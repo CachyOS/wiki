@@ -2,7 +2,7 @@
 title: Features and Merits
 description: Some of the CachyOS features, and what makes CachyOS different.
 published: 1
-date: 2021-07-10T17:29:11.177Z
+date: 2021-07-10T18:20:45.600Z
 tags: best, better, feature, features, info, information, why
 editor: markdown
 dateCreated: 2021-07-04T02:28:46.352Z
@@ -39,6 +39,7 @@ Not Too Nice ([NTN](https://github.com/hamadmarri/ntn)) is a linux tool that add
 - heavily optimized kernel with several patches
 - as default using bbr2 and general optimized network settings
 - earlyroom and every kernel uses le9-patch (https://github.com/hakavlad/le9-patch) with default settings
+- optimized nvidia driver 
 
 # Internet Browser
 The default browser of CachyOS is [CachyBrowser](https://librewolf-community.gitlab.io/), which is a more secure and optimized browser, also some useful addons preinstalled.
