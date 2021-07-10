@@ -2,7 +2,7 @@
 title: Features and Merits
 description: Some of the CachyOS features, and what makes CachyOS different.
 published: 1
-date: 2021-07-10T17:28:40.722Z
+date: 2021-07-10T17:29:11.177Z
 tags: best, better, feature, features, info, information, why
 editor: markdown
 dateCreated: 2021-07-04T02:28:46.352Z
@@ -48,8 +48,8 @@ The main installer is `cachyos-installer`. It is a modification of the `archinst
 
 # Security
 
-*Following security features will be available:
-*
+Following security features will be available:
+
 
 - Firefox based browser with some security plugins  also there config
 - Firejail Toggle for using all packages which got a firejail profile will used in sandboxing and automaticly updated if you are installing new packages
