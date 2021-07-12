@@ -2,8 +2,8 @@
 title: Notebook-Setup
 description: 
 published: 1
-date: 2021-07-04T20:12:01.599Z
-tags: nvidia, laptop, notebook
+date: 2021-07-12T11:31:17.200Z
+tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
 ---
@@ -20,6 +20,7 @@ Tested on laptop with Intel CPU and NVIDIA GPU, but latest Optimus Manager also 
 
 ## Preparing iGPU and dGPU
 Let's go configure **mkinitcpio** which loads various kernel modules.
+Note: If you have AMD CPU, **don't use** `i915` and `intel_agp`
 `sudo nano /etc/mkinitcpio.conf`
 Just write each one module to MODULES section.
 `MODULES="i915 intel_agp nvidia"`
