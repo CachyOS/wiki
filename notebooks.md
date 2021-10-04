@@ -2,8 +2,8 @@
 title: Notebook-Setup
 description: 
 published: 1
-date: 2021-07-12T11:31:17.200Z
-tags: laptop, notebook, nvidia
+date: 2021-07-12T11:31:20.597Z
+tags: nvidia, laptop, notebook
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
 ---

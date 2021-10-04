@@ -2,7 +2,7 @@
 title: Downloads Information
 description: Where to download CachyOS ISO
 published: 1
-date: 2021-07-04T01:54:20.091Z
+date: 2021-08-07T17:38:53.376Z
 tags: download, install, iso, installing, dowloading, installation
 editor: markdown
 dateCreated: 2021-07-04T01:43:25.246Z
