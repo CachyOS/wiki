@@ -2,7 +2,7 @@
 title: How does CachyOS improve the performance?
 description: 
 published: 1
-date: 2021-10-04T07:59:10.433Z
+date: 2021-10-04T07:59:34.836Z
 tags: performance cachyos x86-64-v3 arch cacule
 editor: markdown
 dateCreated: 2021-10-04T07:59:10.433Z
@@ -14,13 +14,21 @@ Yes, this is a first part of optimization for CachyOS, we use CacULE scheduler. 
 
 # packages compiled as generic-v3
 
-You probably don't know so much about compiling, let me introduce that. You can compile code for different ways, with custom flags, but we use barely same as Arch Linux, but here is a one big change. **Arch Linux Repositories use -march=x86-64-v2** **CachyOS Repositories use -march=x86-64-v3**
+You probably don't know so much about compiling, let me introduce that. You can compile code for different ways, with custom flags, but we use barely same as Arch Linux, but here is a one big change.
 
-These common levels in their initial form amount to: x86-64: CMOV, CMPXCHG8B, FPU, FXSR, MMX, FXSR, SCE, SSE, SSE2 x86-64-v2: (close to Nehalem) CMPXCHG16B, LAHF-SAHF, POPCNT, SSE3, SSE4.1, SSE4.2, SSSE3 x86-64-v3: (close to Haswell) AVX, AVX2, BMI1, BMI2, F16C, FMA, LZCNT, MOVBE, XSAVE x86-64-v4: AVX512F, AVX512BW, AVX512CD, AVX512DQ, AVX512VL
+These common levels in their initial form amount to: 
+- x86-64: CMOV, CMPXCHG8B, FPU, FXSR, MMX, FXSR, SCE, SSE, SSE2 
+- x86-64-v2: (close to Nehalem) CMPXCHG16B, LAHF-SAHF, POPCNT, SSE3, SSE4.1, SSE4.2, SSSE3 
+- x86-64-v3: (close to Haswell) AVX, AVX2, BMI1, BMI2, F16C, FMA, LZCNT, MOVBE, XSAVE 
+- x86-64-v4: AVX512F, AVX512BW, AVX512CD, AVX512DQ, AVX512VL
 
-**For more educated people in the tech:** We can called like group of instruction set, probably all Linux distribution use x86-64-v2, because of compatibility with older hardware, but that's cost performance. You probably have something newer than Haswell CPU, these days (2021) have much more instructions than x86-64-v2, but you can't use, because packages (compiled code), doesn't ready and can't use your CPU at full potential.
+**For more educated people in the tech:**
 
-**For users with less tech knowledge:** Example: You have laptop with AMD Ryzen 5 4500U or Intel Core i5 1035G4, your friend can have desktop with Intel Core i7-9700K. All machines have CPU with AVX instruction set, but your programs can't use AVX instruction set. That's cost performance and you simple don't use CPU at full potential.
+ We can called like group of instruction set, probably all Linux distribution use x86-64-v2, because of compatibility with older hardware, but that's cost performance. You probably have something newer than Haswell CPU, these days (2021) have much more instructions than x86-64-v2, but you can't use, because packages (compiled code), doesn't ready and can't use your CPU at full potential.
+
+**For users with less tech knowledge:** 
+
+Example: You have laptop with AMD Ryzen 5 4500U or Intel Core i5 1035G4, your friend can have desktop with Intel Core i7-9700K. All machines have CPU with AVX instruction set, but your programs can't use AVX instruction set. That's cost performance and you simple don't use CPU at full potential.
 
 # Here is a reason why linux distro use x86-64-v2
 
