@@ -2,7 +2,7 @@
 title: CachyOS Repo with optimized packages and kernerls
 description: Packages compiled with GEN3 and also normal generic and higher compile Flags
 published: 1
-date: 2021-10-12T19:07:30.218Z
+date: 2021-10-29T01:45:15.805Z
 tags: repo arch linux cachyos
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -16,7 +16,6 @@ dateCreated: 2021-08-18T15:06:49.466Z
 
     wget https://mirror.cachyos.org/cachyos-repo.tar.xz
     tar xvf cachyos-repo.tar.xz
-    cd repo
     sudo ./cachyos-repo.sh
 
 * * *
