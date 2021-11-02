@@ -2,7 +2,7 @@
 title: CachyOS Repo with optimized packages and kernerls
 description: Packages compiled with GEN3 and also normal generic and higher compile Flags
 published: 1
-date: 2021-10-29T01:45:15.805Z
+date: 2021-11-02T18:12:39.041Z
 tags: repo arch linux cachyos
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -29,7 +29,7 @@ dateCreated: 2021-08-18T15:06:49.466Z
 
       sudo pacman-key --lsign-key F3B607488DB35A47
 
-      sudo pacman -U 'https://build.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-2-1-any.pkg.tar.zst' 'https://build.cachyos.org/repo/x86_64/cachyos/cachyos-mirrorlist-5-1-any.pkg.tar.zst' 'https://build.cachyos.org/repo/x86_64/cachyos/cachyos-v3-mirrorlist-5-1-any.pkg.tar.zst'
+      sudo pacman -U 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-2-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-mirrorlist-6-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v3-mirrorlist-6-1-any.pkg.tar.zst'
 
       **Checking x86_64_v3 cpu support:**
 
