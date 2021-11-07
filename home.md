@@ -2,24 +2,22 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2021-10-03T18:00:21.112Z
-tags: arch, arch linux, archlinux, cachy, cacule, cachyos, cpu scheduler, linux, gnu
+date: 2021-11-07T18:18:57.027Z
+tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
 ---
 
 # CachyOS
-CachyOS is a Linux distribution based on [Arch Linux](https://archlinux.org/). The default Linux kernel is `linux-cacule` which is the default Arch Linux stock kernel with the [CacULE](https://github.com/hamadmarri/cacule-cpu-scheduler) CPU Scheduler. Some features of CachyOS are discribed in the following sections.
+CachyOS is a Linux distribution based on [Arch Linux](https://archlinux.org/). By default, CachyOS uses the `linux-cachyos` kernel, which is the stock Arch Linux kernel modified to use the [CacULE CPU Scheduler](https://github.com/hamadmarri/cacule-cpu-scheduler). The following sections describe the distinguishing features of CachyOS:
 
 ## Linux Kernels
-The default installation of CachyOS contains Arch Linux kernel as a backup, the default CachyOS kernel as well as the following other kernels.
+In addition to the stock Arch Linux kernel (as a stable backup option), CachyOS includes a variety of custom kernels optimized for different scenarios:
 
-List of available kernels:
-* **linux-cacule**: The Linux-CacULE Kernel by Hamad Marri with some other patchsets kernel and modules (See: https://github.com/ptr1337/linux-cacule-aur).
-* **linux-cacule-rdb**: Same as linux-cacule but with the Response Driven Balancer (RDB). RDB is a lightweight tasks loadbalancer to enhance performance.
-* **linux-hardened-cacule**: The Security-Hardened Linux with the cacule scheduler kernel and modules.
-
-* Every Kernel is also available with LTO Optimation and with x86-64-v3 Compile Flags. 
+* **linux-cachyos**: This is the default kernel in CachyOS, featuring the [CacULE CPU Scheduler](https://github.com/hamadmarri/cacule-cpu-scheduler) by Hamad Marri, as well as some other patchsets. More information can be found at the [linux-cachyos kernel repository](https://github.com/CachyOS/linux-cachyos).
+* **linux-cacule-rdb**: The linux-cacule kernel modified to use the Response Driven Balancer (RDB) instead of the CFS load balancer. RDB is a lightweight tasks load balancer that can enhance performance in many workflows.
+* **linux-hardened-cacule**: The Security-Hardened Linux kernel modified to use the CacULE CPU Scheduler and other improvements found in our default kernel.
+* Each kernel is also available in variants built with LTO Optimation and with x86-64-v3 compile flags.
 
 ## KDE and Plasma
 Mostly all desktop packages are compiled with thinlto optimation, security flags and performance improvements. 
