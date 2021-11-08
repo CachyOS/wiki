@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2021-11-08T09:27:14.384Z
+date: 2021-11-08T09:29:32.207Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -29,7 +29,7 @@ Not Too Nice ([NTN](https://github.com/hamadmarri/ntn)) is a tool that adds alia
 
 
 ## Internet Browser
-The default browser of CachyOS is [Cachy-Browser](https://gitlab.com/cachyos), which is a fork of the Librewolf Browser with some security additions and also compiled with more secure flags and performance improvement. 
+The default browser of CachyOS is [Cachy-Browser](https://gitlab.com/cachyos), which is a fork of the Librewolf Browser. We have added some security improvements and have compiled Cachy-Browser with secure flags and performance improvements.
 
 ## CachyOS Installer
-Two installers are provided, one GUI Version, which is based on Calamares, as well as a CLI-Installer.
+Two installers are provided; a GUI installer (based on Calamares), and a CLI Installer.
