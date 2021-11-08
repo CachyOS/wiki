@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2021-11-07T18:18:57.027Z
+date: 2021-11-08T09:27:14.384Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -20,12 +20,12 @@ In addition to the stock Arch Linux kernel (as a stable backup option), CachyOS 
 * Each kernel is also available in variants built with LTO Optimation and with x86-64-v3 compile flags.
 
 ## KDE and Plasma
-Mostly all desktop packages are compiled with thinlto optimation, security flags and performance improvements. 
+Most desktop packages are compiled with thinlto optimation, security flags, and performance improvements. 
 
 ## Ananicy-Cpp and NTN 
-Not Too Nice ([NTN](https://github.com/hamadmarri/ntn)) is a linux tool that adds alias files for other commands to make them run in very low priority by default. It adds this prefix: `chrt -i 0 ionice -c 3` to the command, which means that the command will run on IDLE scheduler policy and on IDLE IO priority. The idle here doesn't mean that the command is idle (not running), it means that the task will be scheduled in IDLE policy which is in the least priority among others. This solution adds 0 overhead to auto down-prioritize tasks while keeping the arguments call the same plus without changing/touching any of the others files.
+Not Too Nice ([NTN](https://github.com/hamadmarri/ntn)) is a tool that adds alias files for commands to make them run in very low priority by default. NTN adds the prefix `chrt -i 0 ionice -c 3` to the command, forcing the program to run with the IDLE scheduler policy and with IDLE IO priority. IDLE policy is in the least priority among others. This solution provides a zero-overhead way to de-prioritize tasks, without needing to specify the nice value each time you run a certain command.
 
-([Ananicy-Cpp](https://gitlab.com/ananicy-cpp/ananicy-cpp)) (ANother Auto NICe daemon) — is a shell daemon created to manage processes' IO and CPU priorities, with community-driven set of rules for popular applications. It's mainly for desktop usage. Ananicy-Cpp is a completly rewritten version of the orginal Ananicy in C++ for much lower CPU and memory usage.
+([Ananicy-Cpp](https://gitlab.com/ananicy-cpp/ananicy-cpp)) (ANother Auto NICe daemon) — is a shell daemon created to manage processes' IO and CPU priorities, with community-driven rulesets for popular applications. This tool is mainly for desktop usage. Ananicy-Cpp is a completly rewritten version of the orginal Ananicy in C++, providing much lower CPU and memory usage.
 
 
 ## Internet Browser
