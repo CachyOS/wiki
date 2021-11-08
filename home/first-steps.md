@@ -2,7 +2,7 @@
 title: First Steps
 description: Things to do after installing cachyOS
 published: 1
-date: 2021-08-12T12:37:01.834Z
+date: 2021-11-08T09:31:34.661Z
 tags: 
 editor: markdown
 dateCreated: 2021-08-11T06:07:58.712Z
@@ -29,7 +29,7 @@ It is advised to reboot your computer after a big update (especially if kernel v
 ## 4. ***Install the Apps That You Use***
 By default, CachyOS comes pre-bundled with tons of useful apps for your everyday use. But these might not be the apps you are accustomed to using daily. As such, the next thing you should be focused on is to install all the apps that you use to recreate your workflow.
 
-Now, if you are new to Linux and don’t know what apps to install, here is a list of some of the must-have Linux apps that you should consider having on your Manjaro system.
+Now, if you are new to Linux and don’t know what apps to install, here is a list of some of the must-have Linux apps that you should consider having on your CachyOS system.
 
 GIMP – Image processor. Alternative to Photoshop.
 VLC – Media Player. You already know what it is.
