@@ -2,34 +2,40 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2021-11-08T09:29:32.207Z
+date: 2021-11-18T20:17:11.145Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
 ---
 
 # CachyOS
-CachyOS is a Linux distribution based on [Arch Linux](https://archlinux.org/). By default, CachyOS uses the `linux-cachyos` kernel, which is the stock Arch Linux kernel modified to use the [CacULE CPU Scheduler](https://github.com/hamadmarri/cacule-cpu-scheduler). The following sections describe the distinguishing features of CachyOS:
+CachyOS is a Linux distribution based on [Arch Linux](https://archlinux.org/). By default, CachyOS uses the [linux-cachyos](https://github.com/CachyOS/linux-cachyos) kernel, which is the stock Arch Linux kernel modified to use the default CFS scheduler and some performance improvements. The following sections describe the distinguishing features of CachyOS:
 
 ## Linux Kernels
-In addition to the stock Arch Linux kernel (as a stable backup option), CachyOS includes a variety of custom kernels optimized for different scenarios:
+The CachyOS are improved kernels which improve the performance and other improvements. Following Scheduler are supported:
 
-* **linux-cachyos**: This is the default kernel in CachyOS, featuring the [CacULE CPU Scheduler](https://github.com/hamadmarri/cacule-cpu-scheduler) by Hamad Marri, as well as some other patchsets. More information can be found at the [linux-cachyos kernel repository](https://github.com/CachyOS/linux-cachyos).
-* **linux-cacule-rdb**: The linux-cacule kernel modified to use the Response Driven Balancer (RDB) instead of the CFS load balancer. RDB is a lightweight tasks load balancer that can enhance performance in many workflows.
-* **linux-hardened-cacule**: The Security-Hardened Linux kernel modified to use the CacULE CPU Scheduler and other improvements found in our default kernel.
-* Each kernel is also available in variants built with LTO Optimation and with x86-64-v3 compile flags.
+- Standard Kernel Completely Fair Scheduler (CFS) - linux-cachyos
+- CacULE and CacULE-RDB created from Hamad Marri, maintained by CachyOS - linux-cachyos-cacule
+- BitMap Queue (BMQ) Alfred Chen Scheduler - linux-cachyos-bmq
+- Priority and Deadline based Skiplist multiple queue scheduler (PDS) - Alfred Chen Scheduler » linux-cachyos-pds
+- Task Type Scheduler by Hamad Marri (TT) - linux-cachyos-tt
 
-## KDE and Plasma
+**All kernels are prebuilt in two different march versions (x86_64 and x86_64_v3) and also with the llvm/lto enabled kernels in the cachyos repo.**
+
+## Adding CachyOS - Repo
+Here you will find a how-to add the repo:
+
+[How-to add cachyos-repo](https://wiki.cachyos.org/en/home/Repo)
+
+## KDE and Plasma and other desktop based packages
+
 Most desktop packages are compiled with thinlto optimation, security flags, and performance improvements. 
 
-## Ananicy-Cpp and NTN 
-Not Too Nice ([NTN](https://github.com/hamadmarri/ntn)) is a tool that adds alias files for commands to make them run in very low priority by default. NTN adds the prefix `chrt -i 0 ionice -c 3` to the command, forcing the program to run with the IDLE scheduler policy and with IDLE IO priority. IDLE policy is in the least priority among others. This solution provides a zero-overhead way to de-prioritize tasks, without needing to specify the nice value each time you run a certain command.
+## Cachy Browser
+The default browser of CachyOS is Cachy-Browser, which is a fork of the Librewolf Browser. We have added some security 
+improvements and have compiled Cachy-Browser with secure flags and 
+performance improvements.
+
+## Ananicy-Cpp,zramd and other tweaks
 
 ([Ananicy-Cpp](https://gitlab.com/ananicy-cpp/ananicy-cpp)) (ANother Auto NICe daemon) — is a shell daemon created to manage processes' IO and CPU priorities, with community-driven rulesets for popular applications. This tool is mainly for desktop usage. Ananicy-Cpp is a completly rewritten version of the orginal Ananicy in C++, providing much lower CPU and memory usage.
-
-
-## Internet Browser
-The default browser of CachyOS is [Cachy-Browser](https://gitlab.com/cachyos), which is a fork of the Librewolf Browser. We have added some security improvements and have compiled Cachy-Browser with secure flags and performance improvements.
-
-## CachyOS Installer
-Two installers are provided; a GUI installer (based on Calamares), and a CLI Installer.
