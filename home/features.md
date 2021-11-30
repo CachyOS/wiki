@@ -2,8 +2,8 @@
 title: Features and Merits
 description: Some of the CachyOS features, and what makes CachyOS different.
 published: 1
-date: 2021-10-03T18:10:12.590Z
-tags: feature, features, best, better, why, info, information
+date: 2021-11-30T09:39:10.023Z
+tags: best, better, feature, features, info, information, why
 editor: markdown
 dateCreated: 2021-07-04T02:28:46.352Z
 ---
@@ -17,13 +17,12 @@ Some of KDE and Plasma tools are compiled with set of flags to provide better pe
 
 # Other performance improvements
 
-- NTN installed and configured on default
+- Ananicy-CPP installed and configured on default
 - ZRAM configured with zstd compression
 - Using BFQ scheduler on ssd and hdds on default
 - Heavily optimized kernel with several patches
 - BBRv2 as default and general optimized network settings
-- Earlyroom and le9-patch (https://github.com/hakavlad/le9-patch) with default settings
-- Optimized nvidia drivers
+- many other tweaks and improvements
 
 # Security
 
@@ -35,3 +34,8 @@ Following security features will be available:
 - toggle for anonymized dnscrypt config and uses only dnscrypt servers
 - toggle for a hardended-kernel and some hardened config
 - security related packages are with more secure cc flags compiled
+
+# Installation with the CLI-Installer example
+
+https://www.youtube.com/watch?v=NtnDyLDO5vA
+
