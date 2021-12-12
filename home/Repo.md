@@ -2,7 +2,7 @@
 title: CachyOS Repo with optimized packages and kernerls
 description: Packages compiled with GEN3 and also normal generic and higher compile Flags
 published: 1
-date: 2021-11-02T18:12:51.460Z
+date: 2021-12-12T16:48:01.655Z
 tags: repo arch linux cachyos
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -29,7 +29,7 @@ dateCreated: 2021-08-18T15:06:49.466Z
 
       sudo pacman-key --lsign-key F3B607488DB35A47
 
-      sudo pacman -U 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-2-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-mirrorlist-6-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v3-mirrorlist-6-1-any.pkg.tar.zst'
+      sudo pacman -U 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-2-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-mirrorlist-7-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v3-mirrorlist-7-1-any.pkg.tar.zst'
 
       **Checking x86_64_v3 cpu support:**
 
@@ -72,16 +72,7 @@ dateCreated: 2021-08-18T15:06:49.466Z
 
 ## How to use CLANG/LLVM/LTO compiled Kernels on Nvidia driver with DKMS:
 
-There is mostly an easy workaround, but be aware, if you install a Kernel and have those parameters still in, the GCC Compiled Kernel will fail. Also some modules which uses DKMS needs to recompiled with CLANG/LLVM. I just compile the backup kernel LINUX-LTS also with CLANG, so i got no problems anymore.
-
--   Just do following:
-
-          sudo nano /etc/dkms/framework.conf
-          and add following entrys on the bottom of the file:
-          export LLVM=1
-          export CC=clang
-
--   If you have this done, just reinstall or install the kernel which is compiled with LLVM/LTO and DKMS wont fail anymore.
+Not needed anymore, since dkms 3.0.1 :)
 
 If you got questions, just hit me up!
 
