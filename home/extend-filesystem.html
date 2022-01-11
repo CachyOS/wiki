@@ -1,0 +1,93 @@
+<!--
+title: How to Resize an ext2/3/4 Filesystem
+description: 
+published: 0
+date: 2022-01-11T18:15:31.243Z
+tags: how to
+editor: ckeditor
+dateCreated: 2022-01-11T18:15:31.243Z
+-->
+
+<h1>How to Resize an ext2/3/4 Filesystem</h1>
+<h2>&nbsp;</h2>
+<h2><strong>Prerequisits</strong></h2>
+<ul>
+  <li><i>&nbsp;A created partition that you know the name of. To check the name, run </i><code>sudo fdisk -l</code>.</li>
+</ul>
+<p>&nbsp;</p>
+<h2><strong>Procedure</strong></h2>
+<p><strong>1.</strong> If the partition the filesystem is on is currently mounted, unmount it.</p>
+<p>For example:</p>
+<pre><code class="language-plaintext">~]# umount /dev/nvme0n1p1
+~]# umount /dev/nvme0n1p2</code></pre>
+<p><strong>2.</strong> Run <strong>fdisk</strong> <i><strong>disk_name</strong></i>.</p>
+<p>For example:</p>
+<pre><code class="language-plaintext">~]# fdisk /dev/nvme0n1</code></pre>
+<p><strong>3.</strong> Check the partition number you wish to delete with the <strong>p</strong>. The partitions are listed under the heading “Device”.</p>
+<p>For example:</p>
+<pre><code class="language-plaintext">Command (m for help): p
+Disk /dev/nvme0n1: 465.76 GiB, 500107862016 bytes, 976773168 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: gpt
+Disk identifier: 8f5bd174-9014-47cb-a8fb-b635976c66ca
+Device            Start       End   Sectors   Size Type
+/dev/nvme0n1p1     2048   1050623   1048576   512M EFI System
+/dev/nvme0n1p2 34605056 976773134 942168079 449.3G Linux filesystem</code></pre>
+<p><strong>4. </strong>Use the option <strong>d</strong> to delete a partition. If there is more than one, <strong>fdisk</strong> prompts for which one to delete.&nbsp;</p>
+<p>For example:</p>
+<pre><code class="language-plaintext">Command (m for help): d
+Partition number (1,2, default 2): 2 
+Partition 2 has been deleted.</code></pre>
+<p><strong>5.</strong> Use the option <strong>n</strong> to create a new partition. Follow the prompts and ensure you allow enough space for any future resizing that is needed. It is possible to specify a set, human-readable size instead of using sectors if this is preferred.</p>
+<blockquote>
+  <p><i>Note:</i> It is recommended to follow <strong>fdisk</strong>’s defaults as the default values (for example, the first partition sectors) and partition sizes specified are always aligned according to the device properties.</p>
+</blockquote>
+<blockquote>
+  <p><i><strong>Warning:</strong></i> If you are recreating a partition in order to allow for more room on a mounted file system, ensure you create it with the same starting disk sector as before. Otherwise the resize operation will not work and the entire file system may be lost.</p>
+</blockquote>
+<p>For example:</p>
+<pre><code class="language-plaintext">Command (m for help): n 
+Partition type: 
+  p  primary (1 primary, 0 extended, 3 free) 
+  e  extended 
+Select (default p): *Enter* 
+Using default response p. 
+Partition number (2-4, default 2): *Enter*
+First sector (1026048-854745087, default 1026048): *Enter* 
+Last sector, +sectors or +size{K,M,G,T,P} (1026048-854745087, default 854745087): +463G
+
+Created a new partition 2 of type 'Linux' and of size 463 GiB.</code></pre>
+<p><strong>6.</strong> Check the partition table to ensure that the partitions are created as required using the <strong>p</strong> option.</p>
+<p>For example:</p>
+<pre><code class="language-plaintext">Command (m for help): p
+Disk /dev/nvme0n1: 465.76 GiB, 500107862016 bytes, 976773168 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: gpt
+Disk identifier: 8f5bd174-9014-47cb-a8fb-b635976c66ca
+Device            Start       End   Sectors   Size Type
+/dev/nvme0n1p1     2048   1050623   1048576   512M EFI System
+/dev/nvme0n1p2 34605056 976773134 942168079   463G Linux filesystem</code></pre>
+<p><strong>7.</strong> Write the changes with the <strong>w</strong> option when you are sure they are correct.</p>
+<blockquote>
+  <p><i><strong>Important</strong></i>: Errors in this process that are written could cause instability with the selected file system.</p>
+</blockquote>
+<p><strong>8.</strong> Extend the file system with the <strong>resize2fs </strong><i><strong>/dev/device size</strong></i><strong> </strong>command.</p>
+<blockquote>
+  <p><i>Note:</i> If you are resizing a partition in order to fill all available space use <strong>resize2fs </strong><i><strong>/dev/device</strong></i></p>
+</blockquote>
+<blockquote>
+  <p><i><strong>Important</strong></i>: <strong>size </strong>cannot be more than allocated space. For example size cannot be more than <i>463G</i></p>
+</blockquote>
+<p>For example:</p>
+<pre><code class="language-plaintext">~]# resize2fs /dev/nvme0n1p1 463G</code></pre>
+<p>Accepted size units for file system block sizes are:&nbsp;<br><br>S - 512 byte sectors&nbsp;<br>K - kilobytes&nbsp;<br>M - megabytes&nbsp;<br>G - gigabytes</p>
+<p>&nbsp;</p>
+<h2><strong>More Information</strong></h2>
+<ul>
+  <li><strong>man fdisk</strong></li>
+  <li><strong>man resize2fs</strong></li>
+</ul>
