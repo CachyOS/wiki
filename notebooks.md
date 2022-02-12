@@ -32,7 +32,7 @@ Just write each one module to MODULES section.
 Just use following commands
 `sudo nano /etc/default/grub`
 Just find line where is GRUB_CMDLINE_LINUX_DEFAULT, you have more parameters here, just add nvidia-drm.modeset=1 and keep other parameters here.
-`GRUB_CMDLINE_LINUX_DEFAULT="nvidia-drm.modeset=1`
+`GRUB_CMDLINE_LINUX_DEFAULT="nvidia-drm.modeset=1"`
 
 To (re-)generate all existing presets ramdisk and update GRUB.
 `sudo mkinitcpio -P`
