@@ -2,7 +2,7 @@
 title: First Steps
 description: Things to do after installing cachyOS
 published: 1
-date: 2021-11-08T09:31:34.661Z
+date: 2022-01-11T15:37:46.329Z
 tags: 
 editor: markdown
 dateCreated: 2021-08-11T06:07:58.712Z

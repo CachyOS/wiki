@@ -2,7 +2,7 @@
 title: How does CachyOS improve the performance?
 description: 
 published: 1
-date: 2021-10-04T07:59:34.836Z
+date: 2021-10-04T07:59:37.080Z
 tags: performance cachyos x86-64-v3 arch cacule
 editor: markdown
 dateCreated: 2021-10-04T07:59:10.433Z

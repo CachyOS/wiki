@@ -2,8 +2,8 @@
 title: Features and Merits
 description: Some of the CachyOS features, and what makes CachyOS different.
 published: 1
-date: 2021-11-30T09:39:10.023Z
-tags: best, better, feature, features, info, information, why
+date: 2021-11-30T09:39:12.128Z
+tags: feature, features, best, better, why, info, information
 editor: markdown
 dateCreated: 2021-07-04T02:28:46.352Z
 ---

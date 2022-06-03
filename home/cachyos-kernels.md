@@ -2,7 +2,7 @@
 title: Which Kernel does CachyOS provide and maintain
 description: CachyOS Kernels, improvements, ... 
 published: 1
-date: 2022-01-30T11:14:04.573Z
+date: 2022-05-08T21:15:37.069Z
 tags: cachyos, kernel, performance
 editor: markdown
 dateCreated: 2021-11-25T07:07:09.929Z
@@ -29,26 +29,43 @@ The CachyOS are improved kernels which improve the performance and other improve
 - 5 Different scheduler are supported, CacULE-,CFS-,tt-,bmq-,bore-, and pds scheduler
 - GCC/CLANG Optimization with automatically found cpu arch or also selectable cpu arch
 - Choose between LLVM/LTO or GCC
-- Choose between 500Hz, , 600 Hz ,750Hz, 1000Hz
+- Choose between 300Hz, 500Hz, 600 Hz ,750Hz and 1000Hz
 - Improved BFQ Scheduler
 - Back-ported patches from linux-next
 - General improved sysctl settings and upstream scheduler fixes
-- Latest LRU Patch-set
+- Latest LRU Patch-set, default enabled
+- Damon Reclaim enabled at default
 - BBRv2 tcp_congestion_control
-- LLVM ThinLTO provided with \*-lto Kernel (in the cachyos-repo)
+- LLVM ThinLTO provided with *-lto Kernel (in the cachyos-repo)
 - LRNG Framework (default enabled)
-- WINEFSYNC and the new futex wait v implementation (futex2) which will be upstream in 5.17
 - Android ANBOX patch-set
-- page-table-patch included
 - Latest & improved ZSTD patch-set
-- Some Security related patches. More here: [Fork-Brute](https://github.com/ptr1337/kernel-patches/blob/master/5.15/0001-security-patches.patch) [spectre](https://github.com/ptr1337/kernel-patches/blob/master/5.15/0001-spectre-patches.patch)
 - Latest BTRFS improvements & fixes
 - KSMBD Module for Samba3 Server
-- Using the latest MG-LRU v5 patch paired with and the new implemented damon.
-- AMD PSTATEv7 Driver
+- AMD PSTATE Driver enabled by default
 - Clearlinux Patchset
-- Control Flow Integrity (CFI) slectable when using LLVM
-- experimental PGO building selectable (at the moment not working)
+- Control Flow Integrity (CFI) selectable when using LLVM
+- ZFS Filesystem Support and prebuilt in the repo!
+- WINESYNC Fastsync
+
+## WINESYNC Usage:
+
+Insall following packages from the AUR, if you get into issue's:
+
+- [winesync](https://aur.archlinux.org/packages/winesync)
+- [winesync-dkms](https://aur.archlinux.org/packages/winesync-dkms)
+- [winesync-header](https://aur.archlinux.org/packages/winesync-header)
+- [winesync-udev-rule](https://aur.archlinux.org/packages/winesync-udev-rule)
+
+And disable following enviroment variables in lutris/steam/..
+
+```
+WINEESYNC=0
+WINEFSYNC=0
+WINEFSYNC_FUTEX2=0
+```
+
+Also you need a wine/proton which includes the winesync patch. I would recommend to built one from [wine-tkg](https://github.com/Frogging-Family/wine-tkg-git) or you will find prebuilt ones in our repo.
 
 ## Other distros
 
@@ -64,60 +81,76 @@ The CachyOS are improved kernels which improve the performance and other improve
 
 ## **automatic march detection and changing the pacman.conf:**
 
-    wget https://mirror.cachyos.org/cachyos-repo.tar.xz
-    tar xvf cachyos-repo.tar.xz
-    cd repo
-    sudo ./cachyos-repo.sh
+```
+wget https://mirror.cachyos.org/cachyos-repo.tar.xz
+tar xvf cachyos-repo.tar.xz
+cd repo
+sudo ./cachyos-repo.sh
+```
 
----
+--------------------------------------------------------------------------------
 
-
+--
 
 ## **manually**:
-```
-    sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
 
-    sudo pacman-key --lsign-key F3B607488DB35A47
+````
+sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
 
-    sudo pacman -U 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-2-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-mirrorlist-8-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v3-mirrorlist-8-1-any.pkg.tar.zst'
+sudo pacman-key --lsign-key F3B607488DB35A47
 
-      **Checking x86_64_v3 cpu support:**
+sudo pacman -U 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-2-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-mirrorlist-8-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v3-mirrorlist-8-1-any.pkg.tar.zst'
 
-      /lib/ld-linux-x86-64.so.2 --help | grep "x86-64-v3 (supported, searched)"
+  **Checking x86_64_v3 cpu support:**
 
-      if you get an output change at the /etc/pacman.conf following:
+  /lib/ld-linux-x86-64.so.2 --help | grep "x86-64-v3 (supported, searched)"
 
-      #Architecture = auto
-      Architecture = x86_64 x86_64_v3
+  if you get an output change at the /etc/pacman.conf following:
+  ```
+  #Architecture = auto
+  Architecture = x86_64 x86_64_v3
+  ```
+  add following under the arch repos the "-v3" repos only if they are supported:
+  ```
+  # cachyos repos
+  [cachyos-v3]
+  Include = /etc/pacman.d/cachyos-v3-mirrorlist
+  [cachyos]
+  Include = /etc/pacman.d/cachyos-mirrorlist
+````
 
-      add following under the arch repos the "-v3" repos only if they are supported:
-
-      # cachyos repos
-      [cachyos-v3]
-      Include = /etc/pacman.d/cachyos-v3-mirrorlist
-      [cachyos]
-      Include = /etc/pacman.d/cachyos-mirrorlist
-
-```
-```
-    This script will also backup your old pacman.conf.
-
-    This script will auto-detect you architecture, if your CPU have x86-64-v3 support, it will automatically use the repos which are optimized with this flag and some other flags.
-
-    Also all provided Kernels, Browsers, ... are optimized and compiled.
-
-    ## How to Backup the config and use the native Arch Packages
-
-    - Remove or Backup the config located at /etc/pacman.conf
-    - then run `sudo mv /etc/pacman.conf.bak /etc/pacman.conf`
-    - Then run following command to switch the packages to the default arch packages `sudo pacman -Suuy`
+--------------------------------------------------------------------------------
 
 ```
+This script will also backup your old pacman.conf.
+
+This script will auto-detect you architecture, if your CPU have x86-64-v3 support, it will automatically use the repos which are optimized with this flag and some other flags.
+
+Also all provided Kernels, Browsers, ... are optimized and compiled.
+
+## How to Backup the config and use the native Arch Packages
+
+- Remove or Backup the config located at /etc/pacman.conf
+- then run `sudo mv /etc/pacman.conf.bak /etc/pacman.conf`
+- Then run following command to switch the packages to the default arch packages `sudo pacman -Suuy`
+
+
 More information's you will find here [CachyOS](https://github.com/cachyos) or [Discord](https://discord.gg/k39qfrxPNa)
+```
 
 ## How to use CLANG/LLVM/LTO compiled Kernels on Nvidia driver with DKMS:
 
 Not needed anymore, just install the latest dkms version (3.0.2).
+
+## Support
+
+You can join the CachyOS Discord with the following link:
+
+<https://discord.gg/qJqj94uFwE>
+
+or at telegram:
+
+<https://t.me/+zCzPX4cAFjk1MTYy>
 
 ## Donations are welcome for the compile server for the repo or a cup of coffee for maintain this repo
 
