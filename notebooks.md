@@ -1,8 +1,8 @@
 ---
-title: Notebook-Setup
+title: Laptop with Dual GPU Setup Guide
 description: 
 published: 1
-date: 2022-06-16T02:43:51.967Z
+date: 2022-06-16T02:45:48.892Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
