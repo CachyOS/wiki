@@ -2,7 +2,7 @@
 title: Laptop with Dual GPU Setup Guide
 description: 
 published: 1
-date: 2022-06-16T02:45:48.892Z
+date: 2022-06-16T02:53:49.243Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
@@ -24,7 +24,7 @@ Tested on laptop with Intel CPU and NVIDIA GPU, but latest Optimus Manager relea
 Let's start by configuring **mkinitcpio** which loads various kernel modules.
 Note: If you have AMD CPU, **don't use** `i915` and `intel_agp`
 `sudo nano /etc/mkinitcpio.conf`
-Just write each one module to MODULES section.
+Set the following to the MODULES section.
 `MODULES="i915 intel_agp nvidia"`
 <kbd>CTRL+O</kbd> to save
 <kbd>CTRL+X</kbd> exit nano
