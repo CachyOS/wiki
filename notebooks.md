@@ -2,7 +2,7 @@
 title: Notebook-Setup
 description: 
 published: 1
-date: 2022-06-16T02:13:03.737Z
+date: 2022-06-16T02:27:23.500Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
@@ -16,7 +16,7 @@ Modern laptops have two graphics cards, especially if we talk about gaming lapto
 Windows automatically switches between the iGPU and dGPU depending on the usage.
 Here is a guide on how to setup the same for CachyOS, specially if you plan to use it for gaming or streaming, 3D developing etc.
 
-Tested on laptop with Intel CPU and NVIDIA GPU, but latest Optimus Manager also has support for AMD CPUs.
+Tested on laptop with Intel CPU and NVIDIA GPU, but latest Optimus Manager release also has support for AMD CPUs.
 
 ## Preparing iGPU and dGPU for the Linux Kernel
 Let's start by configuring **mkinitcpio** which loads various kernel modules.
