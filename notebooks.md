@@ -2,75 +2,77 @@
 title: Notebook-Setup
 description: 
 published: 1
-date: 2021-07-12T11:31:20.597Z
-tags: nvidia, laptop, notebook
+date: 2022-06-16T02:13:03.737Z
+tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
 ---
 
 # Optimus Manager - how to switch to NVIDIA	GPU on laptop
-Modern laptops have two graphics cards, especialy if we talk about gaming laptops.
+Modern laptops have two graphics cards, especially if we talk about gaming laptops.
 **iGPU** - integrated GPU, longer battery life and lower performance. 
-**dGPU** - discrete GPU, high perofrmance, but drain a lot of battery, we use that for gaming, rendering, video encoding etc.
+**dGPU** - discrete GPU, higher performance, but it would drain more battery, highly recommended for gaming, rendering, video encoding, NVENC among other demanding tasks.
 
-Microsoft Windows automatically switch between iGPU and dGPU - depends on usage.
-Here is a guide how to setup system, if we want to use NVIDIA GPU for gaming.
+Windows automatically switches between the iGPU and dGPU depending on the usage.
+Here is a guide on how to setup the same for CachyOS, specially if you plan to use it for gaming or streaming, 3D developing etc.
 
-Tested on laptop with Intel CPU and NVIDIA GPU, but latest Optimus Manager also have support for AMD CPU.
+Tested on laptop with Intel CPU and NVIDIA GPU, but latest Optimus Manager also has support for AMD CPUs.
 
-## Preparing iGPU and dGPU
-Let's go configure **mkinitcpio** which loads various kernel modules.
+## Preparing iGPU and dGPU for the Linux Kernel
+Let's start by configuring **mkinitcpio** which loads various kernel modules.
 Note: If you have AMD CPU, **don't use** `i915` and `intel_agp`
 `sudo nano /etc/mkinitcpio.conf`
 Just write each one module to MODULES section.
 `MODULES="i915 intel_agp nvidia"`
-<kbd>CTRL+O</kbd> save that
+<kbd>CTRL+O</kbd> to save
 <kbd>CTRL+X</kbd> exit nano
 
-## Addition one kernel parameters nvidia-drm.modeset=1
-### How to configure that with GRUB
-Just use following commands
+## Adding a kernel parameter to enable "Direct Rendering Manager" (DRM KMS)
+### (For a better experience and extra features)
+### The easy way of doing it is by modifying the GRUB configuration file
+Just use the following commands:
 `sudo nano /etc/default/grub`
-Just find line where is GRUB_CMDLINE_LINUX_DEFAULT, you have more parameters here, just add nvidia-drm.modeset=1 and keep other parameters here.
+Now look for the following line: GRUB_CMDLINE_LINUX_DEFAULT, you will have more parameters here, just add nvidia-drm.modeset=1 next to them (with a space between) and save the changes as we have done before.
 `GRUB_CMDLINE_LINUX_DEFAULT="nvidia-drm.modeset=1`
 
-To (re-)generate all existing presets ramdisk and update GRUB.
+Now you have to use these two commands to save the modification into all the installed kernels and update GRUB.
 `sudo mkinitcpio -P`
 `grub-mkconfig -o /boot/grub/grub.cfg`
 
-### How to configure SystemD-boot
+### How to configure it with systemd-boot instead
 (under development)
 
 ## Installing Optimus Manager from AUR
-You need to git for using AUR.
+You need to have git installed for the following steps.
 `sudo pacman -S git`
 
-Instaling optimus-manager
+Installing optimus-manager
 `git clone https://aur.archlinux.org/optimus-manager.git`
 `cd optimus-manager`
 `makepkg -si`
 
-Instaling optimus-manager-qt
+Installing optimus-manager-qt (same as optimus-manager but it uses a different framework and has better compatibility with KDE Plasma)
 `git clone https://aur.archlinux.org/optimus-manager-qt.git`
 `cd optimus-manager-qt`
 
-> KDE Plasma need change one line in PKGBUILD.
+> KDE Plasma users need to make a modification in PKGBUILD.
 {.is-warning}
 
 `nano PKGBUILD `
-You need change from `_with_plasma=false` to `_with_plasma=true`
+You have to change `_with_plasma=false` to `_with_plasma=true`
 <kbd>CTRL+O</kbd> save that
 <kbd>CTRL+X</kbd> exit nano
 `makepkg -si`
 
-Last thing, we need turn on service for optimus manager
+Last step, we need to turn on and start the service for optimus manager
 `sudo systemctl enable optimus-manager.service`
 `sudo systemctl start optimus-manager.service`
 
-You can reboot now, after reboot you will have fully working Optimus Manager.
-You can find icon In the right part of the bottom bar.
+You can reboot now, after rebooting, you will have a fully working Optimus Manager.
 
-**You can end up right here.**
+**You can find the icon on the bottom right corner of the taskbar.**
+
+Congrats! you are done with the setup.
 
 # Optional configuration
 ## For Turing generation cards with Intel Coffee Lake or above CPUs, it is possible to fully power down the GPU when not in use.
@@ -86,23 +88,23 @@ The feature is only supported on laptop with Turing GPUs (RTX 20xx/GTX 16xx) and
 > ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="on"
 > ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="on"
 
-<kbd>CTRL+O</kbd> save that
+<kbd>CTRL+O</kbd> save changes
 <kbd>CTRL+X</kbd> exit nano
 
 `sudo nano /etc/modprobe.d/nvidia.conf`
 `options nvidia "NVreg_DynamicPowerManagement=0x02"`
-<kbd>CTRL+O</kbd> save that
+<kbd>CTRL+O</kbd> save changes
 <kbd>CTRL+X</kbd> exit nano
 
-So we need relaod udev rules now.
+To apply these changes right now.
 `sudo udevadm control --reload`
 `sudo udevadm trigger`
 
-So we need configure optimus-manager with **(RTD3) Power Management**
+Now you need to edit optimus-manager's configuration file to enable **(RTD3) Power Management**
 `sudo nano /etc/optimus-manager/optimus-manager.conf`
 
-Edit config optimus-manager.conf file.
+Edit the following in optimus-manager.conf file.
 `dynamic_power_management=fine`
-`reboot`
+`reboot` (to reboot the system)
 
-So you can use hybrid mode and laptop will works like on Microsoft Windows.
+Now your laptop's hybrid mode should work like it does on Windows!.
