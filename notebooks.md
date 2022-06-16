@@ -2,13 +2,15 @@
 title: Notebook-Setup
 description: 
 published: 1
-date: 2022-06-16T02:27:23.500Z
+date: 2022-06-16T02:43:51.967Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
 ---
 
-# Optimus Manager - how to switch to NVIDIA	GPU on laptop
+# Optimus Manager 
+**Clever tool for an easy switching between a laptop's integrated GPU and the discrete one.**
+
 Modern laptops have two graphics cards, especially if we talk about gaming laptops.
 **iGPU** - integrated GPU, longer battery life and lower performance. 
 **dGPU** - discrete GPU, higher performance, but it would drain more battery, highly recommended for gaming, rendering, video encoding, NVENC among other demanding tasks.
