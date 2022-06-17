@@ -2,7 +2,7 @@
 title: Which Kernel does CachyOS provide and maintain
 description: CachyOS Kernels, improvements, ... 
 published: 1
-date: 2022-06-17T02:34:11.126Z
+date: 2022-06-17T02:36:21.775Z
 tags: cachyos, kernel, performance
 editor: markdown
 dateCreated: 2021-11-25T07:07:09.929Z
@@ -76,70 +76,7 @@ Also you need a wine/proton which includes the winesync patch. I would recommend
 - Next I will implement a building system so it is possible to build the kernel for several distros.
 - Maybe I will provide some releases for debian based distros.
 
-## We are providing a [repo](https://mirror.cachyos.org/) which includes all kernels in generic-v3 and generic and more optimized packages
 
-### How to add our repo automatically with CPU detection (if x86-64-v3 is supported)
-
-**Just run the following commands:**
-
-## **automatic march detection and modification of the pacman.conf file:**
-
-```
-wget https://mirror.cachyos.org/cachyos-repo.tar.xz
-tar xvf cachyos-repo.tar.xz
-cd repo
-sudo ./cachyos-repo.sh
-```
-
---------------------------------------------------------------------------------
-
---
-
-## **manually**:
-
-````
-sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
-
-sudo pacman-key --lsign-key F3B607488DB35A47
-
-sudo pacman -U 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-2-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-mirrorlist-8-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v3-mirrorlist-8-1-any.pkg.tar.zst'
-
-  **Checking x86_64_v3 cpu support:**
-
-  /lib/ld-linux-x86-64.so.2 --help | grep "x86-64-v3 (supported, searched)"
-
-  if you get an output, then uncomment the following line at /etc/pacman.conf:
-  ```
-  #Architecture = auto
-  Architecture = x86_64 x86_64_v3
-  ```
-  add the following under the arch repos (only if they are supported):
-  ```
-  # cachyos repos
-  [cachyos-v3]
-  Include = /etc/pacman.d/cachyos-v3-mirrorlist
-  [cachyos]
-  Include = /etc/pacman.d/cachyos-mirrorlist
-````
-
---------------------------------------------------------------------------------
-
-```
-This script will also backup your old pacman.conf.
-
-This script will auto-detect you architecture, if your CPU have x86-64-v3 support, it will automatically use the repos which are optimized with this flag and some other flags.
-
-Also all provided Kernels, Browsers, ... are optimized and compiled.
-
-## How to Backup the config and use the native Arch Packages again.
-
-- Remove or Backup the config located at /etc/pacman.conf
-- then run `sudo mv /etc/pacman.conf.bak /etc/pacman.conf`
-- Then run following command to switch the packages to the default arch packages `sudo pacman -Suuy`
-
-
-For more information, take a look at the description of [CachyOS](https://github.com/cachyos) or via [Discord](https://discord.gg/k39qfrxPNa)
-```
 
 ## How to use CLANG/LLVM/LTO compiled Kernels on Nvidia driver with DKMS:
 
