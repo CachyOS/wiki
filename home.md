@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2022-06-17T01:59:50.900Z
+date: 2022-06-17T02:33:41.216Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -44,19 +44,6 @@ You can select at the online install between the following DE's:
 - Kofuku (bliss in Japanese) is a lightweight and minimalist Linux setup. This setup uses BSPWM as the tiling window manager.
 - Xfce is a lightweight desktop environment for UNIX-like operating systems. It aims to be fast and low on system resources, while still being visually appealing and user friendly
 
-## Linux Kernels
-The CachyOS are improved and heavily modified kernels which improves the performance,security also we add some new features to i,  and other improvements. The following schedulers are supported:
-
--   Standard Scheduler Completely Fair Scheduler (CFS) - linux-cachyos
--   CacULE and CacULE-RDB created from Hamad Marri, maintained by CachyOS - linux-cachyos-cacule
--   BitMap Queue (BMQ) Alfred Chen Scheduler - linux-cachyos-bmq
--   Priority and Deadline based Skiplist multiple queue scheduler (PDS) - Alfred Chen Scheduler » linux-cachyos-pds
--   Task Type Scheduler by [Hamad Marri (TT)](https://github.com/hamadmarri/TT-CPU-Scheduler) - linux-cachyos-tt
--   BORE (Burst-Oriented Response Enhancer) CPU Scheduler by [firelzrd (BORE)](https://github.com/firelzrd/bore-scheduler) - linux-cachyos-bore
-
-**All kernels are prebuilt in two different march versions (x86_64 and x86_64_v3), also we provide kernels with llvm/lto enabled in the CachyOS repo.**
-
-All of our kernels have ZFS support, so there is no need anymore to rebuild the kernel if you're using ZFS. Every Kernel is prebuilt with the corresponding ZFS headers.
 
 ## Adding our CachyOS repo for any Arch based distro
 Here you will find a how-to add the repo:
