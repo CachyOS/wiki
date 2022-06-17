@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2022-06-17T02:33:41.216Z
+date: 2022-06-17T02:37:31.310Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -58,7 +58,18 @@ Most desktop packages are compiled with ThinLTO optimization, security flags, an
 The default browser of CachyOS is Cachy-Browser, which is a fork of the Librewolf Browser. We have added some extra security 
 improvements as it is compiled with more secure flags and performance related too.
 
-### Ananicy-Cpp, zramd and other tweaks.
+## Support
 
-([Ananicy-Cpp](https://gitlab.com/ananicy-cpp/ananicy-cpp)) (ANother Auto NICe daemon) — is a shell daemon created to manage processes' IO and CPU priorities, with community-driven rulesets for popular applications. This tool is mainly for desktop usage. Ananicy-Cpp is a completly rewritten version of the orginal Ananicy in C++, providing much lower CPU and memory usage.
+You can join the CachyOS Discord with the following link:
+
+<https://discord.gg/qJqj94uFwE>
+
+or at Telegram:
+
+<https://t.me/+zCzPX4cAFjk1MTYy>
+
+## Donations are welcome for the maintenance of our compile server and the repo, a cup of coffee would be highly appreciated for maintaining this repo
+
+<https://paypal.me/pttrr>
+
 
