@@ -2,7 +2,7 @@
 title: Which Kernel does CachyOS provide and maintain
 description: CachyOS Kernels, improvements, ... 
 published: 1
-date: 2022-05-08T21:15:37.069Z
+date: 2022-06-17T02:27:07.139Z
 tags: cachyos, kernel, performance
 editor: markdown
 dateCreated: 2021-11-25T07:07:09.929Z
@@ -50,14 +50,14 @@ The CachyOS are improved kernels which improve the performance and other improve
 
 ## WINESYNC Usage:
 
-Insall following packages from the AUR, if you get into issue's:
+Install the following packages from the AUR, if you get into issues:
 
 - [winesync](https://aur.archlinux.org/packages/winesync)
 - [winesync-dkms](https://aur.archlinux.org/packages/winesync-dkms)
 - [winesync-header](https://aur.archlinux.org/packages/winesync-header)
 - [winesync-udev-rule](https://aur.archlinux.org/packages/winesync-udev-rule)
 
-And disable following enviroment variables in lutris/steam/..
+And set the following environment variables in Lutris or Steam for WINESYNC to work.
 
 ```
 WINEESYNC=0
@@ -65,7 +65,7 @@ WINEFSYNC=0
 WINEFSYNC_FUTEX2=0
 ```
 
-Also you need a wine/proton which includes the winesync patch. I would recommend to built one from [wine-tkg](https://github.com/Frogging-Family/wine-tkg-git) or you will find prebuilt ones in our repo.
+Also you need a wine/proton which includes the winesync patch. I would recommend to built one from [wine-tkg](https://github.com/Frogging-Family/wine-tkg-git) repo or you could install one already prebuilt in our repo.
 
 ## Other distros
 
@@ -77,9 +77,9 @@ Also you need a wine/proton which includes the winesync patch. I would recommend
 
 ### How to add our repo automatically with CPU detection (if x86-64-v3 is supported)
 
-**Just run following command:**
+**Just run the following commands:**
 
-## **automatic march detection and changing the pacman.conf:**
+## **automatic march detection and modification of the pacman.conf file:**
 
 ```
 wget https://mirror.cachyos.org/cachyos-repo.tar.xz
@@ -105,12 +105,12 @@ sudo pacman -U 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-2
 
   /lib/ld-linux-x86-64.so.2 --help | grep "x86-64-v3 (supported, searched)"
 
-  if you get an output change at the /etc/pacman.conf following:
+  if you get an output, then uncomment the following line at /etc/pacman.conf:
   ```
   #Architecture = auto
   Architecture = x86_64 x86_64_v3
   ```
-  add following under the arch repos the "-v3" repos only if they are supported:
+  add the following under the arch repos (only if they are supported):
   ```
   # cachyos repos
   [cachyos-v3]
@@ -128,14 +128,14 @@ This script will auto-detect you architecture, if your CPU have x86-64-v3 suppor
 
 Also all provided Kernels, Browsers, ... are optimized and compiled.
 
-## How to Backup the config and use the native Arch Packages
+## How to Backup the config and use the native Arch Packages again.
 
 - Remove or Backup the config located at /etc/pacman.conf
 - then run `sudo mv /etc/pacman.conf.bak /etc/pacman.conf`
 - Then run following command to switch the packages to the default arch packages `sudo pacman -Suuy`
 
 
-More information's you will find here [CachyOS](https://github.com/cachyos) or [Discord](https://discord.gg/k39qfrxPNa)
+For more information, take a look at the description of [CachyOS](https://github.com/cachyos) or via [Discord](https://discord.gg/k39qfrxPNa)
 ```
 
 ## How to use CLANG/LLVM/LTO compiled Kernels on Nvidia driver with DKMS:
@@ -148,22 +148,22 @@ You can join the CachyOS Discord with the following link:
 
 <https://discord.gg/qJqj94uFwE>
 
-or at telegram:
+or at Telegram:
 
 <https://t.me/+zCzPX4cAFjk1MTYy>
 
-## Donations are welcome for the compile server for the repo or a cup of coffee for maintain this repo
+## Donations are welcome for the maintenance of our compile server and the repo, a cup of coffee would be highly appreciated for maintaining this repo
 
 <https://paypal.me/pttrr>
 
 ### Valueable Contributors
 
-[Hamad Marri](https://github.com/hamadmarri) for the CacULE Scheduler
+[Hamad Marri](https://github.com/hamadmarri) for the CacULE Scheduler, TT Scheduler
 
 [BL4CKH47H4CK3R](https://github.com/BL4CKH47H4CK3R) for Optimization, Bug Hunting & Support
 
 [SirLucjan (Piotr Gorski)](https://github.com/sirlucjan)
 
-[Archlinux](https://archlinux.org) for the great linux operating system
+[Archlinux](https://archlinux.org) for this amazing linux operating system
 
 [And all other Kernel Developers and Supporters](https://github.com/torvalds/linux)
