@@ -2,7 +2,7 @@
 title: How does CachyOS improve the performance?
 description: 
 published: 1
-date: 2022-06-17T01:25:21.758Z
+date: 2022-06-17T01:26:31.323Z
 tags: performance cachyos x86-64-v3 arch cacule
 editor: markdown
 dateCreated: 2021-10-04T07:59:10.433Z
@@ -17,7 +17,7 @@ Yes, this is a part of the optimization for CachyOS. ¿Why do we use that schedu
 
 # Huge repository with packages compiled with generic-v3
 
-You probably don't know so much about compiling and stuff, let me introduce you to that. You can compile code in so many different ways, with custom flags,toolchains,algorithms and so on, we barely use the same as Arch Linux, but here is one big change to consider, the x86-64 architecture is supported by every Intel/AMD processor but as technology rapidly changed and improvements were discovered, new instructions were created and used to support better features, improved reliability at runtime, more stable code and so on. Below we'll show you all of them and what instructions are required for them to work.
+You probably don't know so much about compiling and stuff, let me introduce you to it. You can compile code in so many different ways, with custom flags,toolchains,algorithms and so on, we barely use the same as Arch Linux, but here is one big change to consider, the x86-64 architecture is supported by every Intel/AMD processor but as technology rapidly changed and improvements were discovered, new instructions were created and used to support better features, improved reliability at runtime, more stable code and so on. Below we'll show you all of them and what instructions are required for them to work.
 
 These are the four x86-64 microarchitecture levels on top of the x86-64 baseline: 
 - x86-64: CMOV, CMPXCHG8B, FPU, FXSR, MMX, FXSR, SCE, SSE, SSE2 
@@ -27,7 +27,7 @@ These are the four x86-64 microarchitecture levels on top of the x86-64 baseline
 
 **For more educated people in the tech:**
 
- We can calle them like a group of instruction set, probably all Linux distribution use x86-64-v2 or vanilla x86-64, because of compatibility with older hardware, but that could limit performance on newer hardware. You probably have something newer than Haswell CPU aka Intel 4th gen CPUs, these days (2022) all newer processors have many more instructions than x86-64-v2, but you can't use that, because packages which are compiled with x86-64 and v2, they can't use your CPU full potential from 10% to 35% on some cases.
+ We can call them like a group of instruction set, probably all Linux distribution use x86-64-v2 or vanilla x86-64, because of compatibility with older hardware, but that could limit performance on newer hardware. You probably have something newer than Haswell CPU aka Intel 4th gen CPUs, these days (2022) all newer processors have many more instructions than x86-64-v2, but you can't use that, because packages which are compiled with x86-64 and v2, they can't use your CPU full potential from 10% to 35% on some cases.
 
 **For users with less tech knowledge:** 
 
