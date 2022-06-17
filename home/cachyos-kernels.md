@@ -2,7 +2,7 @@
 title: Which Kernel does CachyOS provide and maintain
 description: CachyOS Kernels, improvements, ... 
 published: 1
-date: 2022-06-17T02:27:07.139Z
+date: 2022-06-17T02:29:15.723Z
 tags: cachyos, kernel, performance
 editor: markdown
 dateCreated: 2021-11-25T07:07:09.929Z
@@ -12,7 +12,7 @@ dateCreated: 2021-11-25T07:07:09.929Z
 
 ## General Informations
 
-The CachyOS are improved kernels which improve the performance and other improvements. Following Scheduler are supported:
+CachyOS provides kernels which improves the performance, security, brings extra features and other improvements. The following schedulers are supported:
 
 - Standard Scheduler Completely Fair Scheduler (CFS) - linux-cachyos
 - CacULE and CacULE-RDB created from Hamad Marri, maintained by CachyOS - linux-cachyos-cacule
