@@ -2,14 +2,14 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2022-06-17T01:54:14.054Z
+date: 2022-06-17T01:55:36.342Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
 ---
 
 # CachyOS
-CachyOS is a Linux distribution based on [Arch Linux](https://archlinux.org/). By default, CachyOS uses the [linux-cachyos](https://github.com/CachyOS/linux-cachyos) kernel, which is the stock Arch Linux kernel modified to use the BORE scheduler and some extra performance improvements. The following sections describe and distinguishing the features of CachyOS:
+CachyOS is a Linux distribution based on [Arch Linux](https://archlinux.org/). By default, CachyOS uses the [linux-cachyos](https://github.com/CachyOS/linux-cachyos) kernel, which is the stock Arch Linux kernel modified to use the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler and some extra performance improvements. The following sections describe and distinguishing the features of CachyOS:
 
 ## CachyOS Installer
 
