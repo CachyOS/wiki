@@ -2,7 +2,7 @@
 title: CachyOS - Kernel Manager
 description: A kernel manager which helps users to install or build their kernel itself
 published: 1
-date: 2022-06-17T02:10:18.065Z
+date: 2022-06-17T02:44:52.517Z
 tags: cachyos-kernel, kernel, kernel-manager
 editor: markdown
 dateCreated: 2022-06-03T11:16:11.181Z
@@ -12,7 +12,7 @@ dateCreated: 2022-06-03T11:16:11.181Z
 
 We do provide a application which helps users to install kernels from the repo and also have a overview about the installed kernels.
 
-Also it is possible to build the kernels itself and the configuration will be done simply over a GUI.
+Also it is possible to build the kernels and their configuration simply over a GUI.
 
 ## Installing the kernel from the repo:
 
