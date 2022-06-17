@@ -2,7 +2,7 @@
 title: Which Kernel does CachyOS provide and maintain
 description: CachyOS Kernels, improvements, ... 
 published: 1
-date: 2022-06-17T02:29:36.914Z
+date: 2022-06-17T02:33:48.189Z
 tags: cachyos, kernel, performance
 editor: markdown
 dateCreated: 2021-11-25T07:07:09.929Z
@@ -22,6 +22,9 @@ CachyOS provides kernels which improves the performance, security, also they bri
 - BORE (Burst-Oriented Response Enhancer) CPU Scheduler by [firelzrd (BORE)](https://github.com/firelzrd/bore-scheduler) - linux-cachyos-bore
 
 **All kernels are prebuilt in two different march versions (x86_64 and x86_64_v3) and also with the lto enabled kernels in the cachyos repo.**
+
+
+**Including ZFS support, so there is no need anymore to rebuild the kernel if you're using ZFS. Every kernel is prebuilt with the corresponding ZFS headers.**
 
 ## Features
 
