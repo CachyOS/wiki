@@ -2,7 +2,7 @@
 title: First Steps
 description: Things to do after installing cachyOS
 published: 1
-date: 2022-01-11T15:37:46.329Z
+date: 2022-06-17T13:31:43.396Z
 tags: 
 editor: markdown
 dateCreated: 2021-08-11T06:07:58.712Z
@@ -11,12 +11,13 @@ dateCreated: 2021-08-11T06:07:58.712Z
 # Things to do after installation
 
 ## 1. ***Update your system***
-There are two ways to update your system :-
-1. Discover (Software Update)
+There are two ways to update your system:
+1. Discover (Software Updater)
 2. Terminal command 
 
 
-For the first option you have to open Discover (in KDE , also called software update) and then choose the option update. 
+For the first option you have to open Discover (in KDE , also called software update) and then choose the option Updates at the left tab.
+
 The second option is to open your terminal (shortcut : `ctrl+alt+t`) and type the command `sudo pacman -Syyu` and hit enter, and follow the instructions, if any.
 
 It is advised to reboot your computer after a big update (especially if kernel version changes).
@@ -40,6 +41,10 @@ Spotify – For your music needs.
 MailSpring – Email Client. More feature-rich than the default ThunderBird.
 Super Productivity – An awesome to-do list manager and Pomodoro timer app.
 Visual studio code - An awesome code editor
+Blender - Awesome and powerful free 3D software 
+Krita - An amazing piece of software for Digital Painting
+
+**We do also include a dedicated GUI for managing packages named Pamac (made by the people who made Manjaro's distro), you should find it as Add/Remove Software and its really easy to use for new people coming to any Arch based distro.**
 
 
 You can easily install these softwares by running one of the command `sudo pacman -S nameofapp` or `paru -S nameofapp` or `yay -S nameofapp`
