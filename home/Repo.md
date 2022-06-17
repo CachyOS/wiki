@@ -2,7 +2,7 @@
 title: CachyOS Repo with optimized packages and kernels
 description: Packages compiled with GEN3 and also normal generic and higher compile Flags
 published: 1
-date: 2022-06-17T01:37:54.386Z
+date: 2022-06-17T01:38:43.639Z
 tags: repo arch linux cachyos
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -69,7 +69,7 @@ dateCreated: 2021-08-18T15:06:49.466Z
     - Then run following command to switch the packages to the default arch packages `sudo pacman -Suuy`
 
 
-    More information's you will find here [CachyOS](https://github.com/cachyos) or [Discord](https://discord.gg/k39qfrxPNa)
+    For more information. Check repo's description [CachyOS](https://github.com/cachyos) or via [Discord](https://discord.gg/k39qfrxPNa)
 
 ## How to use CLANG/LLVM/LTO compiled Kernels on Nvidia driver with DKMS:
 
