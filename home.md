@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2022-06-17T01:57:53.406Z
+date: 2022-06-17T01:59:50.900Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -15,7 +15,7 @@ CachyOS is a Linux distribution based on [Arch Linux](https://archlinux.org/). B
 
 **We provide two types of installer, one cli-installer which is completly selfwritten in C++ with a TUI. The installer has many different features to customize the install process.
 Also we provide a GUI-Installer which is based on ArchISO and 
-Calamares. It includes a NetInstall and a Offlineinstall. At the netinstall you can choose between different kernels, DE's and several other packages.**
+Calamares. It includes a NetInstall and a Offlineinstall. Using the netinstall you can choose between different kernels, DE's and several other packages for more customization.**
 
 ## Filesystems
 
