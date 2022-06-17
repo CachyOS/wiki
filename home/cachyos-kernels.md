@@ -2,7 +2,7 @@
 title: Which Kernel does CachyOS provide and maintain
 description: CachyOS Kernels, improvements, ... 
 published: 1
-date: 2022-06-17T02:33:48.189Z
+date: 2022-06-17T02:34:11.126Z
 tags: cachyos, kernel, performance
 editor: markdown
 dateCreated: 2021-11-25T07:07:09.929Z
@@ -10,7 +10,7 @@ dateCreated: 2021-11-25T07:07:09.929Z
 
 # <center>Linux Kernel with several scheduler and other improvements</center>
 
-## General Informations
+## General Information
 
 CachyOS provides kernels which improves the performance, security, also they bring extra features and other improvements. The following schedulers are supported:
 
