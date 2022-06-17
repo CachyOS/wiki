@@ -2,7 +2,7 @@
 title: How does CachyOS improve the performance?
 description: 
 published: 1
-date: 2022-06-17T01:28:48.925Z
+date: 2022-06-17T01:31:20.581Z
 tags: performance cachyos x86-64-v3 arch cacule
 editor: markdown
 dateCreated: 2021-10-04T07:59:10.433Z
@@ -27,7 +27,7 @@ These are the four x86-64 microarchitecture levels on top of the x86-64 baseline
 
 **For more educated people in the tech:**
 
- We can call them like a group of instruction set, probably all Linux distribution use x86-64-v2 or vanilla x86-64, because of compatibility with older hardware, but that could limit performance on newer hardware. You probably have something newer than Haswell CPU aka Intel 4th gen CPUs, these days (2022) all newer processors have many more instructions than x86-64-v2, but you can't use that, because packages which are compiled with x86-64 and v2, they can't use your CPU full potential and the performance improvement could range from 10% to 35% on some cases.
+ We can call them like a group of instruction set, probably all Linux distribution use x86-64-v2 or vanilla x86-64, because of compatibility with older hardware, but that could limit performance on newer hardware. You probably have something newer than a Haswell CPU aka Intel 4th gen CPUs, if that's the case, enjoy free performance!. These days (2022) all newer processors have many more instructions than x86-64-v2, but you can't use that, because packages which are compiled with x86-64 and v2, they can't use your CPU full potential and the performance improvement could range from 10% to 35% on some cases.
 
 **For users with less tech knowledge:** 
 
