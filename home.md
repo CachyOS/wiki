@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2022-06-17T00:28:05.053Z
+date: 2022-06-17T01:46:35.557Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -54,7 +54,7 @@ The CachyOS are improved kernels which improve the performance and other improve
 
 **All kernels are prebuilt in two different march versions (x86_64 and x86_64_v3), also we provide kernels with llvm/lto enabled in the CachyOS repo.**
 
-All of our kernels have ZFS support, so no issues anymore to rebuilt kernels if you're using ZFS. Every Kernel is prebuilt with the corresponding ZFS headers.
+All of our kernels have ZFS support, so there is no need anymore to rebuild the kernel if you're using ZFS. Every Kernel is prebuilt with the corresponding ZFS headers.
 
 ## Adding our CachyOS repo for any Arch based distro
 Here you will find a how-to add the repo:
