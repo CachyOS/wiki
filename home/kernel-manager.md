@@ -2,8 +2,8 @@
 title: CachyOS - Kernel Manager
 description: A kernel manager which helps users to install or build their kernel itself
 published: 1
-date: 2022-06-03T11:16:11.181Z
-tags: kernel, cachyos-kernel, kernel-manager
+date: 2022-06-17T02:10:18.065Z
+tags: cachyos-kernel, kernel, kernel-manager
 editor: markdown
 dateCreated: 2022-06-03T11:16:11.181Z
 ---
@@ -16,15 +16,15 @@ Also it is possible to build the kernels itself and the configuration will be do
 
 ## Installing the kernel from the repo:
 
-Simply just start ehe CachyOS Kernel Manager application, then you can choose between different kernels. Just select the kernel you want to install and click execute.
+Simply just start the CachyOS Kernel Manager application, then you can choose between different kernels. Just select the kernel you want to install and click execute.
 
 ![cachyos-km1.png](/cachyos-km1.png)
 
 ## Configuring and building the kernel:
 
-After you did open the application you can click the "configure" button to configure the kernel build to your wishes.
+After you did open the application, you can click the "configure" button to configure the kernel build to your wishes and needs.
 
-Following options you can change:
+Following options that you can change:
 
 - Scheduler (BMQ, BORE, cacULE, cfs, PDS, TT)
 - NUMA disabled or enabled
@@ -45,7 +45,7 @@ Following options you can change:
 - Enable or disable nf cone
 - Enable LTO (Full, Thin, No)
 
-After you did selected your options you want to use just click execute and the kernel will compile and as soon it is done installed.
+After you selected your desired options, just click execute and the kernel will start to compile and as soon it is done, it would automatically install to your system.
 The built package can be then also found at $HOME/.cache/cachyos-km
 
 ![cachyos-km2.png](/cachyos-km2.png)
