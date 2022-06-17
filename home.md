@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2022-06-17T02:50:25.722Z
+date: 2022-06-17T13:13:59.699Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -25,7 +25,7 @@ CachyOS's GUI-Installer offers the following filesystems to choose from:
 - btrfs
 - xfs
 - f2fs
-- zfs
+# ZFS is also supported!
 
 any many more!
 
