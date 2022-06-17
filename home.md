@@ -2,14 +2,14 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2022-06-17T01:46:35.557Z
+date: 2022-06-17T01:54:14.054Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
 ---
 
 # CachyOS
-CachyOS is a Linux distribution based on [Arch Linux](https://archlinux.org/). By default, CachyOS uses the [linux-cachyos](https://github.com/CachyOS/linux-cachyos) kernel, which is the stock Arch Linux kernel modified to use the default CFS scheduler and some performance improvements. The following sections describe the distinguishing features of CachyOS:
+CachyOS is a Linux distribution based on [Arch Linux](https://archlinux.org/). By default, CachyOS uses the [linux-cachyos](https://github.com/CachyOS/linux-cachyos) kernel, which is the stock Arch Linux kernel modified to use the BORE scheduler and some extra performance improvements. The following sections describe and distinguishing the features of CachyOS:
 
 ## CachyOS Installer
 
@@ -19,7 +19,7 @@ Calamares. It includes a NetInstall and a Offlineinstall. At the netinstall you 
 
 ## Filesystems
 
-At the GUI-Installer we offer following filesystems:
+CachyOS's GUI-Installer offers the following filesystems to choose from:
 
 - ext4
 - btrfs
@@ -27,10 +27,12 @@ At the GUI-Installer we offer following filesystems:
 - f2fs
 - zfs
 
-All custom kernels are provided also with the zfs module built in.
+any many more!
+
+All the provided custom kernels come with the zfs module already built in.
 
 ## CachyOS - DE's
-You can select at the online install between following DE's:
+You can select at the online install between the following DE's:
 - CuteFish – An Elegant, Beautiful and Easy-to-Use Linux Desktop
 - i3 tiling window manager, primarily targeted at developers and advanced users
 - KDE-Plasma Desktop - Simple by default, powerful when needed
@@ -43,7 +45,7 @@ You can select at the online install between following DE's:
 - Xfce is a lightweight desktop environment for UNIX-like operating systems. It aims to be fast and low on system resources, while still being visually appealing and user friendly
 
 ## Linux Kernels
-The CachyOS are improved kernels which improve the performance and other improvements. The following schedulers are supported:
+The CachyOS are improved and heavily modified kernels which improves the performance,security also we add some new features to i,  and other improvements. The following schedulers are supported:
 
 -   Standard Scheduler Completely Fair Scheduler (CFS) - linux-cachyos
 -   CacULE and CacULE-RDB created from Hamad Marri, maintained by CachyOS - linux-cachyos-cacule
