@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2022-06-17T02:37:31.310Z
+date: 2022-06-17T02:50:25.722Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -50,11 +50,11 @@ Here you will find a how-to add the repo:
 
 [How-to add cachyos-repo](https://wiki.cachyos.org/en/home/Repo)
 
-### KDE and Plasma and other desktop based packages
+## KDE and Plasma and other desktop based packages
 
 Most desktop packages are compiled with ThinLTO optimization, security flags, and performance improvements. 
 
-### Cachy Browser
+## Cachy Browser
 The default browser of CachyOS is Cachy-Browser, which is a fork of the Librewolf Browser. We have added some extra security 
 improvements as it is compiled with more secure flags and performance related too.
 
