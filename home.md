@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2022-06-17T00:23:44.361Z
+date: 2022-06-17T00:28:05.053Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -73,28 +73,3 @@ improvements as it is compiled with more secure flags and performance related to
 
 ([Ananicy-Cpp](https://gitlab.com/ananicy-cpp/ananicy-cpp)) (ANother Auto NICe daemon) — is a shell daemon created to manage processes' IO and CPU priorities, with community-driven rulesets for popular applications. This tool is mainly for desktop usage. Ananicy-Cpp is a completly rewritten version of the orginal Ananicy in C++, providing much lower CPU and memory usage.
 
-### Other performance improvements
-
--   zram automatically configured and it's using zstd compression
-
--   BFQ scheduler is enabled by default for HDDs and SSDs.
-
--   heavily optimized kernel with several patches
-
--   as default BBR2 is used and some extra general optimized network settings
-
-### Security
-
-The following security features are available:
-
--   Firefox based browser with some security plugins and extra customizable configuration - Cachy-Browser
-
--   Firejail Toggle for using all packages which got a firejail profile will run in a sandboxed environment and automatically update if you install any new package
-
--   preconfigured dns servers, which uses DoH and DoT servers
-
--   toggle for anonymized dnscrypt config and uses only dnscrypt servers
-
--   toggle for a hardended-kernel and some hardened config
-
--   security related packages are built with more secure cc flags
