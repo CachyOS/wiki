@@ -2,7 +2,7 @@
 title: How does CachyOS improve the performance?
 description: 
 published: 1
-date: 2022-06-17T01:31:20.581Z
+date: 2022-06-17T01:32:32.760Z
 tags: performance cachyos x86-64-v3 arch cacule
 editor: markdown
 dateCreated: 2021-10-04T07:59:10.433Z
@@ -41,5 +41,5 @@ I know... so many buzz-words is bad without proof, so here is a doc testing and 
 
 <https://www.phoronix.com/scan.php?page=news_item&px=Arch-Linux-x86-64-v3-Port-RFC> <https://lists.archlinux.org/pipermail/arch-general/2021-March/048739.html>
 
-**So all packages and kernels (x86-64-v3) in the CachyOS repositories have around 10% performance uplift and some packages can have higher performance uplift (15% or 36%!)**
+**So all packages and kernels in the CachyOS (x86-64-v3) repositories have around 10% performance uplift and some packages can have higher performance uplift (15% or 36%!)**
 
