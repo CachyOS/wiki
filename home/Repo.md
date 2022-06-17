@@ -2,17 +2,17 @@
 title: CachyOS Repo with optimized packages and kernels
 description: Packages compiled with GEN3 and also normal generic and higher compile Flags
 published: 1
-date: 2022-06-17T01:38:43.639Z
+date: 2022-06-17T02:40:27.817Z
 tags: repo arch linux cachyos
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
 ---
 
-### How to add our Repo automatically with CPU detection (if x86-64-v3 is supported)
+## How to add our Repo automatically with CPU detection (if x86-64-v3 is supported)
 
-**Just run the following command:**
+**Choose one of the following methods:**
 
-## **automatic march detection and changing the pacman.conf:**
+## **Automatic with march detection and modification of the pacman.conf file:**
 
     wget https://build.cachyos.org/cachyos-repo.tar.xz
     tar xvf cachyos-repo.tar.xz
