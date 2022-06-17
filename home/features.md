@@ -2,40 +2,40 @@
 title: Features and Merits
 description: Some of the CachyOS features, and what makes CachyOS different.
 published: 1
-date: 2021-11-30T09:39:12.128Z
-tags: feature, features, best, better, why, info, information
+date: 2022-06-17T00:11:16.665Z
+tags: best, better, feature, features, info, information, why
 editor: markdown
 dateCreated: 2021-07-04T02:28:46.352Z
 ---
 
 # Providing x86-64-v3 microarchitecture level optimization
 
-Our installer will autodetect your machine microarchitecture, if x86-64-v3 is detected it will automaticly use the optimized packages, which yields more than 10% performance improvement.
+Our installer will autodetect your machine microarchitecture, if x86-64-v3 is detected it will automatically use the optimized packages, which yields more than 10% performance improvement.
 
 # KDE and Plasma Optimization
 Some of KDE and Plasma tools are compiled with set of flags to provide better performance. Tools like kscreen, kwin, kwindowsystem, plasma-desktop, plasma-wayland-session, plasma-workspace, and qt5-tools.
 
 # Other performance improvements
 
-- Ananicy-CPP installed and configured on default
-- ZRAM configured with zstd compression
-- Using BFQ scheduler on ssd and hdds on default
+- Ananicy-CPP installed and configured by default
+- ZRAM preconfigured with zstd compression
+- BFQ scheduler is used by default for HDDs and SSDs
 - Heavily optimized kernel with several patches
 - BBRv2 as default and general optimized network settings
-- many other tweaks and improvements
+- Many other tweaks and improvements
 
 # Security
 
 Following security features will be available:
 
-- Firefox based browser with some security plugins  also there config
-- Firejail Toggle for using all packages which got a firejail profile will used in sandboxing and automaticly updated if you are installing new packages
-- preconfigured dns servers, which uses DOH and DOT servers
+- Firefox based browser with some security plugins and some extra features
+- Firejail Toggle for using all packages which got a firejail profile will use any untrusted application in a sandbox environment and it will automatically update if you install any new package
+- preconfigured dns servers, which uses DoH and DoT servers
 - toggle for anonymized dnscrypt config and uses only dnscrypt servers
 - toggle for a hardended-kernel and some hardened config
-- security related packages are with more secure cc flags compiled
+- security related packages are compiled with extra CC flags for extra security
 
-# Installation with the CLI-Installer example
+# Installation example using the CLI-Installer
 
 https://www.youtube.com/watch?v=NtnDyLDO5vA
 
