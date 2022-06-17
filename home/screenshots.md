@@ -2,7 +2,7 @@
 title: Screenshots
 description: Some screenshots of CachyOS
 published: 1
-date: 2022-06-03T10:16:46.946Z
+date: 2022-06-17T13:20:17.737Z
 tags: 
 editor: markdown
 dateCreated: 2021-07-04T03:23:21.056Z
@@ -10,9 +10,14 @@ dateCreated: 2021-07-04T03:23:21.056Z
 
 # CachyOS DE's Screenshots
 ## KDE
+> Emerald Theme
+
 ![emerald1920x180guest1.png](/emerald1920x180guest1.png)  
 ![emerald1920x180guest3.png](/emerald1920x180guest3.png)  
-![emerald1920x180guest4.png](/emerald1920x180guest4.png)  
+![emerald1920x180guest4.png](/emerald1920x180guest4.png)
+
+> CachyOS Nord Theme
+
 ![nord1920x180guest1.png](/nord1920x180guest1.png)  
 ![nord1920x180guest.png](/nord1920x180guest.png)  
 ![nord1920x180guest2.png](/nord1920x180guest2.png)  
