@@ -2,7 +2,7 @@
 title: How does CachyOS improve the performance?
 description: 
 published: 1
-date: 2022-06-17T01:23:58.845Z
+date: 2022-06-17T01:25:21.758Z
 tags: performance cachyos x86-64-v3 arch cacule
 editor: markdown
 dateCreated: 2021-10-04T07:59:10.433Z
@@ -31,7 +31,7 @@ These are the four x86-64 microarchitecture levels on top of the x86-64 baseline
 
 **For users with less tech knowledge:** 
 
-Example: You have a laptop with a AMD Ryzen 5 4500U or Intel Core i5 1035G4, your friend can have his desktop with aIntel Core i7-9700K. All machines have a CPU with support for the AVX instruction set, but your programs can't use AVX instruction set, resulting in a lower performance and capability.
+Example: You have a laptop with a AMD Ryzen 5 4500U or Intel Core i5 1035G4, your friend have his desktop with a Intel Core i7-9700K. All machines have a CPU with support for the AVX instruction set, but your programs can't use AVX instruction set, resulting in a lower performance and capability.
 
 # Here is a reason why most Linux distros still use x86-64-v2
 
