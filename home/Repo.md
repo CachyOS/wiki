@@ -1,8 +1,8 @@
 ---
-title: CachyOS Repo with optimized packages and kernerls
+title: CachyOS Repo with optimized packages and kernels
 description: Packages compiled with GEN3 and also normal generic and higher compile Flags
 published: 1
-date: 2022-06-03T09:35:38.300Z
+date: 2022-06-17T01:37:54.386Z
 tags: repo arch linux cachyos
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -10,7 +10,7 @@ dateCreated: 2021-08-18T15:06:49.466Z
 
 ### How to add our Repo automatically with CPU detection (if x86-64-v3 is supported)
 
-**Just run following command:**
+**Just run the following command:**
 
 ## **automatic march detection and changing the pacman.conf:**
 
@@ -75,5 +75,5 @@ dateCreated: 2021-08-18T15:06:49.466Z
 
 Not needed anymore, since dkms 3.0.1 :)
 
-If you got questions, just hit me up!
+If you got any question, just hit me up!
 
