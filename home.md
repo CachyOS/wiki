@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2022-06-17T13:13:59.699Z
+date: 2022-06-23T13:38:12.535Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -70,6 +70,9 @@ or at Telegram:
 
 ## Donations are welcome for the maintenance of our compile server and the repo, a cup of coffee would be highly appreciated for maintaining this repo
 
+### Paetron
+<https://www.patreon.com/CachyOS>
+### PayPal
 <https://paypal.me/pttrr>
 
 
