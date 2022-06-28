@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2022-06-28T15:03:51.916Z
+date: 2022-06-28T23:40:36.966Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -10,18 +10,18 @@ dateCreated: 2021-07-04T01:32:08.787Z
 
 # What is CachyOS ?
 
-CachyOS is a arch linux based distribution which provides a easy installation, several customization option to suite to every users, specially optimizations to offer a better performance and still keep it simple.
+CachyOS is an Arch Linux based distribution which provides a easy installation, several customization options to suite every user, specially optimizations are offered for a better performance and still keep it simple.
 
 ## How does CachyOS improve the performance?
 
-We provide a optimized repo with march=x86-64-v3 support which comes with a notable performance boost. It depends on your cpu if it does support that, but about that you dont need to worry - the installer will detect that and adjust this to your system.
+We provide a optimized repo with march=x86-64-v3 support which comes with a notable performance boost. It depends on your cpu if it does support that, but you dont need to worry about it - the installer will detect the correct march and adjust to your system.
 
-Also we provide several optimized custom kernels with different scheduler, which is maintained from me and also soon from sir_lujan.
-These kernels will be also with march optimization compiled in the repo, including LLVM-LTO support.
+Also we provide several optimized custom kernels with different schedulers, which they are maintained by me and also soon from sir_lujan.
+These kernels will also include march optimization, all of them already compiled in the repo, including LLVM-LTO support.
 
-Here you find some written infos about the cpu march optimization:
+Here you will find some extra inforfmation about the cpu march optimization:
 https://wiki.cachyos.org/en/home/cachyos-performance
-In the next future also several system package's get custom optimized from POLAUR and will be used into our system.
+In the near future, several system package's would get a custom optimization from POLAUR and will be used into our system.
 
 ## Installation
 
@@ -29,9 +29,9 @@ We provide two different installers. A graphical installer and a cli installer.
 
 ### GUI Installer
 The graphical installer is based on calamares and gives the possibility to do a offline installation and a online personalized one with a package selection.
-With the next release you have also the possibility at the online installation to choose between two different bootloader.
-Also you can choose between between different filesystem, the filesystem options are automatically optimized for ssd's if it detects one.
-Following filesystem's can be used, which filesystem will suit to your needs I will write in an extra page:
+With the next release you have also the possibility at the online installation to choose between two different bootloaders.
+Also you can choose between between different filesystems, the filesystem options are automatically optimized for ssd's if it detects one.
+The following filesystems can be used, which filesystem will suit to your needs. If you don't know which to choose, I will create a guide (soon) in an extra page:
 
 - xfs
 - btrfs
@@ -41,7 +41,7 @@ Following filesystem's can be used, which filesystem will suit to your needs I w
 
 ### CLI-Installer
 
-The cli installer is completely written from us in C++. It provides equal functions to the GUI Installer but more customizable and some more features. Generally It is recommend for more advanced users, but the installation is also keep quite simple and fast. Also it does support a configuration, which will set before the installation begin in the root directory and then will do with the options you chooses completely automatically.
+The cli installer is completely written by us in C++. It provides equal functions to the GUI Installer but more customizable and some more features. Generally it is recommend for more advanced users, but the installation is kept quite simple and fast. Also it does support a configuration, which will set before the installation begin in the root directory and then will do with the options you choosen completely automatically.
 
 ## CachyOS Desktop environments
 
@@ -62,7 +62,7 @@ You can select at the online installation between the following DE's:
 
 ### system functions
 
-Following security features will be available:
+The following security features are available:
 
 - Firejail Toggle for using all packages which got a firejail profile will use any untrusted application in a sandbox environment and it will automatically update if you install any new package
 - preconfigured dns servers, which uses DoH and DoT servers
@@ -76,11 +76,11 @@ improvements as it is compiled with more secure flags and performance related to
 
 ## Simplicity
 
-We have added to the distro different helper, which makes the usage more easy if you are new to linux or just lazy.
+We have added to the distro a helper with a lot of features, which makes the usage easier if you are new to linux or just lazy.
 
 ### Kernel Manager
 
-You can easily install kernels with optimization via a kernel manager, the kernel manager does also allow you to configure your own kernel and will compile it then which makes it easier for starters to get into kernel compiling.
+You can easily install kernels with optimization via a kernel manager, the kernel manager does also allow you to configure your own kernel and will compile it then which makes it easier for starters that are getting into kernel compiling.
 
 ### Package-installer
 
@@ -98,9 +98,9 @@ https://t.me/+zCzPX4cAFjk1MTYy
 
 ## Donations
 
-To get the server costs together we are happy about every donation which supports our work.
+Maintaning this distro and their repos is expensive, but we'll be happy about any donation, even 1$ helps a lot which supports our work.
 
-- Paetron
+- Patreon
 
 https://www.patreon.com/CachyOS
 
