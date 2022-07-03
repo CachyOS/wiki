@@ -100,8 +100,6 @@ or at Telegram:
 
 [Hamad Marri](https://github.com/hamadmarri) for the CacULE Scheduler, TT Scheduler
 
-[BL4CKH47H4CK3R](https://github.com/BL4CKH47H4CK3R) for Optimization, Bug Hunting & Support
-
 [SirLucjan (Piotr Gorski)](https://github.com/sirlucjan)
 
 [Archlinux](https://archlinux.org) for this amazing linux operating system
