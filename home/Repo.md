@@ -2,7 +2,7 @@
 title: CachyOS Repo with optimized packages and kernels
 description: Packages compiled with GEN3 and also normal generic and higher compile Flags
 published: 1
-date: 2022-07-16T13:30:37.580Z
+date: 2022-07-16T13:35:45.903Z
 tags: repo arch linux cachyos
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
