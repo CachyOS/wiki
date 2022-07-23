@@ -2,7 +2,7 @@
 title: First Steps
 description: Things to do after installing cachyOS
 published: 1
-date: 2022-06-17T13:31:43.396Z
+date: 2022-07-23T11:38:36.513Z
 tags: 
 editor: markdown
 dateCreated: 2021-08-11T06:07:58.712Z
@@ -22,8 +22,16 @@ The second option is to open your terminal (shortcut : `ctrl+alt+t`) and type th
 
 It is advised to reboot your computer after a big update (especially if kernel version changes).
 
-## 2. ***Reduce Swappiness***
--Things to add
+## 2. ***Reduce Swappiness and vfs_cache_pressure***
+The kernel's preference (or avoidance) of swap space is represented by the swappiness sysctl parameter. Swappiness can range between 0 and 100, with 60 being the default value.
+A low value prevents the kernel from swapping; a high value causes the kernel to attempt to use swap space. It is well known that using a low value for sufficient memory improves responsiveness on many systems.
+
+vfs_cache_pressure value governs the kernel's tendency to reclaim memory used for directory and inode object caching (VFS cache).
+Lowering it from the default value of 100 encourages the kernel to reclaim VFS cache (do not set it to 0, this may produce out-of-memory conditions)
+Increasing vfs_cache_pressure significantly beyond 100 may have negative performance impact. Reclaim code needs to take various locks to find freeable directory and inode objects. With vfs_cache_pressure=1000, it will look for ten times more freeable objects than there are.
+
+You can change these values in `/etc/sysctl.d/99-cachyos-settings.conf`
+
 ## 3. ***Enable Firewall protection***
 -Things to add
 
