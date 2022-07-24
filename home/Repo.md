@@ -2,7 +2,7 @@
 title: CachyOS Repo with optimized packages and kernels
 description: Packages compiled with GEN3 and also normal generic and higher compile Flags
 published: 1
-date: 2022-07-16T13:35:45.903Z
+date: 2022-07-24T13:47:00.306Z
 tags: repo arch linux cachyos
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -77,3 +77,7 @@ Not needed anymore, since dkms 3.0.1 :)
 
 If you got any question, just hit me up!
 
+
+## Removing the repo and downgrade to the archlinux ones
+
+Simply remove the CachyOS entries at `/etc/pacman.conf`, and then run `sudo pacman -Suuy`
