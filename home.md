@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2022-07-25T15:16:48.776Z
+date: 2022-07-25T21:04:33.705Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -19,7 +19,7 @@ We provide a optimized repo with march=x86-64-v3 support which comes with a nota
 Also we provide several optimized custom kernels with different schedulers, which they are maintained by me and also soon from sir_lujan.
 These kernels will also include march optimization, all of them already compiled in the repo, including LLVM-LTO support.
 
-Here you will find some extra inforfmation about the cpu march optimization:
+Here you will find some extra information about the cpu march optimization:
 https://wiki.cachyos.org/en/home/cachyos-performance
 In the near future, several system package's would get a custom optimization from POLAUR and will be used into our system.
 
