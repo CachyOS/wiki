@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2022-07-25T21:04:33.705Z
+date: 2022-07-25T21:19:47.510Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -10,14 +10,14 @@ dateCreated: 2021-07-04T01:32:08.787Z
 
 # What is CachyOS ?
 
-CachyOS is an Arch Linux based distribution which provides a easy installation, several customization options to suite every user, specially optimizations are offered for a better performance and still keep it simple.
+CachyOS is an Arch Linux-based distribution that offers an easy installation, several customization options to suit every user, and special optimizations for improved performance while remaining simple.
 
 ## How does CachyOS improve the performance?
 
 We provide a optimized repo with march=x86-64-v3 support which comes with a notable performance boost. It depends on your cpu if it does support that, but you dont need to worry about it - the installer will detect the correct march and adjust to your system.
 
-Also we provide several optimized custom kernels with different schedulers, which they are maintained by me and also soon from sir_lujan.
-These kernels will also include march optimization, all of them already compiled in the repo, including LLVM-LTO support.
+We also provide several optimized custom kernels with various schedulers, which are maintained by me and also will soon be maintained by sir_lujan.
+These kernels will also include march optimization, with all of them already compiled and available in the repo, as well as LLVM-LTO support.
 
 Here you will find some extra information about the cpu march optimization:
 https://wiki.cachyos.org/en/home/cachyos-performance
@@ -29,8 +29,8 @@ We provide two different installers. A graphical installer and a cli installer.
 
 ### GUI Installer
 The graphical installer is based on calamares and gives the possibility to do a offline installation and a online personalized one with a package selection.
-With the next release you have also the possibility at the online installation to choose between two different bootloaders.
-Also you can choose between between different filesystems, the filesystem options are automatically optimized for ssd's if it detects one.
+With the next release, you will also be able to select between two different bootloaders during an online installation.
+You can also choose between different filesystems; the filesystem options are automatically optimized for SSDs if one is detected.
 The following filesystems can be used, which filesystem will suit to your needs. If you don't know which to choose, I will create a guide (soon) in an extra page:
 
 - xfs
