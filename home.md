@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2022-06-28T23:40:36.966Z
+date: 2022-07-25T15:16:48.776Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -78,13 +78,17 @@ improvements as it is compiled with more secure flags and performance related to
 
 We have added to the distro a helper with a lot of features, which makes the usage easier if you are new to linux or just lazy.
 
-### Kernel Manager
+### CachyOS Hello
 
-You can easily install kernels with optimization via a kernel manager, the kernel manager does also allow you to configure your own kernel and will compile it then which makes it easier for starters that are getting into kernel compiling.
+Our welcome app is launched when the system boots up. It gives you quick access to tweaks, fixes, documentation, our wiki, and other useful apps such as the CachyOS package installer.
 
 ### Package-installer
 
 To the common package installer we provide a own package manager which helps you in updating the repo or installing packages. Packages are simply shown in group for a better understanding for which this package is used for
+
+### Kernel Manager
+
+You can easily install kernels with optimization via a kernel manager, the kernel manager does also allow you to configure your own kernel and will compile it then which makes it easier for starters that are getting into kernel compiling.
 
 ## Support
 
