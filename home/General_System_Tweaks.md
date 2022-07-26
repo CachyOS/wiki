@@ -2,7 +2,7 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2022-07-26T18:23:44.222Z
+date: 2022-07-26T19:07:17.895Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
@@ -32,7 +32,6 @@ HOOKS="base systemd autodetect...
 COMPRESSION="zstd"
 COMPRESSION_OPTIONS=(-2)
 ```
-Note: You can replace base AND udev with systemd but you will lose access to recovery shell.
 
 ## 3. Zram or Zswap tweaking
 TODO
