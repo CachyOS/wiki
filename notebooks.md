@@ -2,7 +2,7 @@
 title: Laptop with Dual GPU Setup Guide
 description: 
 published: 1
-date: 2022-07-30T14:45:46.485Z
+date: 2022-07-30T14:51:57.473Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
@@ -73,33 +73,29 @@ Congrats! You are done with the setup.
 ## For Turing generation cards with Intel Coffee Lake or above CPUs, it is possible to fully power down the GPU when not in use.
 **PCI-Express Runtime D3 (RTD3) Power Management**
 The feature is only supported on laptop with Turing GPUs (RTX 20xx/GTX 16xx) and above, and Intel Coffee Lake CPUs (8th gen) and above. 
-`sudo nano /etc/udev/rules.d/80-nvidia-pm.rules`
+Add these rules into `/etc/udev/rules.d/80-nvidia-pm.rules`
 
-> #Enable runtime PM for NVIDIA VGA/3D controller devices on driver bind
-> ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="auto"
-> ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="auto"
-> 
-> #Disable runtime PM for NVIDIA VGA/3D controller devices on driver unbind
-> ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="on"
-> ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="on"
+```
+#Enable runtime PM for NVIDIA VGA/3D controller devices on driver bind
+ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="auto"
+ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="auto"
 
-<kbd>CTRL+O</kbd> save changes
-<kbd>CTRL+X</kbd> exit nano
+#Disable runtime PM for NVIDIA VGA/3D controller devices on driver unbind
+ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="on"
+ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="on"
+```
 
-`sudo nano /etc/modprobe.d/nvidia.conf`
-`options nvidia "NVreg_DynamicPowerManagement=0x02"`
-<kbd>CTRL+O</kbd> save changes
-<kbd>CTRL+X</kbd> exit nano
+Next add the following text to `/etc/modprobe.d/nvidia.conf`
+```
+options nvidia "NVreg_DynamicPowerManagement=0x02"
+```
 
 To apply these changes right now.
 `sudo udevadm control --reload`
 `sudo udevadm trigger`
 
-Now you need to edit optimus-manager's configuration file to enable **(RTD3) Power Management**
-`sudo nano /etc/optimus-manager/optimus-manager.conf`
+Now you need to edit optimus-manager's configuration file to enable **(RTD3) Power Management** by adding `dynamic_power_management=fine` to `/etc/optimus-manager/optimus-manager.conf`
 
-Edit the following in optimus-manager.conf file.
-`dynamic_power_management=fine`
-`reboot` (to reboot the system)
+And finally reboot your system.
 
-Now your laptop's hybrid mode should work like it does on Windows!.
+Your laptop's hybrid mode should work like it does on Windows!.
