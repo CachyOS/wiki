@@ -2,7 +2,7 @@
 title: Laptop with Dual GPU Setup Guide
 description: 
 published: 1
-date: 2022-07-30T14:42:43.204Z
+date: 2022-07-30T14:43:07.534Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
@@ -41,7 +41,7 @@ Set `radeon nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
 MODULES="radeon nvidia"
 ```
 
-## Adding kernel parameter to enable "Direct Rendering Manager" (DRM KMS)
+## Enable "Direct Rendering Manager" (DRM KMS)
 ### Using GRUB
 Add `nvidia-drm.modeset=1` to GRUB_CMDLINE_LINUX_DEFAULT in `/etc/default/grub/`, it'll look something like this:
 ```conf
