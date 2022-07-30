@@ -2,7 +2,7 @@
 title: Laptop with Dual GPU Setup Guide
 description: 
 published: 1
-date: 2022-07-30T14:51:57.473Z
+date: 2022-07-30T14:53:07.043Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
@@ -90,9 +90,11 @@ Next add the following text to `/etc/modprobe.d/nvidia.conf`
 options nvidia "NVreg_DynamicPowerManagement=0x02"
 ```
 
-To apply these changes right now.
-`sudo udevadm control --reload`
-`sudo udevadm trigger`
+To apply these changes right now:
+```
+sudo udevadm control --reload
+sudo udevadm trigger
+```
 
 Now you need to edit optimus-manager's configuration file to enable **(RTD3) Power Management** by adding `dynamic_power_management=fine` to `/etc/optimus-manager/optimus-manager.conf`
 
