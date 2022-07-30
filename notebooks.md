@@ -2,7 +2,7 @@
 title: Laptop with Dual GPU Setup Guide
 description: 
 published: 1
-date: 2022-06-16T02:53:49.243Z
+date: 2022-07-30T09:52:00.653Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
@@ -45,17 +45,12 @@ Now you have to use these two commands to save the modification into all the ins
 (under development)
 
 ## Installing Optimus Manager from AUR
-You need to have git installed for the following steps.
-`sudo pacman -S git`
 
 Installing optimus-manager
-`git clone https://aur.archlinux.org/optimus-manager.git`
-`cd optimus-manager`
-`makepkg -si`
+`sudo pacman -S optimus-manager`
 
 Installing optimus-manager-qt (same as optimus-manager but it uses a different framework and has better compatibility with KDE Plasma)
-`git clone https://aur.archlinux.org/optimus-manager-qt.git`
-`cd optimus-manager-qt`
+`sudo pacman -S optimus-manager-qt`
 
 > KDE Plasma users need to make a modification in PKGBUILD.
 {.is-warning}
