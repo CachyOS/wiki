@@ -2,7 +2,7 @@
 title: Laptop with Dual GPU Setup Guide
 description: 
 published: 1
-date: 2022-07-30T09:52:49.983Z
+date: 2022-07-30T09:54:47.701Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
@@ -44,7 +44,7 @@ Now you have to use these two commands to save the modification into all the ins
 ### How to configure it with systemd-boot instead
 (under development)
 
-## Installing Optimus Manager from AUR
+## Installing Optimus Manager
 
 Installing optimus-manager
 `sudo pacman -S optimus-manager`
