@@ -2,7 +2,7 @@
 title: Laptop with Dual GPU Setup Guide
 description: 
 published: 1
-date: 2022-07-30T09:52:00.653Z
+date: 2022-07-30T09:52:49.983Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
@@ -51,15 +51,6 @@ Installing optimus-manager
 
 Installing optimus-manager-qt (same as optimus-manager but it uses a different framework and has better compatibility with KDE Plasma)
 `sudo pacman -S optimus-manager-qt`
-
-> KDE Plasma users need to make a modification in PKGBUILD.
-{.is-warning}
-
-`nano PKGBUILD `
-You have to change `_with_plasma=false` to `_with_plasma=true`
-<kbd>CTRL+O</kbd> save that
-<kbd>CTRL+X</kbd> exit nano
-`makepkg -si`
 
 Last step, we need to turn on and start the service for optimus manager
 `sudo systemctl enable optimus-manager.service`
