@@ -2,7 +2,7 @@
 title: Laptop with Dual GPU Setup Guide
 description: 
 published: 1
-date: 2022-07-30T14:43:07.534Z
+date: 2022-07-30T14:44:56.105Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
@@ -30,18 +30,19 @@ MODULES="i915 intel_agp nvidia"
 ```
 
 ### AMD iGPU
-#### [AMDGPU driver](https://wiki.archlinux.org/title/AMDGPU)
+#### with [AMDGPU driver](https://wiki.archlinux.org/title/AMDGPU)
 Set `amdgpu nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
 ```conf
 MODULES="amdgpu nvidia"
 ```
-#### [radeon driver](https://wiki.archlinux.org/title/ATI)
+#### with [radeon driver](https://wiki.archlinux.org/title/ATI)
 Set `radeon nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
 ```conf
 MODULES="radeon nvidia"
 ```
 
 ## Enable "Direct Rendering Manager" (DRM KMS)
+To enable DRM we need to add necessary kernel parameter in the bootloader, each bootloader has a different way to do that. 
 ### Using GRUB
 Add `nvidia-drm.modeset=1` to GRUB_CMDLINE_LINUX_DEFAULT in `/etc/default/grub/`, it'll look something like this:
 ```conf
