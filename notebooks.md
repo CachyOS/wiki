@@ -2,7 +2,7 @@
 title: Laptop with Dual GPU Setup Guide
 description: 
 published: 1
-date: 2022-07-30T09:54:47.701Z
+date: 2022-07-30T14:42:43.204Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
@@ -16,51 +16,57 @@ Modern laptops have two graphics cards, especially if we talk about gaming lapto
 **dGPU** - discrete GPU, higher performance, but it would drain more battery, highly recommended for gaming, rendering, video encoding, NVENC among other demanding tasks.
 
 Windows automatically switches between the iGPU and dGPU depending on the usage.
-Here is a guide on how to setup the same for CachyOS, specially if you plan to use it for gaming or streaming, 3D developing etc.
+Here is a guide on how to setup the same for CachyOS, specially if you plan to use it for gaming or streaming, 3D developing, etc.
 
-Tested on laptop with Intel CPU and NVIDIA GPU, but latest Optimus Manager release also has support for AMD CPUs.
+Tested on laptop with Intel CPU and NVIDIA GPU, but since release 1.4 Optimus Manager also has support for AMD CPUs.
 
 ## Preparing iGPU and dGPU for the Linux Kernel
 Let's start by configuring **mkinitcpio** which loads various kernel modules.
-Note: If you have AMD CPU, **don't use** `i915` and `intel_agp`
-`sudo nano /etc/mkinitcpio.conf`
-Set the following to the MODULES section.
-`MODULES="i915 intel_agp nvidia"`
-<kbd>CTRL+O</kbd> to save
-<kbd>CTRL+X</kbd> exit nano
 
-## Adding a kernel parameter to enable "Direct Rendering Manager" (DRM KMS)
-### (For a better experience and extra features)
-### The easy way of doing it is by modifying the GRUB configuration file
-Just use the following commands:
-`sudo nano /etc/default/grub`
-Now look for the following line: GRUB_CMDLINE_LINUX_DEFAULT, you will have more parameters here, just add nvidia-drm.modeset=1 next to them (with a space between) and save the changes as we have done before.
-`GRUB_CMDLINE_LINUX_DEFAULT="nvidia-drm.modeset=1`
+### Intel iGPU
+Set `i915 intel_agp nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
+```
+MODULES="i915 intel_agp nvidia"
+```
 
+### AMD iGPU
+#### [AMDGPU driver](https://wiki.archlinux.org/title/AMDGPU)
+Set `amdgpu nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
+```conf
+MODULES="amdgpu nvidia"
+```
+#### [radeon driver](https://wiki.archlinux.org/title/ATI)
+Set `radeon nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
+```conf
+MODULES="radeon nvidia"
+```
+
+## Adding kernel parameter to enable "Direct Rendering Manager" (DRM KMS)
+### Using GRUB
+Add `nvidia-drm.modeset=1` to GRUB_CMDLINE_LINUX_DEFAULT in `/etc/default/grub/`, it'll look something like this:
+```conf
+GRUB_CMDLINE_LINUX_DEFAULT="nvidia-drm.modeset=1 ..."
+```
 Now you have to use these two commands to save the modification into all the installed kernels and update GRUB.
-`sudo mkinitcpio -P`
-`grub-mkconfig -o /boot/grub/grub.cfg`
+```sh
+sudo mkinitcpio -P
+grub-mkconfig -o /boot/grub/grub.cfg
+```
 
-### How to configure it with systemd-boot instead
+### Using systemd-boot
 (under development)
 
 ## Installing Optimus Manager
 
-Installing optimus-manager
-`sudo pacman -S optimus-manager`
+Installing optimus-manager & optimus-manager-qt (a system tray for optimus-manager)
+`sudo pacman -S optimus-manager optimus-manager-qt`
 
-Installing optimus-manager-qt (same as optimus-manager but it uses a different framework and has better compatibility with KDE Plasma)
-`sudo pacman -S optimus-manager-qt`
+Last step, we need to enable and start the service for optimus manager
+`sudo systemctl enable --now optimus-manager.service`
 
-Last step, we need to turn on and start the service for optimus manager
-`sudo systemctl enable optimus-manager.service`
-`sudo systemctl start optimus-manager.service`
+You can reboot now, after rebooting, you will have a fully working Optimus Manager, which you can **find the icon on the bottom right corner of the taskbar.**
 
-You can reboot now, after rebooting, you will have a fully working Optimus Manager.
-
-**You can find the icon on the bottom right corner of the taskbar.**
-
-Congrats! you are done with the setup.
+Congrats! You are done with the setup.
 
 # Optional configuration
 ## For Turing generation cards with Intel Coffee Lake or above CPUs, it is possible to fully power down the GPU when not in use.
