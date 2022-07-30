@@ -2,7 +2,7 @@
 title: Laptop with Dual GPU Setup Guide
 description: 
 published: 1
-date: 2022-07-30T14:44:56.105Z
+date: 2022-07-30T14:45:46.485Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
@@ -44,7 +44,7 @@ MODULES="radeon nvidia"
 ## Enable "Direct Rendering Manager" (DRM KMS)
 To enable DRM we need to add necessary kernel parameter in the bootloader, each bootloader has a different way to do that. 
 ### Using GRUB
-Add `nvidia-drm.modeset=1` to GRUB_CMDLINE_LINUX_DEFAULT in `/etc/default/grub/`, it'll look something like this:
+Add `nvidia-drm.modeset=1` to GRUB_CMDLINE_LINUX_DEFAULT in `/etc/default/grub`, it'll look something like this:
 ```conf
 GRUB_CMDLINE_LINUX_DEFAULT="nvidia-drm.modeset=1 ..."
 ```
