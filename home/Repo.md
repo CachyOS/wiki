@@ -2,7 +2,7 @@
 title: Adding CachyOS repo for optimized packages
 description: Basic tutorial for adding CachyOS repo to your system for packages compiled with x86_64-v3 support.
 published: 1
-date: 2022-07-31T19:47:37.273Z
+date: 2022-07-31T19:49:03.820Z
 tags: arch linux, cachyos, repo, x86_64-v3
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -23,17 +23,6 @@ sudo ./cachyos-repo.sh
 This script will backup your old pacman.conf, and will also auto-detect you architecture, if your CPU have x86-64-v3 support, it will automatically use the repos which are optimized with this flag and some other flags.
 
 For more information. Check repo's description [CachyOS](https://github.com/cachyos) or via [Discord](https://discord.gg/k39qfrxPNa)
-### Uninstalling
-
-1. Remove or Backup the config located at /etc/pacman.conf
-2. Then execute this command
-```
-sudo mv /etc/pacman.conf.bak /etc/pacman.conf
-```
-3. Run following command to switch the packages to the default Arch packages 
-```sh
-sudo pacman -Suuy
-```
 
 ## Manually
 First, receive and sign our keys:
@@ -69,6 +58,19 @@ Add the following under the Arch Linux repos
 Include = /etc/pacman.d/cachyos-mirrorlist
 ```
 Now enjoy your system speed going up by our packages :P
+
+## Uninstalling
+
+1. Remove or Backup the config located at /etc/pacman.conf
+2. Then execute this command
+```
+sudo mv /etc/pacman.conf.bak /etc/pacman.conf
+```
+3. Run following command to switch the packages to the default Arch packages 
+```sh
+sudo pacman -Suuy
+```
+
 
 ## Nvidia driver with Clang compiled kernels
 Not needed anymore, since dkms 3.0.1 :)
