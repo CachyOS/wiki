@@ -1,8 +1,8 @@
 ---
 title: Adding CachyOS repo for optimized packages
-description: Basic tutorial for adding CachyOS repo to your system for packages compiled with `x86_64-v3` support.
+description: Basic tutorial for adding CachyOS repo to your system for packages compiled with x86_64-v3 support.
 published: 1
-date: 2022-07-31T18:42:56.942Z
+date: 2022-07-31T18:43:19.079Z
 tags: arch linux, cachyos, repo, x86_64-v3
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
