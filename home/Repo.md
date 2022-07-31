@@ -2,7 +2,7 @@
 title: CachyOS Repo with optimized packages and kernels
 description: Packages compiled with GEN3 and also normal generic and higher compile Flags
 published: 1
-date: 2022-07-31T18:22:03.460Z
+date: 2022-07-31T18:32:24.920Z
 tags: repo arch linux cachyos
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -19,6 +19,20 @@ wget https://build.cachyos.org/cachyos-repo.tar.xz
 tar xvf cachyos-repo.tar.xz
 cd cachyos-repo
 sudo ./cachyos-repo.sh
+```
+This script will backup your old pacman.conf, and will also auto-detect you architecture, if your CPU have x86-64-v3 support, it will automatically use the repos which are optimized with this flag and some other flags.
+
+For more information. Check repo's description [CachyOS](https://github.com/cachyos) or via [Discord](https://discord.gg/k39qfrxPNa)
+### Uninstalling
+
+1. Remove or Backup the config located at /etc/pacman.conf
+2. Then execute this command
+```
+sudo mv /etc/pacman.conf.bak /etc/pacman.conf
+```
+3. Run following command to switch the packages to the default Arch packages 
+```sh
+sudo pacman -Suuy
 ```
 
 ## Manually
@@ -60,30 +74,12 @@ Include = /etc/pacman.d/cachyos-mirrorlist
 [cachyos]
 Include = /etc/pacman.d/cachyos-mirrorlist
 ```
-* * *
+Now enjoy your system speed going up by our packages :P
+### Removing the repo and use the default Arch packages
 
-    This script will also backup your old pacman.conf.
+Simply remove the CachyOS entries at `/etc/pacman.conf`, then run `sudo pacman -Suuy`
 
-    This script will auto-detect you architecture, if your CPU have x86-64-v3 support, it will automatically use the repos which are optimized with this flag and some other flags.
-
-    Also all provided Kernels, Browsers, ... are optimized and compiled.
-
-    ## How to Backup the config and use the native Arch Packages
-
-    - Remove or Backup the config located at /etc/pacman.conf
-    - then run `sudo mv /etc/pacman.conf.bak /etc/pacman.conf`
-    - Then run following command to switch the packages to the default arch packages `sudo pacman -Suuy`
-
-
-    For more information. Check repo's description [CachyOS](https://github.com/cachyos) or via [Discord](https://discord.gg/k39qfrxPNa)
-
-## How to use CLANG/LLVM/LTO compiled Kernels on Nvidia driver with DKMS:
-
+## Nvidia driver with Clang compiled kernels
 Not needed anymore, since dkms 3.0.1 :)
 
 If you got any question, just hit me up!
-
-
-## Removing the repo and downgrade to the archlinux ones
-
-Simply remove the CachyOS entries at `/etc/pacman.conf`, and then run `sudo pacman -Suuy`
