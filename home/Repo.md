@@ -1,9 +1,9 @@
 ---
-title: CachyOS Repo with optimized packages and kernels
-description: Packages compiled with GEN3 and also normal generic and higher compile Flags
+title: Adding CachyOS repo for optimized packages
+description: Basic tutorial for adding CachyOS repo to your system for packages compiled with `x86_64-v3` support.
 published: 1
-date: 2022-07-31T18:32:24.920Z
-tags: repo arch linux cachyos
+date: 2022-07-31T18:42:56.942Z
+tags: arch linux, cachyos, repo, x86_64-v3
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
 ---
