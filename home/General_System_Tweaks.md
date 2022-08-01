@@ -2,7 +2,7 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2022-08-01T09:14:01.709Z
+date: 2022-08-01T12:53:33.940Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
@@ -51,7 +51,7 @@ Also change page-cluster value to 1 for SSD and 2 for HDD, this value can be cha
 
 ## 4. CPU Mitigations
 
-In July 2022 was made the speculative execution attack exploiting return instrunctions called retbleed public.
+In July 2022 was made the speculative execution attack exploiting return instructions called retbleed public.
 This mitigations has been fixed with the kernel but it introduces a really big performance overhead from 14-39%, which is insane much.
 
 Following CPU's are affected from this mitigation:
@@ -65,7 +65,7 @@ Following CPU's are affected from this mitigation:
 - Caby Lake
 - Coffee Lake
 
-You can watch which mitiagations your processor is affected from with the following command:
+You can watch which mitigations your processor is affected from with the following command:
 
 `grep . /sys/devices/system/cpu/vulnerabilities/*`
 
