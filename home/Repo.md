@@ -2,7 +2,7 @@
 title: Adding CachyOS repo for optimized packages
 description: Basic tutorial for adding CachyOS repo to your system for packages compiled with x86_64-v3 support.
 published: 1
-date: 2022-08-01T22:28:37.998Z
+date: 2022-08-02T10:14:20.340Z
 tags: arch linux, cachyos, repo, x86_64-v3
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -25,7 +25,7 @@ sudo ./cachyos-repo.sh
 
 This script will backup your old pacman.conf, and will also auto-detect you architecture, if your CPU have x86-64-v3 support, it will automatically use the repos which are optimized with this flag and some other flags.
 
-💡 For more information. Check repo's description [CachyOS](https://github.com/cachyos) or via [Discord](https://discord.gg/k39qfrxPNa)
+💡 For more information, check repo's description [CachyOS](https://github.com/cachyos) or via [Discord](https://discord.gg/k39qfrxPNa)
 
 ## Manually
 
@@ -80,9 +80,9 @@ Now enjoy your system speed going up by our packages 😛
 
 ## Uninstalling
 
-Automatically
+### Automatically
 
-Execute these commands to use our helper script that does the thing automatically 😉
+Execute these commands to remove CachyOS repos from your system
 
 ```
 wget https://build.cachyos.org/cachyos-repo.tar.xz
@@ -91,7 +91,7 @@ cd cachyos-repo
 sudo ./cachyos-repo.sh --remove
 ```
 
-Manually
+### Manually
 
 1. Remove or Backup the config located at /etc/pacman.conf
 2. Then execute this command
