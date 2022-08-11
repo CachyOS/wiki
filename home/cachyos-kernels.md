@@ -1,8 +1,8 @@
 ---
 title: Which Kernel does CachyOS provide and maintain
-description: CachyOS Kernels, improvements, ... 
+description: CachyOS Kernels, improvements, ...
 published: 1
-date: 2022-06-17T02:36:21.775Z
+date: 2022-08-11T13:20:17.451Z
 tags: cachyos, kernel, performance
 editor: markdown
 dateCreated: 2021-11-25T07:07:09.929Z
@@ -95,7 +95,7 @@ or at Telegram:
 ## Donations are welcome for the maintenance of our compile server and the repo, a cup of coffee would be highly appreciated for maintaining this repo
 
 <https://paypal.me/pttrr>
-
+<https://www.patreon.com/CachyOS>
 ### Valueable Contributors
 
 [Hamad Marri](https://github.com/hamadmarri) for the CacULE Scheduler, TT Scheduler
