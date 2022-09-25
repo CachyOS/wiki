@@ -2,7 +2,7 @@
 title: Laptop with Dual GPU Setup Guide
 description: 
 published: 1
-date: 2022-09-25T13:39:56.407Z
+date: 2022-09-25T13:42:08.632Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
@@ -94,9 +94,11 @@ You can reboot now, after rebooting, you will have a fully working Optimus Manag
 Congrats! You are done with the setup.
 
 # Optional configuration
-## For Turing generation cards with Intel Coffee Lake or above CPUs, it is possible to fully power down the GPU when not in use.
+## Fully power down the GPU when not in use
+> The feature is only supported on laptop with Turing GPUs (RTX 20xx/GTX 16xx) and above, and Intel Coffee Lake CPUs (8th gen) and above.
+{.is-warning}
+
 **PCI-Express Runtime D3 (RTD3) Power Management**
-The feature is only supported on laptop with Turing GPUs (RTX 20xx/GTX 16xx) and above, and Intel Coffee Lake CPUs (8th gen) and above. 
 Add these rules into `/etc/udev/rules.d/80-nvidia-pm.rules`
 
 ```
