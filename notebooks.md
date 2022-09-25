@@ -2,7 +2,7 @@
 title: Laptop with Dual GPU Setup Guide
 description: 
 published: 1
-date: 2022-09-25T13:39:49.805Z
+date: 2022-09-25T13:39:56.407Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
@@ -138,4 +138,4 @@ sudo systemctl enable --now nvidia-persistenced.service
 ```
 And finally reboot your system.
 
-Your laptop's hybrid mode should work like it does on Windows!.
+Your laptop's hybrid mode should work like it does on Windows!
