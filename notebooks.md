@@ -2,7 +2,7 @@
 title: Laptop with Dual GPU Setup Guide
 description: 
 published: 1
-date: 2022-07-30T14:53:07.043Z
+date: 2022-09-25T09:02:42.732Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
@@ -51,8 +51,32 @@ GRUB_CMDLINE_LINUX_DEFAULT="nvidia-drm.modeset=1 ..."
 Now you have to use these two commands to save the modification into all the installed kernels and update GRUB.
 ```sh
 sudo mkinitcpio -P
-grub-mkconfig -o /boot/grub/grub.cfg
+sudo grub-mkconfig -o /boot/grub/grub.cfg
 ```
+## NVIDIA PRIME Render Offload - run your game/app on the NVIDIA GPU.
+Following command that initializes the NVIDIA GPU via PRIME Render Offload. The official way to use NVIDIA GPU. 
+```
+__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia
+```
+### Usage of NVIDIA GPU.
+Instead of the `program`, type any `package`.
+```
+__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia program
+```
+#### Example of usage
+- Xonotic on the NVIDIA GPU:
+```
+__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia xonotic-sdl
+```
+- Darktable on the NVIDIA GPU:
+```
+__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia darktable
+```
+### Steam
+```
+__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia %command%
+```
+Please read the [docs from NVIDIA](https://download.nvidia.com/XFree86/Linux-x86_64/435.17/README/primerenderoffload.html) if you are wondering why we added`__VK_LAYER_NV_optimus=NVIDIA_only`
 
 ### Using systemd-boot
 (under development)
@@ -76,13 +100,23 @@ The feature is only supported on laptop with Turing GPUs (RTX 20xx/GTX 16xx) and
 Add these rules into `/etc/udev/rules.d/80-nvidia-pm.rules`
 
 ```
-#Enable runtime PM for NVIDIA VGA/3D controller devices on driver bind
+# Remove NVIDIA USB xHCI Host Controller devices, if present
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x0c0330", ATTR{remove}="1"
+
+# Remove NVIDIA USB Type-C UCSI devices, if present
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x0c8000", ATTR{remove}="1"
+
+# Remove NVIDIA Audio devices, if present
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x040300", ATTR{remove}="1"
+
+# Enable runtime PM for NVIDIA VGA/3D controller devices on driver bind
 ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="auto"
 ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="auto"
 
-#Disable runtime PM for NVIDIA VGA/3D controller devices on driver unbind
+# Disable runtime PM for NVIDIA VGA/3D controller devices on driver unbind
 ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="on"
 ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="on"
+
 ```
 
 Next add the following text to `/etc/modprobe.d/nvidia.conf`
@@ -95,9 +129,16 @@ To apply these changes right now:
 sudo udevadm control --reload
 sudo udevadm trigger
 ```
-
 Now you need to edit optimus-manager's configuration file to enable **(RTD3) Power Management** by adding `dynamic_power_management=fine` to `/etc/optimus-manager/optimus-manager.conf`
 
+### Using the nvidia-persistenced
+Enable nvidia-persistenced.service to avoid the kernel tearing down the device state whenever the NVIDIA device resources are no longer in use. 
+```
+sudo systemctl enable nvidia-persistenced.service
+```
+```
+sudo systemctl start nvidia-persistenced.service
+```
 And finally reboot your system.
 
 Your laptop's hybrid mode should work like it does on Windows!.
