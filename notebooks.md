@@ -2,7 +2,7 @@
 title: Laptop with Dual GPU Setup Guide
 description: 
 published: 1
-date: 2022-09-25T13:42:08.632Z
+date: 2022-09-25T13:46:20.641Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
@@ -53,26 +53,17 @@ Now you have to use these two commands to save the modification into all the ins
 sudo mkinitcpio -P
 sudo grub-mkconfig -o /boot/grub/grub.cfg
 ```
-## NVIDIA PRIME Render Offload - run your game/app on the NVIDIA GPU.
+## NVIDIA PRIME Render Offload
 Following command that initializes the NVIDIA GPU via PRIME Render Offload. The official way to use NVIDIA GPU. 
 ```
 __NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia
 ```
-### Usage of NVIDIA GPU.
-Instead of the `program`, type any `package`.
+### The official way
+Append these enviroment variables before running the program
 ```
-__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia program
+__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia
 ```
-#### Example of usage
-- Xonotic on the NVIDIA GPU:
-```
-__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia xonotic-sdl
-```
-- Darktable on the NVIDIA GPU:
-```
-__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia darktable
-```
-### Steam
+#### Steam
 ```
 __NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia %command%
 ```
