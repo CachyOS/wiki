@@ -2,7 +2,7 @@
 title: Laptop with Dual GPU Setup Guide
 description: 
 published: 1
-date: 2022-09-25T13:46:20.641Z
+date: 2022-09-25T13:50:36.665Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
@@ -53,21 +53,6 @@ Now you have to use these two commands to save the modification into all the ins
 sudo mkinitcpio -P
 sudo grub-mkconfig -o /boot/grub/grub.cfg
 ```
-## NVIDIA PRIME Render Offload
-Following command that initializes the NVIDIA GPU via PRIME Render Offload. The official way to use NVIDIA GPU. 
-```
-__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia
-```
-### The official way
-Append these enviroment variables before running the program
-```
-__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia
-```
-#### Steam
-```
-__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia %command%
-```
-Please read the [docs from NVIDIA](https://download.nvidia.com/XFree86/Linux-x86_64/435.17/README/primerenderoffload.html) if you are wondering why we added`__VK_LAYER_NV_optimus=NVIDIA_only`
 
 ### Using systemd-boot
 (under development)
@@ -83,6 +68,23 @@ Last step, we need to enable and start the service for optimus manager
 You can reboot now, after rebooting, you will have a fully working Optimus Manager, which you can **find the icon on the bottom right corner of the taskbar.**
 
 Congrats! You are done with the setup.
+
+## NVIDIA PRIME Render Offload
+### The official way
+Append these enviroment variables before running the program
+```
+__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia
+```
+#### Steam
+```
+__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia %command%
+```
+Please read the [docs from NVIDIA](https://download.nvidia.com/XFree86/Linux-x86_64/435.17/README/primerenderoffload.html) if you are wondering why we added`__VK_LAYER_NV_optimus=NVIDIA_only`
+### Wrapper script
+Arch Linux has a package called [`nvidia-prime`](https://archlinux.org/packages/extra/any/nvidia-prime/) that helps you set the enviroment variable above when you run a program, to use it simply execute this:
+```
+prime-run <program>
+```
 
 # Optional configuration
 ## Fully power down the GPU when not in use
@@ -124,7 +126,7 @@ sudo udevadm trigger
 ```
 Now you need to edit optimus-manager's configuration file to enable **(RTD3) Power Management** by adding `dynamic_power_management=fine` to `/etc/optimus-manager/optimus-manager.conf`
 
-### Using the nvidia-persistenced
+## Using nvidia-persistenced
 Enable nvidia-persistenced.service to avoid the kernel tearing down the device state whenever the NVIDIA device resources are no longer in use. 
 ```
 sudo systemctl enable --now nvidia-persistenced.service
