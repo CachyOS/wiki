@@ -2,7 +2,7 @@
 title: Adding CachyOS repo for optimized packages
 description: Basic tutorial for adding CachyOS repo to your system for packages compiled with x86_64-v3 support.
 published: 1
-date: 2022-08-02T10:14:20.340Z
+date: 2022-09-25T13:52:46.576Z
 tags: arch linux, cachyos, repo, x86_64-v3
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -58,7 +58,7 @@ Change the `Architecture` section to `x86_64 x86_64_v3` in `/etc/pacman.conf`
 Architecture = x86_64 x86_64_v3
 ```
 
-And finally, add the following under the Arch Linux repos
+Then add the following under the Arch Linux repos
 
 ```cfg
 [cachyos-v3]
@@ -76,6 +76,10 @@ Add the following under the Arch Linux repos
 Include = /etc/pacman.d/cachyos-mirrorlist
 ```
 
+And finally update your system with CachyOS packages
+```bash
+sudo pacman -Syu
+```
 Now enjoy your system speed going up by our packages 😛
 
 ## Uninstalling
