@@ -2,7 +2,7 @@
 title: Laptop with Dual GPU Setup Guide
 description: 
 published: 1
-date: 2022-09-25T09:04:15.286Z
+date: 2022-09-25T13:39:41.636Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
@@ -134,7 +134,7 @@ Now you need to edit optimus-manager's configuration file to enable **(RTD3) Pow
 ### Using the nvidia-persistenced
 Enable nvidia-persistenced.service to avoid the kernel tearing down the device state whenever the NVIDIA device resources are no longer in use. 
 ```
-sudo systemctl enable nvidia-persistenced.service
+sudo systemctl enable --now nvidia-persistenced.service
 ```
 ```
 sudo systemctl start nvidia-persistenced.service
