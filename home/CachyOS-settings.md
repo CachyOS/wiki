@@ -2,7 +2,7 @@
 title: CachyOS-settings
 description: CachyOS sysctl, udev, systemd configs, modprobe rules and more
 published: 1
-date: 2022-08-06T21:30:59.973Z
+date: 2022-10-23T13:32:34.763Z
 tags: cachy, cachyos
 editor: markdown
 dateCreated: 2022-08-06T21:30:59.973Z
@@ -17,7 +17,7 @@ A low value causes the kernel to avoid swapping, a higher value causes the kerne
 
 This value is automatically calculated using your ram amount
 
-vm.vfs_cache_pressure
+### vm.vfs_cache_pressure
 The value controls the tendency of the kernel to reclaim the memory which is used for caching of directory and inode objects (VFS cache).
 
 Lowering it from the default value of 100 makes the kernel less inclined to reclaim VFS cache (do not set it to 0, this may produce out-of-memory conditions)
