@@ -2,7 +2,7 @@
 title: How to install CachyOS
 description: CachyOS Installation via GUI/CLI Installer
 published: 1
-date: 2022-11-17T19:24:05.237Z
+date: 2022-11-17T19:32:54.161Z
 tags: cachyos, calamares, cli-installer, gui-installer, install-cachyos
 editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
@@ -25,6 +25,8 @@ dateCreated: 2022-11-17T13:07:22.546Z
 - a x86-64-v3 supported processor, to get the performance improvement of the cachyos-v3 repos
 - 50 mbits or better internet connection for the online installation
 
+Actually it is really suggested to have a newer nvidia card (900+), you can select if you want to install the drivers in the netinstall.
+Older nvidia drivers are also supported by nouveau. There are also nvidia drivers for older cards in our repo, these need to be installed after the installation.
 # GUI Installer
 
 ## Choosing between the bootloaders
