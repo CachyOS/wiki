@@ -2,7 +2,7 @@
 title: Adding CachyOS repo for optimized packages
 description: Basic tutorial for adding CachyOS repo to your system for packages compiled with x86_64-v3 support.
 published: 1
-date: 2022-09-25T13:53:38.471Z
+date: 2022-11-17T12:34:40.441Z
 tags: arch linux, cachyos, repo, x86_64-v3
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -77,6 +77,15 @@ And finally update your system with CachyOS packages
 sudo pacman -Syu
 ```
 Now enjoy your system speed going up by our packages 😛
+
+## Debug packages
+Debug packages can be found in the cachyos-debug-v3 repo.
+Simply add the cachyos-debug-v3 repo:
+
+```cfg
+[cachyos-debug-v3]
+Include = /etc/pacman.d/cachyos-v3-mirrorlist
+```
 
 ## Uninstalling
 
