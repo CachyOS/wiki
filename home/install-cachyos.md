@@ -2,8 +2,8 @@
 title: How to install CachyOS
 description: CachyOS Installation via GUI/CLI Installer
 published: 1
-date: 2022-11-17T13:07:22.547Z
-tags: cachyos, install-cachyos, calamares, gui-installer, cli-installer
+date: 2022-11-17T13:07:47.945Z
+tags: cachyos, calamares, cli-installer, gui-installer, install-cachyos
 editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
 ---
@@ -25,9 +25,9 @@ dateCreated: 2022-11-17T13:07:22.546Z
 - a x86-64-v3 supported processor, to get the performance improvement of the cachyos-v3 repos
 - 50 mbits or better internet connection for the online installation
 
-## GUI Installer
+# GUI Installer
 
-### Choosing between the bootloaders
+## Choosing between the bootloaders
 We provide currently two different bootloaders for the online installation, you will be asked for which one when clicking the `Launch Installer` button in CachyOS Hello.
 We suggest to use systemd-boot, since it is quite simple, brings a faster boot time then grub.
 Boot entries for different kernels are automatically generated at systemd boot and grub.
@@ -35,7 +35,7 @@ Boot entries for different kernels are automatically generated at systemd boot a
 Systemd-boot can be only used for systems which have UEFI support.
 GRUB does support MBR and UEFI.
 
-### Choosing between filesystems
+## Choosing between filesystems
 It can between five different filesystems choosed, following are available:
 
 - xfs
@@ -50,4 +50,4 @@ It can between five different filesystems choosed, following are available:
 4. F2FS (Flash-Friendly File System) is a file system intended for NAND-based flash memory equipped with Flash Translation Layer.
 5. ZFS is an advanced filesystem created by Sun Microsystems (now owned by Oracle) and released for OpenSolaris in November 2005. Described as "The last word in filesystems", ZFS is stable, fast, secure, and future-proof. Being licensed under the CDDL, and thus incompatible with GPL, it is not possible for ZFS to be distributed along with the Linux Kernel. This requirement, however, does not prevent a native Linux kernel module from being developed and distributed by a third party, as is the case with OpenZFS, previously named ZFS on Linux (ZOL).
 
-### Desktop environments
+## Desktop environments
