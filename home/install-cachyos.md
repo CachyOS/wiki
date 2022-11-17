@@ -2,7 +2,7 @@
 title: How to install CachyOS
 description: CachyOS Installation via GUI/CLI Installer
 published: 1
-date: 2022-11-17T13:07:47.945Z
+date: 2022-11-17T19:24:05.237Z
 tags: cachyos, calamares, cli-installer, gui-installer, install-cachyos
 editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
@@ -49,5 +49,8 @@ It can between five different filesystems choosed, following are available:
 3. Btrfs is a modern copy on write (CoW) filesystem for Linux aimed at implementing advanced features while also focusing on fault tolerance, repair and easy administration. Jointly developed at multiple companies, Btrfs is licensed under the GPL and open for contribution from anyone.
 4. F2FS (Flash-Friendly File System) is a file system intended for NAND-based flash memory equipped with Flash Translation Layer.
 5. ZFS is an advanced filesystem created by Sun Microsystems (now owned by Oracle) and released for OpenSolaris in November 2005. Described as "The last word in filesystems", ZFS is stable, fast, secure, and future-proof. Being licensed under the CDDL, and thus incompatible with GPL, it is not possible for ZFS to be distributed along with the Linux Kernel. This requirement, however, does not prevent a native Linux kernel module from being developed and distributed by a third party, as is the case with OpenZFS, previously named ZFS on Linux (ZOL).
+
+**!!ATTENTION!!:** 
+If installing ZFS, the parition needs to be cleared before the installation with gparted or partitionmanager. When you cleared your drive, reboot and start the installer. Choose ZFS and everything works fine! :)
 
 ## Desktop environments
