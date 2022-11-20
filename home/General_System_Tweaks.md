@@ -2,7 +2,7 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2022-11-20T16:20:27.824Z
+date: 2022-11-20T16:20:45.002Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
@@ -94,6 +94,8 @@ https://www.phoronix.com/review/xeon-skylake-retbleed
 
 For a better scaling of the frequencies and a better performance per watt you can enable the AMD PSTATE EPP Driver.
 The default AMD PSTATE driver is not really suggested, it does bring nearly no benefits against the acpi-cpufreq driver.
+
+https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/
 
 Check if your CPU provides the CPPC MSR with `lscpu | grep cppc`. Mainly newer ZEN APU's or ZEN4 Desktop CPUs should provide it
 
