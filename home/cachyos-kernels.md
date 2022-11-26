@@ -2,16 +2,15 @@
 title: Which Kernel does CachyOS provide and maintain
 description: CachyOS Kernels, improvements, ...
 published: 1
-date: 2022-11-26T19:27:40.612Z
+date: 2022-11-26T19:31:04.627Z
 tags: cachyos, kernel, performance
 editor: markdown
 dateCreated: 2021-11-25T07:07:09.929Z
 ---
 
-<div align="center">
-  <img src="https://github.com/CachyOS/calamares-config/blob/grub-3.2/etc/calamares/branding/cachyos/logo.png" width="64" alt="CachyOS logo"></img>
-  <br/>
-  <h1 align="center">CachyOS</h1>
+
+
+<h1 align="center">Linux-CachyOS</h1>
   <p align="center">CachyOS ships improved kernels that improve performance and other aspects.</p>
 </div>
 
