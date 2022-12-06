@@ -2,7 +2,7 @@
 title: How to install CachyOS
 description: CachyOS Installation via GUI/CLI Installer
 published: 1
-date: 2022-11-19T17:00:00.502Z
+date: 2022-12-06T12:10:54.459Z
 tags: cachyos, calamares, cli-installer, gui-installer, install-cachyos
 editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
@@ -78,4 +78,3 @@ We provide several desktop environments. KDE being default one. Following are av
 7. XFCE is a lightweight and versatile desktop environment that utilises a classic drop-down/pop-up menu to access applications. It is also compatible with Compiz. A little time and effort will also be required to properly customise the desktop to suit personal taste.
 8. LXQt is a lightweight Qt desktop environment. It was formed from the merger of the LXDE and Razor-qt projects
 9. bspwm is a tiling window manager designed for X11, and written in C. It supports tiling, stacking, and tabbing layouts, which it handles dynamically. It represents windows as the leaves of a full binary tree.
-10. Kofuku (bliss in Japanese) is a lightweight and minimalist desktop setup. This setup uses BSPWM as the tiling window manager.
