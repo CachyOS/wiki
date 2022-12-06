@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2022-07-25T21:19:47.510Z
+date: 2022-12-06T12:09:46.661Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -55,7 +55,6 @@ You can select at the online installation between the following DE's:
 - Wayfire is a wayland compositor based on wlroots. It aims to create a customizable, extendable and lightweight environment without sacrificing its appearance
 - LXQT - The Lightweight Qt Desktop Environment.
 - bspwm is a tiling window manager that represents windows as the leaves of a full binary tree. bspwm supports multiple monitors and is configured and controlled through messages
-- Kofuku (bliss in Japanese) is a lightweight and minimalist Linux setup. This setup uses BSPWM as the tiling window manager.
 - Xfce is a lightweight desktop environment for UNIX-like operating systems. It aims to be fast and low on system resources, while still being visually appealing and user friendly
 
 ## Security
