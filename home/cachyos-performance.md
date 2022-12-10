@@ -2,7 +2,7 @@
 title: How does CachyOS improve the performance?
 description: 
 published: 1
-date: 2022-07-25T21:35:42.855Z
+date: 2022-12-10T13:58:57.905Z
 tags: performance cachyos x86-64-v3 arch cacule
 editor: markdown
 dateCreated: 2021-10-04T07:59:10.433Z
@@ -33,11 +33,11 @@ We can refer to them as a group of instruction sets; most Linux distributions us
 
 Example: Suppose you have a laptop with an AMD Ryzen 5 4500U or an Intel Core i5 1035G4, and your friend has a desktop with an Intel Core i7-9700K. Both machines have a CPU that supports the AVX instruction set, but your programs cannot use it, resulting in lower performance and capability.
 
-# Here is a reason why most Linux distros still use x86-64-v2
+# Here is a reason why most Linux distros still use x86-64
 
 Because there are still a lot of linux servers with old hardware around the world, it makes sense for Linux to be more friendly for end users and not exclude those who don't have the privilege or money to have new and shiny hardware. However most personal computers and laptops nowadays already include a CPU with all of the necessary instruction sets in the x86-64-v3 level; this is also one of the many reasons why CachyOS exists and could potentially unlock even more performance on your PC.
 
-I know... so many buzz-words is bad without proof, so here is a doc testing and benchmarking x86-v64-v2 VS x86-64-v3.
+I know... so many buzz-words is bad without proof, so here is a doc testing and benchmarking x86-v64 VS x86-64-v3.
 
 <https://www.phoronix.com/scan.php?page=news_item&px=Arch-Linux-x86-64-v3-Port-RFC> 
 
@@ -45,3 +45,12 @@ I know... so many buzz-words is bad without proof, so here is a doc testing and 
 
 **So all packages and kernels in the CachyOS (x86-64-v3) repositories have around 10% performance uplift and some packages can have higher performance uplift (15% or 36%!)**
 
+# Benchmarks
+
+Phoronix did benchmarked CachyOS against other Distros. 
+https://www.phoronix.com/review/cachyos-linux-perf
+
+In the PHP and python benchmark we had a little regression, which was caused that ananicy-cpp has limited PHP. This was fixed with the following commit https://github.com/CachyOS/ananicy-rules/commit/9e0d00ef1ad5866b1b597b1e0af7e1ce3ee985ee .
+We are going to improve the python situation as soon we will update to Python 3.11.
+We are looking really forward for further benchmarks.
+Thanks to the great work from phoronix.
