@@ -2,7 +2,7 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2022-12-15T12:15:12.450Z
+date: 2022-12-15T12:20:23.219Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
@@ -102,3 +102,20 @@ If your CPU does provide the MSR add to your boot cmdline following:
 - AMD PSTATE: `amd-pstate=passive`
 - AMD PSTATE-GUIDED: `amd-pstate=guided`
 - AMD PSTATE EPP: `amd-pstate=active`
+
+## 6. Disabling split_lock_mitigate
+
+Some applications and games are getting really slowed from it. We have backported the patch, to disable it via the sysctl.
+
+To change it at runtime simply:
+`sudo sysctl kernel.split_lock_mitigate=0`
+
+and for enabling:
+`sudo sysctl kernel.split_lock_mitigate=1`
+
+To set it permanently make a entry at `/etc/sysctl.d/99-splitlock.conf` with the content:
+`kernel.split_lock_mitigate=0`
+
+More infos about split_lock:
+https://www.phoronix.com/news/Linux-Splitlock-Hurts-Gaming
+https://github.com/doitsujin/dxvk/issues/2938
