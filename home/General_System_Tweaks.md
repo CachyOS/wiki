@@ -2,7 +2,7 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2022-11-20T16:20:45.002Z
+date: 2022-12-15T12:15:12.450Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
@@ -90,21 +90,15 @@ Here are some articles about retbleed and the performance impact:
 https://www.phoronix.com/review/retbleed-benchmark
 https://www.phoronix.com/review/xeon-skylake-retbleed
 
-## AMD PSTATE (EPP) Driver
+## 5. AMD PSTATE (EPP) Driver
 
 For a better scaling of the frequencies and a better performance per watt you can enable the AMD PSTATE EPP Driver.
 The default AMD PSTATE driver is not really suggested, it does bring nearly no benefits against the acpi-cpufreq driver.
 
 https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/
 
-Check if your CPU provides the CPPC MSR with `lscpu | grep cppc`. Mainly newer ZEN APU's or ZEN4 Desktop CPUs should provide it
-
 If your CPU does provide the MSR add to your boot cmdline following:
 
 - AMD PSTATE: `amd-pstate=passive`
+- AMD PSTATE-GUIDED: `amd-pstate=guided`
 - AMD PSTATE EPP: `amd-pstate=active`
-
-If your CPU does not provide the cppc, you need to use the legacy_cppc solution:
-
-- AMD PSTATE: `amd-pstate=passiv amd_pstate=legacy_cppc`
-- AMD PSTATE EPP: `amd-pstate=active amd_pstate=legacy_cppc`
