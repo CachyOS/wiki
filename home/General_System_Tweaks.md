@@ -2,7 +2,7 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2022-12-15T12:20:23.219Z
+date: 2022-12-22T21:03:20.423Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
@@ -11,7 +11,7 @@ dateCreated: 2022-07-26T18:23:44.222Z
 # Things to do after installation
 
 
-## 1. ***Reduce Swappiness and vfs_cache_pressure***
+## 1. Reduce Swappiness and vfs_cache_pressure
 The kernel's preference (or avoidance) of swap space is represented by the swappiness sysctl parameter. Swappiness can range between 0 and 100, with 60 being the default value.
 A low value prevents the kernel from swapping; a high value causes the kernel to attempt to use swap space. It is well known that using a low value for sufficient memory improves responsiveness on many systems.
 
@@ -21,7 +21,7 @@ Increasing vfs_cache_pressure significantly beyond 100 may have negative perform
 
 You can change these values in `/etc/sysctl.d/99-cachyos-settings.conf`
 
-## 2. ***Editing mkinitcpio.conf for faster boot times***
+## 2. Editing mkinitcpio.conf for faster boot times
 
 Replace udev with systemd for faster boots and set compression algorithm to zstd and compression level to 2 because compression ratio increase isn't worth the increased latency.
 
@@ -45,16 +45,16 @@ CachyOS uses zram by default with optimal configuration. However if you want to 
 
 # echo 10 > /sys/module/zswap/parameters/max_pool_percent
 ```
-Above will change zswap settings only for current session, to make the setting changes persist add zswap.compressor=zstd zswap.max_pool_percent=10 to your bootloader's config file for the kernel command line.
+Above will change zswap settings only for current session, to make the setting changes persist add `zswap.compressor=zstd zswap.max_pool_percent=10` to your bootloader's config file for the kernel command line.
 
 Also change page-cluster value to 1 for SSD and 2 for HDD, this value can be changed in `/etc/sysctl.d/99-cachyos-settings.conf`
 
 ## 4. CPU Mitigations
 
-In July 2022 was made the speculative execution attack exploiting return instructions called retbleed public.
-This mitigations has been fixed with the kernel but it introduces a really big performance overhead from 14-39%, which is insane much.
+In July 2022, the speculative execution attack exploiting return instructions (called retbleed) was made public. 
+This mitigation has been fixed with the kernel, but it introduces a really big performance overhead (from 14-39%), which is significantly high.
 
-Following CPU's are affected from this mitigation:
+Following CPU's are affected by this mitigation:
 #### AMD
 - Zen 1
 - Zen 1+
@@ -92,12 +92,11 @@ https://www.phoronix.com/review/xeon-skylake-retbleed
 
 ## 5. AMD PSTATE (EPP) Driver
 
-For a better scaling of the frequencies and a better performance per watt you can enable the AMD PSTATE EPP Driver.
-The default AMD PSTATE driver is not really suggested, it does bring nearly no benefits against the acpi-cpufreq driver.
+For improved scaling of frequencies and better performance per watt, you can enable the AMD PSTATE EPP driver. The default AMD PSTATE driver does not offer significant benefits compared to the acpi-cpufreq driver.
 
-https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/
+For more information, see: https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/
 
-If your CPU does provide the MSR add to your boot cmdline following:
+If your CPU supports the MSR, add the following to your boot cmdline:
 
 - AMD PSTATE: `amd-pstate=passive`
 - AMD PSTATE-GUIDED: `amd-pstate=guided`
@@ -105,7 +104,7 @@ If your CPU does provide the MSR add to your boot cmdline following:
 
 ## 6. Disabling split_lock_mitigate
 
-Some applications and games are getting really slowed from it. We have backported the patch, to disable it via the sysctl.
+Some applications and games may experience slowed performance due to split_lock_mitigate. We have backported a patch to disable it via sysctl.
 
 To change it at runtime simply:
 `sudo sysctl kernel.split_lock_mitigate=0`
@@ -116,6 +115,6 @@ and for enabling:
 To set it permanently make a entry at `/etc/sysctl.d/99-splitlock.conf` with the content:
 `kernel.split_lock_mitigate=0`
 
-More infos about split_lock:
+For more information on split_lock, see:
 https://www.phoronix.com/news/Linux-Splitlock-Hurts-Gaming
 https://github.com/doitsujin/dxvk/issues/2938
