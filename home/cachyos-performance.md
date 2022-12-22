@@ -2,7 +2,7 @@
 title: How does CachyOS improve the performance?
 description: 
 published: 1
-date: 2022-12-10T13:58:57.905Z
+date: 2022-12-22T17:03:02.100Z
 tags: performance cachyos x86-64-v3 arch cacule
 editor: markdown
 dateCreated: 2021-10-04T07:59:10.433Z
@@ -17,7 +17,7 @@ Yes, this is a part of the optimization for CachyOS. ¿Why do we use that schedu
 
 # Huge repository with packages compiled with generic-v3
 
-You probably don't know so much about compiling and stuff, let me introduce you to it. You can compile code in so many different ways, with custom flags, toolchains, algorithms and so on, we barely use the same as Arch Linux, but here is one big change to consider, the x86-64 architecture is supported by every Intel/AMD processor but as technology rapidly changed and improvements were discovered, new instructions were created and used to support better features, improved reliability at runtime, more stable code and so on. Below we'll show you all of them and what instructions are required for them to work.
+You probably don't know so much about compiling and stuff, let me introduce you to it. You can compile code in so many different ways, with custom flags, toolchains, algorithms and so on, we barely use the same as Arch Linux. In order to improve the performance of CachyOS, we have compiled a large repository of packages using the x86-64-v3 microarchitecture level. This is an improvement over the x86-64 and x86-64-v2 levels, which are commonly used by other Linux distributions due to their compatibility with older hardware. However, newer processors, such as those belonging to the Intel 4th generation or later, have a greater number of instructions and can benefit from the additional performance provided by x86-64-v3.
 
 These are the four x86-64 microarchitecture levels on top of the x86-64 baseline: 
 - x86-64: CMOV, CMPXCHG8B, FPU, FXSR, MMX, FXSR, SCE, SSE, SSE2 
@@ -31,7 +31,7 @@ We can refer to them as a group of instruction sets; most Linux distributions us
 
 **For users with less tech knowledge:** 
 
-Example: Suppose you have a laptop with an AMD Ryzen 5 4500U or an Intel Core i5 1035G4, and your friend has a desktop with an Intel Core i7-9700K. Both machines have a CPU that supports the AVX instruction set, but your programs cannot use it, resulting in lower performance and capability.
+As an example, consider a laptop with an AMD Ryzen 5 4500U or an Intel Core i5 1035G4, and a desktop with an Intel Core i7-9700K. Both machines have a CPU that supports the AVX instruction set, but programs compiled with x86-64 or x86-64-v2 can not use it, resulting in lower performance and capability.
 
 # Here is a reason why most Linux distros still use x86-64
 
@@ -43,7 +43,7 @@ I know... so many buzz-words is bad without proof, so here is a doc testing and 
 
 <https://lists.archlinux.org/pipermail/arch-general/2021-March/048739.html>
 
-**So all packages and kernels in the CachyOS (x86-64-v3) repositories have around 10% performance uplift and some packages can have higher performance uplift (15% or 36%!)**
+**Overall, we have found that packages and kernels in the CachyOS x86-64-v3 repositories have an average performance uplift of around 10%. In some cases, performance uplifts of up to 36%(!!) have been observed.**
 
 # Benchmarks
 
