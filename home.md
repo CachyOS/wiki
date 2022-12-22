@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2022-12-06T12:09:46.661Z
+date: 2022-12-22T21:37:55.477Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -10,14 +10,13 @@ dateCreated: 2021-07-04T01:32:08.787Z
 
 # What is CachyOS ?
 
-CachyOS is an Arch Linux-based distribution that offers an easy installation, several customization options to suit every user, and special optimizations for improved performance while remaining simple.
+CachyOS is an Arch Linux-based distribution that aims to provide easy installation, customization options for every user, and special optimizations for improved performance while remaining simple.
 
 ## How does CachyOS improve the performance?
 
 We provide a optimized repo with march=x86-64-v3 support which comes with a notable performance boost. It depends on your cpu if it does support that, but you dont need to worry about it - the installer will detect the correct march and adjust to your system.
 
-We also provide several optimized custom kernels with various schedulers, which are maintained by me and also will soon be maintained by sir_lujan.
-These kernels will also include march optimization, with all of them already compiled and available in the repo, as well as LLVM-LTO support.
+We also provide several optimized custom kernels with various schedulers, maintained by the CachyOS team (sir_lucjan and ptr1337). These kernels include `march` optimization and LLVM-LTO support.
 
 Here you will find some extra information about the cpu march optimization:
 https://wiki.cachyos.org/en/home/cachyos-performance
@@ -25,27 +24,21 @@ In the near future, several system package's would get a custom optimization fro
 
 ## Installation
 
-We provide two different installers. A graphical installer and a cli installer.
+We offer two different installers: a graphical installer and a command-line interface (CLI) installer.
 
-### GUI Installer
-The graphical installer is based on calamares and gives the possibility to do a offline installation and a online personalized one with a package selection.
-With the next release, you will also be able to select between two different bootloaders during an online installation.
-You can also choose between different filesystems; the filesystem options are automatically optimized for SSDs if one is detected.
-The following filesystems can be used, which filesystem will suit to your needs. If you don't know which to choose, I will create a guide (soon) in an extra page:
+### Graphical Installer
 
-- xfs
-- btrfs
-- f2fs
-- ext4
-- zfs
+The graphical installer is based on Calamares and allows for both offline and online personalized installations with package selection. In the next release, you will also be able to select between two different bootloaders during an online installation.
 
-### CLI-Installer
+The installer also automatically optimizes the filesystem options for SSDs if one is detected. The following filesystems are available: XFS, Btrfs, F2FS, Ext4, and ZFS.
 
-The cli installer is completely written by us in C++. It provides equal functions to the GUI Installer but more customizable and some more features. Generally it is recommend for more advanced users, but the installation is kept quite simple and fast. Also it does support a configuration, which will set before the installation begin in the root directory and then will do with the options you choosen completely automatically.
+### Command-Line Interface Installer
+
+The CLI installer, written in C++, provides the same functions as the graphical installer but is more customizable and offers additional features. It is generally recommended for advanced users, but the installation process is kept simple and fast. It also supports configuration, allowing you to set options before the installation begins and then completing the installation automatically.
 
 ## CachyOS Desktop environments
 
-You can select at the online installation between the following DE's:
+You can select from the following desktop environments (DEs) during online installation:
 
 - CuteFish – An Elegant, Beautiful and Easy-to-Use Linux Desktop
 - i3 tiling window manager, primarily targeted at developers and advanced users
@@ -61,17 +54,16 @@ You can select at the online installation between the following DE's:
 
 ### system functions
 
-The following security features are available:
+CachyOS includes the following security features:
 
-- Firejail Toggle for using all packages which got a firejail profile will use any untrusted application in a sandbox environment and it will automatically update if you install any new package
-- preconfigured dns servers, which uses DoH and DoT servers
-- toggle for anonymized dnscrypt config and uses only dnscrypt servers
-- hardened linux kernel
+- A toggle for using Firejail, which allows untrusted applications to run in a sandbox environment and automatically updates when new packages are installed
+- Preconfigured DNS servers using DoH and DoT
+- A toggle for anonymized dnscrypt configuration and use of only dnscrypt servers
+- A hardened Linux kernel
 
 ### Cachy Browser
 
-The default browser of CachyOS is Cachy-Browser, which is a fork of the Librewolf Browser. We have added some extra security
-improvements as it is compiled with more secure flags and performance related too.
+CachyOS's default browser is Cachy Browser, a fork of the Librewolf Browser. It includes additional security improvements such as compilation with more secure flags and performance enhancements.
 
 ## Simplicity
 
@@ -79,15 +71,15 @@ We have added to the distro a helper with a lot of features, which makes the usa
 
 ### CachyOS Hello
 
-Our welcome app is launched when the system boots up. It gives you quick access to tweaks, fixes, documentation, our wiki, and other useful apps such as the CachyOS package installer.
+CachyOS Hello is a welcome app that is launched when the system boots up. It provides quick access to various tweaks, fixes, documentation, the CachyOS Wiki, and other useful apps, such as the CachyOS Package Installer.
 
-### Package-installer
+### Package Installer
 
-To the common package installer we provide a own package manager which helps you in updating the repo or installing packages. Packages are simply shown in group for a better understanding for which this package is used for
+In addition to the common package installer, CachyOS provides its own package manager which helps with updating the repository and installing packages. Packages are organized into groups for easier understanding of their purpose.
 
 ### Kernel Manager
 
-You can easily install kernels with optimization via a kernel manager, the kernel manager does also allow you to configure your own kernel and will compile it then which makes it easier for starters that are getting into kernel compiling.
+The Kernel Manager allows you to easily install optimized kernels, as well as configure and compile your own kernel. This can be helpful for those new to kernel compilation.
 
 ## Support
 
