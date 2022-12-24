@@ -2,7 +2,7 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2022-12-22T21:03:20.423Z
+date: 2022-12-24T21:49:20.760Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
@@ -102,7 +102,25 @@ If your CPU supports the MSR, add the following to your boot cmdline:
 - AMD PSTATE-GUIDED: `amd-pstate=guided`
 - AMD PSTATE EPP: `amd-pstate=active`
 
-## 6. Disabling split_lock_mitigate
+## 6. Using amd-pstate-epp
+
+When using amd-pstate-epp there are two governors available, powersave and performance.
+Actually it is suggested to use the powersave governor and then set a preference.
+You can do this with following command:
+Powersave:
+`sudo cpupower frequency-set -g powersave`
+Performance:
+`sudo cpupower frequency-set -g performance`
+
+To set a preference run following command, the example sets the power `preference`:
+`echo power | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference`
+
+There are follwing preferences available:
+`performance` `power` `balance_power` `balance_performance`
+
+Benchmarks each preference can be found here:
+https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/
+## 7. Disabling split_lock_mitigate
 
 Some applications and games may experience slowed performance due to split_lock_mitigate. We have backported a patch to disable it via sysctl.
 
