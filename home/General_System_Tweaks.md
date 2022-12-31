@@ -2,13 +2,13 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2022-12-24T21:51:50.609Z
+date: 2022-12-31T11:32:25.869Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
 ---
 
-# Things to do after installation
+# General System Tweaks
 
 
 ## 1. Reduce Swappiness and vfs_cache_pressure
