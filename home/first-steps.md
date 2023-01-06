@@ -2,7 +2,7 @@
 title: First Steps
 description: Things to do after installing cachyOS
 published: 1
-date: 2023-01-06T11:09:35.694Z
+date: 2023-01-06T11:12:24.420Z
 tags: 
 editor: markdown
 dateCreated: 2021-08-11T06:07:58.712Z
@@ -73,8 +73,9 @@ For some headphones Pulseaudio doesn't seem to work and you'd need to reconnect 
 There is a current bug with x11 and the AMD RDNA3 Cards.
 The issue can be solved by following workaround:
 `/etc/x11/xorg.conf.d/99-modsetting.conf`
-```
 with following content:
+
+```
 Section "Device"
           Identifier "modesetting"
           Driver "modesetting"
