@@ -2,7 +2,7 @@
 title: Screenshots
 description: Some screenshots of CachyOS
 published: 1
-date: 2022-06-17T13:20:17.737Z
+date: 2023-01-08T21:28:43.330Z
 tags: 
 editor: markdown
 dateCreated: 2021-07-04T03:23:21.056Z
@@ -30,8 +30,11 @@ dateCreated: 2021-07-04T03:23:21.056Z
 ![i3.png](/i3.png)
 ## XFCE
 ![xfce.png](/xfce.png)
-## CuteFish![cutefish.png](/cutefish.png)
+## CuteFish
+![cutefish.png](/cutefish.png)
 ## OpenBox
 ![openbox.png](/openbox.png)
 ## LXQT
 ![lxqt.png](/lxqt.png)
+## Hyprland
+![hyprland.png](/hyprland.png)
