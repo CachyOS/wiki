@@ -2,7 +2,7 @@
 title: Features and Performance Tweaks
 description: Some of the CachyOS features, and what makes CachyOS different.
 published: 1
-date: 2022-12-06T12:10:32.352Z
+date: 2023-01-08T21:25:08.904Z
 tags: best, better, feature, features, info, information, why
 editor: markdown
 dateCreated: 2021-07-04T02:28:46.352Z
@@ -12,14 +12,18 @@ dateCreated: 2021-07-04T02:28:46.352Z
 
 Our installer will autodetect your machine microarchitecture, if x86-64-v3 is detected it will automatically use the optimized packages, which yields more than 10% performance improvement.
 
-# KDE and Plasma Optimization
-Some of KDE and Plasma tools are compiled with set of flags to provide better performance. Tools like kscreen, kwin, kwindowsystem, plasma-desktop, plasma-wayland-session, plasma-workspace, and qt5-tools.
+# Optimized Packages
+All packages are compiled with LTO and x86-64-v3.
+We are currently also introducing a x86-64-v4 repo which will be filled over the time.
+GCC is compiled with PGO and LTO. Some packages also get optimized with BOLT a post link optimizer, for example python.
 
 # Other performance improvements
 
 - Ananicy-CPP installed and configured by default
 - ZRAM preconfigured with zstd compression
-- BFQ scheduler is used by default for HDDs and SSDs
+- BFQ scheduler is used by default for HDDs
+- mq-deadline used for sdd
+- "none" for nvme's
 - Heavily optimized kernel with several patches
 - BBRv2 as default and general optimized network settings
 - Many other tweaks and improvements
@@ -32,7 +36,7 @@ Following security features will be available:
 - Firejail Toggle for using all packages which got a firejail profile will use any untrusted application in a sandbox environment and it will automatically update if you install any new package
 - preconfigured dns servers, which uses DoH and DoT servers
 - toggle for anonymized dnscrypt config and uses only dnscrypt servers
-- toggle for a hardended-kernel and some hardened config
+- Hardened Kernel available in the cachyos repo
 - security related packages are compiled with extra CC flags for extra security
 
 # Ananicy-Cpp
