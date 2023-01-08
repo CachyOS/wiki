@@ -2,15 +2,14 @@
 title: Which Kernel does CachyOS provide and maintain
 description: CachyOS Kernels, improvements, ...
 published: 1
-date: 2022-11-26T19:31:04.627Z
+date: 2023-01-08T21:29:51.332Z
 tags: cachyos, kernel, performance
 editor: markdown
 dateCreated: 2021-11-25T07:07:09.929Z
 ---
 
-
-
-<h1 align="center">Linux-CachyOS</h1>
+<br/>
+  <h1 align="center">CachyOS</h1>
   <p align="center">CachyOS ships improved kernels that improve performance and other aspects.</p>
 </div>
 
@@ -25,29 +24,28 @@ We provided all of these schedulers because each scheduler performs differently 
 - Task Type Scheduler by [Hamad Marri (TT)](https://github.com/hamadmarri/TT-CPU-Scheduler) - `linux-cachyos-tt` / `linux-tt`
 - BitMap Queue (BMQ) Alfred Chen Scheduler - `linux-cachyos-bmq`
 - Priority and Deadline based Skiplist multiple queue scheduler (PDS) - Alfred Chen Scheduler » `linux-cachyos-pds`
-- CacULE and CacULE-RDB created from Hamad Marri, maintained by CachyOS - `linux-cachyos-cacule`
+- CacULE and CacULE-RDB created from Hamad Marri, maintained by CachyOS - `linux-cachyos-cacule` ATTENTION: Not supported after 6.1
 - Standard Scheduler Completely Fair Scheduler (CFS) - `linux-cachyos-cfs`
-> All kernels are prebuilt in two different march versions (x86-64 and x86-64-v3) and also with the LTO-enabled kernels in the cachyos repositories.
+> All kernels are prebuilt in two different march versions (x86-64, x86-64-v3 and x86-64-v4) and also with the LTO-enabled kernels in the cachyos repositories.
 
 ## 🎯 Features
 - Very customizable PKGBUILD with many features and improvements.
 - 5 Different scheduler are supported, `CacULE-`,`CFS-`,`tt-`,`bmq-`,`bore-`, and `pds` scheduler
 - `GCC/CLANG` Optimization with automatically found CPU arch or also selectable CPU architecture.
-- Choose between `LLVM/LTO` or `GCC`.
-- Choose between 300Hz, 500Hz, 600 Hz ,750Hz and 1000Hz # default 750 Hz.
+- Choose between `LLVM/LTO` or `GCC`. Experimental GCC LTO support is available.
+- Choose between 300Hz, 500Hz, 600 Hz ,750Hz and 1000Hz. Defaults to 750 Hz.
 - Improved BFQ Scheduler.
 - Back-ported patches from `linux-next`.
 - General improved sysctl settings and upstream scheduler fixes.
-- Latest LRU (v15) Patch-set, default enabled.
-- Maple Tree from `linux-next`.
-- MM Demotion from `linux-next`.
+- MEMCG MG LRU Patchset
 - Latency Nice Patchset included usuage with `ananicy-cpp` [feature branch](https://lore.kernel.org/lkml/20220925143908.10846-1-vincent.guittot@linaro.org/T/#t).
-- NEST Scheduler.
+- Scheduler patches from linux-next/tip
 - rcu fixes and improvements.
-- latest DAMON improvements and fixes.
+- printk patches
 - BBRv2 tcp_congestion_control.
-- LLVM THIN-LTO Kernels prebuilt in `x86-64-v3` and `x86-64` in the CachyOS repositories.
+- LLVM THIN-LTO Kernels prebuilt in `x86-64-v4`, `x86-64-v3` and `x86-64` in the CachyOS repositories.
 - LRNG Framework. (default enabled)
+- THP Shrinker
 - Latest & improved ZSTD patch-set.
 - Latest BTRFS/XFS/EXT4 improvements & fixes.
 - KSMBD Module for Samba3 Server.
@@ -55,10 +53,11 @@ We provided all of these schedulers because each scheduler performs differently 
 - Clearlinux Patchset.
 - Kernel Control Flow Integrity (kCFI) selectable when using `LLVM`. (patched llvm can be found in the cachyos-repositories)
 - ZFS Filesystem Support and prebuilt in the repository.
-- WINESYNC Fastsync.
-- Use entropy optimization for zRAM.
+- Futex fixes and winesync is available
 - UserKSM daemon from pf.
 - support for bcachefs.
+- RTW88 Patches included
+- OpenRGB and ACS Override support
 
 ## Other GNU/Linux distributions
 - Complete patch for simple patching on the kernel
@@ -73,7 +72,7 @@ eselect repository enable ROKO__
 emaint sync -r ROKO__
 ```
 
-## We are providing a [repositories](https://mirror.cachyos.org/) which includes all kernels in x86-64-v3 and x86-64 and more performance-optimized packages
+## We are providing a [repositories](https://mirror.cachyos.org/) which includes all kernels in x86-64-v4,x86-64-v3 and x86-64 and more performance-optimized packages
 How to add our repositories automatically with compatibility detection (if x86-64-v3 is supported) is described below:
 
 ## 🦾 Automatic adding of our repositories
@@ -110,12 +109,12 @@ sudo pacman-key --lsign-key F3B607488DB35A47
 
 3. You can download first initial packages
 ```
-sudo pacman -U 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-2-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-mirrorlist-13-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v3-mirrorlist-13-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/pacman-6.0.2-9-x86_64.pkg.tar.zst'
+sudo pacman -U 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-2-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-mirrorlist-14-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v3-mirrorlist-14-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v4-mirrorlist-2-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/pacman-6.0.2-10-x86_64.pkg.tar.zst'
 ```
-## Checking x86-64-v3 cpu support
+## Checking for the cpu support
 1. Check support by the following the command
 ```
-/lib/ld-linux-x86-64.so.2 --help | grep "x86-64-v3 (supported, searched)"
+/lib/ld-linux-x86-64.so.2 --help | grep "x86-64 (supported, searched)"
 ```
 
 add following under the arch repos the "-v3" repos only if they are supported:
@@ -128,8 +127,21 @@ Include = /etc/pacman.d/cachyos-v3-mirrorlist
 Include = /etc/pacman.d/cachyos-mirrorlist
 ```
 
+If you have a x86-64-v4 supprted CPU add the following:
+
+```
+# cachyos repos
+## Only add if your CPU does support x86-64-v4 architecture
+[cachyos-v4]
+Include = /etc/pacman.d/cachyos-v4-mirrorlist
+[cachyos-v3]
+Include = /etc/pacman.d/cachyos-v3-mirrorlist
+[cachyos]
+Include = /etc/pacman.d/cachyos-mirrorlist
+```
+
 > This script will also backup your old pacman.conf.
-> This script will auto-detect you architecture, if your CPU have x86-64-v3 support, it will automatically use the repos which are optimized with this flag > and some other flags.
+> This script will auto-detect you architecture, if your CPU have x86-64-v4 or x86-64-v3 support, it will automatically use the repos which are optimized with this flag > and some other flags.
 > Also all provided Kernels, Browsers, ... are optimized and compiled.
 
 ## ◀️ How to Backup the config and use the native Arch Packages
@@ -147,6 +159,7 @@ More information's you will find here [CachyOS](https://github.com/cachyos) or [
 ## 🗣️ Support - get in touch with CachyOS community
 **Discord:** <https://discord.gg/qJqj94uFwE> <br />
 **Telegram:** <https://t.me/+zCzPX4cAFjk1MTYy> <br />
+**Matrix:** <https://matrix.cachyos.org> <br />
 
 ## 🌱 Donations are welcome for the build server for the repositories or a cup of coffee for maintaining our repositories.
 
