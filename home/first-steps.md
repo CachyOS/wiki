@@ -2,7 +2,7 @@
 title: First Steps
 description: Things to do after installing cachyOS
 published: 1
-date: 2023-01-09T15:16:43.236Z
+date: 2023-01-09T15:17:09.811Z
 tags: 
 editor: markdown
 dateCreated: 2021-08-11T06:07:58.712Z
@@ -55,7 +55,7 @@ Krita - An amazing piece of software for Digital Painting
 **We do also include a dedicated GUI for managing packages named Pamac (made by the people who made Manjaro's distro), you should find it as Add/Remove Software and its really easy to use for new people coming to any Arch based distro.**
 
 
-You can easily install these softwares by running one of the command `sudo pacman -S nameofapp` or `paru -S nameofapp` or `yay -S nameofapp`
+You can easily install these softwares by running one of the command `sudo pacman -S $package` or `paru -S $package` or `yay -S $package`
 
 For eg : `paru -S vlc mailspring spotify gimp` can be used to install some of these apps
 Note : If you get and error saying 'error: target not found: appname' you should try the other alternative `pacman -S appname` and vice versa. You should also check if the name you are using is the name of the app in the database, for eg. vscode can be installed using `paru -S visual-studio-code-bin` . Google it, if in confusion.
