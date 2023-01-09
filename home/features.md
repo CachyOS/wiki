@@ -2,7 +2,7 @@
 title: Features and Performance Tweaks
 description: Some of the CachyOS features, and what makes CachyOS different.
 published: 1
-date: 2023-01-08T21:25:08.904Z
+date: 2023-01-09T15:16:01.954Z
 tags: best, better, feature, features, info, information, why
 editor: markdown
 dateCreated: 2021-07-04T02:28:46.352Z
@@ -39,6 +39,7 @@ Following security features will be available:
 - Hardened Kernel available in the cachyos repo
 - security related packages are compiled with extra CC flags for extra security
 
-# Ananicy-Cpp
+# ananicy-cpp
 
-([Ananicy-Cpp](https://gitlab.com/ananicy-cpp/ananicy-cpp)) (ANother Auto NICe daemon) — is a shell daemon created to manage processes' IO and CPU priorities, with community-driven rulesets for popular applications. This tool is mainly for desktop usage. Ananicy-Cpp is a completly rewritten version of the orginal Ananicy in C++, providing much lower CPU and memory usage.
+([ananicy-cpp](https://gitlab.com/ananicy-cpp/ananicy-cpp)) (ANother Auto NICe daemon) — is a shell daemon created to manage processes' IO and CPU priorities, with community-driven rulesets for popular applications. This tool is mainly for desktop usage. Ananicy-Cpp is a completly rewritten version of the orginal Ananicy in C++, providing much lower CPU and memory usage.
+Recently also there was latency_nice included, which helps the scheduler to make decesion which tasks get a lower or higher latency.
