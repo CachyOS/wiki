@@ -2,7 +2,7 @@
 title: First Steps
 description: Things to do after installing cachyOS
 published: 1
-date: 2023-01-06T11:12:24.420Z
+date: 2023-01-09T15:16:43.236Z
 tags: 
 editor: markdown
 dateCreated: 2021-08-11T06:07:58.712Z
@@ -68,16 +68,3 @@ Run this command -> `sudo pacman -S appmenu-gtk-module libdbusmenu-glib` and res
 ## 6. ***Set up Bluetooth headphones***
 If your current headset doesn't auto connect you would need to configure your device to auto connect to your headphones, The Arch wiki gives a comprehensive guide on the same - https://wiki.archlinux.org/title/bluetooth_headset#Headset_via_Bluez5/PulseAudio , just read and follow the steps and you would be good to go.
 For some headphones Pulseaudio doesn't seem to work and you'd need to reconnect the headphones manually each time you restart your computer. To solve this issue replace Pulseaudio with Pipewire, using this https://wiki.archlinux.org/title/bluetooth_headset#Headset_via_Pipewire
-
-## 7. ***RDNA3 Cards invisible mouse pointer in x11***
-There is a current bug with x11 and the AMD RDNA3 Cards.
-The issue can be solved by following workaround:
-`/etc/x11/xorg.conf.d/99-modsetting.conf`
-with following content:
-
-```
-Section "Device"
-          Identifier "modesetting"
-          Driver "modesetting"
-EndSection
-```
