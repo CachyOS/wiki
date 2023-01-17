@@ -2,7 +2,7 @@
 title: Gaming
 description: 
 published: 1
-date: 2023-01-16T20:32:32.645Z
+date: 2023-01-17T07:22:41.257Z
 tags: 
 editor: markdown
 dateCreated: 2023-01-16T19:09:36.842Z
@@ -21,6 +21,7 @@ sudo pacman -S cachyos-gaming-meta
 
 ## Steam
 If you play games through Steam. Congratulations. That's all! Let's open Steam, select proton and enjoy your games!
+> Notebook users with NVIDIA GPU should read following guide: [NVIDIA PRIME Render Offload](https://wiki.cachyos.org/en/notebooks)
 
 ### Proton?
 Don't worry nothing hard, just by few clicks by mouse. Here is a screenshots.
