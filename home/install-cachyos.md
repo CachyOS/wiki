@@ -2,7 +2,7 @@
 title: How to install CachyOS
 description: CachyOS Installation via GUI/CLI Installer
 published: 1
-date: 2023-01-17T22:56:48.414Z
+date: 2023-01-17T23:12:36.324Z
 tags: cachyos, calamares, cli-installer, gui-installer, install-cachyos
 editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
@@ -69,7 +69,7 @@ We provide several desktop environments. KDE being default one. Following are av
 - bspwm
 - Cinnamon
 - UKUI
-- Hyprland (Dotfiles are available in the repo)
+- Hyprland # Is not working well in VMs and on NVIDIA
 
 1. KDE Plasma is a feature-rich and versatile desktop environment that provides several different styles of menu to access applications. Its default window manager is kwin, but is also compatible with Compiz. An excellent built-in interface to easily access and install new themes, widgets, etc, from the internet is also worth mentioning.
 2. Cutefish is an efficient, beautiful, and modern desktop environment built using Qt Quick and some KDE basic frameworks. More or like-macOS style.
@@ -82,4 +82,4 @@ We provide several desktop environments. KDE being default one. Following are av
 9. bspwm is a tiling window manager designed for X11, and written in C. It supports tiling, stacking, and tabbing layouts, which it handles dynamically. It represents windows as the leaves of a full binary tree.
 10. Cinnamon is a Linux desktop which provides advanced innovative features and a traditional user experience
 11. UKUI is a lightweight desktop environment, which consumes few resources and works with older computers. It has been developed with GTK and Qt technologies. Its visual appearance is similar to Windows 7, making it easier for new users of Linux.
-1. Hyprland is a dynamic tiling Wayland compositor that doesn't sacrifice on its looks. Hyprland comes with some preconfigured dotfiles
+12. Hyprland is a dynamic tiling Wayland compositor that doesn't sacrifice on its looks. Hyprland comes with some preconfigured dotfiles
