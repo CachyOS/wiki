@@ -2,7 +2,7 @@
 title: Gaming
 description: 
 published: 1
-date: 2023-01-17T07:22:41.257Z
+date: 2023-01-17T07:23:49.826Z
 tags: 
 editor: markdown
 dateCreated: 2023-01-16T19:09:36.842Z
@@ -24,7 +24,7 @@ If you play games through Steam. Congratulations. That's all! Let's open Steam, 
 > Notebook users with NVIDIA GPU should read following guide: [NVIDIA PRIME Render Offload](https://wiki.cachyos.org/en/notebooks)
 
 ### Proton?
-Don't worry nothing hard, just by few clicks by mouse. Here is a screenshots.
+Don't worry nothing hard, just a few mouse clicks. Here is a screenshots.
 ![screenshot_20230116_212054.png](/screenshot_20230116_212054.png)
 ![screenshot_20230116_212256.png](/screenshot_20230116_212256.png)
 ![screenshot_20230116_212402.png](/screenshot_20230116_212402.png)
