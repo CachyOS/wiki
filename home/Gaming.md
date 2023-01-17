@@ -2,7 +2,7 @@
 title: Gaming
 description: 
 published: 1
-date: 2023-01-17T07:23:49.826Z
+date: 2023-01-17T07:31:31.224Z
 tags: 
 editor: markdown
 dateCreated: 2023-01-16T19:09:36.842Z
@@ -29,6 +29,9 @@ Don't worry nothing hard, just a few mouse clicks. Here is a screenshots.
 ![screenshot_20230116_212256.png](/screenshot_20230116_212256.png)
 ![screenshot_20230116_212402.png](/screenshot_20230116_212402.png)
 ![screenshot_20230116_212343.png](/screenshot_20230116_212343.png)
+
+You can play your Windows games on Linux.
+> How do I know, if my game works on Linux? Check your game on [proton-db](https://www.protondb.com/)
 
 ### Proton versions
 We provide a lot of different proton versions for play games. If you want to more performance, try `proton-cachyos`
