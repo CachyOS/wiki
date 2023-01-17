@@ -2,7 +2,7 @@
 title: Screenshots
 description: Some screenshots of CachyOS
 published: 1
-date: 2023-01-08T21:28:43.330Z
+date: 2023-01-17T22:42:42.237Z
 tags: 
 editor: markdown
 dateCreated: 2021-07-04T03:23:21.056Z
@@ -38,3 +38,5 @@ dateCreated: 2021-07-04T03:23:21.056Z
 ![lxqt.png](/lxqt.png)
 ## Hyprland
 ![hyprland.png](/hyprland.png)
+## UKUI
+![ukui.png](/ukui.png)
