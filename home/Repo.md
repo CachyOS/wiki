@@ -2,7 +2,7 @@
 title: Adding CachyOS repo for optimized packages
 description: Basic tutorial for adding CachyOS repo to your system for packages compiled with x86_64-v3 support.
 published: 1
-date: 2023-01-18T16:54:04.010Z
+date: 2023-01-20T22:26:14.624Z
 tags: arch linux, cachyos, repo, x86_64-v3
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -91,6 +91,11 @@ sudo pacman -Syu
 Now enjoy your system speed going up by our packages 😛
 
 ## Debug packages
+We provide a debuginfod server, with this the debuginfod can be simply fetched with `gdb`.
+Just add following to your enviroment or export it:
+
+`export DEBUGINFOD_URLS=https://debuginfod.cachyos.org`
+
 Debug packages can be found in the cachyos-debug-v3 repo.
 Simply add the cachyos-debug-v3 repo:
 
