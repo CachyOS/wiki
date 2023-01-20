@@ -2,7 +2,7 @@
 title: Gaming
 description: 
 published: 1
-date: 2023-01-17T07:31:31.224Z
+date: 2023-01-20T08:54:23.775Z
 tags: 
 editor: markdown
 dateCreated: 2023-01-16T19:09:36.842Z
@@ -46,4 +46,16 @@ We provide a lot of different proton versions for play games. If you want to mor
 - proton-experimental
 - proton
 
+# Bottles
 
+# Lutris
+Lutris provide one central hub for all games on your Linux distro, you can also manage your runners - Wine, Proton or kind of emulator to run game with a lot of custom parameters. 
+```
+sudo pacman -S lutris
+```
+## Script installers
+Most games are installed through script, so you need minimal effort to install games.
+
+### League Of Legends
+[League Of Legends scripts](https://lutris.net/games/league-of-legends/)
+I personally uses **WINE Standard version**.
