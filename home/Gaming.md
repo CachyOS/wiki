@@ -2,7 +2,7 @@
 title: Gaming
 description: 
 published: 1
-date: 2023-01-20T08:54:23.775Z
+date: 2023-01-20T09:34:29.056Z
 tags: 
 editor: markdown
 dateCreated: 2023-01-16T19:09:36.842Z
@@ -58,4 +58,5 @@ Most games are installed through script, so you need minimal effort to install g
 
 ### League Of Legends
 [League Of Legends scripts](https://lutris.net/games/league-of-legends/)
-I personally uses **WINE Standard version**.
+We sugest to use **WINE Standard version**.
+> Follow instructions of script.
