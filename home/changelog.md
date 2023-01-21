@@ -2,7 +2,7 @@
 title: CachyOS GUI Installer Changelog
 description: Changelog for the CachyOS GUI Installer
 published: 1
-date: 2023-01-21T19:32:04.638Z
+date: 2023-01-21T19:32:37.700Z
 tags: cachyos, changelog, clamares, gui-installer, linux-cachyos
 editor: markdown
 dateCreated: 2023-01-21T19:28:01.996Z
