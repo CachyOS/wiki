@@ -2,8 +2,8 @@
 title: CachyOS GUI Installer Changelog
 description: Changelog for the CachyOS GUI Installer
 published: 1
-date: 2023-01-21T19:28:01.996Z
-tags: cachyos, gui-installer, changelog, clamares, linux-cachyos
+date: 2023-01-21T19:31:33.368Z
+tags: cachyos, changelog, clamares, gui-installer, linux-cachyos
 editor: markdown
 dateCreated: 2023-01-21T19:28:01.996Z
 ---
@@ -63,26 +63,26 @@ Following options you can select for a kernel compile:
 - Enable or disable nf cone
 - Enable LTO (Full, Thin, No)
 
-# Changelog CachyOS 22.07:*
+# Changelog CachyOS 22.07:
 
 **Features:**
 
-`- Boot-loader selection: User can now choose on the online installation between grub and systemd-boot`
-`- At online installation will now always the newest calamares installed, which helps to do bug fixes on the "air"`
-`- Calamares has now a mhwd module which automatically installs the needed drivers (free drivers)`
-`- Calamares has new picture slides at the installation`
-`- fstab and zfs mount options got updated`
-`- HiDPI support`
+- Boot-loader selection: User can now choose on the online installation between grub and systemd-boot
+- At online installation will now always the newest calamares installed, which helps to do bug fixes on the "air"
+- Calamares has now a mhwd module which automatically installs the needed drivers (free drivers)
+- Calamares has new picture slides at the installation
+- fstab and zfs mount options got updated
+- HiDPI support
 
 **Bug-fixes:**
 
-`- The locales bug in calamares got fixed`
-`- F2FS has been removed for the grub boot loader since it is currently not working (calamares issue), it can be still with systemd-boot used`
-`- Calamares shows now the correct default filesystem`
-`- Gnome ISO got fixed`
-`- Missing packages at the live ISO has been added for the offline installation`
-`- btrfs swap luksencryption got fixed`
-`- usual translation fixes`
+- The locales bug in calamares got fixed
+- F2FS has been removed for the grub boot loader since it is currently not working (calamares issue), it can be still with systemd-boot used
+- Calamares shows now the correct default filesystem
+- Gnome ISO got fixed
+- Missing packages at the live ISO has been added for the offline installation
+- btrfs swap luksencryption got fixed
+- usual translation fixes
 
 
 
@@ -90,101 +90,101 @@ Following options you can select for a kernel compile:
 
 **Features:**
 
-`- Calamares is now on the latest 3.3 branch. Its brings bugfixes and new features to calamares`
-`- TUI-Installer is now included in the GUI ISO, you can use it with "cachyos-installer"`
-`- Calamares does now auto detect, if the target filesystem is a ssd or hdd and adjust to it the fstab options`
-`- Nvidia for latest gpu's (starting at 9xx) has now a own boot entry, to avoid issues with nouveau`
-`- fstab and zfs mount options got updated`
-`- FireFox won't be installed as default anymore since cachy-browser is installed as default`
+- Calamares is now on the latest 3.3 branch. Its brings bugfixes and new features to calamares
+- TUI-Installer is now included in the GUI ISO, you can use it with "cachyos-installer"
+- Calamares does now auto detect, if the target filesystem is a ssd or hdd and adjust to it the fstab options
+- Nvidia for latest gpu's (starting at 9xx) has now a own boot entry, to avoid issues with nouveau
+- fstab and zfs mount options got updated
+- FireFox won't be installed as default anymore since cachy-browser is installed as default
 
 **Bug-fixes:**
 
-`- cachyos-gaming-meta has been removed from the netinstall module to avoid issues at the installation process`
-`- netinstall packages has been updated and got some fixes`
-`- OpenBox installation has been fixed`
-`- usual translation fixes`
+- cachyos-gaming-meta has been removed from the netinstall module to avoid issues at the installation process
+- netinstall packages has been updated and got some fixes
+- OpenBox installation has been fixed
+- usual translation fixes
 
 # *Changelog CachyOS 22.10:*
 
 **Features:**
 
-`- Pacman uses now Architecture=auto for x86-64-v3 installation, since we added a patch that pacman does autodetect x86-64-v3`
-`- Pacman does show now, from which repo a package was installed`
-`- Bootloader selection auto detect if EFI is present, if not it will default to grub`
-`- Swap choice has been disabled now as default, since zram gets automatically dynamically generated`
-`- Calamares updated to the latest commit`
-`- Minimum RAM requirement has been set to 4GB`
-`- cachyos-grub-theme got removed`
+- Pacman uses now Architecture=auto for x86-64-v3 installation, since we added a patch that pacman does autodetect x86-64-v3
+- Pacman does show now, from which repo a package was installed
+- Bootloader selection auto detect if EFI is present, if not it will default to grub
+- Swap choice has been disabled now as default, since zram gets automatically dynamically generated
+- Calamares updated to the latest commit
+- Minimum RAM requirement has been set to 4GB
+- cachyos-grub-theme got removed
 
 **Bug-fixes:**
 
-`- SSD and hdd fstab detection has been disabled until there is a upstream fix`
-`- double BTRFS subvolume has been fixed`
-`- Added missing microcode to the ISO grub bootloader`
-`- Added a fallback bootmode, which does not set any modeset (nomodeset)`
-`- And more ISO fixes`
+- SSD and hdd fstab detection has been disabled until there is a upstream fix
+- double BTRFS subvolume has been fixed
+- Added missing microcode to the ISO grub bootloader
+- Added a fallback bootmode, which does not set any modeset (nomodeset)
+- And more ISO fixes
 
 
 # *Changelog CachyOS 22.11:*
 
 **Features:**
 
-`- Calamares and its config are shipped in one package`
-`- Complete Cleanup of the packages in the netinstall`
-`- Add a module which automatically removes the not needed ucode`
-`- required RAM decreased to 2.5GB`
-`- Packages which are required for btrfs, are now only installed for btrfs`
-`- Calamares updated to the latest commit`
-`- The ISO Bootloader has now a background`
-`- Common package upgrades (mesa, kernel, ...)`
-`- Replace systemd-network with networkmanager`
+- Calamares and its config are shipped in one package
+- Complete Cleanup of the packages in the netinstall
+- Add a module which automatically removes the not needed ucode
+- required RAM decreased to 2.5GB
+- Packages which are required for btrfs, are now only installed for btrfs
+- Calamares updated to the latest commit
+- The ISO Bootloader has now a background
+- Common package upgrades (mesa, kernel, ...)
+- Replace systemd-network with networkmanager
 
 
 **Bug-fixes:**
 
-`- qemu-quest-agent.service got removed from the ISO`
-`- copytoram got completly disabled, it breaks the offline installation`
-`- mkinitcpio.conf got updated`
-`- And more ISO fixes`
+- qemu-quest-agent.service got removed from the ISO
+- copytoram got completly disabled, it breaks the offline installation
+- mkinitcpio.conf got updated
+- And more ISO fixes
 
 # *Changelog CachyOS 22.12:*
 
 **Features:**
 
-`- New GRUB background at the ISO bootloader`
-`- memtest is now included for UEFI Systems`
-`- CachyOS-sddm-theme got added to the KDE Installation`
-`- Automatic version script added when creating the ISO`
-`- Calamares updated to the latest commit`
-`- The mirrors are now ranked with "cachyos-rate-mirros", which ranks our mirrors and the arch ones`
-`- Packages Update: 6.1.1 Kernel, mesa 22.3.1, plasma 5.26.4,...`
-`- The Kofuku Desktop Enviroment got removed`
-`- extra ISO with llvm 15 included to provide support for newer AMD Cards`
+- New GRUB background at the ISO bootloader
+- memtest is now included for UEFI Systems
+- CachyOS-sddm-theme got added to the KDE Installation
+- Automatic version script added when creating the ISO
+- Calamares updated to the latest commit
+- The mirrors are now ranked with "cachyos-rate-mirros", which ranks our mirrors and the arch ones
+- Packages Update: 6.1.1 Kernel, mesa 22.3.1, plasma 5.26.4,...
+- The Kofuku Desktop Enviroment got removed
+- extra ISO with llvm 15 included to provide support for newer AMD Cards
 
 
 **Bug-fixes:**
 
-`- Calamares got fixed when using GNOME as ISO`
-`- zfshostid does now work proper for the offline and online installation`
-`- Add "kms" hook to the initcpiocfg module to follow archlinux defaults`
-`- And more ISO fixes`
+- Calamares got fixed when using GNOME as ISO
+- zfshostid does now work proper for the offline and online installation
+- Add "kms" hook to the initcpiocfg module to follow archlinux defaults
+- And more ISO fixes
 
 # *Changelog CachyOS 23.01:*
 
 **Features:**
 
-`- Calamares Slides got reworked and updated`
-`- UKUI Desktop Enviroment got added to the Netinstallation`
-`- Cinnamon Desktop Enviroment got added to the Netinstallation`
-`- Cmdline: zswap is now disabled as default because CachyOS provides zram as default`
-`- Calamares updated to the latest commit`
-`- LLVM 15 is now shipped as default`
-`- Package Updates: linux-cachyos 6.1.7, mesa 22.3.3, Plasma 5.26.5, llvm 15.0.7, gcc 12.1.1, binutils 2.40, zfs-utils 2.1.8, nvidia 525.85.05`
-`- CLI Installer got updated`
+- Calamares Slides got reworked and updated
+- UKUI Desktop Enviroment got added to the Netinstallation
+- Cinnamon Desktop Enviroment got added to the Netinstallation
+- Cmdline: zswap is now disabled as default because CachyOS provides zram as default
+- Calamares updated to the latest commit
+- LLVM 15 is now shipped as default
+- Package Updates: linux-cachyos 6.1.7, mesa 22.3.3, Plasma 5.26.5, llvm 15.0.7, gcc 12.1.1, binutils 2.40, zfs-utils 2.1.8, nvidia 525.85.05
+- CLI Installer got updated
 
 **Bug-fixes:**
 
-`- remove-ucode shellprocess does also run now at the offline installation`
-`- pamac got removed from the netinstall`
-`- The ranked cachyos mirrors gets now correctly copied to the install target`
-`- power-profile-daemon don't gets enabled anymore as default`
+- remove-ucode shellprocess does also run now at the offline installation
+- pamac got removed from the netinstall
+- The ranked cachyos mirrors gets now correctly copied to the install target
+- power-profile-daemon don't gets enabled anymore as default
