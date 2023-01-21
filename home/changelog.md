@@ -2,13 +2,13 @@
 title: CachyOS GUI Installer Changelog
 description: Changelog for the CachyOS GUI Installer
 published: 1
-date: 2023-01-21T19:31:33.368Z
+date: 2023-01-21T19:32:04.638Z
 tags: cachyos, changelog, clamares, gui-installer, linux-cachyos
 editor: markdown
 dateCreated: 2023-01-21T19:28:01.996Z
 ---
 
-# *Changelog CachyOS 22.05:*
+# *Changelog CachyOS 22.05*
 
 CachyOS was founded a year ago. After almost one year of development, we are really proud to announce our first Stable Release of GUI Installer.
 We spent a lot of time investigating repo management, kernel development, infrastructure, theming, ... and finally put them all into the CachyOS GUI Installer.
@@ -25,7 +25,7 @@ https://mirror.cachyos.org/ISO/kde/220522/
 https://sourceforge.net/projects/cachyos-arch/
 
 
- # **Changelog CachyOS 22.06:**
+ # **Changelog CachyOS 22.06**
 
 Following known bugs has been fixed:
 
@@ -63,7 +63,7 @@ Following options you can select for a kernel compile:
 - Enable or disable nf cone
 - Enable LTO (Full, Thin, No)
 
-# Changelog CachyOS 22.07:
+# Changelog CachyOS 22.07
 
 **Features:**
 
@@ -86,7 +86,7 @@ Following options you can select for a kernel compile:
 
 
 
-# *Changelog CachyOS 22.09:*
+# *Changelog CachyOS 22.09*
 
 **Features:**
 
@@ -104,7 +104,7 @@ Following options you can select for a kernel compile:
 - OpenBox installation has been fixed
 - usual translation fixes
 
-# *Changelog CachyOS 22.10:*
+# *Changelog CachyOS 22.10*
 
 **Features:**
 
@@ -125,7 +125,7 @@ Following options you can select for a kernel compile:
 - And more ISO fixes
 
 
-# *Changelog CachyOS 22.11:*
+# *Changelog CachyOS 22.11*
 
 **Features:**
 
@@ -147,7 +147,7 @@ Following options you can select for a kernel compile:
 - mkinitcpio.conf got updated
 - And more ISO fixes
 
-# *Changelog CachyOS 22.12:*
+# *Changelog CachyOS 22.12*
 
 **Features:**
 
@@ -169,7 +169,7 @@ Following options you can select for a kernel compile:
 - Add "kms" hook to the initcpiocfg module to follow archlinux defaults
 - And more ISO fixes
 
-# *Changelog CachyOS 23.01:*
+# *Changelog CachyOS 23.01*
 
 **Features:**
 
