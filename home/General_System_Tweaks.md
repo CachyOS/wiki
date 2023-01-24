@@ -2,7 +2,7 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2022-12-31T11:32:25.869Z
+date: 2023-01-24T22:12:25.977Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
@@ -96,11 +96,33 @@ For improved scaling of frequencies and better performance per watt, you can ena
 
 For more information, see: https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/
 
-If your CPU supports the MSR, add the following to your boot cmdline:
+There is also a amd-pstate=guided mode. For more information, see: https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/
 
-- AMD PSTATE: `amd-pstate=passive`
-- AMD PSTATE-GUIDED: `amd-pstate=guided`
-- AMD PSTATE EPP: `amd-pstate=active`
+Simply add following to your kernel cmdline:
+
+- AMD PSTATE: `amd_pstate=passive`
+- AMD PSTATE-GUIDED: `amd_pstate=guided`
+- AMD PSTATE EPP: `amd_pstate=active`
+
+You can also switch between these modes at runtime, if you want to test these options with:
+
+`echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status`
+
+- In autonomous mode, platform ignores the desired performance level request
+  and takes into account only the values set to the Minimum requested
+  performance, Maximum requested performance and Energy Performance Preference
+  registers.
+  
+`echo guided | sudo tee /sys/devices/system/cpu/amd_pstate/status`
+- In guided-autonomous mode, platform sets operating performance level
+  autonomously according to the current workload and within the limits set by
+  OS through min and max performance registers.
+
+`echo passive | sudo tee /sys/devices/system/cpu/amd_pstate/status`
+
+- In non-autonomous mode, platform gets desired performance level
+  from OS directly through Desired Performance Register.
+
 
 ## 6. Using amd-pstate-epp
 
