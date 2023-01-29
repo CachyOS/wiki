@@ -2,7 +2,7 @@
 title: Adding CachyOS repo for optimized packages
 description: Basic tutorial for adding CachyOS repo to your system for packages compiled with x86_64-v3 support.
 published: 1
-date: 2023-01-29T16:16:27.282Z
+date: 2023-01-29T16:21:14.273Z
 tags: arch linux, cachyos, repo, x86_64-v3
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -102,36 +102,38 @@ Server = https://debug.cachyos.org/repo/$arch_v3/$repo
 Server = https://debug.cachyos.org/repo/$arch_v3/$repo
 ```
 
-## Uninstalling
+Uninstalling CachyOS repositories
+---------------------------------
 
 ### Option 1: Automated Removal
 
-Execute these commands to remove CachyOS repos from your system
+Run these commands to remove the CachyOS repos from your system:
 
-```
+```sh
 wget https://build.cachyos.org/cachyos-repo.tar.xz
 tar xvf cachyos-repo.tar.xz
 cd cachyos-repo
 sudo ./cachyos-repo.sh --remove
 ```
 
-### Manually
+### Option 2: Manual Removal
 
-1. Remove or Backup the config located at /etc/pacman.conf
-2. Then execute this command
+1.  Backup or remove the config file at `/etc/pacman.conf`.
+2.  Run this command:
 
-```
+```bash
 sudo mv /etc/pacman.conf.bak /etc/pacman.conf
 ```
 
-3. Run following command to switch the packages to the default Arch packages
+3.  Switch to default Arch Linux packages with this command:
 
 ```
 sudo pacman -Suuy
 ```
 
-## Nvidia driver with Clang compiled kernels
+Note on Nvidia Driver and Clang Compiled Kernels
+------------------------------------------------
 
-Not needed anymore, since dkms 3.0.1 😃
+This is no longer necessary, since dkms version 3.0.1. 😃
 
-If you got any question, just hit me up!
+If you have any questions, feel free to reach out!
