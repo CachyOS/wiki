@@ -2,26 +2,26 @@
 title: Adding CachyOS repo for optimized packages
 description: Basic tutorial for adding CachyOS repo to your system for packages compiled with x86_64-v3 support.
 published: 1
-date: 2023-01-20T22:26:14.624Z
+date: 2023-01-29T14:34:05.117Z
 tags: arch linux, cachyos, repo, x86_64-v3
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
 ---
 
-## Automatically
+## Option 1: Automated Installation
 
-Execute these commands to use our helper script that does the thing automatically 😉
+We've made it easy for you! Simply run the following commands to use our helper script that does all the work for you.  😉
 
-```
+```sh
 wget https://build.cachyos.org/cachyos-repo.tar.xz
 tar xvf cachyos-repo.tar.xz
 cd cachyos-repo
 sudo ./cachyos-repo.sh
 ```
 
-This script will backup your old pacman.conf, and will also auto-detect you architecture, if your CPU have x86-64-v3 or x86-64-v4 support, it will automatically use the repos which are optimized with this flag and some other flags.
+The script will back up your old pacman.conf file, and automatically detect your architecture. If your CPU supports x86-64-v3 or x86-64-v4, it will use optimized repositories.
 
-💡 For more information, check repo's description [CachyOS](https://github.com/cachyos) or via [Discord](https://discord.gg/k39qfrxPNa)
+💡 For more information, check out our [GitHub](https://github.com/cachyos) or join our [Discord](https://discord.gg/k39qfrxPNa) community.
 
 ## Manually
 
