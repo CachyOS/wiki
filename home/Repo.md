@@ -2,7 +2,7 @@
 title: Adding CachyOS repo for optimized packages
 description: Basic tutorial for adding CachyOS repo to your system for packages compiled with x86_64-v3 support.
 published: 1
-date: 2023-01-29T16:15:35.136Z
+date: 2023-01-29T16:16:27.282Z
 tags: arch linux, cachyos, repo, x86_64-v3
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -104,7 +104,7 @@ Server = https://debug.cachyos.org/repo/$arch_v3/$repo
 
 ## Uninstalling
 
-### Automatically
+### Option 1: Automated Removal
 
 Execute these commands to remove CachyOS repos from your system
 
