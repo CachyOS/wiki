@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2023-01-29T13:57:17.286Z
+date: 2023-01-29T14:22:45.053Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -16,7 +16,7 @@ CachyOS is an Arch Linux-based distribution that aims to provide easy installati
 
 Improved performance is achieved by complex means. But the main ones are our repository with optimized packages and our own default kernel. Our repository contains packages built optimized for today's generation of x86_64-v3 processor microarchitectures,  which comes with a notable performance boost. It depends on your CPU if it does support that, but you don't need to worry about it - the installer will detect the correct supported architecture and adjust to your system.
 
-We also provide an optimized custom linux-cachyos kernel with the various schedulers supported by the CachyOS team (sir_lucjan and ptr1337). You can get this kernel from our repository compiled for x86_64-v3 architecture and LLVM-LTO support or build it yourself.
+We also provide an optimized custom linux-cachyos kernel with the various schedulers supported by the CachyOS team (sir_lucjan and ptr1337). You can get this kernel from our repository compiled for x86_64-v3 architecture and LLVM-LTO support or build it yourself with our cachyos-kernel-manager (see https://wiki.cachyos.org/en/home/kernel-manager).
 
 Also in the near future, several system package's would get a custom optimization from POLAUR and will be used into our system.
 
