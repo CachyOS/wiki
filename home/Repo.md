@@ -2,7 +2,7 @@
 title: Adding CachyOS repo for optimized packages
 description: Basic tutorial for adding CachyOS repo to your system for packages compiled with x86_64-v3 support.
 published: 1
-date: 2023-01-29T14:34:05.117Z
+date: 2023-01-29T14:37:50.032Z
 tags: arch linux, cachyos, repo, x86_64-v3
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -23,7 +23,7 @@ The script will back up your old pacman.conf file, and automatically detect your
 
 💡 For more information, check out our [GitHub](https://github.com/cachyos) or join our [Discord](https://discord.gg/k39qfrxPNa) community.
 
-## Manually
+## Option 2: Manual Installation
 
 First, receive and sign our keys:
 
@@ -32,23 +32,21 @@ sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
 sudo pacman-key --lsign-key F3B607488DB35A47
 ```
 
-Then install our mirrorlist & keyring packages
+Next, install the mirrorlist and keyring packages as well as customized pacman:
 
 ```
 sudo pacman -U 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-2-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-mirrorlist-14-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v3-mirrorlist-14-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v4-mirrorlist-2-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/pacman-6.0.2-10-x86_64.pkg.tar.zst'
 ```
 
-After that, you need to check your CPU for x86-64_v3 or x86-64-v4 support, which you can do by executing
+Check if your CPU supports x86-64-v3 or x86-64-v4 by running the following command:
 
 ```
 /lib/ld-linux-x86-64.so.2 --help | grep "x86-64 (supported, searched)"
 ```
 
-If you get an output then your CPU supports `x86_64-v3` or `x86-64-v4`
+If you get an output, then your CPU supports `x86_64-v3` or `x86-64-v4`.
 
-### With `x86_64-v3`
-
-Then add the following over the Arch Linux repos
+### For `x86_64-v3`: Add the following to the Arch Linux repositories:
 
 ```cfg
 [cachyos-v3]
@@ -60,7 +58,7 @@ Include = /etc/pacman.d/cachyos-mirrorlist
 ```
 
 
-### With `x86_64-v4`
+### For `x86_64-v4`: Add the following
 
 Then add the following over the Arch Linux repos
 
