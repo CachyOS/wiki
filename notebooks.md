@@ -2,7 +2,7 @@
 title: Laptop with Dual GPU Setup Guide
 description: 
 published: 1
-date: 2022-09-25T13:50:36.665Z
+date: 2023-01-29T14:33:37.394Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
@@ -35,6 +35,9 @@ Set `amdgpu nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
 ```conf
 MODULES="amdgpu nvidia"
 ```
+<!---
+TODO: is the old radeon really support PRIME?
+-->
 #### with [radeon driver](https://wiki.archlinux.org/title/ATI)
 Set `radeon nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
 ```conf
@@ -43,6 +46,10 @@ MODULES="radeon nvidia"
 
 ## Enable "Direct Rendering Manager" (DRM KMS)
 To enable DRM we need to add necessary kernel parameter in the bootloader, each bootloader has a different way to do that. 
+
+> DRM KMS is already enabled by default in CachyOS as of cachyos-settings v23
+{.is-note}
+
 ### Using GRUB
 Add `nvidia-drm.modeset=1` to GRUB_CMDLINE_LINUX_DEFAULT in `/etc/default/grub`, it'll look something like this:
 ```conf
@@ -85,6 +92,10 @@ Arch Linux has a package called [`nvidia-prime`](https://archlinux.org/packages/
 ```
 prime-run <program>
 ```
+
+### GNOME
+
+As of GNOME 3.38 and later, you can select *"Run with Discrete Graphics"* from the context menu when you right-click on an application.
 
 # Optional configuration
 ## Fully power down the GPU when not in use
