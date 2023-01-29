@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2023-01-09T15:14:56.482Z
+date: 2023-01-29T13:57:17.286Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -14,13 +14,14 @@ CachyOS is an Arch Linux-based distribution that aims to provide easy installati
 
 ## How does CachyOS improve the performance?
 
-We provide a optimized repo with march=x86-64-v3 support which comes with a notable performance boost. It depends on your cpu if it does support that, but you dont need to worry about it - the installer will detect the correct march and adjust to your system.
+Improved performance is achieved by complex means. But the main ones are our repository with optimized packages and our own default kernel. Our repository contains packages built optimized for today's generation of x86_64-v3 processor microarchitectures,  which comes with a notable performance boost. It depends on your CPU if it does support that, but you don't need to worry about it - the installer will detect the correct supported architecture and adjust to your system.
 
-We also provide several optimized custom kernels with various schedulers, maintained by the CachyOS team (sir_lucjan and ptr1337). These kernels include `march` optimization and LLVM-LTO support.
+We also provide an optimized custom linux-cachyos kernel with the various schedulers supported by the CachyOS team (sir_lucjan and ptr1337). You can get this kernel from our repository compiled for x86_64-v3 architecture and LLVM-LTO support or build it yourself.
 
-Here you will find some extra information about the cpu march optimization:
+Also in the near future, several system package's would get a custom optimization from POLAUR and will be used into our system.
+
+More information, including additional settings, can be found in a separate section:
 https://wiki.cachyos.org/en/home/cachyos-performance
-In the near future, several system package's would get a custom optimization from POLAUR and will be used into our system.
 
 ## Installation
 
@@ -30,7 +31,7 @@ We offer two different installers: a graphical installer and a command-line inte
 
 The graphical installer is based on Calamares and allows for both offline and online personalized installations with package selection. In the next release, you will also be able to select between two different bootloaders during an online installation.
 
-The installer also automatically optimizes the filesystem options for SSDs if one is detected. The following filesystems are available: XFS, Btrfs, F2FS, Ext4, and ZFS.
+The installer also automatically optimizes the filesystem options for SSDs if one is detected. The following filesystems are available: XFS, Btrfs, F2FS, Ext4, and ZFS. Note, if you use automatic partitioning, the XFS file system will be used by default.
 
 ### Command-Line Interface Installer
 
@@ -38,7 +39,7 @@ The CLI installer, written in C++, provides the same functions as the graphical 
 
 ## CachyOS Desktop environments
 
-You can select from the following desktop environments (DEs) during online installation:
+You can select from the following desktop environments (DEs) or window managers (WMs) during online installation:
 
 - CuteFish – An Elegant, Beautiful and Easy-to-Use Linux Desktop
 - i3 tiling window manager, primarily targeted at developers and advanced users
@@ -84,6 +85,8 @@ The Kernel Manager allows you to easily install optimized kernels, as well as co
 
 ## Support
 
+Feel free to contact us if you have any issues, we have an open community.
+
 You can join the CachyOS Discord with the following link:
 
 https://discord.gg/qJqj94uFwE
@@ -91,6 +94,10 @@ https://discord.gg/qJqj94uFwE
 or at Telegram:
 
 https://t.me/+zCzPX4cAFjk1MTYy
+
+Also at Matrix:
+
+https://matrix.to/#/#general:matrix.cachyos.org
 
 ## Donations
 
