@@ -2,7 +2,7 @@
 title: Features and Performance Tweaks
 description: Some of the CachyOS features, and what makes CachyOS different.
 published: 1
-date: 2023-01-30T00:28:16.543Z
+date: 2023-01-30T00:33:40.310Z
 tags: best, better, feature, features, info, information, why
 editor: markdown
 dateCreated: 2021-07-04T02:28:46.352Z
@@ -30,18 +30,19 @@ CachyOS also includes several other performance enhancements to improve the over
 *   BBRv2 as the default network setting
 *   Additional tweaks and improvements to further optimize performance.
 
-# Security
+Security Features
+=================
 
-Following security features will be available:
+At CachyOS, we place a high priority on security. That's why we've included the following security features in our software:
 
-- Firefox based browser with some security plugins and some extra features
-- Firejail Toggle for using all packages which got a firejail profile will use any untrusted application in a sandbox environment and it will automatically update if you install any new package
-- preconfigured dns servers, which uses DoH and DoT servers
-- toggle for anonymized dnscrypt config and uses only dnscrypt servers
-- Hardened Kernel available in the cachyos repo
-- security related packages are compiled with extra CC flags for extra security
+*   A Firefox-based browser with security plugins and additional features
+*   The option to use Firejail, which runs untrusted applications in a sandbox environment and updates automatically with new packages
+*   Preconfigured DNS servers that utilize DoH and DoT protocols
+*   Anonymized DNSCrypt configuration and use of only DNSCrypt servers
+*   A hardened kernel available in the CachyOS repository
+*   Security-related packages compiled with extra CC flags for added security
 
-# ananicy-cpp
+Ananicy-Cpp
+===========
 
-([ananicy-cpp](https://gitlab.com/ananicy-cpp/ananicy-cpp)) (ANother Auto NICe daemon) — is a shell daemon created to manage processes' IO and CPU priorities, with community-driven rulesets for popular applications. This tool is mainly for desktop usage. Ananicy-Cpp is a completly rewritten version of the orginal Ananicy in C++, providing much lower CPU and memory usage.
-Recently also there was latency_nice included, which helps the scheduler to make decesion which tasks get a lower or higher latency.
+[Ananicy-Cpp](https://gitlab.com/ananicy-cpp/ananicy-cpp) is a shell daemon that manages process IO and CPU priorities with community-driven rulesets for popular applications. This tool is primarily designed for desktop usage and is a complete rewrite of the original Ananicy in C++, providing lower CPU and memory usage. Additionally, Latency\_nice has recently been included to help the scheduler make decisions about which tasks receive lower or higher latency.
