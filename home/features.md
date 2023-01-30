@@ -2,31 +2,33 @@
 title: Features and Performance Tweaks
 description: Some of the CachyOS features, and what makes CachyOS different.
 published: 1
-date: 2023-01-09T15:16:01.954Z
+date: 2023-01-30T00:28:16.543Z
 tags: best, better, feature, features, info, information, why
 editor: markdown
 dateCreated: 2021-07-04T02:28:46.352Z
 ---
 
-# Providing x86-64-v3 microarchitecture level optimization
+CachyOS: x86-64-v3 Microarchitecture Optimization
+=================================================
 
-Our installer will autodetect your machine microarchitecture, if x86-64-v3 is detected it will automatically use the optimized packages, which yields more than 10% performance improvement.
+CachyOS is committed to delivering high-performance computing to its users. Our installer detects your machine's microarchitecture and uses optimized packages for x86-64-v3 systems, providing a significant performance improvement of more than 10%.
 
-# Optimized Packages
-All packages are compiled with LTO and x86-64-v3.
-We are currently also introducing a x86-64-v4 repo which will be filled over the time.
-GCC is compiled with PGO and LTO. Some packages also get optimized with BOLT a post link optimizer, for example python.
+Optimized Packages
+------------------
 
-# Other performance improvements
+All packages in CachyOS are compiled with LTO and optimized for the x86-64-v3 microarchitecture. We are currently working on adding a x86-64-v4 repository, which will be filled over time. The GCC compiler is optimized using PGO and LTO, and certain packages are further optimized with BOLT, a post-link optimizer.
 
-- Ananicy-CPP installed and configured by default
-- ZRAM preconfigured with zstd compression
-- BFQ scheduler is used by default for HDDs
-- mq-deadline used for sdd
-- "none" for nvme's
-- Heavily optimized kernel with several patches
-- BBRv2 as default and general optimized network settings
-- Many other tweaks and improvements
+Performance Enhancements
+------------------------
+
+CachyOS also includes several other performance enhancements to improve the overall user experience. These include:
+
+*   Ananicy-CPP installed and configured by default
+*   ZRAM preconfigured with zstd compression
+*   BFQ scheduler used by default for HDDs and mq-deadline for SSDs
+*   Heavily optimized kernel with patches
+*   BBRv2 as the default network setting
+*   Additional tweaks and improvements to further optimize performance.
 
 # Security
 
