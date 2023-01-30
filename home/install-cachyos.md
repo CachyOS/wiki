@@ -2,7 +2,7 @@
 title: How to install CachyOS
 description: CachyOS Installation via GUI/CLI Installer
 published: 1
-date: 2023-01-17T23:12:36.324Z
+date: 2023-01-30T12:09:10.976Z
 tags: cachyos, calamares, cli-installer, gui-installer, install-cachyos
 editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
@@ -70,6 +70,9 @@ We provide several desktop environments. KDE being default one. Following are av
 - Cinnamon
 - UKUI
 - Hyprland # Is not working well in VMs and on NVIDIA
+- Budgie
+- LXDE
+- Mate
 
 1. KDE Plasma is a feature-rich and versatile desktop environment that provides several different styles of menu to access applications. Its default window manager is kwin, but is also compatible with Compiz. An excellent built-in interface to easily access and install new themes, widgets, etc, from the internet is also worth mentioning.
 2. Cutefish is an efficient, beautiful, and modern desktop environment built using Qt Quick and some KDE basic frameworks. More or like-macOS style.
@@ -83,3 +86,6 @@ We provide several desktop environments. KDE being default one. Following are av
 10. Cinnamon is a Linux desktop which provides advanced innovative features and a traditional user experience
 11. UKUI is a lightweight desktop environment, which consumes few resources and works with older computers. It has been developed with GTK and Qt technologies. Its visual appearance is similar to Windows 7, making it easier for new users of Linux.
 12. Hyprland is a dynamic tiling Wayland compositor that doesn't sacrifice on its looks. Hyprland comes with some preconfigured dotfiles
+13. Budgie Desktop is a feature-rich, modern desktop. Budgie's design emphasizes simplicity, minimalism, and elegance.
+14. LXDE, which stands for Lightweight X11 Desktop Environment, is a desktop environment which is lightweight and fast. It is designed to be user friendly and slim, while keeping the resource usage low. LXDE uses less RAM and less CPU while being a feature rich desktop environment. Unlike other tightly integrated desktops LXDE strives to be modular, so each component can be used independently with few dependencies.
+15. The MATE Desktop Environment is the continuation of GNOME 2. It provides an intuitive and attractive desktop environment using traditional metaphors for Linux and other Unix-like operating systems. MATE is under active development to add support for new technologies while preserving a traditional desktop experience.
