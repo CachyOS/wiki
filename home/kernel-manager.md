@@ -1,8 +1,8 @@
 ---
-title: CachyOS - Kernel Manager
-description: A kernel manager which helps users to install or build their kernel itself
+title: Managing Kernels with CachyOS Kernel Manager
+description: The CachyOS Kernel Manager is a powerful tool for managing kernels, allowing users to easily install or build custom kernels with ease.
 published: 1
-date: 2023-01-31T15:11:14.189Z
+date: 2023-01-31T15:19:44.978Z
 tags: cachyos-kernel, kernel, kernel-manager
 editor: markdown
 dateCreated: 2022-06-03T11:16:11.181Z
