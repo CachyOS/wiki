@@ -2,7 +2,7 @@
 title: Gaming
 description: 
 published: 1
-date: 2023-01-31T22:02:14.424Z
+date: 2023-01-31T22:02:53.359Z
 tags: 
 editor: markdown
 dateCreated: 2023-01-16T19:09:36.842Z
@@ -62,10 +62,12 @@ Lutris provides a central hub for all your games on your Linux distro. With Lutr
 sudo pacman -S lutris
 ```
 
-## Script installers
-Most games are installed through script, so you need minimal effort to install games.
+Script Installers
+-----------------
 
-### League Of Legends
-[League Of Legends scripts](https://lutris.net/games/league-of-legends/)
-We sugest to use **WINE Standard version**.
-> Follow instructions of script.
+For many games, installation is made easy with script installers.
+
+For example, the [League Of Legends scripts](https://lutris.net/games/league-of-legends/) can be installed with minimal effort. We recommend using the WINE Standard version. Simply follow the instructions provided by the script.
+
+
+With this guide, you are now ready to start gaming on CachyOS. Enjoy!
