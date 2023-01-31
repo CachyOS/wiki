@@ -2,7 +2,7 @@
 title: Gaming
 description: 
 published: 1
-date: 2023-01-31T22:02:53.359Z
+date: 2023-01-31T22:03:54.823Z
 tags: 
 editor: markdown
 dateCreated: 2023-01-16T19:09:36.842Z
@@ -68,6 +68,5 @@ Script Installers
 For many games, installation is made easy with script installers.
 
 For example, the [League Of Legends scripts](https://lutris.net/games/league-of-legends/) can be installed with minimal effort. We recommend using the WINE Standard version. Simply follow the instructions provided by the script.
-
 
 With this guide, you are now ready to start gaming on CachyOS. Enjoy!
