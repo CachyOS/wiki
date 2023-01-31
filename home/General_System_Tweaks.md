@@ -2,7 +2,7 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2023-01-31T21:47:11.691Z
+date: 2023-01-31T21:48:40.804Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
@@ -125,19 +125,19 @@ Available preferences: `performance`, `power`, `balance_power`, `balance_perform
 Benchmarks for each preference can be found here:
 [https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/](https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/)
 
-## 7. Disabling split_lock_mitigate
+7\. Disabling Split Lock Mitigate
+---------------------------------
 
-Some applications and games may experience slowed performance due to split_lock_mitigate. We have backported a patch to disable it via sysctl.
+In some cases, split lock mitigate can slow down performance in applications and games. A patch is available to disable it via sysctl.
 
-To change it at runtime simply:
-`sudo sysctl kernel.split_lock_mitigate=0`
+*   Disable split lock mitigate: `sudo sysctl kernel.split_lock_mitigate=0`
+*   Enable split lock mitigate: `sudo sysctl kernel.split_lock_mitigate=1`
 
-and for enabling:
-`sudo sysctl kernel.split_lock_mitigate=1`
+To set the value permanently, add the following line to `/etc/sysctl.d/99-splitlock.conf`:
 
-To set it permanently make a entry at `/etc/sysctl.d/99-splitlock.conf` with the content:
 `kernel.split_lock_mitigate=0`
 
-For more information on split_lock, see:
-https://www.phoronix.com/news/Linux-Splitlock-Hurts-Gaming
-https://github.com/doitsujin/dxvk/issues/2938
+For more information on split lock, see:
+
+*   [https://www.phoronix.com/news/Linux-Splitlock-Hurts-Gaming](https://www.phoronix.com/news/Linux-Splitlock-Hurts-Gaming)
+*   [https://github.com/doitsujin/dxvk/issues/2938](https://github.com/doitsujin/dxvk/issues/2938)
