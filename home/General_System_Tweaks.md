@@ -2,7 +2,7 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2023-01-31T21:26:31.277Z
+date: 2023-01-31T21:28:10.737Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
@@ -36,19 +36,19 @@ COMPRESSION_OPTIONS=(-2)
 3\. Zram or Zswap tweaking
 --------------------------
 
-Zswap is a kernel feature that provides a compressed RAM cache for swap pages. Pages which would otherwise be swapped out to disk are instead compressed and stored into a memory pool in RAM. Once the pool is full or the RAM is exhausted, the least recently used (LRU) page is decompressed and written to disk, as if it had not been intercepted. After the page has been decompressed into the swap cache, the compressed version in the pool can be freed.
+Zswap is a kernel feature that caches swap pages in RAM, compressing them before storing. It improves performance by reducing disk I/O when the system needs to swap.
+Zram is a RAM-based swap device that does not require a backing swap device.
 
-The difference compared to ZRAM is that zswap works in conjunction with a swap device while zram is a swap device in RAM that does not require a backing swap device.
+For zswap, use the following recommended configurations:
 
-CachyOS uses zram by default with optimal configuration. However if you want to use zswap, you can use following recommended configurations for zswap
-### Recommended configurations for zswap
 ```C
 # echo zstd > /sys/module/zswap/parameters/compressor
 # echo 10 > /sys/module/zswap/parameters/max_pool_percent
 ```
-Above will change zswap settings only for current session, to make the setting changes persist add `zswap.compressor=zstd zswap.max_pool_percent=10` to your bootloader's config file for the kernel command line.
 
-Also change page-cluster value to 1 for SSD and 2 for HDD, this value can be changed in `/etc/sysctl.d/99-cachyos-settings.conf`
+To make the changes persist, add `zswap.compressor=zstd zswap.max_pool_percent=10` to your bootloader's kernel command line options
+
+For SSDs, set the `page-cluster` value to 1 in `/etc/sysctl.d/99-cachyos-settings.conf`. For HDDs, set it to 2.
 
 ## 4. CPU Mitigations
 
