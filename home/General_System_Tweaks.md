@@ -2,7 +2,7 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2023-01-31T21:48:40.804Z
+date: 2023-01-31T21:52:27.832Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
@@ -11,17 +11,17 @@ dateCreated: 2022-07-26T18:23:44.222Z
 # General System Tweaks
 
 
-## 1. Reduce Swappiness and vfs_cache_pressure
-The kernel's preference (or avoidance) of swap space is represented by the swappiness sysctl parameter. Swappiness can range between 0 and 100, with 60 being the default value.
-A low value prevents the kernel from swapping; a high value causes the kernel to attempt to use swap space. It is well known that using a low value for sufficient memory improves responsiveness on many systems.
+1\. Reduce Swappiness and vfs_cache_pressure
+--------------------------------------------
 
-vfs_cache_pressure value governs the kernel's tendency to reclaim memory used for directory and inode object caching (VFS cache).
-Lowering it from the default value of 100 encourages the kernel to reclaim VFS cache (do not set it to 0, this may produce out-of-memory conditions)
-Increasing vfs_cache_pressure significantly beyond 100 may have negative performance impact. Reclaim code needs to take various locks to find freeable directory and inode objects. With vfs_cache_pressure=1000, it will look for ten times more freeable objects than there are.
+The system's swap space preference can be adjusted using the `vm.swappiness` sysctl parameter. The default value is "30", which means that the kernel will avoid swapping processes to disk as much as possible and will instead try to keep as much data as possible in memory. A lower swappiness value generally leads to improved performance but may lead to decreased stability if the system runs out of memory.
 
-You can change these values in `/etc/sysctl.d/99-cachyos-settings.conf`
+The `vm.vfs_cache_pressure` is a kernel parameter that sets the tendency of the kernel to reclaim inode and dentry cache. By default, it is set to "100" and a lower value means the kernel will tend to cache more inode and dentry information in memory. To improve performance, you can try to lower the value of `vm.vfs_cache_pressure` to improve file system performance by having more file system metadata cached in memory.
 
-## 2. Editing mkinitcpio.conf for faster boot times
+Both values can be changed in the `/etc/sysctl.d/99-cachyos-settings.conf` file.
+
+2\. Editing mkinitcpio.conf for faster boot times
+-------------------------------------------------
 
 Replace udev with systemd for faster boots and set compression algorithm to zstd and compression level to 2 because compression ratio increase isn't worth the increased latency.
 
