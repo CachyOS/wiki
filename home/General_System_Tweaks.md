@@ -2,7 +2,7 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2023-01-24T22:12:25.977Z
+date: 2023-01-31T21:26:31.277Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
@@ -33,7 +33,9 @@ COMPRESSION="zstd"
 COMPRESSION_OPTIONS=(-2)
 ```
 
-## 3. Zram or Zswap tweaking
+3\. Zram or Zswap tweaking
+--------------------------
+
 Zswap is a kernel feature that provides a compressed RAM cache for swap pages. Pages which would otherwise be swapped out to disk are instead compressed and stored into a memory pool in RAM. Once the pool is full or the RAM is exhausted, the least recently used (LRU) page is decompressed and written to disk, as if it had not been intercepted. After the page has been decompressed into the swap cache, the compressed version in the pool can be freed.
 
 The difference compared to ZRAM is that zswap works in conjunction with a swap device while zram is a swap device in RAM that does not require a backing swap device.
@@ -42,7 +44,6 @@ CachyOS uses zram by default with optimal configuration. However if you want to 
 ### Recommended configurations for zswap
 ```C
 # echo zstd > /sys/module/zswap/parameters/compressor
-
 # echo 10 > /sys/module/zswap/parameters/max_pool_percent
 ```
 Above will change zswap settings only for current session, to make the setting changes persist add `zswap.compressor=zstd zswap.max_pool_percent=10` to your bootloader's config file for the kernel command line.
