@@ -2,7 +2,7 @@
 title: Getting Started: Essential Tasks After Installing CachyOS
 description: Steps to configure after installing CachyOS
 published: 1
-date: 2023-01-31T18:15:16.375Z
+date: 2023-01-31T18:17:23.455Z
 tags: 
 editor: markdown
 dateCreated: 2021-08-11T06:07:58.712Z
@@ -24,7 +24,7 @@ To update your system with Octopi, follow these steps:
 
 #### 2\. Updating System with Pacman:
 
-1.  Open a terminal emulator
+1.  Open a terminal emulator(or press `ctrl+alt+t`)
 2.  Run the following command to update the system: `sudo pacman -Syu`
 
 That's it! Now your system is up-to-date and ready for use.
