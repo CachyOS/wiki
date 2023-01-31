@@ -2,7 +2,7 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2023-01-31T21:28:10.737Z
+date: 2023-01-31T21:32:17.190Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
@@ -50,46 +50,36 @@ To make the changes persist, add `zswap.compressor=zstd zswap.max_pool_percent=1
 
 For SSDs, set the `page-cluster` value to 1 in `/etc/sysctl.d/99-cachyos-settings.conf`. For HDDs, set it to 2.
 
-## 4. CPU Mitigations
+4\. CPU Mitigations for retbleed
+--------------------------------
 
-In July 2022, the speculative execution attack exploiting return instructions (called retbleed) was made public. 
-This mitigation has been fixed with the kernel, but it introduces a really big performance overhead (from 14-39%), which is significantly high.
+A public speculative execution attack exploiting return instructions (retbleed) was revealed in July 2022. The kernel has fixed this, but it results in a significant performance overhead (14-39%).
 
-Following CPU's are affected by this mitigation:
-#### AMD
-- Zen 1
-- Zen 1+
-- Zen 2
-#### Intel
-- 6th Generation throug 8th Generation
-- Skylake
-- Caby Lake
-- Coffee Lake
+The following CPU's are affected:
 
-You can watch which mitigations your processor is affected from with the following command:
+*   AMD: Zen 1, Zen 1+, Zen 2
+*   Intel: 6th to 8th Generation, Skylake, Caby Lake, Coffee Lake
 
-`grep . /sys/devices/system/cpu/vulnerabilities/*`
+Check which mitigations your CPU is affected by: `grep . /sys/devices/system/cpu/vulnerabilities/*`
 
-### Disable the mitigation's
-It is not recommended to disable this, as it has a security risk but it will help with your performance. This is just on your own Risk!!
+### Disabling mitigations
 
-You need to set the following command to your kernel commandline:
+While disabling the mitigations increases performance, it also introduces security risks. Do so at your own risk.
 
-`retbleed=off`
+Add the following to your kernel command line: `retbleed=off` or to disable all mitigations: `mitigations=off`
 
-If you want to disable all mitigations you can use:
+Edit the appropriate file to persist the changes:
 
-`mitigations=off`
+*   GRUB: `/etc/default/grub`
+*   systemd boot: `/etc/systemd/boot-manager.conf`
 
-Add this command to your `/etc/default/grub` if youre using grub.
-If you are using systemd boot, add this command to `/etc/sdboot-manage.conf`
+> Note: Disabling these mitigations poses a security risk to your system.
+{.is-warning}
 
-Once again, these will do a security risk in your system.
+For more information:
 
-Here are some articles about retbleed and the performance impact:
-
-https://www.phoronix.com/review/retbleed-benchmark
-https://www.phoronix.com/review/xeon-skylake-retbleed
+*   [https://www.phoronix.com/review/retbleed-benchmark](https://www.phoronix.com/review/retbleed-benchmark)
+*   [https://www.phoronix.com/review/xeon-skylake-retbleed](https://www.phoronix.com/review/xeon-skylake-retbleed)
 
 ## 5. AMD PSTATE (EPP) Driver
 
