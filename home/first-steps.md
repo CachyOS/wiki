@@ -2,13 +2,13 @@
 title: Getting Started: Essential Tasks After Installing CachyOS
 description: Steps to configure after installing CachyOS
 published: 1
-date: 2023-01-31T18:17:23.455Z
+date: 2023-01-31T18:19:52.614Z
 tags: 
 editor: markdown
 dateCreated: 2021-08-11T06:07:58.712Z
 ---
 
-### 1\. Update your system:
+## 1\. Update your system:
 
 #### 1\. Updating System with Octopi:
 
@@ -29,7 +29,7 @@ To update your system with Octopi, follow these steps:
 
 That's it! Now your system is up-to-date and ready for use.
 
-### 2\. Improve performance:
+## 2\. Improve performance:
 
 The system's swap space preference can be adjusted using the `vm.swappiness` sysctl parameter. The default value is "30", which means that the kernel will avoid swapping processes to disk as much as possible and will instead try to keep as much data as possible in memory. A lower swappiness value generally leads to improved performance but may lead to decreased stability if the system runs out of memory.
 
@@ -37,7 +37,7 @@ The `vm.vfs_cache_pressure` is a kernel parameter that sets the tendency of the 
 
 Both values can be changed in the `/etc/sysctl.d/99-cachyos-settings.conf` file.
 
-### 3\. Enable Firewall protection:
+## 3\. Enable Firewall protection:
 
 To enable firewall protection, follow these steps:
 
@@ -70,7 +70,7 @@ sudo ufw status verbose
 {.is-info}
 
 
-### 4\. Install apps:
+## 4\. Install apps:
 
 CachyOS comes pre-installed with many useful apps, but you may want to install additional ones to match your workflow.
 Here are some popular apps you may consider installing:
@@ -89,10 +89,10 @@ Here are some popular apps you may consider installing:
 
 You can easily install these apps using the command line. For example, `paru -S vlc mailspring spotify gimp`. If you get an error message, try using a different command or check the name of the app in the database.
 
-### 5\. Enable global menu:
+## 5\. Enable global menu:
 
 For some apps like Visual Studio Code, the global menu may not work or may be attached to the parent app instead of the panel. To enable global menu support, run the command `sudo pacman -S appmenu-gtk-module libdbusmenu-glib` and restart the app.
 
-### 6\. Set up Bluetooth headphones:
+## 6\. Set up Bluetooth headphones:
 
 To auto-connect your headphones, follow the steps in the Arch wiki guide: [https://wiki.archlinux.org/title/bluetooth\_headset#Headset\_via\_Bluez5/PulseAudio](https://wiki.archlinux.org/title/bluetooth_headset#Headset_via_Bluez5/PulseAudio). If Pulseaudio doesn't work, you may need to manually reconnect the headphones each time you restart your computer.
