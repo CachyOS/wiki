@@ -2,7 +2,7 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2023-01-31T21:33:36.904Z
+date: 2023-01-31T21:47:11.691Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
@@ -84,58 +84,47 @@ For more information:
 *   https://www.phoronix.com/review/retbleed-benchmark
 *   https://www.phoronix.com/review/xeon-skylake-retbleed
 
-## 5. AMD PSTATE (EPP) Driver
+5\. AMD PSTATE (EPP) Driver
+---------------------------
 
-For improved scaling of frequencies and better performance per watt, you can enable the AMD PSTATE EPP driver. The default AMD PSTATE driver does not offer significant benefits compared to the acpi-cpufreq driver.
+For improved performance and power efficiency, you can enable the AMD PSTATE EPP driver. The default AMD PSTATE driver may not provide the same benefits as the acpi-cpufreq driver.
 
-For more information, see: https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/
+Add one of the following options to your kernel command line:
 
-There is also a amd-pstate=guided mode. For more information, see: https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/
+*   AMD PSTATE: `amd_pstate=passive`
+*   AMD PSTATE-GUIDED: `amd_pstate=guided`
+*   AMD PSTATE EPP: `amd_pstate=active`
 
-Simply add following to your kernel cmdline:
+You can switch between modes at runtime to test the options:
 
-- AMD PSTATE: `amd_pstate=passive`
-- AMD PSTATE-GUIDED: `amd_pstate=guided`
-- AMD PSTATE EPP: `amd_pstate=active`
+*   `echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status` - Autonomous mode, platform considers only the values set for Minimum performance, Maximum performance, and Energy Performance Preference.
 
-You can also switch between these modes at runtime, if you want to test these options with:
+*   `echo guided | sudo tee /sys/devices/system/cpu/amd_pstate/status` - Guided-autonomous mode, platform sets operating performance level according to the current workload and within limits set by the OS through minimum and maximum performance registers.
 
-`echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status`
+*   `echo passive | sudo tee /sys/devices/system/cpu/amd_pstate/status` - Non-autonomous mode, platform gets desired performance level from OS directly through Desired Performance Register.
 
-- In autonomous mode, platform ignores the desired performance level request
-  and takes into account only the values set to the Minimum requested
-  performance, Maximum requested performance and Energy Performance Preference
-  registers.
-  
-`echo guided | sudo tee /sys/devices/system/cpu/amd_pstate/status`
-- In guided-autonomous mode, platform sets operating performance level
-  autonomously according to the current workload and within the limits set by
-  OS through min and max performance registers.
+For more information:
 
-`echo passive | sudo tee /sys/devices/system/cpu/amd_pstate/status`
+*   [https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/](https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/)
+*   [https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/](https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/)
 
-- In non-autonomous mode, platform gets desired performance level
-  from OS directly through Desired Performance Register.
+6\. Using AMD PSTATE EPP
+------------------------
 
+To use the AMD PSTATE EPP, there are two CPU frequency scaling governors available: powersave and performance. It is recommended to use the powersave governor and set a preference.
 
-## 6. Using amd-pstate-epp
+*   Set powersave governor: `sudo cpupower frequency-set -g powersave`
+*   Set performance governor: `sudo cpupower frequency-set -g performance`
 
-When using amd-pstate-epp there are two governors available, powersave and performance.
-Actually it is suggested to use the powersave governor and then set a preference.
-You can do this with following command:
-Powersave:
-`sudo cpupower frequency-set -g powersave`
-Performance:
-`sudo cpupower frequency-set -g performance`
+To set a preference, run the following command with the desired preference:
 
-To set a preference run following command, the example sets the power `preference`:
 `echo power | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference`
 
-There are follwing preferences available:
-`performance` `power` `balance_power` `balance_performance`
+Available preferences: `performance`, `power`, `balance_power`, `balance_performance`
 
-Benchmarks each preference can be found here:
-https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/
+Benchmarks for each preference can be found here:
+[https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/](https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/)
+
 ## 7. Disabling split_lock_mitigate
 
 Some applications and games may experience slowed performance due to split_lock_mitigate. We have backported a patch to disable it via sysctl.
