@@ -1,8 +1,8 @@
 ---
 title: Downloads Information
-description: Where to download CachyOS ISO
+description: Here, you can access the latest ISO images for CachyOS.
 published: 1
-date: 2023-01-31T22:08:19.767Z
+date: 2023-01-31T22:10:37.553Z
 tags: dowloading, download, install, installation, installing, iso
 editor: markdown
 dateCreated: 2021-07-04T01:43:25.246Z
