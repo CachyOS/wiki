@@ -2,86 +2,88 @@
 title: How to install CachyOS
 description: CachyOS Installation via GUI/CLI Installer
 published: 1
-date: 2023-01-30T12:09:10.976Z
+date: 2023-01-31T19:59:14.222Z
 tags: cachyos, calamares, cli-installer, gui-installer, install-cachyos
 editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
 ---
 
-# How to install CachyOS
+Installing CachyOS
+==================
 
-## Requirements
-### minimum system requirements
-- Three gigabyte (GB) of memory
-- Thirty gigabytes (GB) of hard disk space
-- A one gigahertz (Ghz) processor
-- A high definition (HD) graphics card and monitor
-- A broadband internet connection
+CachyOS is a powerful and feature-rich operating system, but it can be intimidating to install for the first time. This guide will walk you through the process, step-by-step, so you can have CachyOS up and running on your computer in no time.
 
-### Recommended system requirements
+System Requirements
+-------------------
 
-- Four gigabyte (GB) of memory
-- Fifthy gigabytes (GB) of hard disk space
-- a x86-64-v3 supported processor, to get the performance improvement of the cachyos-v3 repos
-- 50 mbits or better internet connection for the online installation
+Before you begin the installation, you need to make sure that your computer meets the following minimum system requirements:
 
-Actually it is really suggested to have a newer nvidia card (900+), you can select if you want to install the drivers in the netinstall.
-Older nvidia drivers are also supported by nouveau. There are also nvidia drivers for older cards in our repo, these need to be installed after the installation.
-# GUI Installer
+*   3 GB of memory
+*   30 GB of hard disk space
+*   1 GHz processor
+*   HD graphics card and monitor
+*   Broadband internet connection
 
-## Choosing between the bootloaders
-We provide currently two different bootloaders for the online installation, you will be asked for which one when clicking the `Launch Installer` button in CachyOS Hello.
-We suggest to use systemd-boot, since it is quite simple, brings a faster boot time then grub.
-Boot entries for different kernels are automatically generated at systemd boot and grub.
+For the best performance, it is recommended to have:
 
-Systemd-boot can be only used for systems which have UEFI support.
-GRUB does support MBR and UEFI.
+*   4 GB of memory
+*   50 GB of hard disk space
+*   An x86-64-v3 processor
+*   50 Mbps or better internet connection
+*   A newer NVIDIA card (900+)
 
-## Choosing between filesystems
-It can between five different filesystems choosed, following are available:
+Choosing Your Bootloader
+------------------------
 
-- xfs
-- ext4
-- btrfs
-- f2fs
-- zfs
+CachyOS offers two different bootloaders for online installation: systemd-boot and GRUB. You will be asked to choose between the two when you click the `Launch Installer` button in CachyOS Hello. We recommend using systemd-boot as it is simple and results in faster boot times. Note that systemd-boot is only supported on systems with UEFI support, while GRUB supports both MBR and UEFI.
 
-1. XFS is a high-performance journaling file system created by Silicon Graphics, Inc. XFS is particularly proficient at parallel IO due to its allocation group based design. This enables extreme scalability of IO threads, filesystem bandwidth, file and filesystem size when spanning multiple storage devices.
-2. Ext4 is the evolution of the most used Linux filesystem, Ext3. In many ways, Ext4 is a deeper improvement over Ext3 than Ext3 was over Ext2. Ext3 was mostly about adding journaling to Ext2, but Ext4 modifies important data structures of the filesystem such as the ones destined to store the file data. The result is a filesystem with an improved design, better performance, reliability, and features.
-3. Btrfs is a modern copy on write (CoW) filesystem for Linux aimed at implementing advanced features while also focusing on fault tolerance, repair and easy administration. Jointly developed at multiple companies, Btrfs is licensed under the GPL and open for contribution from anyone.
-4. F2FS (Flash-Friendly File System) is a file system intended for NAND-based flash memory equipped with Flash Translation Layer.
-5. ZFS is an advanced filesystem created by Sun Microsystems (now owned by Oracle) and released for OpenSolaris in November 2005. Described as "The last word in filesystems", ZFS is stable, fast, secure, and future-proof. Being licensed under the CDDL, and thus incompatible with GPL, it is not possible for ZFS to be distributed along with the Linux Kernel. This requirement, however, does not prevent a native Linux kernel module from being developed and distributed by a third party, as is the case with OpenZFS, previously named ZFS on Linux (ZOL).
+Choosing Your Filesystem
+------------------------
 
-**!!ATTENTION!!:** 
-If installing ZFS, the parition needs to be cleared before the installation with gparted or partitionmanager. When you cleared your drive, reboot and start the installer. Choose ZFS and everything works fine! :)
+When you install CachyOS, you can choose from the following five filesystems: xfs, ext4, btrfs, f2fs, and zfs.
 
-## Desktop environments
-We provide several desktop environments. KDE being default one. Following are available:
+*   XFS is a high-performance journaling file system that is particularly good at parallel I/O.
+*   Ext4 is the evolution of the widely used Ext3 file system and offers improved performance, reliability, and features.
+*   Btrfs is a modern copy-on-write filesystem with advanced features and a focus on fault tolerance and easy administration.
+*   F2FS is a file system designed for NAND-based flash memory.
+*   ZFS is an advanced file system created by Sun Microsystems that offers stability, speed, security, and future-proofing.
 
-- KDE
-- CuteFish
-- i3
-- Gnome
-- Openbox
-- Wayfire
-- Xfce
-- LXQT
-- bspwm
-- Cinnamon
-- UKUI
-- Hyprland # Is not working well in VMs and on NVIDIA
-- Budgie
-- LXDE
-- Mate
+**!!IMPORTANT!!:** 
+> If you choose to install ZFS, you must clear the partition using a tool such as Gparted or Partition Manager before installation. After clearing the drive, reboot and start the installer. Choose ZFS, and everything should work fine!
+{.is-info}
 
-1. KDE Plasma is a feature-rich and versatile desktop environment that provides several different styles of menu to access applications. Its default window manager is kwin, but is also compatible with Compiz. An excellent built-in interface to easily access and install new themes, widgets, etc, from the internet is also worth mentioning.
-2. Cutefish is an efficient, beautiful, and modern desktop environment built using Qt Quick and some KDE basic frameworks. More or like-macOS style.
-3. i3 is arguably the most popular tiling window manager available, and notable for using a single, completely self-contained configuration file.
-4. GNOME is an intuitive desktop environment that utilises a tablet or smartphone style interface to access applications. It is not compatible with compiz. Although GNOME is very easy to learn and use, it has limited customisation options and it can be difficult to configure.
-5. Openbox is by far the most popular Window Manager available. Due to its popularity there is excellent documentation available, as well as a good choice of additional themes that may be downloaded.
-6. Wayfire is a wayland compositor based on wlroots. It aims to create a customizable, extendable and lightweight environment without sacrificing its appearance. 
-7. XFCE is a lightweight and versatile desktop environment that utilises a classic drop-down/pop-up menu to access applications. It is also compatible with Compiz. A little time and effort will also be required to properly customise the desktop to suit personal taste.
-8. LXQt is a lightweight Qt desktop environment. It was formed from the merger of the LXDE and Razor-qt projects
+
+Desktop Environments
+--------------------
+
+CachyOS offers several desktop environments for you to choose from, including the default option of KDE. The available options are:
+*   KDE
+*   CuteFish
+*   i3
+*   Gnome
+*   Openbox
+*   Wayfire
+*   Xfce
+*   LXQT
+*   bspwm
+*   Cinnamon
+*   UKUI
+*   Budgie
+*   LXDE
+*   Mate
+
+> **Note:** Hyprland may not work well in virtual machines or with NVIDIA graphics cards.
+{.is-info}
+
+
+1.  KDE Plasma is a comprehensive and flexible desktop environment that offers multiple styles of menus to access applications. It features the kwin window manager, and also works with Compiz. KDE Plasma also boasts an intuitive interface that allows you to easily download and install new themes, widgets, and more from the web.
+2.  CuteFish is a sleek, modern, and efficient desktop environment built using Qt Quick and some KDE core frameworks. It has a design reminiscent of macOS.
+3.  i3 is a popular tiling window manager known for its single, self-contained configuration file and its efficient use of screen space.
+4.  GNOME is a user-friendly desktop environment with a touch-style interface for accessing applications. While it is easy to learn, it may have limited customization options and can be difficult to configure.
+5.  Openbox is a highly popular window manager known for its excellent documentation and a wide selection of available themes.
+6.  Wayfire is a wayland compositor based on wlroots that balances customization, extendibility, and aesthetics.
+7.  XFCE is a lightweight and flexible desktop environment with a traditional drop-down/pop-up menu for accessing applications, and is compatible with Compiz. Customization may require some effort to match personal preferences.
+8.  LXQt is a lightweight desktop environment formed from the merger of the LXDE and Razor-qt projects and built with Qt.
 9. bspwm is a tiling window manager designed for X11, and written in C. It supports tiling, stacking, and tabbing layouts, which it handles dynamically. It represents windows as the leaves of a full binary tree.
 10. Cinnamon is a Linux desktop which provides advanced innovative features and a traditional user experience
 11. UKUI is a lightweight desktop environment, which consumes few resources and works with older computers. It has been developed with GTK and Qt technologies. Its visual appearance is similar to Windows 7, making it easier for new users of Linux.
