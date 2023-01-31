@@ -2,69 +2,99 @@
 title: First Steps
 description: Things to do after installing cachyOS
 published: 1
-date: 2023-01-09T15:17:09.811Z
+date: 2023-01-31T18:02:19.079Z
 tags: 
 editor: markdown
 dateCreated: 2021-08-11T06:07:58.712Z
 ---
 
-# Things to do after installation
+After installing CachyOS, here are the recommended steps to get your system up and running:
 
-## 1. ***Update your system***
-There are two ways to update your system:
-1. Discover (Software Updater)
-2. Terminal command 
+### 1\. Update your system:
+
+#### 1\. Updating System with Octopi:
+
+Octopi is a graphical package manager for Arch-based distributions that provides a convenient way to manage packages and updates.
+To update your system with Octopi, follow these steps:
+
+1.  Launch Octopi from the application menu
+2.  In the main window, click on the "System Upgrade" button
+3.  Octopi will check for available updates and present them to you.
+4.  To proceed with the update, click the "Apply" button.
+5.  Octopi will download and install the updates.
+6.  It is advised to reboot your computer after a big update (especially if the kernel version changes).
+
+#### 2\. Updating System with Pacman:
+
+1.  Open a terminal emulator
+2.  Run the following command to update the system: `sudo pacman -Syu`
+
+That's it! Now your system is up-to-date and ready for use.
+
+### 2\. Improve performance:
+
+The system's swap space preference can be adjusted using the `vm.swappiness` sysctl parameter. The default value is "30", which means that the kernel will avoid swapping processes to disk as much as possible and will instead try to keep as much data as possible in memory. A lower swappiness value generally leads to improved performance but may lead to decreased stability if the system runs out of memory.
+
+The `vm.vfs_cache_pressure` is a kernel parameter that sets the tendency of the kernel to reclaim inode and dentry cache. By default, it is set to "100" and a lower value means the kernel will tend to cache more inode and dentry information in memory. To improve performance, you can try to lower the value of `vm.vfs_cache_pressure` to improve file system performance by having more file system metadata cached in memory.
+
+Both values can be changed in the `/etc/sysctl.d/99-cachyos-settings.conf` file.
+
+### 3\. Enable Firewall protection:
+
+To enable firewall protection, follow these steps:
+
+1.  Install the ufw (Uncomplicated Firewall) package using Pacman:
+
+```bash
+sudo pacman -S ufw
+```
+
+2.  Enable the firewall with this command:
+
+```bash
+sudo ufw enable
+```
+
+3.  By default, ufw allows all incoming and outgoing traffic, you can add specific rules to the firewall to block or allow specific connections. For example:
+
+```bash
+sudo ufw allow ssh
+```
+
+4.  To check the status of the firewall, use the following command:
+
+```bash
+sudo ufw status verbose
+```
+
+> 
+> Note: Be careful when configuring firewall rules, as improperly configured rules can lock you out of your own system.
+{.is-info}
 
 
-For the first option you have to open Discover (in KDE , also called software update) and then choose the option Updates at the left tab.
+### 4\. Install apps:
 
-The second option is to open your terminal (shortcut : `ctrl+alt+t`) and type the command `sudo pacman -Syyu` and hit enter, and follow the instructions, if any.
+CachyOS comes pre-installed with many useful apps, but you may want to install additional ones to match your workflow.
+Here are some popular apps you may consider installing:
 
-It is advised to reboot your computer after a big update (especially if kernel version changes).
+*   GIMP (image processor)
+*   VLC (media player)
+*   Stacer (system monitor)
+*   Skype, Telegram, Discord, Signal (messenger apps)
+*   Steam (for gaming)
+*   Spotify (music)
+*   MailSpring (email client)
+*   Super Productivity (to-do list manager and Pomodoro timer)
+*   Visual Studio Code (code editor)
+*   Blender (3D software)
+*   Krita (digital painting)
 
-## 2. ***Reduce Swappiness and vfs_cache_pressure***
-The kernel's preference (or avoidance) of swap space is represented by the swappiness sysctl parameter. Swappiness can range between 0 and 100, with 60 being the default value.
-A low value prevents the kernel from swapping; a high value causes the kernel to attempt to use swap space. It is well known that using a low value for sufficient memory improves responsiveness on many systems.
+You can easily install these apps using the command line. For example, `paru -S vlc mailspring spotify gimp`. If you get an error message, try using a different command or check the name of the app in the database.
 
-vfs_cache_pressure value governs the kernel's tendency to reclaim memory used for directory and inode object caching (VFS cache).
-Lowering it from the default value of 100 encourages the kernel to reclaim VFS cache (do not set it to 0, this may produce out-of-memory conditions)
-Increasing vfs_cache_pressure significantly beyond 100 may have negative performance impact. Reclaim code needs to take various locks to find freeable directory and inode objects. With vfs_cache_pressure=1000, it will look for ten times more freeable objects than there are.
+### 5\. Enable global menu:
 
-You can change these values in `/etc/sysctl.d/99-cachyos-settings.conf`
+For some apps like Visual Studio Code, the global menu may not work or may be attached to the parent app instead of the panel. To enable global menu support, run the command `sudo pacman -S appmenu-gtk-module libdbusmenu-glib` and restart the app.
 
-## 3. ***Enable Firewall protection***
--Things to add
+### 6\. Set up Bluetooth headphones:
 
-## 4. ***Install the Apps That You Use***
-By default, CachyOS comes pre-bundled with tons of useful apps for your everyday use. But these might not be the apps you are accustomed to using daily. As such, the next thing you should be focused on is to install all the apps that you use to recreate your workflow.
-
-Now, if you are new to Linux and don’t know what apps to install, here is a list of some of the must-have Linux apps that you should consider having on your CachyOS system.
-
-GIMP – Image processor. Alternative to Photoshop.
-VLC – Media Player. You already know what it is.
-Stacer – System monitor.
-Skype, Telegram, Discord, Signal – Almost all popular messenger apps are supported.
-Steam – All you gamers already know what it is.
-Spotify – For your music needs.
-MailSpring – Email Client. More feature-rich than the default ThunderBird.
-Super Productivity – An awesome to-do list manager and Pomodoro timer app.
-Visual studio code - An awesome code editor
-Blender - Awesome and powerful free 3D software 
-Krita - An amazing piece of software for Digital Painting
-
-**We do also include a dedicated GUI for managing packages named Pamac (made by the people who made Manjaro's distro), you should find it as Add/Remove Software and its really easy to use for new people coming to any Arch based distro.**
-
-
-You can easily install these softwares by running one of the command `sudo pacman -S $package` or `paru -S $package` or `yay -S $package`
-
-For eg : `paru -S vlc mailspring spotify gimp` can be used to install some of these apps
-Note : If you get and error saying 'error: target not found: appname' you should try the other alternative `pacman -S appname` and vice versa. You should also check if the name you are using is the name of the app in the database, for eg. vscode can be installed using `paru -S visual-studio-code-bin` . Google it, if in confusion.
-
-
-## 5. ***Global Menu***
-For some apps (like VSCode) the global menu doesn't seem to work or is attached to the parent app instead of being attached to the panel, Hence to enable global menu support for GTK and Electron, you need to install some packages :
-Run this command -> `sudo pacman -S appmenu-gtk-module libdbusmenu-glib` and restart the app.
-
-## 6. ***Set up Bluetooth headphones***
-If your current headset doesn't auto connect you would need to configure your device to auto connect to your headphones, The Arch wiki gives a comprehensive guide on the same - https://wiki.archlinux.org/title/bluetooth_headset#Headset_via_Bluez5/PulseAudio , just read and follow the steps and you would be good to go.
-For some headphones Pulseaudio doesn't seem to work and you'd need to reconnect the headphones manually each time you restart your computer. To solve this issue replace Pulseaudio with Pipewire, using this https://wiki.archlinux.org/title/bluetooth_headset#Headset_via_Pipewire
+To auto-connect your headphones, follow the steps in the Arch wiki guide: [https://wiki.archlinux.org/title/bluetooth\_headset#Headset\_via\_Bluez5/PulseAudio](https://wiki.archlinux.org/title/bluetooth_headset#Headset_via_Bluez5/PulseAudio). If Pulseaudio doesn't work, you may need to manually reconnect the headphones each time you restart your computer.
