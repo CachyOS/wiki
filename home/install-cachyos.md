@@ -2,7 +2,7 @@
 title: How to install CachyOS
 description: CachyOS Installation via GUI/CLI Installer
 published: 1
-date: 2023-01-31T20:00:36.238Z
+date: 2023-01-31T20:10:35.734Z
 tags: cachyos, calamares, cli-installer, gui-installer, install-cachyos
 editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
@@ -84,10 +84,10 @@ CachyOS offers several desktop environments for you to choose from, including th
 6.  Wayfire is a wayland compositor based on wlroots that balances customization, extendibility, and aesthetics.
 7.  XFCE is a lightweight and flexible desktop environment with a traditional drop-down/pop-up menu for accessing applications, and is compatible with Compiz. Customization may require some effort to match personal preferences.
 8.  LXQt is a lightweight desktop environment formed from the merger of the LXDE and Razor-qt projects and built with Qt.
-9. bspwm is a tiling window manager designed for X11, and written in C. It supports tiling, stacking, and tabbing layouts, which it handles dynamically. It represents windows as the leaves of a full binary tree.
-10. Cinnamon is a Linux desktop which provides advanced innovative features and a traditional user experience
-11. UKUI is a lightweight desktop environment, which consumes few resources and works with older computers. It has been developed with GTK and Qt technologies. Its visual appearance is similar to Windows 7, making it easier for new users of Linux.
-12. Hyprland is a dynamic tiling Wayland compositor that doesn't sacrifice on its looks. Hyprland comes with some preconfigured dotfiles
-13. Budgie Desktop is a feature-rich, modern desktop. Budgie's design emphasizes simplicity, minimalism, and elegance.
-14. LXDE, which stands for Lightweight X11 Desktop Environment, is a desktop environment which is lightweight and fast. It is designed to be user friendly and slim, while keeping the resource usage low. LXDE uses less RAM and less CPU while being a feature rich desktop environment. Unlike other tightly integrated desktops LXDE strives to be modular, so each component can be used independently with few dependencies.
-15. The MATE Desktop Environment is the continuation of GNOME 2. It provides an intuitive and attractive desktop environment using traditional metaphors for Linux and other Unix-like operating systems. MATE is under active development to add support for new technologies while preserving a traditional desktop experience.
+9. bspwm: Tiling WM for X11, written in C, dynamic layout (tiling, stacking, tabbing), windows represented as binary tree leaves.
+10. Cinnamon is a desktop environment for Linux that balances advanced features with a traditional user experience.
+11. UKUI is a lightweight desktop environment that is efficient and works well on older computers. It uses both GTK and Qt technologies, and has a visual appearance similar to Windows 7, making it user-friendly for new Linux users.
+12. Hyprland is a visually pleasing Wayland compositor that uses dynamic tiling. It comes with preconfigured dotfiles.
+13. Budgie is a simple and elegant desktop environment built using the GTK toolkit. It is designed to provide a modern and attractive interface that is easy to use, while also being highly configurable.
+14.  LXDE (Lightweight X11 Desktop Environment) is a fast and energy-saving desktop environment designed to be used on older computers and resource-constrained systems. It uses Openbox as its default window manager and focuses on providing a simple, clean and user-friendly interface.
+15.  Mate Desktop is a traditional desktop environment forked from GNOME 2. It is characterized by its classic look and feel, with a simple and intuitive user interface. Mate provides an easy-to-use and highly customizable desktop experience for users who prefer a more classic look and feel.
