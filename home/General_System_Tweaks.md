@@ -2,7 +2,7 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2023-01-31T21:32:17.190Z
+date: 2023-01-31T21:33:36.904Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
@@ -64,7 +64,10 @@ Check which mitigations your CPU is affected by: `grep . /sys/devices/system/cpu
 
 ### Disabling mitigations
 
-While disabling the mitigations increases performance, it also introduces security risks. Do so at your own risk.
+While disabling the mitigations increases performance, it also introduces security risks.
+> Do so at your own risk.
+{.is-info}
+
 
 Add the following to your kernel command line: `retbleed=off` or to disable all mitigations: `mitigations=off`
 
@@ -78,8 +81,8 @@ Edit the appropriate file to persist the changes:
 
 For more information:
 
-*   [https://www.phoronix.com/review/retbleed-benchmark](https://www.phoronix.com/review/retbleed-benchmark)
-*   [https://www.phoronix.com/review/xeon-skylake-retbleed](https://www.phoronix.com/review/xeon-skylake-retbleed)
+*   https://www.phoronix.com/review/retbleed-benchmark
+*   https://www.phoronix.com/review/xeon-skylake-retbleed
 
 ## 5. AMD PSTATE (EPP) Driver
 
