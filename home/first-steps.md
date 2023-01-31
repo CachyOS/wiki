@@ -2,13 +2,11 @@
 title: Getting Started: Essential Tasks After Installing CachyOS
 description: Steps to configure after installing CachyOS
 published: 1
-date: 2023-01-31T18:07:44.444Z
+date: 2023-01-31T18:15:16.375Z
 tags: 
 editor: markdown
 dateCreated: 2021-08-11T06:07:58.712Z
 ---
-
-After installing CachyOS, here are the recommended steps to get your system up and running:
 
 ### 1\. Update your system:
 
