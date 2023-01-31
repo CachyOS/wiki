@@ -1,8 +1,8 @@
 ---
-title: Gaming
-description: 
+title: CachyOS - Gaming
+description:  It covers essential package installation, Steam gaming with Proton, various Proton version options, Lutris as a central hub for all games, and script installers for popular games like League of Legends.
 published: 1
-date: 2023-01-31T22:03:54.823Z
+date: 2023-01-31T22:05:28.943Z
 tags: 
 editor: markdown
 dateCreated: 2023-01-16T19:09:36.842Z
