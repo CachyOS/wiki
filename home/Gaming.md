@@ -2,57 +2,66 @@
 title: Gaming
 description: 
 published: 1
-date: 2023-01-20T09:34:29.056Z
+date: 2023-01-31T22:02:14.424Z
 tags: 
 editor: markdown
 dateCreated: 2023-01-16T19:09:36.842Z
 ---
 
-# CachyOS - gaming
-Here is a guide about gaming on CachyOS or any Arch-based distribution.  
-You should have ready graphics card drivers. Of course, no way to play games, if your graphics card doesn't work properly.
+Gaming on CachyOS
+=================
 
-## Essential packages
-CachyOS can install all stuff needed for gaming by one command. You can also install these packages manually, but we grouped all of these packages for easier, faster installation.  
+Welcome to the world of gaming on CachyOS, a leading Arch-based distribution! This guide will help you get started with playing your favorite games on this operating system.
+
+Prerequisites
+-------------
+
+Before we dive into the fun stuff, it is essential to ensure that your graphics card drivers are installed and working properly. If your graphics card is not functioning optimally, you won't be able to play games.
+
+Essential Packages
+------------------
+
+To make things easier for you, CachyOS has grouped all the necessary packages for gaming into one command. This makes the installation process faster and less complicated. Simply run the following command in the terminal:
+
 ```
 sudo pacman -S cachyos-gaming-meta
 ```
-> `cachyos-gaming-meta` installs following [packages](https://github.com/CachyOS/CachyOS-PKGBUILDS/blob/master/cachyos-gaming-meta/PKGBUILD). *If you miss any package, let us know.*
 
-## Steam
-If you play games through Steam. Congratulations. That's all! Let's open Steam, select proton and enjoy your games!
-> Notebook users with NVIDIA GPU should read following guide: [NVIDIA PRIME Render Offload](https://wiki.cachyos.org/en/notebooks)
+> The `cachyos-gaming-meta` package installs the following [packages](https://github.com/CachyOS/CachyOS-PKGBUILDS/blob/master/cachyos-gaming-meta/PKGBUILD). *If you find that you're missing any package, feel free to let the CachyOS team know.*
 
-### Proton?
-Don't worry nothing hard, just a few mouse clicks. Here is a screenshots.
+Steam
+-----
+
+For Steam users, playing games on CachyOS is a breeze! Simply open Steam and select the Proton option, and you're ready to enjoy your games.
+> Notebook users with NVIDIA GPUs should refer to the following guide: [NVIDIA PRIME Render Offload](https://wiki.cachyos.org/en/notebooks)
+
+Proton
+------
+
+Don't worry, Proton is not complicated at all! In just a few clicks, you can have it set up and ready to use. Check out the screenshots below for a step-by-step guide.
+
 ![screenshot_20230116_212054.png](/screenshot_20230116_212054.png)
 ![screenshot_20230116_212256.png](/screenshot_20230116_212256.png)
 ![screenshot_20230116_212402.png](/screenshot_20230116_212402.png)
 ![screenshot_20230116_212343.png](/screenshot_20230116_212343.png)
 
-You can play your Windows games on Linux.
-> How do I know, if my game works on Linux? Check your game on [proton-db](https://www.protondb.com/)
+You can use Proton to play your Windows games on Linux.
+> To check if your game is compatible with Linux, visit [proton-db](https://www.protondb.com/).
 
-### Proton versions
-We provide a lot of different proton versions for play games. If you want to more performance, try `proton-cachyos`
+CachyOS provides various Proton versions for improved performance, including `proton-cachyos`, `proton-ge-custom`, `proton-tkg-git`, and the official Proton versions `proton-experimental` and `proton`.
 
+Bottles
+-------
 
-#### Custom proton versions
-- proton-cachyos
-- proton-ge-custom
-- proton-tkg-git
+Lutris
+------
 
-#### Official proton version
-- proton-experimental
-- proton
+Lutris provides a central hub for all your games on your Linux distro. With Lutris, you can manage your game runners, such as Wine, Proton, or emulators, with custom parameters. To install Lutris, run the following command in the terminal:
 
-# Bottles
-
-# Lutris
-Lutris provide one central hub for all games on your Linux distro, you can also manage your runners - Wine, Proton or kind of emulator to run game with a lot of custom parameters. 
 ```
 sudo pacman -S lutris
 ```
+
 ## Script installers
 Most games are installed through script, so you need minimal effort to install games.
 
