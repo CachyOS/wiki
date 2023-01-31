@@ -2,7 +2,7 @@
 title: How to install CachyOS
 description: CachyOS Installation via GUI/CLI Installer
 published: 1
-date: 2023-01-31T19:59:14.222Z
+date: 2023-01-31T20:00:36.238Z
 tags: cachyos, calamares, cli-installer, gui-installer, install-cachyos
 editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
@@ -35,7 +35,9 @@ For the best performance, it is recommended to have:
 Choosing Your Bootloader
 ------------------------
 
-CachyOS offers two different bootloaders for online installation: systemd-boot and GRUB. You will be asked to choose between the two when you click the `Launch Installer` button in CachyOS Hello. We recommend using systemd-boot as it is simple and results in faster boot times. Note that systemd-boot is only supported on systems with UEFI support, while GRUB supports both MBR and UEFI.
+CachyOS offers two different bootloaders for online installation: systemd-boot and GRUB. You will be asked to choose between the two when you click the `Launch Installer` button in CachyOS Hello. We recommend using systemd-boot as it is simple and results in faster boot times.
+
+> Note that systemd-boot is only supported on systems with UEFI support, while GRUB supports both MBR and UEFI.
 
 Choosing Your Filesystem
 ------------------------
@@ -48,9 +50,8 @@ When you install CachyOS, you can choose from the following five filesystems: xf
 *   F2FS is a file system designed for NAND-based flash memory.
 *   ZFS is an advanced file system created by Sun Microsystems that offers stability, speed, security, and future-proofing.
 
-**!!IMPORTANT!!:** 
-> If you choose to install ZFS, you must clear the partition using a tool such as Gparted or Partition Manager before installation. After clearing the drive, reboot and start the installer. Choose ZFS, and everything should work fine!
-{.is-info}
+> **!!IMPORTANT!!:** 
+If you choose to install ZFS, you must clear the partition using a tool such as Gparted or Partition Manager before installation. After clearing the drive, reboot and start the installer. Choose ZFS, and everything should work fine!
 
 
 Desktop Environments
@@ -73,7 +74,6 @@ CachyOS offers several desktop environments for you to choose from, including th
 *   Mate
 
 > **Note:** Hyprland may not work well in virtual machines or with NVIDIA graphics cards.
-{.is-info}
 
 
 1.  KDE Plasma is a comprehensive and flexible desktop environment that offers multiple styles of menus to access applications. It features the kwin window manager, and also works with Compiz. KDE Plasma also boasts an intuitive interface that allows you to easily download and install new themes, widgets, and more from the web.
