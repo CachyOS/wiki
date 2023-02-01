@@ -2,7 +2,7 @@
 title: How to install CachyOS
 description: CachyOS Installation via GUI/CLI Installer
 published: 1
-date: 2023-01-31T20:10:35.734Z
+date: 2023-02-01T13:23:15.412Z
 tags: cachyos, calamares, cli-installer, gui-installer, install-cachyos
 editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
@@ -91,3 +91,12 @@ CachyOS offers several desktop environments for you to choose from, including th
 13. Budgie is a simple and elegant desktop environment built using the GTK toolkit. It is designed to provide a modern and attractive interface that is easy to use, while also being highly configurable.
 14.  LXDE (Lightweight X11 Desktop Environment) is a fast and energy-saving desktop environment designed to be used on older computers and resource-constrained systems. It uses Openbox as its default window manager and focuses on providing a simple, clean and user-friendly interface.
 15.  Mate Desktop is a traditional desktop environment forked from GNOME 2. It is characterized by its classic look and feel, with a simple and intuitive user interface. Mate provides an easy-to-use and highly customizable desktop experience for users who prefer a more classic look and feel.
+
+Workarounds
+--------------------
+
+There is currently a issue with the CachyOS-Live-ISO that the nvidia driver blocks that nouveau gets loaded.
+If you face a blackscreen get into the tty with CTRL + ALT + F2 and then login with root.
+No password is required, so just enter at the password.
+After that run the command:
+`modprobe nouveau`
