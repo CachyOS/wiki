@@ -2,7 +2,7 @@
 title: Adding CachyOS Repository for Enhanced Arch Linux Performance
 description: Step-by-step guide on how to add CachyOS repository to your Arch Linux system with x86_64-v3 support.
 published: 1
-date: 2023-01-30T12:32:19.012Z
+date: 2023-02-01T11:18:03.910Z
 tags: arch linux, cachyos, repo, x86_64-v3
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -46,7 +46,7 @@ Check if your CPU supports x86-64-v3 or x86-64-v4 by running the following comma
 
 If you get an output, then your CPU supports `x86_64-v3` or `x86-64-v4`.
 
-### For `x86_64-v3`: Add the following to the Arch Linux repositories:
+### For `x86_64-v3`: Add the following over the Arch Linux repositories:
 
 ```cfg
 [cachyos-v3]
@@ -57,7 +57,7 @@ Include = /etc/pacman.d/cachyos-v3-mirrorlist
 Include = /etc/pacman.d/cachyos-mirrorlist
 ```
 
-### For `x86_64-v4`: Add the following to the Arch Linux repositories:
+### For `x86_64-v4`: Add the following over the Arch Linux repositories:
 
 ```cfg
 [cachyos-v4]
@@ -70,7 +70,7 @@ Include = /etc/pacman.d/cachyos-v3-mirrorlist
 Include = /etc/pacman.d/cachyos-mirrorlist
 ```
 
-### For `x86_64`: Add the following to the Arch Linux repositories:
+### For `x86_64`: Add the following over the Arch Linux repositories:
 
 ```cfg
 [cachyos]
@@ -130,10 +130,3 @@ sudo mv /etc/pacman.conf.bak /etc/pacman.conf
 ```
 sudo pacman -Suuy
 ```
-
-Note on Nvidia Driver and Clang Compiled Kernels
-------------------------------------------------
-
-This is no longer necessary, since dkms version 3.0.1. 😃
-
-If you have any questions, feel free to reach out!
