@@ -2,7 +2,7 @@
 title: CachyOS GUI Installer Changelog
 description: Changelog for the CachyOS GUI Installer
 published: 1
-date: 2023-02-06T16:19:23.684Z
+date: 2023-02-06T16:20:37.013Z
 tags: cachyos, changelog, clamares, gui-installer, linux-cachyos
 editor: markdown
 dateCreated: 2023-01-21T19:28:01.996Z
@@ -196,7 +196,7 @@ Following options you can select for a kernel compile:
 - Budgie, Mate, and LXDE desktop environments have been added to the Netinstallation
 - Bluetooth.service is now enabled by default
 - F2FS and grub are enabled and working again
-- Package Updates: linux-cachyos 6.1.10, mesa 22.3.4, zfs-utils 2.1.9, nvidia 525.85.05, glibc 2.37, cachy-browser 109.0.1
+- Package Updates: linux-cachyos 6.1.10, mesa 22.3.4, zfs-utils 2.1.9, glibc 2.37, cachy-browser 109.0.1
 
 **Bug-fixes:**
 
