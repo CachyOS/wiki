@@ -2,7 +2,7 @@
 title: CachyOS GUI Installer Changelog
 description: Changelog for the CachyOS GUI Installer
 published: 1
-date: 2023-01-21T22:56:03.354Z
+date: 2023-02-06T16:19:23.684Z
 tags: cachyos, changelog, clamares, gui-installer, linux-cachyos
 editor: markdown
 dateCreated: 2023-01-21T19:28:01.996Z
@@ -188,3 +188,19 @@ Following options you can select for a kernel compile:
 - pamac got removed from the netinstall
 - The ranked cachyos mirrors gets now correctly copied to the install target
 - power-profile-daemon don't gets enabled anymore as default
+
+# 23.02
+**New Features:**
+
+- The cachyos-community-v3 repo has been added
+- Budgie, Mate, and LXDE desktop environments have been added to the Netinstallation
+- Bluetooth.service is now enabled by default
+- F2FS and grub are enabled and working again
+- Package Updates: linux-cachyos 6.1.10, mesa 22.3.4, zfs-utils 2.1.9, nvidia 525.85.05, glibc 2.37, cachy-browser 109.0.1
+
+**Bug-fixes:**
+
+- Rate-mirrors now fall back to unranked mirrors if it fails to rate them
+- cachyos-rate-mirrors has a longer fetch-mirrors-timeout
+- Github has been added to the hosts to avoid mirrorlist issues
+- Boot entries for BIOS have been updated in syslinux
