@@ -2,7 +2,7 @@
 title: Adding CachyOS Repository for Enhanced Arch Linux Performance
 description: Step-by-step guide on how to add CachyOS repository to your Arch Linux system with x86_64-v3 support.
 published: 1
-date: 2023-02-07T10:48:41.055Z
+date: 2023-02-07T10:57:49.670Z
 tags: arch linux, cachyos, repo, x86_64-v3
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -36,6 +36,19 @@ sudo ./cachyos-repo.sh
 💡 For more information, check out our [GitHub](https://github.com/cachyos) or join our [Discord](https://discord.gg/k39qfrxPNa) community.
 
 # Option 2: Manual Installation
+
+1. Add both keys
+```
+sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
+```
+```
+sudo pacman-key --lsign-key F3B607488DB35A47
+```
+
+2. You can download first initial packages
+```
+sudo pacman -U 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-2-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-mirrorlist-15-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v3-mirrorlist-15-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v4-mirrorlist-3-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/pacman-6.0.2-10-x86_64.pkg.tar.zst'
+```
 
 ## Check CPU compatibility
 If you want to add our repositories manually, you must check the compatibility of the CPU with cachyos repositories.
