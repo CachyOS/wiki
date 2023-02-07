@@ -2,7 +2,7 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2023-01-31T21:52:27.832Z
+date: 2023-02-07T17:33:51.663Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
@@ -74,7 +74,7 @@ Add the following to your kernel command line: `retbleed=off` or to disable all 
 Edit the appropriate file to persist the changes:
 
 *   GRUB: `/etc/default/grub`
-*   systemd boot: `/etc/systemd/boot-manager.conf`
+*   systemd boot: `/etc/sdboot-manage.conf`
 
 > Note: Disabling these mitigations poses a security risk to your system.
 {.is-warning}
