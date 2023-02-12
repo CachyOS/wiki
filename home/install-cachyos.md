@@ -2,7 +2,7 @@
 title: How to install CachyOS
 description: CachyOS Installation via GUI/CLI Installer
 published: 1
-date: 2023-02-01T13:23:15.412Z
+date: 2023-02-12T12:57:29.415Z
 tags: cachyos, calamares, cli-installer, gui-installer, install-cachyos
 editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
@@ -99,4 +99,4 @@ There is currently a issue with the CachyOS-Live-ISO that the nvidia driver bloc
 If you face a blackscreen get into the tty with CTRL + ALT + F2 and then login with root.
 No password is required, so just enter at the password.
 After that run the command:
-`modprobe nouveau`
+`sudo modprobe nouveau`
