@@ -2,7 +2,7 @@
 title: How to install CachyOS
 description: CachyOS Installation via GUI/CLI Installer
 published: 1
-date: 2023-02-12T12:57:29.415Z
+date: 2023-02-17T15:47:16.115Z
 tags: cachyos, calamares, cli-installer, gui-installer, install-cachyos
 editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
@@ -58,23 +58,6 @@ Desktop Environments
 --------------------
 
 CachyOS offers several desktop environments for you to choose from, including the default option of KDE. The available options are:
-*   KDE
-*   CuteFish
-*   i3
-*   Gnome
-*   Openbox
-*   Wayfire
-*   Xfce
-*   LXQT
-*   bspwm
-*   Cinnamon
-*   UKUI
-*   Budgie
-*   LXDE
-*   Mate
-
-> **Note:** Hyprland may not work well in virtual machines or with NVIDIA graphics cards.
-
 
 1.  KDE Plasma is a comprehensive and flexible desktop environment that offers multiple styles of menus to access applications. It features the kwin window manager, and also works with Compiz. KDE Plasma also boasts an intuitive interface that allows you to easily download and install new themes, widgets, and more from the web.
 2.  CuteFish is a sleek, modern, and efficient desktop environment built using Qt Quick and some KDE core frameworks. It has a design reminiscent of macOS.
@@ -91,6 +74,8 @@ CachyOS offers several desktop environments for you to choose from, including th
 13. Budgie is a simple and elegant desktop environment built using the GTK toolkit. It is designed to provide a modern and attractive interface that is easy to use, while also being highly configurable.
 14.  LXDE (Lightweight X11 Desktop Environment) is a fast and energy-saving desktop environment designed to be used on older computers and resource-constrained systems. It uses Openbox as its default window manager and focuses on providing a simple, clean and user-friendly interface.
 15.  Mate Desktop is a traditional desktop environment forked from GNOME 2. It is characterized by its classic look and feel, with a simple and intuitive user interface. Mate provides an easy-to-use and highly customizable desktop experience for users who prefer a more classic look and feel.
+
+> **Note:** Hyprland may not work well in virtual machines or with NVIDIA graphics cards.
 
 Workarounds
 --------------------
