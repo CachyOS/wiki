@@ -2,7 +2,7 @@
 title: How to install CachyOS
 description: CachyOS Installation via GUI/CLI Installer
 published: 1
-date: 2023-02-17T15:47:16.115Z
+date: 2023-02-17T17:50:06.936Z
 tags: cachyos, calamares, cli-installer, gui-installer, install-cachyos
 editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
@@ -58,6 +58,7 @@ Desktop Environments
 --------------------
 
 CachyOS offers several desktop environments for you to choose from, including the default option of KDE. The available options are:
+> **Note:** Please select only one Desktop Enviroment at the net installation
 
 1.  KDE Plasma is a comprehensive and flexible desktop environment that offers multiple styles of menus to access applications. It features the kwin window manager, and also works with Compiz. KDE Plasma also boasts an intuitive interface that allows you to easily download and install new themes, widgets, and more from the web.
 2.  CuteFish is a sleek, modern, and efficient desktop environment built using Qt Quick and some KDE core frameworks. It has a design reminiscent of macOS.
