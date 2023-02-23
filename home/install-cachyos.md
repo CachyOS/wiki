@@ -2,7 +2,7 @@
 title: How to install CachyOS
 description: CachyOS Installation via GUI/CLI Installer
 published: 1
-date: 2023-02-17T17:50:06.936Z
+date: 2023-02-23T15:22:59.500Z
 tags: cachyos, calamares, cli-installer, gui-installer, install-cachyos
 editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
@@ -35,7 +35,8 @@ For the best performance, it is recommended to have:
 Choosing Your Bootloader
 ------------------------
 
-CachyOS offers two different bootloaders for online installation: systemd-boot and GRUB. You will be asked to choose between the two when you click the `Launch Installer` button in CachyOS Hello. We recommend using systemd-boot as it is simple and results in faster boot times.
+CachyOS offers two different bootloaders for online installation: systemd-boot, grub and refind. You will be asked to choose between the two when you click the `Launch Installer` button in CachyOS Hello. We recommend using systemd-boot as it is simple and results in faster boot times.
+systemd-boot does support all filesystem, grub has some limitations with zfs and does not support all features of zfs. Refind does support only xfs and ext4.
 
 > Note that systemd-boot is only supported on systems with UEFI support, while GRUB supports both MBR and UEFI.
 
