@@ -2,7 +2,7 @@
 title: How to install CachyOS
 description: CachyOS Installation via GUI/CLI Installer
 published: 1
-date: 2023-02-23T15:22:59.500Z
+date: 2023-03-03T18:00:21.500Z
 tags: cachyos, calamares, cli-installer, gui-installer, install-cachyos
 editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
@@ -79,11 +79,18 @@ CachyOS offers several desktop environments for you to choose from, including th
 
 > **Note:** Hyprland may not work well in virtual machines or with NVIDIA graphics cards.
 
+
+
 Workarounds
 --------------------
+
+<!-- TODO: Remove that after new release -->
 
 There is currently a issue with the CachyOS-Live-ISO that the nvidia driver blocks that nouveau gets loaded.
 If you face a blackscreen get into the tty with CTRL + ALT + F2 and then login with root.
 No password is required, so just enter at the password.
 After that run the command:
 `sudo modprobe nouveau`
+
+> With the next release this bug should be fixed.
+{.is-info}
