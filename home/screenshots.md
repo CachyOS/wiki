@@ -2,7 +2,7 @@
 title: Screenshots
 description: Some screenshots of CachyOS
 published: 1
-date: 2023-01-30T12:07:00.247Z
+date: 2023-03-04T15:35:48.410Z
 tags: 
 editor: markdown
 dateCreated: 2021-07-04T03:23:21.056Z
