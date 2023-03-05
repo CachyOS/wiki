@@ -2,7 +2,7 @@
 title: CachyOS GUI Installer Changelog
 description: Changelog for the CachyOS GUI Installer
 published: 1
-date: 2023-02-06T16:20:37.013Z
+date: 2023-03-05T11:52:23.375Z
 tags: cachyos, changelog, clamares, gui-installer, linux-cachyos
 editor: markdown
 dateCreated: 2023-01-21T19:28:01.996Z
@@ -83,8 +83,6 @@ Following options you can select for a kernel compile:
 - Missing packages at the live ISO has been added for the offline installation
 - btrfs swap luksencryption got fixed
 - usual translation fixes
-
-
 
 # 22.09
 
@@ -204,3 +202,28 @@ Following options you can select for a kernel compile:
 - cachyos-rate-mirrors has a longer fetch-mirrors-timeout
 - Github has been added to the hosts to avoid mirrorlist issues
 - Boot entries for BIOS have been updated in syslinux
+
+# 23.03
+
+**New Features:**
+
+- Added the refind bootloader
+- Automatic Nvidia driver installation using MHWD
+- Encryption support for ZFS installation
+- Added Hyprland to netinstallation
+- CachyOS-KDE-Settings now uses the KDE default theme, but the CachyOS Themes are still preinstalled and available for use
+- Package updates: linux-cachyos 6.2.2, mesa 23.0.0, cachy-browser 110.0.1, plasma 5.27.2
+- Fully reworked and improved the bootloader calamares module
+- The ISO gets now signed with a GPG key
+- MHWD got improved and updated
+- Synced Calamares with upstream
+
+**Bug-fixes:**
+
+- The "replace partition" option now offers a filesystem selection
+- Fixed a typo in slide 3
+- nouveau got fixed and does now proper load the module
+- MHWD: Use modesetting for INTEL/ATI and Nouveau
+- Removed the zfs hook from mkinitcpio on the live iso, which caused issues when booting
+- You can download the update from our mirrors on SourceForge.
+
