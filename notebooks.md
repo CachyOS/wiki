@@ -28,6 +28,7 @@ Set `i915 intel_agp nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
 ```
 MODULES="i915 intel_agp nvidia"
 ```
+> The `intel_agp` module may cause issues with hibernation on some systems, see https://bbs.archlinux.org/viewtopic.php?id=262043. Try omitting the module if you encounter issues.
 
 ### AMD iGPU
 #### with [AMDGPU driver](https://wiki.archlinux.org/title/AMDGPU)
@@ -128,6 +129,7 @@ ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x0300
 ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="on"
 
 ```
+> The top three `ACTION=="add"` rules are not needed when running Linux kernel `5.5` and newer, see https://download.nvidia.com/XFree86/Linux-x86_64/530.30.02/README/dynamicpowermanagement.html.
 
 Next add the following text to `/etc/modprobe.d/nvidia.conf`
 ```
