@@ -2,7 +2,7 @@
 title: How to install CachyOS
 description: CachyOS Installation via GUI/CLI Installer
 published: 1
-date: 2023-03-03T18:00:21.500Z
+date: 2023-03-06T13:48:51.575Z
 tags: cachyos, calamares, cli-installer, gui-installer, install-cachyos
 editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
@@ -92,5 +92,5 @@ No password is required, so just enter at the password.
 After that run the command:
 `sudo modprobe nouveau`
 
-> With the next release this bug should be fixed.
+> This issue has been fixed in the latest ISO release.
 {.is-info}
