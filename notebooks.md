@@ -2,7 +2,7 @@
 title: Laptop with Dual GPU Setup Guide
 description: 
 published: 1
-date: 2023-03-06T13:51:36.943Z
+date: 2023-03-06T13:58:47.627Z
 tags: laptop, notebook, nvidia
 editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
@@ -99,7 +99,7 @@ As of GNOME 3.38 and later, you can select *"Run with Discrete Graphics"* from t
 
 # Optional configuration
 
-> With the CachyOS-Settings v30 update, these settings are already enabled by default.
+> With the CachyOS-Settings v27 update, these settings are already enabled by default.
 {.is-info}
 
 ## Fully power down the GPU when not in use
