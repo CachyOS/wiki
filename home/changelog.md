@@ -2,7 +2,7 @@
 title: CachyOS GUI Installer Changelog
 description: Changelog for the CachyOS GUI Installer
 published: 1
-date: 2023-03-05T11:52:23.375Z
+date: 2023-03-19T14:27:37.544Z
 tags: cachyos, changelog, clamares, gui-installer, linux-cachyos
 editor: markdown
 dateCreated: 2023-01-21T19:28:01.996Z
@@ -227,3 +227,14 @@ Following options you can select for a kernel compile:
 - Removed the zfs hook from mkinitcpio on the live iso, which caused issues when booting
 - You can download the update from our mirrors on SourceForge.
 
+# 23.03.1
+
+**Features:**
+
+- Package updates: linux-cachyos 6.2.7, cachy-browser 111.0
+
+**Bug-fixes:**
+
+- Calamares got fixed with the lightdm displaymanager due faulty calamares upstream commits
+- Offline installation keyring issue got fixed
+- Refind: Use linux-cachyos-lts as defaullt. Current 6.2 seems not to work well together with refind
