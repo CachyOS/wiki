@@ -50,9 +50,6 @@ You can use Proton to play your Windows games on Linux.
 
 CachyOS provides various Proton versions for improved performance, including `proton-cachyos`, `proton-ge-custom`, `proton-tkg-git`, and the official Proton versions `proton-experimental` and `proton`.
 
-Bottles
--------
-
 Lutris
 ------
 
@@ -61,6 +58,15 @@ Lutris provides a central hub for all your games on your Linux distro. With Lutr
 ```
 sudo pacman -S lutris
 ```
+
+Bottles
+-------
+Bottles is an application that allows you to easily manage Windows prefixes on your favorite Linux distribution. Bottles can also use different runners like Lutris and are manageable within the application. Bottles offers the option of a gaming-orientated prefix. You can install depedencies, add EXE files and use their one-click installers for gaming-related apps like EA App or Battle.net. To install Bottles, run the following command in the terminal:
+
+```
+sudo pacman -S bottles
+```
+For more information regarding Bottles, feel free to look through the [documentation](https://docs.usebottles.com/) of Bottles.
 
 Script Installers
 -----------------
