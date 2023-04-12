@@ -8,7 +8,7 @@ editor: markdown
 dateCreated: 2021-10-04T07:59:10.433Z
 ---
 
-# Linux Kernel with EEDVF scheduler is the default choice
+# Linux Kernel with EEDVF scheduler as the default scheduler
 
 An important aspect of optimization for CachyOS is the scheduler used in our default kernel. Let us explain why we have chosen the EEVDF as our default scheduler. There are many schedulers available, like BMQ or MuQSS, some of them you might already know. We have tested EEVDF and it resulted the one with the best performance results both in benchmarks and responsiveness tests. Please keep an eye out for any updates, as schedulers tend to change often and our default scheduler might change in the future.
 
