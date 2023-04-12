@@ -8,11 +8,11 @@ editor: markdown
 dateCreated: 2021-10-04T07:59:10.433Z
 ---
 
-# Linux Kernel with BORE scheduler is the default choice
+# Linux Kernel with EEDVF scheduler is the default choice
 
-Yes, this is a part of the optimization for CachyOS. ¿Why do we use that scheduler in particular?. Well... let us explain why!. There are so many schedulers like BMQ, MuQSS, that some of you might already know (or not), but we have tested BORE and it resulted the one with the best performance results both in benchmarks and responsiveness tests.
+An important aspect of optimization for CachyOS is the scheduler used in our default kernel. Let us explain why we have chosen the EEVDF as our default scheduler. There are many schedulers available, like BMQ or MuQSS, some of them you might already know. We have tested EEVDF and it resulted the one with the best performance results both in benchmarks and responsiveness tests. Please keep an eye out for any updates, as schedulers tend to change often and our default scheduler might change in the future.
 
-> It's important to note that the choice of BORE scheduler may not always result in improved performance for all hardware types.
+> It's important to note that the choice of EEVDF scheduler may not always result in improved performance for all hardware types.
 {.is-warning}
 
 # Huge repository with packages compiled with generic-v3
