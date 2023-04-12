@@ -53,7 +53,7 @@ Here is a list of features of Linux kernels prebuilt in the CachyOS repositories
 - Kernel Control Flow Integrity (kCFI) selectable when using `LLVM` - *patched llvm can be found in the cachyos-repositories.*
 
 ### :abacus: CPU enhancements
-- 5 Different scheduler are supported,`CFS`,`tt`,`bmq`,`bore`, and `pds` scheduler.
+- 6 Different scheduler are supported: `CFS`,`TT`,`BMQ`,`BORE`, `EEDVF` and `PDS` scheduler.
 - AMD PSTATE EPP and AMD PSTATE Guided Driver enabled by default and with enhancements patches/fixes.
 - Latency Nice Patchset included usuage with `ananicy-cpp` [feature branch](https://lore.kernel.org/lkml/20220925143908.10846-1-vincent.guittot@linaro.org/T/#t).
 - RCU fixes and improvements.
