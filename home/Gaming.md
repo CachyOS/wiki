@@ -73,6 +73,8 @@ Script Installers
 
 For many games, installation is made easy with script installers.
 
-For example, the [League Of Legends scripts](https://lutris.net/games/league-of-legends/) can be installed with minimal effort. We recommend using the WINE Standard version. Simply follow the instructions provided by the script.
+For example, the [League Of Legends scripts](https://lutris.net/games/league-of-legends/) can be installed with minimal effort. Simply follow the instructions provided by the script. Generally, it is recommended to use Wine-GE for non-Steam games while Proton-GE, Proton-CachyOS and Proton-Experimental are excellent choices for Steam games. Try to not use Proton for non-Steam games as Proton relies on the Steam runtime.
+
+A couple of games require a specific, patched Wine-GE version to run (e.g. League of Legends).
 
 With this guide, you are now ready to start gaming on CachyOS. Enjoy!
