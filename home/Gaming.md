@@ -2,7 +2,7 @@
 title: CachyOS - Gaming
 description: It covers essential package installation, Steam gaming with Proton, various Proton version options, Lutris as a central hub for all games, and script installers for popular games like League of Legends.
 published: 1
-date: 2023-04-13T17:49:12.733Z
+date: 2023-04-13T18:06:45.147Z
 tags: 
 editor: markdown
 dateCreated: 2023-01-16T19:09:36.842Z
@@ -24,12 +24,12 @@ To make things easier for you, CachyOS has grouped all the necessary packages fo
 sudo pacman -Sy cachyos-gaming-meta
 ```
 
-> The `cachyos-gaming-meta` package installs the following [packages](https://github.com/CachyOS/CachyOS-PKGBUILDS/blob/master/cachyos-gaming-meta/PKGBUILD). *If you find that you're missing any package, feel free to let the CachyOS team know.*
+> The `cachyos-gaming-meta` package installs the following [packages](https://github.com/CachyOS/CachyOS-PKGBUILDS/blob/master/cachyos-gaming-meta/PKGBUILD). *If you find that you're missing any package, feel free to let the CachyOS team know.* {.is-info}
 
 Steam
 -----
 For Steam users, playing games on CachyOS is a breeze! Simply open Steam and select the Proton option, and you're ready to enjoy your games.
-> Notebook users with NVIDIA GPUs should refer to the following guide: [NVIDIA PRIME Render Offload](https://wiki.cachyos.org/en/notebooks)
+> Notebook users with NVIDIA GPUs should refer to the following guide: [NVIDIA PRIME Render Offload](https://wiki.cachyos.org/en/notebooks) {.is-info}
 
 Proton
 ------
@@ -41,7 +41,7 @@ Don't worry, Proton is not complicated at all! In just a few clicks, you can hav
 ![screenshot_20230116_212343.png](/screenshot_20230116_212343.png)
 
 You can use Proton to play your Windows games on Linux.
-> To check if your game is compatible with Linux, visit [proton-db](https://www.protondb.com/).
+> To check if your game is compatible with Linux, visit [proton-db](https://www.protondb.com/). {.is-info}
 
 CachyOS provides various Proton versions for improved performance, including `proton-cachyos`, `proton-ge-custom`, `proton-tkg-git`, and the official Proton versions `proton-experimental` and `proton`.
 
