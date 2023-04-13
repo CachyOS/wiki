@@ -50,8 +50,6 @@ You can use Proton to play your Windows games on Linux.
 
 CachyOS provides various Proton versions for improved performance, including `proton-cachyos`, `proton-ge-custom`, `proton-tkg-git`, and the official Proton versions `proton-experimental` and `proton`.
 
-Additionally, [Protonup-qt](https://aur.archlinux.org/packages/protonup-qt) is a easy way to install and manage [Wine-GE](https://github.com/GloriousEggroll/wine-ge-custom) and [Proton-GE](https://github.com/gloriouseggroll/proton-ge-custom) installations depending on game launcher.
-
 Lutris
 ------
 
