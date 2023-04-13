@@ -2,7 +2,7 @@
 title: Getting Started: Essential Tasks After Installing CachyOS
 description: Steps to configure after installing CachyOS
 published: 1
-date: 2023-01-31T18:19:52.614Z
+date: 2023-04-13T18:02:38.862Z
 tags: 
 editor: markdown
 dateCreated: 2021-08-11T06:07:58.712Z
@@ -90,9 +90,13 @@ Here are some popular apps you may consider installing:
 You can easily install these apps using the command line. For example, `paru -S vlc mailspring spotify gimp`. If you get an error message, try using a different command or check the name of the app in the database.
 
 ## 5\. Enable global menu:
-
 For some apps like Visual Studio Code, the global menu may not work or may be attached to the parent app instead of the panel. To enable global menu support, run the command `sudo pacman -S appmenu-gtk-module libdbusmenu-glib` and restart the app.
 
-## 6\. Set up Bluetooth headphones:
+## 6\. Enable trim operations on SSD/NVME:
+If you have an SSD or NVME, it would be highly recommended to enable fstrim to ensure your SSD or NVME stays in good working condition.
+```
+sudo systemctl enable --now fstrim.timer
+```
 
+## 7\. Set up Bluetooth headphones:
 To auto-connect your headphones, follow the steps in the Arch wiki guide: [https://wiki.archlinux.org/title/bluetooth\_headset#Headset\_via\_Bluez5/PulseAudio](https://wiki.archlinux.org/title/bluetooth_headset#Headset_via_Bluez5/PulseAudio). If Pulseaudio doesn't work, you may need to manually reconnect the headphones each time you restart your computer.
