@@ -2,7 +2,7 @@
 title: How does CachyOS improve the performance?
 description: 
 published: 1
-date: 2023-01-31T22:23:07.080Z
+date: 2023-04-15T22:29:53.335Z
 tags: performance cachyos x86-64-v3 arch cacule
 editor: markdown
 dateCreated: 2021-10-04T07:59:10.433Z
@@ -40,7 +40,7 @@ Because there are still a lot of outdated Linux servers around the world, it's i
 To prove its efficiency, check out the following benchmarking reports:
 
 *   [https://www.phoronix.com/scan.php?page=news\_item&px=Arch-Linux-x86-64-v3-Port-RFC](https://www.phoronix.com/scan.php?page=news_item&px=Arch-Linux-x86-64-v3-Port-RFC)
-*   [https://lists.archlinux.org/pipermail/arch-General/2021-March/048739.html](https://lists.archlinux.org/pipermail/arch-General/2021-March/048739.html)
+*   [https://lists.archlinux.org/pipermail/arch-general/2021-March/048739.html](https://lists.archlinux.org/pipermail/arch-general/2021-March/048739.html)
 
 **According to these reports, packages and kernels in the CachyOS x86-64-v3 repositories provide an average performance increase of 10%. In some cases, performance increases of up to 36% have been observed.**
 
