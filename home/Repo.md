@@ -2,7 +2,7 @@
 title: Adding CachyOS Repository for Enhanced Arch Linux Performance
 description: Step-by-step guide on how to add CachyOS repository to your Arch Linux system with x86_64-v3 support.
 published: 1
-date: 2023-04-17T11:22:10.618Z
+date: 2023-04-17T11:29:14.537Z
 tags: arch linux, cachyos, repo, x86_64-v3
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -31,7 +31,7 @@ sudo ./cachyos-repo.sh
 
 #### Behaviour of script  
 1. Script will auto-detect CPU architecture, if CPU has `x86-64-v4` or `x86-64-v3` support, script will automatically use the repositories which are optimized with this flag > and some other flags.
-2. Script will backup your old `pacman.conf'.
+2. Script will backup your old `pacman.conf`.
 
 For more information, check out our [GitHub](https://github.com/cachyos) or join our [Discord](https://discord.gg/k39qfrxPNa) community.
 
