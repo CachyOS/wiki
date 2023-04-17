@@ -2,22 +2,22 @@
 title: Adding CachyOS Repository for Enhanced Arch Linux Performance
 description: Step-by-step guide on how to add CachyOS repository to your Arch Linux system with x86_64-v3 support.
 published: 1
-date: 2023-03-12T14:05:16.888Z
+date: 2023-04-17T11:22:10.618Z
 tags: arch linux, cachyos, repo, x86_64-v3
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
 ---
 
-# Option 1: Automated Installation cachyos repositories
+# Option 1: Automated Installation of cachyos repositories
 
 We've made it easy for you! Simply run the following commands to use our helper script that does all the work for you.  😉
 
-Run following commands:
+Run the following commands:
 1. Get archive with script
 ```
 wget https://mirror.cachyos.org/cachyos-repo.tar.xz
 ```
-> If don't have `wget`, install them by `sudo pacman -S wget`
+> If you don't have `wget`, install it with `sudo pacman -S wget`
 
 2. Extract and enter into the archive
 ```
@@ -30,10 +30,10 @@ sudo ./cachyos-repo.sh
 ```
 
 #### Behaviour of script  
-1. Script will auto-detect CPU architecture, if CPU have `x86-64-v4` or `x86-64-v3` support, script will automatically use the repositories which are optimized with this flag > and some other flags.
-2. Script will backup your old `pacman.conf`.
+1. Script will auto-detect CPU architecture, if CPU has `x86-64-v4` or `x86-64-v3` support, script will automatically use the repositories which are optimized with this flag > and some other flags.
+2. Script will backup your old `pacman.conf'.
 
-💡 For more information, check out our [GitHub](https://github.com/cachyos) or join our [Discord](https://discord.gg/k39qfrxPNa) community.
+For more information, check out our [GitHub](https://github.com/cachyos) or join our [Discord](https://discord.gg/k39qfrxPNa) community.
 
 # Option 2: Manual Installation
 
@@ -52,9 +52,9 @@ sudo pacman -U 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-2
 
 ## Check CPU compatibility
 If you want to add our repositories manually, you must check the compatibility of the CPU with cachyos repositories.
-> If you use script above for adding cachyos repositories, you can skip checking.
+> If you are using the script above to add cachyos repositories, you can skip the check.
 
-### 1. Check support by the following the command
+### 1. Check support by running the following the command
 ```
 /lib/ld-linux-x86-64.so.2 --help | grep supported
 ```
@@ -87,19 +87,19 @@ Pay attention to the following text with brackets. **(supported, searched)**
 ```
 
 ### 3. Adding cachyos repositories
-You need edit `pacman.conf` and add repositories.
+You need to edit `pacman.conf` and add repositories.
 ```
 sudo nano /etc/pacman.conf
 ```
 
-#### if CPU support `x86-64`, then add only `[cachyos]` repositories
+#### if your CPU supports `x86-64`, then add only `[cachyos]` repositories
 ```
 # cachyos repos
 [cachyos]
 Include = /etc/pacman.d/cachyos-mirrorlist
 ```
 
-#### if CPU support `x86-64-v3`, then add `[cachyos-v3]`,`[cachyos-community-v3]` and `[cachyos]`
+#### if your CPU supports `x86-64-v3`, then add `[cachyos-v3]`,`[cachyos-community-v3]` and `[cachyos]`
 ```
 # cachyos repos
 ## Only add if your CPU does v3 architecture
@@ -111,7 +111,7 @@ Include = /etc/pacman.d/cachyos-v3-mirrorlist
 Include = /etc/pacman.d/cachyos-mirrorlist
 ```
 
-#### if CPU support `x86-64-v4`, then add `[cachyos-v4]`, `[cachyos-v3]`, `[cachyos-community-v3]` and `[cachyos]`
+#### if your CPU supports `x86-64-v4`, then add `[cachyos-v4]`, `[cachyos-v3]`, `[cachyos-community-v3]` and `[cachyos]`
 ```
 # cachyos repos
 ## Only add if your CPU does support x86-64-v4 architecture
