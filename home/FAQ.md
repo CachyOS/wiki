@@ -1,8 +1,8 @@
 ---
 title: FAQ
-description: 
+description: Frequently asked questions and tips
 published: 1
-date: 2023-04-18T11:21:19.987Z
+date: 2023-04-18T11:35:43.129Z
 tags: information
 editor: markdown
 dateCreated: 2023-04-18T10:29:22.610Z
