@@ -2,7 +2,7 @@
 title: FAQ
 description: Frequently asked questions and tips
 published: 1
-date: 2023-04-18T11:35:43.129Z
+date: 2023-04-19T10:06:23.412Z
 tags: information
 editor: markdown
 dateCreated: 2023-04-18T10:29:22.610Z
@@ -48,6 +48,14 @@ This is indicated by the following text in the terminal and usually comes after 
      $ grub-install ...
      $ grub-mkconfig -o /boot/grub/grub.cfg
 ```
-You simply need to update grub. You can do that with the following command:
+#### If you have UEFI
+To update GRUB on a UEFI system, simply run the following commands:
 1. `sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos`
 2. `grub-mkconfig -o /boot/grub/grub.cfg`
+
+#### If you have BIOS
+To update GRUB on a BIOS system, run the following command:
+1. `sudo grub-install --target=i386-pc /dev/sda`
+2. `grub-mkconfig -o /boot/grub/grub.cfg`
+> **WARNING!** Make sure to check the correct path to your system drive, which could be `/dev/sda`,`/dev/nvme0n1` or `/dev/mmcblk0`.  You can verify this by running the command `lsblk`.
+{.is-warning}
