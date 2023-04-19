@@ -2,7 +2,7 @@
 title: FAQ
 description: Frequently asked questions and tips
 published: 1
-date: 2023-04-19T10:06:23.412Z
+date: 2023-04-19T13:28:12.242Z
 tags: information
 editor: markdown
 dateCreated: 2023-04-18T10:29:22.610Z
