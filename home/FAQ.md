@@ -2,7 +2,7 @@
 title: FAQ
 description: Frequently asked questions and tips
 published: 1
-date: 2023-04-19T13:28:12.242Z
+date: 2023-04-20T07:51:48.732Z
 tags: information
 editor: markdown
 dateCreated: 2023-04-18T10:29:22.610Z
@@ -10,7 +10,6 @@ dateCreated: 2023-04-18T10:29:22.610Z
 
 # Frequently asked questions
 Here are some frequently asked questions. We recommend to read that all users, especially those using CachyOS or Arch-based distributions.
-
 
 ## Software management FAQ
 Here are all the questions related to the installation and uninstallation of software on your system.
@@ -21,19 +20,11 @@ Here are all the questions related to the installation and uninstallation of sof
 ### How can I install a package?
 `sudo pacman -S package`
 
-> Example of GIMP Installation
-`sudo pacman -S gimp` {.is-info}
-
 ### How can I remove a package?
 `sudo pacman -R package`
-> Example of GIMP Uninstallation.
-`sudo pacman -R gimp` {.is-info}
 
 ### How can I remove a package and its dependencies that are no longer needed by other packages?
 `sudo pacman -Rs package`
-> Example of GIMP Uninstallation and GIMP dependencies that are no longer needed by other packages
-`sudo pacman -Rs gimp` {.is-info}
-
 
 ## System maintanance FAQ
 Here are all the questions related to the system maintenance or changes of configurations of your system.
