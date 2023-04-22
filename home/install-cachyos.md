@@ -2,7 +2,7 @@
 title: How to install CachyOS
 description: CachyOS Installation via GUI/CLI Installer
 published: 1
-date: 2023-04-22T14:41:38.464Z
+date: 2023-04-22T14:41:47.666Z
 tags: cachyos, calamares, cli-installer, gui-installer, install-cachyos
 editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
@@ -89,7 +89,4 @@ Workarounds
 ```
 sudo pacman-key --init; sudo pacman-key --populate; sudo pacman-key --lsign cachyos
 ```
-
-### Refind installation does not boot
-The 6.2 Kernel did broke the refind installation. On the 19.03.2023 we will do another fixing release, to use the linux-cachyos-lts kernel as default there, till this is fixed from refind or the kernel itself.
 
