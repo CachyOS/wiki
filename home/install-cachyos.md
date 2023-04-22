@@ -2,7 +2,7 @@
 title: How to install CachyOS
 description: CachyOS Installation via GUI/CLI Installer
 published: 1
-date: 2023-03-14T17:50:49.551Z
+date: 2023-04-22T14:41:38.464Z
 tags: cachyos, calamares, cli-installer, gui-installer, install-cachyos
 editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
@@ -28,9 +28,9 @@ For the best performance, it is recommended to have:
 
 *   4 GB of memory
 *   50 GB of hard disk space
-*   An x86-64-v3 processor
+*   An x86-64-v3 supported processor
 *   50 Mbps or better internet connection
-*   A newer NVIDIA card (900+)
+*   A newer NVIDIA card (900+), AMD Graphics Card or Intel
 
 Choosing Your Bootloader
 ------------------------
