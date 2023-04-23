@@ -2,11 +2,22 @@
 title: CachyOS GUI Installer Changelog
 description: Changelog for the CachyOS GUI Installer
 published: 1
-date: 2023-03-29T20:22:07.341Z
+date: 2023-04-23T13:46:52.692Z
 tags: cachyos, changelog, clamares, gui-installer, linux-cachyos
 editor: markdown
 dateCreated: 2023-01-21T19:28:01.996Z
 ---
+
+# 23.04
+
+Features:
+- Introduce the Qtile desktop enviroment
+- Reworked mhwd: Rust rewrite; Simplified profiles for GPUs and network cards; Removed bunch of ancient code
+- Package updates: linux-cachyos 6.2.12, cachy-browser 112.0.1, mesa 23.0.3, zfs-utils 2.1.11
+
+Bug-fixes:
+
+- f2fs: Remove "atgc" mount options since it has issues with systemd
 
 # 23.03.1
 
