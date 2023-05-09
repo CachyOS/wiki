@@ -2,7 +2,7 @@
 title: FAQ
 description: Frequently asked questions and tips
 published: 1
-date: 2023-05-09T11:08:21.521Z
+date: 2023-05-09T11:08:40.447Z
 tags: information
 editor: markdown
 dateCreated: 2023-04-18T10:29:22.610Z
@@ -47,6 +47,6 @@ To update GRUB on a UEFI system, simply run the following commands:
 #### If you have BIOS
 To update GRUB on a BIOS system, run the following command:
 1. `sudo grub-install --target=i386-pc /dev/sda`
-2. `grub-mkconfig -o /boot/grub/grub.cfg`
+2. `sudo grub-mkconfig -o /boot/grub/grub.cfg`
 > **WARNING!** Make sure to check the correct path to your system drive, which could be `/dev/sda`,`/dev/nvme0n1` or `/dev/mmcblk0`.  You can verify this by running the command `lsblk`.
 {.is-warning}
