@@ -2,7 +2,7 @@
 title: FAQ
 description: Frequently asked questions and tips
 published: 1
-date: 2023-04-20T07:51:48.732Z
+date: 2023-05-09T11:08:21.521Z
 tags: information
 editor: markdown
 dateCreated: 2023-04-18T10:29:22.610Z
@@ -42,7 +42,7 @@ This is indicated by the following text in the terminal and usually comes after 
 #### If you have UEFI
 To update GRUB on a UEFI system, simply run the following commands:
 1. `sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos`
-2. `grub-mkconfig -o /boot/grub/grub.cfg`
+2. `sudo grub-mkconfig -o /boot/grub/grub.cfg`
 
 #### If you have BIOS
 To update GRUB on a BIOS system, run the following command:
