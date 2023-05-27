@@ -2,7 +2,7 @@
 title: Adding CachyOS Repository for Enhanced Arch Linux Performance
 description: Step-by-step guide on how to add CachyOS repository to your Arch Linux system with x86_64-v3 support.
 published: 1
-date: 2023-04-17T11:29:14.537Z
+date: 2023-05-27T08:31:45.083Z
 tags: arch linux, cachyos, repo, x86_64-v3
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -99,19 +99,21 @@ sudo nano /etc/pacman.conf
 Include = /etc/pacman.d/cachyos-mirrorlist
 ```
 
-#### if your CPU supports `x86-64-v3`, then add `[cachyos-v3]`,`[cachyos-community-v3]` and `[cachyos]`
+#### if your CPU supports `x86-64-v3`, then add `[cachyos-v3]`,`[cachyos-core-v3]`,`[cachyos-extra-v3]` and `[cachyos]`
 ```
 # cachyos repos
 ## Only add if your CPU does v3 architecture
 [cachyos-v3]
 Include = /etc/pacman.d/cachyos-v3-mirrorlist
-[cachyos-community-v3]
+[cachyos-core-v3]
+Include = /etc/pacman.d/cachyos-v3-mirrorlist
+[cachyos-extra-v3]
 Include = /etc/pacman.d/cachyos-v3-mirrorlist
 [cachyos]
 Include = /etc/pacman.d/cachyos-mirrorlist
 ```
 
-#### if your CPU supports `x86-64-v4`, then add `[cachyos-v4]`, `[cachyos-v3]`, `[cachyos-community-v3]` and `[cachyos]`
+#### if your CPU supports `x86-64-v4`, then add `[cachyos-v4]`, `[cachyos-v3]`, `[cachyos-core-v3]`, `[cachyos-extra-v3]` and `[cachyos]`
 ```
 # cachyos repos
 ## Only add if your CPU does support x86-64-v4 architecture
@@ -119,7 +121,9 @@ Include = /etc/pacman.d/cachyos-mirrorlist
 Include = /etc/pacman.d/cachyos-v4-mirrorlist
 [cachyos-v3]
 Include = /etc/pacman.d/cachyos-v3-mirrorlist
-[cachyos-community-v3]
+[cachyos-core-v3]
+Include = /etc/pacman.d/cachyos-v3-mirrorlist
+[cachyos-extra-v3]
 Include = /etc/pacman.d/cachyos-v3-mirrorlist
 [cachyos]
 Include = /etc/pacman.d/cachyos-mirrorlist
@@ -146,7 +150,9 @@ Debug packages are available in the `cachyos-debug-v3` repository. Add it with t
 ```cfg
 [cachyos-debug-v3]
 Server = https://debug.cachyos.org/repo/$arch_v3/$repo
-[cachyos-community-debug-v3]
+[cachyos-core-debug-v3]
+Server = https://debug.cachyos.org/repo/$arch_v3/$repo
+[cachyos-extra-debug-v3]
 Server = https://debug.cachyos.org/repo/$arch_v3/$repo
 ```
 
