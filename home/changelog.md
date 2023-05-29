@@ -2,11 +2,24 @@
 title: CachyOS GUI Installer Changelog
 description: Changelog for the CachyOS GUI Installer
 published: 1
-date: 2023-04-23T13:47:56.418Z
+date: 2023-05-29T12:00:51.043Z
 tags: cachyos, changelog, clamares, gui-installer, linux-cachyos
 editor: markdown
 dateCreated: 2023-01-21T19:28:01.996Z
 ---
+
+# 23.05
+
+**Features:**
+- CachyOS Git Migration layout is now reflected in the installation
+- chwd (mhwd) got multiple fixes
+- Pacman: We added a feature, which makes it possible to provide a message to our users before updating
+- Calamares got synced with upstream
+- Package updates: linux-cachyos 6.3.4, cachy-browser 113.0.1, mesa 23.1.1, python 3.11
+
+**Bug-fixes:**
+- netinstall: minimal fixes due package changes
+- Slides: Slide 6 got updated to reflect the lastest chang
 
 # 23.04
 
