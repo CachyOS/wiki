@@ -2,7 +2,7 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2023-02-07T17:33:51.663Z
+date: 2023-05-31T15:49:46.745Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
@@ -20,20 +20,7 @@ The `vm.vfs_cache_pressure` is a kernel parameter that sets the tendency of the 
 
 Both values can be changed in the `/etc/sysctl.d/99-cachyos-settings.conf` file.
 
-2\. Editing mkinitcpio.conf for faster boot times
--------------------------------------------------
-
-Replace udev with systemd for faster boots and set compression algorithm to zstd and compression level to 2 because compression ratio increase isn't worth the increased latency.
-
-(bellow isnt the whole file, just the parts that needs changes)
-```ini
-HOOKS="base systemd autodetect...
-
-COMPRESSION="zstd"
-COMPRESSION_OPTIONS=(-2)
-```
-
-3\. Zram or Zswap tweaking
+2\. Zram or Zswap tweaking
 --------------------------
 
 Zswap is a kernel feature that caches swap pages in RAM, compressing them before storing. It improves performance by reducing disk I/O when the system needs to swap.
@@ -50,7 +37,7 @@ To make the changes persist, add `zswap.compressor=zstd zswap.max_pool_percent=1
 
 For SSDs, set the `page-cluster` value to 1 in `/etc/sysctl.d/99-cachyos-settings.conf`. For HDDs, set it to 2.
 
-4\. CPU Mitigations for retbleed
+3\. CPU Mitigations for retbleed
 --------------------------------
 
 A public speculative execution attack exploiting return instructions (retbleed) was revealed in July 2022. The kernel has fixed this, but it results in a significant performance overhead (14-39%).
@@ -84,7 +71,7 @@ For more information:
 *   https://www.phoronix.com/review/retbleed-benchmark
 *   https://www.phoronix.com/review/xeon-skylake-retbleed
 
-5\. AMD PSTATE (EPP) Driver
+4\. AMD PSTATE (EPP) Driver
 ---------------------------
 
 For improved performance and power efficiency, you can enable the AMD PSTATE EPP driver. The default AMD PSTATE driver may not provide the same benefits as the acpi-cpufreq driver.
@@ -108,7 +95,7 @@ For more information:
 *   [https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/](https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/)
 *   [https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/](https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/)
 
-6\. Using AMD PSTATE EPP
+5\. Using AMD PSTATE EPP
 ------------------------
 
 To use the AMD PSTATE EPP, there are two CPU frequency scaling governors available: powersave and performance. It is recommended to use the powersave governor and set a preference.
@@ -125,7 +112,7 @@ Available preferences: `performance`, `power`, `balance_power`, `balance_perform
 Benchmarks for each preference can be found here:
 [https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/](https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/)
 
-7\. Disabling Split Lock Mitigate
+6\. Disabling Split Lock Mitigate
 ---------------------------------
 
 In some cases, split lock mitigate can slow down performance in applications and games. A patch is available to disable it via sysctl.
