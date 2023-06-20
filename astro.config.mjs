@@ -19,7 +19,7 @@ export default defineConfig({
         src: '/src/assets/logo.svg',
       },
       editLink: {
-        baseUrl: 'https://github.com/cachyos/wiki/edit/next/src/content/docs/',
+        baseUrl: 'https://github.com/cachyos/wiki/edit/next/',
       },
       social: {
         github: 'https://github.com/cachyos',
