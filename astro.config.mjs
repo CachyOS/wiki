@@ -31,14 +31,6 @@ export default defineConfig({
       },
       head: [
         {
-          tag: 'script',
-          attrs: {
-            src: 'https://cdn.usefathom.com/script.js',
-            'data-site': 'EZBHTSIG',
-            defer: true,
-          },
-        },
-        {
           tag: 'meta',
           attrs: { property: 'og:image', content: site + 'og.jpg?v=1' },
         },
