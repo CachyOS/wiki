@@ -2,7 +2,7 @@
 title: CachyOS - Gaming
 description: It covers essential package installation, Steam gaming with Proton, various Proton version options, Lutris as a central hub for all games, and script installers for popular games like League of Legends.
 published: 1
-date: 2023-04-13T18:06:45.147Z
+date: 2023-06-21T16:19:19.756Z
 tags: 
 editor: markdown
 dateCreated: 2023-01-16T19:09:36.842Z
@@ -21,7 +21,7 @@ Essential Packages
 To make things easier for you, CachyOS has grouped all the necessary packages for gaming into one command. This makes the installation process faster and less complicated. Simply run the following command in the terminal:
 
 ```
-sudo pacman -Sy cachyos-gaming-meta
+sudo pacman -S cachyos-gaming-meta
 ```
 
 > The `cachyos-gaming-meta` package installs the following [packages](https://github.com/CachyOS/CachyOS-PKGBUILDS/blob/master/cachyos-gaming-meta/PKGBUILD). *If you find that you're missing any package, feel free to let the CachyOS team know.* {.is-info}
