@@ -21,7 +21,7 @@ Essential Packages
 To make things easier for you, CachyOS has grouped all the necessary packages for gaming into one command. This makes the installation process faster and less complicated. Simply run the following command in the terminal:
 
 ```sh
-sudo pacman -Sy cachyos-gaming-meta
+sudo pacman -S cachyos-gaming-meta
 ```
 
 :::note
