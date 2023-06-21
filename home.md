@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2023-01-29T14:22:45.053Z
+date: 2023-06-21T16:50:59.238Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -50,7 +50,8 @@ You can select from the following desktop environments (DEs) or window managers 
 - LXQT - The Lightweight Qt Desktop Environment.
 - bspwm is a tiling window manager that represents windows as the leaves of a full binary tree. bspwm supports multiple monitors and is configured and controlled through messages
 - Xfce is a lightweight desktop environment for UNIX-like operating systems. It aims to be fast and low on system resources, while still being visually appealing and user friendly
-- Hyprland is a dynamic tiling Wayland compositor that doesn't sacrifice on its looks. 
+- Hyprland is a dynamic tiling Wayland compositor that doesn't sacrifice on its looks.
+- Qtile - TWM written in Python, highly customizable and easy to use, it has tons of built in widgets such as a bar, supports both X11 and Wayland session.
 
 ## Security
 
