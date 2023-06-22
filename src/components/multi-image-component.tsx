@@ -3,8 +3,6 @@ import { CloseButton, SlideToolbar } from 'react-image-previewer/ui';
 import React from 'react';
 
 const MultipleImageComponent = ({ images }) => {
-  console.log(images);
-
   if (images == undefined) {
     return <div>Failed</div>
   }
