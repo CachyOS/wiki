@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import react from '@astrojs/react';
 
 
 export const locales = {
@@ -13,6 +14,7 @@ const site = 'https://wiki.cachyos.org/';
 export default defineConfig({
   site,
   integrations: [
+    react(),
     starlight({
       title: 'CachyOS',
       logo: {
