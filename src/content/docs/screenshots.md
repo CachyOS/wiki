@@ -12,39 +12,39 @@ dateCreated: 2021-07-04T03:23:21.056Z
 ## KDE
 > Emerald Theme
 
-![emerald1920x180guest1.png](../../assets/emerald1920x180guest1.png)
-![emerald1920x180guest3.png](../../assets/emerald1920x180guest3.png)
-![emerald1920x180guest4.png](../../assets/emerald1920x180guest4.png)
+![emerald1920x180guest1.png](~/assets/images/emerald1920x180guest1.png)
+![emerald1920x180guest3.png](~/assets/images/emerald1920x180guest3.png)
+![emerald1920x180guest4.png](~/assets/images/emerald1920x180guest4.png)
 
 > CachyOS Nord Theme
 
-![nord1920x180guest1.png](../../assets/nord1920x180guest1.png)
-![nord1920x180guest.png](../../assets/nord1920x180guest.png)
-![nord1920x180guest2.png](../../assets/nord1920x180guest2.png)
-![nord1920x180guest3.png](../../assets/nord1920x180guest3.png)
-![nord1920x180guest4.png](../../assets/nord1920x180guest4.png)
+![nord1920x180guest1.png](~/assets/images/nord1920x180guest1.png)
+![nord1920x180guest.png](~/assets/images/nord1920x180guest.png)
+![nord1920x180guest2.png](~/assets/images/nord1920x180guest2.png)
+![nord1920x180guest3.png](~/assets/images/nord1920x180guest3.png)
+![nord1920x180guest4.png](~/assets/images/nord1920x180guest4.png)
 ## Gnome
-![gnome.png](../../assets/gnome.png)
-![gnome1.png](../../assets/gnome1.png)
+![gnome.png](~/assets/images/gnome.png)
+![gnome1.png](~/assets/images/gnome1.png)
 ## i3
-![i3.png](../../assets/i3.png)
+![i3.png](~/assets/images/i3.png)
 ## XFCE
-![xfce.png](../../assets/xfce.png)
+![xfce.png](~/assets/images/xfce.png)
 ## CuteFish
-![cutefish.png](../../assets/cutefish.png)
+![cutefish.png](~/assets/images/cutefish.png)
 ## OpenBox
-![openbox.png](../../assets/openbox.png)
+![openbox.png](~/assets/images/openbox.png)
 ## LXQT
-![lxqt.png](../../assets/lxqt.png)
+![lxqt.png](~/assets/images/lxqt.png)
 ## Hyprland
-![hyprland.png](../../assets/hyprland1.png)
+![hyprland.png](~/assets/images/hyprland1.png)
 ## UKUI
-![ukui.png](../../assets/ukui.png)
+![ukui.png](~/assets/images/ukui.png)
 ## Cinnamon
-![cinnamon.png](../../assets/cinnamon.png)
+![cinnamon.png](~/assets/images/cinnamon.png)
 ## Budgie
-![budgie.png](../../assets/budgie.png)
+![budgie.png](~/assets/images/budgie.png)
 ## Mate
-![mate.png](../../assets/mate.png)
+![mate.png](~/assets/images/mate.png)
 ## LXDE
-![lxde.png](../../assets/lxde.png)
+![lxde.png](~/assets/images/lxde.png)
