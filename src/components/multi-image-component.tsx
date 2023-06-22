@@ -13,7 +13,7 @@ const MultipleImageComponent = ({ images }) => {
         const { onClose } = props;
         return (
           <>
-            <SlideToolbar {...props} />
+            <SlideToolbar {...props} items={[ 'arrowLeft', 'countText', 'arrowRight']} />
             <CloseButton onClick={onClose} />
           </>
         )
