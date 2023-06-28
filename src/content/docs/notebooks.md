@@ -7,7 +7,46 @@ editor: markdown
 dateCreated: 2021-07-04T00:59:16.282Z
 ---
 
-# Optimus Manager
+# NVIDIA PRIME Render Offload
+## The official way from NVIDIA
+Append these enviroment variables before running the program
+```bash
+__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia <program>
+```
+### Steam
+```
+__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia %command%
+```
+:::tip
+Please read the [docs from NVIDIA](https://download.nvidia.com/XFree86/Linux-x86_64/435.17/README/primerenderoffload.html) if you are wondering why we added`__VK_LAYER_NV_optimus=NVIDIA_only`
+:::
+
+## Wrapper script
+Arch Linux provides a package called [`nvidia-prime`](https://archlinux.org/packages/extra/any/nvidia-prime/) that helps you set the enviroment variable above when you run a program, to use it simply execute this:
+
+### Installation of the Wrapper script
+```bash
+sudo pacman -S nvidia-prime
+```
+
+You can use `prime-run` now.
+```bash
+prime-run <program>
+```
+
+### GNOME
+As of GNOME 3.38 and later, you can select *"Run with Discrete Graphics"* from the context menu when you right-click on an application.
+
+
+# Optimus Manager (legacy)
+:::caution[WARNING]
+We don't recommend using **Optimus Manager**, as it may result in significant issues with NVIDIA GPUs. The creator of Optimus Manager no longer feels confident in maintaining it, as mentioned in this GitHub issue: https://github.com/Askannz/optimus-manager/issues/543
+
+**We recommend utilizing NVIDIA PRIME Render Offload!**
+
+**Optimus Manager is still available as legacy support** for users who genuinely require it, especially in cases where NVIDIA PRIME Render Offload cannot fulfill their needs.
+:::
+
 **Clever tool for an easy switching between a laptop's integrated GPU and the discrete one.**
 
 Modern laptops have two graphics cards, especially if we talk about gaming laptops.
@@ -85,38 +124,6 @@ sudo systemctl enable --now optimus-manager.service
 You can reboot now, after rebooting, you will have a fully working Optimus Manager, which you can **find the icon on the bottom right corner of the taskbar.**
 
 Congrats! You are done with the setup.
-
-## NVIDIA PRIME Render Offload
-### The official way
-Append these enviroment variables before running the program
-
-```bash
-__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia
-```
-
-#### Steam
-
-```bash
-__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia %command%
-```
-> Please read the [docs from NVIDIA](https://download.nvidia.com/XFree86/Linux-x86_64/435.17/README/primerenderoffload.html) if you are wondering why we added`__VK_LAYER_NV_optimus=NVIDIA_only`
-
-### Wrapper script
-Arch Linux provides a package called [`nvidia-prime`](https://archlinux.org/packages/extra/any/nvidia-prime/) that helps you set the enviroment variable above when you run a program, to use it simply execute this:
-
-#### Installation of the Wrapper script
-```sh
-sudo pacman -S nvidia-prime
-```
-
-You can use `prime-run` now.
-```bash
-prime-run <program>
-```
-
-### GNOME
-
-As of GNOME 3.38 and later, you can select *"Run with Discrete Graphics"* from the context menu when you right-click on an application.
 
 # Optional configuration
 

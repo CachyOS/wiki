@@ -96,3 +96,8 @@ Workarounds
 sudo pacman-key --init; sudo pacman-key --populate; sudo pacman-key --lsign cachyos
 ```
 
+### Calamares "freezes"
+
+There is since mesa 23.x a issue, that the main GUI thread of calamares has a hardlock on **VMs**.
+The installation itself still gets forward and should be installed fine.
+Please check the log to see if it is completly installed.
