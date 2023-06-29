@@ -54,7 +54,7 @@ export default defineConfig({
               translations: {
                 ru: 'Как скачать CachyOS',
               },
-              link: 'download/Download',
+              link: 'download/download',
             },
             {
               label: 'How to install CachyOS?',
@@ -68,7 +68,7 @@ export default defineConfig({
               translations: {
                 ru: 'Действия после установки',
               },
-              link: 'first_steps/first_steps',
+              link: 'first_steps/first-steps',
             },
             {
               label: 'Support',
