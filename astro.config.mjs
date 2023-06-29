@@ -50,6 +50,13 @@ export default defineConfig({
           },
           items: [
             {
+              label: 'What is the Cachyos?',
+              translations: {
+                ru: 'Что такое качос?',
+              },
+              link: 'cachyos_basic/cachyos_description',
+            },
+            {
               label: 'How to download CachyOS?',
               translations: {
                 ru: 'Как скачать CachyOS',
