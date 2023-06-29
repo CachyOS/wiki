@@ -46,36 +46,36 @@ export default defineConfig({
         {
           label: 'Start with CachyOS',
           translations: {
-            ru: 'Начни здесь',
+            ru: 'Начните с CachyOS',
           },
           items: [
             {
-              label: 'How to get CachyOS',
+              label: 'How to download CachyOS?',
               translations: {
-                ru: 'Ядра CachyOS',
+                ru: 'Как скачать CachyOS',
               },
-              link: 'cachyos-kernels',
+              link: 'download/Download',
             },
             {
-              label: 'How to download CachyOS',
+              label: 'How to install CachyOS?',
               translations: {
-                ru: 'Менеджер Ядра',
+                ru: 'Как установить CachyOS',
               },
-              link: 'kernel-manager',
-            },
-            {
-              label: 'How to install CachyOS',
-              translations: {
-                ru: 'Репозиторий',
-              },
-              link: 'repo',
+              link: 'how_to_install/install-cachyos',
             },
             {
               label: 'Post-install steps',
               translations: {
-                ru: 'Установка ZFS',
+                ru: 'Действия после установки',
               },
-              link: 'cachyos-zfs',
+              link: 'first_steps/first_steps',
+            },
+            {
+              label: 'Support',
+              translations: {
+                ru: 'Поддержка',
+              },
+              link: 'support/support_community',
             },
           ],
         },
