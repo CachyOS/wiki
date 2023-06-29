@@ -44,52 +44,38 @@ export default defineConfig({
       locales,
       sidebar: [
         {
-          label: 'Start Here',
+          label: 'Start with CachyOS',
           translations: {
             ru: 'Начни здесь',
           },
           items: [
             {
-              label: 'CachyOS Kernels',
+              label: 'How to get CachyOS',
               translations: {
                 ru: 'Ядра CachyOS',
               },
               link: 'cachyos-kernels',
             },
             {
-              label: 'Kernel Manager',
+              label: 'How to download CachyOS',
               translations: {
                 ru: 'Менеджер Ядра',
               },
               link: 'kernel-manager',
             },
             {
-              label: 'Repository',
+              label: 'How to install CachyOS',
               translations: {
                 ru: 'Репозиторий',
               },
               link: 'repo',
             },
             {
-              label: 'ZFS Installation',
+              label: 'Post-install steps',
               translations: {
                 ru: 'Установка ZFS',
               },
               link: 'cachyos-zfs',
-            },
-            {
-              label: 'Laptops GPU setup',
-              translations: {
-                ru: 'Настройка GPU ноутбука',
-              },
-              link: 'notebooks',
-            },
-            {
-              label: 'Showcase',
-              translations: {
-                ru: 'Изображения',
-              },
-              link: 'screenshots',
             },
           ],
         },
