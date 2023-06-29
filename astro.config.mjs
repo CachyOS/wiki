@@ -80,6 +80,21 @@ export default defineConfig({
           ],
         },
         {
+          label: 'Notebook devices',
+          translations: {
+            ru: 'Устройства для ноутбуков',
+          },
+          items: [
+            {
+              label: 'NVIDIA notebook',
+              translations: {
+                ru: 'Ноутбук NVIDIA',
+              },
+              link: 'notebooks',
+            },
+          ],
+        },
+        {
           label: 'How to Install CachyOS?',
           translations: {
             ru: 'Как установить CachyOS?',
