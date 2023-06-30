@@ -2,8 +2,8 @@
 title: Secure Boot with CachyOS
 description: How to install CachyOS with Secure Boot enabled
 published: 1
-date: 2023-06-30T12:24:08.999Z
-tags: cachyos, secure-boot, how-to
+date: 2023-06-30T12:27:33.465Z
+tags: cachyos, how-to, secure-boot
 editor: markdown
 dateCreated: 2023-06-30T12:24:08.999Z
 ---
@@ -54,3 +54,7 @@ The KeyTool can be used to add/remove/replace keys from NVRAM of your device. To
 `sudo sbsign --key /etc/refind.d/keys/refind_local.key --cert /etc/refind.d/keys/refind_local.crt --output /boot/efi/EFI/refind/KeyTool.efi /boot/efi/EFI/refind/KeyTool.efi`
 
 - Select KeyTool from the Refind boot screen to open it.
+
+# Credits
+
+Thanks to [Aritra Karak](https://github.com/tr1ckydev) for writing this guide!
