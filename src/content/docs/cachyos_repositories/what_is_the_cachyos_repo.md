@@ -8,7 +8,7 @@ editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
 ---
 # Meet with CachyOS repositories
-CachyOS repositories are one of the most unique aspects of CachyOS, setting it apart from other Arch-based distros.  
+CachyOS repositories are one of the most unique aspects of CachyOS, setting it apart from other Arch-based distros.
 These repositories enable CachyOS to create performance-focused packages and exert more control over the package ecosystem compared to distros that solely rely on the Arch Linux repositories.
 
 :::tip

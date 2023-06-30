@@ -5,7 +5,7 @@ editor: markdown
 ---
 
 <div align="center">
-  <img src="https://github.com/CachyOS/calamares-config/blob/grub-3.2/etc/calamares/branding/cachyos/logo.png" width="64" alt="CachyOS logo"></img>
+  <img src="https://raw.githubusercontent.com/cachyos/calamares-config/grub-3.2/etc/calamares/branding/cachyos/logo.png" width="64" alt="CachyOS logo" />
   <br/>
   <h1 align="center">CachyOS</h1>
   <p align="center">CachyOS is designed to deliver lightning-fast speeds and stability, ensuring a smooth and enjoyable computing experience every time you use it. Whether you're a seasoned Linux user or just starting out, CachyOS is the ideal choice for those looking for a powerful, customizable and blazingly fast operating system. </p>
