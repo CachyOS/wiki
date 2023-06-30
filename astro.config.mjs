@@ -102,20 +102,6 @@ export default defineConfig({
           ],
         },
         {
-          label: 'How to Install CachyOS?',
-          translations: {
-            ru: 'Как установить CachyOS?',
-          },
-          autogenerate: { directory: 'how_to_install' },
-        },
-        {
-          label: 'First steps',
-          translations: {
-            ru: 'Первые шаги',
-          },
-          autogenerate: { directory: 'first_steps' },
-        },
-        {
           label: 'General Information',
           translations: {
             ru: 'Основная информация',
@@ -123,11 +109,33 @@ export default defineConfig({
           autogenerate: { directory: 'general_info' },
         },
         {
-          label: 'Download',
+          label: 'CachyOS repositories',
           translations: {
-            ru: 'Загрузить',
+            ru: 'Устройства для ноутбуков',
           },
-          autogenerate: { directory: 'download' },
+          items: [
+            {
+              label: 'What is the CachyOS repositories?',
+              translations: {
+                ru: 'Ноутбук NVIDIA',
+              },
+              link: 'cachyos_repositories/what_is_the_cachyos_repo',
+            },
+            {
+              label: 'How to add CachyOS repositories?',
+              translations: {
+                ru: 'Ноутбук NVIDIA',
+              },
+              link: 'cachyos_repositories/how_to_add_cachyos_repo',
+            },
+            {
+              label: 'Why CachyOS repositories?',
+              translations: {
+                ru: 'Ноутбук NVIDIA',
+              },
+              link: 'cachyos_repositories/why_cachyos_repo',
+            },
+          ],
         },
         {
           label: 'Changelog',
