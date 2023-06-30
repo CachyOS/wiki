@@ -23,6 +23,7 @@ People often have the initial reaction of "Oh no, another Arch-based distributio
 1. CachyOS employs its own method to detect your graphics cards.
 1. CachyOS prioritizes resources for your games and programs.
 1. CachyOS supports multiple bootloaders, including GRUB, rEFInd, and SystemD-boot.
+1. CachyOS can warn of risky updates over the terminal. That saved a lot of users during Python 3.11 update in the past.
 
 ## Is that distro for me?
 Well, the choice is up to you, but gamers and users who demand a really smooth desktop use CachyOS.
