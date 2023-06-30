@@ -16,6 +16,7 @@ export default defineConfig({
   integrations: [
     react(),
     starlight({
+      lastUpdated: true,
       title: 'CachyOS',
       logo: {
         src: '/src/assets/logo.svg',
