@@ -9,12 +9,12 @@ dateCreated: 2023-04-18T10:29:22.610Z
 ---
 
 # Frequently asked questions
-Here are some frequently asked questions. We recommend to read that all users, especially those using CachyOS or Arch-based distributions.
+Here are some frequently asked questions. We recommend reading that all users, especially those using CachyOS or Arch-based distributions.
 
 ## Software management FAQ
 Here are all the questions related to the installation and uninstallation of software on your system.
 
-### How can I update system?
+### How can I update the system?
 ```sh
 sudo pacman -Syu
 ```
@@ -33,6 +33,16 @@ sudo pacman -R package
 ```sh
 sudo pacman -Rs package
 ```
+### How to revert to an older version of the package?
+If you install the latest update and find out a specific package doesn't work or a newer version of the software introduces a bug. You definitely want to come back to the previous version.
+1. Go into the pacman cache and find the needed package.
+   ```sh
+   cd /var/cache/pacman/pkg
+   ```
+2. Install the needed package.
+   ```sh
+   sudo pacman -U package
+   ```
 
 ## System maintanance FAQ
 Here are all the questions related to the system maintenance or changes of configurations of your system.
@@ -57,5 +67,5 @@ To update GRUB on a BIOS system, run the following command:
 1. `sudo grub-install --target=i386-pc /dev/sda`
 2. `sudo grub-mkconfig -o /boot/grub/grub.cfg`
 :::caution[WARNING!]
-Make sure to check the correct path to your system drive, which could be `/dev/sda`,`/dev/nvme0n1` or `/dev/mmcblk0`.  You can verify this by running the command `lsblk`.
+Make sure to check the correct path to your system drive, which could be `/dev/sda`,`/dev/nvme0n1`, or `/dev/mmcblk0`.  You can verify this by running the command `lsblk`.
 :::
