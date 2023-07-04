@@ -9,7 +9,7 @@ dateCreated: 2021-07-04T00:59:16.282Z
 
 # NVIDIA PRIME Render Offload
 ## The official way from NVIDIA
-Append these enviroment variables before running the program
+Append these environment variables before running the program
 ```bash
 __NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia <program>
 ```
@@ -22,7 +22,7 @@ Please read the [docs from NVIDIA](https://download.nvidia.com/XFree86/Linux-x86
 :::
 
 ## Wrapper script
-Arch Linux provides a package called [`nvidia-prime`](https://archlinux.org/packages/extra/any/nvidia-prime/) that helps you set the enviroment variable above when you run a program, to use it simply execute this:
+Arch Linux provides a package called [`nvidia-prime`](https://archlinux.org/packages/extra/any/nvidia-prime/) that helps you set the environment variable above when you run a program, to use it simply execute this:
 
 ### Installation of the Wrapper script
 ```bash
@@ -47,16 +47,16 @@ We don't recommend using **Optimus Manager**, as it may result in significant is
 **Optimus Manager is still available as legacy support** for users who genuinely require it, especially in cases where NVIDIA PRIME Render Offload cannot fulfill their needs.
 :::
 
-**Clever tool for an easy switching between a laptop's integrated GPU and the discrete one.**
+**Clever tool for easy switching between a laptop's integrated GPU and the discrete one.**
 
 Modern laptops have two graphics cards, especially if we talk about gaming laptops.
-**iGPU** - integrated GPU, longer battery life and lower performance.
+**iGPU** - integrated GPU, longer battery life, and lower performance.
 **dGPU** - discrete GPU, higher performance, but it would drain more battery, highly recommended for gaming, rendering, video encoding, NVENC among other demanding tasks.
 
 Windows automatically switches between the iGPU and dGPU depending on the usage.
-Here is a guide on how to setup the same for CachyOS, specially if you plan to use it for gaming or streaming, 3D developing, etc.
+Here is a guide on how to set up the same for CachyOS, especially if you plan to use it for gaming or streaming, 3D development, etc.
 
-Tested on laptop with Intel CPU and NVIDIA GPU, but since release 1.4 Optimus Manager also has support for AMD CPUs.
+Tested on the laptop with Intel CPU and NVIDIA GPU, but since release 1.4 Optimus Manager also has support for AMD CPUs.
 
 ## Preparing iGPU and dGPU for the Linux Kernel
 Let's start by configuring **mkinitcpio** which loads various kernel modules.
@@ -84,7 +84,7 @@ MODULES="radeon nvidia"
 ```
 
 ## Enable "Direct Rendering Manager" (DRM KMS)
-To enable DRM we need to add necessary kernel parameter in the bootloader, each bootloader has a different way to do that.
+To enable DRM we need to add the necessary kernel parameter in the bootloader, each bootloader has a different way to do that.
 
 :::note
 DRM KMS is already enabled by default in CachyOS as of cachyos-settings v23
@@ -111,12 +111,12 @@ sudo grub-mkconfig -o /boot/grub/grub.cfg
 
 ## Installing Optimus Manager
 
-Installing optimus-manager & optimus-manager-qt (a system tray for optimus-manager)
+Installing optimus-manager & Optimus-manager-qt (a system tray for optimus-manager)
 ```sh
 sudo pacman -S optimus-manager optimus-manager-qt
 ```
 
-Last step, we need to enable and start the service for optimus manager
+The last step, we need to enable and start the service for the Optimus manager
 ```sh
 sudo systemctl enable --now optimus-manager.service
 ```
@@ -126,14 +126,13 @@ You can reboot now, after rebooting, you will have a fully working Optimus Manag
 Congrats! You are done with the setup.
 
 # Optional configuration
-
-:::info
+:::note
 With the CachyOS-Settings v27 update, the settings related to **PCI-Express Runtime D3 (RTD3) Power Management** are already enabled by default.
 :::
 
 ## Fully power down the GPU when not in use
-:::info
-The feature is only supported on laptop with Turing GPUs (RTX 20xx/GTX 16xx) and above, and Intel Coffee Lake CPUs (8th gen) and above.
+:::note
+The feature is only supported on laptops with Turing GPUs (RTX 20xx/GTX 16xx) and above, and Intel Coffee Lake CPUs (8th gen) and above.
 :::
 
 **PCI-Express Runtime D3 (RTD3) Power Management**
@@ -177,5 +176,5 @@ Enable nvidia-persistenced.service to avoid the kernel tearing down the device s
 ```sh
 sudo systemctl enable --now nvidia-persistenced.service
 ```
-And finally reboot your system.
-Your laptop's hybrid mode should work like it does on Windows!
+And finally, reboot your system.
+Your laptop's hybrid mode should work as it does on Windows!
