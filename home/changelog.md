@@ -2,11 +2,31 @@
 title: CachyOS GUI Installer Changelog
 description: Changelog for the CachyOS GUI Installer
 published: 1
-date: 2023-05-29T12:01:10.632Z
+date: 2023-07-09T16:27:30.404Z
 tags: cachyos, changelog, clamares, gui-installer, linux-cachyos
 editor: markdown
 dateCreated: 2023-01-21T19:28:01.996Z
 ---
+
+# 23.07
+
+**Features:**
+- CachyOS-Settings includes now "bpftune", which automatically tweaks the network settings depending on the usage
+- CachyOS-Qtile-Settings: Quality of Life changes, better icons, ...
+- Package updates: linux-cachyos 6.4.2, cachy-browser 115.0.1, mesa 23.1.3,
+
+**Bug-fixes:**
+- rate-mirrors got fixed
+- chwd (Hardware Detection) got multiple fixes
+- fixed installation of nonfree drivers for hybrid setup in the installer
+- fixed Calamares freezes, which happened in some rare configurations, mainly VM
+- Slides: Slide 6 typo fix
+
+# 23.06
+
+**Bug-fixes:**
+- Offline Installation: Fix calamares
+
 
 # 23.05
 
