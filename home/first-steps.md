@@ -2,7 +2,7 @@
 title: Getting Started: Essential Tasks After Installing CachyOS
 description: Steps to configure after installing CachyOS
 published: 1
-date: 2023-04-13T18:02:38.862Z
+date: 2023-07-19T18:00:29.204Z
 tags: 
 editor: markdown
 dateCreated: 2021-08-11T06:07:58.712Z
@@ -29,15 +29,8 @@ To update your system with Octopi, follow these steps:
 
 That's it! Now your system is up-to-date and ready for use.
 
-## 2\. Improve performance:
 
-The system's swap space preference can be adjusted using the `vm.swappiness` sysctl parameter. The default value is "30", which means that the kernel will avoid swapping processes to disk as much as possible and will instead try to keep as much data as possible in memory. A lower swappiness value generally leads to improved performance but may lead to decreased stability if the system runs out of memory.
-
-The `vm.vfs_cache_pressure` is a kernel parameter that sets the tendency of the kernel to reclaim inode and dentry cache. By default, it is set to "100" and a lower value means the kernel will tend to cache more inode and dentry information in memory. To improve performance, you can try to lower the value of `vm.vfs_cache_pressure` to improve file system performance by having more file system metadata cached in memory.
-
-Both values can be changed in the `/etc/sysctl.d/99-cachyos-settings.conf` file.
-
-## 3\. Enable Firewall protection:
+## 2\. Enable Firewall protection:
 
 To enable firewall protection, follow these steps:
 
@@ -97,6 +90,8 @@ If you have an SSD or NVME, it would be highly recommended to enable fstrim to e
 ```
 sudo systemctl enable --now fstrim.timer
 ```
+
+Some filesystems such as F2FS (continuous TRIM)  have a built-in trim operation, meaning that fstrim is not needed.
 
 ## 7\. Set up Bluetooth headphones:
 To auto-connect your headphones, follow the steps in the Arch wiki guide: [https://wiki.archlinux.org/title/bluetooth\_headset#Headset\_via\_Bluez5/PulseAudio](https://wiki.archlinux.org/title/bluetooth_headset#Headset_via_Bluez5/PulseAudio). If Pulseaudio doesn't work, you may need to manually reconnect the headphones each time you restart your computer.
