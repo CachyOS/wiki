@@ -2,11 +2,13 @@
 title: How to install CachyOS
 description: CachyOS Installation via GUI/CLI Installer
 published: 1
-date: 2023-06-26T15:15:02.054Z
+date: 2023-07-19T18:55:54.319Z
 tags: cachyos, calamares, cli-installer, gui-installer, install-cachyos
 editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
 ---
+
+>Please, check Download information section before proceding.{.is-warning}
 
 Installing CachyOS
 ==================
