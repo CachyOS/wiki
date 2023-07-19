@@ -2,7 +2,7 @@
 title: Downloads Information
 description: Here, you can access the latest ISO images for CachyOS.
 published: 1
-date: 2023-04-02T22:31:37.934Z
+date: 2023-07-19T18:51:47.159Z
 tags: dowloading, download, install, installation, installing, iso
 editor: markdown
 dateCreated: 2021-07-04T01:43:25.246Z
@@ -15,14 +15,16 @@ If you're currently on Windows:
 >1)If you downloaded the iso via SourceForge at the right of each file there is a exclamation point and it contains both SHA1 and MD5.
 2)Open CMD or PowerShell as Administrator and navigate to the path where the ISO is stored.
 3)Type the following command: certUtil -hashfile full_iso_name.iso MD5
-Example > <kbd>certUtil cachyos-kde-linux-230319.iso MD5</kbd>
+Example > <kbd>certUtil cachyos-kde-linux-230709.iso MD5</kbd>
+SHA256 > <kbd>certUtil cachyos-kde-linux-230709.iso SHA256</kbd>
 4)Compare certUtil hash with SourceForge file information, if both of them match then you are ready to proceed.
 {.is-warning}
 
 >Verification from any Linux distro:
 1)Open a terminal and navigate to the path where the ISO is stored
-2)Type the following command: md5sum full_iso_name.iso    <kbd>Example: md5sum cachyos-kde-linux-230319.iso</kbd>
-3)Compare if SourceForge MD5 hash matches with md5sum{.is-warning}
+2)Type the following command: md5sum full_iso_name.iso    <kbd>Example: md5sum cachyos-kde-linux-230709.iso</kbd>
+SHA256 (found in cachyos-kde-linux-230709.iso.sha256 - Open this file with a text editor or use cat command)  if downloading from mirror.cachyos.org <kbd>Example: sha256sum cachyos-kde-linux-230709.iso</kbd>
+3)Compare if both hashes  match.{.is-warning}
 
 GUI Installer
 -------------
