@@ -2,7 +2,7 @@
 title: CachyOS
 description: Operating System
 published: 1
-date: 2023-06-21T16:50:59.238Z
+date: 2023-07-19T18:33:36.942Z
 tags: arch, arch linux, archlinux, cachy, cachyos, cacule, cpu scheduler, gnu, linux
 editor: markdown
 dateCreated: 2021-07-04T01:32:08.787Z
@@ -33,7 +33,7 @@ The graphical installer is based on Calamares and allows for both offline and on
 
 The installer also automatically optimizes the filesystem options for SSDs if one is detected. The following filesystems are available: XFS, Btrfs, F2FS, Ext4, and ZFS. Note, if you use automatic partitioning, the XFS file system will be used by default.
 
-### Command-Line Interface Installer
+### Command-Line Interface Installer (Coming soon)
 
 The CLI installer, written in C++, provides the same functions as the graphical installer but is more customizable and offers additional features. It is generally recommended for advanced users, but the installation process is kept simple and fast. It also supports configuration, allowing you to set options before the installation begins and then completing the installation automatically.
 
