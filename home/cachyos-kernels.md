@@ -2,7 +2,7 @@
 title: Which Kernel does CachyOS provide and maintain
 description: CachyOS Kernels, improvements, ...
 published: 1
-date: 2023-07-19T18:26:04.970Z
+date: 2023-07-19T18:32:15.850Z
 tags: cachyos, kernel, performance
 editor: markdown
 dateCreated: 2021-11-25T07:07:09.929Z
@@ -65,7 +65,7 @@ Here is a list of features of Linux kernels prebuilt in the CachyOS repositories
 - Latest & improved ZSTD 1.5.5 patch-set.
 - UserKSM daemon from pf.
 - Improved BFQ Scheduler.
-- support for bcachefs.
+- Support for bcachefs.
 - [per VMA lock](https://lore.kernel.org/lkml/20230109205336.3665937-1-surenb@google.com/T/#ma04517b963591298a9eb76d96d2c453256a4d9ab) - *default disabled*
 - zram patches from upstream
 
