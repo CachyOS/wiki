@@ -2,7 +2,7 @@
 title: Which Kernel does CachyOS provide and maintain
 description: CachyOS Kernels, improvements, ...
 published: 1
-date: 2023-07-19T18:16:15.712Z
+date: 2023-07-19T18:26:04.970Z
 tags: cachyos, kernel, performance
 editor: markdown
 dateCreated: 2021-11-25T07:07:09.929Z
@@ -53,7 +53,7 @@ Here is a list of features of Linux kernels prebuilt in the CachyOS repositories
 - Choose between 300Hz, 500Hz, 600 Hz ,750Hz and 1000Hz. Defaults to 500Hz for BORE/CFS/EEVDF and 1000Hz for other schedulers.
 - Kernel Control Flow Integrity (kCFI) selectable when using `LLVM` - *patched llvm can be found in the cachyos-repositories.*
 
-### :abacus: CPU enhancements
+### 🧮 CPU enhancements
 - 6 Different scheduler are supported: `CFS`,`TT`,`BMQ`,`BORE`, `EEDVF` and `PDS` scheduler.
 - AMD PSTATE EPP and AMD PSTATE Guided Driver enabled by default and with enhancements patches/fixes.
 - Latency Nice Patchset included usuage with `ananicy-cpp` [feature branch](https://lore.kernel.org/lkml/20220925143908.10846-1-vincent.guittot@linaro.org/T/#t).
