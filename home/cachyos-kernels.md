@@ -2,7 +2,7 @@
 title: Which Kernel does CachyOS provide and maintain
 description: CachyOS Kernels, improvements, ...
 published: 1
-date: 2023-07-19T18:32:15.850Z
+date: 2023-07-19T18:57:48.591Z
 tags: cachyos, kernel, performance
 editor: markdown
 dateCreated: 2021-11-25T07:07:09.929Z
@@ -55,7 +55,6 @@ Here is a list of features of Linux kernels prebuilt in the CachyOS repositories
 
 ### 🧮 CPU enhancements
 - 6 Different scheduler are supported: `CFS`,`TT`,`BMQ`,`BORE`, `EEDVF` and `PDS` scheduler.
-- AMD PSTATE EPP and AMD PSTATE Guided Driver enabled by default and with enhancements patches/fixes.
 - Latency Nice Patchset included usuage with `ananicy-cpp` [feature branch](https://lore.kernel.org/lkml/20220925143908.10846-1-vincent.guittot@linaro.org/T/#t).
 - RCU fixes and improvements.
 - EEVDF Scheduler used in linux-cachyos # https://lwn.net/Articles/927530/
