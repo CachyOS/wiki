@@ -2,7 +2,7 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2023-05-31T15:49:46.745Z
+date: 2023-08-09T18:39:40.119Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
@@ -71,16 +71,30 @@ For more information:
 *   https://www.phoronix.com/review/retbleed-benchmark
 *   https://www.phoronix.com/review/xeon-skylake-retbleed
 
-4\. AMD PSTATE (EPP) Driver
+### Downfall
+
+Downfall is characterized as a vulnerability due to a memory optimization feature that unintentionally reveals internal hardware registers to software. With Downfall, untrusted software can access data stored by other programs that typically should be off-limits: the AVX GATHER instruction can leak the contents of the internal vector register file during speculative execution. Downfall was discovered by security researcher Daniel Moghimi of Google. Moghimi has written demo code for Downfall to show 128-bit and 256-bit AES keys being stolen from other users on the local system as well as the ability to steal arbitrary data from the Linux kernel.
+
+This affects following CPU's:
+- Skylake
+- Tiger Lake
+- Ice Lake
+
+
+#### Disabling Downfall
+
+Add `gather_data_sampling=off` to your kernel cmdline options.
+`mitigations=off` will also disable downfall.
+4\. AMD P-State Driver
 ---------------------------
 
-For improved performance and power efficiency, you can enable the AMD PSTATE EPP driver. The default AMD PSTATE driver may not provide the same benefits as the acpi-cpufreq driver.
+For improved performance and power efficiency, you can enable the AMD P-State EPP driver. The default AMD P-State driver may not provide the same benefits as the acpi-cpufreq driver.
 
 Add one of the following options to your kernel command line:
 
-*   AMD PSTATE: `amd_pstate=passive`
-*   AMD PSTATE-GUIDED: `amd_pstate=guided`
-*   AMD PSTATE EPP: `amd_pstate=active`
+*   AMD P-State: `amd_pstate=passive`
+*   AMD P-State-GUIDED: `amd_pstate=guided`
+*   AMD P-State EPP: `amd_pstate=active`
 
 You can switch between modes at runtime to test the options:
 
@@ -95,10 +109,10 @@ For more information:
 *   [https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/](https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/)
 *   [https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/](https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/)
 
-5\. Using AMD PSTATE EPP
+5\. Using AMD P-State EPP
 ------------------------
 
-To use the AMD PSTATE EPP, there are two CPU frequency scaling governors available: powersave and performance. It is recommended to use the powersave governor and set a preference.
+To use the P-State EPP, there are two CPU frequency scaling governors available: powersave and performance. It is recommended to use the powersave governor and set a preference.
 
 *   Set powersave governor: `sudo cpupower frequency-set -g powersave`
 *   Set performance governor: `sudo cpupower frequency-set -g performance`
@@ -112,7 +126,22 @@ Available preferences: `performance`, `power`, `balance_power`, `balance_perform
 Benchmarks for each preference can be found here:
 [https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/](https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/)
 
-6\. Disabling Split Lock Mitigate
+6\. AMD P-State Preferred Core Handling
+---------------------------------
+
+AMD Pstate driver will provide an initial core ordering at boot time. It relies on the CPPC interface to communicate the core ranking to the operating system and scheduler to make sure that OS is choosing the cores with highest performance firstly for scheduling the process. When AMD Pstate driver receives a message with the highest performance change, it will update the core ranking.
+
+This can result into a better performance and process handling.
+More information here:
+https://lore.kernel.org/linux-pm/20230808081001.2215240-1-li.meng@amd.com/
+
+To enable the AMD P-State Preferred Core Handling just add following to your kernel cmdline options:
+`amd_prefcore=enable`
+
+## 9.08.23
+This is currently only implemented in our "linux-cachyos-rc" kernel. As soon the further testing is done, we are planning to merge it to our stable kernel.
+
+7\. Disabling Split Lock Mitigate
 ---------------------------------
 
 In some cases, split lock mitigate can slow down performance in applications and games. A patch is available to disable it via sysctl.
