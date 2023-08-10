@@ -2,7 +2,7 @@
 title: General System Tweaks
 description: Things you can do to tweak after installing
 published: 1
-date: 2023-08-09T18:39:40.119Z
+date: 2023-08-10T20:32:28.604Z
 tags: information, performance
 editor: markdown
 dateCreated: 2022-07-26T18:23:44.222Z
@@ -138,8 +138,6 @@ https://lore.kernel.org/linux-pm/20230808081001.2215240-1-li.meng@amd.com/
 To enable the AMD P-State Preferred Core Handling just add following to your kernel cmdline options:
 `amd_prefcore=enable`
 
-## 9.08.23
-This is currently only implemented in our "linux-cachyos-rc" kernel. As soon the further testing is done, we are planning to merge it to our stable kernel.
 
 7\. Disabling Split Lock Mitigate
 ---------------------------------
