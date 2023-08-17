@@ -1,5 +1,4 @@
 const starlightPlugin = require('@astrojs/starlight-tailwind');
-const colors = require('tailwindcss/colors');
 
 // Generated color palettes
 const accent = { 200: '#82dccc', 600: '#007d6f', 900: '#003c34', 950: '#002b25' };
