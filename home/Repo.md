@@ -2,7 +2,7 @@
 title: Adding CachyOS Repository for Enhanced Arch Linux Performance
 description: Step-by-step guide on how to add CachyOS repository to your Arch Linux system with x86_64-v3 support.
 published: 1
-date: 2023-08-17T17:56:33.654Z
+date: 2023-08-17T17:59:28.658Z
 tags: arch linux, cachyos, repo, x86_64-v3
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -78,12 +78,10 @@ Pay attention to the following text with brackets. **(supported, searched)**
 
 #### Example of CPU incompatible with x86-64-v4 instruction set
 ```
-  > /lib/ld-linux-x86-64.so.2 --help | grep supported
-     STDIN
-  40 Subdirectories of glibc-hwcaps directories, in priority order:
-  41   x86-64-v4
-  42   x86-64-v3 (supported, searched)                                          
-  43   x86-64-v2 (supported, searched)       
+> /lib/ld-linux-x86-64.so.2 --help | grep supported
+  x86-64-v4
+  x86-64-v3 (supported, searched)                                          
+  x86-64-v2 (supported, searched)       
 ```
 
 ### 3. Adding cachyos repositories
