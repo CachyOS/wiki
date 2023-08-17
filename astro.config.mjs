@@ -1,13 +1,17 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
-
-
+import tailwind from '@astrojs/tailwind';
 export const locales = {
-  root: { label: 'English', lang: 'en' },
-  ru: { label: 'Русский', lang: 'ru' },
+  root: {
+    label: 'English',
+    lang: 'en',
+  },
+  ru: {
+    label: 'Русский',
+    lang: 'ru',
+  },
 };
-
 const site = 'https://wiki.cachyos.org/';
 
 // https://astro.build/config
@@ -27,19 +31,25 @@ export default defineConfig({
       social: {
         github: 'https://github.com/cachyos',
         twitter: 'https://twitter.com/cachyos',
-        telegram: 'https://t.me/+oR-kWT47vRdmMDli',
+        //telegram: 'https://t.me/+oR-kWT47vRdmMDli',
         discord: 'https://discord.gg/qJqj94uFwE',
-        reddit: 'https://www.reddit.com/r/cachyos',
-        patreon: 'https://www.patreon.com/CachyOS',
+        //reddit: 'https://www.reddit.com/r/cachyos',
+        //patreon: 'https://www.patreon.com/CachyOS'
       },
       head: [
         {
           tag: 'meta',
-          attrs: { property: 'og:image', content: site + 'og.jpg?v=1' },
+          attrs: {
+            property: 'og:image',
+            content: site + 'og.jpg?v=1',
+          },
         },
         {
           tag: 'meta',
-          attrs: { property: 'twitter:image', content: site + 'og.jpg?v=1' },
+          attrs: {
+            property: 'twitter:image',
+            content: site + 'og.jpg?v=1',
+          },
         },
       ],
       locales,
@@ -107,7 +117,9 @@ export default defineConfig({
           translations: {
             ru: 'Основная информация',
           },
-          autogenerate: { directory: 'general_info' },
+          autogenerate: {
+            directory: 'general_info',
+          },
         },
         {
           label: 'CachyOS repositories',
@@ -143,12 +155,18 @@ export default defineConfig({
           translations: {
             ru: 'Журнал изменений',
           },
-          autogenerate: { directory: 'changelog' },
+          autogenerate: {
+            directory: 'changelog',
+          },
         },
       ],
     }),
+    tailwind(),
   ],
-
   // Process images with sharp: https://docs.astro.build/en/guides/assets/#using-sharp
-  image: { service: { entrypoint: 'astro/assets/services/sharp' } },
+  image: {
+    service: {
+      entrypoint: 'astro/assets/services/sharp',
+    },
+  },
 });
