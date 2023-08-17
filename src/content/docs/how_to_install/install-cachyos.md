@@ -8,6 +8,10 @@ editor: markdown
 dateCreated: 2022-11-17T13:07:22.546Z
 ---
 
+:::caution[WARNING]
+Please, check Download information section before proceding.
+:::
+
 Installing CachyOS
 ==================
 

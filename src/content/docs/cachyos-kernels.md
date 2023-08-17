@@ -2,7 +2,7 @@
 title: Which Kernel does CachyOS provide and maintain
 description: CachyOS Kernels, improvements, ...
 published: 1
-date: 2023-04-02T14:53:19.862Z
+date: 2023-07-19T18:57:48.591Z
 tags: cachyos, kernel, performance
 editor: markdown
 dateCreated: 2021-11-25T07:07:09.929Z
@@ -33,7 +33,8 @@ The Schedulers listed below are supported
 ## linux-cachyos
 We have provided all of these CPU schedulers because each scheduler performs differently depending on usage. We recommend testing each one to determine which best suits your specific requirements.
 - **(BORE) - Burst-Oriented Response Enhancer** Scheduler by [firelzrd (BORE)](https://github.com/firelzrd/bore-scheduler) `linux-bore` / `linux-cachyos-bore`
-- **(EEVDF) - Earliest Eligiable Virtual Deadline First** [EEVDF](https://lwn.net/Articles/927530/) is a replacement for the CFS Scheduler from Peter Zijlstra `linux-cachyos`
+- **(EEVDF + BORE) - Earliest Eligiable Virtual Deadline First + Burst-Oriented Response Enhancer** [EEVDF](https://lwn.net/Articles/927530/) is a replacement for the CFS Scheduler from Peter Zijlstra `linux-cachyos`
+- **(EEVDF)** - Earliest Eligiable Virtual Deadline First `linux-cachyos-eevdf`
 - **(TT) - Task Type** Scheduler by [Hamad Marri](https://github.com/hamadmarri/TT-CPU-Scheduler) - `linux-cachyos-tt` / `linux-tt`
 - **(BMQ) - BitMap Queue** by Alfred Chen - `linux-cachyos-bmq`
 - **(PDS) - Priority and Deadline based Skiplist multiple queue** by Alfred Chen - `linux-cachyos-pds`
@@ -56,7 +57,6 @@ Here is a list of features of Linux kernels prebuilt in the CachyOS repositories
 
 ### 🧮 CPU enhancements
 - 6 Different scheduler are supported: `CFS`,`TT`,`BMQ`,`BORE`, `EEDVF` and `PDS` scheduler.
-- AMD PSTATE EPP and AMD PSTATE Guided Driver enabled by default and with enhancements patches/fixes.
 - Latency Nice Patchset included usuage with `ananicy-cpp` [feature branch](https://lore.kernel.org/lkml/20220925143908.10846-1-vincent.guittot@linaro.org/T/#t).
 - RCU fixes and improvements.
 - EEVDF Scheduler used in linux-cachyos # https://lwn.net/Articles/927530/
@@ -66,7 +66,7 @@ Here is a list of features of Linux kernels prebuilt in the CachyOS repositories
 - Latest & improved ZSTD 1.5.5 patch-set.
 - UserKSM daemon from pf.
 - Improved BFQ Scheduler.
-- support for bcachefs.
+- Support for bcachefs.
 - [per VMA lock](https://lore.kernel.org/lkml/20230109205336.3665937-1-surenb@google.com/T/#ma04517b963591298a9eb76d96d2c453256a4d9ab) - *default disabled*
 - zram patches from upstream
 
@@ -93,7 +93,7 @@ Repositories contain Arch Linux and CachyOS unique packages, but re-build with f
 - `x86-64` - all Arch Linux packages + LTO.
 
 ## How to add CachyOS repositories
-Watch here [link](/repo)
+Watch [here](/repo)
 
 ## Other GNU/Linux distributions
 - Complete patch for simple patching on the kernel

@@ -9,7 +9,7 @@ dateCreated: 2023-04-18T10:29:22.610Z
 ---
 
 # Frequently asked questions
-Here are some frequently asked questions. We recommend reading that all users, especially those using CachyOS or Arch-based distributions.
+Here are some frequently asked questions. We recommend to read that all users, especially those using CachyOS or Arch-based distributions.
 
 ## Software management FAQ
 Here are all the questions related to the installation and uninstallation of software on your system.
