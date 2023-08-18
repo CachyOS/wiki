@@ -2,6 +2,7 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
 import tailwind from '@astrojs/tailwind';
+
 export const locales = {
   root: {
     label: 'English',
@@ -21,6 +22,7 @@ export default defineConfig({
     react(),
     starlight({
       lastUpdated: true,
+      customCss: ['./src/tailwind.css'],
       title: 'CachyOS',
       logo: {
         src: '/src/assets/logo.svg',
@@ -161,7 +163,7 @@ export default defineConfig({
         },
       ],
     }),
-    tailwind(),
+    tailwind({ applyBaseStyles: false }),
   ],
   // Process images with sharp: https://docs.astro.build/en/guides/assets/#using-sharp
   image: {
