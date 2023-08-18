@@ -63,23 +63,23 @@ export default defineConfig({
           },
           items: [
             {
-              label: 'What is the Cachyos?',
+              label: 'What is the CachyOS?',
               translations: {
-                ru: 'Что такое качос?',
+                ru: 'Что такое CachyOS?',
               },
               link: 'cachyos_basic/cachyos_description',
             },
             {
               label: 'How to download CachyOS?',
               translations: {
-                ru: 'Как скачать CachyOS',
+                ru: 'Как скачать CachyOS?',
               },
               link: 'download/download',
             },
             {
               label: 'How to install CachyOS?',
               translations: {
-                ru: 'Как установить CachyOS',
+                ru: 'Как установить CachyOS?',
               },
               link: 'how_to_install/install-cachyos',
             },
@@ -126,27 +126,27 @@ export default defineConfig({
         {
           label: 'CachyOS repositories',
           translations: {
-            ru: 'Устройства для ноутбуков',
+            ru: 'Репозитории CachyOS',
           },
           items: [
             {
               label: 'What is the CachyOS repositories?',
               translations: {
-                ru: 'Ноутбук NVIDIA',
+                ru: 'Что такое репозитории CachyOS?',
               },
               link: 'cachyos_repositories/what_is_the_cachyos_repo',
             },
             {
               label: 'How to add CachyOS repositories?',
               translations: {
-                ru: 'Ноутбук NVIDIA',
+                ru: 'Как добавить репозитории CachyOS?',
               },
               link: 'cachyos_repositories/how_to_add_cachyos_repo',
             },
             {
               label: 'Why CachyOS repositories?',
               translations: {
-                ru: 'Ноутбук NVIDIA',
+                ru: 'Почему репозитории CachyOS?',
               },
               link: 'cachyos_repositories/why_cachyos_repo',
             },
