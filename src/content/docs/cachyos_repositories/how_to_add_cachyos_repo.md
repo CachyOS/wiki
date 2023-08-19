@@ -2,7 +2,7 @@
 title: Adding CachyOS Repository for Enhanced Arch Linux Performance
 description: Step-by-step guide on how to add CachyOS repository to your Arch Linux system with x86_64-v3 support.
 published: 1
-date: 2023-05-27T08:31:45.083Z
+date: 2023-08-17T17:59:28.658Z
 tags: arch linux, cachyos, repo, x86_64-v3
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
@@ -49,7 +49,7 @@ sudo pacman-key --lsign-key F3B607488DB35A47
 
 2. Install required packages
 ```sh
-sudo pacman -U 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-2-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-mirrorlist-17-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v3-mirrorlist-17-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v4-mirrorlist-5-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/pacman-6.0.2-10-x86_64.pkg.tar.zst'
+sudo pacman -U 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-3-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-mirrorlist-17-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v3-mirrorlist-17-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v4-mirrorlist-5-1-any.pkg.tar.zst' 'https://mirror.cachyos.org/repo/x86_64/cachyos/pacman-6.0.2-13-x86_64.pkg.tar.zst'
 ```
 
 ## Check CPU compatibility
@@ -81,7 +81,6 @@ Pay attention to the following text with brackets. **(supported, searched)**
 #### Example of CPU incompatible with x86-64-v4 instruction set
 ```
 > /lib/ld-linux-x86-64.so.2 --help | grep supported
-Subdirectories of glibc-hwcaps directories, in priority order:
   x86-64-v4
   x86-64-v3 (supported, searched)
   x86-64-v2 (supported, searched)

@@ -93,7 +93,7 @@ Repositories contain Arch Linux and CachyOS unique packages, but re-build with f
 - `x86-64` - all Arch Linux packages + LTO.
 
 ## How to add CachyOS repositories
-Watch [here](/repo)
+Watch [here](/cachyos_repositories/how_to_add_cachyos_repo/)
 
 ## Other GNU/Linux distributions
 - Complete patch for simple patching on the kernel
