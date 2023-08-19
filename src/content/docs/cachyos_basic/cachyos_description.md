@@ -30,4 +30,4 @@ Well, the choice is up to you, but gamers and users who demand a really smooth d
 
 ## Can I expect support?
 Yes, we trying to provide support much as we can. The CachyOS team is small and everyone works on that in their free time and no one pays us. We only receiving donations to help our build server alive and provide cachyos repositories.
-**Check the support page:** https://wiki-dev.cachyos.org/support/support_community/
+**Check the support page:** https://wiki.cachyos.org/support/support_community/
