@@ -27,7 +27,7 @@ If you're currently on Windows:
 
 e.g:
 ```powershell
-certUtil cachyos-kde-linux-230319.iso MD5
+certUtil -hashfile cachyos-kde-linux-230813.iso MD5
 ```
 
 4. Compare certUtil hash with SourceForge file information, if both of them match then you are ready to proceed.
