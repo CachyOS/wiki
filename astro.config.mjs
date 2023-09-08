@@ -84,6 +84,13 @@ export default defineConfig({
               link: 'how_to_install/install-cachyos',
             },
             {
+              label: 'How to install CachyOS with Secure Boot?',
+              translations: {
+                ru: 'Как установить CachyOS с безопасной загрузкой?',
+              },
+              link: 'how_to_install/install-cachyos-secure-boot',
+            },
+            {
               label: 'Post-install steps',
               translations: {
                 ru: 'Действия после установки',
