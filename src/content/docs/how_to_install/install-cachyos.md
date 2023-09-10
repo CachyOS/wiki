@@ -39,7 +39,7 @@ For the best performance, it is recommended to have:
 Choosing Your Bootloader
 ------------------------
 
-CachyOS offers two different bootloaders for online installation: systemd-boot, grub and refind. You will be asked to choose between the two when you click the `Launch Installer` button in CachyOS Hello. We recommend using systemd-boot as it is simple and results in faster boot times.
+CachyOS offers two different bootloaders for online installation: systemd-boot, grub and refind. You will be asked to choose between the three when you click the `Launch Installer` button in CachyOS Hello. We recommend using systemd-boot as it is simple and results in faster boot times.
 systemd-boot does support all filesystem, grub has some limitations with zfs and does not support all features of zfs. Refind does support only xfs and ext4.
 
 :::tip
