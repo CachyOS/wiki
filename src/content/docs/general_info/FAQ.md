@@ -38,6 +38,9 @@ sudo pacman -Rs package
 ```sh
 sudo rm /var/lib/pacman/db.lck
 ```
+:::tip
+You can also achieve this by clicking the GUI button in CachyOS Hello.
+:::
 
 ### How to revert to an older version of the package?
 If you install the latest update and find out a specific package doesn't work or a newer version of the software introduces a bug. You definitely want to come back to the previous version.
