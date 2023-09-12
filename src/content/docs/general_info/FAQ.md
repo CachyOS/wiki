@@ -33,6 +33,12 @@ sudo pacman -R package
 ```sh
 sudo pacman -Rs package
 ```
+
+### Fix "unable to lock database" Error in CachyOS - *Arch Linux*
+```sh
+sudo rm /var/lib/pacman/db.lck
+```
+
 ### How to revert to an older version of the package?
 If you install the latest update and find out a specific package doesn't work or a newer version of the software introduces a bug. You definitely want to come back to the previous version.
 1. Go into the pacman cache and find the needed package.
