@@ -8,6 +8,18 @@ editor: markdown
 dateCreated: 2023-01-21T19:28:01.996Z
 ---
 
+23.09
+-----
+
+**Features:**
+- systemd-boot: Default to luks2
+- netinstall: Provide a own category for CachyOS Packages
+- Calamares synced with upstream
+- Package updates: linux-cachyos 6.5.3, nvidia-utils 535.104.05, mesa 23.2.7
+
+**Bug-fixes:**
+- shellprocess_sdboot: Avoid using "sudo", when generating the boot entries at the installation process
+
 23.08
 -----
 
