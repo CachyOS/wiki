@@ -42,6 +42,16 @@ sudo rm /var/lib/pacman/db.lck
 You can also achieve this by clicking the GUI button in CachyOS Hello.
 :::
 
+### Fix possible keyrings issues in CachyOS - *Arch Linux*
+```sh
+sudo rm -rf /etc/pacman.d/gnupg/
+sudo pacman-key --init
+sudo pacman-key --populate
+
+sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
+sudo pacman-key --lsign-key F3B607488DB35A47
+```
+
 ### How to revert to an older version of the package?
 If you install the latest update and find out a specific package doesn't work or a newer version of the software introduces a bug. You definitely want to come back to the previous version.
 1. Go into the pacman cache and find the needed package.
