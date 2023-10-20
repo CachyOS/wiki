@@ -89,7 +89,8 @@ To update GRUB on a BIOS system, run the following command:
 Make sure to check the correct path to your system drive, which could be `/dev/sda`,`/dev/nvme0n1`, or `/dev/mmcblk0`.  You can verify this by running the command `lsblk`.
 :::
 
-### How can I remove those nesty, annoying warnings while updating my system? I'm worried if its safe to update the system
+### How can I remove those annoying warnings while updating my system? I'm worried if its safe to update the system
+"warning: X package: local(1.0.1-1.1) is newer than Y repo (1.0.1-1)"
 TODO add image
 
 Yes, it is safe to update the system.
