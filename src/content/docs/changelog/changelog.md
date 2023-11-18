@@ -8,6 +8,19 @@ editor: markdown
 dateCreated: 2023-01-21T19:28:01.996Z
 ---
 
+23.11
+-----
+
+**Features:**
+- nvidia: Use nvidia module instead of dkms
+- Calamares synced with upstream
+- Package updates: linux-cachyos 6.6.1, nvidia-utils 545.29.02, mesa 23.2.1, zfs-utils 2.2.0, mkinitcpio 37
+
+**Bug-fixes:**
+- nvidia-hook: Added nvidia-hook back to avoid issues at installation time with the new module
+- netinstall: Packages got renamed due the recent changes at the KF5 packaging
+- netinstall: xdg-desktop-portal-gnome got added to the GNOME Installation
+
 23.09
 -----
 
