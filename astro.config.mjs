@@ -91,6 +91,13 @@ export default defineConfig({
               link: 'how_to_install/install-cachyos-secure-boot',
             },
             {
+              label: 'CachyOS-NVIDIA Modules Installation',
+              translations: {
+                ru: 'Установка модуля CachyOS-NVIDIA',
+              },
+              link: 'how_to_install/cachyos-nvidia-modules.md',
+            },
+            {
               label: 'Post-install steps',
               translations: {
                 ru: 'Действия после установки',
