@@ -95,7 +95,7 @@ export default defineConfig({
               translations: {
                 ru: 'Установка модуля CachyOS-NVIDIA',
               },
-              link: 'how_to_install/cachyos-nvidia-modules.md',
+              link: 'how_to_install/cachyos-nvidia-modules',
             },
             {
               label: 'Post-install steps',
