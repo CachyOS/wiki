@@ -64,7 +64,7 @@ export default defineConfig({
           label: 'Start with CachyOS',
           translations: {
             ru: 'Начните с CachyOS',
-            de: 'Start mit CachyOS',
+            de: 'Starte mit CachyOS',
           },
           items: [
             {
