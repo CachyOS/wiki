@@ -14,7 +14,7 @@ Append these environment variables before running the program
 __NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia <program>
 ```
 ### Steam
-```
+```bash
 __NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia %command%
 ```
 :::tip
@@ -138,7 +138,7 @@ The feature is only supported on laptops with Turing GPUs (RTX 20xx/GTX 16xx) an
 **PCI-Express Runtime D3 (RTD3) Power Management**
 Add these rules into `/etc/udev/rules.d/80-nvidia-pm.rules`
 
-```udev
+```bash
 # Load and unload nvidia-modeset module
 ACTION=="add", DEVPATH=="/bus/pci/drivers/nvidia", RUN+="/sbin/modprobe nvidia-modeset"
 ACTION=="remove", DEVPATH=="/bus/pci/drivers/nvidia", RUN+="/sbin/modprobe -r nvidia-modeset"
