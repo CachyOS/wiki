@@ -76,16 +76,11 @@ Pay attention to the following text with brackets. **(supported, searched)**
   x86-64-v4 (supported, searched)
   x86-64-v3 (supported, searched)
   x86-64-v2 (supported, searched)
-  haswell (AT_PLATFORM; supported, searched)
-  tls (supported, searched)
-  avx512_1 (supported, searched)
-  x86_64 (supported, searched)
 ```
 
 #### Example of CPU incompatible with x86-64-v4 instruction set
 ```
 > /lib/ld-linux-x86-64.so.2 --help | grep supported
-  x86-64-v4
   x86-64-v3 (supported, searched)
   x86-64-v2 (supported, searched)
 ```
@@ -117,18 +112,16 @@ Include = /etc/pacman.d/cachyos-v3-mirrorlist
 Include = /etc/pacman.d/cachyos-mirrorlist
 ```
 
-#### if your CPU supports `x86-64-v4`, then add `[cachyos-v4]`, `[cachyos-v3]`, `[cachyos-core-v3]`, `[cachyos-extra-v3]` and `[cachyos]`
+#### if your CPU supports `x86-64-v4`, then add `[cachyos-v4]`, `[cachyos-core-v4]`, `[cachyos-extra-v4]` and `[cachyos]`
 ```ini
 # cachyos repos
 ## Only add if your CPU does support x86-64-v4 architecture
 [cachyos-v4]
 Include = /etc/pacman.d/cachyos-v4-mirrorlist
-[cachyos-v3]
-Include = /etc/pacman.d/cachyos-v3-mirrorlist
-[cachyos-core-v3]
-Include = /etc/pacman.d/cachyos-v3-mirrorlist
-[cachyos-extra-v3]
-Include = /etc/pacman.d/cachyos-v3-mirrorlist
+[cachyos-core-v4]
+Include = /etc/pacman.d/cachyos-v4-mirrorlist
+[cachyos-extra-v4]
+Include = /etc/pacman.d/cachyos-v4-mirrorlist
 [cachyos]
 Include = /etc/pacman.d/cachyos-mirrorlist
 ```
