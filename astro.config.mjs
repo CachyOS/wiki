@@ -183,6 +183,14 @@ export default defineConfig({
               },
               link: 'cachyos_repositories/why_cachyos_repo',
             },
+            {
+              label: 'PGO & BOLT optimized packages',
+              translations: {
+                ru: 'Пакеты, оптимизированные PGO & BOLT',
+                de: 'PGO & BOLT optimierte Pakete',
+              },
+              link: 'cachyos_repositories/pgo_bolt_packages',
+            },
           ],
         },
         {
