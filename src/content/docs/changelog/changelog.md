@@ -8,6 +8,18 @@ editor: markdown
 dateCreated: 2023-01-21T19:28:01.996Z
 ---
 
+24.01
+-----
+
+**Features:**
+- x86-64-v4: Autodetection and enabling the repository at installation
+- linux-cachyos: the sched-ext scheduler framework is now provided in the default kernel
+- xwayland: Provide explicit sync patches as default
+- Package Updates: linux-cachyos 6.7, mesa 23.3.3, gcc 13.2.1-8, xorg-xwayland 23.2.4
+
+**Bug Fixes:**
+- chwd: For Ada Lovelace Nvidia cards the nvidia modules get directly packed into the initramfs to avoid issues with the early kms
+
 23.12
 -----
 
