@@ -38,7 +38,7 @@ export default defineConfig({
         github: 'https://github.com/cachyos',
         twitter: 'https://twitter.com/cachyos',
         telegram: 'https://t.me/+oR-kWT47vRdmMDli',
-        discord: 'https://discord.gg/qJqj94uFwE',
+        discord: 'https://discord.gg/cachyos-862292009423470592',
         //reddit: 'https://www.reddit.com/r/cachyos',
         //patreon: 'https://www.patreon.com/CachyOS'
       },

@@ -151,7 +151,7 @@ sudo dnf install clang clang-devel llvm lld
 > Not needed anymore, just install the latest dkms version from our repo.
 
 ## Support
-**Discord:** <https://discord.gg/qJqj94uFwE> <br />
+**Discord:** <https://discord.gg/cachyos-862292009423470592> <br />
 **Telegram:** <https://t.me/+zCzPX4cAFjk1MTYy> <br />
 **Matrix:** <https://matrix.cachyos.org> <br />
 
