@@ -44,6 +44,9 @@ systemd-boot does support all filesystem, grub has some limitations with zfs and
 
 :::tip
 Note that systemd-boot is only supported on systems with UEFI support, while GRUB supports both MBR and UEFI.
+
+When doing manual partitioning keep in mind that you need to set boot flag for boot partition and set mountpoint to:
+`/boot` for systemd-boot, for refind and grub `/boot/efi`.
 :::
 
 Choosing Your Filesystem
