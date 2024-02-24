@@ -17,6 +17,6 @@ CachyOS has a unique feature that allows users to receive text messages directly
 
 # [CachyOS repositories](https://mirror.cachyos.org/)
 The CachyOS repositories contain Arch Linux and CachyOS packages, which have been rebuilt with flags optimized for performance, stability, and security.
-- `x86-64-v4` - currently only kernel packages + LTO. *All packages will be soon*
+- `x86-64-v4` - all Arch Linux packages + LTO.
 - `x86-64-v3` - all Arch Linux packages + LTO.
 - `x86-64` - all Arch Linux packages + LTO.
