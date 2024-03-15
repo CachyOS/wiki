@@ -85,7 +85,7 @@ Pay attention to the following text with brackets. **(supported, searched)**
 ```
 
 ### 3. Adding cachyos repositories
-You need to edit `pacman.conf` and add repositories.
+You need to edit `pacman.conf` and add the repositories **ABOVE THE EXISTING ARCHLINUX REPOS**.
 ```
 sudo nano /etc/pacman.conf
 ```
