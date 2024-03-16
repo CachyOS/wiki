@@ -19,7 +19,7 @@ CachyOS is a user-friendly Arch-based distribution focused on performance optimi
 People often have the initial reaction of "Oh no, another Arch-based distribution." However, CachyOS stands out with its unique set of differences:
 1. CachyOS utilizes its own repositories.
 1. CachyOS includes its own modified and optimized kernels.
-1. CachyOS offers better compatibility for NVIDIA users and user of older AMD cards.
+1. CachyOS offers better compatibility for NVIDIA users and users of older AMD cards.
 1. CachyOS employs its own method to detect your graphics cards.
 1. CachyOS prioritizes resources for your games and programs.
 1. CachyOS supports multiple bootloaders, including GRUB, rEFInd, and SystemD-boot.
