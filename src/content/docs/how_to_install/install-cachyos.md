@@ -39,14 +39,16 @@ For the best performance, it is recommended to have:
 Choosing Your Bootloader
 ------------------------
 
-CachyOS offers two different bootloaders for online installation: systemd-boot, grub and refind. You will be asked to choose between the three when you click the `Launch Installer` button in CachyOS Hello. We recommend using systemd-boot as it is simple and results in faster boot times.
-systemd-boot does support all filesystem, grub has some limitations with zfs and does not support all features of zfs. Refind does support only xfs and ext4.
+CachyOS offers three different bootloaders for online installation: systemd-boot, Grub(3) and rEFInd. You will be asked to choose between the three when you click the `Launch Installer` button in CachyOS Hello. We recommend using systemd-boot as it is the simplest and results in faster boot times.
+* systemd-boot supports any filesystem.
+* Grub has some limitations with zfs and does not support all features of zfs but otherwise supports all filesystems.
+* rEFInd supports any filesystem. 
 
 :::tip
-Note that systemd-boot is only supported on systems with UEFI support, while GRUB supports both MBR and UEFI.
+Note that systemd-boot and rEFInd only support systems with UEFI support, while GRUB supports both BIOS/LEGACY and UEFI.
 
 When doing manual partitioning keep in mind that you need to set boot flag for boot partition and set mountpoint to:
-`/boot` for systemd-boot, for refind and grub `/boot/efi`.
+`/boot` for systemd-boot,rEFInd and grub as `/boot/efi`.
 :::
 
 Choosing Your Filesystem
@@ -69,7 +71,7 @@ Desktop Environments
 
 CachyOS offers several desktop environments for you to choose from, including the default option of KDE. The available options are:
 :::note
-Please select only one Desktop Enviroment at the net installation
+Please select only one Desktop Enviroment during the installation
 :::
 
 1.  **KDE Plasma** is a comprehensive and flexible desktop environment that offers multiple styles of menus to access applications. It features the kwin window manager, and also works with Compiz. KDE Plasma also boasts an intuitive interface that allows you to easily download and install new themes, widgets, and more from the web.
@@ -105,6 +107,6 @@ sudo pacman-key --init; sudo pacman-key --populate; sudo pacman-key --lsign cach
 
 ### Calamares "freezes"
 
-There is since mesa 23.x a issue, that the main GUI thread of calamares has a hardlock on **VMs**.
-The installation itself still gets forward and should be installed fine.
+There is since mesa 23.x an issue, that the main GUI thread of calamares has a hardlock on **VMs**.
+The installation itself still gets forward and should be install fine.
 Please check the log to see if it is completly installed.
