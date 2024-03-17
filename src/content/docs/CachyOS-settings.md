@@ -45,4 +45,4 @@ The BBR congestion control algorithm can help achieve higher bandwidths and lowe
 TCP Fast Open is an extension to the transmission control protocol (TCP) that helps reduce network latency by enabling data to be exchanged during the sender’s initial TCP SYN. Using the value 3 instead of the default 1 allows TCP Fast Open for both incoming and outgoing connections
 
 ### kernel.nmi_watchdog
-Disabling NMI watchdog will speed up your boot and shutdown, because one less module is loaded. Additionally disabling watchdog timers increases performance and lowers power consumption
+Disabling NMI watchdog will speed up your boot and shutdown process because one less module is loaded. Additionally disabling watchdog timers increases performance and lowers power consumption
