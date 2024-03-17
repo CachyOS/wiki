@@ -64,7 +64,7 @@ Let's start by configuring **mkinitcpio** which loads various kernel modules.
 ### Intel iGPU
 Set `i915 intel_agp nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
 ```bash
-MODULES="i915 intel_agp nvidia"
+MODULES=(i915 intel_agp nvidia)
 ```
 > The `intel_agp` module may cause issues with hibernation on some systems, see https://bbs.archlinux.org/viewtopic.php?id=262043. Try omitting the module if you encounter issues.
 
@@ -72,7 +72,7 @@ MODULES="i915 intel_agp nvidia"
 #### with [AMDGPU driver](https://wiki.archlinux.org/title/AMDGPU)
 Set `amdgpu nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
 ```bash
-MODULES="amdgpu nvidia"
+MODULES=(amdgpu nvidia)
 ```
 <!---
 TODO: is the old radeon really support PRIME?
@@ -80,7 +80,7 @@ TODO: is the old radeon really support PRIME?
 #### with [radeon driver](https://wiki.archlinux.org/title/ATI)
 Set `radeon nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
 ```bash
-MODULES="radeon nvidia"
+MODULES=(radeon nvidia)
 ```
 
 ## Enable "Direct Rendering Manager" (DRM KMS)
