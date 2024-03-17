@@ -11,7 +11,7 @@ dateCreated: 2021-10-04T07:59:10.433Z
 CachyOS incorporates various elements to achieve enhanced performance, smoothness, and responsiveness, ensuring a satisfying user experience.
 
 ## CachyOS repository
-CachyOS repositories offer optimized packages for `x86-64-v3`, `x86-64-v4` (`x86-64-v4` - currently only kernels) architecture. We take the Arch Linux packages and rebuild them with `mach=x86-64-v3` and other performance-focused flags, ensuring stability and security for our custom packages.
+CachyOS repositories offer optimized packages for `x86-64-v3` and `x86-64-v4` architecture. We take the Arch Linux packages and rebuild them with `mach=x86-64-v3/v4` and other performance-focused flags, ensuring stability and security for our custom packages.
 
 ## linux-cachyos kernels
 By default, CachyOS utilizes the `linux-cachyos` kernel, which is fine-tuned by the CachyOS team to prioritize performance, responsiveness, and overall smoothness of the operating system.
@@ -24,19 +24,21 @@ The specific package offered by CachyOS provides a range of tweaks for the opera
 If you would like to explore further details about the package and features, we encourage you to visit our GitHub repository at: https://github.com/CachyOS/CachyOS-Settings
 
 ## ananicy-cpp & ananicy-rules
-That helps adjust nice values, allowing for the allocation of resources to each process, app, and program. While we haven't covered everything, our range of supported programs is quite extensive. If you would like, you can contribute by helping us cover more programs.
+Ananicy-cpp helps adjust nice values, allowing for the allocation of resources to each process, app, and program. While we haven't covered everything, our range of supported programs is quite extensive. If you would like, you can contribute by helping us cover more programs.
 
 For further information, please visit our GitHub repository at: https://github.com/CachyOS/ananicy-rules
+
 # Here is a reason why most Linux distros still use x86-64
 
-Because there are still a lot of outdated Linux servers around the world, it's important for Linux distributions to be accessible to users with older hardware. However, most personal computers and laptops now include CPUs with x86-64-v3 instruction sets, which is one of the reasons why CachyOS was created. This distribution can potentially unlock even more performance on your PC.
+This is because there are still a lot of outdated Linux servers around the world and it is very important for Linux distributions to be accessible to users with older hardware. However, most personal computers and laptops now include CPUs with x86-64-v3/v4 instruction sets, which is one of the reasons why CachyOS was created. This distribution can help unlock even more performance for your PC.
 
 To prove its efficiency, check out the following benchmarking reports:
 
 *   [https://www.phoronix.com/scan.php?page=news\_item&px=Arch-Linux-x86-64-v3-Port-RFC](https://www.phoronix.com/scan.php?page=news_item&px=Arch-Linux-x86-64-v3-Port-RFC)
+*   [https://www.phoronix.com/review/cachyos-x86-64-v3-v4](https://www.phoronix.com/review/cachyos-x86-64-v3-v4)
 *   [https://lists.archlinux.org/pipermail/arch-general/2021-March/048739.html](https://lists.archlinux.org/pipermail/arch-general/2021-March/048739.html)
 
-**According to these reports, packages and kernels in the CachyOS x86-64-v3 repositories provide an average performance increase of 10%. In some cases, performance increases of up to 36% have been observed.**
+**According to these reports, packages and kernels in the CachyOS x86-64-v3/v4 repositories provide an average performance increase of 10%. In some cases, performance increases of up to 36% have been observed.**
 
 # Benchmarks
 
