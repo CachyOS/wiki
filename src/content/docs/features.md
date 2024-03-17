@@ -31,9 +31,7 @@ Security Features
 =================
 At CachyOS, we take security very seriously. That is why our software includes the following security features:
 - A Firefox-based browser with security plugins and additional features
-- The option to use Firejail, which runs untrusted applications in a sandbox environment and updates automatically with new packages
 - Preconfigured DNS servers that utilize DoH and DoT protocols
-- Anonymized DNSCrypt configuration and use of only DNSCrypt servers
 - A hardened kernel available in the CachyOS repository
 - Security-related packages compiled with extra CC flags for added security
 
