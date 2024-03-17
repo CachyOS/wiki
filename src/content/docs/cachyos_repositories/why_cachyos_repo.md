@@ -23,8 +23,12 @@ Arch Linux repositories are great, but sometimes they are slow to react on requi
 # Tests and benchmarks
 If you would like to know more about the performance uplift of our repositories, check the links below.  
 
-- Phoronix tried benchmarks and it seems to be mostly good for CachyOS and shows leading in the performance aspect. These benchmarks are a little bit older, during that time, CachyOS has already evolved much more:  
+- Phoronix has benchmarked Cachy twice and it seems to be mostly good for CachyOS, which is shown leading in the performance aspect. 
+These benchmarks are a little bit older, during that time, CachyOS has already evolved much more:  
 https://www.phoronix.com/review/cachyos-linux-perf
+These benchmarks are quite recent. Showing the further improvements made to CachyOS:
+https://www.phoronix.com/review/cachyos-x86-64-v3-v4
+
 
 - x86-64-v3 (- there is a moderate benefit of *-march=haswell* (x86_64-v3) - of around
 10%-20% as compared to baseline for the tests performed):  
