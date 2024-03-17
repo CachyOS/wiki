@@ -62,7 +62,7 @@ Tested on a laptop with an Intel CPU and a NVIDIA GPU, but since release 1.4 Opt
 Let's start by configuring **mkinitcpio** which loads various kernel modules.
 
 ### Intel iGPU
-Set `i915 intel_agp nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
+Add `i915 intel_agp nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
 ```bash
 MODULES=(i915 intel_agp nvidia)
 ```
@@ -70,7 +70,7 @@ MODULES=(i915 intel_agp nvidia)
 
 ### AMD iGPU
 #### with [AMDGPU driver](https://wiki.archlinux.org/title/AMDGPU)
-Set `amdgpu nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
+Add `amdgpu nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
 ```bash
 MODULES=(amdgpu nvidia)
 ```
@@ -78,7 +78,7 @@ MODULES=(amdgpu nvidia)
 TODO: is the old radeon really support PRIME?
 -->
 #### with [radeon driver](https://wiki.archlinux.org/title/ATI)
-Set `radeon nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
+Add `radeon nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
 ```bash
 MODULES=(radeon nvidia)
 ```
