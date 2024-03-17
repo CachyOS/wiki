@@ -31,7 +31,7 @@ Security Features
 =================
 At CachyOS, we take security very seriously. That is why our software includes the following security features:
 - A Firefox-based browser with security plugins and additional features
-- Preconfigured DNS servers that utilize DoH and DoT protocols
+- The option to easily set your preferred DNS in the CachyOS Hello app
 - A hardened kernel available in the CachyOS repository
 - Security-related packages compiled with extra CC flags for added security
 
