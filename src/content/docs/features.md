@@ -24,7 +24,7 @@ CachyOS comes with several performance enhancements. These enhancements are desi
 - ZRAM, which is pre-configured with zstd compression.
 - The BFQ scheduler, which is used by default for HDDs and mq-deadline for SSDs.
 - Highly optimized, patched and tuned Kernels.
-- BBRv2 set as the default network setting.
+- BBRv3 set as the default network setting.
 - Additional tweaks and improvements to further optimize performance.
 
 Security Features
