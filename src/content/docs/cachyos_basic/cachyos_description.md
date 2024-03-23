@@ -12,7 +12,7 @@ editor: markdown
 </div>
 <br />
 
-## What's the CachyOS?
+## What's CachyOS?
 CachyOS is a user-friendly Arch-based distribution focused on performance optimizations.
 
 ## How is CachyOS unique?
@@ -29,5 +29,5 @@ People often have the initial reaction of "Oh no, another Arch-based distributio
 Well, the choice is up to you, but gamers and users who demand a really smooth desktop use CachyOS.
 
 ## Can I expect support?
-Yes, we trying to provide support much as we can. The CachyOS team is small and everyone works on that in their free time and no one pays us. We only receiving donations to help our build server alive and provide cachyos repositories.
+Yes, we trying to provide support much as we can. The CachyOS team is small and everyone works on that in their free time and no one pays us. We're only receiving donations to help our build server stay alive and provide CachyOS repositories.
 **Check the support page:** https://wiki.cachyos.org/support/support_community/
