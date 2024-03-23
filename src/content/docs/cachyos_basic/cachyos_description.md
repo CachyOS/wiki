@@ -25,9 +25,9 @@ People often have the initial reaction of "Oh no, another Arch-based distributio
 1. CachyOS supports multiple bootloaders, including GRUB, rEFInd, and SystemD-boot.
 1. CachyOS can warn of risky updates over the terminal. That saved a lot of users during Python 3.11 update in the past.
 
-## Is that distro for me?
+## Is this distro for me?
 Well, the choice is up to you, but gamers and users who demand a really smooth desktop use CachyOS.
 
 ## Can I expect support?
-Yes, we trying to provide support much as we can. The CachyOS team is small and everyone works on that in their free time and no one pays us. We're only receiving donations to help our build server stay alive and provide CachyOS repositories.
+Yes, we trying to provide as much support as we can. The CachyOS team is small and everyone works on it in their free time and no one pays us. We're only receiving donations to help our build server stay alive and provide CachyOS repositories.
 **Check the support page:** https://wiki.cachyos.org/support/support_community/
