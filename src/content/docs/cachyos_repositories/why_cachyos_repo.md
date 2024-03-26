@@ -10,21 +10,25 @@ dateCreated: 2021-08-18T15:06:49.466Z
 
 # Why does CachyOS utilize its own repositories?
 ## Performance and optimizations
-We want to provide a performance-optimized distro and that needs performance-optimized packages. So that's why CachyOS provides its own repositories with packages compiled with:
+We want to provide a performance-optimized distro and this requires performance-optimized packages. So that's why CachyOS provides its own repositories with packages compiled with the following:
 - x86-64-v4 
 - x86-64-v3 - *10%-20% performance uplift*
 - x86-64 - *These packages have minimal benefits, only LTO provides a 5-10% uplift*
 
 ## Better control of the packages
-Arch Linux repositories are great, but sometimes slow to react on required re-builds.  
+Arch Linux repositories are great, but sometimes they are slow to react on required re-builds.  
 - **Example:** Typical errors like "error while loading shared libraries: /usr/lib/..."  
-- **Solution:** That error is mostly solved by re-build the package against a newer library and after re-build the package work again.
+- **Solution:** That error is mostly solved by a re-build of the package against a newer library and after the re-build the package works again.
 
 # Tests and benchmarks
-If you can't imagine how much performance you will get, check the links below.  
+If you would like to know more about the performance uplift of our repositories, check the links below.  
 
-- Phoronix tried benchmarks and it seems to be mostly good for CachyOS and showing leading in the performance. These benchmarks are a little bit older, in the time, CachyOS already evolved even more:  
+- Phoronix has benchmarked Cachy twice and it seems to be mostly good for CachyOS, which is shown leading in the performance aspect. 
+These benchmarks are a little bit older, during that time, CachyOS has already evolved much more:  
 https://www.phoronix.com/review/cachyos-linux-perf
+These benchmarks are quite recent. Showing the further improvements made to CachyOS:
+https://www.phoronix.com/review/cachyos-x86-64-v3-v4
+
 
 - x86-64-v3 (- there is a moderate benefit of *-march=haswell* (x86_64-v3) - of around
 10%-20% as compared to baseline for the tests performed):  

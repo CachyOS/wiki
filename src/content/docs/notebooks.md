@@ -22,7 +22,7 @@ Please read the [docs from NVIDIA](https://download.nvidia.com/XFree86/Linux-x86
 :::
 
 ## Wrapper script
-Arch Linux provides a package called [`nvidia-prime`](https://archlinux.org/packages/extra/any/nvidia-prime/) that helps you set the environment variable above when you run a program, to use it simply execute this:
+Arch Linux provides a package called [`nvidia-prime`](https://archlinux.org/packages/extra/any/nvidia-prime/) that helps you set the environment variables above when you run a program, to use it simply execute the following:
 
 ### Installation of the Wrapper script
 ```bash
@@ -56,31 +56,31 @@ Modern laptops have two graphics cards, especially if we talk about gaming lapto
 Windows automatically switches between the iGPU and dGPU depending on the usage.
 Here is a guide on how to set up the same for CachyOS, especially if you plan to use it for gaming or streaming, 3D development, etc.
 
-Tested on the laptop with Intel CPU and NVIDIA GPU, but since release 1.4 Optimus Manager also has support for AMD CPUs.
+Tested on a laptop with an Intel CPU and a NVIDIA GPU, but since release 1.4 Optimus Manager also has support for AMD CPUs.
 
 ## Preparing iGPU and dGPU for the Linux Kernel
 Let's start by configuring **mkinitcpio** which loads various kernel modules.
 
 ### Intel iGPU
-Set `i915 intel_agp nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
+Add the following modules `i915 intel_agp nvidia` to the MODULES section in `/etc/mkinitcpio.conf`, make sure you don't insert the same module multiple times:
 ```bash
-MODULES="i915 intel_agp nvidia"
+MODULES=(i915 intel_agp nvidia)
 ```
 > The `intel_agp` module may cause issues with hibernation on some systems, see https://bbs.archlinux.org/viewtopic.php?id=262043. Try omitting the module if you encounter issues.
 
 ### AMD iGPU
 #### with [AMDGPU driver](https://wiki.archlinux.org/title/AMDGPU)
-Set `amdgpu nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
+Add the following modules `amdgpu nvidia` to the MODULES section in `/etc/mkinitcpio.conf`, make sure you don't insert the same module multiple times:
 ```bash
-MODULES="amdgpu nvidia"
+MODULES=(amdgpu nvidia)
 ```
 <!---
 TODO: is the old radeon really support PRIME?
 -->
 #### with [radeon driver](https://wiki.archlinux.org/title/ATI)
-Set `radeon nvidia` to the MODULES section in `/etc/mkinitcpio.conf`:
+Add the following modules `radeon nvidia` to the MODULES section in `/etc/mkinitcpio.conf`, make sure you don't insert the same module multiple times:
 ```bash
-MODULES="radeon nvidia"
+MODULES=(radeon nvidia)
 ```
 
 ## Enable "Direct Rendering Manager" (DRM KMS)
@@ -98,7 +98,7 @@ Add `nvidia-drm.modeset=1` to GRUB_CMDLINE_LINUX_DEFAULT in `/etc/default/grub`,
 GRUB_CMDLINE_LINUX_DEFAULT="nvidia-drm.modeset=1 ..."
 ```
 
-Now you have to use these two commands to save the modification into all the installed kernels and update GRUB.
+Now you must use these two commands to save the modification into all the installed kernels and update GRUB.
 
 ```sh
 # run the following commands
@@ -116,14 +116,14 @@ Installing optimus-manager & Optimus-manager-qt (a system tray for optimus-manag
 sudo pacman -S optimus-manager optimus-manager-qt
 ```
 
-The last step, we need to enable and start the service for the Optimus manager
+The last step, we need to enable and start the service for Optimus manager
 ```sh
 sudo systemctl enable --now optimus-manager.service
 ```
 
-You can reboot now, after rebooting, you will have a fully working Optimus Manager, which you can **find the icon on the bottom right corner of the taskbar.**
+You can now reboot, after rebooting, you will have a fully working Optimus Manager, which you can **find the icon on the bottom right corner of the taskbar.**
 
-Congrats! You are done with the setup.
+Congrats! You are now done with the setup.
 
 # Optional configuration
 :::note
@@ -132,7 +132,7 @@ With the CachyOS-Settings v27 update, the settings related to **PCI-Express Runt
 
 ## Fully power down the GPU when not in use
 :::note
-The feature is only supported on laptops with Turing GPUs (RTX 20xx/GTX 16xx) and above, and Intel Coffee Lake CPUs (8th gen) and above.
+This feature is only supported on laptops with Turing GPUs (RTX 20xx/GTX 16xx) and above, and Intel Coffee Lake CPUs (8th gen) and above.
 :::
 
 **PCI-Express Runtime D3 (RTD3) Power Management**
@@ -177,4 +177,4 @@ Enable nvidia-persistenced.service to avoid the kernel tearing down the device s
 sudo systemctl enable --now nvidia-persistenced.service
 ```
 And finally, reboot your system.
-Your laptop's hybrid mode should work as it does on Windows!
+Your laptop's hybrid mode should now work as it does on Windows!

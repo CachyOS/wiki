@@ -68,7 +68,7 @@ export default defineConfig({
           },
           items: [
             {
-              label: 'What is the CachyOS?',
+              label: 'What is CachyOS?',
               translations: {
                 ru: 'Что такое CachyOS?',
                 de: 'Was ist das CachyOS?',
@@ -160,7 +160,7 @@ export default defineConfig({
           },
           items: [
             {
-              label: 'What is the CachyOS repositories?',
+              label: 'What are the CachyOS repositories?',
               translations: {
                 ru: 'Что такое репозитории CachyOS?',
                 de: 'Was sind die CachyOS-Repositorien?',

@@ -7,12 +7,12 @@ tags: arch linux, cachyos, repo, x86_64-v3
 editor: markdown
 dateCreated: 2021-08-18T15:06:49.466Z
 ---
-# Meet with CachyOS repositories
-CachyOS repositories are one of the most unique aspects of CachyOS, setting it apart from other Arch-based distros.
+# Meet the CachyOS repositories
+CachyOS repositories are one of the most unique aspects of CachyOS, setting it apart from other Arch-based distributions.
 These repositories enable CachyOS to create performance-focused packages and exert more control over the package ecosystem compared to distros that solely rely on the Arch Linux repositories.
 
 :::tip
-CachyOS has a unique feature that allows users to receive text messages directly in the terminal. If the CachyOS team detects the dangerous state of the repository. You will be informed in the terminal before you execute the update. We already used that during a large Python 3.11 update in the past and prevented damage to the CachyOS.
+CachyOS has a unique feature that allows users to receive text messages directly in the terminal. If the CachyOS team detects a dangerous state of the repository. You will be informed in the terminal before you execute the update. We already used that during a large Python 3.11 update in the past and prevented damage to users installation.
 :::
 
 # [CachyOS repositories](https://mirror.cachyos.org/)

@@ -10,12 +10,12 @@ dateCreated: 2023-06-30T12:24:08.999Z
 
 # How does CachyOS handle the nvidia module?
 
-We are providing precompiled nvidia modules for every kernel. We are not relaying on nvidia-dkms anymore since Mid of November 2023.
-This helps to avoid issues with compatibility or the compilation with nvidia-dkms.
+We are providing precompiled nvidia modules for every kernel. We no longer rely on nvidia-dkms anymore since Mid November 2023.
+This helps to avoid issues with compatibility or the compilation of nvidia-dkms.
 
 # Namescheme of the Modules
 
-We are following a quite easy naming scheme, which just adds "nvidia" to the end of the kernel.
+We are following quite an easy naming scheme, which just adds "nvidia" to the end of the kernel.
 
 ## Examples
 
@@ -24,7 +24,7 @@ linux-cachyos-bore-lto --> linux-cachyos-bore-lto-nvidia
 
 # Kernels provided from Arch
 
-We are aware, that people also using kernels from arch as a fallback or other reasons.
-Arch does provide for the "linux" (nvidia) and "linux-lts" (nvidia-lts) kernel a precompiled nvidia module.
+We are aware, that people also using kernels from arch as a fallback or for other reasons.
+Arch does provide precompiled modules for its kernels, "linux" (nvidia) and "linux-lts" (nvidia-lts).
 
-We have added also the nvidia module for "linux-zen" (nvidia-zen) and "linux-hardened" (nvidia-hardened).
+We have also added the nvidia module for "linux-zen" (nvidia-zen) and "linux-hardened" (nvidia-hardened).
