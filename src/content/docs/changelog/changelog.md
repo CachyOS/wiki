@@ -8,6 +8,23 @@ editor: markdown
 dateCreated: 2023-01-21T19:28:01.996Z
 ---
 
+24.04
+----
+
+**Features:**
+- plymouth: Use plymouth and provide a themed boot animation
+- ISO: Switch back to x11 due to issues when setting the keyboard layout in calamares
+- ISO: Use ZSTD 19 Compression for mkinitcpio image for ISO
+- Refind: New portioning layout
+- netinstall: KDE: Install xwaylandvideobridge as default
+- netinstall: Use lightdm instead of ly at various Desktop Environments, due to a bug in ly
+- systemd-boot: Use @saved for systemd-boot to boot all time in the previous booted kernel
+- Package Updates: linux-cachyos 6.8.2, pacman 6.1.0-5, mesa 24.0.4, Plasma 6.0.3, nvidia 550.67
+
+**Bug-Fixes:**
+- Autologin: Fix the autologin option when used together with sddm
+- xz: Provide a patched xz package
+
 24.03.1
 ----
 
