@@ -13,17 +13,20 @@ dateCreated: 2023-01-21T19:28:01.996Z
 
 **Features:**
 - plymouth: Use plymouth and provide a themed boot animation
-- ISO: Switch back to x11 due to issues when setting the keyboard layout in calamares
-- ISO: Use ZSTD 19 Compression for mkinitcpio image for ISO
+- ISO: Switch back to X11 due to issues when setting the keyboard layout in calamares
 - Refind: New portioning layout
 - netinstall: KDE: Install xwaylandvideobridge as default
 - netinstall: Use lightdm instead of ly at various Desktop Environments, due to a bug in ly
 - systemd-boot: Use @saved for systemd-boot to boot all time in the previous booted kernel
-- Package Updates: linux-cachyos 6.8.2, pacman 6.1.0-5, mesa 24.0.4, Plasma 6.0.3, nvidia 550.67
+- cachyos-keyring: Refactor cachyos-keyring package and provide a cachyos-trusted
+- ISO: Use ZSTD 19 Compression for mkinitcpio image for ISO
+- Package Updates: linux-cachyos 6.8.2, pacman 6.1.0-5, mesa 24.0.4, Plasma 6.0.3, nvidia 550.67, cachyos-settings 39-2
 
 **Bug-Fixes:**
 - Autologin: Fix the autologin option when used together with sddm
 - xz: Provide a patched xz package
+- cachyos-settings: udev-rule don't set watermark_scale_factor to 125, since it increases the RAM usage massively
+- calamares: pacman-keyring use more simply method to integrate the keyring into the installation
 
 24.03.1
 ----
