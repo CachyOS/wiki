@@ -156,7 +156,8 @@ Server = https://debug.cachyos.org/repo/$arch_v3/$repo
 Uninstalling CachyOS repositories
 ---------------------------------
 
-**ATTENTION:** Since pacman 6.1 Arch has introduced a validation layer for features. Since we provide a hard fork of pacman, which adds various features, there will be an influx of warnings, when downgrading to the archlinux state.
+**ATTENTION:** Since pacman 6.1 Arch has introduced a validation layer for features. Since we provide a fork of pacman, which adds various features, there will be an influx of warnings, when downgrading to the archlinux pacman, due the missing "Installed from" Feature.
+We have tried to push this feature to pacman, since various people and maintainer were interested in, but got declined by the pacman maintainer.
 
 This can be resolved with installing the archlinux pacman first before [reinstalling all packages](https://wiki.archlinux.org/title/Pacman/Tips_and_tricks#Reinstalling_all_packages).
 ```sh
