@@ -33,7 +33,7 @@ tar xvf cachyos-repo.tar.xz && cd cachyos-repo
 sudo ./cachyos-repo.sh
 ```
 
-#### Behaviour of the script
+#### Behavior of the script
 1. The script will auto-detect the CPU architecture, if the CPU has `x86-64-v4` or `x86-64-v3` support, the script will automatically use the repositories which are optimized with this flag > and some other flags.
 2. The script will backup your old `pacman.conf`.
 
@@ -156,6 +156,13 @@ Server = https://debug.cachyos.org/repo/$arch_v3/$repo
 Uninstalling CachyOS repositories
 ---------------------------------
 
+**ATTENTION:** Since pacman 6.1 Arch has introduced a validation layer for features. Since we provide a hard fork of pacman, which adds various features, there will be an influx of warnings, when downgrading to the archlinux state.
+
+This can be resolved with installing the archlinux pacman first before [reinstalling all packages](https://wiki.archlinux.org/title/Pacman/Tips_and_tricks#Reinstalling_all_packages).
+```sh
+sudo pacman -S core/pacman
+```
+
 ### Option 1: Automated Removal
 
 Run these commands to remove the CachyOS repos from your system:
@@ -179,5 +186,7 @@ sudo mv /etc/pacman.conf.bak /etc/pacman.conf
 3.  Switch to default Arch Linux packages with this command:
 
 ```sh
-sudo pacman -Suuy
+sudo pacman -S core/pacman
+pacman -Qqn | sudo pacman -S -
+sudo pacman -Syu
 ```
