@@ -16,13 +16,13 @@ Here is how you can do it:
 
 If you're currently on Windows:
 
-1. If you downloaded the iso via SourceForge at the right of each file there is an exclamation point that contains both a SHA1 and a MD5.
+1. If you downloaded the iso via SourceForge at the right of each file there is an exclamation point that contains both a SHA1 and a SHA256.
 2. Open CMD or PowerShell as Administrator and navigate to the path where the ISO is stored.
-3. Type the following command: certUtil -hashfile full_iso_name.iso MD5
+3. Type the following command: certUtil -hashfile full_iso_name.iso SHA256
 
 e.g:
 ```powershell
-certUtil -hashfile cachyos-kde-linux-230813.iso MD5
+certUtil -hashfile cachyos-kde-linux-230813.iso SHA256
 ```
 
 4. Compare certUtil hash with SourceForge file information, if they both match then you are ready to proceed.
@@ -30,14 +30,14 @@ certUtil -hashfile cachyos-kde-linux-230813.iso MD5
 Verification from any Linux distribution:
 
 1. Open a terminal and navigate to the path where the ISO is stored
-2. Type the following command: `md5sum full_iso_name.iso`
+2. Type the following command: `sha256sum full_iso_name.iso`
 
 e.g:
 ```sh
-md5sum cachyos-kde-linux-230319.iso
+sha256sum cachyos-kde-linux-230319.iso
 ```
 
-3. Compare if the SourceForge MD5 hash matches with the md5sum
+3. Compare if the SourceForge SHA256 hash matches with the SHA256
 
 Verify ISO Image Authenticity
 -----------------------------
