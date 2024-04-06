@@ -69,17 +69,13 @@ export default defineConfig({
             },
             {
               label: 'Downloading CachyOS',
-              link: 'download/download',
+              link: 'cachyos_basic/download',
             },
           ],
         },
         {
           label: 'Installation',
           items: [
-            {
-              label: 'System Requirements',
-              link: 'installation/system_requirements',
-            },
             {
               label: 'Installation Prepare',
               link: 'installation/installation_prepare',
