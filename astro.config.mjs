@@ -89,6 +89,10 @@ export default defineConfig({
               link: 'installation/filesystem',
             },
             {
+              label: 'Screenshots',
+              link: 'installation/screenshots',
+            },
+            {
               label: 'Desktop Environments',
               link: 'installation/desktop_environments',
             },
