@@ -1,3 +1,8 @@
+---
+title: GUI Installer Changelogs
+description: Changelogs of Calamares and the GUI Live ISO
+---
+
 24.04
 ----
 
