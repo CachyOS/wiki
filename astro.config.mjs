@@ -61,147 +61,193 @@ export default defineConfig({
       locales,
       sidebar: [
         {
-          label: 'Start with CachyOS',
-          translations: {
-            ru: 'Начните с CachyOS',
-            de: 'Starte mit CachyOS',
-          },
+          label: 'Getting Started',
           items: [
             {
-              label: 'What is CachyOS?',
-              translations: {
-                ru: 'Что такое CachyOS?',
-                de: 'Was ist das CachyOS?',
-              },
-              link: 'cachyos_basic/cachyos_description',
+              label: 'Why CachyOS?',
+              link: 'cachyos_basic/why_cachyos',
             },
             {
-              label: 'How to download CachyOS?',
-              translations: {
-                ru: 'Как скачать CachyOS?',
-                de: 'Wie lädt man CachyOS herunter?',
-              },
+              label: 'Downloading CachyOS',
               link: 'download/download',
             },
-            {
-              label: 'How to install CachyOS?',
-              translations: {
-                ru: 'Как установить CachyOS?',
-                de: 'Wie installiert man CachyOS?',
-              },
-              link: 'how_to_install/install-cachyos',
-            },
-            {
-              label: 'How to install CachyOS with Secure Boot?',
-              translations: {
-                ru: 'Как установить CachyOS с Secure Boot?',
-                de: 'Wie installiert man CachyOS mit Secure Boot?',
-              },
-              link: 'how_to_install/install-cachyos-secure-boot',
-            },
-            {
-              label: 'CachyOS-NVIDIA Modules Installation',
-              translations: {
-                ru: 'Установка модуля CachyOS-NVIDIA',
-                de: 'Installation der CachyOS-NVIDIA-Module',
-              },
-              link: 'how_to_install/cachyos-nvidia-modules',
-            },
-            {
-              label: 'Post-install steps',
-              translations: {
-                ru: 'Действия после установки',
-                de: 'Post-Installationsschritte',
-              },
-              link: 'first_steps/first-steps',
-            },
-            {
-              label: 'Support',
-              translations: {
-                ru: 'Поддержка',
-                de: 'Support',
-              },
-              link: 'support/support_community',
-            },
           ],
         },
         {
-          label: 'Notebook devices',
-          translations: {
-            ru: 'Устройства для ноутбуков',
-            de: 'Notebook-Geräte',
-          },
+          label: 'Installation',
           items: [
             {
-              label: 'NVIDIA notebook',
-              translations: {
-                ru: 'Ноутбук NVIDIA',
-                de: 'NVIDIA-Notebook',
-              },
-              link: 'notebooks',
+              label: 'System Requirements',
+              link: 'installation/system_requirements',
+            },
+            {
+              label: 'Installation Prepare',
+              link: 'installation/installation_prepare',
+            },
+            {
+              label: 'Bootloader',
+              link: 'installation/bootloader',
+            },
+            {
+              label: 'Filesystem',
+              link: 'installation/filesystem',
+            },
+            {
+              label: 'Desktop Environments',
+              link: 'installation/desktop_environments',
+            },
+            {
+              label: 'Installation on Root',
+              link: 'installation/installation_on_root',
+            },
+            {
+              label: 'Installation Dual Boot',
+              link: 'installation/installation_dualboot',
+            },
+            {
+              label: 'Installation on Root with Secure Boot',
+              link: 'installation/installation_secureboot',
+            },
+            {
+              label: 'Updating CachyOS',
+              link: 'installation/updating_cachyos.md',
             },
           ],
         },
         {
-          label: 'General Information',
-          translations: {
-            ru: 'Основная информация',
-            de: 'Allgemeine Informationen',
-          },
-          autogenerate: {
-            directory: 'general_info',
-          },
+          label: 'Configuration',
+          items: [
+            {
+              label: 'Post Install Setup',
+              link: 'configuration/post_install_setup',
+            },
+            {
+              label: 'Dual GPU Laptops (NVIDIA + iGPU)',
+              link: 'configuration/dual_gpu',
+            },
+            {
+              label: 'Modules Handling (NVIDIA/ZFS)',
+              link: 'configuration/modules',
+            },
+            {
+              label: 'General System Tweaks',
+              link: 'configuration/general_system_tweaks',
+            },
+            {
+              label: 'Kernel Manager',
+              link: 'configuration/kernel_manager.mdx',
+            },
+            {
+              label: 'Shell (Bash, zsh, fish)',
+              link: 'configuration/shell',
+            },
+            {
+              label: 'KDE Plasma',
+              link: 'configuration/kde_plasma',
+            },
+            {
+              label: 'GNOME',
+              link: 'configuration/gnome',
+            },
+            {
+              label: 'Hyprland',
+              link: 'configuration/hyprland',
+            },
+            {
+              label: 'i3',
+              link: 'configuration/i3',
+            },
+          ],
         },
         {
-          label: 'CachyOS repositories',
-          translations: {
-            ru: 'Репозитории CachyOS',
-            de: 'CachyOS-Repositories',
-          },
+          label: 'CachyOS Repositories',
           items: [
             {
               label: 'What are the CachyOS repositories?',
-              translations: {
-                ru: 'Что такое репозитории CachyOS?',
-                de: 'Was sind die CachyOS-Repositorien?',
-              },
-              link: 'cachyos_repositories/what_is_the_cachyos_repo',
+              link: 'cachyos_repositories/what_are_the_cachyos_repo',
             },
             {
               label: 'How to add CachyOS repositories?',
-              translations: {
-                ru: 'Как добавить репозитории CachyOS?',
-                de: 'Wie kann man CachyOS-Repositorien hinzufügen?',
-              },
               link: 'cachyos_repositories/how_to_add_cachyos_repo',
             },
             {
-              label: 'Why CachyOS repositories?',
-              translations: {
-                ru: 'Почему репозитории CachyOS?',
-                de: 'Warum CachyOS-Repositorien?',
-              },
-              link: 'cachyos_repositories/why_cachyos_repo',
-            },
-            {
-              label: 'PGO & BOLT optimized packages',
-              translations: {
-                ru: 'Пакеты, оптимизированные PGO & BOLT',
-                de: 'PGO & BOLT optimierte Pakete',
-              },
-              link: 'cachyos_repositories/pgo_bolt_packages',
+              label: 'PGO, BOLT and other Optimization',
+              link: 'cachyos_repositories/other_optimization',
             },
           ],
         },
         {
-          label: 'Changelog',
-          translations: {
-            ru: 'Журнал изменений',
-            de: 'Änderungsliste',
-          },
-          autogenerate: {
-            directory: 'changelog',
-          },
+          label: 'Kernel',
+          items: [
+            {
+              label: 'What are the CachyOS repositories?',
+              link: 'kernel/kernel',
+            },
+          ],
+        },
+        {
+          label: 'Support',
+          items: [
+            {
+              label: 'Troubleshooting',
+              link: 'support/troubleshooting',
+            },
+            {
+              label: 'Getting Help',
+              link: 'support/getting_help',
+            },
+            {
+              label: 'Submitting Bugs',
+              link: 'support/submitting_bugs',
+            },
+            {
+              label: 'Submitting Package Requests',
+              link: 'support/submitting_package_requests',
+            },
+          ],
+        },
+        {
+          label: 'Changelogs',
+          items: [
+            {
+              label: 'GUI Installer and ISO',
+              link: 'changelogs/gui_installer',
+            },
+            {
+              label: 'CLI Installer',
+              link: 'changelogs/cli_installer',
+            },
+
+          ],
+        },
+        {
+          label: 'Policy',
+          items: [
+            {
+              label: 'Code of Conduct',
+              link: 'policy/code_of_conduct',
+            },
+            {
+              label: 'Terms of Use',
+              link: 'policy/terms_of_use',
+            },
+            {
+              label: 'Privacy Policy',
+              link: 'policy/privacy_policy',
+            },
+            {
+              label: 'Repository Policy',
+              link: 'policy/privacy_policy',
+            },
+            {
+              label: 'Social',
+              link: 'policy/social',
+            },
+            {
+              label: 'Donation',
+              link: 'policy/donation',
+            },
+          ],
         },
       ],
     }),
