@@ -1,11 +1,6 @@
 ---
-title: Downloads Information
-description: Here, you can access the latest ISO images for CachyOS.
-published: 1
-date: 2023-04-02T22:31:37.934Z
-tags: dowloading, download, install, installation, installing, iso
-editor: markdown
-dateCreated: 2021-07-04T01:43:25.246Z
+title: Downloads and Validation
+description: Download and Validation of CachyOS ISO.
 ---
 
 CachyOS can be installed using two types of installations: a GUI Installer and a CLI Installer.
