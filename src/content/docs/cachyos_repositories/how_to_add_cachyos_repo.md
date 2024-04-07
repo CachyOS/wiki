@@ -19,10 +19,8 @@ Run the following commands:
 1. Get archive with the script
 
 ```sh
-wget https://mirror.cachyos.org/cachyos-repo.tar.xz
+curl https://mirror.cachyos.org/cachyos-repo.tar.xz -o cachyos-repo.tar.xz
 ```
-> If you don't have `wget`, install it with `sudo pacman -S wget`
-
 2. Extract and enter into the archive
 ```sh
 tar xvf cachyos-repo.tar.xz && cd cachyos-repo
