@@ -13,6 +13,11 @@ We've made it easy for you! Simply run the following commands to use our helper 
 Run the following commands:
 1. Get archive with the script
 
+*method 1 (curl)*
+```sh
+curl https://mirror.cachyos.org/cachyos-repo.tar.xz -o cachyos-repo.tar.xz
+```
+*method 2 (wget)*
 ```sh
 wget https://mirror.cachyos.org/cachyos-repo.tar.xz
 ```
