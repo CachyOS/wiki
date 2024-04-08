@@ -110,7 +110,7 @@ export default defineConfig({
             },
             {
               label: 'Updating CachyOS',
-              link: 'installation/updating_cachyos.md',
+              link: 'installation/updating_cachyos',
             },
           ],
         },
@@ -135,7 +135,7 @@ export default defineConfig({
             },
             {
               label: 'Kernel Manager',
-              link: 'configuration/kernel_manager.mdx',
+              link: 'configuration/kernel-manager',
             },
             {
               label: 'Shell (Bash, zsh, fish)',
@@ -237,7 +237,7 @@ export default defineConfig({
             },
             {
               label: 'Repository Policy',
-              link: 'policy/privacy_policy',
+              link: 'policy/repository_policy',
             },
             {
               label: 'Social',
