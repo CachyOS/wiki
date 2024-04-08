@@ -42,6 +42,13 @@ export default defineConfig({
         //reddit: 'https://www.reddit.com/r/cachyos',
         //patreon: 'https://www.patreon.com/CachyOS'
       },
+      expressiveCode: {
+        shiki: {
+          langs: [
+            'ini'
+          ],
+        },
+      },
       head: [
         {
           tag: 'meta',
