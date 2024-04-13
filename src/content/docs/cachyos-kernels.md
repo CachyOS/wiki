@@ -1,5 +1,5 @@
 ---
-title: Which Kernel does CachyOS provide and maintain
+title: Which kernels do CachyOS provide and maintain?
 description: CachyOS Kernels, improvements, ...
 published: 1
 date: 2023-07-19T18:57:48.591Z

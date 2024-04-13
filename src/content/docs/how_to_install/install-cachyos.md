@@ -9,7 +9,7 @@ dateCreated: 2022-11-17T13:07:22.546Z
 ---
 
 :::caution[WARNING]
-Please, check Download information section before proceding.
+Please check the Download information section before proceding.
 :::
 
 Installing CachyOS
@@ -20,7 +20,7 @@ CachyOS is a powerful and feature-rich operating system, but it can be intimidat
 System Requirements
 -------------------
 
-Before you begin the installation, you need to make sure that your computer meets the following minimum system requirements:
+Before you begin the installation, please ensure that your computer meets the following minimum system requirements:
 
 *   3 GB of memory
 *   30 GB of hard disk space
