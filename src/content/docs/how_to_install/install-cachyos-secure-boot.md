@@ -8,7 +8,7 @@ editor: markdown
 dateCreated: 2023-06-30T12:24:08.999Z
 ---
 
-# How to dual boot CachyOS and Windows with Secure Boot ON ?
+# How to dual boot CachyOS and Windows with Secure Boot on
 
 We are going to use **rEFInd** boot manager for this.
 
