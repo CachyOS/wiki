@@ -127,7 +127,7 @@ Include = /etc/pacman.d/cachyos-mirrorlist
 Finally, update your system with the CachyOS packages:
 
 ```bash
-sudo pacman -Syu
+sudo pacman -Syyuu
 ```
 Enjoy your improved system speed with optimized CachyOS packages! 🎉
 
@@ -182,10 +182,13 @@ sudo ./cachyos-repo.sh --remove
 sudo mv /etc/pacman.conf.bak /etc/pacman.conf
 ```
 
+If you don't have a backup of the original /etc/pacman.conf file, just edit the
+existing one by deleting all lines with the CachyOS repositories you added
+earlier.
+
 3.  Switch to default Arch Linux packages with this command:
 
 ```sh
 sudo pacman -S core/pacman
-pacman -Qqn | sudo pacman -S -
-sudo pacman -Syu
+sudo pacman -Syyuu
 ```
