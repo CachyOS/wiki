@@ -88,8 +88,8 @@ export default defineConfig({
               link: 'installation/installation_prepare',
             },
             {
-              label: 'Bootloader',
-              link: 'installation/bootloader',
+              label: 'Boot managers',
+              link: 'installation/bootmanagers',
             },
             {
               label: 'Filesystem',
