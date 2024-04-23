@@ -93,12 +93,12 @@ ZFS should only be used by advanced users who want the advanced features of ZFS 
 F2FS or the Flash-Friendly File System, is a flash file system created and developed by Samsung originally for the linux kernel. F2FS was created to cater specifically for the NAND flash used in modern day storage.
 ### Pros
 - Designed with flash friendlyness in mind.
-- Transparent compression used to reduce disk writes (Saved storage not usable by user)
+- Transparent compression used to reduce disk writes (Space savings not currently usable by user)
 - Faster than other filesystems like Ext4.
 - Better wear leveling further prolonging the life of NAND flash.
 ### Cons
 - Cannot shrink.
-- Space savings from compression cannot be used by the user.
+- Space savings from compression cannot currently be used by the user. This may be added in the future.
 - Relatively weak fsck. (filesystem check)
 - Downgrading to a kernel older than the version that created the filesystem may cause issues. 
 
