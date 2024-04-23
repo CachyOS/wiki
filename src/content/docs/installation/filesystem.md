@@ -39,7 +39,7 @@ BTRFS is a modern copy-on-write(COW) filesystem created in 2007 and declared sta
 Btrfs's userspace utility package is 'btrfs-progs'
 
 ### Subvolume Layout
-CachyOS provides a subvolume layout OOTB to allow easy snapshot functionality.
+CachyOS provides a subvolume layout out of the box to allow easy snapshot functionality.
 - Subvol @ = /
 - Subvol @home = /home
 - Subvol @root = /root
