@@ -5,38 +5,10 @@ description: Description and recommendations for the currently offered boot mana
 
 # CachyOS Boot managers
 
-To offer the best experience across a range of devices CachyOS currently offers the following boot managers: Grub, systemd-boot and rEFInd.
+To offer the best experience across a range of devices CachyOS currently offers the following boot managers: systemd-boot, rEFInd and Grub.
 This wiki article will describe the featureset of each boot manager and also includes our recommendation for when to choose them.
 
 ### Each boot manager support all our currently available filesystems choices and full root encryption.
-
-## Grub
-Grub is the oldest of the available boot managers and consequently the only one that supports BIOS booting. It has a very large featureset, works on almost every machine and is the most commonly used Linux boot manager.
-The following is a list of its main pros and cons.
-### Pros:
-- Able to read boot images from almost all available linux filesystems.
-- Widely used and very easy to find information online.
-- Able to decrypt encrypted boot partitions.
-- The only boot*loader* offered allowing it to boot BIOS machines.
-- Looks dated. However has great theme support to compensate.
-### Cons:
-- Bloated due to needing to support much older hardware and needing lots of filesystem drivers.
-- Slightly slower than other boot managers due to aforementioned bloat.
-- Complicated config that needs to be regenerated every time a kernel is updated. (However this is done automatically.)
-
-### Configuration
-The main command line tool for grub is grub-mkconfig.
-!!! INSERT GRUB CONFIG LOCATION !!!
-
-### Partitioning layout:
-#### BIOS:
-!!! INSERT BIOS LAYOUT !!!
-#### UEFI:
-- Minimum 50MB EFI partition (/boot/efi)
-- Minimum 6.5GB user selected root filesystem (/)
-
-### Recommendation:
-Grub is the only available boot manager if your machine only supports BIOS booting. It is also the only boot manager that supports boot partition encryption (Different from disk encryption). If you do not fit those criteria alternative boot managers are recommended.
 
 
 ## systemd-boot
@@ -67,7 +39,7 @@ Systemd-boot is the recommended boot manager for CachyOS. Choose this one if you
 
 
 ## rEFInd
-A fork of rEFIt, rEFInd was primarly made to make it easier for MacOS users to multi-boot. However rEFInd has evolved into being hardware agnostic making it a great choice for multi-booting on any system. The main draw of rEFInd is its ability to scan all storage devices at boot and correspondly display entries for each OS/Kernel found.
+A fork of rEFIt, rEFInd was primarly made to make it easier for MacOS users to multi-boot. However rEFInd has evolved into being hardware agnostic making it a great choice for multi-booting on any system. The main draw of rEFInd is its ability to scan all storage devices at boot and correspondingly display entries for each OS/Kernel found.
 
 ### Pros:
 - Autodetection of all operating systems and kernels on storage devices. 
@@ -93,6 +65,36 @@ refind_linux.conf next to kernels to provide rEFInd with a list of kernel parame
 
 ### Recommendation:
 rEFInd is the recommended boot manager for booting with multiple operating systems.
+
+
+## Grub
+Grub is the oldest of the available boot managers and consequently the only one that supports BIOS booting. It has a very large featureset, works on almost every machine and is the most commonly used Linux boot manager.
+The following is a list of its main pros and cons.
+### Pros:
+- Able to read boot images from almost all available linux filesystems.
+- Widely used and very easy to find information online.
+- Able to decrypt encrypted boot partitions.
+- The only boot*loader* offered allowing it to boot BIOS machines.
+- Looks dated. However has great theme support to compensate.
+### Cons:
+- Bloated due to needing to support much older hardware and needing lots of filesystem drivers.
+- Slightly slower than other boot managers due to aforementioned bloat.
+- Complicated config that needs to be regenerated every time a kernel is updated. (However this is done automatically.)
+
+### Configuration
+The main command line tool for grub is grub-mkconfig.
+!!! INSERT GRUB CONFIG LOCATION !!!
+
+### Partitioning layout:
+#### BIOS:
+!!! INSERT BIOS LAYOUT !!!
+#### UEFI:
+- Minimum 50MB EFI partition (/boot/efi)
+- Minimum 6.5GB user selected root filesystem (/)
+
+### Recommendation:
+Grub is the only available boot manager if your machine only supports BIOS booting. It is also the only boot manager that supports boot partition encryption (Different from disk encryption). If you do not fit those criteria alternative boot managers are recommended.
+
 
 ## TL:DR
 Choose Grub if your machine is BIOS only, pick rEFInd if you plan on having multiple operating systems on your machine (Especially Windows), otherwise go with systemd-boot.
