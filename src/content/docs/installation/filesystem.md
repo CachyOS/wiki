@@ -5,7 +5,7 @@ description: Description and recommendations for the available filesystems. (ext
 
 # Filesystems
 
-CachyOS offers 5 filesystems to allow the user to choose what best fits their needs. The following will go over advantages, disadvantages and recommendations for each filesystem.
+CachyOS offers 5 filesystems to allow the user to choose what best fits their needs. The following will go over advantages, disadvantages and recommendations for each filesystem. Each filesystem comes with its requirements/utilities preinstalled on CachyOS.
 
 ## XFS
 XFS is a journaling filesystem created and developed by Silicon Graphics, Inc. It was created with 1993, ported to linux in 2001, and is now widely supported by most linux distributions.
