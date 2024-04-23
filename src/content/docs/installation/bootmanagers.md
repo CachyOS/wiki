@@ -26,9 +26,9 @@ Part of systemd family, systemd-boot was created to be as simple as possible, th
  - Inability to find boot images on partitions other than its own without manual intervention.
 
  ### Configuration
- The main command line tool for sd-boot is sdboot-manage
- !!! INSERT SD BOOT MANAGE CONFIG !!!
- !!! INSERT SYSTEMD BOOT ENTRIES AND CONFIG FILE LOCATION !!!
+The main command line tool for sd-boot is sdboot-manage
+The configuration file for changing kernel parameters and other options is located at /etc/sdboot-manage.conf
+Boot entries are located in /boot/loader/entries/
 
 ### Partitioning layout:
 - Minimum 1GB (2GB recommended) FAT32 EFI boot partition (/boot)
@@ -55,8 +55,8 @@ A fork of rEFIt, rEFInd was primarly made to make it easier for MacOS users to m
 
 ### Configuration
 The main command line tool for rEFInd is refind-install.
-refind_linux.conf next to kernels to provide rEFInd with a list of kernel parameters.
-!!! INSERT MAIN REFIND CONFIG LOCATION !!!
+Kernel parameters are provided by a file called refind_linux.conf which is located next to the kernels. (Usually /boot)
+rEFInd's primary configuration file is normally located at /boot/efi/refind/refind.conf
 
 ### Partitioning Layout:
 - Minimum 50MB FAT32 EFI partition (/boot/efi)
@@ -83,11 +83,11 @@ The following is a list of its main pros and cons.
 
 ### Configuration
 The main command line tool for grub is grub-mkconfig.
-!!! INSERT GRUB CONFIG LOCATION !!!
+Grub's main configuration file is normally located at /boot/grub/grub.cfg
 
 ### Partitioning layout:
 #### BIOS:
-!!! INSERT BIOS LAYOUT !!!
+- Minimum 6.5GB user selected root filesystem (/)
 #### UEFI:
 - Minimum 50MB EFI partition (/boot/efi)
 - Minimum 6.5GB user selected root filesystem (/)
