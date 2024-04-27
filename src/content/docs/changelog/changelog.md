@@ -418,7 +418,7 @@ The most exciting changes are that we use now for the online install pacstrap wh
 
 Since Discord restrict the length of the messages the full announcement can be found here:
 
-https://forum.cachyos.org/d/34-cachyos-gui-installer-stable-release
+https://discuss.cachyos.org/t/cachyos-gui-installer-changelog/
 
 Download can be found here:
 https://mirror.cachyos.org/ISO/kde/220522/
