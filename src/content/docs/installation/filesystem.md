@@ -74,6 +74,7 @@ ZFS is an advanced filesystem originally developed by Sun Microsystems in 2005. 
 ### Pros
 - Pooled storage (zpool)
 - Snapshots using COW
+- Compression
 - Raid-Z support
 - ARC cache allows insanely fast read times on commonly accessed files.
 ### Cons
@@ -82,7 +83,7 @@ ZFS is an advanced filesystem originally developed by Sun Microsystems in 2005. 
 - Not included in the linux kernel therefore dependent on a third party kernel module (OpenZFS)
 
 ### Required tools
-'zfs-dkms' or the precompiled module for your specific kernel is REQUIRED.
+'ZFS-Moduke' CachyOS provides a precompiled zfs module for each kernel version.
 'zfs-utils' for the userspace utilities.
 
 ### Recommendation:
@@ -108,6 +109,19 @@ The main utility for f2fs is 'f2fs-tools'
 ### Recommendation:
 F2FS is only recommended for users who want to maximize the life of their NAND flash.
 
+## BcacheFS
+Bcachefs is an advanced new filesystem for Linux, with an emphasis on reliability and robustness and the complete set of features one would expect from a modern filesystem.
+ATTENTION: Bcachefs is still considered as experimental and can have issues.
+
+### Pros
+- Copy on write (CoW) - like btrfs or zfs
+- Compression
+- Caching, Data Placement
+- Replication
+- Scaleable
+### Cons
+- Experimental
+- Setup can be complicated
 
 ## TL:DR
 Use xfs or ext4 by default, BTRFS if snapshots and compression is something you want and ZFS if the ARC cache or zpools are wanted. 
