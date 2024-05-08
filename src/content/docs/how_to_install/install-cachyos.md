@@ -105,8 +105,9 @@ Workarounds
 sudo pacman-key --init; sudo pacman-key --populate; sudo pacman-key --lsign cachyos
 ```
 
-### Calamares "freezes"
+### KDE Plasma Wayland Taskbar not working
 
-There is since mesa 23.x an issue, that the main GUI thread of calamares has a hardlock on **VMs**.
-The installation itself still gets forward and should install fine.
-Please check the log to see if it is completly installed.
+With Plasma 6 and a fresh Installation plasma seems to have issues when clicking on the taskbar, for example on the networkmanager icon.
+This can be simply resolved when logging into X11 instead of Plasma Session, clicking on the networkmanager button and then go back to Wayland
+
+This is an upstream bug and should be solved in the future.
