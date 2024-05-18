@@ -111,3 +111,7 @@ With Plasma 6 and a fresh Installation plasma seems to have issues when clicking
 This can be simply resolved when logging into X11 instead of Plasma Session, clicking on the networkmanager button and then go back to Wayland
 
 This is an upstream bug and should be solved in the future.
+
+### BCacheFS Partioning is not working
+
+It seems that BcacheFS has sometimes problems to format the disk. There is a workaround for that issue to simply format the targeted drive first with Ext4 and then let the installer does it things.
