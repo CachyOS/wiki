@@ -51,19 +51,19 @@ To verify the authenticity of the ISO file to be sure that the actual one has be
    ```shell
    gpg --verify full_iso_name.iso.sig full_iso_name.iso
    ```
+
    If you get a **Good signature** output, the ISO file is genuine:
-   ```
+  ```
   gpg: Signature made Mo 01 Apr 2024 14:13:30 CEST
   gpg:                using RSA key 882DCFE48E2051D48E2562ABF3B607488DB35A47
   gpg: Good signature from "CachyOS <admin@cachyos.org>" [unknown]
   gpg: WARNING: This key is not certified with a trusted signature!
   gpg:          There is no indication that the signature belongs to the owner.
   Primary key fingerprint: 882D CFE4 8E20 51D4 8E25  62AB F3B6 0748 8DB3 5A47
+  ```
 
-   ```
 :::danger
 If the output does not return **Good signature** string or the key ID does not match, don't use the ISO image and check if you downloaded the image from a legitimate Athena OS source. It could suggest that your image has been tampered.
-
 :::
 
 Download ISOs
