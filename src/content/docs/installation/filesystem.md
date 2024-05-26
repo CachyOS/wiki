@@ -8,7 +8,7 @@ description: Description and recommendations for the available filesystems. (ext
 CachyOS offers 5 filesystems to allow the user to choose what best fits their needs. The following will go over advantages, disadvantages and recommendations for each filesystem. Each filesystem comes with its requirements/utilities preinstalled on CachyOS.
 
 ## XFS
-XFS is a journaling filesystem created and developed by Silicon Graphics, Inc. It was created with 1993, ported to linux in 2001, and is now widely supported by most linux distributions.
+XFS is a journaling filesystem created and developed by Silicon Graphics, Inc. It was created in 1993, ported to linux in 2001, and is now widely supported by most linux distributions.
 ### Pros
 - Fast, xfs was originally designed with speed and extreme scalability in mind.
 - Reliable, xfs makes use of several technologies to prevent data corruption.
@@ -34,7 +34,7 @@ BTRFS is a modern copy-on-write(COW) filesystem created in 2007 and declared sta
 ### Cons
 - Sometimes requires defragmentation or balancing.
 - Worse on rotational drives due to aforementioned fragmentation.
-- 
+-
 ### Userspace utility
 Btrfs's userspace utility package is 'btrfs-progs'
 
@@ -83,7 +83,7 @@ ZFS is an advanced filesystem originally developed by Sun Microsystems in 2005. 
 - Not included in the linux kernel therefore dependent on a third party kernel module (OpenZFS)
 
 ### Required tools
-'ZFS-Moduke' CachyOS provides a precompiled zfs module for each kernel version.
+'ZFS-Module' CachyOS provides a precompiled zfs module for each kernel version.
 'zfs-utils' for the userspace utilities.
 
 ### Recommendation:
@@ -101,7 +101,7 @@ F2FS or the Flash-Friendly File System, is a flash file system created and devel
 - Cannot shrink.
 - Space savings from compression cannot currently be used by the user. This may be added in the future.
 - Relatively weak fsck. (filesystem check)
-- Downgrading to a kernel older than the version that created the filesystem may cause issues. 
+- Downgrading to a kernel older than the version that created the filesystem may cause issues.
 
 ### Userspace utilities
 The main utility for f2fs is 'f2fs-tools'
@@ -124,5 +124,5 @@ ATTENTION: Bcachefs is still considered as experimental and can have issues.
 - Setup can be complicated
 
 ## TL:DR
-Use xfs or ext4 by default, BTRFS if snapshots and compression is something you want and ZFS if the ARC cache or zpools are wanted. 
+Use xfs or ext4 by default, BTRFS if snapshots and compression is something you want and ZFS if the ARC cache or zpools are wanted.
 
