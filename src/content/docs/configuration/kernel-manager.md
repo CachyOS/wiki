@@ -5,13 +5,11 @@ description: The CachyOS Kernel Manager is a powerful tool for managing kernels,
 
 import ImageComponent from '~/components/image-component.astro';
 
-CachyOS Kernel Manager
-======================
+## CachyOS Kernel Manager
 
 The CachyOS Kernel Manager makes it simple to install and manage kernels from the repository. It also provides a comprehensive overview of all installed kernels.
 
-Installing a Kernel from the Repository
----------------------------------------
+# Installing a Kernel from the Repository
 
 To install a kernel, simply launch the CachyOS Kernel Manager application and choose the desired kernel from a list of available options.
 Then, simply click the "execute" button to complete the installation.
@@ -19,8 +17,7 @@ Then, simply click the "execute" button to complete the installation.
 <br />
 <ImageComponent imgsrc={import('~/assets/images/cachyos-km1.png')} />
 
-Configuring and Building a Kernel
----------------------------------
+# Configuring and Building a Kernel
 
 The CachyOS Kernel Manager also makes it easy to configure and build custom kernels. To get started, simply open the application and click the "configure" button. Then, you can adjust various settings, such as the scheduler, performance governor, tick rate, and more. Once you have made your desired changes, simply click the "execute" button to begin building your custom kernel.
 
