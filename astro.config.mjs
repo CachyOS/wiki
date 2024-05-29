@@ -187,7 +187,7 @@ export default defineConfig({
           label: 'Kernel',
           items: [
             {
-              label: 'What are the CachyOS repositories?',
+              label: 'CachyOS Kernel Features',
               link: 'kernel/kernel',
             },
           ],
