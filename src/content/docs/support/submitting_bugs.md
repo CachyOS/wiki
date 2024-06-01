@@ -23,3 +23,7 @@ You simply run:
 # Report it at GitHub
 
 https://github.com/CachyOS/distribution
+
+# Report to Forum
+
+https://discuss.cachyos.org/c/feedback/bugreports/10
