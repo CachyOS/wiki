@@ -242,8 +242,8 @@ export default defineConfig({
               link: 'policy/code_of_conduct',
             },
             {
-              label: 'Terms of Use',
-              link: 'policy/terms_of_use',
+              label: 'Terms of Service',
+              link: 'policy/terms_of_service',
             },
             {
               label: 'Privacy Policy',
