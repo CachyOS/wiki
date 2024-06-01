@@ -1,6 +1,6 @@
 ---
 title: Filesystems
-description: Description and recommendations for the available filesystems. (ext4, f2fs, btrfs, xfs, zfs)
+description: Description and recommendations for the available filesystems. (ext4, f2fs, btrfs, xfs, zfs, bcachefs)
 ---
 
 # Filesystems
@@ -70,7 +70,7 @@ Ext4 is recommended for users who want the simplest and most commonly used files
 
 
 ## ZFS
-ZFS is an advanced filesystem originally developed by Sun Microsystems in 2005. ZFS has many features however it licensed under CDDL which means it can not be included inside the linux kernel and requires a seperate module installed.
+ZFS is an advanced filesystem originally developed by Sun Microsystems in 2005. ZFS has many features however it licensed under CDDL which means it can not be included inside the linux kernel and requires a separate module installed.
 ### Pros
 - Pooled storage (zpool)
 - Snapshots using COW
