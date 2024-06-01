@@ -112,6 +112,10 @@ export default defineConfig({
               link: 'installation/installation_dualboot',
             },
             {
+              label: 'Installation T2 MacBook',
+              link: 'installation/installation_t2macbook',
+            },
+            {
               label: 'Installation on Root with Secure Boot',
               link: 'installation/installation_secureboot',
             },
