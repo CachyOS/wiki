@@ -207,6 +207,10 @@ export default defineConfig({
           label: 'Support',
           items: [
             {
+              label: 'FAQ',
+              link: 'support/faq',
+            },
+            {
               label: 'Troubleshooting',
               link: 'support/troubleshooting',
             },
