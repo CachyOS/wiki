@@ -15,7 +15,11 @@ The following CPU's are affected:
 *   AMD: Zen 1, Zen 1+, Zen 2
 *   Intel: 6th to 8th Generation, Skylake, Caby Lake, Coffee Lake
 
-Check which mitigation's your CPU is affected by using: `grep . /sys/devices/system/cpu/vulnerabilities/*`
+Check which mitigation's your CPU is affected by using:
+
+```sh
+grep . /sys/devices/system/cpu/vulnerabilities/*
+```
 
 ### Disabling mitigation's
 
@@ -92,7 +96,9 @@ To use the P-State EPP, there are two CPU frequency scaling governors available:
 
 To set a preference, run the following command with the desired preference:
 
-`echo power | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference`
+```sh
+echo power | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
+```
 
 Available preferences: `performance`, `power`, `balance_power`, `balance_performance`
 
@@ -130,7 +136,9 @@ In some cases, split lock mitigate can slow down performance in some application
 
 To make the change persistent, add the following line to `/etc/sysctl.d/99-splitlock.conf`:
 
-`kernel.split_lock_mitigate=0`
+```conf
+kernel.split_lock_mitigate=0
+```
 
 For more information on split lock, see:
 

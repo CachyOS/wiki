@@ -8,5 +8,5 @@ Users can requests AUR Package and these get automatically updated with our buil
 
 If users want to add a package, they can do at GitHub or in the Forum requests for it.
 
-GitHub: https://github.com/CachyOS/distribution/issues
-Forum: https://discuss.cachyos.org/c/feedback/repository/11
+- GitHub: https://github.com/CachyOS/distribution/issues
+- Forum: https://discuss.cachyos.org/c/feedback/repository/11

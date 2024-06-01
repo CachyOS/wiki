@@ -11,26 +11,26 @@ Here a list of the current costs per months:
 - Buildserver 127 € (Hetzner 7950X3D)
 - Webserver/mirror 17 €
 - Mailserver/mirror 17 €
-- Matrix Bridge 5 €
-- Forum Server (Netcup VPS) 7 Euro
+- Matrix Bridge 5 € (DigitalOcean VPS)
+- Forum Server (Netcup VPS) 7 €
 
 
-## Patreon
+### Patreon
 
 https://www.patreon.com/CachyOS
 
-## PayPal
+### PayPal
 
 https://paypal.me/pttrr
 
-## Ethereum
+### Ethereum
 
 0xc2dc77327F78A7B85Db3941Eb49e74F41E961649
 
-## BitCoin
+### BitCoin
 
 bc1qmwglfchlc335du6pcu6w64cexu7cck0mzhyw42
 
-## LiteCoin
+### LiteCoin
 
 LgGTwcEBcXqMgNT6XyyNWABMb7dZVtVg9w

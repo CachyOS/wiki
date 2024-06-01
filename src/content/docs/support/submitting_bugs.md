@@ -17,13 +17,12 @@ This tool will collect logs from:
 
 When the logs are collected, it will ask the user, if this should be uploaded to our paste services.
 
-You simply run:
-`sudo cachyos-bugreport.sh` in the terminal and then post the link with the bugs into the topic.
+Run the following command in the terminal, and post the link with the bugs into the topic:
+```sh
+sudo cachyos-bugreport.sh
+```
 
-# Report it at GitHub
+# Links for submitting report
 
-https://github.com/CachyOS/distribution
-
-# Report to Forum
-
-https://discuss.cachyos.org/c/feedback/bugreports/10
+- Github: https://github.com/CachyOS/distribution
+- Forum: https://discuss.cachyos.org/c/feedback/bugreports/10
