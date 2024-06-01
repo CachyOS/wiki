@@ -28,7 +28,7 @@ that manages how tasks (or processes) are executed on the system. It decides whi
 ensuring efficient use of system resources to allow multiple tasks to run simultaneously.
 
 By default CachyOS provides BORE Scheduler (Burst-Oriented Response Enhancer) in our default kernel.
-It provides better perfomance and interactivity according to our test. But we also provide other schedulers, like:
+It provides better performance and interactivity according to our test. But we also provide other schedulers, like:
 EEVDF, sched-ext (Framework to load userspace scheduler's), ECHO, and RT. And you can choose any you prefer the most via the kernel manager.
 
 ## Customizable Installation Process
