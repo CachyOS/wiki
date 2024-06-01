@@ -140,10 +140,6 @@ export default defineConfig({
               link: 'configuration/dual_gpu',
             },
             {
-              label: 'Modules Handling (NVIDIA/ZFS)',
-              link: 'configuration/modules',
-            },
-            {
               label: 'General System Tweaks',
               link: 'configuration/general_system_tweaks',
             },
@@ -196,6 +192,14 @@ export default defineConfig({
             {
               label: 'CachyOS Kernel Features',
               link: 'kernel/kernel',
+            },
+            {
+              label: 'sched-ext Tutorial',
+              link: 'kernel/sched-ext',
+            },
+            {
+              label: 'Modules Handling (NVIDIA/ZFS)',
+              link: 'configuration/modules',
             },
           ],
         },
