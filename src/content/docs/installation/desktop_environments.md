@@ -26,7 +26,7 @@ Please select only one Desktop Environment during the installation
 16. **Qtile** is a X11 window manager that is configured with the Python programming language.
 
 :::note
-User support is not longer provided for Hyprland.
+User support is no longer provided for Hyprland.
 :::
 
 Screenshots
