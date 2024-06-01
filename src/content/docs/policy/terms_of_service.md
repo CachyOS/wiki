@@ -6,7 +6,8 @@ title: Terms of Service
 
 ### 1.1. Definitions
 
-These Terms of Service govern the use of the CachyOS platform and associated services, including the forums, wiki, bug reporting tool, and other collaborative tools ("Services"). CachyOS ("we," "us," "our") operates the platform accessible at cachyos.org and related subdomains. Users ("you," "your") must accept these terms to use the Services.
+These Terms of Service govern the use of the CachyOS platform and associated services, including the forums, wiki, bug reporting tool, and other collaborative tools ("Services").
+CachyOS ("we," "us," "our") operates the platform accessible at cachyos.org and related subdomains. Users ("you," "your") must accept these terms to use the Services.
 
 ### 1.2. Use of the Services
 
@@ -14,13 +15,14 @@ Only natural persons of legal age and with full legal capacity are permitted to 
 
 ### 1.3. Access to Terms of Service
 
-The latest version of the Terms of Service can be accessed at any time on our website: cachyos.org/terms.
+The latest version of the Terms of Service can be accessed at any time on our website: https://cachyos.org/terms.
 
 ## 2. Registration, Conclusion of Contract, and Subject Matter
 
 ### 2.1. Requirements
 
-To use our Interactive Services (e.g., forums, package contributions), you must register via our online form, provide accurate contact information, and agree to these Terms of Service. Activation of your account signifies the conclusion of the contract. There is no entitlement to activation or participation.
+To use our Interactive Services (e.g., forums, package contributions), you must register via our online form, provide accurate contact information, and agree to these Terms of Service.
+Activation of your account signifies the conclusion of the contract. There is no entitlement to activation or participation.
 
 ### 2.2. Change of the Platform
 
@@ -68,7 +70,7 @@ By posting content, you grant us the rights needed to provide our Services. You 
 
 ### 5.2. Contribution Licenses
 
-Software contributions must be licensed under the projectâ€™s license or the GNU General Public License version 3.
+Software contributions must be licensed under the project's license or the GNU General Public License version 3.
 
 ### 5.3. Continuation of Rights
 
@@ -132,4 +134,4 @@ If any provision of these Terms of Service is found to be invalid, the remaining
 
 ### 10.3. Disputes
 
-The European Commission's online dispute resolution platform can be accessed at ec.europa.eu/consumers/odr. We are not obligated to participate in dispute resolution procedures before a consumer arbitration board.
+The European Commission's online dispute resolution platform can be accessed at https://ec.europa.eu/consumers/odr. We are not obligated to participate in dispute resolution procedures before a consumer arbitration board.
