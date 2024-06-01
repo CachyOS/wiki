@@ -25,6 +25,10 @@ Please select only one Desktop Environment during the installation
 15.  **Mate Desktop** is a traditional desktop environment forked from GNOME 2. It is characterized by its classic look and feel, with a simple and intuitive user interface. Mate provides an easy-to-use and highly customizable desktop experience for users who prefer a more classic look and feel.
 16. **Qtile** is a X11 window manager that is configured with the Python programming language.
 
+:::note
+User support is not longer provided for Hyprland.
+:::
+
 Screenshots
 -----------
 
