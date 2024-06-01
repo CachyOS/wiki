@@ -82,7 +82,7 @@ We may update our Privacy Policy from time to time. We will notify you of any ch
 ## 11. Contact Us
 
 If you have any questions or concerns about this Privacy Policy, please contact us at:
-Email: privacy@cachyos.org
+Email: admin@cachyos.org
 
 ---
 
