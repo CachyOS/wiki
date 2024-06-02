@@ -199,7 +199,7 @@ export default defineConfig({
             },
             {
               label: 'Modules Handling (NVIDIA/ZFS)',
-              link: 'configuration/modules',
+              link: 'kernel/modules',
             },
           ],
         },
