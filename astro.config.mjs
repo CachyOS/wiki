@@ -122,6 +122,10 @@ export default defineConfig({
               label: 'Installation on Root with Secure Boot',
               link: 'installation/installation_secureboot',
             },
+             {
+              label: 'Installation Handheld Edition',
+              link: 'installation/installation_handheld',
+            },
             {
               label: 'Updating CachyOS',
               link: 'installation/updating_cachyos',
