@@ -171,6 +171,10 @@ export default defineConfig({
               label: 'i3',
               link: 'configuration/i3',
             },
+            {
+              label: 'Qtile',
+              link: 'configuration/qtile',
+            },
           ],
         },
         {
