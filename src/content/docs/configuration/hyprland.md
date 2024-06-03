@@ -25,7 +25,11 @@ Most of the key combinations require the use of the mod key which in our case is
 
 ### Go to workspace (1-9)
 
-* SUPER + 1-9 (Number row, numpad does not count)
+* SUPER + 1-9 (Number row, number pad does not count)
+
+### Change focus to (Left,Right,Up,Down) 
+
+* SUPER + ArrowKeys
 
 ### Move between workspaces with the scroll wheel
 
@@ -40,11 +44,11 @@ Most of the key combinations require the use of the mod key which in our case is
 
 * SUPER + Shift + 1-9
 
-### Same as above but switch to said workspace
+### Same as above but also switch to said workspace
 
 * SUPER + CTRL + 1-9
 
-### Open rofi
+### Open rofi (Program Launcher)
 
 * CTRL + Space
   
