@@ -17,7 +17,7 @@ XFS is a journaling filesystem created and developed by Silicon Graphics, Inc. I
 - Cannot be shrunk.
 
 ### Userspace utility
-The package containing userspace tools to manage xfs filesystems is 'xfsprogs'.
+The package containing userspace tools to manage xfs filesystems is `xfsprogs`.
 
 ### Recommendation:
 XFS is the recommended filesystem for users who do not need advanced features and simply want a fast and reliable filesystem.
@@ -34,9 +34,8 @@ BTRFS is a modern copy-on-write(COW) filesystem created in 2007 and declared sta
 ### Cons
 - Sometimes requires defragmentation or balancing.
 - Worse on rotational drives due to aforementioned fragmentation.
--
 ### Userspace utility
-Btrfs's userspace utility package is 'btrfs-progs'
+Btrfs's userspace utility package is `btrfs-progs`
 
 ### Subvolume Layout
 CachyOS provides a subvolume layout out of the box to allow easy snapshot functionality.
@@ -63,7 +62,7 @@ Ext4 (fourth extended filesystem) is the most commonly used Linux filesystem. Ex
 - Lacks many of the advanced features other filesystems offer.
 
 ### Userspace utilities
-The package to manage ext4 is 'e2fsprogs'
+The package to manage ext4 is `e2fsprogs`
 
 ### Recommendation:
 Ext4 is recommended for users who want the simplest and most commonly used filesystem.
@@ -84,7 +83,7 @@ ZFS is an advanced filesystem originally developed by Sun Microsystems in 2005. 
 
 ### Required tools
 'ZFS-Module' CachyOS provides a precompiled zfs module for each kernel version.
-'zfs-utils' for the userspace utilities.
+`zfs-utils` for the userspace utilities.
 
 ### Recommendation:
 ZFS should only be used by advanced users who want the advanced features of ZFS such as pooled storage or the ARC cache.
@@ -104,14 +103,17 @@ F2FS or the Flash-Friendly File System, is a flash file system created and devel
 - Downgrading to a kernel older than the version that created the filesystem may cause issues.
 
 ### Userspace utilities
-The main utility for f2fs is 'f2fs-tools'
+The main utility for f2fs is `f2fs-tools`
 
 ### Recommendation:
 F2FS is only recommended for users who want to maximize the life of their NAND flash.
 
 ## BcacheFS
 Bcachefs is an advanced new filesystem for Linux, with an emphasis on reliability and robustness and the complete set of features one would expect from a modern filesystem.
-ATTENTION: Bcachefs is still considered as experimental and can have issues.
+
+:::caution[ATTENTION]
+Bcachefs is still considered as experimental and can have issues.
+:::
 
 ### Pros
 - Copy on write (CoW) - like btrfs or zfs
@@ -124,5 +126,5 @@ ATTENTION: Bcachefs is still considered as experimental and can have issues.
 - Setup can be complicated
 
 ## TL:DR
-Use xfs or ext4 by default, BTRFS if snapshots and compression is something you want and ZFS if the ARC cache or zpools are wanted.
+Use **xfs** or **ext** by default, BTRFS if snapshots and compression is something you want and ZFS if the ARC cache or zpools are wanted.
 

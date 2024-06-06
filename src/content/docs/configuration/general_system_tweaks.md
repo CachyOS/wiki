@@ -34,9 +34,9 @@ Add the following to your kernel command line: `retbleed=off` or to disable all 
 
 Edit the appropriate file to make the changes persistent:
 
-*   GRUB: `/etc/default/grub`
-*   systemd boot: `/etc/sdboot-manage.conf`
-*   rEFInd: `/boot/refind_linux.conf`
+- **GRUB**: `/etc/default/grub`
+- **systemd boot**: `/etc/sdboot-manage.conf`
+- **rEFInd**: `/boot/refind_linux.conf`
 
 :::caution
 Disabling these mitigation's poses a security risk to your system.
@@ -69,17 +69,26 @@ For improved performance and power efficiency, you can enable the AMD P-State EP
 
 Add one of the following options to your kernel command line:
 
-*   AMD P-State: `amd-pstate=passive`
-*   AMD P-State-GUIDED: `amd-pstate=guided`
-*   AMD P-State EPP: `amd-pstate=active`
+- **AMD P-State**: `amd-pstate=passive`
+- **AMD P-State-GUIDED**: `amd-pstate=guided`
+- **AMD P-State EPP**: `amd-pstate=active`
 
 You can switch between modes at runtime to test the options:
 
-*   `echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status` - Autonomous mode, platform considers only the values set for Minimum performance, Maximum performance, and Energy Performance Preference.
+- **Autonomous mode**: platform considers only the values set for Minimum performance, Maximum performance, and Energy Performance Preference.
+   ```sh
+   echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status 
+   ```
 
-*   `echo guided | sudo tee /sys/devices/system/cpu/amd_pstate/status` - Guided-autonomous mode, platform sets operating performance level according to the current workload and within limits set by the OS through minimum and maximum performance registers.
+- **Guided-autonomous mode**: platform sets operating performance level according to the current workload and within limits set by the OS through minimum and maximum performance registers.
+   ```sh
+   echo guided | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
 
-*   `echo passive | sudo tee /sys/devices/system/cpu/amd_pstate/status` - Non-autonomous mode, platform gets desired performance level from OS directly through Desired Performance Register.
+- **Non-autonomous mode**: platform gets desired performance level from OS directly through Desired Performance Register.
+   ```sh
+   echo passive | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
 
 For more information:
 
@@ -142,5 +151,5 @@ kernel.split_lock_mitigate=0
 
 For more information on split lock, see:
 
-*   [https://www.phoronix.com/news/Linux-Splitlock-Hurts-Gaming](https://www.phoronix.com/news/Linux-Splitlock-Hurts-Gaming)
-*   [https://github.com/doitsujin/dxvk/issues/2938](https://github.com/doitsujin/dxvk/issues/2938)
+- https://www.phoronix.com/news/Linux-Splitlock-Hurts-Gaming
+- https://github.com/doitsujin/dxvk/issues/2938

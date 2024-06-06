@@ -8,7 +8,9 @@ description: Description and recommendations for the currently offered boot mana
 To offer the best experience across a range of devices CachyOS currently offers the following boot managers: systemd-boot, rEFInd and Grub.
 This wiki article will describe the featureset of each boot manager and also includes our recommendation for when to choose them.
 
-### Each boot manager support all our currently available filesystems choices and full root encryption.
+:::note
+Each bootmanager support all our currently available filesystems choices and full root encryption.
+:::
 
 
 ## systemd-boot
@@ -25,7 +27,7 @@ Part of systemd family, systemd-boot was created to be as simple as possible, th
  - Only able to read boot images on EFi supported filesystems (FAT, FAT16, FAT32)
  - Inability to find boot images on partitions other than its own without manual intervention.
 
- ### Configuration
+### Configuration
 The main command line tool for sd-boot is sdboot-manage
 The configuration file for changing kernel parameters and other options is located at /etc/sdboot-manage.conf
 Boot entries are located in /boot/loader/entries/

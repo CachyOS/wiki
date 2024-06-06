@@ -13,14 +13,14 @@ This results into having a more optimized kernel for the users system. The deskt
 
 The base patchset contains a bunch of changes compared on upstream. Here is a little list, which is commonly included each branch:
 
-- aes-crypto: Contains massive improvements for encryption workloads and dynamically utilizes different instruction levels (avx2, avx512, avx10.1)
-- amd-pstate: This contains improvements and changes for the amd-pstate driver. Patches are commonly fetched from the mailing list.
-- bbr3: Replaces bbrv1 with the latest bbrv3 provided by Google.
-- cachy: Various configuration changes for scheduler and interactivity (CONFIG_CACHY), OpenRGB Patch, ACS Override, MM improvements, v4l2loopback, Clear Linux patches and HDR enabling.
-- fixes: Various fixes, which gets queued over the time of a stable kernel
-- ksm: Provides syscalls for uksmd. uksmd does identify same memory pages and merges them.
-- ntsync: Contains the latest kernel driver NTSync patchset.
-- zstd: Patches the zstd api inside the kernel to the latest release one. Commonly improves performance for compression tasks with zstd (BTRFS, Zram, Zswap)
+- **aes-crypto**: Contains massive improvements for encryption workloads and dynamically utilizes different instruction levels (avx2, avx512, avx10.1)
+- **amd-pstate**: This contains improvements and changes for the amd-pstate driver. Patches are commonly fetched from the mailing list.
+- **bbr3**: Replaces bbrv1 with the latest bbrv3 provided by Google.
+- **cachy**: Various configuration changes for scheduler and interactivity (CONFIG_CACHY), OpenRGB Patch, ACS Override, MM improvements, v4l2loopback, Clear Linux patches and HDR enabling.
+- **fixes**: Various fixes, which gets queued over the time of a stable kernel
+- **ksm**: Provides syscalls for uksmd. uksmd does identify same memory pages and merges them.
+- **ntsync**: Contains the latest kernel driver NTSync patchset.
+- **zstd**: Patches the zstd api inside the kernel to the latest release one. Commonly improves performance for compression tasks with zstd (BTRFS, Zram, Zswap)
 
 ## Variants
 

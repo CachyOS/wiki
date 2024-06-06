@@ -122,7 +122,8 @@ Most of the key combinations require the use of the mod key which in our case is
 ## Why does my Discord,Thunar,Nautilus have a weird background?
 This is because the window has a modified opacity
 
-* Consider modifying Discord's window rule near the bottom of Hyprland's config file: windowrule=opacity 0.96,discord
+* Consider modifying Discord's window rule near the bottom of Hyprland's config file:
+   `windowrule=opacity 0.96,discord`
 
 ## Is there a File Manager included?
 
@@ -135,5 +136,3 @@ This is because the window has a modified opacity
 ## Why Hyprland randomly crashed? 
 
 * Check at the beginning of this page why
-
-
