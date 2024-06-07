@@ -104,6 +104,10 @@ Some of them might make use of mod1 (ALT key).
 
 * SUPER + Scroll wheel button
 
+### Stick window (For example sticking Firefox PIP will now follow you between workspaces)
+
+* SUPER + S
+
 
 # FAQ
 
