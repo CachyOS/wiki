@@ -10,7 +10,7 @@ CachyOS ("we," "us," or "our") is committed to protecting your privacy. This Pri
 
 The data controller responsible for your personal data is:
 CachyOS Team
-Email: admin@cachyos.org
+Email: admin at cachyos dot org
 
 ## 3. Data Collection and Use
 
@@ -81,7 +81,7 @@ We may update our Privacy Policy from time to time. We will notify you of any ch
 ## 11. Contact Us
 
 If you have any questions or concerns about this Privacy Policy, please contact us at:
-Email: admin@cachyos.org
+Email: admin at cachyos dot org
 
 ---
 
