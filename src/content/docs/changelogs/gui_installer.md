@@ -2,6 +2,47 @@
 title: GUI Installer Changelogs
 description: Changelogs of Calamares and the GUI Live ISO
 ---
+24.06
+----
+
+**Features:**
+- chwd: Introduce handheld hardware detection
+- chwd: Introduce T2 MacBook support
+- chwd: Add network driver detection
+- Installation: Added MacBook T2 support
+- ISO: Add cachy-chroot. This is a script that helps the user to chroot into the system.
+- ISO: Switch to Microcode Hooks; this requires using the latest Ventoy release (1.0.98)
+- ISO: Enable copytoram; this no longer needs to be disabled because we don't provide the offline installation anymore
+- filesystem: BTRFS is now the default selected file system
+- netinstall: Use ufw instead of firewalld
+- Calamares: Update Branding Slides
+- Slides: Updated for latest changes
+- Package Updates: linux-cachyos 6.9.3, mesa 24.1.1, xwayland 24.1, NVIDIA 555.52.04, Plasma 6.0.5
+
+**Bug Fixes:**
+- Calamares: umount: Enable emergency again
+- Qtile: Multimedia Controls are now working correctly
+- NVIDIA: Enable required services and options for working sleep on Wayland
+- netinstall: Remove b43-fwcutter from installation
+- netinstall: Replace hyprland-git with hyprland
+- netinstall: Drop linux-cachyos-lts from selection to avoid issues with missing modules
+- Calamares: Shellprocess: Move mirror ranking before installing keyring
+
+**Changelog from Experimental Handheld Release:**
+- Default to KDE Vapor Theme (SteamOS Theme)
+- Default file system: BTRFS
+- Default kernel: linux-cachyos-deckify
+- SDDM now uses Wayland
+- Environment Flag for HHD to reduce latency
+- Added Kernel Arguments to improve Game Mode Switching behavior
+- The username can now be edited
+- Hardware Detection configures and installs required packages depending on the device used
+- Mallit Keyboard now uses Dark Mode
+- Valve's Powerbuttond for proper sleeping
+- Shortcuts can now be added to Steam
+- Updated scx-scheds to latest git commit, providing the latest enhancements for the LAVD Scheduler
+- Added automount to cachyos-handheld
+- CachyOS can now perform Steam Deck BIOS updates on the Steam Deck
 
 24.05
 ----
