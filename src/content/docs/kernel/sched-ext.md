@@ -72,8 +72,40 @@ Since there are really many example scheduler, we want to give a little suggesti
 - **scx_lavd** - Scheduler developed for Gaming and mainly for handhelds. This Scheduler has currently no Topology Aware (For example when the CPU has 2 CXX, like a 7950X)
 - **scx_rustland** - Scheduler with userspace scheduling. Can handle heavy workloads good, but does have overhead due userspace scheduling
 
+## Benchmarking Schedulers
+
+In order to benchmark shedulers for various options we suggest use mini-benchmarker tool that is avaible in our repositories.To install mini-benchmarker:
+#### Install mini-benchmarker
+```sh
+sudo pacman -Sy mini-benchmarker
+```
+#### How to benchmark
+When you have installed mini-benchmarker to start benchmark you should do:
+```sh
+mini-benchmarker /bench
+```
+:::caution[WARNING]
+"bench" is a folder where results (and tools) located. You can use any other name.
+:::
+:::caution[WARNING]
+If you want to make 2 (or more) benchmarks just run mini-benchmarker in the same folder.
+Also if there is 2 (or more) benchmark results you might want to edit kernel name in text files of result folder to see 2 (or more) graphs for each bench.
+We suggest to add in the end of kernel line name of schedule that was used in benchmark.
+:::
+After benchmark completed job you can find results (in directory that you used) and check results.
+
+#### Make a graph (Optional)
+If you want to make image with result of benchmark you can use tool called mini-benchmark-scraper. Inorder to use it firstly you should download and chmod (allow admin rights) and run:
+```sh
+wget https://raw.githubusercontent.com/julmajustus/mini-benchmark-scraper/main/benchmark_scraper.py
+chmod +x benchmark_scraper.py
+python benchmark_scraper.py
+```
+And you made it. You can check .png files with result of benchmark(s).
 
 ## GitHub
 
 - scx-scheds (Schedulers): https://github.com/sched-ext/scx
 - sched-ext (Kernel Framework): https://github.com/sched-ext/sched-ext
+- mini-bechmarker (Benchmark): https://gitlab.com/torvic9/mini-benchmarker
+- mini-benchmark-scraper (Benchmark Scrapper): https://github.com/julmajustus/mini-benchmark-scraper
