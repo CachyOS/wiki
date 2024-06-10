@@ -1,0 +1,126 @@
+---
+title: Konfigurácia i3wm
+description: CachyOS i3wm klávesové skratky a FAQ
+---
+
+**Pre viac informácií o i3wm si prečítajte ich wiki**
+*   https://i3wm.org/docs/userguide.html
+
+#### Vďaka patrí vnepogodinovi za vytvorenie tejto jednoduchej a ľahko pochopiteľnej konfigurácie
+
+> Iba pre X11, nie je kompatibilné s Wayland
+
+# Klávesové skratky
+
+Väčšina klávesových skratiek vyžaduje použitie modifikačného kľúča, čo je v našom prípade kláves Windows (označovaný ako SUPER), môžete ho zmeniť v konfiguračnom súbore.
+
+### Otvoriť terminál
+
+* SUPER + Enter
+
+### Ukončiť zamerané okno
+
+* SUPER + Q
+
+### Prejsť na pracovnú plochu (1-9)
+
+* SUPER + 1-9 (horný rad čísel, čísla na numerickej klávesnici sa nepočítajú)
+
+### Otvoriť rofi (spúšťač programov)
+
+* CTRL + Space
+
+### Zmeniť zameranie na (Vľavo, Vpravo, Hore, Dole) 
+
+* SUPER + šípky
+
+### Presunúť zamerané okno do (Vľavo, Vpravo, Hore, Dole)
+
+* SUPER + Shift + šípky
+
+### Presunúť zamerané okno na pracovnú plochu (1-9)
+
+* SUPER + Shift + 1-9 (horný rad čísel, čísla na numerickej klávesnici sa nepočítajú)
+
+### Rozdeliť rozloženie horizontálne
+
+* SUPER + H
+
+### Rozdeliť rozloženie vertikálne
+
+* SUPER + V
+
+### Prepnúť rozdelenie
+
+* SUPER + T
+
+### Prepnúť režim celého okna v zameranom okne
+
+* SUPER + F
+
+### Zamerať posledný plávajúci/dlaždicový kontajner
+
+* SUPER + Space
+
+### Prepnúť režim plávajúceho okna v zameranom okne
+
+* SUPER + Shift + Space
+
+### Zmeniť rozloženie kontajnera na (stohovanie, tabuľkové)
+
+* SUPER + S (stohovanie)
+* SUPER + W (tabuľkové)
+
+### Reštartovať i3 na mieste (napr. po aktualizácii i3wm alebo chybe)
+
+* SUPER + Shift + R
+
+### Načítať konfiguračný súbor i3
+
+* SUPER + Shift + C
+
+### Ukončiť i3 (ukončiť bežiacu X session)
+
+* SUPER + Shift + E
+
+### Uzamknúť obrazovku
+Na odomknutie zadajte svoje používateľské heslo a stlačte Enter.
+* SUPER + L
+
+### Vstúpiť do režimu zmeny veľkosti
+
+* SUPER + R
+
+### Zmeniť veľkosť zameraného okna v režime zmeny veľkosti
+
+* Šípky
+
+### Ukončiť režim zmeny veľkosti 
+
+* Enter
+* Escape
+* SUPER + R
+
+# FAQ
+
+## Ako môžem automaticky spustiť program? napríklad "nastaviť tapetu pri štarte"
+
+* i3 už obsahuje flexibilnú funkciu autoštartu, ktorá vám umožňuje spustiť akýkoľvek program alebo dokonca príkazy.
+
+Ak sa pozriete na koniec nášho konfiguračného súboru, uvidíte niekoľko riadkov začínajúcich sa exec a exec_always.
+
+Napríklad:
+
+```exec chromium```
+To znamená, že Chromium sa spustí na pracovnej ploche 1 vždy, keď sa prihlásite do i3 session.
+
+* Čo odlišuje exec od exec_always?
+
+exec_always vám dáva možnosť vždy vykonať určitú akciu, aj po opätovnom načítaní i3wm.
+
+* Pre viac referencií a informácií si pozrite používateľskú príručku i3
+*   https://i3wm.org/docs/userguide.html#exec
+
+## Fungujú multimediálne klávesy?
+
+* Áno, fungujú.
