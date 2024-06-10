@@ -16,6 +16,10 @@ export const locales = {
     label: 'Deutsch',
     lang: 'de',
   },
+  sk: {
+    label: 'Slovak',
+    lang: 'sk',
+  },
 };
 const site = 'https://wiki.cachyos.org/';
 
