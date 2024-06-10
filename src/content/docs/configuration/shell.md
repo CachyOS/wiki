@@ -3,7 +3,7 @@ title: Configuration Shell
 ---
 
 CachyOS currently does use the fish shell as default.
-Is is possible to change the default shell.
+It is possible to change the default shell.
 
 
 ## Zsh
