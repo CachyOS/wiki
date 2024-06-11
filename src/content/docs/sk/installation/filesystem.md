@@ -1,3 +1,8 @@
+---
+title: Filesystems
+description: Description and recommendations for the available filesystems. (ext4, f2fs, btrfs, xfs, zfs, bcachefs)
+---
+
 # Súborové systémy
 
 CachyOS ponúka 5 súborových systémov, aby si používateľ mohol vybrať ten, ktorý najlepšie vyhovuje jeho potrebám. Nasledujúci text popisuje výhody, nevýhody a odporúčania pre každý súborový systém. Každý súborový systém má predinštalované svoje požiadavky/nástroje v CachyOS.

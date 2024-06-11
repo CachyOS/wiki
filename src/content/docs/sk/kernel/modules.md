@@ -1,5 +1,5 @@
 ---
-Moduly jadra v CachyOS
+title: Moduly jadra v CachyOS
 ---
 
 CachyOS poskytuje prekompilované moduly jadra pre každý nami poskytované jadro.

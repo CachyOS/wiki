@@ -1,3 +1,8 @@
+---
+title: Offered Boot managers
+description: Description and recommendations for the currently offered boot managers
+---
+
 # CachyOS Boot Manažéry
 
 Aby sme zabezpečili najlepší zážitok na rôznych zariadeniach, CachyOS momentálne ponúka nasledujúce boot manažéry: systemd-boot, rEFInd a Grub. Tento článok popisuje vlastnosti každého boot manažéra a tiež obsahuje naše odporúčania, kedy ich použiť.
