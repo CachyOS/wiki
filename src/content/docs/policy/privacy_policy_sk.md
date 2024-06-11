@@ -1,90 +1,90 @@
 ---
-title: Privacy Policy
+title: Zásady ochrany osobných údajov
 ---
 
-## 1. Introduction
+## 1. Úvod
 
-CachyOS ("we," "us," or "our") is committed to protecting your privacy. This Privacy Policy outlines how we collect, use, disclose, and safeguard your information when you visit our website and use our services, including the forum based on Discourse software. By using our services, you agree to the collection and use of information in accordance with this policy.
+CachyOS ("my", "nás" alebo "naše") sa zaväzuje chrániť vaše súkromie. Tieto Zásady ochrany osobných údajov vysvetľujú, ako zhromažďujeme, používame, zverejňujeme a chránime vaše informácie, keď navštívite našu webovú stránku a používate naše služby, vrátane fóra založeného na softvéri Discourse. Používaním našich služieb súhlasíte so zhromažďovaním a používaním informácií v súlade s týmito zásadami.
 
-## 2. Controller
+## 2. Správca údajov
 
-The data controller responsible for your personal data is:
-CachyOS Team
+Správcom údajov zodpovedným za vaše osobné údaje je:
+Tím CachyOS
 Email: admin at cachyos dot org
 
-## 3. Data Collection and Use
+## 3. Zber a používanie údajov
 
-### 3.1. General Use of the Platform
+### 3.1. Všeobecné použitie platformy
 
-When you visit our website, our hosting provider automatically collects certain technical data:
-- IP address
-- Accessed content
-- Date and time of access
-- Browser type and version
-- Referrer URL
+Keď navštívite našu webovú stránku, náš hostingový poskytovateľ automaticky zhromažďuje určité technické údaje:
+- IP adresa
+- Prístupný obsah
+- Dátum a čas prístupu
+- Typ a verzia prehliadača
+- URL odkazov
 
-This data is necessary for the operation of the website and to ensure its security, in compliance with Art. 6(1)(f) GDPR. The data is stored for 91 days before being deleted.
+Tieto údaje sú potrebné na prevádzku webovej stránky a na zabezpečenie jej bezpečnosti v súlade s čl. 6 ods. 1 písm. f) GDPR. Údaje sú uchovávané 91 dní pred ich vymazaním.
 
-### 3.2. User Account Registration
+### 3.2. Registrácia užívateľského účtu
 
-When you create a user account, we collect:
-- Username
-- Email address
-- Password
+Keď si vytvoríte užívateľský účet, zhromažďujeme:
+- Užívateľské meno
+- Emailovú adresu
+- Heslo
 
-We may also collect additional data such as your IP address, language preference, and timezone. This information is used to manage your account and provide our services, under Art. 6(1)(b) GDPR. Your data will be stored as long as you have an account with us.
+Môžeme tiež zhromažďovať ďalšie údaje, ako napríklad vašu IP adresu, preferovaný jazyk a časové pásmo. Tieto informácie sa používajú na správu vášho účtu a poskytovanie našich služieb v súlade s čl. 6 ods. 1 písm. b) GDPR. Vaše údaje budú uchovávané tak dlho, ako máte u nás účet.
 
-## 4. Services
+## 4. Služby
 
-### 4.1. Forum
+### 4.1. Fórum
 
-To participate in our forum, you must register an account. We collect your username, email address, and a captcha response to prevent spam. You can choose whether to display your email address to other users. Posts and comments will display your username and registration date. Upon account deletion, posts will remain anonymized.
+Ak sa chcete zúčastniť na našom fóre, musíte sa zaregistrovať. Zhromažďujeme vaše užívateľské meno, emailovú adresu a odpoveď na captcha, aby sme predišli spamu. Môžete si zvoliť, či chcete zobrazovať svoju emailovú adresu ostatným užívateľom. Príspevky a komentáre budú zobrazovať vaše užívateľské meno a dátum registrácie. Po vymazaní účtu zostanú príspevky anonymizované.
 
-### 4.2. Website
+### 4.2. Webová stránka
 
-You can browse our website without providing personal data. However, certain interactions, such as contacting us or subscribing to newsletters, may require you to provide personal data such as your email address and name. This data is processed to fulfill your requests, under Art. 6(1)(b) GDPR.
+Môžete prehliadať našu webovú stránku bez poskytovania osobných údajov. Avšak, niektoré interakcie, ako napríklad kontaktovanie nás alebo prihlásenie sa na odber noviniek, môžu vyžadovať, aby ste poskytli osobné údaje, ako je vaša emailová adresa a meno. Tieto údaje sa spracúvajú na splnenie vašich požiadaviek v súlade s čl. 6 ods. 1 písm. b) GDPR.
 
-## 5. Contact
+## 5. Kontakt
 
-When you contact us via email, we collect your email address and any other information you provide. This data is used to respond to your inquiry and is stored for as long as necessary to fulfill this purpose, in compliance with Art. 6(1)(f) GDPR.
+Keď nás kontaktujete prostredníctvom emailu, zhromažďujeme vašu emailovú adresu a akékoľvek ďalšie informácie, ktoré poskytnete. Tieto údaje sa používajú na odpoveď na váš dopyt a sú uchovávané tak dlho, ako je to potrebné na splnenie tohto účelu, v súlade s čl. 6 ods. 1 písm. f) GDPR.
 
-## 6. Data Retention
+## 6. Uchovávanie údajov
 
-We retain your personal data only for as long as necessary to fulfill the purposes for which it was collected. Once the data is no longer needed, it will be deleted in accordance with our data retention policies.
+Vaše osobné údaje uchovávame iba tak dlho, ako je to potrebné na splnenie účelov, na ktoré boli zhromaždené. Keď už údaje nie sú potrebné, budú vymazané v súlade s našimi politikami uchovávania údajov.
 
-## 7. Data Recipients
+## 7. Príjemcovia údajov
 
-We may share your data with external service providers, such as our hosting provider, to facilitate our services. These providers are contractually obligated to protect your data and use it only for the specified purposes.
+Vaše údaje môžeme zdieľať s externými poskytovateľmi služieb, ako je náš hostingový poskytovateľ, na uľahčenie našich služieb. Títo poskytovatelia sú zmluvne povinní chrániť vaše údaje a používať ich iba na stanovené účely.
 
-## 8. Your Rights
+## 8. Vaše práva
 
-Under the GDPR, you have the following rights regarding your personal data:
-- Right of access (Art. 15 GDPR)
-- Right to rectification (Art. 16 GDPR)
-- Right to deletion (Art. 17 GDPR)
-- Right to restriction of processing (Art. 18 GDPR)
-- Right to data portability (Art. 20 GDPR)
-- Right to object (Art. 21 GDPR)
-- Right to withdraw consent (Art. 7(3) GDPR)
-- Right to lodge a complaint with a supervisory authority (Art. 77 GDPR)
+Podľa GDPR máte nasledujúce práva týkajúce sa vašich osobných údajov:
+- Právo na prístup (čl. 15 GDPR)
+- Právo na opravu (čl. 16 GDPR)
+- Právo na vymazanie (čl. 17 GDPR)
+- Právo na obmedzenie spracovania (čl. 18 GDPR)
+- Právo na prenosnosť údajov (čl. 20 GDPR)
+- Právo namietať (čl. 21 GDPR)
+- Právo odvolať súhlas (čl. 7 ods. 3 GDPR)
+- Právo podať sťažnosť dozornému orgánu (čl. 77 GDPR)
 
-To exercise these rights, please contact us at admin@cachyos.org.
+Ak chcete uplatniť tieto práva, kontaktujte nás na adrese admin@cachyos.org.
 
-## 9. Data Security
+## 9. Bezpečnosť údajov
 
-We implement appropriate technical and organizational measures to ensure a level of security appropriate to the risk, protecting your data from unauthorized access, alteration, disclosure, or destruction.
+Implementujeme vhodné technické a organizačné opatrenia, aby sme zabezpečili úroveň bezpečnosti primeranú riziku, chrániac vaše údaje pred neoprávneným prístupom, zmenou, zverejnením alebo zničením.
 
-## 10. Changes to This Privacy Policy
+## 10. Zmeny v týchto Zásadách ochrany osobných údajov
 
-We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page. Changes are effective immediately upon posting.
+Naše Zásady ochrany osobných údajov môžeme z času na čas aktualizovať. O akýchkoľvek zmenách vás budeme informovať zverejnením nových Zásad ochrany osobných údajov na tejto stránke. Zmeny nadobúdajú účinnosť okamžite po zverejnení.
 
-## 11. Contact Us
+## 11. Kontaktujte nás
 
-If you have any questions or concerns about this Privacy Policy, please contact us at:
+Ak máte akékoľvek otázky alebo obavy týkajúce sa týchto Zásad ochrany osobných údajov, kontaktujte nás na adrese:
 Email: admin at cachyos dot org
 
 ---
 
-This Privacy Policy ensures compliance with GDPR and outlines the practices regarding your personal data for CachyOS services and website.
+Tieto Zásady ochrany osobných údajov zabezpečujú súlad s GDPR a vysvetľujú praktiky týkajúce sa vašich osobných údajov pre služby a webovú stránku CachyOS.
 
-Date: 1.06.2024
+Dátum: 1.06.2024
