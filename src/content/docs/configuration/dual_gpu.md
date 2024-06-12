@@ -2,86 +2,145 @@
 title: Laptop with Dual GPU Setup Guide
 ---
 
-# NVIDIA PRIME Render Offload
-## The official way from NVIDIA
-Append these environment variables before running the program
-```bash
+# What's hybrid graphics?
+
+Hybrid graphics is a hardware configuration in which you have two graphics
+cards that can work in tandem with each other. This approach is mainly found in
+laptops where you have integrated graphics (iGPU) of your CPU, and discrete
+graphics (dGPU). The main advantage is that integrated graphics should (but not
+necessarily) only be used for low-profile tasks, such as surfing the Internet,
+watching videos, etc. And discrete graphics are used for high-performance
+things like gaming, video editing, 3D modeling, and so on. Consequently, if two
+GPUs share "big" and "small" tasks, then if we have only "small" tasks running
+at the moment, we don't need to use our dGPU, so it can simply be disabled (as
+if asleep), thereby significantly reducing power consumption. This way when our
+dGPU is needed again (we run an application using it), it will wake up and
+start working.
+
+# What's PRIME Offload?
+
+PRIME is a unifying technology for working with different sets of hybrid
+graphics in Linux, like NVIDIA Optimus/AMD Dynamic Switchable Graphics. PRIME
+Offload is an implementation of the idea of moving the execution of render from
+one GPU to another in Linux. PRIME support in a closed NVIDIA driver actually
+started only with the 435.17 driver. So if you are a user of the outdated 390xx
+or even 340xx driver branches, PRIME Offload will not work for you. Note that we also
+strongly discourage you from using outdated ways to handle hybrid graphics,
+such as nvidia-xrun or Bumblebee. They are obsolete and unsupported (Bumblebee
+has not been updated for over 8 years), run solely on hacks and have low
+performance. At the same time the Nouveau driver supports PRIME Offload, which
+can be an alternative for older dGPUs.
+
+In CachyOS, **you don't need to configure anything to make PRIME Offload work**.
+With the nvidia-utils package and cachyos-settings you already have everything
+you need to use PRIME Offload.
+
+Also, please avoid using tools like optimus-manager. They may seem quite handy
+to you, but believe us, they can cause a lot of issues and you really don't
+need them if your dGPU supports PRIME Offload and dynamic power management.
+
+# How to use PRIME Offload?
+
+To indicate driver that you want to use discrete graphics instead of integrated
+graphics, you must specify a number of environment variables before running the
+program:
+
+```
 __NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia <program>
 ```
-### Steam
-```bash
-__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia %command%
+
+This set of variables looks very cumbersome and easy to forget, so you can
+install the ``nvidia-prime`` package (``sudo pacman -S nvidia-prime``), which
+contains script-alias for all these variables. Then running an application
+using it will look like this:
+
 ```
-:::tip
-Please read the [docs from NVIDIA](https://download.nvidia.com/XFree86/Linux-x86_64/435.17/README/primerenderoffload.html) if you are wondering why we added`__VK_LAYER_NV_optimus=NVIDIA_only`
-:::
-
-## Wrapper script
-Arch Linux provides a package called [`nvidia-prime`](https://archlinux.org/packages/extra/any/nvidia-prime/) that helps you set the environment variables above when you run a program, to use it simply execute the following:
-
-### Installation of the Wrapper script
-```bash
-sudo pacman -S nvidia-prime
-```
-
-You can use `prime-run` now.
-```bash
 prime-run <program>
 ```
 
+Where ``<program>`` is the name of command that runs your application.
+
+## Graphical way
+
+You may find launching all applications you need through the terminal with
+``prime-run`` not too convenient, but some applications/desktop environments
+offer graphical tools to control which GPU to use when launching applications.
+
+### Lutris
+
+To configure games to run with discrete graphics in Lutris you need to go to
+settings (three strips in the bottom right corner of the window and
+"Preferences" button). Next, go to *"Global Options"* -> *"Display"*. Here you
+select the GPU with which the game will be run.
+
+![lutris-prime.png](/lutris-prime.png)
+
+### Steam
+
+Steam doesn't have a special setting to run game using discrete graphics, but
+you can click the *"Gear"* and go to *"Properties"* before launching each game.
+There you have to prescribe the prime-run command or environment variables
+like:
+
+```
+prime-run %command%
+```
+
+You must be sure to put ``%command%`` after ``prime-run``! Remember that game
+options come after placeholder, and system environment variables or commands
+come before it.
+
+![steam-prime.png](/steam-prime.png)
+
+### KDE Plasma
+
+Plasma has a very handy way to set up the startup of applications with discrete
+graphics. But it works only if switcheroo-control package and corresponding
+service are installed in the system:
+
+```
+sudo pacman -S switcheroo-control
+sudo systemctl enable --now switcheroo-control
+```
+
+For new installations of CachyOS, this package and service should already be
+enabled by default via chwd.
+
+After that right click on the desktop entry you need on your desktop or in the
+application menu then go to *"Properties"* -> *"Application"* -> *"Advanced Options"*.
+
+You should have *"Run using dedicated graphics card"* checkbox checked.
+
+![plasma-prime.jpg](/plasma-prime.jpg)
+
 ### GNOME
-As of GNOME 3.38 and later, you can select *"Run with Discrete Graphics"* from the context menu when you right-click on an application.
 
+On GNOME, you should also install switcheroo-control as shown above and
+right-click on the application icon and select *"Run using discrete graphics"*.
+But note that GNOME does not remember this choice later, and the next time you
+simply click on the icon, application will still run using integrated graphics.
 
-**Clever tool for easy switching between a laptop's integrated GPU and the discrete one.**
+# Troubleshooting
 
-Modern laptops have two graphics cards, especially if we talk about gaming laptops.
-**iGPU** - integrated GPU, longer battery life, and lower performance.
-**dGPU** - discrete GPU, higher performance, but it would drain more battery, highly recommended for gaming, rendering, video encoding, NVENC among other demanding tasks.
+## I: "I don't have a choice of Wayland session GDM"
 
-Windows automatically switches between the iGPU and dGPU depending on the usage.
-Here is a guide on how to set up the same for CachyOS, especially if you plan to use it for gaming or streaming, 3D development, etc.
+S: This is a GDM upstream issue that intentionally blocks access to Wayland
+session selection on the login screen, despite the fact that your integrated
+GPU may support Wayland perfectly well.
 
+To workaround this you need to disable the udev rules that are responsible for
+this:
 
-## Fully power down the GPU when not in use
-:::note
-This feature is only supported on laptops with Turing GPUs (RTX 20xx/GTX 16xx) and above, and Intel Coffee Lake CPUs (8th gen) and above.
-:::
-
-**PCI-Express Runtime D3 (RTD3) Power Management**
-Add these rules into `/etc/udev/rules.d/80-nvidia-pm.rules`
-
-```bash
-# Load and unload nvidia-modeset module
-ACTION=="add", DEVPATH=="/bus/pci/drivers/nvidia", RUN+="/sbin/modprobe nvidia-modeset"
-ACTION=="remove", DEVPATH=="/bus/pci/drivers/nvidia", RUN+="/sbin/modprobe -r nvidia-modeset"
-
-# Load and unload nvidia-drm module
-ACTION=="add", DEVPATH=="/bus/pci/drivers/nvidia", RUN+="/sbin/modprobe nvidia-drm"
-ACTION=="remove", DEVPATH=="/bus/pci/drivers/nvidia", RUN+="/sbin/modprobe -r nvidia-drm"
-
-# Load and unload nvidia-uvm module
-ACTION=="add", DEVPATH=="/bus/pci/drivers/nvidia", RUN+="/sbin/modprobe nvidia-uvm"
-ACTION=="remove", DEVPATH=="/bus/pci/drivers/nvidia", RUN+="/sbin/modprobe -r nvidia-uvm"
-
-# Enable runtime PM for NVIDIA VGA/3D controller devices on driver bind
-ACTION=="bind", SUBSYSTEM=="pci", DRIVERS=="nvidia", ATTR{vendor}=="0x10de", ATTR{class}=="0x03[0-9]*", TEST=="power/control", ATTR{power/control}="auto"
-
-# Disable runtime PM for NVIDIA VGA/3D controller devices on driver unbind
-ACTION=="unbind", SUBSYSTEM=="pci", DRIVERS=="nvidia", ATTR{vendor}=="0x10de", ATTR{class}=="0x03[0-9]*", TEST=="power/control", ATTR{power/control}="on"
 ```
-> The top three `ACTION=="add"` rules are not needed when running Linux kernel `5.5` and newer, see https://download.nvidia.com/XFree86/Linux-x86_64/530.30.02/README/dynamicpowermanagement.html.
-
-To apply these changes right now:
-```sh
-sudo udevadm control --reload
-sudo udevadm trigger
+sudo ln -s /dev/null /etc/udev/rules.d/61-gdm.rules
 ```
 
-## Using nvidia-persistenced
-Enable nvidia-persistenced.service to avoid the kernel tearing down the device state whenever the NVIDIA device resources are no longer in use.
-```sh
-sudo systemctl enable --now nvidia-persistenced.service
-```
-And finally, reboot your system.
-Your laptop's hybrid mode should now work as it does on Windows!
+## I: "My external monitor is very laggy on PRIME"
+
+S: This is a known NVIDIA driver issue. You should have the latest NVIDIA
+driver installed and use Wayland with a compositor that supports explicit sync.
+For GNOME this has been fixed in version 46.2. For Plasma 6 it will probably be
+fixed with 6.1 although some users report normal performance already on 6.0.
+Other environments/window managers still have this issue, so you need to switch
+to the latest version of GNOME or Plasma to fix it.
+
