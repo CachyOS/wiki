@@ -25,7 +25,7 @@ grep . /sys/devices/system/cpu/vulnerabilities/*
 
 Hoci deaktivácia zmierniení zvyšuje výkon, zároveň zvyšuje bezpečnostné riziká.
 
-:::caution
+:::caution[UPOZORNENIE]
 Urobte tak na vlastné riziko.
 :::
 
@@ -37,7 +37,7 @@ Upravte príslušný súbor, aby boli zmeny trvalé:
 - **systemd boot**: `/etc/sdboot-manage.conf`
 - **rEFInd**: `/boot/refind_linux.conf`
 
-:::caution
+:::caution[UPOZORNENIE]
 Deaktivácia týchto zmierniení predstavuje bezpečnostné riziko pre váš systém.
 :::
 
@@ -77,7 +77,7 @@ Môžete prepínať medzi režimami za behu na testovanie možností:
 
 - **Autonómny režim**: platforma zohľadňuje iba hodnoty nastavené pre minimálny výkon, maximálny výkon a preferenciu energetického výkonu.
    ```sh
-   echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status 
+   echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status
    ```
 
 - **Guided-autonómny režim**: platforma nastavuje úroveň prevádzkového výkonu podľa aktuálnej pracovnej záťaže a v rámci limitov nastavených OS cez registre minimálneho a maximálneho výkonu.

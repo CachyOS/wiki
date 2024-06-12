@@ -1,5 +1,5 @@
 ---
-title: Návod na nastavenie notebooku s dvojitou GPU
+title: Návod na nastavenie notebooku s dvoma GPU
 ---
 
 # NVIDIA PRIME Render Offload
@@ -12,7 +12,7 @@ __NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRA
 ```bash
 __NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia %command%
 ```
-:::tip
+:::tip[TIP]
 Ak vás zaujíma, prečo sme pridali `__VK_LAYER_NV_optimus=NVIDIA_only`, prečítajte si [dokumentáciu od NVIDIA](https://download.nvidia.com/XFree86/Linux-x86_64/435.17/README/primerenderoffload.html)
 :::
 
@@ -43,7 +43,7 @@ Tu je návod, ako nastaviť to isté pre CachyOS, najmä ak plánujete používa
 
 
 ## Úplné vypnutie GPU, keď sa nepoužíva
-:::note
+:::note[POZNÁMKA]
 Táto funkcia je podporovaná len na notebookoch s Turing GPU (RTX 20xx/GTX 16xx) a novšími a Intel Coffee Lake CPU (8. generácia) a novšími.
 :::
 

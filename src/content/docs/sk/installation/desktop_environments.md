@@ -4,7 +4,7 @@ description: Desktopové prostredia podporované CachyOS
 ---
 
 CachyOS ponúka niekoľko desktopových prostredí, z ktorých si môžete vybrať, vrátane predvoleného prostredia KDE. Dostupné možnosti sú:
-:::note
+:::note[POZNÁMKA]
 Prosím, počas inštalácie vyberte iba jedno desktopové prostredie.
 :::
 
@@ -25,7 +25,7 @@ Prosím, počas inštalácie vyberte iba jedno desktopové prostredie.
 15.  **Mate Desktop** je tradičné desktopové prostredie vytvorené z GNOME 2. Je charakteristické svojim klasickým vzhľadom a jednoduchým, intuitívnym používateľským rozhraním. Mate poskytuje ľahko použiteľný a vysoko prispôsobiteľný desktopový zážitok pre používateľov, ktorí preferujú klasický vzhľad a dojem.
 16. **Qtile** je správca okien pre X11, ktorý je konfigurovaný pomocou programovacieho jazyka Python.
 
-:::note
+:::note[POZNÁMKA]
 Používateľská podpora pre Hyprland už nie je poskytovaná.
 :::
 

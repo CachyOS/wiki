@@ -1,6 +1,6 @@
 ---
-title: Filesystems
-description: Description and recommendations for the available filesystems. (ext4, f2fs, btrfs, xfs, zfs, bcachefs)
+title: Súborové systémy
+description: Popis a doporučenia pre dostupné súborové systémy. (ext4, f2fs, btrfs, xfs, zfs, bcachefs)
 ---
 
 # Súborové systémy

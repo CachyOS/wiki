@@ -1,12 +1,12 @@
 ---
-title: Podmienky poskytovania službye
+title: Podmienky poskytovania služby
 ---
 
 ## 1. Rozsah podmienok poskytovania služby
 
 ### 1.1. Definície
 
-Tieto Podmienky poskytovania služby upravujú používanie platformy CachyOS a súvisiacich služieb, vrátane fór, wiki, nástroja na hlásenie chýb a ďalších kolaboratívnych nástrojov ("Služby"). 
+Tieto Podmienky poskytovania služby upravujú používanie platformy CachyOS a súvisiacich služieb, vrátane fór, wiki, nástroja na hlásenie chýb a ďalších kolaboratívnych nástrojov ("Služby").
 CachyOS ("my," "nás," "naše") prevádzkuje platformu prístupnú na cachyos.org a súvisiacich subdoménach. Používatelia ("vy," "váš") musia prijať tieto podmienky, aby mohli používať Služby.
 
 ### 1.2. Používanie Služieb
@@ -21,7 +21,7 @@ Najnovšiu verziu Podmienok poskytovania služby je možné kedykoľvek získať
 
 ### 2.1. Požiadavky
 
-Na používanie našich interaktívnych služieb (napr. fóra, príspevky balíčkov) sa musíte zaregistrovať prostredníctvom nášho online formulára, poskytnúť presné kontaktné informácie a súhlasiť s týmito Podmienkami poskytovania služby. 
+Na používanie našich interaktívnych služieb (napr. fóra, príspevky balíčkov) sa musíte zaregistrovať prostredníctvom nášho online formulára, poskytnúť presné kontaktné informácie a súhlasiť s týmito Podmienkami poskytovania služby.
 Aktivácia vášho účtu znamená uzavretie zmluvy. Neexistuje žiadne právo na aktiváciu alebo účasť.
 
 ### 2.2. Zmena platformy

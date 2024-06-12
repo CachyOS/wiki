@@ -3,7 +3,7 @@ title: Konfigurácia Hyprland
 description: CachyOS Hyprland klávesové skratky a FAQ
 ---
 
-:::caution
+:::caution[UPOZORNENIE]
 Keďže Hyprland začal svoju rekonštrukciu, uvedomte si, že momentálne nie je stabilný a môžete zažiť chyby/nečakané pády. Používajte na vlastné riziko.
 Dokonca aj ich "stabilná" verzia je tiež nefunkčná a chybná, preto neplánujeme poskytovať podporu v budúcnosti. Odkazujte na ich wiki.
 :::
@@ -27,7 +27,7 @@ Väčšina klávesových skratiek vyžaduje použitie modifikačného kľúča, 
 
 * SUPER + 1-9 (horný rad čísel, čísla na numerickej klávesnici sa nepočítajú)
 
-### Zmeniť zameranie na (Vľavo, Vpravo, Hore, Dole) 
+### Zmeniť zameranie na (Vľavo, Vpravo, Hore, Dole)
 
 * SUPER + šípky
 
@@ -51,7 +51,7 @@ Väčšina klávesových skratiek vyžaduje použitie modifikačného kľúča, 
 ### Otvoriť rofi (spúšťač programov)
 
 * CTRL + Space
-  
+
 ### Zatvoriť zamerané okno
 
 * SUPER + Q
@@ -75,7 +75,7 @@ Väčšina klávesových skratiek vyžaduje použitie modifikačného kľúča, 
 
 ### Vstúpiť do režimu zmeny veľkosti (umožňuje zmenu veľkosti), H, J, K, L alebo pomocou šípok
 
-* SUPER + R 
+* SUPER + R
 * ESC na ukončenie
 
 ### Pohyb okna pomocou myši
@@ -108,9 +108,9 @@ Väčšina klávesových skratiek vyžaduje použitie modifikačného kľúča, 
 
 * SUPER + O
 
-### Zmenšiť medzeru medzi oknami 
+### Zmenšiť medzeru medzi oknami
 
-* SUPER + G 
+* SUPER + G
 
 ### Obnoviť medzery na predvolenú hodnotu
 
@@ -133,6 +133,6 @@ Je to preto, že okno má upravenú priehľadnosť.
 
 * SUPER + A (Môžete tam tiež kresliť)
 
-## Prečo Hyprland náhodne spadol? 
+## Prečo Hyprland náhodne spadol?
 
 * Skontrolujte začiatok tejto stránky, prečo.
