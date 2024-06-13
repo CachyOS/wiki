@@ -11,9 +11,8 @@ CachyOS is not an ordinary Arch-based distribution; it has some major changes fr
 
 ## Optimized Packages and Repositories
 CachyOS maintains its own repositories with optimized packages, especially for your hardware.
-There are x86-64-v3 and x86-64-v4 optimized repositories, that exists to enhance your experience by
+There are x86-64-v3 and x86-64-v4 optimized repositories that exists to enhance your experience by
 reducing latency, improving performance, applying special fixes, etc.
-Also, the system automatically selects repositories that are the fastest and optimized specially for your CPU.
 
 :::caution[WARNING]
 x86-64-v3 repository only works for CPUs that supports AVX and AVX2 instructions
