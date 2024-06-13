@@ -36,7 +36,7 @@ When you boot into the live ISO from the [bootable USB](/installation/installati
 you will automatically meet our installer. Our installer provides much more choice than other distributions.
 We offer a variety of [desktop environments](/installation/desktop_environments/), [boot loaders](/installation/bootmanagers/)
 and [kernels](kernel/kernel/#variants) to choose from.
-You can and should choose what you want to have installed and what not to have installed. Your system is your name
+You can and should choose what you want to have installed and what not to have installed. Your system is your home.
 
 ## User Friendly OS
 By default, we provide our own applications, such as CachyOS Hello or CachyOS Package Installer
