@@ -112,7 +112,7 @@ export default defineConfig({
             {
               label: 'Boot managers',
               translations: {
-                'sk': 'Boot manažéri',
+                'sk': 'Boot manažéry',
               },
               link: 'installation/bootmanagers',
             },
