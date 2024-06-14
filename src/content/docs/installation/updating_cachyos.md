@@ -6,8 +6,8 @@ description: How to update CachyOS?
 CachyOS is a rolling system, which means updates come all time automatically via the package manager.
 If there is a manual adjustment required, we notify users via Social Media or pacman.
 
-We have integrated into pacman to fetch an update message, which needs to be confirmed before the user is updating their system.
-Once confirmed this message wont come anymore at updating.
+We have integrated a function to fetch an update message inside pacman. This needs to be confirmed by the user
+before updating their system. Once confirmed, this message will not appear anymore when updating.
 
 pacman
 ------
