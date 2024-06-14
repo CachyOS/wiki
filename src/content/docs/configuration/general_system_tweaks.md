@@ -90,6 +90,11 @@ You can switch between modes at runtime to test the options:
    echo passive | sudo tee /sys/devices/system/cpu/amd_pstate/status
    ```
 
+:::note
+Since kernel 6.5, `amd-pstate=active` is the default on Zen 2 or newer. However, there is an issue on some
+Zen 3 CPUs that don't automatically load it.
+:::
+
 For more information:
 
 *   [https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/](https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/)
