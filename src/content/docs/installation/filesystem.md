@@ -130,5 +130,10 @@ Bcachefs is still considered as experimental and can have issues.
 - Setup can be complicated
 
 ## TL:DR
-Use **XFS** or **Ext4** by default, BTRFS if snapshots and compression is something you want and ZFS if the ARC cache or zpools are wanted.
+Use the default filesystem **BTRFS** as it is considered stable and has a lot of neat features (snapshots, compression, etc). Use **XFS** or **Ext4** for a simple
+and fast filesystem.
+
+:::note
+Filesystem performance between BTRFS, XFS, Ext4 are negligible.
+:::
 
