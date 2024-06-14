@@ -7,8 +7,12 @@ description: Description and recommendations for the available filesystems. (ext
 
 CachyOS offers 5 filesystems to allow the user to choose what best fits their needs. The following will go over advantages, disadvantages and recommendations for each filesystem. Each filesystem comes with its requirements/utilities preinstalled on CachyOS.
 
+:::note
+CachyOS defaults to BTRFS if no other filesystem is selected when installing.
+:::
+
 ## XFS
-XFS is a journaling filesystem created and developed by Silicon Graphics, Inc. It was created in 1993, ported to linux in 2001, and is now widely supported by most linux distributions.
+XFS is a journaling filesystem created and developed by Silicon Graphics, Inc. It was created in 1993, ported to linux in 2001, and is now widely supported by most Linux distributions.
 ### Pros
 - Fast, xfs was originally designed with speed and extreme scalability in mind.
 - Reliable, xfs makes use of several technologies to prevent data corruption.
