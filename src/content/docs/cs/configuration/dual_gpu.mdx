@@ -1,0 +1,154 @@
+---
+title: Průvodce notebookem s dual GPU nastavením
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+# Co je hybridní grafika?
+
+Hybridní grafika je hardwarová konfigurace, ve které máte dva grafické čipy, které mohou spolupracovat společně. Tento přístup je hlavně nalezen u notebooků, kde máte integrovanou grafiku (iGPU) vašeho CPU a diskrétní grafiku (dGPU). Hlavní výhodou je, že integrovaná grafika by měla (ale nemusí nutně) být používána pouze pro nízko-náročné úkoly, jako je surfování na internetu, sledování videí apod. Diskrétní grafika se používá pro výkonně náročné úkoly, jako jsou hraní her, úpravy videí, 3D modelování atd. Pokud tedy běží pouze "malé" úkoly, není třeba používat dGPU, což může významně snížit spotřebu energie. Když je dGPU znovu potřeba (spustíme aplikaci, která ji využívá), aktivuje se a začne pracovat.
+
+# Co je PRIME Offload?
+
+PRIME je sjednocující technologie pro práci s různými sestavami hybridní grafiky v Linuxu, jako jsou NVIDIA Optimus/AMD Dynamic Switchable Graphics. PRIME Offload je implementace myšlenky přesunu vykreslování z jedné GPU do druhé v Linuxu. Podpora PRIME v uzavřeném ovladači NVIDIA začala až s verzí 435.17. Pokud používáte zastaralé verze ovladačů jako 390xx nebo dokonce 340xx, PRIME Offload pro vás nebude fungovat. Důrazně také nedoporučujeme používat zastaralé metody pro správu hybridní grafiky, jako jsou nvidia-xrun nebo Bumblebee. Ty jsou zastaralé, nepodporované (Bumblebee nebylo aktualizováno více než 8 let), spoléhají pouze na triky a mají nižší výkon. Alternativou pro starší dGPU může být ovladač Nouveau, který podporuje PRIME Offload.
+
+V CachyOS **není potřeba nic konfigurovat pro funkci PRIME Offload**. S balíčkem `nvidia-utils` a nastavením v CachyOS máte vše, co potřebujete k použití PRIME Offload.
+
+Také se vyvarujte používání nástrojů jako je optimus-manager. Mohou se zdát pohodlné, ale mohou způsobit mnoho problémů, a opravdu je nepotřebujete, pokud vaše dGPU podporuje PRIME Offload a dynamické řízení spotřeby energie.
+
+# Jak používat PRIME Offload?
+
+Abyste indikovali ovladači, že chcete používat diskrétní grafiku místo integrované grafiky, musíte nastavit několik prostředí proměnných před spuštěním programu:
+
+```bash
+__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia <program>
+```
+
+Tento soubor proměnných vypadá velmi zdlouhavě a je snadné na ně zapomenout. Proto můžete nainstalovat balíček `nvidia-prime` (`sudo pacman -S nvidia-prime`), který obsahuje aliasy skriptů pro tyto proměnné. Spuštění aplikace s použitím těchto aliasů bude vypadat takto:
+
+```bash
+prime-run <program>
+```
+
+Kde `<program>` je název příkazu pro spuštění vaší aplikace.
+
+## Grafický způsob
+
+Možná budete mít pocit, že spouštění všech potřebných aplikací přes terminál s `prime-run` není příliš pohodlné, ale některé aplikace nebo desktopová prostředí nabízejí grafické nástroje pro řízení, která GPU použít při spouštění aplikací.
+
+### Lutris
+
+Pro nastavení her na běh s diskrétní grafikou v Lutris musíte jít do nastavení (tři pruhy v pravém dolním rohu okna a tlačítko "Nastavení"). Poté přejděte na *"Globální možnosti"* -> *"Zobrazení"*. Zde vyberte GPU, s níž má být hra spuštěna.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/lutris-prime.png')} />
+
+### Steam
+
+Steam nemá speciální nastavení pro spuštění hry s diskrétní grafikou, ale můžete kliknout na tlačítko *"Nastavení"* a před spuštěním každé hry přejít na *"Vlastnosti"*. Zde musíte zadat příkaz `prime-run` nebo prostředí proměnné jako:
+
+```bash
+prime-run %command%
+```
+
+Musíte se ujistit, že `%command%` je za `prime-run`! Paměťte si, že volby hry jdou za zástupnými znaky a systémové prostředí nebo příkazy přicházejí před ním.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/steam-prime.png')} />
+
+### KDE Plasma
+
+Plasma nabízí velmi užitečný způsob nastavení spouštění aplikací s diskrétní grafikou. Ale funguje pouze pokud je balíček `switcheroo-control` a příslušná služba nainstalována v systému:
+
+```bash
+sudo pacman -S switcheroo-control
+sudo systemctl enable --now switcheroo-control
+```
+
+Pro nové instalace CachyOS by měl být tento balíček a služba již ve výchozím nastavení povolený pomocí chwd.
+
+Poté klikněte pravým tlačítkem na ikonu zástupce na ploše nebo v nabídce aplikací a přejděte na *"Vlastnosti"* -> *"Aplikace"* -> *"Pokročilé možnosti"*.
+
+Měli byste mít zaškrtnutou možnost *"Spustit s dedikovanou grafickou kartou"*.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/plasma-prime.jpg')} />
+
+:::note
+Použití `switcheroo-control` umožňuje tyto zaškrtávací políčka fungovat na všech PRIME konfiguracích, které nemají dokonce ani NVIDIA dGPU, jako je například AMD+AMD.
+:::
+
+### GNOME
+
+V GNOME byste měli také nainstalovat `switcheroo-control` a kliknout pravým tlačítkem na ikonu aplikace a vybrat *"Spustit s dedikovanou grafickou kartou"*. Mějte však na paměti, že GNOME si tuto volbu nezapamatuje, a příště, když kliknete na ikonu, aplikace se stále spustí pomocí integrované grafiky.
+
+### Cinnamon
+
+Stejně jako v Plasma v Cinnamon můžete také jít do *Vlastností* zástupce aplikace, kterou chcete použít, a tam zaškrtnout zaškrtávací políčko.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cinnamon-prime.png')} />
+
+Pokud možnost volby Wayland session ve GDM není dostupná, ujistěte se, že máte nainstalován balíček switcheroo-control a jeho služba je aktivní, protože všechna desktopová prostředí na tuto funkcionalitu spoléhají.
+
+Řešení problému s nedostupností volby Wayland session spočívá v odstranění udev pravidel, která jsou za tuto situaci zodpovědná. Toho lze dosáhnout pomocí následujícího příkazu:
+
+```bash
+sudo ln -s /dev/null /etc/udev/rules.d/61-gdm.rules
+```
+
+Pokud máte problémy s velmi zpomalenou odezvou externího monitoru v režimu PRIME, jedná se pravděpodobně o známý problém s ovladačem NVIDIA. Doporučujeme mít nainstalovaný nejnovější ovladač NVIDIA a používat prostředí Wayland s kompozitorem, který podporuje explicitní synchronizaci. Pro GNOME byl tento problém vyřešen ve verzi 46.2, a podobně by měl být opraven i ve verzi 6.1 pro Plasma. Uživatelé nahlášejí, že některá prostředí již ve verzi 6.0 mají normální výkon, avšak jiná mohou stále tento problém mít, takže je vhodné přepnout na nejnovější verzi GNOME nebo Plasma pro jeho řešení.n go to *"Properties"* -> *"Application"* -> *"Advanced Options"*.
+
+You should have *"Run using dedicated graphics card"* checkbox checked.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/plasma-prime.jpg')} />
+
+:::note
+Using switcheroo-control allows these checkboxes to work on all PRIME
+configurations that don't even have NVIDIA dGPU, such as AMD+AMD.
+:::
+
+### GNOME
+
+On GNOME, you should also install switcheroo-control as shown above and
+right-click on the application icon and select *"Run using discrete graphics"*.
+But note that GNOME does not remember this choice later, and the next time you
+simply click on the icon, application will still run using integrated graphics.
+
+### Cinnamon
+
+Similar to Plasma in Cinnamon, you can also go to the *Properties* of desktop
+entry of the application you want to use, and enable the checkbox there.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cinnamon-prime.png')} />
+
+If it's not available, make sure you have ``switcheroo-control`` installed and
+its service enabled, because all desktop environments rely on it for this
+functionality.
+
+# Troubleshooting
+
+## I: "I don't have a choice of Wayland session GDM"
+
+S: This is a GDM upstream issue that intentionally blocks access to Wayland
+session selection on the login screen, despite the fact that your integrated
+GPU may support Wayland perfectly well.
+
+To workaround this you need to disable the udev rules that are responsible for
+this:
+
+```bash
+sudo ln -s /dev/null /etc/udev/rules.d/61-gdm.rules
+```
+
+## I: "My external monitor is very laggy on PRIME"
+
+S: This is a known NVIDIA driver issue. You should have the latest NVIDIA
+driver installed and use Wayland with a compositor that supports explicit sync.
+For GNOME this has been fixed in version 46.2. For Plasma 6 it will probably be
+fixed with 6.1 although some users report normal performance already on 6.0.
+Other environments/window managers still have this issue, so you need to switch
+to the latest version of GNOME or Plasma to fix it.
+
