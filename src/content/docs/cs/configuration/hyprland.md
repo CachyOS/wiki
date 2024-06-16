@@ -4,7 +4,7 @@ description: CachyOS Hyprland klávesové zkratky & FAQ
 ---
 
 
-:::Upozornění
+:::caution
 Od doby, kdy Hyprland začal s přepracováním, je třeba si uvědomit, že momentálně není stabilní a můžete se setkat s chybami/náhlými pády. Používejte na vlastní nebezpečí.
 Dokonce jejich "stabilní" verze je také rozbitá a chybová, proto nemáme v plánu poskytovat podporu v budoucnosti. Místo toho se obracejte na jejich wiki.
 :::
