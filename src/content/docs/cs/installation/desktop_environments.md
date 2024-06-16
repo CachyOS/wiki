@@ -25,7 +25,7 @@ Během instalace vyberte pouze jedno desktopové prostředí
 15. **Mate Desktop** je tradiční desktopové prostředí forkované z GNOME 2. Je charakterizováno svým klasickým vzhledem a dojmem, s jednoduchým a intuitivním uživatelským rozhraním. Mate poskytuje snadno použitelné a vysoce přizpůsobitelné desktopové prostředí pro uživatele, kteří preferují klasický vzhled a dojem.
 16. **Qtile** je správcem oken pro X11, který je konfigurován pomocí programovacího jazyka Python.
 
-:::note
+:::Poznámka
 Uživatelská podpora pro Hyprland již není poskytována.
 :::
 
