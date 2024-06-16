@@ -413,6 +413,10 @@ export default defineConfig({
           },
           items: [
             {
+              label: 'Community Rules',
+              link: 'policy/community-rules',
+            },
+            {
               label: 'Code of Conduct',
               translations: {
                 'sk': 'Kódex správania',
