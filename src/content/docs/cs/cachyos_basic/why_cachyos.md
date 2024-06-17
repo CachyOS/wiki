@@ -5,7 +5,7 @@ description: Proč je pro tebe CachyOS lepší
 
 CachyOS je uživatelsky přívětivá a vysoce optimalizovaná Linuxová distribuce založená na Arch Linuxu.
 
-# Co dělá CachyOS nejen distribucí založenou na Archu?.
+# Co dělá CachyOS nejen distribucí založenou na Archy?
 
 CachyOS není obyčejná distribuce založená na Arch Linuxu; má několik významných změn oproti ostatním.
 
