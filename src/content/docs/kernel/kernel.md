@@ -29,9 +29,9 @@ CachyOS does provide a bunch of different variants for the kernel. Below you can
 
 ### linux-cachyos (Default Kernel)
 
-The default kernel is thought to provide our suggestion and we are open to do their changes, in terms of scheduler and configuration.
-The changes can happen, if there are regressions in schedulers or other configuration.
-Currently the linux-cachyos kernel provies the CachyOS Base Patchset, sched-ext framework (The extensible scheduler class), and the BORE (Burst-Oriented Response Enhancer) Scheduler.
+The default kernel is our main recommendation in terms of scheduler choice and configuration. We are always open to feedback and
+suggestions on what should be the default. Changes in the default kernel may happen if there are regressions.
+Currently the linux-cachyos kernel provides the CachyOS Base Patchset, sched-ext framework (The extensible scheduler class), and the BORE (Burst-Oriented Response Enhancer) Scheduler.
 
 ### linux-cachyos-bore
 
