@@ -40,7 +40,7 @@ The BORE kernel does utilize the CachyOS Base Patchset and the BORE Scheduler wi
 ### linux-cachyos-deckify
 
 The deckify kernel contains the same patches as the default kernel, but utilizes extra changes for the Steam Deck and other Handhelds to provide compatibility for them.
-This kernel is used as default in the CachyOS Handheld Edition.
+This kernel is the default in the CachyOS Handheld Edition.
 
 ### linux-cachyos-echo
 
@@ -52,7 +52,7 @@ The EEVDF (Earliest Eligible Virtual Deadline First) kernel does utilize the Cac
 
 ### linux-cachyos-hardened
 
-The hardened kernel does use the CachyOS Base Patchset and the hardened patch from linux-hardened
+The hardened kernel does use the CachyOS Base Patchset and the hardened patches from linux-hardened
 
 ### linux-cachyos-lts
 
@@ -66,7 +66,7 @@ This kernel is not suggested for new users and only thought for testing reasons.
 
 ### linux-cachyos-rt-bore
 
-The RT (realtime) kernel does utilize the CachyOS Base Patchset, Real Time Patch and BORE Scheduler. RT Preemption is as default enabled at this kernel.
+The RT (realtime) kernel does utilize the CachyOS Base Patchset, Real Time Patch and BORE Scheduler. RT Preemption enabled by default.
 
 ### linux-cachyos-sched-ext
 
@@ -75,4 +75,4 @@ The sched-ext kernel does contain the CachyOS Base Patchset and the sched-ext Fr
 ### linux-cachyos-server
 
 The Server Kernel is targeted for servers and more throughput. The kernel is NOT tuned for interactivity and is not suggested for desktop users.
-The main differences here are a lower tickrate (300Hz), No Preemption and CONFIG_CACHY not applied. The kernel does only contain the CachyOS Base Patchset.
+The main differences here are a lower tickrate (300Hz), No Preemption and CONFIG_CACHY not applied. This kernel only contains the CachyOS Base Patchset.
