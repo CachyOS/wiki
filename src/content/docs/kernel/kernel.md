@@ -56,7 +56,8 @@ The hardened kernel does use the CachyOS Base Patchset and the hardened patches 
 
 ### linux-cachyos-lts
 
-The LTS (Longterm) Kernel is based on the latest release of the Longterm branch and includes some little and stable patches, like configuration changes, amd-pstate patches and BBRv3.
+The LTS (Longterm) Kernel is based on the latest release of the Longterm branch. Patches in the LTS variant are fewer in number
+compared to the latest variants to ensure more stability. These patches include configuration changes, amd-pstate patches and BBR-v3.
 
 ### linux-cachyos-rc
 
