@@ -6,10 +6,10 @@ CachyOS does provide Kernel Modules precompiled for every kernel from us.
 
 ## ZFS Module
 
-Since we are providing ZFS support directly in the installer, we want to ensure that the ZFS Module is all time compatible with our kernel version.
+Since we are providing ZFS support directly in the installer, we want to ensure that the ZFS Module is always compatible with our kernel version.
 
-This can be archived, when we compile the module directly with the kernel and package the module into an own package.
-We are also pulling in upstream patches into the module to ensure compatibility with the latest kernel.
+This can be achieved by compiling the module directly inside the kernel and packaging the module into its own package.
+We also pull in upstream patches into the module to ensure compatibility with the latest kernel.
 
 The ZFS Module is simply named as the installed kernel + "-zfs" as ending.
 Here some examples:
@@ -24,17 +24,18 @@ linux-cachyos-bore-lto-headers (Kernel Headers)
 linux-cachyos-bore-lto-zfs (ZFS Module)
 ```
 
-If youre installing an different kernel, when using the ZFS Filesystem, be sure to also install the zfs module with it.
+If youre installing a different kernel, when using the ZFS Filesystem, be sure to also install the zfs module with it.
 
 ## NVIDIA Module
 
-We are also providing a pre compiled NVIDIA Module, which makes "nvidia-dkms" not required anymore.
-This benefits to users, since they don't need to compile the module on their own. This compilation can take some time at the update process, depending on the CPU Power.
+We provide a pre-compiled NVIDIA module, which makes "nvidia-dkms" not required anymore.
+The main advantage of this pre-compiled module is that users don't have to compile their own NVIDIA module everytime a new kernel package is installed, saving
+precious time and CPU cycles in the process.
 
 Also we can ensure that the module is correctly compiling for the users.
 We are also pulling patches into the module, if required to ensure compatibility with the latest kernel version.
 
-The NVIDIA Module is simply named as the installed kernel + "-zfs" as ending.
+The NVIDIA Module is simply named as the installed kernel + "-nvidia" as ending.
 Here some examples:
 
 ```
