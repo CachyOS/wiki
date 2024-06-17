@@ -5,7 +5,7 @@ description: Things you can do to tweak after installing
 
 # General System Tweaks
 
-1\. CPU mitigation's
+1\. CPU mitigations
 --------------------------------
 
 A public speculative execution attack exploiting return instructions (retbleed) was revealed in July 2022. The kernel has fixed this, but it results in a significant performance regression (14-39%).
@@ -21,7 +21,7 @@ Check which mitigation's your CPU is affected by using:
 grep . /sys/devices/system/cpu/vulnerabilities/*
 ```
 
-### Disabling mitigation's
+### Disabling mitigations
 
 While disabling the mitigation's increases performance, it also introduces security risks.
 
