@@ -119,7 +119,7 @@ Available preferences: `performance`, `power`, `balance_power`, `balance_perform
 Benchmarks for each preference can be found here:
 [https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/](https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/)
 
-4\. AMD P-State Preferred Core Handling (enabled as default)
+4\. AMD P-State Preferred Core Handling
 ---------------------------------
 
 AMD Pstate driver will provide an initial core ordering at boot time. It relies on the CPPC interface to communicate the core ranking to the operating system and scheduler to make sure that OS is choosing the cores with highest performance firstly for scheduling the process. When AMD Pstate driver receives a message with the highest performance change, it will update the core ranking.
@@ -128,7 +128,9 @@ This can result into a better performance and process handling.
 More information here:
 https://lore.kernel.org/linux-pm/20230808081001.2215240-1-li.meng@amd.com/
 
-The AMD P-State Preferred Core Handling is now enabled by default. 
+:::note
+AMD P-State Preferred Core Handling is enabled by default for all supported CPUs.
+:::
 
 You can use the following command to check if your CPU supports it:
 ```sh
