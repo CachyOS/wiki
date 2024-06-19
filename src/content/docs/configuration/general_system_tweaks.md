@@ -65,15 +65,19 @@ Add `gather_data_sampling=off` to your kernel cmdline options.
 2\. AMD P-State Driver
 ---------------------------
 
-For improved performance and power efficiency, you can enable the AMD P-State EPP driver. The default AMD P-State driver may not provide the same benefits as the acpi-cpufreq driver.
+`amd-pstate` is the AMD CPU performance scaling driver that introduces a new CPU frequency control mechanism on modern AMD APU and CPU series in Linux kernel. The new mechanism is based on Collaborative Processor Performance Control (CPPC) which provides finer grain frequency management than the `acpi-cpufreq` driver. CPPC allows a flexible, low-latency interface for the Linux kernel to directly communicate the performance hints to hardware.
 
-Add one of the following options to your kernel command line:
+Below are 3 operation modes of the `amd-pstate` driver and kernel cmdline entries to use them on boot:
 
-- **AMD P-State**: `amd-pstate=passive`
-- **AMD P-State-GUIDED**: `amd-pstate=guided`
-- **AMD P-State EPP**: `amd-pstate=active`
+- **AMD P-State (Non-Autonomous Mode)**: `amd-pstate=passive`
+- **AMD P-State Guided (Guided Autonomous Mode)**: `amd-pstate=guided`
+- **AMD P-State EPP (Autonomous Mode)**: `amd-pstate=active`
 
-You can switch between modes at runtime to test the options:
+:::note
+The AMD P-State EPP Driver is used by default when no explicit configuration is made.
+:::
+
+You can also switch between operation modes at runtime to test the options:
 
 - **Autonomous mode**: platform considers only the values set for Minimum performance, Maximum performance, and Energy Performance Preference.
    ```sh
@@ -89,11 +93,6 @@ You can switch between modes at runtime to test the options:
    ```sh
    echo passive | sudo tee /sys/devices/system/cpu/amd_pstate/status
    ```
-
-:::note
-Since kernel 6.5, `amd-pstate=active` is the default on Zen 2 or newer. However, there is an issue on some
-Zen 3 CPUs that don't automatically load it.
-:::
 
 For more information:
 
