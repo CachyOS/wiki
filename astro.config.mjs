@@ -20,6 +20,10 @@ export const locales = {
     label: 'Slovensky',
     lang: 'sk',
   },
+  cs: {
+    label: 'Čeština',
+    lang: 'cs',
+  },
 };
 const site = 'https://wiki.cachyos.org/';
 
@@ -78,12 +82,14 @@ export default defineConfig({
           label: 'Getting Started',
           translations: {
             'sk': 'Začíname',
+            'cs': 'Začínáme',
           },
           items: [
             {
               label: 'Why CachyOS?',
               translations: {
                 'sk': 'Prečo CachyOS?',
+                'cs': 'Proč CachyOS?',
               },
               link: 'cachyos_basic/why_cachyos',
             },
@@ -91,6 +97,7 @@ export default defineConfig({
               label: 'Downloading CachyOS',
               translations: {
                 'sk': 'Sťahovanie CachyOS',
+                'cs': 'Stažení CachyOS',
               },
               link: 'cachyos_basic/download',
             },
@@ -100,12 +107,14 @@ export default defineConfig({
           label: 'Installation',
           translations: {
             'sk': 'Inštalácia',
+            'cs': 'Instalace',
           },
           items: [
             {
               label: 'Installation Prepare',
               translations: {
                 'sk': 'Príprava na inštaláciu',
+                'cs': 'Příprava Instalace',
               },
               link: 'installation/installation_prepare',
             },
@@ -113,6 +122,7 @@ export default defineConfig({
               label: 'Boot managers',
               translations: {
                 'sk': 'Boot manažéry',
+                'cs': 'Boot manažeři',
               },
               link: 'installation/bootmanagers',
             },
@@ -120,6 +130,7 @@ export default defineConfig({
               label: 'Filesystem',
               translations: {
                 'sk': 'Súborový systém',
+                'cs': 'Filesystem',
               },
               link: 'installation/filesystem',
             },
@@ -127,6 +138,7 @@ export default defineConfig({
               label: 'Screenshots',
               translations: {
                 'sk': 'Snímky obrazovky',
+                'cs': 'Screenshots',
               },
               link: 'installation/screenshots',
             },
@@ -134,6 +146,7 @@ export default defineConfig({
               label: 'Desktop Environments',
               translations: {
                 'sk': 'Desktopové prostredia',
+                'cs': 'Desktop prostředí',
               },
               link: 'installation/desktop_environments',
             },
@@ -141,6 +154,7 @@ export default defineConfig({
               label: 'Installation on Root',
               translations: {
                 'sk': 'Inštalácia Root',
+                'cs': 'Instalace na kořenový oddíl',
               },
               link: 'installation/installation_on_root',
             },
@@ -148,6 +162,7 @@ export default defineConfig({
               label: 'Installation Dual Boot',
               translations: {
                 'sk': 'Inštalácia Dual Root',
+                'cs': 'Instalace duálního zavaděče',
               },
               link: 'installation/installation_dualboot',
             },
@@ -155,6 +170,7 @@ export default defineConfig({
               label: 'Installation T2 MacBook',
               translations: {
                 'sk': 'Inštalácia na T2 MacBook',
+                'cs': 'Instalace na MacBook T2',
               },
               link: 'installation/installation_t2macbook',
             },
@@ -162,6 +178,7 @@ export default defineConfig({
               label: 'Installation on Root with Secure Boot',
               translations: {
                 'sk': 'Inštalácia Root so zabezpečeným spustením',
+                'cs': 'Instalace na kořenový oddíl s Secure Boot',
               },
               link: 'installation/installation_secureboot',
             },
@@ -169,6 +186,7 @@ export default defineConfig({
               label: 'Installation Handheld Edition',
               translations: {
                 'sk': 'Inštalácia Handheld Edition',
+                'cs': 'Instalace verze pro přenosné zařízení',
               },
               link: 'installation/installation_handheld',
             },
@@ -176,6 +194,7 @@ export default defineConfig({
               label: 'Updating CachyOS',
               translations: {
                 'sk': 'Aktualizácia CachyOS',
+                'cs': 'Aktualizace CachyOS',
               },
               link: 'installation/updating_cachyos',
             },
@@ -185,12 +204,14 @@ export default defineConfig({
           label: 'Configuration',
           translations: {
             'sk': 'Konfigurácia',
+            'cs': 'Nastavení',
           },
           items: [
             {
               label: 'Post Install Setup',
               translations: {
                 'sk': 'Nastavenie po inštalácii',
+                'cs': 'Nastavení po instalaci',
               },
               link: 'configuration/post_install_setup',
             },
@@ -198,6 +219,7 @@ export default defineConfig({
               label: 'Dual GPU Laptops (NVIDIA + iGPU)',
               translations: {
                 'sk': 'Dvojité GPU notebooky (NVIDIA + iGPU)',
+                'cs': 'Notebooky s dvojitou GPU (NVIDIA + iGPU)',
               },
               link: 'configuration/dual_gpu',
             },
@@ -205,6 +227,7 @@ export default defineConfig({
               label: 'General System Tweaks',
               translations: {
                 'sk': 'Všeobecné systémové úpravy',
+                'cs': 'Obecná úprava systému',
               },
               link: 'configuration/general_system_tweaks',
             },
@@ -212,6 +235,7 @@ export default defineConfig({
               label: 'Kernel Manager',
               translations: {
                 'sk': 'Správca jadra',
+                'cs': 'Správce jader',
               },
               link: 'configuration/kernel-manager',
             },
@@ -245,12 +269,14 @@ export default defineConfig({
           label: 'CachyOS Repositories',
           translations: {
             'sk': 'CachyOS Repozitáre',
+            'cs': 'CachyOS repozitáře',
           },
           items: [
             {
               label: 'What are the CachyOS repositories?',
               translations: {
                 'sk': 'Čo sú repozitáre CachyOS?',
+                'cs': 'Co jsou CachyOS repozitáře?',
               },
               link: 'cachyos_repositories/what_are_the_cachyos_repo',
             },
@@ -258,6 +284,7 @@ export default defineConfig({
               label: 'How to add CachyOS repositories?',
               translations: {
                 'sk': 'Ako pridať repozitáre CachyOS?',
+                'cs': 'Jak přidat CachyOS repozitáře?',
               },
               link: 'cachyos_repositories/how_to_add_cachyos_repo',
             },
@@ -265,6 +292,7 @@ export default defineConfig({
               label: 'PGO, BOLT and other Optimization',
               translations: {
                 'sk': 'PGO, BOLT a iné optimalizácie',
+                'cs': 'PGO, BOLT a další optimalizace',
               },
               link: 'cachyos_repositories/other_optimization',
             },
@@ -274,12 +302,14 @@ export default defineConfig({
           label: 'Kernel',
           translations: {
             'sk': 'Jadro',
+            'cs': 'Kernel',
           },
           items: [
             {
               label: 'CachyOS Kernel Features',
               translations: {
                 'sk': 'Funkcie jadra CachyOS',
+                'cs': 'Funkce CachyOS kernelu',
               },
               link: 'kernel/kernel',
             },
@@ -287,6 +317,7 @@ export default defineConfig({
               label: 'sched-ext Tutorial',
               translations: {
                 'sk': 'sched-ext návod',
+                'cs': 'sched-ext Tutoriál',
               },
               link: 'kernel/sched-ext',
             },
@@ -294,6 +325,7 @@ export default defineConfig({
               label: 'Modules Handling (NVIDIA/ZFS)',
               translations: {
                 'sk': 'Správa modulov (NVIDIA/ZFS)',
+                'cs': 'Správa modulů (NVIDIA/ZFS)',
               },
               link: 'kernel/modules',
             },
@@ -303,16 +335,21 @@ export default defineConfig({
           label: 'Support',
           translations: {
             'sk': 'Podpora',
+            'cs': 'Podpora',
           },
           items: [
             {
               label: 'FAQ',
+              translations: {
+                'cs': 'Často kladené otázky',
+              },
               link: 'support/faq',
             },
             {
               label: 'Troubleshooting',
               translations: {
                 'sk': 'Riešenie problémov',
+                'cs': 'Řešení potíží',
               },
               link: 'support/troubleshooting',
             },
@@ -320,6 +357,7 @@ export default defineConfig({
               label: 'Getting Help',
               translations: {
                 'sk': 'Získanie pomoci',
+                'cs': 'Jak získat pomoc',
               },
               link: 'support/getting_help',
             },
@@ -327,6 +365,7 @@ export default defineConfig({
               label: 'Submitting Bugs',
               translations: {
                 'sk': 'Odoslanie chýb',
+                'cs': 'Nahlášení chyb',
               },
               link: 'support/submitting_bugs',
             },
@@ -334,6 +373,7 @@ export default defineConfig({
               label: 'Submitting Package Requests',
               translations: {
                 'sk': 'Odoslanie požiadaviek na balíčky',
+                'cs': 'Žádosti o balíčky',
               },
               link: 'support/submitting_package_requests',
             },
@@ -343,12 +383,14 @@ export default defineConfig({
           label: 'Changelogs',
           translations: {
             'sk': 'Zmenové logy',
+            'cs': 'Změny',
           },
           items: [
             {
               label: 'GUI Installer and ISO',
               translations: {
                 'sk': 'GUI Inštalátor a ISO',
+                'cs': 'Grafický instalátor a ISO',
               },
               link: 'changelogs/gui_installer',
             },
@@ -356,6 +398,7 @@ export default defineConfig({
               label: 'CLI Installer',
               translations: {
                 'sk': 'CLI Inštalátor',
+                'cs': 'Příkazový řádek instalátoru',
               },
               link: 'changelogs/cli_installer',
             },
@@ -366,12 +409,18 @@ export default defineConfig({
           label: 'Policy',
           translations: {
             'sk': 'Politika',
+            'cs': 'Podmínky',
           },
           items: [
+            {
+              label: 'Community Rules',
+              link: 'policy/community-rules',
+            },
             {
               label: 'Code of Conduct',
               translations: {
                 'sk': 'Kódex správania',
+                'cs': 'Kodex chování',
               },
               link: 'policy/code_of_conduct',
             },
@@ -379,6 +428,7 @@ export default defineConfig({
               label: 'Terms of Service',
               translations: {
                 'sk': 'Podmienky služby',
+                'cs': 'Obchodní podmínky',
               },
               link: 'policy/terms_of_service',
             },
@@ -386,6 +436,7 @@ export default defineConfig({
               label: 'Privacy Policy',
               translations: {
                 'sk': 'Zásady ochrany osobných údajov',
+                'cs': 'Zásady ochrany osobních údajů',
               },
               link: 'policy/privacy_policy',
             },
@@ -393,6 +444,7 @@ export default defineConfig({
               label: 'Repository Policy',
               translations: {
                 'sk': 'Politika repozitárov',
+                'cs': 'Repozitářní politika',
               },
               link: 'policy/repository_policy',
             },
@@ -400,6 +452,7 @@ export default defineConfig({
               label: 'Social',
               translations: {
                 'sk': 'Sociálne siete',
+                'cs': 'Sociální sítě',
               },
               link: 'policy/social',
             },
@@ -407,6 +460,7 @@ export default defineConfig({
               label: 'Donation',
               translations: {
                 'sk': 'Darcovstvo',
+                'cs': 'Dobrovolné příspěvky',
               },
               link: 'policy/donation',
             },

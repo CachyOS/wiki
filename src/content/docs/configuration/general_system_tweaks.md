@@ -160,3 +160,21 @@ For more information on split lock, see:
 
 - https://www.phoronix.com/news/Linux-Splitlock-Hurts-Gaming
 - https://github.com/doitsujin/dxvk/issues/2938
+
+6\. Enabling Kernel Samepage Merging
+---------------------------------
+
+CachyOS has used earlier as default uksmd (userspace kernel samepage merging) and then replaced this my the MemoryKSM function by systemd.
+Since there is a general cpu overhead and mainly a benefit for Hosts, which are running VM's we decided to disable this feature for now.
+
+User can enable again by following command:
+```sh
+sudo ksmctl --enable
+```
+
+After that Kernel Samepage Merging is enabled and it will merge memory pages into one, if possible.
+
+to disable KSM again, run following
+```sh
+sudo ksmctl --disable
+```

@@ -1,0 +1,94 @@
+---
+title: Secure Boot s CachyOS
+description: Jak nainstalovat CachyOS s povoleným Secure Boot
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+# Jak duálně bootovat CachyOS a Windows s povoleným Secure Boot
+
+Budeme používat boot manager **rEFInd**.
+
+<Steps>
+
+1. Dočasně vypněte Secure Boot a nabootujte pomocí bootovatelného USB s CachyOS.
+
+2. Nyní budete potřebovat aktivní připojení k internetu.
+
+    Klikněte na **Launch Installer** > **Online** > **rEFInd**.
+
+3. Pokračujte s instalací. V kroku s vytvářením oddílů vyberte **Ručně** a vytvořte následující oddíl:
+
+    - **Velikost**: 500 MB
+    - **Souborový systém**: FAT32
+    - **Přípojný bod**: /boot/efi
+    - **Flags**: boot
+
+4. Vytvořte zbylé oddíly (root, swap, atd.) a pokračujte s instalací. Po dokončení restartujte systém.
+
+5. Nainstalujte balíčky `shim-signed` a `sbsigntools` z AUR.
+
+6. Spusťte tento příkaz pro znovu nainstalování **rEFInd** s instalovaným shimem a automatickým generováním klíčů pro podepsání binárek **rEFInd**:
+
+    ```bash
+    sudo refind-install --shim /usr/share/shim-signed/shimx64.efi --localkeys
+    ```
+
+7. Pro odpovědi na výzvy zadejte `Y` a dokončete instalaci.
+
+8. Podepište kernel binárku pomocí klíčů generovaných **rEFInd** pomocí následujícího příkazu:
+
+    ```bash
+    sudo sbsign --key /etc/refind.d/keys/refind_local.key --cert /etc/refind.d/keys/refind_local.crt --output /boot/vmlinuz-linux-cachyos /boot/vmlinuz-linux-cachyos
+    ```
+    > Název vašeho kernelu se může lišit!
+
+9. Jsme téměř hotovi! Nyní restartujte vaše zařízení, zapněte Secure Boot a normálně nabootujte.
+
+10. Uvidíte zprávu: `Verification failed: Security Violation`. Stiskněte **Enter**.
+
+11. Otevře se Shim UEFI Key Management. Stiskněte libovolnou klávesu pro otevření MokManager.
+
+12. V obrazovce Perform MOK management vyberte **Enroll key from disk** a procházejte do /EFI/refind/keys. Vyberte `refind_local.crt`.
+
+13. Stiskněte **Enter** > **Continue** > **Yes**.
+
+14. Restartujte vaše zařízení.
+
+</Steps>
+
+Všechno by mělo nyní fungovat perfektně. Spusťte `bootctl` pro kontrolu stavu Secure Boot.
+
+
+
+## Tipy a triky
+
+### Podepisování pomocí Hook
+
+Podepisování kernelu může být automatizováno pomocí post hooku mkinitcpio. Viz [Secure Boot#Signing the kernel with a mkinitcpio post hook](https://wiki.archlinux.org/title/Secure_Boot#Signing_the_kernel_with_a_mkinitcpio_post_hook).
+
+### Používání KeyTool
+
+KeyTool může být použit pro přidání/odstranění/náhradu klíčů z NVRAM vašeho zařízení. Pro použití:
+
+<Steps>
+
+1. Zkopírujte `KeyTool.efi`:
+
+    ```bash
+    sudo cp /usr/share/efitools/KeyTool.efi /boot/efi/EFI/refind/
+    ```
+
+2. Podepište `KeyTool.efi`:
+
+    ```bash
+    sudo sbsign --key /etc/refind.d/keys/refind_local.key --cert /etc/refind.d/keys/refind_local.crt --output /boot/efi/EFI/refind/KeyTool.efi /boot/efi/EFI/refind/KeyTool.efi
+    ```
+
+3. Vyberte **KeyTool** z bootovací obrazovky **rEFInd** pro otevření.
+
+</Steps>
+
+## Poděkování
+
+Díky [Aritra Karak](https://github.com/tr1ckydev) za napsání tohoto návodu!

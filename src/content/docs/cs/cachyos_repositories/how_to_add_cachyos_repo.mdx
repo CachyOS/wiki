@@ -1,0 +1,239 @@
+---
+title: Přidání repozitáře CachyOS
+description: Krok za krokem jak přidat repozitář CachyOS do vašeho systému Arch Linux s podporou x86-64-v3, x86-64-v4
+
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+Instalace repozitářů CachyOS
+-------------------------------
+
+### Možnost 1: Automatizovaná instalace repozitářů CachyOS
+
+Udělali jsme to pro vás snadné! Stačí spustit následující příkazy, abyste použili náš pomocný skript, který vše udělá za vás. 😉
+
+Spusťte následující příkazy:
+
+<Steps>
+
+1. Získejte archiv se skriptem pomocí jednoho z následujících nástrojů:
+
+   <Tabs>
+
+   <TabItem label="použití curl">
+
+   ```sh
+   curl https://mirror.cachyos.org/cachyos-repo.tar.xz -o cachyos-repo.tar.xz
+   ```
+
+   </TabItem>
+   <TabItem label="použití wget">
+
+   ```sh
+   wget https://mirror.cachyos.org/cachyos-repo.tar.xz
+   ```
+   > Pokud nemáte `wget`, nainstalujte ho pomocí `sudo pacman -S wget`
+
+   </TabItem>
+   </Tabs>
+
+2. Rozbalte a přejděte do archivu:
+
+   ```sh
+   tar xvf cachyos-repo.tar.xz && cd cachyos-repo
+   ```
+
+3. Spusťte skript s oprávněním sudo:
+
+   ```sh
+   sudo ./cachyos-repo.sh
+   ```
+
+</Steps>
+
+#### Chování skriptu
+
+<Steps>
+
+1. Skript automaticky detekuje architekturu CPU. Pokud CPU podporuje `x86-64-v4` nebo `x86-64-v3`, skript automaticky použije repozitáře optimalizované pro tuto architekturu > a několik dalších příznaků.
+
+2. Skript zálohovat váš starý `pacman.conf`.
+
+</Steps>
+
+### Možnost 2: Manuální instalace
+
+<Steps>
+
+1. Nainstalujte keyring CachyOS:
+
+   ```sh
+   sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
+   sudo pacman-key --lsign-key F3B607488DB35A47
+   ```
+
+2. Nainstalujte potřebné balíčky:
+
+   ```sh
+   sudo pacman -U 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-20240331-1-any.pkg.tar.zst' \
+                  'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-mirrorlist-18-1-any.pkg.tar.zst'    \
+                  'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v3-mirrorlist-18-1-any.pkg.tar.zst' \
+                  'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v4-mirrorlist-6-1-any.pkg.tar.zst'  \
+                  'https://mirror.cachyos.org/repo/x86_64/cachyos/pacman-6.1.0-5-x86_64.pkg.tar.zst'
+   ```
+
+</Steps>
+
+## Ověření kompatibility CPU
+Pokud chcete repozitáře CachyOS přidat ručně, musíte zkontrolovat kompatibilitu vašeho CPU s repozitáři CachyOS.
+> Pokud používáte výše uvedený skript k přidání repozitářů CachyOS, můžete tuto kontrolu přeskočit.
+
+#### 1. Zkontrolujte podporu spuštěním následujícího příkazu
+```sh
+/lib/ld-linux-x86-64.so.2 --help | grep supported
+```
+
+#### 2. Porozumění výstupu příkazu
+Věnujte pozornost textu v závorkách. **(supported, searched)**
+- Pokud uvidíte `x86-64-v4 (supported, searched)`, znamená to, že **CPU je kompatibilní** a může používat sadu instrukcí **x86-64-v4**.
+- Pokud uvidíte pouze `x86-64-v4`, znamená to, že **CPU není kompatibilní** a nemůže používat sadu instrukcí **x86-64-v4**.
+
+#### Příklad CPU kompatibilního se sadou instrukcí x86-64-v3
+```
+> /lib/ld-linux-x86-64.so.2 --help | grep supported
+  x86-64-v4
+  x86-64-v3 (supported, searched)
+  x86-64-v2 (supported, searched)
+```
+
+### 3. Přidání repozitářů CachyOS
+Musíte upravit `pacman.conf` a přidat repozitáře **POD EXISTUJÍCÍ ARCHLINUX REPOS**
+```sh
+sudo micro /etc/pacman.conf
+```
+
+#### Pokud váš CPU podporuje pouze `x86-64`, přidejte pouze `[cachyos]` repozitář
+```ini
+# repozitáře cachyos
+[cachyos]
+Include = /etc/pacman.d/cachyos-mirrorlist
+```
+
+#### Pokud váš CPU podporuje `x86-64-v4`, přidejte `[cachyos-v4]`, `[cachyos-core-v4]`, `[cachyos-extra-v4]` a `[cachyos]`
+```ini
+# repozitáře cachyos
+## Přidejte pouze pokud váš CPU podporuje architekturu x86-64-v4
+[cachyos-v4]
+Include = /etc/pacman.d/cachyos-v4-mirrorlist
+[cachyos-core-v4]
+Include = /etc/pacman.d/cachyos-v4-mirrorlist
+[cachyos-extra-v4]
+Include = /etc/pacman.d/cachyos-v4-mirrorlist
+[cachyos]
+Include = /etc/pacman.d/cachyos-mirrorlist
+```
+
+#### Pokud váš CPU podporuje `x86-64-v3`, přidejte `[cachyos-v3]`, `[cachyos-core-v3]`, `[cachyos-extra-v3]` a `[cachyos]`
+```ini
+# repozitáře cachyos
+## Přidejte pouze pokud váš CPU podporuje architekturu x86-64-v3
+[cachyos-v3]
+Include = /etc/pacman.d/cachyos-v3-mirrorlist
+[cachyos-core-v3]
+Include = /etc/pacman.d/cachyos-v3-mirrorlist
+[cachyos-extra-v3]
+Include = /etc/pacman.d/cachyos-v3-mirrorlist
+[cachyos]
+Include = /etc/pacman.d/cachyos-mirrorlist
+# Po nich by měly následovat repozitáře Arch Linux
+#
+#[core]
+#Include = /etc/pacman.d/mirrorlist
+# ...
+```
+
+Nakonec aktualizujte váš systém s balíčky CachyOS:
+
+```bash
+sudo pacman -Syu
+```
+Užijte si zrychlení systému s optimalizovanými balíčky CachyOS! 🎉
+
+Ladící balíčky
+--------------
+
+Poskytujeme server pro debugování (`debuginfod`) pro snadný přístup k ladícím symbolům pomocí `gdb`. Nastavte následující prostředí:
+
+```bash
+export DEBUGINFOD_URLS=https://debuginfod.cachyos.org
+```
+
+Ladící balíčky jsou k dispozici v následujícím repozitáři. Přidejte je s následující konfigurací:
+
+```ini
+[cachyos-debug-v3]
+Server = https://debug.cachyos.org/repo/$arch_v3/$repo
+[cachyos-core-debug-v3]
+Server = https://debug.cachyos.org/repo/$arch_v3/$repo
+[cachyos-extra-debug-v3]
+Server = https://debug.cachyos.org/repo/$arch_v3/$repo
+```
+
+```ini
+[cachyos-debug-v4]
+Server = https://debug.cachyos.org/repo/$arch_v4/$repo
+[cachyos-core-debug-v4]
+Server = https://debug.cachyos.org/repo/$arch_v4/$repo
+[cachyos-extra-debug-v4]
+Server = https://debug.cachyos.org/repo/$arch_v4/$repo
+```
+
+Nebo je stáhněte ručně z výše uvedené URL.
+
+
+Odinstalace repozitářů CachyOS
+---------------------------------
+
+:::caution[UPOZORNĚNÍ]
+Od verze pacman 6.1 Arch Linux zavedl vrstvu validace funkcí. Vzhledem k tomu, že poskytujeme upravenou verzi pacmanu, která přidává různé funkce, může se objevit záplava upozornění při downgrade na archlinuxový pacman kvůli chybějící funkci "Instalováno z".
+Pokusili jsme se tuto funkci začlenit do pacmanu, protože o ni projevili zájem různí uživatelé a správci, ale byli jsme odmítnuti správcem pacmanu.
+:::
+
+Tento problém lze vyřešit instalací standardní verze archlinuxového pacmanu před [znovuinstalací všech balíčků](https://wiki.archlinux.org/title/Pacman/Tips_and_tricks#Reinstalling_all_packages).
+```sh
+sudo pacman -S core/pacman
+```
+
+### Možnost 1: Automatizované odstranění
+
+Spusťte tyto příkazy pro odstranění repozitářů CachyOS ze systému:
+
+```sh
+wget https://build.cachyos.org/cachyos-repo.tar.xz
+tar xvf cachyos-repo.tar.xz
+cd cachyos-repo
+sudo ./cachyos-repo.sh --remove
+```
+
+### Možnost 2: Ruční odstranění
+
+<Steps>
+
+1. Zálohujte nebo odeberte konfigurační soubor na adrese `/etc/pacman.conf`.
+
+2. Spusťte tento příkaz:
+
+   ```sh
+   sudo mv /etc/pacman.conf.bak /etc/pacman.conf
+   ```
+
+3. Přepněte se na výchozí balíčky Arch Linux s tímto příkazem:
+
+   ```sh
+   sudo pacman -S core/pacman
+   pacman -Qqn | sudo pacman -S -
+   sudo pacman -Syu
+   ```
+
+</Steps>
