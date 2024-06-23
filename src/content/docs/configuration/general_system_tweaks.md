@@ -5,7 +5,7 @@ description: Things you can do to tweak after installing
 
 # General System Tweaks
 
-1\. CPU mitigation's
+1\. CPU mitigations
 --------------------------------
 
 A public speculative execution attack exploiting return instructions (retbleed) was revealed in July 2022. The kernel has fixed this, but it results in a significant performance regression (14-39%).
@@ -21,7 +21,7 @@ Check which mitigation's your CPU is affected by using:
 grep . /sys/devices/system/cpu/vulnerabilities/*
 ```
 
-### Disabling mitigation's
+### Disabling mitigations
 
 While disabling the mitigation's increases performance, it also introduces security risks.
 
@@ -65,15 +65,19 @@ Add `gather_data_sampling=off` to your kernel cmdline options.
 2\. AMD P-State Driver
 ---------------------------
 
-For improved performance and power efficiency, you can enable the AMD P-State EPP driver. The default AMD P-State driver may not provide the same benefits as the acpi-cpufreq driver.
+`amd-pstate` is the AMD CPU performance scaling driver that introduces a new CPU frequency control mechanism on modern AMD APU and CPU series in Linux kernel. The new mechanism is based on Collaborative Processor Performance Control (CPPC) which provides finer grain frequency management than the `acpi-cpufreq` driver. CPPC allows a flexible, low-latency interface for the Linux kernel to directly communicate the performance hints to hardware.
 
-Add one of the following options to your kernel command line:
+Below are 3 operation modes of the `amd-pstate` driver and kernel cmdline entries to use them on boot:
 
-- **AMD P-State**: `amd-pstate=passive`
-- **AMD P-State-GUIDED**: `amd-pstate=guided`
-- **AMD P-State EPP**: `amd-pstate=active`
+- **AMD P-State (Non-Autonomous Mode)**: `amd-pstate=passive`
+- **AMD P-State Guided (Guided Autonomous Mode)**: `amd-pstate=guided`
+- **AMD P-State EPP (Autonomous Mode)**: `amd-pstate=active`
 
-You can switch between modes at runtime to test the options:
+:::note
+The AMD P-State EPP Driver is used by default when no explicit configuration is made.
+:::
+
+You can also switch between operation modes at runtime to test the options:
 
 - **Autonomous mode**: platform considers only the values set for Minimum performance, Maximum performance, and Energy Performance Preference.
    ```sh
@@ -92,6 +96,7 @@ You can switch between modes at runtime to test the options:
 
 For more information:
 
+*   [https://www.kernel.org/doc/html/v6.9/admin-guide/pm/amd-pstate.html](https://www.kernel.org/doc/html/v6.9/admin-guide/pm/amd-pstate.html)
 *   [https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/](https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/)
 *   [https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/](https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/)
 
@@ -114,7 +119,7 @@ Available preferences: `performance`, `power`, `balance_power`, `balance_perform
 Benchmarks for each preference can be found here:
 [https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/](https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/)
 
-4\. AMD P-State Preferred Core Handling (enabled as default)
+4\. AMD P-State Preferred Core Handling
 ---------------------------------
 
 AMD Pstate driver will provide an initial core ordering at boot time. It relies on the CPPC interface to communicate the core ranking to the operating system and scheduler to make sure that OS is choosing the cores with highest performance firstly for scheduling the process. When AMD Pstate driver receives a message with the highest performance change, it will update the core ranking.
@@ -123,7 +128,9 @@ This can result into a better performance and process handling.
 More information here:
 https://lore.kernel.org/linux-pm/20230808081001.2215240-1-li.meng@amd.com/
 
-The AMD P-State Preferred Core Handling is now enabled by default. 
+:::note
+AMD P-State Preferred Core Handling is enabled by default for all supported CPUs.
+:::
 
 You can use the following command to check if your CPU supports it:
 ```sh

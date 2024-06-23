@@ -32,4 +32,4 @@ User support is no longer provided for Hyprland.
 Screenshots
 -----------
 
-Screenshots of our changes on the theming and general looking can be found in the Screenshot Wiki Section.
+Screenshots of our changes on the theming and general looking can be found in the [Screenshot Wiki](/installation/screenshots) Section.

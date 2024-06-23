@@ -3,13 +3,17 @@ title: sched-ext Tutorial
 description: Tutorial how to use LAVD, Rusty and Rustland
 ---
 
+`sched-ext` is a Linux kernel feature which enables implementing kernel thread schedulers in BPF(Berkeley Package Filter)
+and dynamically loading them. Essentially this allows end-users to change their schedulers in userspace without the need to
+build another kernel for a different scheduler.
+
 ##  Installing a Kernel with sched-ext support
 
 CachyOS provides kernels, which have OOB support for the sched-ext framework.
 Following kernels are supported:
 - linux-cachyos (default kernel)
 - linux-cachyos-sched-ext (latest Stable release)
-- linux-cachyos-sched-ext-debug (This is thought for developers to develop and work on sched-ext)
+- linux-cachyos-sched-ext-debug (This is mainly for developers to develop and work on sched-ext)
 - linux-cachyos-rc (latest testing release with the latest features)
 
 You can simply check with following command, if your kernel supports sched-ext:
@@ -26,7 +30,7 @@ Simply run following command to install the package:
 sudo pacman -Sy scx-scheds
 ```
 
-The `scx-scheds-git` package could have issues, when using it with the stable kernel due API or Feature changes. So the `scx-scheds-git` package should be as best used, together with the `linux-cachyos-rc` kernel.
+The `scx-scheds-git` package could have issues, when using it with the stable kernel due API or Feature changes. So the `scx-scheds-git` package should be best used together with the `linux-cachyos-rc` kernel.
 
 ### Starting the Scheduler
 
@@ -41,9 +45,10 @@ To stop the scheduler, you simply run CTRL + C and the scheduler will be stopped
 
 ### Systemd Service
 
-The scx packages provides also a systemd service. This services can be configured `/etc/default/scx`. 
-You can change here the scheduler you want to use for the systemd service and also pass options to it.
-As default the rusty scheduler is set. If you want to change the used scheduler by the service simply change the `SCX_SCHEDULER=scx_rusty` to `SCX_SCHEDULER=scx_lavd`.
+The scx packages provides also a systemd service. This service can be configured in `/etc/default/scx`.
+You can change the scheduler used by sched-ext and set custom flags for each scheduler in this configuration file.
+By default, the services uses the rusty scheduler. If you want to change the scheduler used by the service simply change
+the `SCX_SCHEDULER=scx_rusty` to `SCX_SCHEDULER=scx_lavd` or others.
 
 Now you can start/enable/stop the scheduler as any other systemd service.
 

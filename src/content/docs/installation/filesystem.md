@@ -7,17 +7,21 @@ description: Description and recommendations for the available filesystems. (ext
 
 CachyOS offers 5 filesystems to allow the user to choose what best fits their needs. The following will go over advantages, disadvantages and recommendations for each filesystem. Each filesystem comes with its requirements/utilities preinstalled on CachyOS.
 
+:::note
+CachyOS defaults to BTRFS if no other filesystem is selected when installing.
+:::
+
 ## XFS
-XFS is a journaling filesystem created and developed by Silicon Graphics, Inc. It was created in 1993, ported to linux in 2001, and is now widely supported by most linux distributions.
+XFS is a journaling filesystem created and developed by Silicon Graphics, Inc. It was created in 1993, ported to linux in 2001, and is now widely supported by most Linux distributions.
 ### Pros
-- Fast, xfs was originally designed with speed and extreme scalability in mind.
-- Reliable, xfs makes use of several technologies to prevent data corruption.
+- Fast, XFS was originally designed with speed and extreme scalability in mind.
+- Reliable, XFS makes use of several technologies to prevent data corruption.
 - Resistant to fragmentation due to its extent-based nature and delayed allocation strategy.
 ### Cons
 - Cannot be shrunk.
 
 ### Userspace utility
-The package containing userspace tools to manage xfs filesystems is `xfsprogs`.
+The package containing userspace tools to manage XFS filesystems is `xfsprogs`.
 
 ### Recommendation:
 XFS is the recommended filesystem for users who do not need advanced features and simply want a fast and reliable filesystem.
@@ -126,5 +130,10 @@ Bcachefs is still considered as experimental and can have issues.
 - Setup can be complicated
 
 ## TL:DR
-Use **xfs** or **ext** by default, BTRFS if snapshots and compression is something you want and ZFS if the ARC cache or zpools are wanted.
+Use the default filesystem **BTRFS** as it is considered stable and has a lot of neat features (snapshots, compression, etc). Use **XFS** or **Ext4** for a simple
+and fast filesystem.
+
+:::note
+Filesystem performance between BTRFS, XFS, Ext4 are negligible.
+:::
 

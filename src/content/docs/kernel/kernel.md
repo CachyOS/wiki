@@ -29,9 +29,9 @@ CachyOS does provide a bunch of different variants for the kernel. Below you can
 
 ### linux-cachyos (Default Kernel)
 
-The default kernel is thought to provide our suggestion and we are open to do their changes, in terms of scheduler and configuration.
-The changes can happen, if there are regressions in schedulers or other configuration.
-Currently the linux-cachyos kernel provies the CachyOS Base Patchset, sched-ext framework (The extensible scheduler class), and the BORE (Burst-Oriented Response Enhancer) Scheduler.
+The default kernel is our main recommendation in terms of scheduler choice and configuration. We are always open to feedback and
+suggestions on what should be the default. Changes in the default kernel may happen if there are regressions.
+Currently the linux-cachyos kernel provides the CachyOS Base Patchset, sched-ext framework (The extensible scheduler class), and the BORE (Burst-Oriented Response Enhancer) Scheduler.
 
 ### linux-cachyos-bore
 
@@ -40,7 +40,7 @@ The BORE kernel does utilize the CachyOS Base Patchset and the BORE Scheduler wi
 ### linux-cachyos-deckify
 
 The deckify kernel contains the same patches as the default kernel, but utilizes extra changes for the Steam Deck and other Handhelds to provide compatibility for them.
-This kernel is used as default in the CachyOS Handheld Edition.
+This kernel is the default in the CachyOS Handheld Edition.
 
 ### linux-cachyos-echo
 
@@ -52,11 +52,12 @@ The EEVDF (Earliest Eligible Virtual Deadline First) kernel does utilize the Cac
 
 ### linux-cachyos-hardened
 
-The hardened kernel does use the CachyOS Base Patchset and the hardened patch from linux-hardened
+The hardened kernel does use the CachyOS Base Patchset and the hardened patches from linux-hardened
 
 ### linux-cachyos-lts
 
-The LTS (Longterm) Kernel is based on the latest release of the Longterm branch and includes some little and stable patches, like configuration changes, amd-pstate patches and BBRv3.
+The LTS (Longterm) Kernel is based on the latest release of the Longterm branch. Patches in the LTS variant are fewer in number
+compared to the latest variants to ensure more stability. These patches include configuration changes, amd-pstate patches and BBR-v3.
 
 ### linux-cachyos-rc
 
@@ -66,7 +67,7 @@ This kernel is not suggested for new users and only thought for testing reasons.
 
 ### linux-cachyos-rt-bore
 
-The RT (realtime) kernel does utilize the CachyOS Base Patchset, Real Time Patch and BORE Scheduler. RT Preemption is as default enabled at this kernel.
+The RT (realtime) kernel does utilize the CachyOS Base Patchset, Real Time Patch and BORE Scheduler. RT Preemption enabled by default.
 
 ### linux-cachyos-sched-ext
 
@@ -75,4 +76,4 @@ The sched-ext kernel does contain the CachyOS Base Patchset and the sched-ext Fr
 ### linux-cachyos-server
 
 The Server Kernel is targeted for servers and more throughput. The kernel is NOT tuned for interactivity and is not suggested for desktop users.
-The main differences here are a lower tickrate (300Hz), No Preemption and CONFIG_CACHY not applied. The kernel does only contain the CachyOS Base Patchset.
+The main differences here are a lower tickrate (300Hz), No Preemption and CONFIG_CACHY not applied. This kernel only contains the CachyOS Base Patchset.
