@@ -182,7 +182,7 @@ export default defineConfig({
               },
               link: 'installation/installation_secureboot',
             },
-             {
+            {
               label: 'Installation Handheld Edition',
               translations: {
                 'sk': 'Inštalácia Handheld Edition',
@@ -222,6 +222,10 @@ export default defineConfig({
                 'cs': 'Notebooky s dvojitou GPU (NVIDIA + iGPU)',
               },
               link: 'configuration/dual_gpu',
+            },
+            {
+              label: 'Gaming',
+              link: 'configuration/gaming',
             },
             {
               label: 'General System Tweaks',
