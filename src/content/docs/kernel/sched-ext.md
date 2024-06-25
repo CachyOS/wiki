@@ -1,6 +1,6 @@
 ---
 title: sched-ext Tutorial
-description: Tutorial how to use LAVD, Rusty and Rustland
+description: Tutorial how to use LAVD, Rusty, Rustland and bpfland
 ---
 
 `sched-ext` is a Linux kernel feature which enables implementing kernel thread schedulers in BPF(Berkeley Package Filter)
@@ -76,7 +76,7 @@ Since there are really many example scheduler, we want to give a little suggesti
 - **scx_rusty** - a good global scheduler, which is very interactive and stress resistant. Can be for any workload
 - **scx_lavd** - Scheduler developed for Gaming and mainly for handhelds. This Scheduler has currently no Topology Aware (For example when the CPU has 2 CXX, like a 7950X)
 - **scx_rustland** - Scheduler with userspace scheduling. Can handle heavy workloads good, but does have overhead due userspace scheduling
-
+- **scx_bpfland** - Scheduler based on rustland, but without the userspace part. This removed the overhead of it and performance also quite well, equal to rusty
 
 ## GitHub
 
