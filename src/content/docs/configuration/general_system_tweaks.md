@@ -176,6 +176,16 @@ CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
 ❯ echo 0 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/boost # Disables boost on cpu0
 ```
 
+CachyOS also provides a version of `power-profiles-daemon` that backports a commit that enables
+support for AMD CPB. AMD CPB will disabled if on the `powersave` profile or on `balanced` profile + on battery.
+It will be enabled if on `performance` profile or `balanced` + AC.
+
+:::note
+The global CPB sysfs entry overrides any individual CPU boost state in the sysfs boost file.
+This means that changing `ppd` profiles or changing the global sysfs entry will change every CPU's
+boost state to the global value.
+:::
+
 For more information see:
 - https://lore.kernel.org/linux-pm/1a78eeaa-fadd-4734-aaeb-2fe11e96e198@amd.com/T/#m4a0c8917ea8fb033504055bd61512c80c85410c8
 
