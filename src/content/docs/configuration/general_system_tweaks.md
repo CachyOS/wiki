@@ -140,9 +140,56 @@ or
 ```sh
 cat /sys/devices/system/cpu/amd_pstate/status
 ```
-to see if it is enabled 
+to see if it is enabled.
 
-5\. Disabling Split Lock Mitigate
+5\. AMD P-State Core Performance Boost
+---------------------------------
+
+AMD Core Performance Boost aka AMD Turbo Core is a dynamic frequency scaling technology by AMD that allows the
+processor to dynamically adjust and control the processor operating frequency in certain version of its processors
+which allows for increased performance when needed while maintaining lower power and thermal parameters during normal operation.
+
+Since `linux-cachyos` 6.9.6, the kernel is patched with CPB support for AMD's p-state drivers (includes `passive`, `active` and `guided`).
+Users can change the global core frequency boost via the sysfs entry `/sys/devices/system/cpu/amd_pstate/cpb_boost`, e.g.
+```sh
+echo disabled | sudo tee /sys/devices/system/cpu/amd_pstate/cpb_boost # This disables AMD CPB globally
+echo enabled | sudo tee /sys/devices/system/cpu/amd_pstate/cpb_boost # This enables it globally
+```
+
+This patch also allows the user to update an individual CPU core's boost state in the sysfs boost file
+`/sys/devices/system/cpu/cpuX/cpufreq/boost` (X refers to the core number e.g. cpu0 is the first core, cpu1 second, etc)
+```sh
+❯ lscpu -ae # This shows that AMD CPB is disabled globally
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
+  0    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1212.8250
+  1    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1394.2180
+  2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 1204.4600
+
+❯ echo 1 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/boost # Enables boost on cpu0
+1
+❯ lscpu -ae
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
+  0    0      0    0 0:0:0:0          yes 4564.0000 400.0000 1393.2380
+  1    0      0    0 0:0:0:0          yes 3301.0000 400.0000  400.0000
+  2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 2157.8469
+
+❯ echo 0 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/boost # Disables boost on cpu0
+```
+
+CachyOS also provides a version of `power-profiles-daemon` that backports a commit that enables
+support for AMD CPB. AMD CPB will disabled if on the `powersave` profile or on `balanced` profile + on battery.
+It will be enabled if on `performance` profile or `balanced` + AC.
+
+:::note
+The global CPB sysfs entry overrides any individual CPU boost state in the sysfs boost file.
+This means that changing `ppd` profiles or changing the global sysfs entry will change every CPU's
+boost state to the global value.
+:::
+
+For more information see:
+- https://lore.kernel.org/linux-pm/1a78eeaa-fadd-4734-aaeb-2fe11e96e198@amd.com/T/#m4a0c8917ea8fb033504055bd61512c80c85410c8
+
+6\. Disabling Split Lock Mitigate
 ---------------------------------
 
 In some cases, split lock mitigate can slow down performance in some applications and games. A patch is available to disable it via sysctl.
@@ -161,7 +208,7 @@ For more information on split lock, see:
 - https://www.phoronix.com/news/Linux-Splitlock-Hurts-Gaming
 - https://github.com/doitsujin/dxvk/issues/2938
 
-6\. Enabling Kernel Samepage Merging
+7\. Enabling Kernel Samepage Merging
 ---------------------------------
 
 CachyOS has used earlier as default uksmd (userspace kernel samepage merging) and then replaced this my the MemoryKSM function by systemd.
