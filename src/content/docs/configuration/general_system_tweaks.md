@@ -178,3 +178,15 @@ to disable KSM again, run following
 ```sh
 sudo ksmctl --disable
 ```
+
+7\. Enable RCU Lazy
+---------------------------------
+
+RCU Lazy helps reducing the power usage at idle or lighlty loaded systems. This can be useful for laptops and handheld devices.
+The improvement is between 5-10% in terms of power savings, but can have a performance regression.
+The linux-cachyos-deckify kernel will have this option still enabled, since powersaving is a major improvement
+
+to enable rcu lazy add following to your kernel cmdline:
+```conf
+rcutree.enable_rcu_lazy=1
+```
