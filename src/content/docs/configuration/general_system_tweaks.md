@@ -140,9 +140,63 @@ or
 ```sh
 cat /sys/devices/system/cpu/amd_pstate/status
 ```
-to see if it is enabled 
+to see if it is enabled.
 
-5\. Disabling Split Lock Mitigate
+5\. AMD P-State Core Performance Boost
+---------------------------------
+
+AMD Core Performance Boost aka AMD Turbo Core is a dynamic frequency scaling technology by AMD that allows the
+processor to dynamically adjust and control the processor operating frequency in certain version of its processors
+which allows for increased performance when needed while maintaining lower power and thermal parameters during normal operation.
+
+Since `linux-cachyos` 6.9.6, the kernel is patched with CPB support for AMD's p-state drivers (includes `passive`, `active` and `guided`).
+Users can change the global core frequency boost via the sysfs entry `/sys/devices/system/cpu/amd_pstate/cpb_boost`, e.g.
+```sh
+echo disabled | sudo tee /sys/devices/system/cpu/amd_pstate/cpb_boost # This disables AMD CPB globally
+echo enabled | sudo tee /sys/devices/system/cpu/amd_pstate/cpb_boost # This enables it globally
+```
+
+This patch also allows the user to update an individual CPU core's boost state in the sysfs boost file
+`/sys/devices/system/cpu/cpuX/cpufreq/boost` (X refers to the core number e.g. cpu0 is the first core, cpu1 second, etc)
+```sh
+❯ lscpu -ae # This shows that AMD CPB is disabled globally
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
+  0    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1212.8250
+  1    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1394.2180
+  2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 1204.4600
+  3    0      0    1 1:1:1:0          yes 3301.0000 400.0000  400.0000
+  4    0      0    2 2:2:2:0          yes 3301.0000 400.0000 1200.2970
+  5    0      0    2 2:2:2:0          yes 3301.0000 400.0000  400.0000
+  6    0      0    3 3:3:3:0          yes 3301.0000 400.0000 2121.5459
+  7    0      0    3 3:3:3:0          yes 3301.0000 400.0000 2131.0349
+  8    0      0    4 4:4:4:0          yes 3301.0000 400.0000 1232.3440
+  9    0      0    4 4:4:4:0          yes 3301.0000 400.0000  400.0000
+ 10    0      0    5 5:5:5:0          yes 3301.0000 400.0000 2121.9399
+ 11    0      0    5 5:5:5:0          yes 3301.0000 400.0000  400.0000
+
+❯ echo 1 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/boost # Enables boost on cpu0
+❯ lscpu -ae
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
+  0    0      0    0 0:0:0:0          yes 4564.0000 400.0000 1393.2380
+  1    0      0    0 0:0:0:0          yes 3301.0000 400.0000  400.0000
+  2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 2157.8469
+  3    0      0    1 1:1:1:0          yes 3301.0000 400.0000 2145.7620
+  4    0      0    2 2:2:2:0          yes 3301.0000 400.0000 1456.8030
+  5    0      0    2 2:2:2:0          yes 3301.0000 400.0000  400.0000
+  6    0      0    3 3:3:3:0          yes 3301.0000 400.0000 2121.3250
+  7    0      0    3 3:3:3:0          yes 3301.0000 400.0000  400.0000
+  8    0      0    4 4:4:4:0          yes 3301.0000 400.0000 1348.7450
+  9    0      0    4 4:4:4:0          yes 3301.0000 400.0000  400.0000
+ 10    0      0    5 5:5:5:0          yes 3301.0000 400.0000 2133.4260
+ 11    0      0    5 5:5:5:0          yes 3301.0000 400.0000 1447.5959
+
+❯ echo 0 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/boost # Disables boost on cpu0
+```
+
+For more information see:
+- https://lore.kernel.org/linux-pm/1a78eeaa-fadd-4734-aaeb-2fe11e96e198@amd.com/T/#m4a0c8917ea8fb033504055bd61512c80c85410c8
+
+6\. Disabling Split Lock Mitigate
 ---------------------------------
 
 In some cases, split lock mitigate can slow down performance in some applications and games. A patch is available to disable it via sysctl.
@@ -161,7 +215,7 @@ For more information on split lock, see:
 - https://www.phoronix.com/news/Linux-Splitlock-Hurts-Gaming
 - https://github.com/doitsujin/dxvk/issues/2938
 
-6\. Enabling Kernel Samepage Merging
+7\. Enabling Kernel Samepage Merging
 ---------------------------------
 
 CachyOS has used earlier as default uksmd (userspace kernel samepage merging) and then replaced this my the MemoryKSM function by systemd.
