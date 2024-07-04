@@ -226,7 +226,7 @@ to disable KSM again, run following
 sudo ksmctl --disable
 ```
 
-7\. Enable RCU Lazy
+8\. Enable RCU Lazy
 ---------------------------------
 
 RCU Lazy helps reducing the power usage at idle or lighlty loaded systems. This can be useful for laptops and handheld devices.
@@ -237,3 +237,22 @@ to enable rcu lazy add following to your kernel cmdline:
 ```conf
 rcutree.enable_rcu_lazy=1
 ```
+
+9\. NVIDIA GSP Firmware
+---------------------------------
+
+The NVIDIA GSP Firmware can introduce in some cases a bit more worse performance, this has been mostly fixed with the 555.58.02 NVIDIA Driver, but it is still on some systems problematic.
+If you are facing hiccups in KDE or bad performance in some cases, you can disable the GSP Firmware with following:
+`/usr/lib/modprobe.d/nvidia-gsp.conf`
+
+```conf
+options nvidia NVreg_EnableGpuFirmware=0
+```
+
+After that run:
+```sh
+sudo mkinitcpio -P
+```
+
+Generally, it is suggested to retest this with every new NVIDIA Driver version again, since the GSP Firmware also brings a bunch of benefits.
+Also, NVIDIA starts to do mainly their QA Testing with GSP Firmware.
