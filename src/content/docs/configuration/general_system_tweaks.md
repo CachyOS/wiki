@@ -150,15 +150,11 @@ processor to dynamically adjust and control the processor operating frequency in
 which allows for increased performance when needed while maintaining lower power and thermal parameters during normal operation.
 
 Since `linux-cachyos` 6.9.6, the kernel is patched with CPB support for AMD's p-state drivers (includes `passive`, `active` and `guided`).
-Users can change the global core frequency boost via the sysfs entry `/sys/devices/system/cpu/amd_pstate/cpb_boost`, e.g.
-```sh
-echo disabled | sudo tee /sys/devices/system/cpu/amd_pstate/cpb_boost # This disables AMD CPB globally
-echo enabled | sudo tee /sys/devices/system/cpu/amd_pstate/cpb_boost # This enables it globally
-```
+Users can change each CPU's boost state via the sysfs boost file `/sys/devices/system/cpu/cpuX/cpufreq/boost`
+(X refers to the core number e.g. cpu0 is the first core, cpu1 second, etc).
 
-This patch also allows the user to update an individual CPU core's boost state in the sysfs boost file
-`/sys/devices/system/cpu/cpuX/cpufreq/boost` (X refers to the core number e.g. cpu0 is the first core, cpu1 second, etc)
 ```sh
+❯ echo 0 | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/boost # Disable boost for all cores
 ❯ lscpu -ae # This shows that AMD CPB is disabled globally
 CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
   0    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1212.8250
@@ -166,28 +162,20 @@ CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
   2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 1204.4600
 
 ❯ echo 1 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/boost # Enables boost on cpu0
-1
 ❯ lscpu -ae
 CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
   0    0      0    0 0:0:0:0          yes 4564.0000 400.0000 1393.2380
   1    0      0    0 0:0:0:0          yes 3301.0000 400.0000  400.0000
   2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 2157.8469
-
-❯ echo 0 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/boost # Disables boost on cpu0
 ```
 
 CachyOS also provides a version of `power-profiles-daemon` that backports a commit that enables
 support for AMD CPB. AMD CPB will disabled if on the `powersave` profile or on `balanced` profile + on battery.
 It will be enabled if on `performance` profile or `balanced` + AC.
 
-:::note
-The global CPB sysfs entry overrides any individual CPU boost state in the sysfs boost file.
-This means that changing `ppd` profiles or changing the global sysfs entry will change every CPU's
-boost state to the global value.
-:::
-
 For more information see:
 - https://lore.kernel.org/linux-pm/1a78eeaa-fadd-4734-aaeb-2fe11e96e198@amd.com/T/#m4a0c8917ea8fb033504055bd61512c80c85410c8
+- https://lore.kernel.org/linux-pm/20240624213400.67773-1-mario.limonciello@amd.com/
 
 6\. Disabling Split Lock Mitigate
 ---------------------------------
