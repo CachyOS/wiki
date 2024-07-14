@@ -2,6 +2,44 @@
 title: GUI Installer Changelogs
 description: Changelogs of Calamares and the GUI Live ISO
 ---
+24.07
+----
+
+**Features:**
+- Repository: Introduce Zen 4 optimized repository, this will be used for Zen4 and Zen5 CPU's
+- ISO: Add automatic architecture check for Zen4/Zen5 repository
+- chwd: Added GC support for AMD GPU's, this helps for detecting official ROCm supported GPUs
+- chwd: Use libva-nvidia-driver on supported cards
+- ksmctl: Introduce tool to enable/disable KSM: ksmctl --enable
+- kernel: For the "linux-cachyos" kernel is now a "linux-cachyos-dbg" package available, this contains an unstripped vmlinux for debugging purposes
+- kernel: amd cpb boost is now available and the power-profiles-daemon is patched, if the "powersave" profile is set, it will disable the boost on amd cpus
+- kernel: Added power saving patch for AMD SoCs for video playback
+- kernel-manager: Added support for managing sched-ext schedulers and getting information via GUI
+- steam/proton: There is now a "game-performance" script, which can be added to steam's launch options
+- power-profiles: On AMD Pstate supported CPUs the lowest Linear frequency is now set higher, this can improve latency and 1% lows
+- kwin: Added back-port for tearing, this has been tested. On NVIDIA it only works on native wayland applications
+- netinstall: Cutefish has been dropped as installable Desktop Environment
+- Mirrors: Added Austria and China Mirror, the China Mirror is hosted by the TUNA University. This should help a lot of users from china
+- Package Updates: linux-cachyos 6.9.9, mesa 24.1.3, NVIDIA 555.58.02, Plasma 6.1.2, LLVM 18.1.8
+
+**Bug Fixes:**
+- ISO: Set copytoram to auto instead of yes
+- ISO: Fixed Sleep on Live ISO for Laptops
+- Launch Installer: Install the latest archlinux-keyring, before the installation starts to avoid issues, when fetching the archlinux-keyring in the chroot
+- Mirrors Ranking: Rank only Tier 1 Mirror's at installation time
+- pacman.conf: Remove not used pacman repository
+- cachy-chroot: Do not show .snapshot subvolumes
+- Calamares: Do not use "Preservefiles" module, since user a reporting issues with it.
+
+**Changelog for Handheld Edition:**
+- Added configuration file to apply different scaling, '/home/$USER/.config/deckscale
+- Make GameMode switching more robust
+- Updated Wifi/Bluetooth Firmware for Steam Deck
+- Implemented Auto Mount for GameMode
+- Added gamescope-session quirks for Wine CPU Topology, HDR, and Backlight
+- Fixed Refresh Rate Selection
+- Updated jupiter-hw-support, steamdeck-dsp, jupiter-fan-control, gamescope-session-git
+
 24.06
 ----
 
