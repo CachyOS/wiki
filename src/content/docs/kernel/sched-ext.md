@@ -74,7 +74,7 @@ sudo systemctl stop scx
 
 Since there are really many example scheduler, we want to give a little suggestion about the scheduler:
 - **scx_rusty** - a good global scheduler, which is very interactive and stress resistant. Can be for any workload
-- **scx_lavd** - Scheduler developed for Gaming and mainly for handhelds. This Scheduler has currently no Topology Aware (For example when the CPU has 2 CXX, like a 7950X)
+- **scx_lavd** - Scheduler developed for Gaming and mainly for handhelds. This Scheduler has currently no Topology Aware (For example when the CPU has 2 CCX, like a 7950X)
 - **scx_rustland** - Scheduler with userspace scheduling. Can handle heavy workloads good, but does have overhead due userspace scheduling
 - **scx_bpfland** - Scheduler based on rustland, but without the userspace part. This removed the overhead of it and performance also quite well, equal to rusty
 

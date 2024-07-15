@@ -69,7 +69,7 @@ sudo systemctl stop scx
 
 Pretože existuje veľa príkladov plánovačov, chceme poskytnúť malé odporúčanie pre plánovače:
 - **scx_rusty** - dobrý globálny plánovač, ktorý je veľmi interaktívny a odolný voči stresu. Môže byť použitý pre akékoľvek pracovné zaťaženie.
-- **scx_lavd** - plánovač vyvinutý pre hry a hlavne pre prenosné zariadenia. Tento plánovač momentálne nemá Topology Aware (napríklad keď má CPU 2 CXX, ako 7950X).
+- **scx_lavd** - plánovač vyvinutý pre hry a hlavne pre prenosné zariadenia. Tento plánovač momentálne nemá Topology Aware (napríklad keď má CPU 2 CCX, ako 7950X).
 - **scx_rustland** - plánovač s plánovaním v užívateľskom priestore. Dokáže dobre zvládať ťažké pracovné zaťaženie, ale má režijné náklady kvôli plánovaniu v užívateľskom priestore.
 
 ## GitHub
