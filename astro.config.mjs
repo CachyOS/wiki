@@ -214,6 +214,10 @@ export default defineConfig({
           },
           items: [
             {
+              label: 'Secure Boot Setup',
+              link: 'configuration/secure_boot_setup',
+            },
+            {
               label: 'Post Install Setup',
               translations: {
                 sk: 'Nastavenie po inštalácii',
