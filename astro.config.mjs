@@ -189,14 +189,6 @@ export default defineConfig({
               link: 'installation/installation_t2macbook',
             },
             {
-              label: 'Installation on Root with Secure Boot',
-              translations: {
-                sk: 'Inštalácia Root so zabezpečeným spustením',
-                cs: 'Instalace na kořenový oddíl s Secure Boot',
-              },
-              link: 'installation/installation_secureboot',
-            },
-            {
               label: 'Installation Handheld Edition',
               translations: {
                 sk: 'Inštalácia Handheld Edition',
@@ -221,6 +213,10 @@ export default defineConfig({
             cs: 'Nastavení',
           },
           items: [
+            {
+              label: 'Secure Boot Setup',
+              link: 'configuration/secure_boot_setup',
+            },
             {
               label: 'Post Install Setup',
               translations: {
