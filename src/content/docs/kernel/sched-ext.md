@@ -3,9 +3,11 @@ title: sched-ext Tutorial
 description: Tutorial how to use LAVD, Rusty, Rustland and bpfland
 ---
 
-`sched-ext` is a Linux kernel feature which enables implementing kernel thread schedulers in BPF(Berkeley Package Filter)
+`sched-ext` is a Linux kernel feature which enables implementing kernel thread schedulers in BPF (Berkeley Package Filter)
 and dynamically loading them. Essentially this allows end-users to change their schedulers in userspace without the need to
 build another kernel for a different scheduler.
+
+- Planned release for being an official kernel feature: 6.12
 
 ##  Installing a Kernel with sched-ext support
 
@@ -70,15 +72,53 @@ sudo systemctl start scx
 sudo systemctl stop scx
 ```
 
-## Suggestion for Schedulers
+## Brief introduction to the main ones
 
-Since there are really many example scheduler, we want to give a little suggestion about the scheduler:
-- **scx_rusty** - a good global scheduler, which is very interactive and stress resistant. Can be for any workload
-- **scx_lavd** - Scheduler developed for Gaming and mainly for handhelds. This Scheduler has currently no Topology Aware (For example when the CPU has 2 CCX, like a 7950X)
-- **scx_rustland** - Scheduler with userspace scheduling. Can handle heavy workloads good, but does have overhead due userspace scheduling
-- **scx_bpfland** - Scheduler based on rustland, but without the userspace part. This removed the overhead of it and performance also quite well, equal to rusty
+Since there are many schedulers to choose from, we want to give a little introduction about the schedulers in hand:
+
+Reminder: These schedulers are in constant development while being tested, so expect some of its features/flags which are subject to change.
+
+Feel free to report any issue or feedback to their GitHub repo referenced below.
+
+- **scx_rusty** - Balanced choice, can be used for a wide range of workloads (Gaming included)   
+- **scx_lavd** - Latency-criticality Aware Virtual Deadline, focused on Gaming and mainly in handhelds such as the Steam Deck. This Scheduler has currently no Topology Aware (For example when the CPU has 2 CCX, like a 7950X)
+- **scx_rustland** - Scheduler that does its scheduling in userspace. Can handle heavy workloads good, due to working in userspace it might lead to some overhead.
+- **scx_bpfland** - Scheduler based on rustland, but without the userspace part. This removed the overhead part from it. Can be utilized for anything including intensive workloads, gaming or in a day to day basis such as browsing, media consumption.
+In games it provides a substancial fps stability, meaning frametimes are really stable and consistant at the cost of max fps.
+
+## FAQ
+
+- Why X scheduler performs worse than the other?
+
+They're lots of variables that take place when comparing each one of them, for example: How do they measure a task's weight? Does it prioritize interactive instead of non interactive ones? and so on.
+
+- Why everyone keeps saying this X scheduler is the best for X case but it does not perform as well for me?
+
+Similar to the answer from above. Which cpu is used and his design, being their core layout or similar might cause the scheduler to not work as intended.
+
+That's why having choices is one of the highlights from the sched-ext framework, so don't be scared to try the main ones and see which one works best for your use case, being ex: fps stability, maximum performance, responsiveness under intensive workloads etc.
+
+- Which one do i choose?
+
+It depends but for mixed workloads meaning it could vary from gaming, programming, video editing, browsing etc. Rusty/Bpfland/Rustland or even LAVD.
+
+Gaming? then you'll have to choose what matters the most for you.
+
+FPS Stability?: Bpfland and ASDF, LAVD depending on the game
+
+Maximum performance?: Rusty, ASDF, LAVD
+
+Responsiveness no matter the workload: Rusty and Bpfland, LAVD might be able to handle it pretty well too but again it depends
+
+Battery life: LAVD or Rustland, LAVD enables Core compaction by default unless specified not to, what does this mean? it tries to use the least amount of cores for the task without harvesting too much of performance, Rustland has a low power mode which can be enabled by the flag -l or --low-power
+
+Is there a way to tune their behavior?
+
+Yes, by referring to their --help explanations.
+
+For example. scx_bpfland --help
 
 ## GitHub
 
 - scx-scheds (Schedulers): https://github.com/sched-ext/scx
-- sched-ext (Kernel Framework): https://github.com/sched-ext/sched-ext
+- https://github.com/sched-ext/scx-kernel-releases
