@@ -29,9 +29,11 @@ CachyOS does provide a bunch of different variants for the kernel. Below you can
 
 ### linux-cachyos (Default Kernel)
 
-The default kernel is our main recommendation in terms of scheduler choice and configuration. We are always open to feedback and
-suggestions on what should be the default. Changes in the default kernel may happen if there are regressions.
-Currently the linux-cachyos kernel provides the CachyOS Base Patchset, sched-ext framework (The extensible scheduler class), and the BORE (Burst-Oriented Response Enhancer) Scheduler.
+The default kernel is our main recommendation in terms of scheduler choice and configuration. Currently, our default kernel
+is using the **BORE** scheduler as the default option, along with our **base patchset**. However, we have also included the sched-ext
+framework into our default kernel that makes it possible to switch to different schedulers in runtime. See [sched-ext tutorial](/kernel/sched-ext)
+for our scx schedulers recommendation. Feel free to open an issue in our [GitHub](https://github.com/CachyOS/linux-cachyos) or reach out
+to us in Discord for suggestions and improvements that should be added to the default kernel.
 
 ### linux-cachyos-bore
 
@@ -39,8 +41,9 @@ The BORE kernel does utilize the CachyOS Base Patchset and the BORE Scheduler wi
 
 ### linux-cachyos-deckify
 
-The deckify kernel contains the same patches as the default kernel, but utilizes extra changes for the Steam Deck and other Handhelds to provide compatibility for them.
-This kernel is the default in the CachyOS Handheld Edition.
+The deckify kernel contains the same patches as the default kernel, but offers extra functionality to provide compatibility for the Steam
+Deck and other Handhelds. This kernel is the default in the CachyOS Handheld Edition.
+
 
 ### linux-cachyos-echo
 
@@ -52,12 +55,13 @@ The EEVDF (Earliest Eligible Virtual Deadline First) kernel does utilize the Cac
 
 ### linux-cachyos-hardened
 
-The hardened kernel does use the CachyOS Base Patchset and the hardened patches from linux-hardened
+The hardened kernel does use the CachyOS Base Patchset and the hardened patches from linux-hardened. This kernel uses the BORE scheduler.
 
 ### linux-cachyos-lts
 
 The LTS (Longterm) Kernel is based on the latest release of the Longterm branch. Patches in the LTS variant are fewer in number
-compared to the latest variants to ensure more stability. These patches include configuration changes, amd-pstate patches and BBR-v3.
+compared to the latest variants to ensure more stability. These patches include configuration changes, latest zstd patches and BBR-v3.
+This kernel uses the BORE scheduler.
 
 ### linux-cachyos-rc
 
