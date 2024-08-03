@@ -170,8 +170,7 @@ CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
 ```
 
 CachyOS also provides a version of `power-profiles-daemon` that backports a commit that enables
-support for AMD CPB. AMD CPB will disabled if on the `powersave` profile or on `balanced` profile + on battery.
-It will be enabled if on `performance` profile or `balanced` + AC.
+support for AMD CPB. AMD CPB will be disabled if on the `powersave` profile, and will be enabled on `balanced` or `performance`.
 
 For more information see:
 - https://lore.kernel.org/linux-pm/1a78eeaa-fadd-4734-aaeb-2fe11e96e198@amd.com/T/#m4a0c8917ea8fb033504055bd61512c80c85410c8
