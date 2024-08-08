@@ -19,3 +19,9 @@ Use following command to update your system:
 sudo pacman -Syu
 ```
 
+:::note
+If you want to use a GUI solution to update CachyOS.
+Our main recommendation is to avoid at all costs pamac-manager, Discover (KDE) or similar because they're prone to cause issues and break your system.
+
+Instead use Octopi or our Package installer which are safer.
+:::
