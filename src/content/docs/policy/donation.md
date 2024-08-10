@@ -9,11 +9,11 @@ Every Donator gets a Donator Rank in our Discord.
 Here a list of the current costs per months:
 
 - Buildserver 127 € (Hetzner 7950X3D)
+- Second Buildserver 70€ (Hetzner 7700X)
 - Webserver/mirror 17 €
 - Mailserver/mirror 17 €
-- Matrix Bridge 5 € (DigitalOcean VPS)
-- Forum Server (Netcup VPS) 7 €
-
+- Matrix Bridge 5 $
+- Forum Server (Netcup VPS) 7 Euro
 
 ### Patreon
 
