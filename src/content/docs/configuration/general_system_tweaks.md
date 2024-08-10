@@ -8,7 +8,7 @@ description: Things you can do to tweak after installing
 1\. CPU mitigations
 --------------------------------
 
-A public speculative execution attack exploiting return instructions (retbleed) was revealed in July 2022. The kernel already has a patch, but it results in a significant performance regression (14-39%).
+A public speculative execution attack exploiting return instructions (retbleed) was revealed in July 2022. This has been mitigated in the kernel, but it results in a significant performance regression (14-39%).
 
 The following CPU's are affected:
 

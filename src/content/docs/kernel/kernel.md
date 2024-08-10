@@ -70,7 +70,7 @@ This kernel uses the BORE scheduler.
 
 ### linux-cachyos-rc
 
-The RC Kernel is based on the latest available Release Candidate. This contains the latest features and changes from upstream but can lead to a more unstable experience due to being heavily tested.
+The RC Kernel is based on the latest available Release Candidate. This contains the latest features and changes from upstream but can lead to a more unstable experience due to being experimental/bleeding edge.
 
 Additionally it also contains our CachyOS Base Patchset, sched-ext Framework and the BORE Scheduler.
 

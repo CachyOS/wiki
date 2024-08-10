@@ -28,7 +28,6 @@ CachyOS Settings contains a bunch of configuration files for zram, nvidia, amd a
 - **paste-cachyos**: Script which makes it possible to paste text from the terminal easily
 - **kerver**: Shows the current used kernel configuration and used scheduler
 - **topmem**: Shows up to 10 processes which are currently using the highest amount of RAM in a descending order
-- **amdpstate-guided/amdpstate-epp**: Seamlessly switch between amdpstate-guided and amdpstate-epp modes at runtime
 
 ### Services
 
@@ -40,7 +39,7 @@ CachyOS Applications
 --------------------
 
 - **Cachy Browser**: Browser based on Firefox, with a more secure config and patches from Gentoo and Librewolf
-- **cachyos-kernel-manager**: Easily install kernels from the repository or configure your own kernel and include of your own patches
+- **cachyos-kernel-manager**: Easily install kernels from the repository or configure your own kernel and include your own patches
 - **CachyOS Hello**: Application for controlling tweaks, applying fixes, package installation and more information about CachyOS
 - **CachyOS-ApplicationInstaller**: GUI for an easy installation of commonly used applications
 - **cachyos-rate-mirrors**: Automatically rank Arch and CachyOS mirrors for optimal download speeds
