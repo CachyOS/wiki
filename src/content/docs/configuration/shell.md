@@ -2,15 +2,16 @@
 title: Configuration Shell
 ---
 
-CachyOS currently does use the fish shell as default.
+CachyOS currently uses the Fish shell as default.
+:::note
 It is possible to change the default shell.
-
+:::
 
 ## Zsh
 
-We are shipping already an OOB zsh config with common used plugins and configuration.
+We currently ship an OOB ZSH config with commonly used plugins and configurations.
 You can find it [here](https://github.com/CachyOS/cachyos-zsh-config).
-to change your default shell to zsh, run following command:
+to change your default shell to zsh, run the following command:
 
 ```bash
 chsh -s /usr/bin/zsh
@@ -18,8 +19,8 @@ chsh -s /usr/bin/zsh
 
 ## Fish
 
-Fish has also an OOB Configuration, which can be found [here](https://github.com/CachyOS/cachyos-fish-config).
-to change your default shell to fish, run following command:
+Fish also includes an OOB config made by us, which can be found [here](https://github.com/CachyOS/cachyos-fish-config).
+to change your default shell to fish, run the following command:
 
 ```bash
 chsh -s /usr/bin/fish
@@ -27,8 +28,7 @@ chsh -s /usr/bin/fish
 
 ## Bash
 
-This is the common used default shell. Bash does not provide features like auto completion, a easy history, ...
-to change your default shell to bash, run following command:
+This is the common used default shell. Bash does not provide fancy features like auto completion, an easy history management etc, to change your default shell to Bash, run the following command:
 
 ```bash
 chsh -s /usr/bin/bash

@@ -8,7 +8,7 @@ description: Things you can do to tweak after installing
 1\. CPU mitigations
 --------------------------------
 
-A public speculative execution attack exploiting return instructions (retbleed) was revealed in July 2022. The kernel has fixed this, but it results in a significant performance regression (14-39%).
+A public speculative execution attack exploiting return instructions (retbleed) was revealed in July 2022. The kernel already has a patch, but it results in a significant performance regression (14-39%).
 
 The following CPU's are affected:
 
@@ -23,7 +23,7 @@ grep . /sys/devices/system/cpu/vulnerabilities/*
 
 ### Disabling mitigations
 
-While disabling the mitigation's increases performance, it also introduces security risks.
+While disabling the CPU mitigations is going to increase performance, as a downside it introduces security risks.
 
 :::caution
 Do so at your own risk.
@@ -122,7 +122,7 @@ Benchmarks for each preference can be found here:
 4\. AMD P-State Preferred Core Handling
 ---------------------------------
 
-AMD Pstate driver will provide an initial core ordering at boot time. It relies on the CPPC interface to communicate the core ranking to the operating system and scheduler to make sure that OS is choosing the cores with highest performance firstly for scheduling the process. When AMD Pstate driver receives a message with the highest performance change, it will update the core ranking.
+AMD Pstate driver will provide an initial core ordering at boot time. It relies on the CPPC interface to communicate core rankings to the operating system and scheduler, ensuring the OS prioritizes higher-performance cores for process scheduling. When AMD Pstate driver receives a message with the highest performance change, it will update the core ranking.
 
 This can result into a better performance and process handling.
 More information here:
@@ -140,7 +140,7 @@ or
 ```sh
 cat /sys/devices/system/cpu/amd_pstate/status
 ```
-to see if it is enabled.
+to check if it's enabled.
 
 5\. AMD P-State Core Performance Boost
 ---------------------------------
@@ -169,8 +169,8 @@ CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
   2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 2157.8469
 ```
 
-CachyOS also provides a version of `power-profiles-daemon` that backports a commit that enables
-support for AMD CPB. AMD CPB will be disabled if on the `powersave` profile, and will be enabled on `balanced` or `performance`.
+CachyOS also provides a version of `power-profiles-daemon` that backports a commit which enables
+support for AMD CPB. AMD CPB will be disabled if the `powersave` profile is being used, and will be enabled on `balanced` or `performance`.
 
 For more information see:
 - https://lore.kernel.org/linux-pm/1a78eeaa-fadd-4734-aaeb-2fe11e96e198@amd.com/T/#m4a0c8917ea8fb033504055bd61512c80c85410c8
@@ -198,8 +198,8 @@ For more information on split lock, see:
 7\. Enabling Kernel Samepage Merging
 ---------------------------------
 
-CachyOS has used earlier as default uksmd (userspace kernel samepage merging) and then replaced this my the MemoryKSM function by systemd.
-Since there is a general cpu overhead and mainly a benefit for Hosts, which are running VM's we decided to disable this feature for now.
+CachyOS earlier used as default uksmd (userspace kernel samepage merging) and then it got replaced by the MemoryKSM function by systemd.
+Since there is cpu overhead and mainly benefits Hosts which are running VM's. We decided to disable this feature for now.
 
 User can enable again by following command:
 ```sh
@@ -216,11 +216,11 @@ sudo ksmctl --disable
 8\. Enable RCU Lazy
 ---------------------------------
 
-RCU Lazy helps reducing the power usage at idle or lighlty loaded systems. This can be useful for laptops and handheld devices.
+RCU Lazy helps reducing the power usage at idle or lightly loaded systems. This can be useful for laptops and handheld devices.
 The improvement is between 5-10% in terms of power savings, but can have a performance regression.
-The linux-cachyos-deckify kernel will have this option still enabled, since powersaving is a major improvement
+The linux-cachyos-deckify kernel will have this option enabled by default, since powersaving is key and necessary for these devices.
 
-to enable rcu lazy add following to your kernel cmdline:
+To enable RCU Lazy, add the following parameter to your kernel cmdline:
 ```conf
 rcutree.enable_rcu_lazy=1
 ```
@@ -228,19 +228,17 @@ rcutree.enable_rcu_lazy=1
 9\. NVIDIA GSP Firmware
 ---------------------------------
 
-The NVIDIA GSP Firmware can introduce in some cases a bit more worse performance. This has been mostly fixed with the 555.58.02 NVIDIA Driver, but it is still
-problematic on some systems.
-If you are facing hiccups in KDE or bad performance in some cases, you can disable the GSP Firmware with following:
+The NVIDIA GSP Firmware can, in some cases, lead to decreased performance. While the 555.58.02 NVIDIA Driver has largely addressed this issue, it persists on certain systems.
+If you are facing hiccups in KDE or bad performance in some cases, you can disable the GSP Firmware with the following config file:
 `/etc/modprobe.d/nvidia-gsp.conf`
 
 ```conf
 options nvidia NVreg_EnableGpuFirmware=0
 ```
 
-After that run:
+After creating the file, run:
 ```sh
 sudo mkinitcpio -P
 ```
 
-Generally, it is suggested to retest this with every new NVIDIA Driver version again, since the GSP Firmware also brings a bunch of benefits.
-Also, NVIDIA has mainly started to do their QA Testing with GSP Firmware.
+It's generally recommended to test the GSP firmware after each new NVIDIA driver installation, as it often introduces beneficial features. Moreover, NVIDIA primarily started conducting QA testing using the GSP firmware.
