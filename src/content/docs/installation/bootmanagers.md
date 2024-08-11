@@ -41,16 +41,16 @@ Systemd-boot is the recommended boot manager for CachyOS. Choose this one if you
 
 
 ## rEFInd
-A fork of rEFIt, rEFInd was primarly made to make it easier for MacOS users to multi-boot. However rEFInd has evolved into being hardware agnostic making it a great choice for multi-booting on any system. The main draw of rEFInd is its ability to scan all storage devices at boot and correspondingly display entries for each OS/Kernel found.
+A fork of rEFIt, rEFInd was primarily made to make it easier for MacOS users to multi-boot. However rEFInd has evolved into being hardware agnostic making it a great choice for multi-booting on any system. The main draw of rEFInd is its ability to scan all storage devices at boot and correspondingly display entries for each OS/Kernel found.
 
 ### Pros
 - Autodetection of all operating systems and kernels on storage devices. 
 - Little to no configuration required due to aforementioned autodetection.
 - Easily able to support secure boot
-- Much more graphical UI reminescent of the MacOS Boot selector.
+- Much more graphical UI reminiscent of the MacOS Boot selector.
 - Great theming support
 - CachyOS provides a different partition layout for rEFInd to further increase multi-booting compatibility with other OS such as Windows.
-- Able to read boot images from EFI filesystems (FAT,FAT16,FAT32) as well as ext4 and btrfs.
+- Able to read boot images from EFI filesystems (FAT,FAT16,FAT32) as well as EXT4 and BTRFS.
 ### Cons
 - Does not support BIOS systems.
 - Slightly slower due to the autodetection feature.

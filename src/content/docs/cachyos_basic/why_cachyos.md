@@ -27,7 +27,7 @@ that manages how tasks (or processes) are executed on the system. It decides whi
 ensuring efficient use of system resources to allow multiple tasks to run simultaneously.
 
 By default CachyOS provides BORE (Burst-Oriented Response Enhancer) scheduler in the default kernel,
-alongside EEVDF + sched-ext (framework to load userspace shedulers). We also provide individual versions of the EEVDF and sched-ext schedulers
+alongside EEVDF + sched-ext (framework to load userspace schedulers). We also provide individual versions of the EEVDF and sched-ext schedulers
 separately, along with other schedulers such as ECHO and RT. You can choose any scheduler that you prefer via the kernel manager that is bundled.
 
 ## Customizable Installation Process
@@ -39,5 +39,5 @@ You can and should choose what you want to have installed and what not to have i
 
 ## User Friendly OS
 By default, we provide our own applications, such as CachyOS Hello or CachyOS Package Installer
-among others to simplify and enchance your Linux experience. For example, CachyOS Hello provides options to update your system, enable services and rank the mirrors. Package Installer will help you to install packages.
+among others to simplify and enhance your Linux experience. For example, CachyOS Hello provides options to update your system, enable services and rank the mirrors. Package Installer will help you to install packages.
 CachyOS also has a really good and friendly community, which helps each other very well.

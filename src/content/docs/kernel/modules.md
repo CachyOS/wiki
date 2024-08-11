@@ -24,12 +24,12 @@ linux-cachyos-bore-lto-headers (Kernel Headers)
 linux-cachyos-bore-lto-zfs (ZFS Module)
 ```
 
-If youre installing a different kernel, when using the ZFS Filesystem, be sure to also install the zfs module with it.
+If you're installing a different kernel, when using the ZFS Filesystem, be sure to also install the zfs module with it.
 
 ## NVIDIA Module
 
 We provide a pre-compiled NVIDIA module, which makes "nvidia-dkms" not required anymore.
-The main advantage of this pre-compiled module is that users don't have to compile their own NVIDIA module everytime a new kernel package is installed, saving
+The main advantage of this pre-compiled module is that users don't have to compile their own NVIDIA module every time a new kernel package is installed, saving
 precious time and CPU cycles in the process.
 
 Also we can ensure that the module is correctly compiling for the users.

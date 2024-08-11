@@ -84,7 +84,7 @@ Feel free to report any issue or feedback to their GitHub repo referenced below.
 - **scx_lavd** - Latency-criticality Aware Virtual Deadline, focused on Gaming and mainly in handhelds such as the Steam Deck. This Scheduler has currently no Topology Aware (For example when the CPU has 2 CCX, like a 7950X)
 - **scx_rustland** - Scheduler that does its scheduling in userspace. Can handle heavy workloads good, due to working in userspace it might lead to some overhead.
 - **scx_bpfland** - Scheduler based on rustland, but without the userspace part. This removed the overhead part from it. Can be utilized for anything including intensive workloads, gaming or in a day to day basis such as browsing, media consumption.
-In games it provides a substancial fps stability, meaning frametimes are really stable and consistant at the cost of max fps.
+In games it provides a substantial fps stability, meaning frametimes are really stable and consistent at the cost of max fps.
 
 ## FAQ
 

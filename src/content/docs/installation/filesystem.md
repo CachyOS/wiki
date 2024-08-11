@@ -30,11 +30,11 @@ XFS is the recommended filesystem for users who do not need advanced features an
 ## BTRFS
 BTRFS is a modern copy-on-write(COW) filesystem created in 2007 and declared stable in the linux kernel in 2013. It is widely supported and is mainly known for its advanced featureset.
 ### Pros
-- Transparent compression. BTRFS supports transparently compressing files to allow for signifcant space savings with no user intervention. CachyOS ships with ZSTD compression set to level 3 by default.
+- Transparent compression. BTRFS supports transparently compressing files to allow for significant space savings with no user intervention. CachyOS ships with ZSTD compression set to level 3 by default.
 - Snapshot functionality. BTRFS leverages its COW nature to allow for the creation of snapshots of subvolumes that take up very little actual space.
 - Subvolume functionality allowing for greater control over the filesystem.
 - Able to grow or shrink.
-- Very fast developement.
+- Very fast development.
 ### Cons
 - Sometimes requires defragmentation or balancing.
 - Worse on rotational drives due to aforementioned fragmentation.
@@ -55,11 +55,11 @@ CachyOS provides a subvolume layout out of the box to allow easy snapshot functi
 BTRFS is recommended for users who want snapshot/backup functionality and transparent compression.
 
 
-## Ext4
-Ext4 (fourth extended filesystem) is the most commonly used Linux filesystem. Ext4 was made stable in the linux kernel in 2008.
+## EXT4
+EXT4 (fourth extended filesystem) is the most commonly used Linux filesystem. EXT4 was made stable in the linux kernel in 2008.
 ### Pros
 - Very common allowing easy access to plenty of resources.
-- Reliable. Ext4 has a proven track record of being very reliable.
+- Reliable. EXT4 has a proven track record of being very reliable.
 - Able to grow or shrink.
 ### Cons
 - Built on an old code base.
@@ -69,7 +69,7 @@ Ext4 (fourth extended filesystem) is the most commonly used Linux filesystem. Ex
 The package to manage ext4 is `e2fsprogs`
 
 ### Recommendation:
-Ext4 is recommended for users who want the simplest and most commonly used filesystem.
+EXT4 is recommended for users who want the simplest and most commonly used filesystem.
 
 
 ## ZFS
@@ -96,9 +96,9 @@ ZFS should only be used by advanced users who want the advanced features of ZFS 
 ## F2FS
 F2FS or the Flash-Friendly File System, is a flash file system created and developed by Samsung originally for the linux kernel. F2FS was created to cater specifically for the NAND flash used in modern day storage.
 ### Pros
-- Designed with flash friendlyness in mind.
+- Designed with flash friendliness in mind.
 - Transparent compression used to reduce disk writes (Space savings not currently usable by user)
-- Faster than other filesystems like Ext4.
+- Faster than other filesystems like EXT4.
 - Better wear leveling further prolonging the life of NAND flash.
 ### Cons
 - Cannot shrink.
@@ -120,17 +120,17 @@ Bcachefs is still considered as experimental and can have issues.
 :::
 
 ### Pros
-- Copy on write (CoW) - like btrfs or zfs
+- Copy on write (CoW) - like BTRFS or ZFS
 - Compression
 - Caching, Data Placement
 - Replication
-- Scaleable
+- Scalable
 ### Cons
 - Experimental
 - Setup can be complicated
 
 ## TL:DR
-Use the default filesystem **BTRFS** as it is considered stable and has a lot of neat features (snapshots, compression, etc). Use **XFS** or **Ext4** for a simple
+Use the default filesystem **BTRFS** as it is considered stable and has a lot of neat features (snapshots, compression, etc). Use **XFS** or **EXT4** for a simple
 and fast filesystem.
 
 :::note

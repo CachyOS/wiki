@@ -3,7 +3,7 @@ title: Updating CachyOS
 description: How to update CachyOS?
 ---
 
-CachyOS is a rolling release distribution. This means that everytime a new package update is released, it will become
+CachyOS is a rolling release distribution. This means that every time a new package update is released, it will become
 available inside the repositories after a very short period of time. All the user needs to do is update the system through `pacman`.
 If there is a manual adjustment required, we notify users via Social Media or `pacman`.
 
