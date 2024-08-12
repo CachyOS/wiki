@@ -117,12 +117,12 @@ export default defineConfig({
               link: 'installation/installation_prepare',
             },
             {
-              label: 'Boot managers',
+              label: 'Bootloaders',
               translations: {
                 sk: 'Boot manažéry',
                 cs: 'Boot manažeři',
               },
-              link: 'installation/bootmanagers',
+              link: 'installation/bootloaders',
             },
             {
               label: 'Filesystem',
