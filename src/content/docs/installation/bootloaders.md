@@ -15,22 +15,19 @@ All the boot managers we offer support all the available filesystem choices and 
 
 ## systemd-boot
 Part of systemd family, systemd-boot was created to be as simple as possible, therefore it only has support for UEFI based systems. This simple yet efficient design ensures it is reliable and fast. However this comes at the cost of advanced features supported by other boot managers.
+
 ### Pros
 - Fastest out of the three boot managers.
 - Very simple configuration.
 - Boot entries are separated into multiple files making it easier to manage.
 - Simple yet modern design.
+
 ### Cons
  - Does not support BIOS systems.
  - Lacks any kind of theming or customization.
  - Config is not auto-generated unless configured to do so. CachyOS includes systemd-boot manager to offer auto-generated configuration.
  - Only able to read boot images on EFI supported filesystems (FAT, FAT16, FAT32)
  - Inability to find boot images on partitions other than its own without manual intervention.
-
-### Configuration
-The main command line tool for sd-boot is sdboot-manage
-The configuration file for changing kernel parameters and other options is located at `/etc/sdboot-manage.conf`
-Boot entries are located in /boot/loader/entries/
 
 ### Partitioning layout
 - Minimum 1GB (2GB recommended) FAT32 EFI boot partition (/boot)
@@ -51,14 +48,10 @@ A fork of rEFIt, rEFInd was primarily made to make it easier for MacOS users to 
 - Great theming support
 - CachyOS provides a different partition layout for rEFInd to further increase multi-booting compatibility with other OS such as Windows.
 - Able to read boot images from EFI filesystems (FAT,FAT16,FAT32) as well as EXT4 and BTRFS.
+
 ### Cons
 - Does not support BIOS systems.
 - Slightly slower due to the autodetection feature.
-
-### Configuration
-The main command line tool for rEFInd is refind-install.
-Kernel parameters are provided by a file called refind_linux.conf which is located next to the kernels. (Usually /boot)
-rEFInd's primary configuration file is normally located at /boot/efi/refind/refind.conf
 
 ### Partitioning Layout
 - Minimum 50MB FAT32 EFI partition (/boot/efi)
@@ -72,24 +65,24 @@ rEFInd is the recommended boot manager for booting with multiple operating syste
 ## Grub
 Grub is the oldest of the available boot managers and consequently the only one that supports BIOS booting. It has a very large featureset, works on almost every machine and is the most commonly used Linux boot manager.
 The following is a list of its main pros and cons.
+
 ### Pros
 - Able to read boot images from almost all available linux filesystems.
 - Widely used and very easy to find information online.
 - Able to decrypt encrypted boot partitions.
 - The only boot*loader* offered allowing it to boot BIOS machines.
 - Looks dated. However has great theme support to compensate.
+
 ### Cons
 - Bloated due to needing to support much older hardware and needing lots of filesystem drivers.
 - Slightly slower than other boot managers due to aforementioned bloat.
 - Complicated config that needs to be regenerated every time a kernel is updated. (However this is done automatically.)
 
-### Configuration
-The main command line tool for grub is grub-mkconfig.
-Grub's main configuration file is normally located at /boot/grub/grub.cfg
-
 ### Partitioning layout
+
 #### BIOS
 - Minimum 6.5GB user selected root filesystem (/)
+
 #### UEFI
 - Minimum 50MB EFI partition (/boot/efi)
 - Minimum 6.5GB user selected root filesystem (/)

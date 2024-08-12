@@ -226,6 +226,10 @@ export default defineConfig({
               link: 'configuration/post_install_setup',
             },
             {
+              label: 'Bootloader Configuration',
+              link: 'configuration/bootloader_configuration',
+            },
+            {
               label: 'Dual GPU Laptops (NVIDIA + iGPU)',
               translations: {
                 sk: 'Dvojité GPU notebooky (NVIDIA + iGPU)',
