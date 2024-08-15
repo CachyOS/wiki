@@ -26,7 +26,7 @@ CONFIG_SCHED_CLASS_EXT=y
 
 ## Starting and using the scx schedulers
 
-You can find the schedulers in the `scx-scheds` or `scx-scheds-git` package. 
+You can find the schedulers in the `scx-scheds` or `scx-scheds-git` package.
 Simply run following command to install the package:
 ```sh
 sudo pacman -Sy scx-scheds
@@ -80,7 +80,7 @@ Reminder: These schedulers are in constant development while being tested, so ex
 
 Feel free to report any issue or feedback to their GitHub repo referenced below.
 
-- **scx_rusty** - Balanced choice, can be used for a wide range of workloads (Gaming included)   
+- **scx_rusty** - Balanced choice, can be used for a wide range of workloads (Gaming included)
 - **scx_lavd** - Latency-criticality Aware Virtual Deadline, focused on Gaming and mainly in handhelds such as the Steam Deck. This Scheduler has currently no Topology Aware (For example when the CPU has 2 CCX, like a 7950X)
 - **scx_rustland** - Scheduler that does its scheduling in userspace. Can handle heavy workloads good, due to working in userspace it might lead to some overhead.
 - **scx_bpfland** - Scheduler based on rustland, but without the userspace part. This removed the overhead part from it. Can be utilized for anything including intensive workloads, gaming or in a day to day basis such as browsing, media consumption.
@@ -88,17 +88,17 @@ In games it provides a substantial fps stability, meaning frametimes are really 
 
 ## FAQ
 
-- Why X scheduler performs worse than the other?
+### Why X scheduler performs worse than the other?
 
 They're lots of variables that take place when comparing each one of them, for example: How do they measure a task's weight? Does it prioritize interactive instead of non interactive ones? and so on.
 
-- Why everyone keeps saying this X scheduler is the best for X case but it does not perform as well for me?
+### Why everyone keeps saying this X scheduler is the best for X case but it does not perform as well for me?
 
 Similar to the answer from above. Which cpu is used and his design, being their core layout or similar might cause the scheduler to not work as intended.
 
 That's why having choices is one of the highlights from the sched-ext framework, so don't be scared to try the main ones and see which one works best for your use case, being ex: fps stability, maximum performance, responsiveness under intensive workloads etc.
 
-- Which one do i choose?
+### Which one do i choose?
 
 It depends but for mixed workloads meaning it could vary from gaming, programming, video editing, browsing etc. Rusty/Bpfland/Rustland or even LAVD.
 
