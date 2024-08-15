@@ -40,9 +40,24 @@ After making changes, regenerate all systemd-boot entries with the following com
 
 ## rEFInd
 
-The main command line tool for rEFInd is refind-install.
-Kernel parameters are provided by a file called refind_linux.conf which is located next to the kernels. (Usually /boot)
-rEFInd's primary configuration file is normally located at /boot/efi/refind/refind.conf
+Like [systemd-boot](/configuration/bootloader_configuration#systemd-boot), rEFInd has two configuration files. `refind.conf` located in
+`boot/efi/EFI/refind` is mainly for changing how rEFind behaves while `/boot/refind_linux.conf` is for managing your boot options.
+`refind.conf` contains extensive comments explaining all its options.
+
+### Kernel Commandline Configuration
+
+To pass kernel parameters to the commandline, modify "Boot using default options" in `/boot/refind_linux.conf`
+
+```shell
+# /boot/refind_linux.conf
+
+"Boot using default options"     "root=PARTUUID=1cb353ec-7f03-4820-8b4b-03baf53a208f rw zswap.enabled=0 nowatchdog quiet splash"
+```
+
+Changes to both configuration files will immediately take effect. Running a command to "save" changes is unnecessary.
+
+Learn more:
+- [rEFInd: Configuring the boot manager](https://www.rodsbooks.com/refind/configfile.html)
 
 ## GRUB
 
