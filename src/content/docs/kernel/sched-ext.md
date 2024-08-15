@@ -112,11 +112,23 @@ Responsiveness no matter the workload: Rusty and Bpfland, LAVD might be able to 
 
 Battery life: LAVD or Rustland, LAVD enables Core compaction by default unless specified not to, what does this mean? it tries to use the least amount of cores for the task without harvesting too much of performance, Rustland has a low power mode which can be enabled by the flag -l or --low-power
 
-Is there a way to tune their behavior?
+Each of these schedulers' behaviour can be tuned with flags. Refer to each scheduler's `--help` output for a brief explanation
+of what each flag does
 
-Yes, by referring to their --help explanations.
+```sh
+❯ scx_lavd --help
 
-For example. scx_bpfland --help
+Options:
+      --no-core-compaction
+          Disable core compaction, which uses minimum CPUs for power saving, and always use all the online
+          CPUs
+
+      --prefer-smt-core
+          Use SMT logical cores before using other physcial cores in core compaction
+
+      --no-freq-scaling
+          Disable frequency scaling by scx_lavd
+```
 
 ## GitHub
 
