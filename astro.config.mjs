@@ -117,12 +117,12 @@ export default defineConfig({
               link: 'installation/installation_prepare',
             },
             {
-              label: 'Boot managers',
+              label: 'Bootloaders',
               translations: {
                 sk: 'Boot manažéry',
                 cs: 'Boot manažeři',
               },
-              link: 'installation/bootmanagers',
+              link: 'installation/bootloaders',
             },
             {
               label: 'Filesystem',
@@ -224,6 +224,10 @@ export default defineConfig({
                 cs: 'Nastavení po instalaci',
               },
               link: 'configuration/post_install_setup',
+            },
+            {
+              label: 'Bootloader Configuration',
+              link: 'configuration/bootloader_configuration',
             },
             {
               label: 'Dual GPU Laptops (NVIDIA + iGPU)',
