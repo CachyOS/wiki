@@ -9,7 +9,7 @@ Please select only one Desktop Environment during the installation
 :::
 
 1.  **KDE Plasma** is a comprehensive and flexible desktop environment that offers multiple styles of menus to access applications. It features the kwin window manager. KDE Plasma also boasts an intuitive interface that allows you to easily download and install new themes, widgets, and more from the web.
-2.  **CuteFish** is a sleek, modern, and efficient desktop environment built using Qt Quick and some KDE core frameworks. It has a design reminiscent of macOS.
+2.  **Cosmic** is a comprehensive operating system GUI (graphical user interface) environment that features advanced functionality and a responsive design. Its modular architecture is specifically designed to facilitate the creation of unique, branded user experiences with ease.
 3.  **i3** is a popular tiling window manager known for its single, self-contained configuration file and its efficient use of screen space.
 4.  **GNOME** is a user-friendly desktop environment with a touch-style interface for accessing applications. While it is easy to learn, it may have limited customization options and can be difficult to configure.
 5.  **Openbox** is a highly popular window manager known for its excellent documentation and a wide selection of available themes.
