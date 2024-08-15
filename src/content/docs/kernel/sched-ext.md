@@ -32,8 +32,6 @@ Simply run following command to install the package:
 sudo pacman -Sy scx-scheds
 ```
 
-The `scx-scheds-git` package could have issues, when using it with the stable kernel due API or Feature changes. So the `scx-scheds-git` package should be best used together with the `linux-cachyos-rc` kernel.
-
 ### Starting the Scheduler
 
 The scheduler can be simply started in the terminal with following command:
