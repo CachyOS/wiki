@@ -6,21 +6,26 @@ description: A detailed list of Features and changes CachyOS does apply
 Packages
 --------
 
-CachyOS does apply optimization like PGO, LTO and BOLT on further packages.
-We are focusing to optimize compilers and core packages first, like GCC, python, zstd, xz, lz4, julia, php, sqlite and more.
+CachyOS applies PGO, LTO, and BOLT optimizations to various packages.
+We are focusing on optimizing compilers and core packages first, like GCC, Python, ZSTD, XZ, LZ4, Julia, PHP, SQLite and more.
 
 CachyOS Settings
 ----------------
 
-CachyOS Settings contains a bunch of configuration files for zram, nvidia, amd and general system changes.
+CachyOS Settings contains a bunch of configuration files for ZRAM, Nvidia, AMD and general system changes.
 
 ### Configuration
 
 - ZRAM configuration and rules
 - NVIDIA Tweaks/Settings to provide a better nvidia OOB experience
 - Force AMDGPU Driver for GCN 1.0 and GCN 2.0 GPU's
-- sysctl kernel config changes for Networking, Memory management and Security related
-- systemd journal.d configuration
+- Networking, memory management, and security-related sysctl kernel configuration changes
+- systemd journal.d size limit
+- Zswap disabled 
+- THP (Transparent Huge Pages) set to defer+madvise
+- I/O scheduler: BFQ (HDD), MQ-Deadline (SSD), none (NVMe)
+- SATA Active Link Power Management set to max performance
+- Watchdog blacklist
 
 ### Scripts
 
