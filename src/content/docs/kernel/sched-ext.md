@@ -110,7 +110,7 @@ Maximum performance?: Rusty, ASDF, LAVD
 
 Responsiveness no matter the workload: Rusty and Bpfland, LAVD might be able to handle it pretty well too but again it depends
 
-Battery life: LAVD or Rustland, LAVD enables Core compaction by default unless specified not to, what does this mean? it tries to use the least amount of cores for the task without harvesting too much of performance, Rustland has a low power mode which can be enabled by the flag -l or --low-power
+Battery life: LAVD or Rustland, LAVD enables Core compaction by default unless specified not to, what does this mean? it tries to use the least amount of cores for the task without harvesting too much of performance, Rustland has a low power mode which can be enabled by the flag `-l` or `--low-power`
 
 Each of these schedulers' behaviour can be tuned with flags. Refer to each scheduler's `--help` output for a brief explanation
 of what each flag does
