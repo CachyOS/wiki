@@ -81,7 +81,7 @@ You can also switch between operation modes at runtime to test the options:
 
 - **Autonomous mode**: platform considers only the values set for Minimum performance, Maximum performance, and Energy Performance Preference.
    ```sh
-   echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status 
+   echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status
    ```
 
 - **Guided-autonomous mode**: platform sets operating performance level according to the current workload and within limits set by the OS through minimum and maximum performance registers.
@@ -240,5 +240,9 @@ After creating the file, run:
 ```sh
 sudo mkinitcpio -P
 ```
+
+:::note
+NVIDIA's [open kernel modules](https://github.com/NVIDIA/open-gpu-kernel-modules) are based on GSP firmware. Due to this, GSP cannot be disabled and this modprobe option will be ignored when using them (`linux-cachyos-nvidia-open` or `nvidia-open-dkms`).
+:::
 
 It's generally recommended to test the GSP firmware after each new NVIDIA driver installation, as it often introduces beneficial features. Moreover, NVIDIA primarily started conducting QA testing using the GSP firmware.
