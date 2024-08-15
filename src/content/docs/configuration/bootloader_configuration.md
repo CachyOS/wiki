@@ -46,5 +46,38 @@ rEFInd's primary configuration file is normally located at /boot/efi/refind/refi
 
 ## GRUB
 
-The main command line tool for grub is grub-mkconfig.
-Grub's main configuration file is normally located at /boot/grub/grub.cfg
+Unlike [systemd-boot](/configuration/bootloader_configuration#systemd-boot) and [rEFInd](/configuration/bootloader_configuration#refind),
+GRUB only has one configuration file located in `/etc/default/grub`. There is pretty good documentation in this file that explains what
+each option does.
+
+### Hiding the GRUB Boot Menu
+
+To hide the GRUB menu, simply set these following options accordingly.
+
+```shell
+# /etc/default/grub
+
+GRUB_TIMEOUT='0'
+GRUB_TIMEOUT_STYLE=hidden
+```
+
+Press ESC to get access to the GRUB prompt. From here run `normal` or `exit` to get back to the familiar GRUB boot menu.
+
+### Kernel Commandline Configuration
+
+To pass kernel parameters to the commandline with GRUB, we need to edit `GRUB_CMDLINE_LINUX_DEFAULT` within `/etc/default/grub`
+
+```shell
+# /etc/default/grub
+
+GRUB_CMDLINE_LINUX_DEFAULT='nowatchdog zswap.enabled=0 quiet splash'
+```
+
+Everytime we modify the GRUB configuration file, we need to remake the config with the following command
+
+```shell
+❯ sudo grub-mkconfig -o /boot/grub/grub.cfg
+```
+
+Learn more:
+- [GRUB Manual: Configuration](https://www.gnu.org/software/grub/manual/grub/grub.html#Configuration)
