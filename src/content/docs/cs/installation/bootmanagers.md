@@ -27,7 +27,7 @@ Každý správce zavádění podporuje všechny naše aktuálně dostupné volby
 
 ### Konfigurace
 Hlavním nástrojem příkazového řádku pro sd-boot je sdboot-manage.
-Konfigurační soubor pro změnu parametrů jádra a dalších možností se nachází v /etc/sdboot-manage.conf.
+Konfigurační soubor pro změnu parametrů jádra a dalších možností se nachází v `/etc/sdboot-manage.conf`.
 Záznamy zavádění se nacházejí v /boot/loader/entries/.
 
 ### Rozložení oddílů:

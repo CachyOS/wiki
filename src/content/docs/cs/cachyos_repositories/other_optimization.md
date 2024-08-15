@@ -45,7 +45,7 @@ CachyOS Aplikace
 - **CachyOS-Hello**: Aplikace pro manipulaci s úpravami, instalací balíčků a dalšími informacemi o CachyOS
 - **CachyOS-ApplicationInstaller**: Snadná instalace často používaných aplikací přímo z grafického rozhraní (GUI)
 - **cachyos-rate-mirrors**: Automaticky hodnotit zrcadla pro Arch a CachyOS
-- **systemd-boot-manager**: Automaticky generuje nové záznamy pro správce systemd-boot a lze snadno konfigurovat v souboru /etc/sdboot-manage.conf
+- **systemd-boot-manager**: Automaticky generuje nové záznamy pro správce systemd-boot a lze snadno konfigurovat v souboru `/etc/sdboot-manage.conf`
 
 Kernel moduly
 --------------

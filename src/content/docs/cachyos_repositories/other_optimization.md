@@ -21,7 +21,7 @@ CachyOS Settings contains a bunch of configuration files for ZRAM, Nvidia, AMD a
 - Force AMDGPU Driver for GCN 1.0 and GCN 2.0 GPU's
 - Networking, memory management, and security-related sysctl kernel configuration changes
 - systemd journal.d size limit
-- Zswap disabled 
+- Zswap disabled
 - THP (Transparent Huge Pages) set to defer+madvise
 - I/O scheduler: BFQ (HDD), MQ-Deadline (SSD), none (NVMe)
 - SATA Active Link Power Management set to max performance
@@ -48,7 +48,7 @@ CachyOS Applications
 - **CachyOS Hello**: Application for controlling tweaks, applying fixes, package installation and more information about CachyOS
 - **CachyOS-ApplicationInstaller**: GUI for an easy installation of commonly used applications
 - **cachyos-rate-mirrors**: Automatically rank Arch and CachyOS mirrors for optimal download speeds
-- **systemd-boot-manager**: Automatically generates new entries for the systemd-boot-manager and can be easily configured in /etc/sdboot-manage.conf
+- **systemd-boot-manager**: Automatically generates new entries for the systemd-boot-manager and can be easily configured in `/etc/sdboot-manage.conf`
 
 Kernel Modules
 --------------

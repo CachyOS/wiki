@@ -30,7 +30,7 @@ Súčasť rodiny systemd, systemd-boot bol vytvorený tak, aby bol čo najjednod
 
 ### Konfigurácia
 Hlavný príkazový nástroj pre systemd-boot je sdboot-manage.
-Konfiguračný súbor na zmenu parametrov jadra a iných možností sa nachádza v /etc/sdboot-manage.conf.
+Konfiguračný súbor na zmenu parametrov jadra a iných možností sa nachádza v `/etc/sdboot-manage.conf`.
 Bootovacie položky sú umiestnené v /boot/loader/entries/.
 
 ### Rozloženie partícií:

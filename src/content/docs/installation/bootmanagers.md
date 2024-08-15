@@ -29,7 +29,7 @@ Part of systemd family, systemd-boot was created to be as simple as possible, th
 
 ### Configuration
 The main command line tool for sd-boot is sdboot-manage
-The configuration file for changing kernel parameters and other options is located at /etc/sdboot-manage.conf
+The configuration file for changing kernel parameters and other options is located at `/etc/sdboot-manage.conf`
 Boot entries are located in /boot/loader/entries/
 
 ### Partitioning layout
@@ -44,7 +44,7 @@ Systemd-boot is the recommended boot manager for CachyOS. Choose this one if you
 A fork of rEFIt, rEFInd was primarily made to make it easier for MacOS users to multi-boot. However rEFInd has evolved into being hardware agnostic making it a great choice for multi-booting on any system. The main draw of rEFInd is its ability to scan all storage devices at boot and correspondingly display entries for each OS/Kernel found.
 
 ### Pros
-- Autodetection of all operating systems and kernels on storage devices. 
+- Autodetection of all operating systems and kernels on storage devices.
 - Little to no configuration required due to aforementioned autodetection.
 - Easily able to support secure boot
 - Much more graphical UI reminiscent of the MacOS Boot selector.
