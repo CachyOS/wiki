@@ -35,7 +35,7 @@ separately, along with other schedulers such as ECHO. You can choose any schedul
 ## Customizable Installation Process
 Start your CachyOS journey by booting from the [bootable USB](/installation/installation_prepare/#creating-a-bootable-cachyos-usb-drive) that you created,
 You’ll be welcomed by our Hello program, a helpful introduction to CachyOS. Our customized Calamares installer provides a wide range of possibilities.
-We offer a variety of [desktop environments](/installation/desktop_environments/), [boot loaders](/installation/bootmanagers/)
+We offer a variety of [desktop environments](/installation/desktop_environments/), [boot managers](/installation/bootmanagers/)
 and [kernels](kernel/kernel/#variants) to choose from.
 You can choose what you need and deselect whatever you don't. Your system, your choices.
 
