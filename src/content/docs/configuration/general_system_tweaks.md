@@ -246,3 +246,25 @@ NVIDIA's [open kernel modules](https://github.com/NVIDIA/open-gpu-kernel-modules
 :::
 
 It's generally recommended to test the GSP firmware after each new NVIDIA driver installation, as it often introduces beneficial features. Moreover, NVIDIA primarily started conducting QA testing using the GSP firmware.
+
+10\. Enabling core dumps
+---------------------------------
+
+By default, CachyOS prevents core dumps from being generated. To enable this feature, follow these steps:
+
+1. Create a configuration file:
+
+- Open a terminal and create a new file named 99-core-dump.conf in the /etc/sysctl.d directory.
+- Open the file with a text editor and add the following line:
+```sh
+kernel.core_pattern = /usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h
+```
+- Save and close the file.
+
+2. Apply changes:
+
+- Reboot your system or run the following command in the terminal:
+```sh
+sudo sysctl --system
+```
+This will enable core dumps, which can be helpful for troubleshooting software issues.
