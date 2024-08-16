@@ -12,7 +12,7 @@ CachyOS maintains its own repositories with optimized packages, especially for y
 There are x86-64-v3, x86-64-v4 and Zen4 optimized repositories that exists to enhance your experience by
 reducing latency, improving performance, applying special fixes, etc.
 
-For more information, check out [this](/cachyos_repositories/what_are_the_cachyos_repo) page for a more detailed explanation of the optimized repositories that we provide.
+Check out [this](/cachyos_repositories/what_are_the_cachyos_repo) page for a more detailed explanation of the optimized repositories that we provide.
 
 ## Advanced CPU Scheduler Support
 Firstly let's understand what a CPU scheduler is. In the Linux kernel, the CPU scheduler is a crucial component
