@@ -3,15 +3,8 @@ title: Offered Boot Managers
 description: Description and recommendations for the currently offered boot managers
 ---
 
-# CachyOS Boot Managers
-
 To offer the best experience across a range of devices, CachyOS currently offers the following boot managers: systemd-boot, rEFInd and Grub.
 This wiki article will describe the featuresets of each boot manager and also includes our recommendations for when choosing them.
-
-:::note
-All the boot managers we offer support all the available filesystem choices and full root encryption.
-:::
-
 
 ## systemd-boot
 Part of systemd family, systemd-boot was created to be as simple as possible, therefore it only has support for UEFI based systems. This simple yet efficient design ensures it is reliable and fast. However this comes at the cost of advanced features supported by other boot managers.
