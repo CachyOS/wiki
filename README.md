@@ -11,6 +11,10 @@ This repository contains the source code of our [wiki page](https://wiki.cachyos
 to get started on using git.
 - A text editor - Ideally one that parses markdown correctly.
 
+> [!TIP]
+> Please take a look at our [TODO list](https://github.com/CachyOS/wiki/issues/50) or other opened [issues](https://github.com/CachyOS/wiki/issues)
+> for what things to work on.
+
 1. [Fork](https://github.com/CachyOS/wiki/fork) this repository so you have your own copy of this repository.
 2. Clone the forked repository to your computer.
 
