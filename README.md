@@ -14,17 +14,25 @@ to get started on using git.
 1. [Fork](https://github.com/CachyOS/wiki/fork) this repository so you have your own copy of this repository.
 2. Clone the forked repository to your computer.
 
-```bash
+```shell
 git clone https://github.com/<your-username>/wiki
 ```
 
 3. Create a new branch to commit your changes too. Avoid comitting to the master branch, even if it is on your own fork.
 
-```bash
+```shell
 git checkout -b <new-branch>
 ```
 
 4. Now you can start editting the files you see fit.
+
+5. Commit your changes
+
+```shell
+git add <modified-files> # Alternatively you can use git add -a for all files or git add -u for untracked files
+git commit # For a simple commit message, you can do git commit -m "Commmit Message"
+git push origin <new-branch>
+```
 
 ### Previewing local changes
 
