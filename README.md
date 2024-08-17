@@ -7,7 +7,7 @@ This repository contains the source code of our [wiki page](https://wiki.cachyos
 ### Requirements
 
 - [bun](https://github.com/oven-sh/bun) - Run a local copy of the website to preview local changes
-- [git](https://git-scm.com/downloads) - Avoid editting files from GitHub Web as much as possible. See [here](https://docs.github.com/en/get-started/using-git)
+- [git](https://git-scm.com/downloads) - Avoid editing files from GitHub Web as much as possible. See [here](https://docs.github.com/en/get-started/using-git)
 to get started on using git.
 - A text editor - Ideally one that parses markdown correctly.
 
@@ -22,19 +22,19 @@ to get started on using git.
 git clone https://github.com/<your-username>/wiki
 ```
 
-3. Create a new branch to commit your changes too. Avoid comitting to the master branch, even if it is on your own fork.
+3. To commit your changes, create a new branch. Do not commit directly to the master branch, regardless of whether it's your own fork.
 
 ```shell
 git checkout -b <new-branch>
 ```
 
-4. Now you can start editting the files you see fit.
+4. Now you can start editing the files you see fit.
 
-5. Commit your changes
+5. Commit your changes.
 
 ```shell
 git add <modified-files> # Alternatively you can use git add -a for all files or git add -u for untracked files
-git commit # For a simple commit message, you can do git commit -m "Commmit Message"
+git commit # For a simple commit message, you can do git commit -m "Commit Message"
 git push origin <new-branch>
 ```
 
