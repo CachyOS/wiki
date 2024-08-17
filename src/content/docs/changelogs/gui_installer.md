@@ -2,6 +2,41 @@
 title: GUI Installer Changelogs
 description: Changelogs of Calamares and the GUI Live ISO
 ---
+24.08
+----
+
+**Features:**
+- chwd: NVIDIA now uses the open module as default for supported cards
+- Desktop: Added Cosmic Desktop Environment to the installation options
+- NVIDIA: Latest 560 Beta driver is now the default; egl-wayland patched to fix crashes in Firefox and other applications
+- mirrors: CDN77 sponsored CachyOS with Object Storage featuring a worldwide cache, significantly improving connection speeds for users
+- mirrors: CachyOS now provides its own Arch Linux mirror to avoid syncing issues, set as default during installation along with fallback mirrors
+- SecureBoot: Introduced script and tutorial in the Wiki for easy Secure Boot support
+- cachy-chroot: Added auto-mount via fstab for simplified chrooting
+- cachy-chroot: Implemented support for LUKS Encryption
+- kernel-manager: Added support for setting sched-ext flags in the sched-ext configuration
+- kernel-manager: Introduced option to build nvidia-open
+- kernel-manager: Added option to remember last used options in configure page
+- Package Updates: linux-cachyos 6.10.5, mesa 24.2.0, Plasma 6.1.4, NVIDIA 560.31.02
+
+**Bug Fixes:**
+- chwd: Improved PRIME profile detection based on device name
+- chwd: Removed RTD3 workaround due to issues on some setups
+- cachyos-rate-mirrors: Disabled mirror ranking when running on Live ISO
+- cachy-chroot: Fixes a crash when a partition didn't have a valid fstype or uuid (eg Microsoft Recovery Partition)
+- calamares: Refactored keyring initialization
+- kernel-manager: Fixed support for building custom pkgbase with LTO kernels and modules enabled
+- kernel-manager: Fixed password prompt delay
+- ISO: Replaced radeon.modeset=1 with amdgpu.modeset=1 for modern GPUs
+- game-performance: Prevented failure when profile is unavailable
+
+**Changelog for Handheld Edition:**
+- device support: Added support for Ally X, thanks to Luke Jones
+- libei: Implemented support for libei, replacing libextest
+- packagekit: Blocked packagekit installation to prevent issues with system updates via Discover
+- hook: Added pacman-hook to conflict with natively compiled Proton versions, avoiding potential issues
+- Updated jupiter-fan-control, steamdeck-dsp, and Steam Deck firmware
+
 24.07
 ----
 
