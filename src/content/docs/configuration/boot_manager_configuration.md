@@ -1,6 +1,6 @@
 ---
-title: Bootloader Configuration
-description: Configure bootloader settings and pass kernel parameters to the command line
+title: Boot Manager Configuration
+description: Configure boot manager settings and pass kernel parameters to the command line
 ---
 
 ## systemd-boot
@@ -40,7 +40,7 @@ After making changes, regenerate all systemd-boot entries with the following com
 
 ## rEFInd
 
-Like [systemd-boot](/configuration/bootloader_configuration#systemd-boot), rEFInd has two configuration files. `refind.conf` located in
+Like [systemd-boot](/configuration/boot_manager_configuration#systemd-boot), rEFInd has two configuration files. `refind.conf` located in
 `boot/efi/EFI/refind` is mainly for changing how rEFind behaves while `/boot/refind_linux.conf` is for managing your boot options.
 `refind.conf` contains extensive comments explaining all its options.
 
@@ -61,7 +61,7 @@ Learn more:
 
 ## GRUB
 
-Unlike [systemd-boot](/configuration/bootloader_configuration#systemd-boot) and [rEFInd](/configuration/bootloader_configuration#refind),
+Unlike [systemd-boot](/configuration/boot_manager_configuration#systemd-boot) and [rEFInd](/configuration/boot_manager_configuration#refind),
 GRUB only has one configuration file located in `/etc/default/grub`. There is pretty good documentation in this file that explains what
 each option does.
 

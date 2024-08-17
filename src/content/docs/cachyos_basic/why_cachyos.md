@@ -5,7 +5,7 @@ description: Why CachyOS may be better for you
 
 CachyOS offers a polished Arch experience, complete with a user-friendly installer, pre-configured desktops, performance optimizations without compromising the user experience.
 
-Besides performance changes, we provide a ready to go setup for NVIDIA GPUs, ZFS which is built into some of our kernels and miscellaneous tools 
+Besides performance changes, we provide a ready to go setup for NVIDIA GPUs, ZFS which is built into some of our kernels and miscellaneous tools
 
 ## Optimized Packages and Repositories
 CachyOS maintains its own repositories with optimized packages, especially for your hardware.
