@@ -1,51 +1,38 @@
-# Starlight Starter Kit: Basics
+# CachyOS Wiki
 
-```
-npm create astro@latest -- --template starlight
-```
+This repository contains the source code of our [wiki page](https://wiki.cachyos.org).
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/starlight/tree/main/examples/basics)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/starlight/tree/main/examples/basics)
+## 🙋 Contributing
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+### Requirements
 
-## 🚀 Project Structure
+- [bun](https://github.com/oven-sh/bun) - Run a local copy of the website to preview local changes
+- [git](https://git-scm.com/downloads) - Avoid editting files from GitHub Web as much as possible. See [here](https://docs.github.com/en/get-started/using-git)
+to get started on using git.
+- A text editor - Ideally one that parses markdown correctly.
 
-Inside of your Astro + Starlight project, you'll see the following folders and files:
+1. [Fork](https://github.com/CachyOS/wiki/fork) this repository so you have your own copy of this repository.
+2. Clone the forked repository to your computer.
 
-```
-.
-├── public/
-├── src/
-│   ├── assets/
-│   ├── content/
-│   │   ├── docs/
-│   │   └── config.ts
-│   └── env.d.ts
-├── astro.config.mjs
-├── package.json
-└── tsconfig.json
+```bash
+git clone https://github.com/<your-username>/wiki
 ```
 
-Starlight looks for `.md` or `.mdx` files in the `src/content/docs/` directory. Each file is exposed as a route based on its file name.
+3. Create a new branch to commit your changes too. Avoid comitting to the master branch, even if it is on your own fork.
 
-Images can be added to `src/assets/` and embedded in Markdown with a relative link.
+```bash
+git checkout -b <new-branch>
+```
 
-Static assets, like favicons, can be placed in the `public/` directory.
+4. Now you can start editting the files you see fit.
 
-## 🧞 Commands
+### Previewing local changes
 
-All commands are run from the root of the project, from a terminal:
+```bash
+bun install # Install dependencies used by our wiki
+bun run dev # Runs a local copy of the wiki, complete with your modifications!
+```
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:3000`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+Finally, you can open a [pull request](https://github.com/CachyOS/wiki/compare) to get your changes reviewed and hopefully merged.
 
-## 👀 Want to learn more?
-
-Check out [Starlight’s docs](https://starlight.astro.build/), read [the Astro documentation](https://docs.astro.build), or jump into the [Astro Discord server](https://astro.build/chat).
+Happy contributing!
