@@ -9,7 +9,7 @@ x86-64-v3, x86-64-v4, and Zen4 architectures.
 - x86-64 (Most CPUs) - While lacking AVX2 support found in x86-64-v3, this repository offers optimized packages. LTO and PGO techniques have boosted performance in several packages.
 - x86-64-v3- (Intel Haswell and up, AMD Ryzen 1st gen and up) - 5%-20% performance uplift compared to x86-64.
 - x86-64-v4 (Intel Rocket Lake, Zen 4, Zen 5) - Delivers substantial performance gains through AVX512 support, depending on the workload.
-- Zen 4 - In addition to the x86-64-v4 instruction set, the following are added:
+- Zen 4/5 - In addition to the x86-64-v4 instruction set, the following are added:
 
 ```text
 abm, adx, aes, avx512bf16, avx512bitalg, avx512ifma, avx512vbmi, avx512vbmi2, avx512vnni,
