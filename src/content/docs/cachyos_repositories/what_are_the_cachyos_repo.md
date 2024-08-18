@@ -17,7 +17,7 @@ avx512vpopctndq, clflushopt, clwb, clzero, fsgsbase, gfni, mwaitx, pclmul, pku. 
 rpdid, rdrnd, rdseed, sha, sse4a, vaes, vockmulqdq, wbnoinvd, savec, xsaveopt, xsaves
 ```
 
-Check out [this](https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels) page for more information about the instructions used in the different x86_64 variants
+Check out [this](https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels) page for more information about the instructions used in the different x86_64 micro-architectures
 
 :::note
 Wikipedia page quotes that the Skylake architecture supports AVX512 which is wrong, only Skylake-X does.
