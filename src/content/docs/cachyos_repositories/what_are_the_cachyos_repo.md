@@ -1,6 +1,6 @@
 ---
 title: CachyOS Repository General Information
-description: Benchmarks and information about the repositories
+description: Benchmarks and information about our optimized repositories
 ---
 
 Our aim to deliver a performance-optimized distribution necessitates recompiling essential Arch Linux packages for generic x86-64,
