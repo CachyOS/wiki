@@ -24,6 +24,10 @@ export const locales = {
     label: 'Čeština',
     lang: 'cs',
   },
+  id: {
+    label: 'Indonesian',
+    lang: 'id',
+  },
 };
 const site = 'https://wiki.cachyos.org/';
 
@@ -431,6 +435,9 @@ export default defineConfig({
           items: [
             {
               label: 'Community Rules',
+              translations: {
+                id: 'Peraturan Komunitas',
+              },
               link: 'policy/community-rules',
             },
             {
