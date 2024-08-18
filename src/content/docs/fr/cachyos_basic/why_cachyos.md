@@ -1,6 +1,6 @@
 ---
-title: Pourquoi CachyOS?
-description: Pourquoi CachyOS peut être mieux pour vous?
+Titre: Pourquoi CachyOS?
+Description: Pourquoi CachyOS peut être mieux pour vous?
 ---
 
 CachyOS offre une brillante expérience de Arch Linux, complète avec un installeur convivial , des environnements de bureau pré-configurés et des performances optimisées sans aucun compromis pour l’expérience utilisateur.
