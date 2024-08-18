@@ -15,6 +15,8 @@ to get started on using git.
 > Please take a look at our [TODO list](https://github.com/CachyOS/wiki/issues/50) or other opened [issues](https://github.com/CachyOS/wiki/issues)
 > for what things to work on.
 
+### Basic Guide
+
 1. [Fork](https://github.com/CachyOS/wiki/fork) this repository so you have your own copy of this repository.
 2. Clone the forked repository to your computer.
 
@@ -48,3 +50,65 @@ bun run dev # Runs a local copy of the wiki, complete with your modifications!
 Finally, you can open a [pull request](https://github.com/CachyOS/wiki/compare) to get your changes reviewed and hopefully merged.
 
 Happy contributing!
+
+## 🧑‍🤝‍🧑 Translations
+
+We are always open to community members adding new translations to the wiki. This helps **immensely** for non-English speakers.
+
+### Getting started
+
+Firstly, you need to add your language to the list of available locales to the site. This is done in `astro.config.mjs`.
+Please refer to the [ISO 639-1 list of language codes](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes#Table).
+
+```mjs
+// astro.config.mjs
+
+export const locales = {
+  root: {
+    label: 'English',
+    lang: 'en',
+  },
+  xx: {
+    label: 'Your Language',
+    lang: 'xx', // Refer to two-letter language codes from the ISO 639-1 list linked above.
+  },
+};
+```
+
+Next, you can start adding your own translations. To do this, add a subdirectory to `src/content/docs` with your two-letter language code.
+
+```sh
+├── astro.config.mjs
+├── src
+│   └── content
+│       └── docs
+│           ├── cachyos_basic
+│           │   ├── download.mdx
+│           │   └── why_cachyos.md
+│           └── xx # Your language code
+│               └── cachyos_basic
+│                   ├── download.mdx
+│                   └── why_cachyos.md
+└── tsconfig.json
+```
+
+Now you can start adding your own translations!.
+
+As a final step, you want your translated page to be indexed, this is done again in our `astro.config.mjs`
+
+```mjs
+// astro.config.mjs
+
+    {
+        label: 'Why CachyOS?',
+        translations: {
+        xx: '<why-cachyos-in-yourlanguage>',
+        },
+        link: 'cachyos_basic/why_cachyos',
+    },
+```
+
+Please refer to our [basic guide](#basic-guide) for comitting and pushing changes.
+When you're done, you can open a [pull request](https://github.com/CachyOS/wiki/compare)
+
+Happy translating!
