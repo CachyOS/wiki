@@ -35,7 +35,7 @@ git checkout -b <new-branch>
 5. Commit your changes.
 
 ```shell
-git add <modified-files> # Alternatively you can use git add -a for all files or git add -u for untracked files
+git add <modified-files> # Alternatively you can use git add -A for all files or git add -u for untracked files
 git commit # For a simple commit message, you can do git commit -m "Commit Message"
 git push origin <new-branch>
 ```
