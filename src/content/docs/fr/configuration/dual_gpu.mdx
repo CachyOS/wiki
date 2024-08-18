@@ -1,0 +1,167 @@
+---
+title: Laptop with Dual GPU Setup Guide
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+# What's hybrid graphics?
+
+Hybrid graphics is a hardware configuration in which you have two graphics
+cards that can work in tandem with each other. This approach is mainly found in
+laptops where you have integrated graphics (iGPU) of your CPU, and discrete
+graphics (dGPU). The main advantage is that integrated graphics should (but not
+necessarily) only be used for low-profile tasks, such as surfing the Internet,
+watching videos, etc. On the other hand, discrete graphics are used for high-performance
+things like gaming, video editing, 3D modeling, and so on. Consequently, if two
+GPUs share "big" and "small" tasks, then if we have only "small" tasks running
+at the moment, we don't need to use our dGPU, so it can simply be disabled (as
+if asleep), thereby significantly reducing power consumption. This way when our
+dGPU is needed again (we run an application using it), it will wake up and
+start working.
+
+# What's PRIME Offload?
+
+PRIME is a unifying technology for working with different sets of hybrid
+graphics in Linux, like NVIDIA Optimus/AMD Dynamic Switchable Graphics. PRIME
+Offload is an implementation of the idea of moving the execution of render from
+one GPU to another in Linux. PRIME support in a closed NVIDIA driver actually
+started only with the 435.17 driver. So if you are a user of the outdated 390xx
+or even 340xx driver branches, PRIME Offload will not work for you. Note that we also
+strongly discourage you from using outdated ways to handle hybrid graphics,
+such as nvidia-xrun or Bumblebee. They are obsolete and unsupported (Bumblebee
+has not been updated for over 8 years), run solely on hacks and have low
+performance. At the same time the Nouveau driver supports PRIME Offload, which
+can be an alternative for older dGPUs.
+
+In CachyOS, **you don't need to configure anything to make PRIME Offload work**.
+With the nvidia-utils package and cachyos-settings you already have everything
+you need to use PRIME Offload.
+
+Also, please avoid using tools like optimus-manager. They may seem quite handy
+to you, but believe us, they can cause a lot of issues and you really don't
+need them if your dGPU supports PRIME Offload and dynamic power management.
+
+# How to use PRIME Offload?
+
+To indicate PRIME that you want to use discrete graphics instead of integrated
+graphics, you must specify a number of environment variables before running the
+program:
+
+```bash
+__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia <program>
+```
+
+This set of variables looks very cumbersome and easy to forget, so you can
+install the ``nvidia-prime`` package (``sudo pacman -S nvidia-prime``), which
+contains script-alias for all these variables. Then running an application
+using it will look like this:
+
+```bash
+prime-run <program>
+```
+
+Where ``<program>`` is the name of command that runs your application.
+
+:::note
+Some DX12 games have trouble choosing the dGPU even with `prime-run`
+To workaround this, add the env var `VK_DRIVER_FILES=/usr/share/vulkan/icd.d/nvidia_icd.json`
+before `prime-run` wrapper script.
+:::
+
+## Graphical method
+
+You might find launching all needed applications through the terminal using ``prime-run`` inconvenient.
+Fortunately, some applications and desktop environments provide tools to control which GPU is used for specific applications.
+
+### Lutris
+
+To configure games to run with discrete graphics in Lutris you need to go to
+settings (three strips in the bottom right corner of the window and
+"Preferences" button). Next, go to *"Global Options"* -> *"Display"*. Here, you can select the GPU the game will run on.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/lutris-prime.png')} />
+
+### Steam
+
+Steam doesn't have a specific setting to force a game to use discrete graphics. However, you can access the game's properties by clicking the gear icon before launching it. In the "Launch options" field, you can add the prime-run command or environment variables.
+Example:
+
+```bash
+prime-run %command%
+```
+
+Be sure to add ``%command%`` after ``prime-run``. Remember that game options come after the placeholder,
+while system environment variables or commands should precede it.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/steam-prime.png')} />
+
+### KDE Plasma
+
+Plasma has a very handy way to set up the startup of applications with discrete
+graphics. However, this method only works if the switcheroo-control package and its corresponding service are installed on your system.
+
+In a fresh installation of CachyOS, this package and service should already be
+enabled by default via chwd.
+
+```bash
+sudo pacman -S switcheroo-control
+sudo systemctl enable --now switcheroo-control
+```
+
+After having executed both commands, right click on the desktop entry you want on your desktop or in the
+application menu then go to *"Properties"* -> *"Application"* -> *"Advanced Options"*.
+
+You should have *"Run using dedicated graphics card"* checkbox checked.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/plasma-prime.jpg')} />
+
+:::note
+Using switcheroo-control allows these checkboxes to work on all PRIME
+configurations that don't even have NVIDIA dGPU, such as AMD-APU+AMD-Dedicated.
+:::
+
+### GNOME
+
+On GNOME, you should also install switcheroo-control as shown above and
+right-click on the application icon and select *"Run using discrete graphics"*.
+But note that GNOME does not remember this choice for later, and the next time you
+run the application from the icon, its going to run using integrated graphics instead of discrete.
+
+### Cinnamon
+
+Similar to Plasma, Cinnamon also allows you to select the GPU for specific applications. Right-click the application's desktop entry, go to Properties, and enable the relevant option.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cinnamon-prime.png')} />
+
+If it's not available, make sure you have ``switcheroo-control`` installed and
+its service enabled, because all desktop environments rely on it for this
+functionality.
+
+# Troubleshooting
+
+## I: "I don't have a choice of Wayland session GDM"
+
+S: This is a GDM upstream issue that intentionally blocks access to Wayland
+session selection on the login screen, despite the fact that your integrated
+GPU may support Wayland perfectly well.
+
+To workaround this you need to disable the udev rules that are responsible for
+this:
+
+```bash
+sudo ln -s /dev/null /etc/udev/rules.d/61-gdm.rules
+```
+
+## I: "My external monitor is very laggy on PRIME"
+
+S: This is a known NVIDIA driver issue. You should have the latest NVIDIA
+driver installed and use Wayland with a compositor that supports explicit sync.
+For GNOME this has been fixed in version 46.2. For Plasma 6 it will probably be
+fixed with 6.1 although some users report normal performance already on 6.0.
+Other environments/window managers still have this issue, so you need to switch
+to the latest version of GNOME or Plasma to fix it.
+

@@ -1,0 +1,159 @@
+---
+title: Secure Boot Setup
+description: Set up secure boot with sbctl after installing CachyOS
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+# sbctl
+
+[`sbctl`](https://github.com/Foxboron/sbctl) is a a user-friendly secure boot key manager capable of setting up secure boot,
+offers key management capabilities and keeps track of files that needs to be signed in the boot chain.
+
+## Installing sbctl
+
+```bash
+❯ sudo pacman -S sbctl
+```
+
+## Pre-setup
+
+### GRUB Boot Manager
+
+If you are using GRUB, run the following command to enable secure boot support on GRUB using CA Keys.
+
+```bash
+❯ sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
+```
+
+:::note
+Loading unnecessary modules in your boot manager has the potential to present a security risk.
+Only run this command if you actually need secure boot.
+:::
+
+### Entering Setup Mode in UEFI
+Firstly, we need to go to firmware settings and set secure boot mode to "Setup Mode". You can reboot from an
+already running system to firmware settings with following command.
+
+```bash
+❯ systemctl reboot --firmware-setup
+```
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/ideapad-bios-secure-boot.jpg')} />
+
+This is how the BIOS looks like on a Lenovo Ideapad 5 Pro. Reset to setup mode or restore factory keys and reboot back
+to the system
+
+## Setting Up sbctl
+
+```bash
+❯ sudo sbctl status # If setup mode is enabled we can proceed to the next step
+Installed:      ✘ sbctl is not installed
+Setup Mode:     ✘ Enabled
+Secure Boot     ✘ Disabled
+
+❯ sudo sbctl create-keys # Create your custom secure boot keys
+Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Creating secure boot keys...✔
+Secure boot keys created!
+
+❯ sudo sbctl enroll-keys -m # Enroll your keys with Microsoft's keys
+Enrolling keys to EFI variables...✔
+Enrolled keys to the EFI variables!
+
+❯ sudo sbctl status
+# sbctl should now be installed and we can proceed to signing the kernel images and boot manager
+Installed:      ✔ sbctl is installed
+Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Setup Mode:     ✔ Disabled
+Secure Boot     ✘ Disabled
+Vendor Keys:    microsoft
+```
+
+## Signing the Kernel Image and Boot Manager
+
+CachyOS provides a script [`sbctl-batch-sign`](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign)
+that takes the list of files needed to be signed from `sudo sbctl verify` and signs them all.
+
+```bash
+❯ sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is not signed
+✘ /boot/EFI/BOOT/BOOTX64.EFI is not signed
+✘ /boot/EFI/systemd/systemd-bootx64.efi is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is not signed
+
+❯ sudo sbctl-batch-sign
+
+❯ sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is signed
+✔ /boot/EFI/BOOT/BOOTX64.EFI is signed
+✔ /boot/EFI/systemd/systemd-bootx64.efi is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
+```
+
+:::note
+In some cases with rEFInd, the kernel image might not detected when running `sudo sbctl verify`.
+To sign the kernel image, you can just do `sudo sbctl sign -s /boot/vmlinuz-linux-cachyos`.
+The file name of the kernel image varies between kernel versions and there could be more than one if you have
+multiple kernel versions installed.
+:::
+
+Now that all the files are signed, we can reboot back to UEFI settings and enable secure boot.
+Note that this is a one-time process as signing files with `-s` flag will save those files to `sbctl`'s database.
+`sbctl` ships with a [pacman hook](https://wiki.archlinux.org/title/Pacman_hook) meaning it will automatically
+sign all new files upon a kernel or boot manager update.
+
+## Verify that Secure Boot is Enabled
+
+To check that secure boot is indeed enabled. You can run one of the following commands
+
+```bash
+❯ sudo sbctl status
+Installed:      ✓ sbctl is installed
+Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Setup Mode:     ✓ Disabled
+Secure Boot:    ✓ Enabled
+Vendor Keys:    microsoft
+
+❯ bootctl
+System:
+      Firmware: UEFI 2.80 (INSYDE Corp. 28724.16435)
+ Firmware Arch: x64
+   Secure Boot: enabled (user)
+  TPM2 Support: yes
+  Measured UKI: no
+  Boot into FW: supported
+```
+
+## Migration to newer sbctl version
+
+Starting from sbctl `0.15`, sbctl files have been moved from `/usr/share/secureboot` to `/var/lib/sbctl`. Due to this change,
+a migration is necessary if users are using sbctl before `0.15`.
+You might need to clean `/var/lib/sbctl` first, in case you get a warning.
+
+```bash
+❯ sudo sbctl setup --migrate
+```
+
+sbctl provides a migration command to move all files from the old location to the new one.
+
+:::note
+This section isn't necessary for new sbctl users.
+:::
+
+
+## Credits
+
+- [The Arch Wiki](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
+laid the groundwork for this guide. Most of the stuff here was taken from there
+- [sbctl](https://github.com/Foxboron/sbctl) - This easy guide to enable secure boot support wouldn't have been possible if it weren't
+for the amazing work done to create this piece of software.
+
+
+
+
