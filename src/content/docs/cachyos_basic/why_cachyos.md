@@ -9,7 +9,7 @@ Besides performance changes, we provide a ready to go setup for NVIDIA GPUs, ZFS
 
 ## Optimized Packages and Repositories
 
-CachyOS offers optimized packages for various hardware configurations, including x86-64, x86-64-v3, x86-64-v4, and Zen4, to enhance performance and reduce latency.
+CachyOS offers optimized packages for various hardware configurations, including x86-64, x86-64-v3, x86-64-v4, and Zen4 to enhance performance and reduce latency.
 
 Check out [this](/cachyos_repositories/what_are_the_cachyos_repo) page for a more detailed explanation of the optimized repositories that we provide.
 
