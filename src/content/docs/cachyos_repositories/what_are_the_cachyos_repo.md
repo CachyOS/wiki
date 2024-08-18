@@ -25,7 +25,7 @@ Wikipedia page quotes that the Skylake architecture supports AVX512 which is wro
 
 ### Customized Packages
 
-Our [CachyOS-PKGBUILDs](https://github.com/CachyOS/CachyOS-PKGBUILDS) repository contains packages that receive ongoing updates and patches.
+Our [CachyOS-PKGBUILDs](https://github.com/CachyOS/CachyOS-PKGBUILDS) repository contains packages that receive ongoing updates, patches and backported fixes.
 To boost performance, we selectively implement PGO, LTO, and BOLT optimizations depending on the need.
 We also maintain a couple of -git packages e.g mesa-git.
 
