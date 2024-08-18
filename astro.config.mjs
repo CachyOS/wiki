@@ -200,6 +200,19 @@ export default defineConfig({
           ],
         },
         {
+          label: 'CachyOS Features',
+          items: [
+            {
+              label: 'CachyOS Kernel',
+              link: 'features/kernel',
+            },
+            {
+              label: 'Prebuilt Kernel Modules (NVIDIA/ZFS)',
+              link: 'features/modules',
+            },
+          ],
+        },
+        {
           label: 'Configuration',
           translations: {
             sk: 'Konfigurácia',
@@ -241,6 +254,14 @@ export default defineConfig({
                 cs: 'Obecná úprava systému',
               },
               link: 'configuration/general_system_tweaks',
+            },
+            {
+              label: 'sched-ext Tutorial',
+              translations: {
+                sk: 'sched-ext návod',
+              cs: 'sched-ext Tutoriál',
+              },
+              link: 'configuration/sched-ext',
             },
             {
               label: 'Kernel Manager',
@@ -306,39 +327,6 @@ export default defineConfig({
                 cs: 'PGO, BOLT a další optimalizace',
               },
               link: 'cachyos_repositories/other_optimization',
-            },
-          ],
-        },
-        {
-          label: 'Kernel',
-          translations: {
-            sk: 'Jadro',
-            cs: 'Kernel',
-          },
-          items: [
-            {
-              label: 'CachyOS Kernel Features',
-              translations: {
-                sk: 'Funkcie jadra CachyOS',
-                cs: 'Funkce CachyOS kernelu',
-              },
-              link: 'kernel/kernel',
-            },
-            {
-              label: 'sched-ext Tutorial',
-              translations: {
-                sk: 'sched-ext návod',
-                cs: 'sched-ext Tutoriál',
-              },
-              link: 'kernel/sched-ext',
-            },
-            {
-              label: 'Modules Handling (NVIDIA/ZFS)',
-              translations: {
-                sk: 'Správa modulov (NVIDIA/ZFS)',
-                cs: 'Správa modulů (NVIDIA/ZFS)',
-              },
-              link: 'kernel/modules',
             },
           ],
         },
