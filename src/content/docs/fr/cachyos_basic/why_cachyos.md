@@ -35,7 +35,7 @@ Vous choisissez ce dont vous avez besoin et décochez ce dont vous n’avez pas 
 
 Votre système, vos choix.
 
-:::Attention[MISE EN GARDE]
+:::caution[MISE EN GARDE]
 La sélection de plusieurs environnement de bureau n’est pas permise car possiblement source de casse du système. Par exemple, KDE et GNOME. Nous vous recommandons le choix d’un seul environnement de bureau afin d ‘éviter une erreur lors de l’installation.
 :::
 
