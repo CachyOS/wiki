@@ -206,6 +206,7 @@ export default defineConfig({
               translations: {
                 sk: 'Inštalácia na T2 MacBook',
                 cs: 'Instalace na MacBook T2',
+                fr: 'Installation sur un MacBook T2',
               },
               link: 'installation/installation_t2macbook',
             },
@@ -214,6 +215,7 @@ export default defineConfig({
               translations: {
                 sk: 'Inštalácia Handheld Edition',
                 cs: 'Instalace verze pro přenosné zařízení',
+                fr: 'Installation sur machine portable',
               },
               link: 'installation/installation_handheld',
             },
@@ -222,6 +224,7 @@ export default defineConfig({
               translations: {
                 sk: 'Aktualizácia CachyOS',
                 cs: 'Aktualizace CachyOS',
+                fr: 'Mettre à jour CachyOS',
               },
               link: 'installation/updating_cachyos',
             },
