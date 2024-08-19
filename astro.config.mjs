@@ -89,6 +89,7 @@ export default defineConfig({
           translations: {
             sk: 'Začíname',
             cs: 'Začínáme',
+            fr: 'Commençons',
           },
           items: [
             {
@@ -96,6 +97,7 @@ export default defineConfig({
               translations: {
                 sk: 'Prečo CachyOS?',
                 cs: 'Proč CachyOS?',
+                fr: 'Pourquoi CachyOS?',
               },
               link: 'cachyos_basic/why_cachyos',
             },
@@ -104,6 +106,7 @@ export default defineConfig({
               translations: {
                 sk: 'Sťahovanie CachyOS',
                 cs: 'Stažení CachyOS',
+                fr: 'Télécharger CachyOS',
               },
               link: 'cachyos_basic/download',
             },
@@ -114,6 +117,7 @@ export default defineConfig({
           translations: {
             sk: 'Inštalácia',
             cs: 'Instalace',
+            fr: 'Installation',
           },
           items: [
             {
