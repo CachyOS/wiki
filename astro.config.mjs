@@ -143,6 +143,7 @@ export default defineConfig({
               translations: {
                 sk: 'Súborový systém',
                 cs: 'Filesystem',
+                fr: 'Système de fichiers',
               },
               link: 'installation/filesystem',
             },
@@ -151,6 +152,7 @@ export default defineConfig({
               translations: {
                 sk: 'Snímky obrazovky',
                 cs: 'Screenshots',
+                fr: 'Capture d\'écrans',
               },
               link: 'installation/screenshots',
             },
@@ -159,6 +161,7 @@ export default defineConfig({
               translations: {
                 sk: 'Desktopové prostredia',
                 cs: 'Desktop prostředí',
+                fr: 'Environnements de bureau',
               },
               link: 'installation/desktop_environments',
             },
@@ -167,6 +170,7 @@ export default defineConfig({
               translations: {
                 sk: 'Inštalácia Root',
                 cs: 'Instalace na kořenový oddíl',
+                fr: 'Installation à la racine',
               },
               link: 'installation/installation_on_root',
             },
@@ -175,6 +179,7 @@ export default defineConfig({
               translations: {
                 sk: 'Inštalácia na VirtualBox',
                 cs: 'Instalace na VirtualBox',
+                fr: 'Installation dans VirtualBox',
               },
               link: 'installation/installation_virtualbox',
             },
@@ -183,6 +188,7 @@ export default defineConfig({
               translations: {
                 sk: 'Inštalácia na VMware Workstation',
                 cs: 'Instalace na VMware Workstation',
+                fr: 'Installation dans VMware Workstation',
               },
               link: 'installation/installation_vmware',
             },
@@ -191,6 +197,7 @@ export default defineConfig({
               translations: {
                 sk: 'Inštalácia Dual Root',
                 cs: 'Instalace duálního zavaděče',
+                fr:'Installation en Dual Boot',
               },
               link: 'installation/installation_dualboot',
             },
