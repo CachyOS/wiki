@@ -35,8 +35,8 @@ Vous choisissez ce dont vous avez besoin et décochez ce dont vous n’avez pas 
 
 Votre système, vos choix.
 
-:::caution[WARNING]
-Selecting multiple desktop environments is not allowed due to possible breakage. For example, KDE and GNOME. We recommend choosing a single desktop environment to avoid an installation error.
+:::Attention[MISE EN GARDE]
+La sélection de plusieurs environnement de bureau n’est pas permise car possiblement source de casse du système. Par exemple, KDE et GNOME. Nous vous recommandons le choix d’un seul environnement de bureau afin d ‘éviter une erreur lors de l’installation.
 :::
 
 ## Un OS convivial
