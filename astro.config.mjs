@@ -235,10 +235,14 @@ export default defineConfig({
           translations: {
             sk: 'Konfigurácia',
             cs: 'Nastavení',
+            fr: 'Configuration';
           },
           items: [
             {
               label: 'Secure Boot Setup',
+              translations: {
+                fr: 'Réglage du Démarrage Sécurisé',
+              }   ,
               link: 'configuration/secure_boot_setup',
             },
             {
@@ -246,11 +250,15 @@ export default defineConfig({
               translations: {
                 sk: 'Nastavenie po inštalácii',
                 cs: 'Nastavení po instalaci',
+                fr: 'Réglage Post installation',
               },
               link: 'configuration/post_install_setup',
             },
             {
               label: 'Boot Manager Configuration',
+              translations: {
+                fr: 'Configuration des gestionnaires de démarrage',
+              },
               link: 'configuration/boot_manager_configuration',
             },
             {
@@ -258,11 +266,15 @@ export default defineConfig({
               translations: {
                 sk: 'Dvojité GPU notebooky (NVIDIA + iGPU)',
                 cs: 'Notebooky s dvojitou GPU (NVIDIA + iGPU)',
+                fr: 'PC portable et Double GPU (NVIDIA + iGPU)',
               },
               link: 'configuration/dual_gpu',
             },
             {
               label: 'Gaming',
+              translations: {
+                fr: 'Le jeu',
+                },
               link: 'configuration/gaming',
             },
             {
@@ -270,6 +282,7 @@ export default defineConfig({
               translations: {
                 sk: 'Všeobecné systémové úpravy',
                 cs: 'Obecná úprava systému',
+                fr: 'Ajustements du système',
               },
               link: 'configuration/general_system_tweaks',
             },
@@ -278,11 +291,15 @@ export default defineConfig({
               translations: {
                 sk: 'Správca jadra',
                 cs: 'Správce jader',
+                fr: 'Gestionnaire de noyaux',
               },
               link: 'configuration/kernel-manager',
             },
             {
               label: 'Shell (Bash, zsh, fish)',
+              translations: {
+                fr: 'Terminaux: Bash/Zsh/ Fish',
+              },
               link: 'configuration/shell',
             },
             {
