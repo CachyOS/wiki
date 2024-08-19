@@ -28,6 +28,10 @@ export const locales = {
     label: 'Indonesian',
     lang: 'id',
   },
+  fr: {
+    label: 'Français',
+    lang: 'fr',
+  },
 };
 const site = 'https://wiki.cachyos.org/';
 
