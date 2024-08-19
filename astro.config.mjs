@@ -125,6 +125,7 @@ export default defineConfig({
               translations: {
                 sk: 'Príprava na inštaláciu',
                 cs: 'Příprava Instalace',
+                fr: 'Préparation à l\'installation',
               },
               link: 'installation/installation_prepare',
             },
@@ -133,6 +134,7 @@ export default defineConfig({
               translations: {
                 sk: 'Boot manažéry',
                 cs: 'Boot manažeři',
+                fr: 'Gestionnaire de démarrage',
               },
               link: 'installation/boot_managers',
             },
