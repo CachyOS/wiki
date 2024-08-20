@@ -298,28 +298,43 @@ export default defineConfig({
             {
               label: 'Shell (Bash, zsh, fish)',
               translations: {
-                fr: 'Terminaux: Bash/Zsh/ Fish',
+                fr: 'Terminaux: Bash/Zsh/Fish',
               },
               link: 'configuration/shell',
             },
             {
               label: 'KDE Plasma',
+              translations: {
+                fr: 'Bureau KDE Plasma',
+              },
               link: 'configuration/kde_plasma',
             },
             {
               label: 'GNOME',
+              translations: {
+                fr: 'Bureau GNOME',
+              },
               link: 'configuration/gnome',
             },
             {
               label: 'Hyprland',
+              translations: {
+                fr: 'Bureau Hyprland',
+              },
               link: 'configuration/hyprland',
             },
             {
               label: 'i3',
+              translations: {
+                fr: 'Bureau I3',
+              },
               link: 'configuration/i3',
             },
             {
               label: 'Qtile',
+              translations: {
+                fr: 'Bureau Qti',
+              },
               link: 'configuration/qtile',
             },
           ],
@@ -329,6 +344,7 @@ export default defineConfig({
           translations: {
             sk: 'CachyOS Repozitáre',
             cs: 'CachyOS repozitáře',
+            fr: 'Les dépôts CachyOS',
           },
           items: [
             {
@@ -336,6 +352,7 @@ export default defineConfig({
               translations: {
                 sk: 'Čo sú repozitáre CachyOS?',
                 cs: 'Co jsou CachyOS repozitáře?',
+                fr: 'Que sont les dépôts CachyOS?',
               },
               link: 'cachyos_repositories/what_are_the_cachyos_repo',
             },
@@ -344,6 +361,7 @@ export default defineConfig({
               translations: {
                 sk: 'Ako pridať repozitáre CachyOS?',
                 cs: 'Jak přidat CachyOS repozitáře?',
+                fr: 'Ajouter les dépôts CachyOS',
               },
               link: 'cachyos_repositories/how_to_add_cachyos_repo',
             },
@@ -352,6 +370,7 @@ export default defineConfig({
               translations: {
                 sk: 'PGO, BOLT a iné optimalizácie',
                 cs: 'PGO, BOLT a další optimalizace',
+                fr: 'Optimisations pour PGO, BOLT et autres',
               },
               link: 'cachyos_repositories/other_optimization',
             },
@@ -362,6 +381,7 @@ export default defineConfig({
           translations: {
             sk: 'Jadro',
             cs: 'Kernel',
+            fr: 'Les noyaux',
           },
           items: [
             {
@@ -369,6 +389,7 @@ export default defineConfig({
               translations: {
                 sk: 'Funkcie jadra CachyOS',
                 cs: 'Funkce CachyOS kernelu',
+                fr: 'Les fonctionnalités des kernel CachyOS',
               },
               link: 'kernel/kernel',
             },
@@ -377,6 +398,7 @@ export default defineConfig({
               translations: {
                 sk: 'sched-ext návod',
                 cs: 'sched-ext Tutoriál',
+                fr: 'Tutoriel sched-ext',
               },
               link: 'kernel/sched-ext',
             },
@@ -385,6 +407,7 @@ export default defineConfig({
               translations: {
                 sk: 'Správa modulov (NVIDIA/ZFS)',
                 cs: 'Správa modulů (NVIDIA/ZFS)',
+                fr: 'Gestion des modules (NVIDIA/ZFS)',
               },
               link: 'kernel/modules',
             },
@@ -395,12 +418,14 @@ export default defineConfig({
           translations: {
             sk: 'Podpora',
             cs: 'Podpora',
+            fr: 'Support',
           },
           items: [
             {
               label: 'FAQ',
               translations: {
                 cs: 'Často kladené otázky',
+                fr: 'Foire aux questions (FAQ)','
               },
               link: 'support/faq',
             },
@@ -409,6 +434,7 @@ export default defineConfig({
               translations: {
                 sk: 'Riešenie problémov',
                 cs: 'Řešení potíží',
+                fr: 'Dépannage',
               },
               link: 'support/troubleshooting',
             },
@@ -417,6 +443,7 @@ export default defineConfig({
               translations: {
                 sk: 'Získanie pomoci',
                 cs: 'Jak získat pomoc',
+                fr: 'Demander de l\'aide',
               },
               link: 'support/getting_help',
             },
@@ -425,6 +452,7 @@ export default defineConfig({
               translations: {
                 sk: 'Odoslanie chýb',
                 cs: 'Nahlášení chyb',
+                fr: 'Remonter des bugs',
               },
               link: 'support/submitting_bugs',
             },
@@ -433,6 +461,7 @@ export default defineConfig({
               translations: {
                 sk: 'Odoslanie požiadaviek na balíčky',
                 cs: 'Žádosti o balíčky',
+                fr: 'Soumettre des demandes de paquets',
               },
               link: 'support/submitting_package_requests',
             },
@@ -443,6 +472,7 @@ export default defineConfig({
           translations: {
             sk: 'Zmenové logy',
             cs: 'Změny',
+            fr: 'Journaux des modifications',
           },
           items: [
             {
@@ -450,6 +480,7 @@ export default defineConfig({
               translations: {
                 sk: 'GUI Inštalátor a ISO',
                 cs: 'Grafický instalátor a ISO',
+                fr: 'Installeur graphique et image ISO',
               },
               link: 'changelogs/gui_installer',
             },
@@ -458,6 +489,7 @@ export default defineConfig({
               translations: {
                 sk: 'CLI Inštalátor',
                 cs: 'Příkazový řádek instalátoru',
+                fr: 'Installeur en ligne de commande',
               },
               link: 'changelogs/cli_installer',
             },
@@ -468,12 +500,14 @@ export default defineConfig({
           translations: {
             sk: 'Politika',
             cs: 'Podmínky',
+            fr: 'Réglement',
           },
           items: [
             {
               label: 'Community Rules',
               translations: {
                 id: 'Peraturan Komunitas',
+                fr: 'Régles de la communauté',
               },
               link: 'policy/community-rules',
             },
@@ -482,6 +516,7 @@ export default defineConfig({
               translations: {
                 sk: 'Kódex správania',
                 cs: 'Kodex chování',
+                fr: 'Code de conduite',
               },
               link: 'policy/code_of_conduct',
             },
@@ -490,6 +525,7 @@ export default defineConfig({
               translations: {
                 sk: 'Podmienky služby',
                 cs: 'Obchodní podmínky',
+                fr: 'Conditions d\'utilisation',
               },
               link: 'policy/terms_of_service',
             },
@@ -498,6 +534,7 @@ export default defineConfig({
               translations: {
                 sk: 'Zásady ochrany osobných údajov',
                 cs: 'Zásady ochrany osobních údajů',
+                fr: 'Politique de confidentialité',
               },
               link: 'policy/privacy_policy',
             },
@@ -506,6 +543,7 @@ export default defineConfig({
               translations: {
                 sk: 'Politika repozitárov',
                 cs: 'Repozitářní politika',
+                fr: 'Réglement des Dépôts',
               },
               link: 'policy/repository_policy',
             },
@@ -514,6 +552,7 @@ export default defineConfig({
               translations: {
                 sk: 'Sociálne siete',
                 cs: 'Sociální sítě',
+                fr: 'Réseaux sociaux',
               },
               link: 'policy/social',
             },
@@ -522,6 +561,7 @@ export default defineConfig({
               translations: {
                 sk: 'Darcovstvo',
                 cs: 'Dobrovolné příspěvky',
+                fr: 'Dons',
               },
               link: 'policy/donation',
             },
