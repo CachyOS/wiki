@@ -45,5 +45,8 @@ If you would like to know more about the performance uplift from our repositorie
 * **29/02/2024:** Phoronix conducted another benchmark demonstrating the difference between x86-64-v4, x86-64-v3 and x86-64 (generic) Packages. Looking at the examples like PHP or GCC, where we customize our PKGBUILDs there is a noticeable performance improvement.
   * <https://www.phoronix.com/review/cachyos-x86-64-v3-v4>
 
-* **20/08/2024:** Phoronix posted a new benchmark for the AMD Ryzen 9950x on which it includes CachyOS and some others Linux Distributions.
+* **20/08/2024:** Michael posted a new benchmark for the AMD Ryzen 9950x on which it includes CachyOS and some others Linux Distributions.
   * <https://www.phoronix.com/review/linux-os-amd-ryzen9-9950x>
+   :::note
+   Liquid-DSP and RocksDB were compiled using the Phoronix Benchmark Suite, ignoring the compilation flags specified in /etc/makepkg.conf resulting in a unexpected performance result for CachyOS.
+   :::
