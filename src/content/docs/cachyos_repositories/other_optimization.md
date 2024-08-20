@@ -3,12 +3,6 @@ title: Other Optimization and Features
 description: A detailed list of Features and changes CachyOS does apply
 ---
 
-Packages
---------
-
-CachyOS applies PGO, LTO, and BOLT optimizations to various packages.
-We are focusing on optimizing compilers and core packages first, like GCC, Python, ZSTD, XZ, LZ4, Julia, PHP, SQLite and more.
-
 CachyOS Settings
 ----------------
 
