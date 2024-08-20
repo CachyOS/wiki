@@ -31,15 +31,19 @@ We also maintain a couple of -git packages e.g mesa-git.
 
 ### Tests and benchmarks
 
+Michael from Phoronix has already benchmarked CachyOS a couple of times, which is shown mostly leading in the benchmark graphs and on the Geometric Mean of All Test Results.
+Since the first benchmark made back in 2022. CachyOS has evolved and matured a lot more in terms of usability and performance.
+
 If you would like to know more about the performance uplift from our repositories. Please check the links below.
 
-- Phoronix has already benchmarked CachyOS twice and it seems to be a win for CachyOS, which is shown mostly leading in the benchmark graphs and on the Geometric Mean of All Test Results.
-These benchmarks are old by now, After these two reviews, CachyOS has evolved and matured a lot more in terms of usability and performance. the following review was the first one Michael made of CachyOS on it's early days.
-https://www.phoronix.com/review/cachyos-linux-perf
+* **14/03/2021:** In a RFC discussion about the impact of x86-64-v3 was started by **Mateusz Jończyk** from Arch Linux showed some initial results.
+  * <https://lists.archlinux.org/pipermail/arch-general/2021-March/048739.html>
 
-- Here, Phoronix has recently conducted another benchmark demonstrating the difference between x86-64-v4, x86-64-v3 and x86-64 (generic) Packages. Looking at the examples like PHP or GCC, where we customize our PKGBUILDs there is a noticeable performance improvement.
-https://www.phoronix.com/review/cachyos-x86-64-v3-v4
+* **09/12/2022:** First benchmark done by Michael.
+  * <https://www.phoronix.com/review/cachyos-linux-perf>
 
-- x86-64-v3 (there is a moderate benefit of *-march=haswell* (x86_64-v3) - of around
-10%-20% as compared to baseline for the tests performed by Arch Linux):
-https://lists.archlinux.org/pipermail/arch-general/2021-March/048739.html
+* **29/02/2024:** Phoronix conducted another benchmark demonstrating the difference between x86-64-v4, x86-64-v3 and x86-64 (generic) Packages. Looking at the examples like PHP or GCC, where we customize our PKGBUILDs there is a noticeable performance improvement.
+  * <https://www.phoronix.com/review/cachyos-x86-64-v3-v4>
+
+* **20/08/2024:** Phoronix posted a new benchmark for the AMD Ryzen 9950x on which it includes CachyOS and some others Linux Distributions.
+  * <https://www.phoronix.com/review/linux-os-amd-ryzen9-9950x>
