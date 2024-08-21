@@ -13,6 +13,7 @@ Lorsqu'on parle de systèmes UEFI, le terme correct pour désigner le menu de d�
 **gestionnaire de démarrage**.
 
 En guise d'explication simplifiée, un gestionnaire de démarrage présente uniquement les options de démarrage et confie le contrôle du processus de démarrage au système d'exploitation.
+
 Tandis qu'un chargeur de démarrage gère la tâche de chargement d'un noyau de système d'exploitation en mémoire, souvent avec des fichiers de support tels qu'un fichier de disque RAM initial Linux, et de démarrage du noyau en cours d'exécution.
 
 For a more detailed explanation and the reason both terms are often used interchangeably,
