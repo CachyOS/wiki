@@ -39,9 +39,6 @@ export default defineConfig({
     starlight({
       lastUpdated: true,
       customCss: ['./src/tailwind.css'],
-      components: {
-        Head: './src/components/starlight/Head.astro',
-      },
       title: 'CachyOS',
       logo: {
         src: '/src/assets/logo.svg',
