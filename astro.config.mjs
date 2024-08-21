@@ -207,6 +207,10 @@ export default defineConfig({
               link: 'features/kernel',
             },
             {
+              label: 'CachyOS Settings',
+              link: 'features/cachyos_settings',
+            },
+            {
               label: 'Prebuilt Kernel Modules (NVIDIA/ZFS)',
               link: 'features/modules',
             },
@@ -319,14 +323,6 @@ export default defineConfig({
                 cs: 'Jak přidat CachyOS repozitáře?',
               },
               link: 'cachyos_repositories/how_to_add_cachyos_repo',
-            },
-            {
-              label: 'PGO, BOLT and other Optimization',
-              translations: {
-                sk: 'PGO, BOLT a iné optimalizácie',
-                cs: 'PGO, BOLT a další optimalizace',
-              },
-              link: 'cachyos_repositories/other_optimization',
             },
           ],
         },
