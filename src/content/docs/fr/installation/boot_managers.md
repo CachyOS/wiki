@@ -8,11 +8,12 @@ Ce Wiki  va vous décrire l’ensemble des fonctionnalités de chaque gestionnai
 
 ## Préambule: Gestionnaire de démarrage ! = Chargeur de démarrage
 
-When talking about UEFI systems, the correct term when referring to the boot menu presented by systemd-boot, rEFInd and even GRUB is
-**boot manager**.
+Lorsqu'on parle de systèmes UEFI, le terme correct pour désigner le menu de démarrage présenté par systemd-boot, rEFInd et même GRUB est
 
-As a simplified explanation, a boot manager only presents boot options and hands off control of the boot process to the OS while a boot loader
-handles the task of loading an OS kernel into memory, often along with support files such as a Linux initial RAM disk file, and starting the kernel running.
+**gestionnaire de démarrage**.
+
+En guise d'explication simplifiée, un gestionnaire de démarrage présente uniquement les options de démarrage et confie le contrôle du processus de démarrage au système d'exploitation.
+Tandis qu'un chargeur de démarrage gère la tâche de chargement d'un noyau de système d'exploitation en mémoire, souvent avec des fichiers de support tels qu'un fichier de disque RAM initial Linux, et de démarrage du noyau en cours d'exécution.
 
 For a more detailed explanation and the reason both terms are often used interchangeably,
 please see "[Managing EFI Boot Loaders for Linux: Basic Principles](https://www.rodsbooks.com/efi-bootloaders/principles.html)" by Rod Smith.
