@@ -1,12 +1,12 @@
 ---
-title: Offered Boot Managers
-description: Description and recommendations for the currently offered boot managers
+title: Lesgestionnaires de démarrage inclus
+description: Description et recommandations pour les getsionnaires actuellement inclus dans CachyOS
 ---
 
-To offer the best experience across a range of devices, CachyOS currently offers the following boot managers: systemd-boot, rEFInd and Grub.
-This wiki article will describe the featuresets of each boot manager and also includes our recommendations for when choosing them.
+Afin d’offrir la meilleur expérience possible sur un large éventail d’appareils, CachyOS offre actuellement les gestionnaires de démarrage suivant : systemd-boot, rEFInd and Grub.
+Ce Wiki  va vous décrire l’ensemble des fonctionnalités de chaque gestionnaire de démarrage et va aussi inclure nos conseils pour votre choix.
 
-## Preambule: Boot Manager != Boot Loader
+## Préambule: Gestionnaire de démarrage ! = Chargeur de démarrage
 
 When talking about UEFI systems, the correct term when referring to the boot menu presented by systemd-boot, rEFInd and even GRUB is
 **boot manager**.
