@@ -251,7 +251,7 @@ export default defineConfig({
               link: 'configuration/kernel-manager',
             },
             {
-              label: 'Shell (Bash, zsh, fish)',
+              label: 'Shell Configuration',
               link: 'configuration/shell',
             },
             {
