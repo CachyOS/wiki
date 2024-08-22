@@ -197,14 +197,6 @@ export default defineConfig({
               },
               link: 'installation/installation_handheld',
             },
-            {
-              label: 'Updating CachyOS',
-              translations: {
-                sk: 'Aktualizácia CachyOS',
-                cs: 'Aktualizace CachyOS',
-              },
-              link: 'installation/updating_cachyos',
-            },
           ],
         },
         {
