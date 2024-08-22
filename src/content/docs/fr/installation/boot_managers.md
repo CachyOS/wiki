@@ -20,27 +20,32 @@ Pour plus d’explications détaillées  et la raison de l’utilisation des deu
 
 
 ## systemd-boot
-Part of systemd family, systemd-boot was created to be as simple as possible, therefore it only has support for UEFI based systems. This simple yet efficient design ensures it is reliable and fast. However this comes at the cost of advanced features supported by other boot managers.
 
-### Pros
-- Fastest out of the three boot managers.
-- Very simple configuration.
-- Boot entries are separated into multiple files making it easier to manage.
-- Simple yet modern design.
+Faisant parti de la famille systemd, systemd-boot a été créé pour etre le plus simple possible, par conséquent, il ne supporte que les systèmes basés sur UEFI. Cette conception simple mais efficace, lui assure rapidité et fiabilité. Cependant, cela se fait au détriment de fonctionnalités avancées prises en charge par d’autres gestionnaires de démarrage.
 
-### Cons
- - Does not support BIOS systems.
- - Lacks any kind of theming or customization.
- - Config is not auto-generated unless configured to do so. CachyOS includes systemd-boot manager to offer auto-generated configuration.
- - Only able to read boot images on EFI supported filesystems (FAT, FAT16, FAT32)
- - Inability to find boot images on partitions other than its own without manual intervention.
+### Les avantages
 
-### Partitioning layout
-- Minimum 1GB (2GB recommended) FAT32 EFI boot partition (/boot)
-- Minimum 5.5GB user selected root filesystem (/)
+- Le plus rapide des trois gestionnaires de démarrage.
+- Une configuration vraiment simple.
+- Les entrées de démarrages  sont séparées en plusieurs fichier ce qui les rend faciles à gérer.
+- Design simple mais moderne.
+
+### Les inconvénients
+
+ – Ne supporte pas les systèmes BIOS.
+ – Manque de personnalisation et de thèmes.
+ - La configuration n'est pas générée automatiquement, sauf si elle est configurée pour le faire. CachyOS inclut le gestionnaire de démarrage systemd pour offrir une configuration générée automatiquement.
+- Capable de lire uniquement les images de démarrage sur les systèmes de fichiers pris en charge par EFI (FAT, FAT16, FAT32)
+- Impossibilité de trouver des images de démarrage sur des partitions autres que la sienne sans intervention manuelle.
+
+### Disposition de partitionnement
+- Partition de démarrage EFI FAT32 d'au moins 1 Go (2 Go recommandés) (/boot)
+- Système de fichiers racine sélectionné par l'utilisateur d'au moins 5,5 Go (/)
 
 ### Recommendation:
-Systemd-boot is the recommended boot manager for CachyOS. Choose this one if you do not need any of the features specific to grub and rEFInd.
+
+Systemd-boot est le gestionnaire de démarrage recommandé pour CachyOS. Choisissez-le si vous n'avez besoin d'aucune des fonctionnalités spécifiques à grub et rEFInd.
+
 
 
 ## rEFInd
