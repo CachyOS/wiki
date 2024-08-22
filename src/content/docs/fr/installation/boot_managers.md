@@ -16,8 +16,8 @@ En guise d'explication simplifiée, un gestionnaire de démarrage présente uniq
 
 Tandis qu'un chargeur de démarrage gère la tâche de chargement d'un noyau de système d'exploitation en mémoire, souvent avec des fichiers de support tels qu'un fichier de disque RAM initial Linux, et de démarrage du noyau en cours d'exécution.
 
-For a more detailed explanation and the reason both terms are often used interchangeably,
-please see "[Managing EFI Boot Loaders for Linux: Basic Principles](https://www.rodsbooks.com/efi-bootloaders/principles.html)" by Rod Smith.
+Pour plus d’explications détaillées  et la raison de l’utilisation des deux termes de façon interchangeable, veuillez vous rendre sur ce lien "[La gestion des chargeurs de démarrage EFI sur Linux Linux: Les principes de base](https://www.rodsbooks.com/efi-bootloaders/principles.html)" par Rod Smith.
+
 
 ## systemd-boot
 Part of systemd family, systemd-boot was created to be as simple as possible, therefore it only has support for UEFI based systems. This simple yet efficient design ensures it is reliable and fast. However this comes at the cost of advanced features supported by other boot managers.
