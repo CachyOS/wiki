@@ -46,31 +46,34 @@ Faisant parti de la famille systemd, systemd-boot a été créé pour etre le pl
 
 Systemd-boot est le gestionnaire de démarrage recommandé pour CachyOS. Choisissez-le si vous n'avez besoin d'aucune des fonctionnalités spécifiques à grub et rEFInd.
 
-
-
 ## rEFInd
-A fork of rEFIt, rEFInd was primarily made to make it easier for MacOS users to multi-boot. However rEFInd has evolved into being hardware agnostic making it a great choice for multi-booting on any system. The main draw of rEFInd is its ability to scan all storage devices at boot and correspondingly display entries for each OS/Kernel found.
 
-### Pros
-- Autodetection of all operating systems and kernels on storage devices.
-- Little to no configuration required due to aforementioned autodetection.
-- Easily able to support secure boot
-- Much more graphical UI reminiscent of the MacOS Boot selector.
-- Great theming support
-- CachyOS provides a different partition layout for rEFInd to further increase multi-booting compatibility with other OS such as Windows.
-- Able to read boot images from EFI filesystems (FAT,FAT16,FAT32) as well as EXT4 and BTRFS.
+rEFInd, un fork de rEFIt, a été conçu à l'origine pour faciliter le démarrage multiple des utilisateurs de MacOS. Cependant, rEFInd a évolué pour devenir indépendant du matériel, ce qui en fait un excellent choix pour le démarrage multiple sur n'importe quel système. Le principal attrait de rEFInd est sa capacité à analyser tous les périphériques de stockage au démarrage et à afficher en conséquence les entrées pour chaque système d'exploitation/noyau trouvé.
 
-### Cons
-- Does not support BIOS systems.
-- Slightly slower due to the autodetection feature.
+### Les avantages
 
-### Partitioning Layout
-- Minimum 50MB FAT32 EFI partition (/boot/efi)
-- Minimum 1GB (2GB recommended) ext4 boot partition (/boot)
-- Minimum 5.5GB user selected root filesystem (/)
+- Détection automatique de tous les systèmes d'exploitation et noyaux sur les périphériques de stockage.
+- Peu ou pas de configuration requise en raison de la détection automatique mentionnée ci-dessus.
+- Prise en charge facile du démarrage sécurisé
+- Interface utilisateur beaucoup plus graphique rappelant le sélecteur de démarrage MacOS.
+- Excellent support de thème
+- CachyOS fournit une disposition de partition différente pour rEFInd afin d'augmenter encore la compatibilité de démarrage multiple avec d'autres systèmes d'exploitation tels que Windows.
+- Capable de lire les images de démarrage à partir des systèmes de fichiers EFI (FAT, FAT16, FAT32) ainsi que EXT4 et BTRFS.
 
-### Recommendation
-rEFInd is the recommended boot manager for booting with multiple operating systems.
+### Les inconvénients
+
+- Ne prend pas en charge les systèmes BIOS.
+- Légèrement plus lent en raison de la fonction de détection automatique.
+
+### Disposition de partitionnement
+
+- Partition EFI FAT32 d'au moins 50 Mo (/boot/efi)
+- Partition de démarrage ext4 d'au moins 1 Go (2 Go recommandés) (/boot)
+- Système de fichiers racine sélectionné par l'utilisateur d'au moins 5,5 Go (/)
+
+### Recommandation
+
+rEFInd est le gestionnaire de démarrage recommandé pour le démarrage avec plusieurs systèmes d'exploitation.
 
 
 ## Grub
