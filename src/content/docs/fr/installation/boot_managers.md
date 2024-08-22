@@ -32,9 +32,9 @@ Faisant parti de la famille systemd, systemd-boot a été créé pour etre le pl
 
 ### Les inconvénients
 
- – Ne supporte pas les systèmes BIOS.
- – Manque de personnalisation et de thèmes.
- - La configuration n'est pas générée automatiquement, sauf si elle est configurée pour le faire. CachyOS inclut le gestionnaire de démarrage systemd pour offrir une configuration générée automatiquement.
+- Ne supporte pas les systèmes BIOS.
+- Manque de personnalisation et de thèmes.
+- La configuration n'est pas générée automatiquement, sauf si elle est configurée pour le faire. CachyOS inclut le gestionnaire de démarrage systemd pour offrir une configuration générée automatiquement.
 - Capable de lire uniquement les images de démarrage sur les systèmes de fichiers pris en charge par EFI (FAT, FAT16, FAT32)
 - Impossibilité de trouver des images de démarrage sur des partitions autres que la sienne sans intervention manuelle.
 
