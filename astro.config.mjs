@@ -100,6 +100,14 @@ export default defineConfig({
               },
               link: 'cachyos_basic/download',
             },
+            {
+              label: 'CachyOS Requirements & Installation Media',
+              translations: {
+                sk: 'PPožiadavky CachyOS a inštalačné médium',
+                cs: 'Požadavky CachyOS a instalační médium',
+              },
+              link: 'installation/installation_prepare',
+            },
           ],
         },
         {
@@ -109,14 +117,6 @@ export default defineConfig({
             cs: 'Instalace',
           },
           items: [
-            {
-              label: 'Installation Prepare',
-              translations: {
-                sk: 'Príprava na inštaláciu',
-                cs: 'Příprava Instalace',
-              },
-              link: 'installation/installation_prepare',
-            },
             {
               label: 'Boot Managers',
               translations: {
