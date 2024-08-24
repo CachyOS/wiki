@@ -223,10 +223,10 @@ export default defineConfig({
               link: 'configuration/boot_manager_configuration',
             },
             {
-              label: 'Dual GPU Laptops (NVIDIA + iGPU)',
+              label: 'Dual GPU Laptops',
               translations: {
-                sk: 'Dvojité GPU notebooky (NVIDIA + iGPU)',
-                cs: 'Notebooky s dvojitou GPU (NVIDIA + iGPU)',
+                sk: 'Dvojité GPU notebooky',
+                cs: 'Notebooky s dvojitou GPU',
               },
               link: 'configuration/dual_gpu',
             },
