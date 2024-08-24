@@ -211,6 +211,10 @@ export default defineConfig({
               link: 'features/cachyos_settings',
             },
             {
+              label: 'Optimized Repositories',
+              link: 'features/optimized_repos',
+            },
+            {
               label: 'Prebuilt Kernel Modules (NVIDIA/ZFS)',
               link: 'features/modules',
             },
@@ -298,31 +302,6 @@ export default defineConfig({
             {
               label: 'Qtile',
               link: 'configuration/qtile',
-            },
-          ],
-        },
-        {
-          label: 'CachyOS Repositories',
-          translations: {
-            sk: 'CachyOS Repozitáre',
-            cs: 'CachyOS repozitáře',
-          },
-          items: [
-            {
-              label: 'What are the CachyOS repositories?',
-              translations: {
-                sk: 'Čo sú repozitáre CachyOS?',
-                cs: 'Co jsou CachyOS repozitáře?',
-              },
-              link: 'cachyos_repositories/what_are_the_cachyos_repo',
-            },
-            {
-              label: 'How to add CachyOS repositories?',
-              translations: {
-                sk: 'Ako pridať repozitáre CachyOS?',
-                cs: 'Jak přidat CachyOS repozitáře?',
-              },
-              link: 'cachyos_repositories/how_to_add_cachyos_repo',
             },
           ],
         },
