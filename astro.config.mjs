@@ -107,6 +107,15 @@ export default defineConfig({
               },
               link: 'cachyos_basic/download',
             },
+            {
+              label: 'Installation Prepare',
+              translations: {
+                sk: 'Príprava na inštaláciu',
+              cs: 'Příprava Instalace',
+              fr: 'Préparation à l\'installation',
+              },
+              link: 'installation/installation_prepare',
+            },
           ],
         },
         {
@@ -117,15 +126,6 @@ export default defineConfig({
             fr: 'Installation',
           },
           items: [
-            {
-              label: 'Installation Prepare',
-              translations: {
-                sk: 'Príprava na inštaláciu',
-                cs: 'Příprava Instalace',
-                fr: 'Préparation à l\'installation',
-              },
-              link: 'installation/installation_prepare',
-            },
             {
               label: 'Boot Managers',
               translations: {
