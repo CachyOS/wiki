@@ -112,6 +112,7 @@ export default defineConfig({
               translations: {
                 sk: 'PPožiadavky CachyOS a inštalačné médium',
                 cs: 'Požadavky CachyOS a instalační médium',
+                fr: 'Prérequis pour CachyOS et support d\'installation';
               },
               link: 'installation/installation_prepare',
             },
