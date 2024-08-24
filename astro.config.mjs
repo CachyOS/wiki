@@ -390,6 +390,7 @@ export default defineConfig({
               label: 'FAQ',
               translations: {
                 cs: 'Často kladené otázky',
+                fr: 'Foire aux questions',
               },
               link: 'support/faq',
             },
