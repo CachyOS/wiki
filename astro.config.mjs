@@ -108,11 +108,10 @@ export default defineConfig({
               link: 'cachyos_basic/download',
             },
             {
-              label: 'Installation Prepare',
+              label: 'CachyOS Requirements & Installation Media',
               translations: {
-                sk: 'Príprava na inštaláciu',
-              cs: 'Příprava Instalace',
-              fr: 'Préparation à l\'installation',
+                sk: 'PPožiadavky CachyOS a inštalačné médium',
+                cs: 'Požadavky CachyOS a instalační médium',
               },
               link: 'installation/installation_prepare',
             },
@@ -123,7 +122,6 @@ export default defineConfig({
           translations: {
             sk: 'Inštalácia',
             cs: 'Instalace',
-            fr: 'Installation',
           },
           items: [
             {
@@ -139,7 +137,6 @@ export default defineConfig({
               label: 'Filesystem',
               translations: {
                 sk: 'Súborový systém',
-                cs: 'Filesystem',
                 fr: 'Système de fichiers',
               },
               link: 'installation/filesystem',
@@ -194,7 +191,7 @@ export default defineConfig({
               translations: {
                 sk: 'Inštalácia Dual Root',
                 cs: 'Instalace duálního zavaděče',
-                fr:'Installation en Dual Boot',
+                fr: 'Installation en Dual Boot',
               },
               link: 'installation/installation_dualboot',
             },
@@ -216,15 +213,6 @@ export default defineConfig({
               },
               link: 'installation/installation_handheld',
             },
-            {
-              label: 'Updating CachyOS',
-              translations: {
-                sk: 'Aktualizácia CachyOS',
-                cs: 'Aktualizace CachyOS',
-                fr: 'Mettre à jour CachyOS',
-              },
-              link: 'installation/updating_cachyos',
-            },
           ],
         },
         {
@@ -232,14 +220,13 @@ export default defineConfig({
           translations: {
             sk: 'Konfigurácia',
             cs: 'Nastavení',
-            fr: 'Configuration';
           },
           items: [
             {
               label: 'Secure Boot Setup',
               translations: {
                 fr: 'Réglage du Démarrage Sécurisé',
-              }   ,
+              },
               link: 'configuration/secure_boot_setup',
             },
             {
@@ -263,7 +250,6 @@ export default defineConfig({
               translations: {
                 sk: 'Dvojité GPU notebooky (NVIDIA + iGPU)',
                 cs: 'Notebooky s dvojitou GPU (NVIDIA + iGPU)',
-                fr: 'PC portable et Double GPU (NVIDIA + iGPU)',
               },
               link: 'configuration/dual_gpu',
             },
@@ -271,7 +257,7 @@ export default defineConfig({
               label: 'Gaming',
               translations: {
                 fr: 'Le jeu',
-                },
+              },
               link: 'configuration/gaming',
             },
             {
@@ -293,45 +279,27 @@ export default defineConfig({
               link: 'configuration/kernel-manager',
             },
             {
-              label: 'Shell (Bash, zsh, fish)',
-              translations: {
-                fr: 'Terminaux: Bash/Zsh/Fish',
-              },
+              label: 'Shell Configuration',
               link: 'configuration/shell',
             },
             {
               label: 'KDE Plasma',
-              translations: {
-                fr: 'Bureau KDE Plasma',
-              },
               link: 'configuration/kde_plasma',
             },
             {
               label: 'GNOME',
-              translations: {
-                fr: 'Bureau GNOME',
-              },
               link: 'configuration/gnome',
             },
             {
               label: 'Hyprland',
-              translations: {
-                fr: 'Bureau Hyprland',
-              },
               link: 'configuration/hyprland',
             },
             {
               label: 'i3',
-              translations: {
-                fr: 'Bureau I3',
-              },
               link: 'configuration/i3',
             },
             {
               label: 'Qtile',
-              translations: {
-                fr: 'Bureau Qti',
-              },
               link: 'configuration/qtile',
             },
           ],
@@ -415,14 +383,12 @@ export default defineConfig({
           translations: {
             sk: 'Podpora',
             cs: 'Podpora',
-            fr: 'Support',
           },
           items: [
             {
               label: 'FAQ',
               translations: {
                 cs: 'Často kladené otázky',
-                fr: 'Foire aux questions (FAQ)','
               },
               link: 'support/faq',
             },
