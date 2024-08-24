@@ -327,7 +327,7 @@ export default defineConfig({
               translations: {
                 sk: 'Ako pridať repozitáre CachyOS?',
                 cs: 'Jak přidat CachyOS repozitáře?',
-                fr: 'Ajouter les dépôts CachyOS',
+                fr: 'Comment ajouter les dépôts CachyOS',
               },
               link: 'cachyos_repositories/how_to_add_cachyos_repo',
             },
