@@ -77,33 +77,38 @@ rEFInd est le gestionnaire de démarrage recommandé pour le démarrage avec plu
 
 
 ## Grub
-Grub is the oldest of the available boot managers and consequently the only one that supports BIOS booting. It has a very large featureset, works on almost every machine and is the most commonly used Linux boot manager.
-The following is a list of its main pros and cons.
+
+Grub est le plus ancien des gestionnaires de démarrage disponibles et par conséquent le seul à prendre en charge le démarrage du BIOS. Il dispose d'un très grand nombre de fonctionnalités, fonctionne sur presque toutes les machines et est le gestionnaire de démarrage Linux le plus couramment utilisé.
+Voici une liste de ses principaux avantages et inconvénients.
 
 ### Pros
-- Able to read boot images from almost all available linux filesystems.
-- Widely used and very easy to find information online.
-- Able to decrypt encrypted boot partitions.
-- The only boot*loader* offered allowing it to boot BIOS machines.
-- Looks dated. However has great theme support to compensate.
+
+- Capable de lire les images de démarrage de presque tous les systèmes de fichiers Linux disponibles.
+- Largement utilisé et il est très facile de trouver des informations en ligne.
+- Capable de décrypter les partitions de démarrage cryptées.
+- Le seul *chargeur* de démarrage proposé lui permettant de démarrer les machines BIOS.
+- Semble daté. Cependant, il offre un excellent support de thèmes pour compenser.
 
 ### Cons
-- Bloated due to needing to support much older hardware and needing lots of filesystem drivers.
-- Slightly slower than other boot managers due to aforementioned bloat.
-- Complicated config that needs to be regenerated every time a kernel is updated. (However this is done automatically.)
 
-### Partitioning layout
+- Trés lourd en raison de la nécessité de prendre en charge du matériel beaucoup plus ancien et de la nécessité de nombreux pilotes de système de fichiers.
+- Légèrement plus lent que les autres gestionnaires de démarrage en raison du gonflement susmentionné.
+- Configuration compliquée qui doit être régénérée à chaque mise à jour d'un noyau. (Cependant, cela se fait automatiquement.)
+
+### Schéma de partitionnement
 
 #### BIOS
-- Minimum 6.5GB user selected root filesystem (/)
+
+- Système de fichiers racine sélectionné par l'utilisateur d'au moins 6,5 Go (/)
 
 #### UEFI
-- Minimum 50MB EFI partition (/boot/efi)
-- Minimum 6.5GB user selected root filesystem (/)
 
-### Recommendation
-Grub is the only available boot manager if your machine only supports BIOS booting. It is also the only boot manager that supports boot partition encryption (Different from disk encryption). If you do not fit those criteria alternative boot managers are recommended.
+- Partition EFI minimale de 50 Mo (/boot/efi)
+- Système de fichiers racine sélectionné par l'utilisateur minimum de 6,5 Go (/)
 
+### Recommandation
+Grub est le seul gestionnaire de démarrage disponible si votre machine ne prend en charge que le démarrage du BIOS. C'est également le seul gestionnaire de démarrage qui prend en charge le chiffrement de la partition de démarrage (différent du chiffrement du disque). Si vous ne correspondez pas à ces critères, d'autres gestionnaires de démarrage sont recommandés.
 
-## TL:DR
-Choose Grub if your machine is BIOS only, pick rEFInd if you plan on having multiple operating systems on your machine (Especially Windows), otherwise go with systemd-boot.
+## Résumé
+
+Choisissez Grub si votre machine est uniquement BIOS, choisissez rEFInd si vous prévoyez d'avoir plusieurs systèmes d'exploitation sur votre machine (en particulier Windows), sinon optez pour systemd-boot.
