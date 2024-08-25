@@ -1,6 +1,6 @@
 ---
-title: CachyOS Repository General Information
-description: Benchmarks and information about our optimized repositories
+title: Optimized Repositories
+description: Information about our optimized repositories
 ---
 
 Our aim to deliver a performance-optimized distribution necessitates recompiling essential Arch Linux packages for generic x86-64,
@@ -17,19 +17,34 @@ avx512vpopctndq, clflushopt, clwb, clzero, fsgsbase, gfni, mwaitx, pclmul, pku, 
 rpdid, rdrnd, rdseed, sha, sse4a, vaes, vockmulqdq, wbnoinvd, savec, xsaveopt, xsaves
 ```
 
-Check out [this](https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels) page for more information about the instructions used in the different x86_64 micro-architectures
-
-:::note
-Wikipedia page quotes that the Skylake architecture supports AVX512 which is wrong, only Skylake-X does.
-:::
-
-### Customized Packages
+## Customized Packages
 
 Our [CachyOS-PKGBUILDs](https://github.com/CachyOS/CachyOS-PKGBUILDS) repository contains packages that receive ongoing updates, patches and backported fixes.
 To boost performance, we selectively implement PGO, LTO, and BOLT optimizations depending on the need.
 We also maintain a couple of -git packages e.g mesa-git.
 
-### Tests and benchmarks
+### Adding Our Repositories to an Existing Arch Linux Install
+
+We provide a script that automates the installation of our repositories to your existing Arch-based installs.
+
+```sh
+curl https://mirror.cachyos.org/cachyos-repo.tar.xz -o cachyos-repo.tar.xz
+tar xvf cachyos-repo.tar.xz && cd cachyos-repo
+sudo ./cachyos-repo.sh
+```
+
+:::tip[How the script works]
+This script will detect the instruction sets your CPU is capable of and install whichever version of our repositories that
+are the most optimized for it. It also backs up your old `pacman.conf` for repository removal via the script
+:::
+
+Our script also supports removing the CachyOS repositories by appending `--remove` to the `cachyos-repo.sh` script.
+
+```sh
+sudo /path/to/cachyos-repo.sh --remove
+```
+
+## Tests and benchmarks
 
 Michael from Phoronix has already benchmarked CachyOS a couple of times, which is shown mostly leading in the benchmark graphs and on the Geometric Mean of All Test Results.
 Since the first benchmark made back in 2022. CachyOS has evolved and matured a lot more in terms of usability and performance.
@@ -50,3 +65,8 @@ If you would like to know more about the performance uplift from our repositorie
    :::note
    Liquid-DSP and RocksDB were compiled using the Phoronix Benchmark Suite, ignoring the compilation flags specified in /etc/makepkg.conf resulting in a unexpected performance result for CachyOS.
    :::
+
+## Learn more
+
+- [Instruction sets for the various x86-64 micro-architectures](https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels)
+- [Manual Installation of CachyOS's repositories](https://github.com/CachyOS/linux-cachyos?tab=readme-ov-file#option-2-manual-installation)

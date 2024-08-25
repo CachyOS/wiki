@@ -200,6 +200,31 @@ export default defineConfig({
           ],
         },
         {
+          label: 'CachyOS Features',
+          items: [
+            {
+              label: 'cachy-chroot',
+              link: 'features/cachy_chroot',
+            },
+            {
+              label: 'CachyOS Kernel',
+              link: 'features/kernel',
+            },
+            {
+              label: 'CachyOS Settings',
+              link: 'features/cachyos_settings',
+            },
+            {
+              label: 'Optimized Repositories',
+              link: 'features/optimized_repos',
+            },
+            {
+              label: 'Prebuilt Kernel Modules (NVIDIA/ZFS)',
+              link: 'features/modules',
+            },
+          ],
+        },
+        {
           label: 'Configuration',
           translations: {
             sk: 'Konfigurácia',
@@ -243,6 +268,14 @@ export default defineConfig({
               link: 'configuration/general_system_tweaks',
             },
             {
+              label: 'sched-ext Tutorial',
+              translations: {
+                sk: 'sched-ext návod',
+              cs: 'sched-ext Tutoriál',
+              },
+              link: 'configuration/sched-ext',
+            },
+            {
               label: 'Kernel Manager',
               translations: {
                 sk: 'Správca jadra',
@@ -273,72 +306,6 @@ export default defineConfig({
             {
               label: 'Qtile',
               link: 'configuration/qtile',
-            },
-          ],
-        },
-        {
-          label: 'CachyOS Repositories',
-          translations: {
-            sk: 'CachyOS Repozitáre',
-            cs: 'CachyOS repozitáře',
-          },
-          items: [
-            {
-              label: 'What are the CachyOS repositories?',
-              translations: {
-                sk: 'Čo sú repozitáre CachyOS?',
-                cs: 'Co jsou CachyOS repozitáře?',
-              },
-              link: 'cachyos_repositories/what_are_the_cachyos_repo',
-            },
-            {
-              label: 'How to add CachyOS repositories?',
-              translations: {
-                sk: 'Ako pridať repozitáre CachyOS?',
-                cs: 'Jak přidat CachyOS repozitáře?',
-              },
-              link: 'cachyos_repositories/how_to_add_cachyos_repo',
-            },
-            {
-              label: 'PGO, BOLT and other Optimization',
-              translations: {
-                sk: 'PGO, BOLT a iné optimalizácie',
-                cs: 'PGO, BOLT a další optimalizace',
-              },
-              link: 'cachyos_repositories/other_optimization',
-            },
-          ],
-        },
-        {
-          label: 'Kernel',
-          translations: {
-            sk: 'Jadro',
-            cs: 'Kernel',
-          },
-          items: [
-            {
-              label: 'CachyOS Kernel Features',
-              translations: {
-                sk: 'Funkcie jadra CachyOS',
-                cs: 'Funkce CachyOS kernelu',
-              },
-              link: 'kernel/kernel',
-            },
-            {
-              label: 'sched-ext Tutorial',
-              translations: {
-                sk: 'sched-ext návod',
-                cs: 'sched-ext Tutoriál',
-              },
-              link: 'kernel/sched-ext',
-            },
-            {
-              label: 'Modules Handling (NVIDIA/ZFS)',
-              translations: {
-                sk: 'Správa modulov (NVIDIA/ZFS)',
-                cs: 'Správa modulů (NVIDIA/ZFS)',
-              },
-              link: 'kernel/modules',
             },
           ],
         },
