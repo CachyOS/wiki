@@ -203,6 +203,10 @@ export default defineConfig({
           label: 'CachyOS Features',
           items: [
             {
+              label: 'cachy-chroot',
+              link: 'features/cachy_chroot',
+            },
+            {
               label: 'CachyOS Kernel',
               link: 'features/kernel',
             },
