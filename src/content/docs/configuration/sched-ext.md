@@ -100,7 +100,7 @@ scx_rusty --help
 
 **Developed by: Changwoo Min (multics69 [GitHub](<https://github.com/multics69>)).**
 
-**Brief introduction to LAVD from Chang:**
+**Brief introduction to LAVD from Changwoo:**
 
 ***LAVD is a new scheduling algorithm which is still under development. It is
 motivated by gaming workloads, which are latency-critical and
@@ -113,13 +113,8 @@ Use cases:
 * Audio Production
 * Latency sensitive workloads
 * Desktop usage
+* Great interactivity under intensive workloads
 * Power saving
-
-CPU compatibility:
-
-* Intel P/E Cores
-* AMD Ryzen X3D / Multi CCD-CCX
-* Older CPUs
 
 One of the main and awesome capabilities that LAVD includes is **Core Compaction.** which without going into technical details: When CPU usage < 50%, Currently active cores will run for longer and at a higher frequency. Meanwhile Idle Cores will stay in C-State (Sleep) for a much longer duration achieving less overall power usage.
 
@@ -134,19 +129,12 @@ Bpfland when making decisions on which cores to use, it takes in consideration t
 
 Use cases:
 
-- Gaming
-- Latency sensitive workloads
-- Desktop usage
-- Multimedia/Audio production (Thanks to the low latency mode)
-- Intensive background tasks such as a compilation
-
-CPU compatibility:
-
-* Intel P/E Cores
-* AMD Ryzen X3D / Multi CCD-CCX
-* Older CPUs
-
-
+* Gaming
+* Latency sensitive workloads
+* Desktop usage
+* Multimedia/Audio production (Thanks to the low latency mode)
+* Great interactivity under intensive workloads
+* Power saving (Primary domain > powersave)
 
 ## Scheduler Profiles
 
