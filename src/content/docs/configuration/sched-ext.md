@@ -76,9 +76,11 @@ The scx schedulers can be accessed and configured through the [GUI](/configurati
 
 ## Introduction to the main schedulers
 
-Since there are many schedulers to choose from, we want to give a little introduction about the schedulers in hand:
+Since there are many schedulers to choose from, we want to give a little introduction about the schedulers in hand.
 
-Reminder: These schedulers are in constant development while being tested, so expect some of its features/flags which are subject to change.
+:::note
+These schedulers are in constant development while being tested, so expect some of its features/flags which are subject to change.
+:::
 
 Feel free to report any issue or feedback to their [GitHub](/configuration/sched-ext#github) referenced below.
 
@@ -86,9 +88,17 @@ Feel free to report any issue or feedback to their [GitHub](/configuration/sched
 
 **Developed by: David Vernet (Byte-Lab [GitHub](<https://github.com/Byte-Lab>))**
 
-It's a great choice for almost every use case. Web browsing, Gaming, Code compilation and so on. 
-
 Being one of the heaviest schedulers yet released on sched-ext, it comes with a lot of features that add to his flexibility and capability. Tunability is one of them so you can adjust Rusty to your desires and use case.
+
+**Use cases:**
+
+* Gaming
+* Latency sensitive workloads
+* Desktop usage
+* Multimedia/Audio production
+* Latency sensitive workloads
+* Great interactivity under intensive workloads
+* Power saving
 
 For more information about what can be done with Rusty and his tunable flags. Check out the help page:
 
@@ -107,14 +117,14 @@ motivated by gaming workloads, which are latency-critical and
 communication-heavy. It aims to minimize latency spikes while maintaining
 overall good throughput and fair use of CPU time among tasks.***
 
-Use cases:
+**Use cases:**
 
 * Gaming
 * Audio Production
 * Latency sensitive workloads
 * Desktop usage
 * Great interactivity under intensive workloads
-* Power saving
+* Power saving 
 
 One of the main and awesome capabilities that LAVD includes is **Core Compaction.** which without going into technical details: When CPU usage < 50%, Currently active cores will run for longer and at a higher frequency. Meanwhile Idle Cores will stay in C-State (Sleep) for a much longer duration achieving less overall power usage.
 
@@ -127,14 +137,14 @@ A vruntime-based sched_ext scheduler that prioritizes interactive workloads. Hig
 
 Bpfland when making decisions on which cores to use, it takes in consideration their cache layout and which cores share the same L2/L3 cache leading to fewer cache misses = more performance.
 
-Use cases:
+**Use cases:**
 
 * Gaming
 * Latency sensitive workloads
 * Desktop usage
 * Multimedia/Audio production (Thanks to the low latency mode)
 * Great interactivity under intensive workloads
-* Power saving (Primary domain > powersave)
+* Power saving
 
 ## Scheduler Profiles
 
@@ -189,6 +199,12 @@ Options:
       --no-freq-scaling
           Disable frequency scaling by scx_lavd
 ```
+
+### The use cases of these schedulers are quite similar... why is that?
+
+Mainly because they are (for now) multipurpose schedulers, meaning they adapt to many workloads even if they don't excel at all of them.
+
+In order to find out which one fits you best, there is no other shortcut than to test it yourself.
 
 ## GitHub
 
