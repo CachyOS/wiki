@@ -133,7 +133,3 @@ Bcachefs is still considered as experimental and can have issues.
 Use the default filesystem **BTRFS** as it is considered stable and has a lot of neat features (snapshots, compression, etc). Use **XFS** or **EXT4** for a simple
 and fast filesystem.
 
-:::note
-Filesystem performance between BTRFS, XFS, Ext4 are negligible.
-:::
-
