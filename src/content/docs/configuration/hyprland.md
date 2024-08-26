@@ -6,9 +6,8 @@ description: CachyOS Hyprland keybinds & FAQ
 
 :::caution
 Since Hyprland started their rework. Please be aware that it is not currently stable and you can experience bugs/unexpected crashes. Use at your own risk.
-Even their "stable" version is also broken and buggy therefore we do not plan to provide support in the future. Refer to their wiki instead.
+Even their "stable" version is also broken and buggy therefore we do not plan to provide support in the future. Refer to their [wiki](<https://wiki.hyprland.org/>) instead:
 
-* <https://wiki.hyprland.org/>
 
 :::
 
