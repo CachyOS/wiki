@@ -3,13 +3,11 @@ title: Qtile Configuration
 description: CachyOS Qtile keybinds & FAQ
 ---
 
-**For more information about Qtile. Please check out their wiki for reference**
-*   https://docs.qtile.org/en/stable/
-
 #### Credits go to Aarrayy for making this Qtile setup
+
 > X11 and Wayland session
 
-# Keybinds
+## Keybinds
 
 Most of the key combinations require the use of the mod key which in our case is the Windows key (referenced as SUPER), you can change it on the config file.
 Some of them might make use of mod1 (ALT key).
@@ -108,19 +106,24 @@ Some of them might make use of mod1 (ALT key).
 
 * SUPER + S
 
+## FAQ
 
-# FAQ
+### Why is the volume widget showing an error or it's stuck at 0%?
 
-## Why is the volume widget showing an error or it's stuck at 0%?
 * Sometimes this is due to Qtile volume widget not being able to detect your default Output Device, you can take a look in the wiki for more information.
-*    https://docs.qtile.org/en/latest/manual/ref/widgets.html#pulsevolume
+* <https://docs.qtile.org/en/latest/manual/ref/widgets.html#pulsevolume>
 
-## Is there a autostart.sh script?
+### Is there a autostart.sh script?
+
 * Its located in scripts/ from Qtile folder
 
-## Does Qtile's bar interacts with the mouse?
+### Does Qtile's bar interacts with the mouse?
+
 * It does, for example if you scroll on the tiny dots which are your workspaces (Active,Inactive,Empty etc) you'll switch to the Left or Right or even click in one of them.
 * Another example is the layout (columns by default), clicking on it allows you to switch between the available layouts
 * CPU and RAM usage by clicking it's going to open Btop (TUI System Monitor)
 * Increase/Lower/Mute/ by interacting on the volume widget
 
+For more information about Qtile. Please check out their wiki for reference
+
+* <https://docs.qtile.org/en/stable/>
