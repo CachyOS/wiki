@@ -7,27 +7,26 @@ description: CachyOS Hyprland keybinds & FAQ
 :::caution
 Since Hyprland started their rework. Please be aware that it is not currently stable and you can experience bugs/unexpected crashes. Use at your own risk.
 Even their "stable" version is also broken and buggy therefore we do not plan to provide support in the future. Refer to their wiki instead.
-:::
 
-*   https://wiki.hyprland.org/
+* <https://wiki.hyprland.org/>
+
+:::
 
 Our main goal with our setup is to have a working Hyprland but keep it barebones therefore some essential tools and programs might be missing such as a GUI File Manager, Please check FAQ section (at the bottom)
 
-
-
-# Keybinds
+## Keybinds
 
 Most of the key combinations require the use of the mod key which in our case is the Windows key (referenced as SUPER),  you can change it on the config file.
 
 ### Open terminal
 
-*   SUPER + Return
+* SUPER + Return
 
 ### Go to workspace (1-9)
 
 * SUPER + 1-9 (Number row, number pad does not count)
 
-### Change focus to (Left,Right,Up,Down) 
+### Change focus to (Left,Right,Up,Down)
 
 * SUPER + ArrowKeys
 
@@ -75,7 +74,7 @@ Most of the key combinations require the use of the mod key which in our case is
 
 ### Enter resize submap state (Allows resizing), H,J,K,L or via arrow keys
 
-* SUPER + R 
+* SUPER + R
 * ESC to exit
 
 ### Move window with your mouse
@@ -108,31 +107,31 @@ Most of the key combinations require the use of the mod key which in our case is
 
 * SUPER + O
 
-### Lower gap between windows 
+### Lower gap between windows
 
-* SUPER + G 
+* SUPER + G
 
 ### Reset gaps to default value
 
 * SUPER + Shift + G
 
+## FAQ
 
-# FAQ
+### Why does my Discord, Thunar and Nautilus have a weird background?
 
-## Why does my Discord,Thunar,Nautilus have a weird background?
 This is because the window has a modified opacity
 
 * Consider modifying Discord's window rule near the bottom of Hyprland's config file:
    `windowrule=opacity 0.96,discord`
 
-## Is there a File Manager included?
+### Is there a File Manager included?
 
 * No, install one you like
 
-## How can i take an screenshot?
+### How can i take an screenshot?
 
 * SUPER + A (You can draw there too)
 
-## Why Hyprland randomly crashed? 
+### Why Hyprland randomly crashed?
 
 * Check at the beginning of this page why
