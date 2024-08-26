@@ -9,16 +9,18 @@ build another kernel for a different scheduler.
 
 - Planned release for being an official kernel feature: 6.12
 
-##  Installing a Kernel with sched-ext support
+## Installing a Kernel with sched-ext support
 
 CachyOS provides kernels, which have OOB support for the sched-ext framework.
 Following kernels are supported:
+
 - linux-cachyos (default kernel)
 - linux-cachyos-sched-ext (latest Stable release)
 - linux-cachyos-sched-ext-debug (This is mainly for developers to develop and work on sched-ext)
 - linux-cachyos-rc (latest testing release with the latest features)
 
 You can simply check if your kernel supports sched-ext with the following command:
+
 ```bash
 ❯ zcat /proc/config.gz | grep SCHED_CLASS_EXT
 CONFIG_SCHED_CLASS_EXT=y
@@ -28,6 +30,7 @@ CONFIG_SCHED_CLASS_EXT=y
 
 You can find the schedulers in the `scx-scheds` or `scx-scheds-git` package.
 Simply run following command to install the package:
+
 ```sh
 sudo pacman -Sy scx-scheds
 ```
@@ -35,6 +38,7 @@ sudo pacman -Sy scx-scheds
 ### Starting the Scheduler
 
 The scheduler can be simply started in the terminal with following command:
+
 ```sh
 sudo scx_rusty
 ```
@@ -72,7 +76,7 @@ sudo systemctl stop scx
 
 ### CachyOS Kernel Manager
 
-The scx schedulers can be accessed and configured through the [GUI](/configuration/kernel-manager#sched-ext-gui). 
+The scx schedulers can be accessed and configured through the [GUI](/configuration/kernel-manager#sched-ext-gui).
 
 ## Introduction to the main schedulers
 
@@ -92,13 +96,13 @@ Being one of the heaviest schedulers yet released on sched-ext, it comes with a 
 
 **Use cases:**
 
-* Gaming
-* Latency sensitive workloads
-* Desktop usage
-* Multimedia/Audio production
-* Latency sensitive workloads
-* Great interactivity under intensive workloads
-* Power saving
+- Gaming
+- Latency sensitive workloads
+- Desktop usage
+- Multimedia/Audio production
+- Latency sensitive workloads
+- Great interactivity under intensive workloads
+- Power saving
 
 For more information about what can be done with Rusty and his tunable flags. Check out the help page:
 
@@ -106,7 +110,7 @@ For more information about what can be done with Rusty and his tunable flags. Ch
 scx_rusty --help
 ```
 
-### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>) 
+### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>)
 
 **Developed by: Changwoo Min (multics69 [GitHub](<https://github.com/multics69>)).**
 
@@ -119,15 +123,14 @@ overall good throughput and fair use of CPU time among tasks.***
 
 **Use cases:**
 
-* Gaming
-* Audio Production
-* Latency sensitive workloads
-* Desktop usage
-* Great interactivity under intensive workloads
-* Power saving 
+- Gaming
+- Audio Production
+- Latency sensitive workloads
+- Desktop usage
+- Great interactivity under intensive workloads
+- Power saving
 
 One of the main and awesome capabilities that LAVD includes is **Core Compaction.** which without going into technical details: When CPU usage < 50%, Currently active cores will run for longer and at a higher frequency. Meanwhile Idle Cores will stay in C-State (Sleep) for a much longer duration achieving less overall power usage.
-
 
 ### [scx_bpfland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_bpfland>)
 
@@ -139,12 +142,12 @@ Bpfland when making decisions on which cores to use, it takes in consideration t
 
 **Use cases:**
 
-* Gaming
-* Latency sensitive workloads
-* Desktop usage
-* Multimedia/Audio production (Thanks to the low latency mode)
-* Great interactivity under intensive workloads
-* Power saving
+- Gaming
+- Latency sensitive workloads
+- Desktop usage
+- Multimedia/Audio production (Thanks to the low latency mode)
+- Great interactivity under intensive workloads
+- Power saving
 
 ## Scheduler Profiles
 
@@ -181,7 +184,7 @@ Similar to the answer from above. Which cpu is used and his design, being their 
 
 That's why having choices is one of the highlights from the sched-ext framework, so don't be scared to try the main ones and see which one works best for your use case, being ex: fps stability, maximum performance, responsiveness under intensive workloads etc.
 
-Each of these schedulers' behaviour can be tuned with flags. Refer to each scheduler's `--help` output for a brief explanation
+Each of these schedulers' behavior can be tuned with flags. Refer to each scheduler's `--help` output for a brief explanation
 of what each flag does
 
 ```sh
@@ -208,5 +211,5 @@ In order to find out which one fits you best, there is no other shortcut than to
 
 ## GitHub
 
-- scx-scheds (Schedulers): https://github.com/sched-ext/scx
-- https://github.com/sched-ext/scx-kernel-releases
+- scx-scheds (Schedulers): <https://github.com/sched-ext/scx>
+- <https://github.com/sched-ext/scx-kernel-releases>
