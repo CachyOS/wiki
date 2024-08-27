@@ -3,10 +3,9 @@ title: Hyprland configuration
 description: CachyOS Hyprland keybinds & FAQ
 ---
 
-
 :::caution
 Since Hyprland started their rework. Please be aware that it is not currently stable and you can experience bugs/unexpected crashes. Use at your own risk.
-Even their "stable" version is also broken and buggy therefore we do not plan to provide support in the future. Refer to their [wiki](<https://wiki.hyprland.org/>) instead:
+Even their "stable" version is also broken and buggy therefore we do not plan to provide support in the future. Refer to their [wiki](https://wiki.hyprland.org/) instead:
 
 :::
 
@@ -14,74 +13,74 @@ Our main goal with our setup is to have a working Hyprland but keep it barebones
 
 ## Keybinds
 
-Most of the key combinations require the use of the mod key which in our case is the Windows key (referenced as SUPER),  you can change it on the config file.
+Most of the key combinations require the use of the mod key which in our case is the Windows key (referenced as SUPER), you can change it on the config file.
 
 ### Open terminal
 
-* SUPER + Return
+- SUPER + Return
 
 ### Go to workspace (1-9)
 
-* SUPER + 1-9 (Number row, number pad does not count)
+- SUPER + 1-9 (Number row, number pad does not count)
 
 ### Change focus to (Left,Right,Up,Down)
 
-* SUPER + ArrowKeys
+- SUPER + ArrowKeys
 
 ### Move between workspaces with the scroll wheel
 
-* Super + Scroll
+- Super + Scroll
 
 ### Move between workspaces with comma and period
 
-* Super + period (Next workspace)
-* Super + comma (Previous workspace)
+- Super + period (Next workspace)
+- Super + comma (Previous workspace)
 
 ### Move focused window to workspace (1-9) but don't go there
 
-* SUPER + Shift + 1-9
+- SUPER + Shift + 1-9
 
 ### Same as above but also switch to said workspace
 
-* SUPER + CTRL + 1-9
+- SUPER + CTRL + 1-9
 
 ### Open rofi (Program Launcher)
 
-* CTRL + Space
-  
+- CTRL + Space
+
 ### Close focused window
 
-* SUPER + Q
+- SUPER + Q
 
 ### Move focused window to direction (Up,Down,Left,Right)
 
-* SUPER + Shift + ArrowKeys
+- SUPER + Shift + ArrowKeys
 
 ### Resize focused window
 
-* CTRL + Shift + J (Downwards)
-* CTRL + Shift + K (Upwards)
-* CTRL + Shift + H (Left)
-* CTRL + Shift + L (Right)
-* CTRL + Shift + ArrowKeys
+- CTRL + Shift + J (Downwards)
+- CTRL + Shift + K (Upwards)
+- CTRL + Shift + H (Left)
+- CTRL + Shift + L (Right)
+- CTRL + Shift + ArrowKeys
 
 ### Toggle focused window into floating or fullscreen
 
-* SUPER + F (Fullscreen)
-* SUPER + V (Floating)
+- SUPER + F (Fullscreen)
+- SUPER + V (Floating)
 
 ### Enter resize submap state (Allows resizing), H,J,K,L or via arrow keys
 
-* SUPER + R
-* ESC to exit
+- SUPER + R
+- ESC to exit
 
 ### Move window with your mouse
 
-* SUPER + Left click
+- SUPER + Left click
 
 ### Resize window
 
-* SUPER + Right click (keep it pressed and drag your cursor on any direction)
+- SUPER + Right click (keep it pressed and drag your cursor on any direction)
 
 ### Volume control (Multimedia keys) such as VolUP, VolDOWN and MUTE
 
@@ -91,27 +90,27 @@ Most of the key combinations require the use of the mod key which in our case is
 
 ### Pin focused window so it shows on all workspaces (Floating)
 
-* SUPER + Y
+- SUPER + Y
 
 ### Toggle current window to a group
 
-* SUPER + K
+- SUPER + K
 
 ### Change active group
 
-* SUPER + TAB
+- SUPER + TAB
 
 ### Reload waybar
 
-* SUPER + O
+- SUPER + O
 
 ### Lower gap between windows
 
-* SUPER + G
+- SUPER + G
 
 ### Reset gaps to default value
 
-* SUPER + Shift + G
+- SUPER + Shift + G
 
 ## FAQ
 
@@ -119,17 +118,17 @@ Most of the key combinations require the use of the mod key which in our case is
 
 This is because the window has a modified opacity
 
-* Consider modifying Discord's window rule near the bottom of Hyprland's config file:
-   `windowrule=opacity 0.96,discord`
+- Consider modifying Discord's window rule near the bottom of Hyprland's config file:
+  `windowrule=opacity 0.96,discord`
 
 ### Is there a File Manager included?
 
-* No, install one you like
+- No, install one you like
 
 ### How can i take an screenshot?
 
-* SUPER + A (You can draw there too)
+- SUPER + A (You can draw there too)
 
 ### Why Hyprland randomly crashed?
 
-* Check at the beginning of this page why
+- Check at the beginning of this page why

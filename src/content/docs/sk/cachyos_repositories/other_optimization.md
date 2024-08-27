@@ -3,14 +3,12 @@ title: Ďalšie optimalizácie a funkcie
 description: Podrobný zoznam funkcií a zmien, ktoré CachyOS aplikuje.
 ---
 
-Balíčky
--------
+## Balíčky
 
 CachyOS aplikuje optimalizácie ako PGO, LTO a BOLT na ďalšie balíčky.
 Zameriavame sa najskôr na optimalizáciu kompilátorov a základných balíčkov, ako sú GCC, python, zstd, xz, lz4, julia, php, sqlite a ďalšie.
 
-Nastavenia CachyOS
-------------------
+## Nastavenia CachyOS
 
 Nastavenia CachyOS obsahujú množstvo konfiguračných súborov pre zram, nvidia, amd a všeobecné systémové zmeny.
 
@@ -36,8 +34,7 @@ Nastavenia CachyOS obsahujú množstvo konfiguračných súborov pre zram, nvidi
 - **ananicy-cpp**: daemon na nastavenie priorít procesov s množstvom pravidiel
 - **uksmd**: daemon na úrovni užívateľského priestoru na zlúčenie rovnakých pamäťových stránok do jednej
 
-Aplikácie CachyOS
------------------
+## Aplikácie CachyOS
 
 - **cachy-browser**: Prehliadač založený na firefox, s bezpečnejšou konfiguráciou a opravami z gentoo a librewolf
 - **cachyos-kernel-manager**: Jednoduchá inštalácia jadier z repozitára alebo konfigurácia vlastného jadra a vlastných opráv
@@ -46,8 +43,7 @@ Aplikácie CachyOS
 - **cachyos-rate-mirrors**: Automaticky hodnotí zrkadlá Arch a CachyOS
 - **systemd-boot-manager**: Automaticky generuje nové položky pre systemd-boot-manager a dá sa ľahko konfigurovať v `/etc/sdboot-manage.conf`
 
-Moduly jadra
-------------
+## Moduly jadra
 
 CachyOS poskytuje predkompilované moduly jadra pre nvidia a zfs.
 To uľahčuje používateľovi zabezpečiť kompatibilitu so najnovšou verziou jadra. Taktiež pridávame opravy pre moduly, ak je to potrebné na zabezpečenie najnovšieho stabilného jadra.

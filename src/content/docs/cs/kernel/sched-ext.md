@@ -13,6 +13,7 @@ CachyOS poskytuje jádra s integrovanou podporou sched-ext frameworku. Podporova
 - linux-cachyos-rc (poslední testovací verze s nejnovějšími funkcemi)
 
 Můžete jednoduše zkontrolovat, zda vaše jádro podporuje sched-ext pomocí následujícího příkazu:
+
 ```bash
 ❯ zcat /proc/config.gz | grep SCHED_CLASS_EXT
 CONFIG_SCHED_CLASS_EXT=y
@@ -21,6 +22,7 @@ CONFIG_SCHED_CLASS_EXT=y
 ## Spuštění a použití plánovačů scx
 
 Plánovače můžete najít v balíčku `scx-scheds` nebo `scx-scheds-git`. Instalujte balíček jednoduše pomocí následujícího příkazu:
+
 ```sh
 sudo pacman -Sy scx-scheds
 ```
@@ -30,6 +32,7 @@ Balíček `scx-scheds-git` může mít problémy při použití s stabilním já
 ### Spuštění plánovače
 
 Plánovač můžete jednoduše spustit v terminálu pomocí následujícího příkazu:
+
 ```sh
 sudo scx_rusty
 ```
@@ -69,7 +72,6 @@ Vzhledem k mnoha existujícím plánovačům chceme poskytnout malé doporučen�
 - **scx_rusty** - dobrý globální plánovač, který je velmi interaktivní a odolný vůči zátěži. Může být použit pro jakoukoli práci.
 - **scx_lavd** - Plánovač vyvinutý pro hraní her, hlavně pro handheldy. Tento plánovač momentálně neumožňuje použití topologie (např. když má CPU 2 CCX, jako je 7950X).
 - **scx_rustland** - Plánovač s plánováním uživatelského prostoru. Může dobře zvládat těžké zátěže, ale má nadbytečnost v důsledku plánování uživatelského prostoru.
-
 
 ## GitHub
 

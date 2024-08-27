@@ -8,7 +8,7 @@ This repository contains the source code of our [wiki page](https://wiki.cachyos
 
 - [bun](https://github.com/oven-sh/bun) - Run a local copy of the website to preview local changes
 - [git](https://git-scm.com/downloads) - Avoid editing files from GitHub Web as much as possible. See [here](https://docs.github.com/en/get-started/using-git)
-to get started on using git.
+  to get started on using git.
 - A text editor - Ideally one that parses markdown correctly.
 
 > [!TIP]

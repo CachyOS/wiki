@@ -29,7 +29,6 @@ Během instalace vyberte pouze jedno desktopové prostředí
 Uživatelská podpora pro Hyprland již není poskytována.
 :::
 
-Screenshoty
------------
+## Screenshoty
 
 Screenshoty našich změn na vzhledu a obecného vzhledu naleznete v sekci Screenshot Wiki.

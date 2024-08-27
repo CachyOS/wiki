@@ -12,12 +12,14 @@ title: Nahlasovanie chýb
 
 CachyOS poskytuje skvelý nástroj na zhromažďovanie logov, nazvaný `cachyos-bugreport.sh`.
 Tento nástroj zhromažďuje logy z:
+
 - dmesg
 - journalctl
 
 Keď sa logy zhromaždia, nástroj sa opýta používateľa, či by mali byť nahraté na naše služby pre zdieľanie textu.
 
 Spustite nasledujúci príkaz v termináli a vložte odkaz s logmi do témy:
+
 ```sh
 sudo cachyos-bugreport.sh
 ```

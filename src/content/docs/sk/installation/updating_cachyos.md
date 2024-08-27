@@ -9,11 +9,11 @@ Ak je potrebné manuálne nastavenie, informujeme používateľov prostredníctv
 Integrujeme do pacmana správu o aktualizácii, ktorá musí byť potvrdená pred aktualizáciou systému používateľom.
 Po potvrdení sa táto správa pri aktualizácii už nezobrazí.
 
-pacman
------
+## pacman
 
 Pacman je JEDINÁ odporúčaná metóda na aktualizáciu vášho systému.
 Použite nasledujúci príkaz na aktualizáciu vášho systému:
+
 ```bash
 sudo pacman -Syu
 ```

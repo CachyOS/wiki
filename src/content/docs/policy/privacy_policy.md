@@ -17,6 +17,7 @@ Email: admin at cachyos dot org
 ### 3.1. General Use of the Platform
 
 When you visit our website, our hosting provider automatically collects certain technical data:
+
 - IP address
 - Accessed content
 - Date and time of access
@@ -28,6 +29,7 @@ This data is necessary for the operation of the website and to ensure its securi
 ### 3.2. User Account Registration
 
 When you create a user account, we collect:
+
 - Username
 - Email address
 - Password
@@ -59,6 +61,7 @@ We may share your data with external service providers, such as our hosting prov
 ## 8. Your Rights
 
 Under the GDPR, you have the following rights regarding your personal data:
+
 - Right of access (Art. 15 GDPR)
 - Right to rectification (Art. 16 GDPR)
 - Right to deletion (Art. 17 GDPR)

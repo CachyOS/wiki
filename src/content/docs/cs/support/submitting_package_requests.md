@@ -10,4 +10,3 @@ Pokud uživatelé chtějí přidat balíček, mohou to udělat na GitHubu nebo v
 
 - GitHub: https://github.com/CachyOS/distribution/issues
 - Fórum: https://discuss.cachyos.org/c/feedback/repository/11
-

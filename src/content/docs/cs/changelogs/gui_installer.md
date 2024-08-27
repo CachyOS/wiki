@@ -2,10 +2,11 @@
 title: GUI Instalátor changelog
 description: Changelog Calamares a GUI Live ISO
 ---
-24.06
-----
+
+## 24.06
 
 **Novinky:**
+
 - chwd: Zavedení detekce hardware pro přenosná zařízení
 - chwd: Podpora T2 MacBooků
 - chwd: Přidání detekce síťových ovladačů
@@ -20,6 +21,7 @@ description: Changelog Calamares a GUI Live ISO
 - Aktualizace balíků: linux-cachyos 6.9.3, mesa 24.1.1, xwayland 24.1, NVIDIA 555.52.04, Plasma 6.0.5
 
 **Opravy chyb:**
+
 - Calamares: umount: Opět povolen nouzový režim
 - Qtile: Multimediální ovládání nyní správně funguje
 - NVIDIA: Povolení potřebných služeb a možností pro správný spánek v prostředí Wayland
@@ -29,6 +31,7 @@ description: Changelog Calamares a GUI Live ISO
 - Calamares: Shellprocess: Přesunutí hodnocení zrcadel před instalaci klíčů
 
 **Změny z experimentální verze pro přenosná zařízení:**
+
 - Výchozí téma: KDE Vapor Theme (SteamOS Theme)
 - Výchozí souborový systém: BTRFS
 - Výchozí jádro: linux-cachyos-deckify
@@ -44,10 +47,12 @@ description: Changelog Calamares a GUI Live ISO
 - Přidání automount do cachyos-handheld
 - CachyOS nyní může provádět aktualizace BIOSu na Steam Decku
 
-24.05
-----
+  24.05
+
+---
 
 **Novinky:**
+
 - Souborové systémy: Přidání Bcachefs jako možnosti souborového systému
 - pacstrap: Detekce použití Bcachefs a instalace odpovídajících Bcachefs-tools
 - CachyOS-AI-SDK: Zavedení nové instalační možnosti pro OOB NVIDIA SDK Setup
@@ -57,6 +62,7 @@ description: Changelog Calamares a GUI Live ISO
 - Aktualizace balíků: Python 3.12, gcc 14.1.1, mesa 24.0.6, xwayland 24.1rc2 , NVIDIA 550.78
 
 **Opravy chyb:**
+
 - settings.conf: Přesun detekce hardware před netinstall
 - pacstrap: Použití btrfs-assistant místo btrfs-assistant-git
 - plymouth: odebrání plymouth hooku na zfs + šifrování
@@ -65,10 +71,12 @@ description: Changelog Calamares a GUI Live ISO
 - umount: Zakázání nouzového režimu pro zabránění problémům s instalací zfs
 - shellprocess: Úklid zbytků z offline instalace
 
-24.04
-----
+  24.04
+
+---
 
 **Novinky:**
+
 - Plymouth: Použití plymouth pro poskytnutí tématizovaného animovaného bootovacího obrazu
 - ISO: Přepnutí zpět na X11 kvůli problémům se nastavením rozložení klávesnice v calamares
 - rEFInd: Nové rozložení oddílů (/boot odděleně a /boot/efi)
@@ -80,30 +88,36 @@ description: Changelog Calamares a GUI Live ISO
 - Aktualizace balíků: xz 5.6.1-3, linux-cachyos 6.8.2, pacman 6.1.0-5, mesa 24.0.4, Plasma 6.0.3, nvidia 550.67 a cachyos-settings 39-2
 
 **Opravy chyb:**
+
 - Autologin: Oprava možnosti automatického přihlášení při použití sddm
 - xz: Poskytnutí opraveného balíčku xz
 - libarchive: Zmírnění problému závadným xz aktérem
 - cachyos-settings: udev-rule: nedávat watermark_scale_factor na 125, protože výrazně zvyšuje využití paměti RAM
 - calamares: pacman-keyring: Použití jednodušší metody pro integraci klíčového prstenu do instalace
 
-24.03.1
-----
+  24.03.1
+
+---
 
 **Novinky:**
+
 - netinstall: Odstranění nadbytečných jader ve výběru netinstall pro lepší orientaci uživatelů. Ostatní vlastní jádra lze instalovat pomocí Kernel Manageru.
 - Kernel Manager: NVIDIA moduly jsou nyní automaticky instalovány při detekci, přepracováno pro QT6, opraveny vlastní názvy při použití možnosti LTO.
 - Package Installer: Přepracován pro QT6, aktualizován pro pacman 6.1.
 - Aktualizace balíků: linux-cachyos 6.8.1, pacman 6.1, mesa 24.0.3, Plasma 6.0.2, llvm 17.0.6
 
 **Opravy chyb:**
+
 - NVIDIA: Opraven modul nvidia tak, aby vlastnil dříve nvidia.drm.modeset a předešel tak problémům s grafikou NVIDIA.
 - Refind: Nepoužívá se již instalace LTS jádra kvůli potenciálním problémům.
 - shellprocess: Úplné odstranění adresáře liveusers.
 
-24.03
-----
+  24.03
+
+---
 
 **Novinky:**
+
 - ISO: Plasma 6 je nyní součástí ISO a jako výchozí je použit Wayland. ISO s GNOME bylo zrušeno kvůli zjednodušení netinstall.
 - Calamares: Přepracován pro QT6.
 - refind: Přidány možnosti f2fs a zfs včetně šifrování luks2.
@@ -114,13 +128,16 @@ description: Changelog Calamares a GUI Live ISO
 - Aktualizace balíků: linux-cachyos 6.7.9, mesa 24.0.2, zfs-utils 2.2.3
 
 **Opravy chyb:**
+
 - pacstrap: Není již instalováno konfigurační balíčky pro čistší výběr instalace.
 - shellprocess_pacman: Kopírování ranked cachyos-v4-mirrorlists na cíl.
 
-24.02
------
+  24.02
+
+---
 
 **Novinky:**
+
 - refind: Změna layoutu z /boot/efi na /boot pro více možností souborových systémů a šifrování.
 - Live-ISO: Úklid a synchronizace Live-ISO.
 - Launch Installer: Doporučení pro online instalaci při spuštění instalátoru.
@@ -128,86 +145,107 @@ description: Changelog Calamares a GUI Live ISO
 - netinstall: Přidání phonon-qt5-vlc do KDE.
 - Aktualizace balíků: linux-cachyos 6.7.5, mesa 23.3.5, gcc 13.2.1-12, glibc 2.39, mesa 24.0.1, nvidia 550.54.14
 
-24.01
------
+  24.01
+
+---
 
 **Novinky:**
+
 - x86-64-v4: Autodetekce a povolení repozitáře při instalaci.
 - linux-cachyos: Framework sched-ext scheduler je nyní součástí výchozího jádra.
 - xwayland: Poskytování explicitních synchronizačních patchů jako výchozí.
 - Aktualizace balíků: linux-cachyos 6.7, mesa 23.3.3, gcc 13.2.1-8, xorg-xwayland 23.2.4
 
 **Opravy chyb:**
+
 - chwd: Pro grafické karty Nvidia Ada Lovelace jsou moduly nvidia nyní přímo zabaleny do initramfs pro předejití problémům s early kms.
 
-23.12
------
+  23.12
+
+---
 
 **Opravy chyb:**
+
 - zfs: Přidání compatibility=grub k volbám poolu pro zajištění kompatibility.
 - grub/xfs: Přidání patche do grubu pro kompatibilitu s novým xfs bigtime výchozím nastavením.
 - netinstall: xdg-desktop-portal-hyprland místo xdg-desktop-portal-hyprland-git
 
-23.11
------
+  23.11
+
+---
 
 **Novinky:**
+
 - nvidia: Použití modulu nvidia místo dkms
 - Calamares synchronizován s upstreamem
 - Aktualizace balíků: linux-cachyos 6.6.1, nvidia-utils 545.29.02, mesa 23.2.1, zfs-utils 2.2.0, mkinitcpio 37
 
 **Opravy chyb:**
+
 - nvidia-hook: Přidán zpět nvidia-hook, aby se předešlo problémům při instalaci s novým modulem
 - netinstall: Balíčky byly přejmenovány kvůli nedávným změnám v balení KF5
 - netinstall: xdg-desktop-portal-gnome byl přidán do instalace GNOME
 
-23.09
------
+  23.09
+
+---
 
 **Novinky:**
+
 - systemd-boot: Výchozí nastavení na luks2
 - netinstall: Poskytnutí vlastní kategorie pro balíčky CachyOS
 - Calamares synchronizován s upstreamem
 - Aktualizace balíků: linux-cachyos 6.5.3, nvidia-utils 535.104.05, mesa 23.2.7
 
 **Opravy chyb:**
+
 - shellprocess_sdboot: Při generování záznamů o bootu při instalaci se nyní vyhýbá použití "sudo".
 
-23.08
------
+  23.08
+
+---
 
 **Novinky:**
+
 - Calamares synchronizován s upstreamem
 - Aktualizace balíků: linux-cachyos 6.4.10, nvidia-utils 535.98
 
 **Opravy chyb:**
+
 - Keyring byl aktualizován a nyní správně funguje.
 
-23.07
------
+  23.07
+
+---
 
 **Novinky:**
+
 - CachyOS-Settings nyní zahrnuje "bpftune", který automaticky upravuje nastavení sítě podle použití.
 - CachyOS-Qtile-Settings: Změny pro zlepšení uživatelského zážitku, lepší ikony, ...
 - Aktualizace balíků: linux-cachyos 6.4.2, cachy-browser 115.0.1, mesa 23.1.3,
 
 **Opravy chyb:**
+
 - rate-mirrors byl opraven.
 - chwd (Hardware Detection) dostal několik oprav.
 - Opravena instalace nevolných ovladačů pro hybridní nastavení v instalátoru.
 - Opraveny zamrzání Calamares, které se vyskytovalo v některých vzácných konfiguracích, zejména ve virtuálním prostředí.
 - Slides: Oprava chyby v textu na slide 6.
 
-23.06
------
+  23.06
+
+---
 
 **Opravy chyb:**
+
 - Offline instalace: Opraveno Calamares.
 
-23.05
------
+  23.05
+
+---
 
 **Novinky:**
+
 - CachyOS Git migrace je nyní reflektována při instalaci.
 - chwd (mhwd) dostal několik oprav.
 - Pacman: Přidána funkce umožňující zobrazit uživatelům zprávu před aktualizací.
@@ -215,11 +253,13 @@ description: Changelog Calamares a GUI Live ISO
 - Aktualizace balíků: linux-cachyos 6.3.4, cachy-browser 113.0.1, mesa 23.1.1, python 3.11
 
 **Opravy chyb:**
+
 - netinstall: Minimální opravy kvůli změnám v balíčcích.
 - Slides: Slide 6 byl aktualizován, aby reflektoval poslední změny.
 
-23.04
------
+  23.04
+
+---
 
 **Novinky:**
 
@@ -231,10 +271,12 @@ description: Changelog Calamares a GUI Live ISO
 
 - f2fs: Odstranění možnosti "atgc" pro mount, protože má problémy se systemd
 
-23.03.1
--------
+  23.03.1
+
+---
 
 **Novinky:**
+
 - Aktualizace balíků: linux-cachyos 6.2.7, cachy-browser 111.0
 
 **Opravy chyb:**
@@ -243,8 +285,9 @@ description: Changelog Calamares a GUI Live ISO
 - Opraven problém s klíčováním při offline instalaci
 - Refind: Použití linux-cachyos-lts jako výchozího. Aktuální verze 6.2 se zdá, že nefunguje dobře s refindem.
 
-23.03
------
+  23.03
+
+---
 
 **Nové funkce:**
 
@@ -268,8 +311,9 @@ description: Changelog Calamares a GUI Live ISO
 - Odstraněn zfs hook z mkinitcpio na live iso, který způsoboval problémy při bootování
 - Aktualizaci můžete stáhnout z našich zrcadel na SourceForge.
 
-23.02
------
+  23.02
+
+---
 
 **Nové funkce:**
 
@@ -286,8 +330,9 @@ description: Changelog Calamares a GUI Live ISO
 - Github byl přidán mezi hosty, aby se předešlo problémům se seznamem zrcadel
 - Boot záznamy pro BIOS byly aktualizovány v syslinux
 
-23.01
------
+  23.01
+
+---
 
 **Novinky:**
 
@@ -306,8 +351,9 @@ description: Changelog Calamares a GUI Live ISO
 - Ohodnocená zrcadla cachyos jsou nyní správně zkopírována do cílového systému
 - power-profile-daemon již není výchozím nastavením povolen
 
-22.12
------
+  22.12
+
+---
 
 **Novinky:**
 
@@ -328,8 +374,9 @@ description: Changelog Calamares a GUI Live ISO
 - Přidán "kms" hook do modulu initcpiocfg, aby odpovídal výchozím nastavením Archlinuxu
 - A další opravy ISO
 
-22.11
------
+  22.11
+
+---
 
 **Novinky:**
 
@@ -350,8 +397,9 @@ description: Changelog Calamares a GUI Live ISO
 - Aktualizace mkinitcpio.conf
 - A další opravy ISO
 
-22.10
------
+  22.10
+
+---
 
 **Novinky:**
 
@@ -371,8 +419,9 @@ description: Changelog Calamares a GUI Live ISO
 - Přidán záložní bootmode, který nenastavuje žádný modeset (nomodeset)
 - A další opravy ISO
 
-22.09
------
+  22.09
+
+---
 
 **Novinky:**
 
@@ -389,10 +438,11 @@ description: Changelog Calamares a GUI Live ISO
 - Aktualizace balíků netinstallace a opravy
 - Opravena instalace OpenBoxu
 - Běžné opravy překladů
-Here is the translation of the CachyOS release changelogs from 22.05 to 22.07:
+  Here is the translation of the CachyOS release changelogs from 22.05 to 22.07:
 
-22.07
------
+  22.07
+
+---
 
 **Novinky:**
 
@@ -413,8 +463,9 @@ Here is the translation of the CachyOS release changelogs from 22.05 to 22.07:
 - Opravena šifrování btrfs swap luksencryption
 - Běžné opravy překladů
 
-22.06
------
+  22.06
+
+---
 
 **Opravy chyb:**
 
@@ -453,8 +504,9 @@ Následující možnosti můžete vybrat pro kompilaci jádra:
 - Povolit nebo vypnout nf cone
 - Povolit LTO (Full, Thin, No)
 
-22.05
------
+  22.05
+
+---
 
 CachyOS byl založen před rokem. Po téměř roce vývoje jsme opravdu hrdí, že oznámíme naši první stabilní verzi GUI instalátoru.
 Věnovali jsme hodně času správě repozitářů, vývoji jádra, infrastruktuře, themingu, ... a nakonec jsme všechno implementovali do GUI instalátoru CachyOS.

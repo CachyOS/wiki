@@ -5,7 +5,6 @@ title: Konfigurace Shell
 CachyOS v současné době používá jako výchozí shell fish.
 Je možné změnit výchozí shell.
 
-
 ## Zsh
 
 Již dodáváme konfiguraci zsh s běžně používanými pluginy a nastavením.

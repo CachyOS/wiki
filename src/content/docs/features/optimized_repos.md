@@ -51,20 +51,23 @@ Since the first benchmark made back in 2022. CachyOS has evolved and matured a l
 
 If you would like to know more about the performance uplift from our repositories. Please check the links below.
 
-* **14/03/2021:** In a RFC discussion about the impact of x86-64-v3 was started by **Mateusz Jończyk** from Arch Linux showed some initial results.
-  * <https://lists.archlinux.org/pipermail/arch-general/2021-March/048739.html>
+- **14/03/2021:** In a RFC discussion about the impact of x86-64-v3 was started by **Mateusz Jończyk** from Arch Linux showed some initial results.
 
-* **09/12/2022:** First benchmark done by Michael.
-  * <https://www.phoronix.com/review/cachyos-linux-perf>
+  - <https://lists.archlinux.org/pipermail/arch-general/2021-March/048739.html>
 
-* **29/02/2024:** Phoronix conducted another benchmark demonstrating the difference between x86-64-v4, x86-64-v3 and x86-64 (generic) Packages. Looking at the examples like PHP or GCC, where we customize our PKGBUILDs there is a noticeable performance improvement.
-  * <https://www.phoronix.com/review/cachyos-x86-64-v3-v4>
+- **09/12/2022:** First benchmark done by Michael.
 
-* **20/08/2024:** Michael posted a new benchmark for the AMD Ryzen 9950x on which it includes CachyOS and some others Linux Distributions.
-  * <https://www.phoronix.com/review/linux-os-amd-ryzen9-9950x>
-   :::note
-   Liquid-DSP and RocksDB were compiled using the Phoronix Benchmark Suite, ignoring the compilation flags specified in /etc/makepkg.conf resulting in a unexpected performance result for CachyOS.
-   :::
+  - <https://www.phoronix.com/review/cachyos-linux-perf>
+
+- **29/02/2024:** Phoronix conducted another benchmark demonstrating the difference between x86-64-v4, x86-64-v3 and x86-64 (generic) Packages. Looking at the examples like PHP or GCC, where we customize our PKGBUILDs there is a noticeable performance improvement.
+
+  - <https://www.phoronix.com/review/cachyos-x86-64-v3-v4>
+
+- **20/08/2024:** Michael posted a new benchmark for the AMD Ryzen 9950x on which it includes CachyOS and some others Linux Distributions.
+  - <https://www.phoronix.com/review/linux-os-amd-ryzen9-9950x>
+    :::note
+    Liquid-DSP and RocksDB were compiled using the Phoronix Benchmark Suite, ignoring the compilation flags specified in /etc/makepkg.conf resulting in a unexpected performance result for CachyOS.
+    :::
 
 ## Learn more
 

@@ -7,7 +7,6 @@ The CachyOS Kernel is a customized kernel which utilizes enhancements, configura
 This results into a more optimized kernel for the user. Most of the kernel variants that we provide are tuned for interactivity.
 However, we also provide [one](#linux-cachyos-server) that is better geared for server workloads.
 
-
 ## CachyOS Base Patchset
 
 The base patchset contains a bunch of changes compared to upstream. Here is a brief list, which is commonly included each branch:

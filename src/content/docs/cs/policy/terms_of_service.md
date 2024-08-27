@@ -118,7 +118,6 @@ Tyto Podmínky služby jsou uzavřeny na neurčito.
 
 Každá strana může tyto Podmínky služby kdykoliv ukončit bez uvedení důvodu.
 
-
 ### 9.3. Smazání účtu
 
 Veřejná prohlášení a příspěvky mohou zůstat viditelné i po smazání účtu.

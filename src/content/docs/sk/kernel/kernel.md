@@ -7,8 +7,6 @@ description: Čo je CachyOS Kernel?
 
 CachyOS Kernel je prispôsobené jadro, ktoré využíva patche, vylepšenia, konfigurácie a patche z upstreamu. Výsledkom je optimalizované jadro pre používateľský systém. Desktopové jadrá sú primárne vyladené pre interaktivitu, ale existujú aj iné varianty zamerané na priepustnosť.
 
-
-
 ## Základná sada patchov CachyOS
 
 Základná sada patchov obsahuje množstvo zmien v porovnaní s upstreamom. Tu je stručný zoznam, ktorý je bežne zahrnutý v každej vetve:
@@ -26,12 +24,9 @@ Základná sada patchov obsahuje množstvo zmien v porovnaní s upstreamom. Tu j
 
 CachyOS poskytuje množstvo rôznych variantov jadra. Nižšie nájdete vysvetlenie každého z nich.
 
-
 ### linux-cachyos (Predvolené jadro)
 
 Predvolené jadro je navrhnuté tak, aby poskytovalo naše odporúčania a sme otvorení ich zmenám, pokiaľ ide o plánovač a konfiguráciu. Zmeny môžu nastať, ak sú v plánovačoch alebo inej konfigurácii regresie. Momentálne jadro linux-cachyos poskytuje základnú sadu patchov CachyOS, framework sched-ext (rozšíriteľná trieda plánovača) a plánovač BORE (Burst-Oriented Response Enhancer).
-
-
 
 ### linux-cachyos-bore
 
@@ -40,7 +35,6 @@ Jadro BORE využíva základnú sadu patchov CachyOS a plánovač BORE s predvol
 ### linux-cachyos-deckify
 
 Jadro deckify obsahuje rovnaké patche ako predvolené jadro, ale využíva ďalšie zmeny pre Steam Deck a ďalšie prenosné zariadenia, aby poskytlo kompatibilitu pre ne. Toto jadro sa používa ako predvolené v edícii CachyOS Handheld.
-
 
 ### linux-cachyos-echo
 
@@ -61,8 +55,6 @@ Jadro LTS (Longterm) je založené na najnovšej verzii vetvy Longterm a obsahuj
 ### linux-cachyos-rc
 
 Jadro RC je založené na najnovšom dostupnom Release Candidate. Obsahuje najnovšie funkcie a zmeny z upstreamu, ale môže mať problémy. Okrem toho obsahuje základnú sadu patchov CachyOS, framework sched-ext a plánovač BORE. Toto jadro nie je odporúčané pre nových používateľov a je určené iba na testovacie účely.
-
-
 
 ### linux-cachyos-rt-bore
 
