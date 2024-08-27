@@ -1,0 +1,170 @@
+---
+title: Réglage du démarrage sécurisé
+description: Réglez le démarrage sécurisé avec sbctl après l’installation de CachyOS
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+# sbctl
+
+[`sbctl`](https://github.com/Foxboron/sbctl) est un gestionnaire de clé de démarrage sécurisé convivial,
+Offrant une capacité de gestion de clé et qui garde des traces  des fichiers ayant besoin d’être signés au démarrage.
+
+## Installation de  sbctl
+
+```bash
+❯ sudo pacman -S sbctl
+```
+
+## Préréglages
+
+### Gestionnaire de démarrage GRUB
+
+Si vous utilisez GRUB, lancez la commande suivante pour activer le support du démarrage sécurisé avec GRUB en utilisant les clés CA.
+
+```bash
+❯ sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
+```
+
+:::note
+Le chargement de modules non nécessaire dans votre gestionnaire de démarrage, peut potentiellement présenter un risque de sécurité.
+Lancez seulement cette commande, si vous avez vraiment besoin du démarrage sécurisé.
+:::
+
+### Accès au mode de configuration dans UEFI
+
+Tout d'abord, nous avons besoin d’aller dans les réglages micrologiciel (Firmware) et régler le démarrage sécurisé sur "Setup Mode". Vous pouvez aussi redémarrer dans les réglages firmware à partir d’un système déjà installé et démarré avec la commande suivante:
+
+```bash
+
+❯ systemctl reboot --firmware-setup
+```
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/ideapad-bios-secure-boot.jpg')} />
+
+Voici à quoi ressemble le BIOS du sur un Lenovo Ideapad 5 Pro. Réinitialiser le mode de configuration ou restaurer les clés d'usine et redémarrer le système
+
+## Configuration de sbctl
+
+❯ sudo sbctl status # Si setup mode est activé (enabled) nous pouvons passé à l’étape suivante
+Installed:      ✘ sbctl is not installed
+Setup Mode:     ✘ Enabled
+Secure Boot     ✘ Disabled
+
+❯ sudo sbctl create-keys # Créez vos propres clés de démarrage sécurisés
+Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Creating secure boot keys...✔
+Secure boot keys created!
+
+❯ sudo sbctl enroll-keys -m # Inscrivez vos clés avec celle de Microsoft
+Enrolling keys to EFI variables...✔
+Enrolled keys to the EFI variables!
+
+❯ sudo sbctl status
+# sbctl devrait maintenant être installé et nous pouvons procéder à la signature de l'image du noyau et du gestionnaire de démarrage
+Installed:      ✔ sbctl is installed
+Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Setup Mode:     ✔ Disabled
+Secure Boot     ✘ Disabled
+Vendor Keys:    microsoft
+```
+
+##  Signature de l’image noyau et du gestionnaire de démarrage
+
+CachyOS fourni un script : provides a script [`sbctl-batch-sign`](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign)
+qui prend la liste des fichiers devant être signés à partir de « sudo sbctl verify » et les signe tous.
+
+```bash
+
+❯ sudo sbctl verify
+
+Verifying file database and EFI images in /boot...
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is not signed
+✘ /boot/EFI/BOOT/BOOTX64.EFI is not signed
+✘ /boot/EFI/systemd/systemd-bootx64.efi is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is not signed
+
+❯ sudo sbctl-batch-sign
+
+❯ sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is signed
+✔ /boot/EFI/BOOT/BOOTX64.EFI is signed
+✔ /boot/EFI/systemd/systemd-bootx64.efi is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
+
+```
+
+:::note
+
+Dans certains cas avec  rEFInd, l’image noyau peut ne pas être détecté lorsque l’on lance la comamnde `sudo sbctl verify`.
+Pour signer l’image noyau,  vous pouvez juste utiliser `sudo sbctl sign -s /boot/vmlinuz-linux-cachyos`.
+Le nom de fichier de l'image du noyau varie selon les versions du noyau et il peut y en avoir plusieurs si vous avez de multiple versions de noyaux installées
+:::
+
+Maintenant que tous les fichiers sont signés, nous pouvons redémarrer dans les paramètres UEFI et activer le démarrage sécurisé.
+Notez qu'il s'agit d'un processus unique car la signature des fichiers avec l'indicateur `-s` enregistrera ces fichiers dans la base de données de `sbctl`.
+`sbctl` est livré avec un [hook pacman](https://wiki.archlinux.org/title/Pacman_hook) ce qui signifie qu'il signera automatiquement
+tous les nouveaux fichiers lors d'une mise à jour du noyau ou du gestionnaire de démarrage.
+
+### systemd-boot
+
+CachyOS utilise `systemd-boot-update.service` fourni par systemd pour mettre à jour le gestionnaire de démarrage au redémarrage.
+Cela signifie que le hook pacman `sbctl` ne signera **pas** les binaires EFI mis à jour. Pour contourner ce problème, nous pouvons signer directement le gestionnaire de démarrage
+
+```sh
+
+❯ sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+
+```
+
+## Vérifier que  le démarrage sécurisé (Secure Boot) est activé
+
+Pour vérifier que le démarrage sécurisé est bien activé, vous pouvez exécuter l'une des commandes suivantes
+
+```bash
+
+❯ sudo sbctl status
+Installed:      ✓ sbctl is installed
+Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Setup Mode:     ✓ Disabled
+Secure Boot:    ✓ Enabled
+Vendor Keys:    microsoft
+
+❯ bootctl
+System:
+      Firmware: UEFI 2.80 (INSYDE Corp. 28724.16435)
+ Firmware Arch: x64
+   Secure Boot: enabled (user)
+  TPM2 Support: yes
+  Measured UKI: no
+  Boot into FW: supported
+
+```
+## Migration vers une version plus récente de sbctl
+
+À partir de la version 0.15 de sbctl, les fichiers sbctl ont été déplacés de `/usr/share/secureboot` vers `/var/lib/sbctl`. En raison de ce changement,
+une migration est nécessaire si les utilisateurs utilisent sbctl avant la version 0.15.
+Vous devrez peut-être d'abord nettoyer `/var/lib/sbctl`, au cas où vous recevriez un avertissement.
+
+```bash
+
+❯ sudo sbctl setup --migrate
+```
+
+sbctl fournit une commande de migration pour déplacer tous les fichiers de l'ancien emplacement vers le nouveau.
+
+:::note
+Cette section n'est pas nécessaire pour les nouveaux utilisateurs de sbctl.
+:::
+
+
+## Crédits
+
+- [Le Wiki Arch Linux](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
+Ce wiki a posé les bases de ce guide. La plupart des éléments ici ont été repris de ce dernier
+- [sbctl](https://github.com/Foxboron/sbctl) - Ce guide facile pour activer la prise en charge du démarrage sécurisé n'aurait pas été possible sans cela.
+pour l'incroyable travail accompli pour créer ce logiciel.
