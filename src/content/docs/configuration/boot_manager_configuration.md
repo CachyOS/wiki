@@ -19,9 +19,6 @@ timeout 5
 #console-mode keep # This option configures the resolution of the console.
 ```
 
-Learn more:
-- [loader.conf manual page](https://man.archlinux.org/man/loader.conf.5)
-
 ### Kernel Commandline Configuration
 We provide a tool for easier configuration of systemd-boot [`sdboot-manage`](https://github.com/CachyOS/CachyOS-PKGBUILDS/tree/master/systemd-boot-manager).
 One of the perks of this tool is global kernel commandline configuration. The configuration file for `sdboot-manage` is located in `/etc/sdboot-manage.conf`.
@@ -55,9 +52,6 @@ To pass kernel parameters to the commandline, modify "Boot using default options
 ```
 
 Changes to both configuration files will immediately take effect. Running a command to "save" changes is unnecessary.
-
-Learn more:
-- [rEFInd: Configuring the boot manager](https://www.rodsbooks.com/refind/configfile.html)
 
 ## GRUB
 
@@ -94,5 +88,7 @@ Everytime we modify the GRUB configuration file, we need to remake the config wi
 ❯ sudo grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
-Learn more:
+## Learn more:
+- [loader.conf manual page](https://man.archlinux.org/man/loader.conf.5)
+- [rEFInd: Configuring the boot manager](https://www.rodsbooks.com/refind/configfile.html)
 - [GRUB Manual: Configuration](https://www.gnu.org/software/grub/manual/grub/grub.html#Configuration)
