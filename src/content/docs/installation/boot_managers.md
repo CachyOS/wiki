@@ -4,9 +4,10 @@ description: Description and recommendations for the currently offered boot mana
 ---
 
 To offer the best experience across a range of devices, CachyOS currently offers the following boot managers: systemd-boot, rEFInd and Grub.
-This wiki article will describe the featuresets of each boot manager and also includes our recommendations for when choosing them.
+This wiki article will describe the featuresets of each boot manager and also includes our recommendations for when choosing them. For
+configuration, please see [Boot Manager Configuration](/configuration/boot_manager_configuration).
 
-## Preambule: Boot Manager != Boot Loader
+## Preamble: Boot Manager != Boot Loader
 
 When talking about UEFI systems, the correct term when referring to the boot menu presented by systemd-boot, rEFInd and even GRUB is
 **boot manager**.
