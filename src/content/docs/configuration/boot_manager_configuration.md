@@ -90,7 +90,7 @@ Everytime we modify the GRUB configuration file, we need to remake the config wi
 ❯ sudo grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
-## Learn more:
+## Learn more
 
 - [loader.conf manual page](https://man.archlinux.org/man/loader.conf.5)
 - [rEFInd: Configuring the boot manager](https://www.rodsbooks.com/refind/configfile.html)
