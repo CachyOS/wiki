@@ -271,7 +271,7 @@ export default defineConfig({
               label: 'sched-ext Tutorial',
               translations: {
                 sk: 'sched-ext návod',
-                cs: 'sched-ext Tutoriál',
+              cs: 'sched-ext Tutoriál',
               },
               link: 'configuration/sched-ext',
             },

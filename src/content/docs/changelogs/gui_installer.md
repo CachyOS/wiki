@@ -2,11 +2,10 @@
 title: GUI Installer Changelogs
 description: Changelogs of Calamares and the GUI Live ISO
 ---
-
-## 24.08
+24.08
+----
 
 **Features:**
-
 - chwd: NVIDIA now uses the open module as default for supported cards
 - Desktop: Added Cosmic Desktop Environment to the installation options
 - NVIDIA: Latest 560 Beta driver is now the default; egl-wayland patched to fix crashes in Firefox and other applications
@@ -21,7 +20,6 @@ description: Changelogs of Calamares and the GUI Live ISO
 - Package Updates: linux-cachyos 6.10.5, mesa 24.2.0, Plasma 6.1.4, NVIDIA 560.31.02
 
 **Bug Fixes:**
-
 - chwd: Improved PRIME profile detection based on device name
 - chwd: Removed RTD3 workaround due to issues on some setups
 - cachyos-rate-mirrors: Disabled mirror ranking when running on Live ISO
@@ -33,19 +31,16 @@ description: Changelogs of Calamares and the GUI Live ISO
 - game-performance: Prevented failure when profile is unavailable
 
 **Changelog for Handheld Edition:**
-
 - device support: Added support for Ally X, thanks to Luke Jones
 - libei: Implemented support for libei, replacing libextest
 - packagekit: Blocked packagekit installation to prevent issues with system updates via Discover
 - hook: Added pacman-hook to conflict with natively compiled Proton versions, avoiding potential issues
 - Updated jupiter-fan-control, steamdeck-dsp, and Steam Deck firmware
 
-  24.07
-
----
+24.07
+----
 
 **Features:**
-
 - Repository: Introduce Zen 4 optimized repository, this will be used for Zen4 and Zen5 CPU's
 - ISO: Add automatic architecture check for Zen4/Zen5 repository
 - chwd: Added GC support for AMD GPU's, this helps for detecting official ROCm supported GPUs
@@ -63,7 +58,6 @@ description: Changelogs of Calamares and the GUI Live ISO
 - Package Updates: linux-cachyos 6.9.9, mesa 24.1.3, NVIDIA 555.58.02, Plasma 6.1.2, LLVM 18.1.8
 
 **Bug Fixes:**
-
 - ISO: Set copytoram to auto instead of yes
 - ISO: Fixed Sleep on Live ISO for Laptops
 - Launch Installer: Install the latest archlinux-keyring, before the installation starts to avoid issues, when fetching the archlinux-keyring in the chroot
@@ -73,7 +67,6 @@ description: Changelogs of Calamares and the GUI Live ISO
 - Calamares: Do not use "Preservefiles" module, since user a reporting issues with it.
 
 **Changelog for Handheld Edition:**
-
 - Added configuration file to apply different scaling, '/home/$USER/.config/deckscale
 - Make GameMode switching more robust
 - Updated Wifi/Bluetooth Firmware for Steam Deck
@@ -82,12 +75,10 @@ description: Changelogs of Calamares and the GUI Live ISO
 - Fixed Refresh Rate Selection
 - Updated jupiter-hw-support, steamdeck-dsp, jupiter-fan-control, gamescope-session-git
 
-  24.06
-
----
+24.06
+----
 
 **Features:**
-
 - chwd: Introduce handheld hardware detection
 - chwd: Introduce T2 MacBook support
 - chwd: Add network driver detection
@@ -102,7 +93,6 @@ description: Changelogs of Calamares and the GUI Live ISO
 - Package Updates: linux-cachyos 6.9.3, mesa 24.1.1, xwayland 24.1, NVIDIA 555.52.04, Plasma 6.0.5
 
 **Bug Fixes:**
-
 - Calamares: umount: Enable emergency again
 - Qtile: Multimedia Controls are now working correctly
 - NVIDIA: Enable required services and options for working sleep on Wayland
@@ -112,7 +102,6 @@ description: Changelogs of Calamares and the GUI Live ISO
 - Calamares: Shellprocess: Move mirror ranking before installing keyring
 
 **Changelog from Experimental Handheld Release:**
-
 - Default to KDE Vapor Theme (SteamOS Theme)
 - Default file system: BTRFS
 - Default kernel: linux-cachyos-deckify
@@ -128,12 +117,10 @@ description: Changelogs of Calamares and the GUI Live ISO
 - Added automount to cachyos-handheld
 - CachyOS can now perform Steam Deck BIOS updates on the Steam Deck
 
-  24.05
-
----
+24.05
+----
 
 **Features:**
-
 - Filesystems: Introduce Bcachefs as a filesystem option
 - pacstrap: Add detection if Bcachefs is used and install corresponding Bcachefs-tools
 - CachyOS-AI-SDK: Introduce new install option to provide a OOB NVIDIA SDK Setup
@@ -143,7 +130,6 @@ description: Changelogs of Calamares and the GUI Live ISO
 - Package Updates: Python 3.12, gcc 14.1.1, mesa 24.0.6, xwayland 24.1rc2 , NVIDIA 550.78
 
 **Bug-Fixes:**
-
 - settings.conf: Move hardware detection before netinstall
 - pacstrap: Use btrfs-assistant instead of btrfs-assistant-git
 - plymouth: remove plymouth hook on zfs + encryption
@@ -152,12 +138,10 @@ description: Changelogs of Calamares and the GUI Live ISO
 - umount: Disable emergency to avoid issues with the zfs installation
 - shellprocess: Cleanup leftovers from the offline installation
 
-  24.04
-
----
+24.04
+----
 
 **Features:**
-
 - Plymouth: Use plymouth to provide a themed boot animation
 - ISO: Switch back to X11 due to issues when setting the keyboard layout in calamares
 - rEFInd: New partitioning layout (seperate /boot and /boot/efi)
@@ -169,36 +153,30 @@ description: Changelogs of Calamares and the GUI Live ISO
 - Package Updates: xz 5.6.1-3, linux-cachyos 6.8.2, pacman 6.1.0-5, mesa 24.0.4, Plasma 6.0.3, nvidia 550.67 and cachyos-settings 39-2
 
 **Bug-Fixes:**
-
 - Autologin: Fixed the autologin option when used together with sddm
 - xz: Provide a patched xz package
 - libarchive: Mitigate commit from malicious xz actor
 - cachyos-settings: udev-rule: don't set watermark_scale_factor to 125, since it siginificantly increases RAM usage
 - calamares: pacman-keyring: Use simpler method to integrate the keyring into the installation
 
-  24.03.1
-
----
+24.03.1
+----
 
 **Features:**
-
 - netinstall: Remove extra kernels in the netinstall selection to avoid confusion by users. Other custom kernels can be installed via Kernel Manager
 - Kernel Manager: NVIDIA Modules are automatically installed when detected, Rebased for QT6, Fixed custom names when using LTO Option
 - Package Installer: Rebased on QT6, updated for pacman 6.1
 - Package Updates: linux-cachyos 6.8.1, pacman 6.1, mesa 24.0.3, Plasma 6.0.2, llvm 17.0.6
 
 **Bug-Fixes:**
-
 - NVIDIA: patched nvidia module to take the owner ship of nvidia.drm.modeset earlier to avoid issues on nvidia graphics
 - Refind: Don't install the lts kernel to avoid issues
 - shellprocess: Remove the liveusers directory completly
 
-  24.03
-
----
+24.03
+----
 
 **Features:**
-
 - ISO: Plasma 6 is now shipped in the ISO and uses Wayland as default, GNOME ISO got dropped to avoid confusion about netinstall
 - Calamares: Rebased for QT6
 - refind: Add f2fs and zfs as option including luks2 encryption
@@ -209,16 +187,13 @@ description: Changelogs of Calamares and the GUI Live ISO
 - Package Updates: linux-cachyos 6.7.9, mesa 24.0.2, zfs-utils 2.2.3
 
 **Bug-Fixes:**
-
 - pacstrap: Do not install config packages to provide the user a more clean selection of the installation
 - shellprocess_pacman: Also copy the ranked cachyos-v4-mirrorlists to the target
 
-  24.02
-
----
+24.02
+-----
 
 **Features:**
-
 - refind: Change layout from /boot/efi to /boot to provide more options of filesystems and encryption
 - Live-ISO: Cleanup and Sync the Live-ISO
 - Launch Installer: Add recommendation for the online installation
@@ -226,107 +201,87 @@ description: Changelogs of Calamares and the GUI Live ISO
 - netinstall: Add phonon-qt5-vlc to kde
 - Package Updates: linux-cachyos 6.7.5, mesa 23.3.5, gcc 13.2.1-12, glibc 2.39, mesa 24.0.1, nvidia 550.54.14
 
-  24.01
-
----
+24.01
+-----
 
 **Features:**
-
 - x86-64-v4: Autodetection and enabling the repository at installation
 - linux-cachyos: the sched-ext scheduler framework is now provided in the default kernel
 - xwayland: Provide explicit sync patches as default
 - Package Updates: linux-cachyos 6.7, mesa 23.3.3, gcc 13.2.1-8, xorg-xwayland 23.2.4
 
 **Bug Fixes:**
-
 - chwd: For Ada Lovelace Nvidia cards the nvidia modules get directly packed into the initramfs to avoid issues with the early kms
 
-  23.12
-
----
+23.12
+-----
 
 **Bug-fixes:**
-
 - zfs: Add compatibility=grub to the pool options to ensure the compatibility
 - grub/xfs: Add a patch to grub to have compatibility with the new xfs bigtime default
 - netinstall: xdg-desktop-portal-hyprland instead of xdg-desktop-portal-hyprland-git
 
-  23.11
-
----
+23.11
+-----
 
 **Features:**
-
 - nvidia: Use nvidia module instead of dkms
 - Calamares synced with upstream
 - Package updates: linux-cachyos 6.6.1, nvidia-utils 545.29.02, mesa 23.2.1, zfs-utils 2.2.0, mkinitcpio 37
 
 **Bug-fixes:**
-
 - nvidia-hook: Added nvidia-hook back to avoid issues at installation time with the new module
 - netinstall: Packages got renamed due the recent changes at the KF5 packaging
 - netinstall: xdg-desktop-portal-gnome got added to the GNOME Installation
 
-  23.09
-
----
+23.09
+-----
 
 **Features:**
-
 - systemd-boot: Default to luks2
 - netinstall: Provide a own category for CachyOS Packages
 - Calamares synced with upstream
 - Package updates: linux-cachyos 6.5.3, nvidia-utils 535.104.05, mesa 23.2.7
 
 **Bug-fixes:**
-
 - shellprocess_sdboot: Avoid using "sudo", when generating the boot entries at the installation process
 
-  23.08
-
----
+23.08
+-----
 
 **Features:**
-
 - Calamares synced with upstream
 - Package updates: linux-cachyos 6.4.10, nvidia-utils 535.98
 
 **Bug-fixes:**
-
 - Keyring got updated and works now correctly
 
-  23.07
 
----
+23.07
+-----
 
 **Features:**
-
 - CachyOS-Settings includes now "bpftune", which automatically tweaks the network settings depending on the usage
 - CachyOS-Qtile-Settings: Quality of Life changes, better icons, ...
 - Package updates: linux-cachyos 6.4.2, cachy-browser 115.0.1, mesa 23.1.3,
 
 **Bug-fixes:**
-
 - rate-mirrors got fixed
 - chwd (Hardware Detection) got multiple fixes
 - fixed installation of nonfree drivers for hybrid setup in the installer
 - fixed Calamares freezes, which happened in some rare configurations, mainly VM
 - Slides: Slide 6 typo fix
 
-  23.06
-
----
+23.06
+-----
 
 **Bug-fixes:**
-
 - Offline Installation: Fix calamares
 
-  23.05
-
----
+23.05
+-----
 
 **Features:**
-
 - CachyOS Git Migration layout is now reflected in the installation
 - chwd (mhwd) got multiple fixes
 - Pacman: We added a feature, which makes it possible to provide a message to our users before updating
@@ -334,13 +289,11 @@ description: Changelogs of Calamares and the GUI Live ISO
 - Package updates: linux-cachyos 6.3.4, cachy-browser 113.0.1, mesa 23.1.1, python 3.11
 
 **Bug-fixes:**
-
 - netinstall: minimal fixes due package changes
 - Slides: Slide 6 got updated to reflect the lastest chang
 
-  23.04
-
----
+23.04
+-----
 
 **Features:**
 
@@ -352,9 +305,8 @@ description: Changelogs of Calamares and the GUI Live ISO
 
 - f2fs: Remove "atgc" mount options since it has issues with systemd
 
-  23.03.1
-
----
+23.03.1
+-------
 
 **Features:**
 
@@ -366,9 +318,9 @@ description: Changelogs of Calamares and the GUI Live ISO
 - Offline installation keyring issue got fixed
 - Refind: Use linux-cachyos-lts as defaullt. Current 6.2 seems not to work well together with refind
 
-  23.03
 
----
+23.03
+-----
 
 **New Features:**
 
@@ -392,9 +344,8 @@ description: Changelogs of Calamares and the GUI Live ISO
 - Removed the zfs hook from mkinitcpio on the live iso, which caused issues when booting
 - You can download the update from our mirrors on SourceForge.
 
-  23.02
-
----
+23.02
+-----
 
 **New Features:**
 
@@ -411,9 +362,9 @@ description: Changelogs of Calamares and the GUI Live ISO
 - Github has been added to the hosts to avoid mirrorlist issues
 - Boot entries for BIOS have been updated in syslinux
 
-  23.01
 
----
+23.01
+-----
 
 **Features:**
 
@@ -433,9 +384,9 @@ description: Changelogs of Calamares and the GUI Live ISO
 - The ranked cachyos mirrors gets now correctly copied to the install target
 - power-profile-daemon don't gets enabled anymore as default
 
-  22.12
 
----
+22.12
+-----
 
 **Features:**
 
@@ -449,6 +400,7 @@ description: Changelogs of Calamares and the GUI Live ISO
 - The Kofuku Desktop Enviroment got removed
 - extra ISO with llvm 15 included to provide support for newer AMD Cards
 
+
 **Bug-fixes:**
 
 - Calamares got fixed when using GNOME as ISO
@@ -456,9 +408,9 @@ description: Changelogs of Calamares and the GUI Live ISO
 - Add "kms" hook to the initcpiocfg module to follow archlinux defaults
 - And more ISO fixes
 
-  22.11
 
----
+22.11
+-----
 
 **Features:**
 
@@ -472,6 +424,7 @@ description: Changelogs of Calamares and the GUI Live ISO
 - Common package upgrades (mesa, kernel, ...)
 - Replace systemd-network with networkmanager
 
+
 **Bug-fixes:**
 
 - qemu-quest-agent.service got removed from the ISO
@@ -479,9 +432,9 @@ description: Changelogs of Calamares and the GUI Live ISO
 - mkinitcpio.conf got updated
 - And more ISO fixes
 
-  22.10
 
----
+22.10
+-----
 
 **Features:**
 
@@ -501,9 +454,9 @@ description: Changelogs of Calamares and the GUI Live ISO
 - Added a fallback bootmode, which does not set any modeset (nomodeset)
 - And more ISO fixes
 
-  22.09
 
----
+22.09
+-----
 
 **Features:**
 
@@ -521,9 +474,9 @@ description: Changelogs of Calamares and the GUI Live ISO
 - OpenBox installation has been fixed
 - usual translation fixes
 
-  22.07
 
----
+22.07
+-----
 
 **Features:**
 
@@ -544,9 +497,8 @@ description: Changelogs of Calamares and the GUI Live ISO
 - btrfs swap luksencryption got fixed
 - usual translation fixes
 
-  22.06
-
----
+22.06
+-----
 
 Following known bugs has been fixed:
 
@@ -584,9 +536,9 @@ Following options you can select for a kernel compile:
 - Enable or disable nf cone
 - Enable LTO (Full, Thin, No)
 
-  22.05
 
----
+22.05
+-----
 
 CachyOS was founded a year ago. After almost one year of development, we are really proud to announce our first Stable Release of GUI Installer.
 We spent a lot of time investigating repo management, kernel development, infrastructure, theming, ... and finally put them all into the CachyOS GUI Installer.

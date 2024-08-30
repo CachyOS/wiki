@@ -14,6 +14,7 @@ Zde je seznam aktuálních měsíčních nákladů:
 - Matrix Bridge 5 € (DigitalOcean VPS)
 - Forum Server (Netcup VPS) 7 €
 
+
 ### Patreon
 
 https://www.patreon.com/CachyOS

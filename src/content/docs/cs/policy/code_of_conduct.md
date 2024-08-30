@@ -14,19 +14,19 @@ Slibujeme jednat tak, abychom přispívali k otevřené, přátelské, rozmanit�
 
 Příklady chování, které přispívají k pozitivnímu prostředí naší komunity, zahrnují:
 
-- Projevování empatie a laskavosti k ostatním lidem
-- Respektování odlišných názorů, pohledů a zkušeností
-- Sdílení a přijímání konstruktivní zpětné vazby s grácií
-- Přijímání odpovědnosti a omlouvání se těm, které naše chyby ovlivnily, a učení se z těchto zkušeností
-- Zaměření se na to, co je nejlepší nejen pro nás jako jednotlivce, ale pro celou komunitu
+* Projevování empatie a laskavosti k ostatním lidem
+* Respektování odlišných názorů, pohledů a zkušeností
+* Sdílení a přijímání konstruktivní zpětné vazby s grácií
+* Přijímání odpovědnosti a omlouvání se těm, které naše chyby ovlivnily, a učení se z těchto zkušeností
+* Zaměření se na to, co je nejlepší nejen pro nás jako jednotlivce, ale pro celou komunitu
 
 Příklady nevhodného chování zahrnují:
 
-- Použití sexualizovaného jazyka nebo obrazů a sexuální pozornost nebo pokusy o nátlak jakéhokoli druhu
-- Trollování, urážky, hanlivé komentáře a osobní či politické útoky
-- Veřejné či soukromé obtěžování
-- Zveřejňování soukromých informací ostatních, jako jsou fyzické nebo emailové adresy, bez jejich explicitního souhlasu
-- Jiné chování, které by mohlo být považováno za nevhodné v profesionálním prostředí
+* Použití sexualizovaného jazyka nebo obrazů a sexuální pozornost nebo pokusy o nátlak jakéhokoli druhu
+* Trollování, urážky, hanlivé komentáře a osobní či politické útoky
+* Veřejné či soukromé obtěžování
+* Zveřejňování soukromých informací ostatních, jako jsou fyzické nebo emailové adresy, bez jejich explicitního souhlasu
+* Jiné chování, které by mohlo být považováno za nevhodné v profesionálním prostředí
 
 ## Zodpovědnost za vynucování pravidel
 
@@ -72,6 +72,7 @@ Vedoucí komunity budou následovat tyto Směrnice pro dopad na komunitu při st
 **Dopad na komunitu**: Prokazování vzorce porušení standardů komunity, včetně trvalého nevhodného chování, obtěžování jednotlivce nebo agresivního chování či hanobení skupin jednotlivců.
 
 **Následek**: Trvalý ban na jakýkoliv druh veřejné interakce v rámci komunity.
+
 
 ## Připisování
 

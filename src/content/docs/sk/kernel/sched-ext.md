@@ -5,16 +5,14 @@ description: Návod ako používať LAVD, Rusty and Rustland
 
 ## Inštalácia jadra s podporou sched-ext
 
-CachyOS poskytuje jadrá, ktoré majú podporu pre sched-ext framework priamo z balíka.
+CachyOS poskytuje jadrá, ktoré majú podporu pre sched-ext framework priamo z balíka. 
 Podporované jadrá sú:
-
 - linux-cachyos (predvolené jadro)
 - linux-cachyos-sched-ext (najnovšie stabilné vydanie)
 - linux-cachyos-sched-ext-debug (určené pre vývojárov na vývoj a prácu so sched-ext)
 - linux-cachyos-rc (najnovšie testovacie vydanie s najnovšími funkciami)
 
 Jednoducho môžete skontrolovať podporu sched-ext v jadre pomocou nasledujúceho príkazu:
-
 ```bash
 ❯ zcat /proc/config.gz | grep SCHED_CLASS_EXT
 CONFIG_SCHED_CLASS_EXT=y
@@ -24,7 +22,6 @@ CONFIG_SCHED_CLASS_EXT=y
 
 Plánovače sa nachádzajú v balíku `scx-scheds` alebo `scx-scheds-git`.
 Jednoducho spustite nasledujúci príkaz na inštaláciu balíka:
-
 ```sh
 sudo pacman -Sy scx-scheds
 ```
@@ -34,7 +31,6 @@ Balík `scx-scheds-git` môže mať problémy pri použití so stabilným jadrom
 ### Spustenie plánovača
 
 Plánovač môžete jednoducho spustiť v termináli pomocou nasledujúceho príkazu:
-
 ```sh
 sudo scx_rusty
 ```
@@ -72,7 +68,6 @@ sudo systemctl stop scx
 ## Odporúčania pre plánovače
 
 Pretože existuje veľa príkladov plánovačov, chceme poskytnúť malé odporúčanie pre plánovače:
-
 - **scx_rusty** - dobrý globálny plánovač, ktorý je veľmi interaktívny a odolný voči stresu. Môže byť použitý pre akékoľvek pracovné zaťaženie.
 - **scx_lavd** - plánovač vyvinutý pre hry a hlavne pre prenosné zariadenia. Tento plánovač momentálne nemá Topology Aware (napríklad keď má CPU 2 CCX, ako 7950X).
 - **scx_rustland** - plánovač s plánovaním v užívateľskom priestore. Dokáže dobre zvládať ťažké pracovné zaťaženie, ale má režijné náklady kvôli plánovaniu v užívateľskom priestore.

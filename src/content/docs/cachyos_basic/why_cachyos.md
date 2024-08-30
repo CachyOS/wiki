@@ -42,7 +42,8 @@ By default, we provide our own applications, such as CachyOS Hello or CachyOS Pa
 among others to simplify and enhance your Linux experience. For example, CachyOS Hello provides options to update your system, enable services and rank the mirrors. Package Installer will help you to install packages.
 CachyOS also has a really good and friendly Discord community that helps each other. Join us at [Discord](https://discord.com/invite/cachyos-862292009423470592) or our [forum](https://discuss.cachyos.org/)
 
-## CachyOS Applications
+CachyOS Applications
+--------------------
 
 - **Cachy Browser**: Browser based on Firefox, with a more secure config and patches from Gentoo and Librewolf.
 - **cachyos-kernel-manager**: Easily install kernels from the repository or configure your own kernel and include your own patches.
@@ -50,3 +51,4 @@ CachyOS also has a really good and friendly Discord community that helps each ot
 - **CachyOS-ApplicationInstaller**: GUI for an easy installation of commonly used applications.
 - **cachyos-rate-mirrors**: Automatically rank Arch and CachyOS mirrors for optimal download speeds.
 - **systemd-boot-manager**: Automatically generates new entries for the systemd-boot-manager and can be easily configured in `/etc/sdboot-manage.conf`.
+

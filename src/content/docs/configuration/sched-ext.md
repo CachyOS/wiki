@@ -9,18 +9,16 @@ build another kernel for a different scheduler.
 
 - Planned release for being an official kernel feature: 6.12
 
-## Installing a Kernel with sched-ext support
+##  Installing a Kernel with sched-ext support
 
 CachyOS provides kernels, which have OOB support for the sched-ext framework.
 Following kernels are supported:
-
 - linux-cachyos (default kernel)
 - linux-cachyos-sched-ext (latest Stable release)
 - linux-cachyos-sched-ext-debug (This is mainly for developers to develop and work on sched-ext)
 - linux-cachyos-rc (latest testing release with the latest features)
 
 You can simply check with following command, if your kernel supports sched-ext:
-
 ```bash
 ❯ zcat /proc/config.gz | grep SCHED_CLASS_EXT
 CONFIG_SCHED_CLASS_EXT=y
@@ -30,7 +28,6 @@ CONFIG_SCHED_CLASS_EXT=y
 
 You can find the schedulers in the `scx-scheds` or `scx-scheds-git` package.
 Simply run following command to install the package:
-
 ```sh
 sudo pacman -Sy scx-scheds
 ```
@@ -38,7 +35,6 @@ sudo pacman -Sy scx-scheds
 ### Starting the Scheduler
 
 The scheduler can be simply started in the terminal with following command:
-
 ```sh
 sudo scx_rusty
 ```
@@ -86,7 +82,7 @@ Feel free to report any issue or feedback to their GitHub repo referenced below.
 - **scx_lavd** - Latency-criticality Aware Virtual Deadline, focused on Gaming and mainly in handhelds such as the Steam Deck. This Scheduler has currently no Topology Aware (For example when the CPU has 2 CCX, like a 7950X)
 - **scx_rustland** - Scheduler that does its scheduling in userspace. Can handle heavy workloads good, due to working in userspace it might lead to some overhead.
 - **scx_bpfland** - Scheduler based on rustland, but without the userspace part. This removed the overhead part from it. Can be utilized for anything including intensive workloads, gaming or in a day to day basis such as browsing, media consumption.
-  In games it provides a substantial fps stability, meaning frametimes are really stable and consistent at the cost of max fps.
+In games it provides a substantial fps stability, meaning frametimes are really stable and consistent at the cost of max fps.
 
 ## FAQ
 

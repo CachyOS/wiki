@@ -15,7 +15,6 @@ Postiženy jsou následující typy procesorů:
 - Intel: 6. až 8. generace, Skylake, Kaby Lake, Coffee Lake
 
 Zkontrolujte, která bezpečnostní opatření se na vašem CPU aplikují pomocí:
-
 ```sh
 grep . /sys/devices/system/cpu/vulnerabilities/*
 ```
@@ -50,7 +49,6 @@ Pro více informací:
 Downfall je charakterizován jako zranitelnost způsobená optimalizací paměti, která neúmyslně odhaluje interní registry hardware software. S Downfallem může nedůvěryhodný software získávat přístup k datům uloženým jinými programy, na které by normálně neměl přístup: instrukce AVX GATHER může unikat obsah interního registru vektorů během spekulativního provádění. Downfall byl objeven bezpečnostním výzkumníkem Daniel Moghimi z Google. Moghimi napsal demo kód pro Downfall, který ukazuje, jak 128bitové a 256bitové AES klíče mohou být kradeny z jiných uživatelů na lokálním systému, stejně jako schopnost krádeže libovolných dat z jádra Linuxu.
 
 Tato zranitelnost postihuje následující generace CPU:
-
 - Skylake
 - Tiger Lake
 - Ice Lake
@@ -73,13 +71,11 @@ Přidejte jednu z následujících možností na příkazový řádek jádra:
 Můžete přepínat mezi režimy za běhu pro testování možností:
 
 - **Autonomní režim**: platforma bere v úvahu pouze hodnoty nastavené pro minimální výkon, maximální výkon a preferenci energetického výkonu.
-
-  ```sh
-  echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status
-  ```
+   ```sh
+   echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
 
 - **Vedený autonomní režim**: platforma nastavuje provozní úroveň v souladu s aktuální zátěží a v rámci limitů nastavených OS pomocí registrů minimálního a maximálního výkonu.
-
   ```sh
    echo guided | sudo tee /sys/devices/system/cpu/amd_pstate/status
   ```
@@ -91,15 +87,15 @@ Můžete přepínat mezi režimy za běhu pro testování možností:
 
 Pro více informací:
 
-- [https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/](https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/)
-- [https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/](https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/)
+*   [https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/](https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/)
+*   [https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/](https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/)
 
 3\. Použití AMD P-State EPP
 
 Pro použití P-State EPP jsou k dispozici dva správci frekvence CPU: powersave a performance. Doporučuje se používat správce powersave a nastavit preferenci.
 
-- Nastavení správce powersave: `sudo cpupower frequency-set -g powersave`
-- Nastavení správce performance: `sudo cpupower frequency-set -g performance`
+* Nastavení správce powersave: `sudo cpupower frequency-set -g powersave`
+* Nastavení správce performance: `sudo cpupower frequency-set -g performance`
 
 Pro nastavení preference spusťte následující příkaz s požadovanou preferencí:
 
@@ -123,25 +119,21 @@ https://lore.kernel.org/linux-pm/20230808081001.2215240-1-li.meng@amd.com/
 AMD P-State řízení preferovaného jádra je nyní povoleno jako výchozí.
 
 Můžete použít následující příkaz k ověření, zda váš CPU tuto funkci podporuje:
-
 ```sh
 cat /sys/devices/system/cpu/amd_pstate/prefcore
 ```
-
 nebo
-
 ```sh
 cat /sys/devices/system/cpu/amd_pstate/status
 ```
-
 abyste zjistili, zda je toto nastaveno.
 
 5\. Vypnutí Split Lock Mitigate
 
 V některých případech může split lock mitigate zpomalovat výkon některých aplikací a her. Je k dispozici oprava pro jeho vypnutí pomocí sysctl.
 
-- Vypnutí split lock mitigate: `sudo sysctl kernel.split_lock_mitigate=0`
-- Zapnutí split lock mitigate: `sudo sysctl kernel.split_lock_mitigate=1`
+* Vypnutí split lock mitigate: `sudo sysctl kernel.split_lock_mitigate=0`
+* Zapnutí split lock mitigate: `sudo sysctl kernel.split_lock_mitigate=1`
 
 Pro trvalé nastavení přidejte následující řádek do `/etc/sysctl.d/99-splitlock.conf`:
 

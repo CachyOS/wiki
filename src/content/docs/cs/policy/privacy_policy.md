@@ -17,7 +17,6 @@ Email: admin at cachyos dot org
 #### 3.1. Obecné použití platformy
 
 Při návštěvě našich webových stránek náš poskytovatel hostingu automaticky shromažďuje určité technické údaje:
-
 - IP adresa
 - Navštívený obsah
 - Datum a čas přístupu
@@ -29,7 +28,6 @@ Tato data jsou nezbytná pro provoz webových stránek a zajištění jejich bez
 #### 3.2. Registrace uživatelského účtu
 
 Při vytváření uživatelského účtu sbíráme:
-
 - Uživatelské jméno
 - Emailovou adresu
 - Heslo
@@ -61,7 +59,6 @@ Vaše data můžeme sdílet s externími poskytovateli služeb, jako je naším 
 ### 8. Vaše práva
 
 Podle GDPR máte následující práva týkající se vašich osobních údajů:
-
 - Právo na přístup (čl. 15 GDPR)
 - Právo na opravu (čl. 16 GDPR)
 - Právo na výmaz (čl. 17 GDPR)

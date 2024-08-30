@@ -17,7 +17,7 @@ chsh -s /usr/bin/zsh
 
 ## Fish
 
-Fish being our favorite pick. We include an OOB config made by us, the complete setup can be found [here](https://github.com/CachyOS/cachyos-fish-config).
+Fish being our favorite pick. We include an OOB config made by us, the complete setup can be found [here](<https://github.com/CachyOS/cachyos-fish-config>).
 To change your default shell to Fish, run the following command:
 
 ```bash

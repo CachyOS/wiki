@@ -2,33 +2,32 @@
 title: CachyOS CLI Installer Chagelog
 description: Changelogs CLI Installer
 ---
-
 # 0.8.4
 
 ## Features ✨
 
-- **Improved Partition Handling:** Significant refactoring and improvements have been made to how the installer handles partitions, leading to better accuracy and reliability.
+- **Improved Partition Handling:**  Significant refactoring and improvements have been made to how the installer handles partitions, leading to better accuracy and reliability.
 - **Kernel Parameter Generation:** The installer now automatically generates kernel parameters based on the detected partition scheme.
-- **Enhanced `gucc` Library:** The `gucc` library has been significantly enhanced, now encompassing refind installation and configuration capabilities.
+- **Enhanced `gucc` Library:**  The `gucc` library has been significantly enhanced, now encompassing refind installation and configuration capabilities.
 
 ## Chores 🧹
 
 - **Clang-Format and Clang-Tidy:** Codebase consistency and quality have been improved through the application of clang-format and clang-tidy.
-- **Refactoring with String Views:** Several areas of the codebase now utilize string_view literals for improved performance and readability.
-- **Doctest Implementation:** C asserts have been replaced with doctest for more robust and informative testing.
+- **Refactoring with String Views:**  Several areas of the codebase now utilize string_view literals for improved performance and readability.
+- **Doctest Implementation:**  C asserts have been replaced with doctest for more robust and informative testing.
 - **Refactored Tests:** Test suites have been refactored for clarity and maintainability.
-- **Refind Handling in `gucc`:** Refind-related code has been refactored and moved into the `gucc` library for better organization and maintainability.
+- **Refind Handling in `gucc`:**  Refind-related code has been refactored and moved into the `gucc` library for better organization and maintainability.
 
 ## Bug Fixes 🐛
 
 - **Btrfs Subvolume Detection:** Issues with detecting existing btrfs subvolumes have been resolved.
 - **Partition Information Accuracy:** Improvements have been made to ensure the accurate collection and display of partition information.
-- **Root Mount Point for Refind:** A bug affecting the root mount point used by refind has been fixed.
+- **Root Mount Point for Refind:**  A bug affecting the root mount point used by refind has been fixed.
 - **UUID Detection:** The process of detecting partition UUIDs during initialization has been improved.
-- **Meson Build Fixes:** Issues encountered during the meson build process have been addressed.
-- **Btrfs Subvolume Appending:** A bug related to appending btrfs subvolumes in development environments has been fixed.
-- **Rootfs in Predefined Configurations:** An issue with the rootfs of partition schemes derived from predefined configurations has been resolved.
-- **Refind Read-Write Mounting:** Ensured that refind mounts the necessary partitions with read-write permissions.
+- **Meson Build Fixes:**  Issues encountered during the meson build process have been addressed.
+- **Btrfs Subvolume Appending:**  A bug related to appending btrfs subvolumes in development environments has been fixed.
+- **Rootfs in Predefined Configurations:**  An issue with the rootfs of partition schemes derived from predefined configurations has been resolved.
+- **Refind Read-Write Mounting:**  Ensured that refind mounts the necessary partitions with read-write permissions.
 
 # 0.8.3
 
@@ -36,7 +35,7 @@ description: Changelogs CLI Installer
 
 - Updated the CPR dependency to a newer version for improved functionality.
 - Explicitly instructed CTRE (Compile Time Regular Expressions library) to utilize the C++23 standard for consistency and potential performance enhancements.
-- Increased the connection check timeout in the utilities section to accommodate potential network delays or slow responses.
+- Increased the connection check timeout in the utilities section to accommodate potential network delays or slow responses. 
 
 # 0.8.2
 
@@ -58,7 +57,7 @@ description: Changelogs CLI Installer
 
 ## Chores 🧹
 
-- Removed unnecessary ucode logic related to refind, streamlining the codebase.
+- Removed unnecessary ucode logic related to refind, streamlining the codebase. 
 
 # 0.8.0
 

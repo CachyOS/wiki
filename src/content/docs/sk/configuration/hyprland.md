@@ -8,9 +8,12 @@ Keďže Hyprland začal svoju rekonštrukciu, uvedomte si, že momentálne nie j
 Dokonca aj ich "stabilná" verzia je tiež nefunkčná a chybná, preto neplánujeme poskytovať podporu v budúcnosti. Odkazujte na ich wiki.
 :::
 
-- https://wiki.hyprland.org/
+
+*   https://wiki.hyprland.org/
 
 Naším hlavným cieľom s naším nastavením je mať funkčný Hyprland, ale udržiavať ho v minimalistickom stave, preto môžu chýbať niektoré základné nástroje a programy, ako napríklad GUI správca súborov. Skontrolujte sekciu FAQ (na konci).
+
+
 
 # Klávesové skratky
 
@@ -18,70 +21,70 @@ Väčšina klávesových skratiek vyžaduje použitie modifikačného kľúča, 
 
 ### Otvoriť terminál
 
-- SUPER + Enter
+*   SUPER + Enter
 
 ### Prejsť na pracovnú plochu (1-9)
 
-- SUPER + 1-9 (horný rad čísel, čísla na numerickej klávesnici sa nepočítajú)
+* SUPER + 1-9 (horný rad čísel, čísla na numerickej klávesnici sa nepočítajú)
 
 ### Zmeniť zameranie na (Vľavo, Vpravo, Hore, Dole)
 
-- SUPER + šípky
+* SUPER + šípky
 
 ### Pohyb medzi pracovnými plochami s kolieskom myši
 
-- SUPER + rolovanie
+* SUPER + rolovanie
 
 ### Pohyb medzi pracovnými plochami pomocou čiarok a bodiek
 
-- SUPER + bodka (Ďalšia pracovná plocha)
-- SUPER + čiarka (Predchádzajúca pracovná plocha)
+* SUPER + bodka (Ďalšia pracovná plocha)
+* SUPER + čiarka (Predchádzajúca pracovná plocha)
 
 ### Presun zameraného okna na pracovnú plochu (1-9), ale neprejsť na ňu
 
-- SUPER + Shift + 1-9
+* SUPER + Shift + 1-9
 
 ### Rovnaké ako vyššie, ale tiež prejsť na túto pracovnú plochu
 
-- SUPER + CTRL + 1-9
+* SUPER + CTRL + 1-9
 
 ### Otvoriť rofi (spúšťač programov)
 
-- CTRL + Space
+* CTRL + Space
 
 ### Zatvoriť zamerané okno
 
-- SUPER + Q
+* SUPER + Q
 
 ### Presun zameraného okna do smeru (Hore, Dole, Vľavo, Vpravo)
 
-- SUPER + Shift + šípky
+* SUPER + Shift + šípky
 
 ### Zmeniť veľkosť zameraného okna
 
-- CTRL + Shift + J (Nadol)
-- CTRL + Shift + K (Nahor)
-- CTRL + Shift + H (Vľavo)
-- CTRL + Shift + L (Vpravo)
-- CTRL + Shift + šípky
+* CTRL + Shift + J (Nadol)
+* CTRL + Shift + K (Nahor)
+* CTRL + Shift + H (Vľavo)
+* CTRL + Shift + L (Vpravo)
+* CTRL + Shift + šípky
 
 ### Prepnúť zamerané okno do plávajúceho alebo celého okna
 
-- SUPER + F (Celé okno)
-- SUPER + V (Plávajúce okno)
+* SUPER + F (Celé okno)
+* SUPER + V (Plávajúce okno)
 
 ### Vstúpiť do režimu zmeny veľkosti (umožňuje zmenu veľkosti), H, J, K, L alebo pomocou šípok
 
-- SUPER + R
-- ESC na ukončenie
+* SUPER + R
+* ESC na ukončenie
 
 ### Pohyb okna pomocou myši
 
-- SUPER + ľavé tlačidlo myši
+* SUPER + ľavé tlačidlo myši
 
 ### Zmena veľkosti okna
 
-- SUPER + pravé tlačidlo myši (držte stlačené a ťahajte kurzorom v ľubovoľnom smere)
+* SUPER + pravé tlačidlo myši (držte stlačené a ťahajte kurzorom v ľubovoľnom smere)
 
 ### Ovládanie hlasitosti (multimediálne klávesy) ako zvýšenie hlasitosti, zníženie hlasitosti a stlmenie
 
@@ -91,45 +94,45 @@ Väčšina klávesových skratiek vyžaduje použitie modifikačného kľúča, 
 
 ### Pripnúť zamerané okno, aby sa zobrazovalo na všetkých pracovných plochách (plávajúce)
 
-- SUPER + Y
+* SUPER + Y
 
 ### Prepnúť aktuálne okno do skupiny
 
-- SUPER + K
+* SUPER + K
 
 ### Zmeniť aktívnu skupinu
 
-- SUPER + TAB
+* SUPER + TAB
 
 ### Reload waybar
 
-- SUPER + O
+* SUPER + O
 
 ### Zmenšiť medzeru medzi oknami
 
-- SUPER + G
+* SUPER + G
 
 ### Obnoviť medzery na predvolenú hodnotu
 
-- SUPER + Shift + G
+* SUPER + Shift + G
+
 
 # FAQ
 
 ## Prečo má môj Discord, Thunar, Nautilus divné pozadie?
-
 Je to preto, že okno má upravenú priehľadnosť.
 
-- Skúste upraviť pravidlo okna pre Discord v konfiguračnom súbore Hyprland:
-  `windowrule=opacity 0.96,discord`
+* Skúste upraviť pravidlo okna pre Discord v konfiguračnom súbore Hyprland:
+   `windowrule=opacity 0.96,discord`
 
 ## Je zahrnutý správca súborov?
 
-- Nie, nainštalujte si ten, ktorý sa vám páči.
+* Nie, nainštalujte si ten, ktorý sa vám páči.
 
 ## Ako môžem urobiť snímku obrazovky?
 
-- SUPER + A (Môžete tam tiež kresliť)
+* SUPER + A (Môžete tam tiež kresliť)
 
 ## Prečo Hyprland náhodne spadol?
 
-- Skontrolujte začiatok tejto stránky, prečo.
+* Skontrolujte začiatok tejto stránky, prečo.

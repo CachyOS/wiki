@@ -14,19 +14,19 @@ Sľubujeme, že budeme konať a interagovať spôsobmi, ktoré prispievajú k ot
 
 Príklady správania, ktoré prispievajú k pozitívnemu prostrediu pre našu komunitu, zahŕňajú:
 
-- Preukazovanie empatie a láskavosti voči ostatným ľuďom
-- Byť rešpektujúci voči rozdielnym názorom, pohľadom a skúsenostiam
-- Poskytovanie a prijímanie konštruktívnej spätnej väzby
-- Prevzatie zodpovednosti a ospravedlnenie sa tým, ktorých naše chyby ovplyvnili, a poučenie sa z tejto skúsenosti
-- Zameranie sa na to, čo je najlepšie nie len pre nás ako jednotlivcov, ale pre celú komunitu
+* Preukazovanie empatie a láskavosti voči ostatným ľuďom
+* Byť rešpektujúci voči rozdielnym názorom, pohľadom a skúsenostiam
+* Poskytovanie a prijímanie konštruktívnej spätnej väzby
+* Prevzatie zodpovednosti a ospravedlnenie sa tým, ktorých naše chyby ovplyvnili, a poučenie sa z tejto skúsenosti
+* Zameranie sa na to, čo je najlepšie nie len pre nás ako jednotlivcov, ale pre celú komunitu
 
 Príklady neprijateľného správania zahŕňajú:
 
-- Používanie sexualizovaného jazyka alebo obrazov a sexuálna pozornosť alebo návrhy akéhokoľvek druhu
-- Trollovanie, urážlivé alebo znevažujúce komentáre a osobné alebo politické útoky
-- Verejné alebo súkromné obťažovanie
-- Zverejňovanie súkromných informácií druhých, ako je fyzická alebo emailová adresa, bez ich výslovného povolenia
-- Iné správanie, ktoré by sa dalo považovať za nevhodné v profesionálnom prostredí
+* Používanie sexualizovaného jazyka alebo obrazov a sexuálna pozornosť alebo návrhy akéhokoľvek druhu
+* Trollovanie, urážlivé alebo znevažujúce komentáre a osobné alebo politické útoky
+* Verejné alebo súkromné obťažovanie
+* Zverejňovanie súkromných informácií druhých, ako je fyzická alebo emailová adresa, bez ich výslovného povolenia
+* Iné správanie, ktoré by sa dalo považovať za nevhodné v profesionálnom prostredí
 
 ## Zodpovednosti za presadzovanie
 
