@@ -3,8 +3,8 @@ title: Offered Boot Managers
 description: Description and recommendations for the currently offered boot managers
 ---
 
-To offer the best experience across a range of devices, CachyOS currently offers the following boot managers: systemd-boot, rEFInd and Grub.
-This wiki article will describe the featuresets of each boot manager and also includes our recommendations for when choosing them. For
+To offer the best experience across a range of devices, CachyOS currently offers the following boot managers: systemd-boot, rEFInd and GRUB.
+This wiki article will describe the feature set of each boot manager and also includes our recommendations for when choosing them. For
 configuration, please see [Boot Manager Configuration](/configuration/boot_manager_configuration).
 
 ## Preamble: Boot Manager != Boot Loader
@@ -34,12 +34,8 @@ Part of systemd family, systemd-boot was created to be as simple as possible, th
  - Only able to read boot images on EFI supported filesystems (FAT, FAT16, FAT32)
  - Inability to find boot images on partitions other than its own without manual intervention.
 
-### Partitioning layout
-- Minimum 1GB (2GB recommended) FAT32 EFI boot partition (/boot)
-- Minimum 5.5GB user selected root filesystem (/)
-
-### Recommendation:
-Systemd-boot is the recommended boot manager for CachyOS. Choose this one if you do not need any of the features specific to grub and rEFInd.
+### Recommendation
+Systemd-boot is the recommended boot manager for CachyOS. Choose this one if you do not need any of the features specific to GRUB and rEFInd.
 
 
 ## rEFInd
@@ -58,43 +54,29 @@ A fork of rEFIt, rEFInd was primarily made to make it easier for MacOS users to 
 - Does not support BIOS systems.
 - Slightly slower due to the autodetection feature.
 
-### Partitioning Layout
-- Minimum 50MB FAT32 EFI partition (/boot/efi)
-- Minimum 1GB (2GB recommended) ext4 boot partition (/boot)
-- Minimum 5.5GB user selected root filesystem (/)
-
 ### Recommendation
 rEFInd is the recommended boot manager for booting with multiple operating systems.
 
 
-## Grub
-Grub is the oldest of the available boot managers and consequently the only one that supports BIOS booting. It has a very large featureset, works on almost every machine and is the most commonly used Linux boot manager.
+## GRUB
+GRUB is the oldest of the available boot managers and consequently the only one that supports BIOS booting. It has a very large feature set, works on almost every machine and is the most commonly used Linux boot manager.
 The following is a list of its main pros and cons.
 
 ### Pros
 - Able to read boot images from almost all available linux filesystems.
 - Widely used and very easy to find information online.
 - Able to decrypt encrypted boot partitions.
-- The only boot*loader* offered allowing it to boot BIOS machines.
+- The only boot manager offered allowing it to boot BIOS machines.
 - Looks dated. However has great theme support to compensate.
 
 ### Cons
 - Bloated due to needing to support much older hardware and needing lots of filesystem drivers.
 - Slightly slower than other boot managers due to aforementioned bloat.
-- Complicated config that needs to be regenerated every time a kernel is updated. (However this is done automatically.)
-
-### Partitioning layout
-
-#### BIOS
-- Minimum 6.5GB user selected root filesystem (/)
-
-#### UEFI
-- Minimum 50MB EFI partition (/boot/efi)
-- Minimum 6.5GB user selected root filesystem (/)
+- Complicated config that needs to be regenerated every time a kernel is updated. (However this is done automatically).
 
 ### Recommendation
-Grub is the only available boot manager if your machine only supports BIOS booting. It is also the only boot manager that supports boot partition encryption (Different from disk encryption). If you do not fit those criteria alternative boot managers are recommended.
+GRUB is the only available boot manager if your machine only supports BIOS booting. It is also the only boot manager that supports boot partition encryption (Different from disk encryption). If you do not fit those criteria alternative boot managers are recommended.
 
 
 ## TL:DR
-Choose Grub if your machine is BIOS only, pick rEFInd if you plan on having multiple operating systems on your machine (Especially Windows), otherwise go with systemd-boot.
+Choose GRUB if your machine is BIOS only, pick rEFInd if you plan on having multiple operating systems on your machine (Especially Windows), otherwise go with systemd-boot.
