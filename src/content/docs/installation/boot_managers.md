@@ -63,7 +63,7 @@ GRUB is the oldest of the available boot managers and consequently the only one 
 The following is a list of its main pros and cons.
 
 ### Pros
-- Able to read boot images from almost all available linux filesystems.
+- Able to read boot images from almost all available Linux filesystems.
 - Widely used and very easy to find information online.
 - Able to decrypt encrypted boot partitions.
 - The only boot manager offered allowing it to boot BIOS machines.
