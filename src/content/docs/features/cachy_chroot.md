@@ -6,7 +6,7 @@ description: Helper tool to make it easier to chroot into systems
 [**`cachy-chroot`**](https://github.com/CachyOS/cachy-chroot) is a simple helper program to ease the process of chrooting into existing
 CachyOS or any Arch-based install. It lists all the partitions discovered on the machine and also supports listing BTRFS subvolumes.
 Last but not least, `cachy-chroot` also supports encrypted systems via LUKS. It will map each `fstab` entries to its designated `crypttab`
-entries and will close all LUKS volumes gracefully when exitting the chroot.
+entries and will close all LUKS volumes gracefully when exiting the chroot.
 
 ## Usage
 
