@@ -66,7 +66,7 @@ The following is a list of its main pros and cons.
 - Able to read boot images from almost all available Linux filesystems.
 - Widely used and very easy to find information online.
 - Able to decrypt encrypted boot partitions.
-- The only boot manager offered allowing it to boot BIOS machines.
+- The only boot loader offered allowing it to boot BIOS machines.
 - Looks dated. However has great theme support to compensate.
 
 ### Cons
