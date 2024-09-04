@@ -74,6 +74,10 @@ sudo systemctl start scx
 sudo systemctl stop scx
 ```
 
+### Adding flags to the scheduler
+
+You can include any flag to the sched-ext schedulers. Check out this [guide.](<https://github.com/sched-ext/scx/blob/main/services/README.md>)
+
 ### CachyOS Kernel Manager
 
 The scx schedulers can be accessed and configured through the [GUI](/configuration/kernel-manager#sched-ext-gui).
@@ -160,6 +164,10 @@ These profiles are only accessible by using [CachyOS Kernel Manager](/configurat
 - ***Low Latency:*** As the name implies, this profile is meant to be used when latency is critical. Enabling this option can be beneficial in soft real-time scenarios, such as audio
 processing, multimedia etc.
 
+    :::caution
+    Low Latency is unstable and it can lead to stalls, use it at your own risk.
+    :::
+
 - ***Gaming:*** Bpfland is going to try it's best to achieve the highest performance on the game and if you're in a Intel CPU with a mix of P/E Cores then it will prioritize P Cores over E Cores, same goes for Ryzen X3D CPUs and their CCD with stacked L3 X3D cache. **Be aware**, this mode is meant to be used only when you're just running the game and nothing else on the background, otherwise you'll experience some frame time spikes and a less stable experience.
 
 - ***Power Save:*** In order to achieve more savings in power consumption, Bpfland will adjust itself to prioritize less performant cores such as E Cores on Intel meaning the P cores are going to be avoided when possible.
@@ -171,6 +179,24 @@ processing, multimedia etc.
 - ***Balanced profile*** **(Default)**: With this profile, LAVD tries to achieve good performance without consuming too much power. Like the power-saving profile, it minimizes the number of active cores serving the compute demand to save power consumption. However, it chooses performant cores (P or big cores) over energy-efficient cores and physical cores over hyper-twins for performance. In most usage scenarios, this profile will work best.
 
 - ***Performance profile:***  LAVD aims to maximize performance without taking in consideration power consumption. With the performance profile, LAVD always utilizes all the cores while still preferring to schedule tasks on performant, physical cores over energy-efficient, hyper-twin cores. Also, when the [sched_util](<https://github.com/sched-ext/scx/tree/main/rust/scx_utils>) scaling governor is used, LAVD lies to the underlying CPU driver, stating that the workload requires maximum performance no matter the demand.
+
+## General recommendations
+
+### LAVD Autopilot & Autopower
+
+***Quotes from Changwoo Min:***
+In the autopilot mode, the scheduler dynamically changes its power mode (Powersave, Balanced or Performance) according to system's load (CPU
+utilization).
+
+Autopower: Automatically decide the scheduler's power mode based on the system's energy profile aka ***(EPP: Energy Performance Profile)***.
+
+```sh
+# Autopilot and Autopower can be activated by the following flags:
+--autopilot
+--autopower
+# e.g: 
+scx_lavd --autopilot
+```
 
 ## FAQ
 
