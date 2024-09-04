@@ -10,7 +10,9 @@ Even their "stable" version is also broken and buggy therefore we do not plan to
 
 :::
 
-Our main goal with our setup is to have a working Hyprland but keep it barebones therefore some essential tools and programs might be missing such as a GUI File Manager, Please check FAQ section (at the bottom)
+Our main goal with our setup is to have a working Hyprland but keeping it simple therefore some essential tools and programs might be missing such as a GUI File Manager.
+
+Take a look into our [FAQ.](/configuration/hyprland#faq)
 
 ## Keybinds
 
@@ -45,7 +47,7 @@ Most of the key combinations require the use of the mod key which in our case is
 
 * SUPER + CTRL + 1-9
 
-### Open rofi (Program Launcher)
+### Open Rofi (Program Launcher)
 
 * CTRL + Space
   
@@ -65,7 +67,7 @@ Most of the key combinations require the use of the mod key which in our case is
 * CTRL + Shift + L (Right)
 * CTRL + Shift + ArrowKeys
 
-### Toggle focused window into floating or fullscreen
+### Toggle focused window into Floating or Fullscreen state
 
 * SUPER + F (Fullscreen)
 * SUPER + V (Floating)
@@ -101,7 +103,7 @@ Most of the key combinations require the use of the mod key which in our case is
 
 * SUPER + TAB
 
-### Reload waybar
+### Reload Waybar
 
 * SUPER + O
 
