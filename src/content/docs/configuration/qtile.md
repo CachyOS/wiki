@@ -3,7 +3,7 @@ title: Qtile Configuration
 description: CachyOS Qtile keybinds & FAQ
 ---
 
-#### Credits go to Aarrayy for making this Qtile setup
+Credits go to [Aarrayy](<https://github.com/aarrayy>) for making this Qtile setup.
 
 > X11 and Wayland session
 
@@ -24,7 +24,7 @@ Some of them might make use of mod1 (ALT key).
 
 * SUPER + 1-9 (Number row, number pad does not count)
 
-### Open rofi (Program launcher)
+### Open Rofi (Program launcher)
 
 * ALT + Space
 
@@ -54,7 +54,7 @@ Some of them might make use of mod1 (ALT key).
 
 * SUPER + N
 
-### Toggle fullscreen in focused window
+### Toggle Fullscreen in focused window
 
 * SUPER + F
 
@@ -78,7 +78,7 @@ Some of them might make use of mod1 (ALT key).
 
 * SUPER + Control + Q
 
-### Execute flameshot (Utility for taking screenshots)
+### Execute Flameshot (Utility for taking screenshots)
 
 * Print
 
@@ -124,6 +124,6 @@ Some of them might make use of mod1 (ALT key).
 * CPU and RAM usage by clicking it's going to open Btop (TUI System Monitor)
 * Increase/Lower/Mute/ by interacting on the volume widget
 
-For more information about Qtile. Please check out their wiki for reference
+For more information about Qtile. Please check out their wiki for reference.
 
 * <https://docs.qtile.org/en/stable/>
