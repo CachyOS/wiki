@@ -332,14 +332,6 @@ export default defineConfig({
               link: 'support/troubleshooting',
             },
             {
-              label: 'Getting Help',
-              translations: {
-                sk: 'Získanie pomoci',
-                cs: 'Jak získat pomoc',
-              },
-              link: 'support/getting_help',
-            },
-            {
               label: 'Submitting Bugs',
               translations: {
                 sk: 'Odoslanie chýb',
@@ -354,6 +346,14 @@ export default defineConfig({
                 cs: 'Žádosti o balíčky',
               },
               link: 'support/submitting_package_requests',
+            },
+            {
+              label: 'Social',
+              translations: {
+                sk: 'Sociálne siete',
+                cs: 'Sociální sítě',
+              },
+              link: 'support/social',
             },
           ],
         },
@@ -427,14 +427,6 @@ export default defineConfig({
                 cs: 'Repozitářní politika',
               },
               link: 'policy/repository_policy',
-            },
-            {
-              label: 'Social',
-              translations: {
-                sk: 'Sociálne siete',
-                cs: 'Sociální sítě',
-              },
-              link: 'policy/social',
             },
             {
               label: 'Donation',
