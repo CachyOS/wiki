@@ -16,7 +16,7 @@ Following kernels are supported:
 
 - linux-cachyos (default kernel)
 - linux-cachyos-sched-ext (latest Stable release)
-- linux-cachyos-sched-ext-debug (This is mainly for developers to develop and work on sched-ext)
+- linux-cachyos-sched-ext-dbg (This is mainly for developers to develop and work on sched-ext)
 - linux-cachyos-rc (latest testing release with the latest features)
 
 You can simply check if your kernel supports sched-ext with the following command:
