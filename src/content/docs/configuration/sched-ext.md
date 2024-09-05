@@ -19,13 +19,6 @@ Following kernels are supported:
 - linux-cachyos-sched-ext-dbg (This is mainly for developers to develop and work on sched-ext)
 - linux-cachyos-rc (latest testing release with the latest features)
 
-You can simply check if your kernel supports sched-ext with the following command:
-
-```bash
-❯ zcat /proc/config.gz | grep SCHED_CLASS_EXT
-CONFIG_SCHED_CLASS_EXT=y
-```
-
 ## Starting and using the scx schedulers
 
 You can find the schedulers in the `scx-scheds` or `scx-scheds-git` package.
@@ -74,9 +67,7 @@ sudo systemctl start scx
 sudo systemctl stop scx
 ```
 
-### Adding flags to the scheduler
-
-You can include any flag to the sched-ext schedulers. Check out this [guide.](<https://github.com/sched-ext/scx/blob/main/services/README.md>)
+For more information: [Sched-ext systemd service](<https://github.com/sched-ext/scx/blob/main/services/README.md>)
 
 ### CachyOS Kernel Manager
 
@@ -153,33 +144,6 @@ Bpfland when making decisions on which cores to use, it takes in consideration t
 - Great interactivity under intensive workloads
 - Power saving
 
-## Scheduler Profiles
-
-:::note
-These profiles are only accessible by using [CachyOS Kernel Manager](/configuration/kernel-manager#sched-ext-gui):
-:::
-
-### Bpfland
-
-- ***Low Latency:*** As the name implies, this profile is meant to be used when latency is critical. Enabling this option can be beneficial in soft real-time scenarios, such as audio
-processing, multimedia etc.
-
-    :::caution
-    Low Latency is unstable and it can lead to stalls, use it at your own risk.
-    :::
-
-- ***Gaming:*** Bpfland is going to try it's best to achieve the highest performance on the game and if you're in a Intel CPU with a mix of P/E Cores then it will prioritize P Cores over E Cores, same goes for Ryzen X3D CPUs and their CCD with stacked L3 X3D cache. **Be aware**, this mode is meant to be used only when you're just running the game and nothing else on the background, otherwise you'll experience some frame time spikes and a less stable experience.
-
-- ***Power Save:*** In order to achieve more savings in power consumption, Bpfland will adjust itself to prioritize less performant cores such as E Cores on Intel meaning the P cores are going to be avoided when possible.
-
-### LAVD
-
-- ***Power saving profile:*** The primary goal of this profile is to save power consumption while providing reasonable performance. It tries to use the minimum number of cores serving the compute demand. Notably, hybrid processor architectures (e.g., P/E cores in Intel Alder Lake or big/LITTLE cores in ARM) choose energy-efficient cores (E or LITTLE cores) to save energy. Similarly, when hyper-threading is enabled, the scheduler prefers using hyper-thread to minimize the number of physical cores and power consumption. The power saving profile will be useful when your laptop's battery is low or if u want to reduce power usage when performance is not a priority.
-
-- ***Balanced profile*** **(Default)**: With this profile, LAVD tries to achieve good performance without consuming too much power. Like the power-saving profile, it minimizes the number of active cores serving the compute demand to save power consumption. However, it chooses performant cores (P or big cores) over energy-efficient cores and physical cores over hyper-twins for performance. In most usage scenarios, this profile will work best.
-
-- ***Performance profile:***  LAVD aims to maximize performance without taking in consideration power consumption. With the performance profile, LAVD always utilizes all the cores while still preferring to schedule tasks on performant, physical cores over energy-efficient, hyper-twin cores. Also, when the [sched_util](<https://github.com/sched-ext/scx/tree/main/rust/scx_utils>) scaling governor is used, LAVD lies to the underlying CPU driver, stating that the workload requires maximum performance no matter the demand.
-
 ## General recommendations
 
 ### LAVD Autopilot & Autopower
@@ -188,7 +152,7 @@ processing, multimedia etc.
 In the autopilot mode, the scheduler dynamically changes its power mode (Powersave, Balanced or Performance) according to system's load (CPU
 utilization).
 
-Autopower: Automatically decide the scheduler's power mode based on the system's energy profile aka ***(EPP: Energy Performance Profile)***.
+Autopower: Automatically decide the scheduler's power mode based on the system's energy profile aka EPP (Energy Performance Preference).
 
 ```sh
 # Autopilot and Autopower can be activated by the following flags:
@@ -235,7 +199,11 @@ Mainly because they are (for now) multipurpose schedulers, meaning they adapt to
 
 In order to find out which one fits you best, there is no other shortcut than to test it yourself.
 
-## GitHub
+## Learn More
 
-- scx-scheds (Schedulers): <https://github.com/sched-ext/scx>
-- <https://github.com/sched-ext/scx-kernel-releases>
+If you want to learn more about the sched-ext framework. Take a look at the links below.
+
+- [Sched-ext Schedulers Source Code](<https://github.com/sched-ext/scx/tree/main/scheds/rust>)
+- [Changwoo Min: Introduction to sched-ext & CPU Scheduling Part 1](<https://blogs.igalia.com/changwoo/sched-ext-a-bpf-extensible-scheduler-class-part-1/>)
+  - [Part 2](<https://blogs.igalia.com/changwoo/sched-ext-scheduler-architecture-and-interfaces-part-2/>)
+- [Andrea Righi: Re-implementing my Linux Rust scheduler in eBPF](<https://arighi.blogspot.com/2024/08/re-implementing-my-linux-rust-scheduler.html>)
