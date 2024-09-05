@@ -9,25 +9,21 @@ build another kernel for a different scheduler.
 
 - Planned release for being an official kernel feature: 6.12
 
-##  Installing a Kernel with sched-ext support
+## Installing a Kernel with sched-ext support
 
 CachyOS provides kernels, which have OOB support for the sched-ext framework.
 Following kernels are supported:
+
 - linux-cachyos (default kernel)
 - linux-cachyos-sched-ext (latest Stable release)
-- linux-cachyos-sched-ext-debug (This is mainly for developers to develop and work on sched-ext)
+- linux-cachyos-sched-ext-dbg (This is mainly for developers to develop and work on sched-ext)
 - linux-cachyos-rc (latest testing release with the latest features)
-
-You can simply check with following command, if your kernel supports sched-ext:
-```bash
-❯ zcat /proc/config.gz | grep SCHED_CLASS_EXT
-CONFIG_SCHED_CLASS_EXT=y
-```
 
 ## Starting and using the scx schedulers
 
 You can find the schedulers in the `scx-scheds` or `scx-scheds-git` package.
 Simply run following command to install the package:
+
 ```sh
 sudo pacman -Sy scx-scheds
 ```
@@ -35,6 +31,7 @@ sudo pacman -Sy scx-scheds
 ### Starting the Scheduler
 
 The scheduler can be simply started in the terminal with following command:
+
 ```sh
 sudo scx_rusty
 ```
@@ -70,19 +67,100 @@ sudo systemctl start scx
 sudo systemctl stop scx
 ```
 
-## Brief introduction to the main ones
+For more information: [Sched-ext systemd service](<https://github.com/sched-ext/scx/blob/main/services/README.md>)
 
-Since there are many schedulers to choose from, we want to give a little introduction about the schedulers in hand:
+### CachyOS Kernel Manager
 
-Reminder: These schedulers are in constant development while being tested, so expect some of its features/flags which are subject to change.
+The scx schedulers can be accessed and configured through the [GUI](/configuration/kernel-manager#sched-ext-gui).
 
-Feel free to report any issue or feedback to their GitHub repo referenced below.
+## Introduction to the main schedulers
 
-- **scx_rusty** - Balanced choice, can be used for a wide range of workloads (Gaming included)
-- **scx_lavd** - Latency-criticality Aware Virtual Deadline, focused on Gaming and mainly in handhelds such as the Steam Deck. This Scheduler has currently no Topology Aware (For example when the CPU has 2 CCX, like a 7950X)
-- **scx_rustland** - Scheduler that does its scheduling in userspace. Can handle heavy workloads good, due to working in userspace it might lead to some overhead.
-- **scx_bpfland** - Scheduler based on rustland, but without the userspace part. This removed the overhead part from it. Can be utilized for anything including intensive workloads, gaming or in a day to day basis such as browsing, media consumption.
-In games it provides a substantial fps stability, meaning frametimes are really stable and consistent at the cost of max fps.
+Since there are many schedulers to choose from, we want to give a little introduction about the schedulers in hand.
+
+:::note
+These schedulers are in constant development while being tested, so expect some of its features/flags which are subject to change.
+:::
+
+Feel free to report any issue or feedback to their [GitHub](/configuration/sched-ext#github) referenced below.
+
+### [scx_rusty](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rusty>)
+
+**Developed by: David Vernet (Byte-Lab [GitHub](<https://github.com/Byte-Lab>))**
+
+Being one of the heaviest schedulers yet released on sched-ext, it comes with a lot of features that add to his flexibility and capability. Tunability is one of them so you can adjust Rusty to your desires and use case.
+
+**Use cases:**
+
+- Gaming
+- Latency sensitive workloads
+- Desktop usage
+- Multimedia/Audio production
+- Latency sensitive workloads
+- Great interactivity under intensive workloads
+- Power saving
+
+For more information about what can be done with Rusty and his tunable flags. Check out the help page:
+
+```text
+scx_rusty --help
+```
+
+### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>)
+
+**Developed by: Changwoo Min (multics69 [GitHub](<https://github.com/multics69>)).**
+
+**Brief introduction to LAVD from Changwoo:**
+
+***LAVD is a new scheduling algorithm which is still under development. It is
+motivated by gaming workloads, which are latency-critical and
+communication-heavy. It aims to minimize latency spikes while maintaining
+overall good throughput and fair use of CPU time among tasks.***
+
+**Use cases:**
+
+- Gaming
+- Audio Production
+- Latency sensitive workloads
+- Desktop usage
+- Great interactivity under intensive workloads
+- Power saving
+
+One of the main and awesome capabilities that LAVD includes is **Core Compaction.** which without going into technical details: When CPU usage < 50%, Currently active cores will run for longer and at a higher frequency. Meanwhile Idle Cores will stay in C-State (Sleep) for a much longer duration achieving less overall power usage.
+
+### [scx_bpfland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_bpfland>)
+
+**Developed by: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+A vruntime-based sched_ext scheduler that prioritizes interactive workloads. Highly flexible and easy to adapt, a deadline-based behavior can be achieved when lowlatency mode is enabled.
+
+Bpfland when making decisions on which cores to use, it takes in consideration their cache layout and which cores share the same L2/L3 cache leading to fewer cache misses = more performance.
+
+**Use cases:**
+
+- Gaming
+- Latency sensitive workloads
+- Desktop usage
+- Multimedia/Audio production (Thanks to the low latency mode)
+- Great interactivity under intensive workloads
+- Power saving
+
+## General recommendations
+
+### LAVD Autopilot & Autopower
+
+***Quotes from Changwoo Min:***
+In the autopilot mode, the scheduler dynamically changes its power mode (Powersave, Balanced or Performance) according to system's load (CPU
+utilization).
+
+Autopower: Automatically decide the scheduler's power mode based on the system's energy profile aka EPP (Energy Performance Preference).
+
+```sh
+# Autopilot and Autopower can be activated by the following flags:
+--autopilot
+--autopower
+# e.g: 
+scx_lavd --autopilot
+```
 
 ## FAQ
 
@@ -96,24 +174,11 @@ Similar to the answer from above. Which cpu is used and his design, being their 
 
 That's why having choices is one of the highlights from the sched-ext framework, so don't be scared to try the main ones and see which one works best for your use case, being ex: fps stability, maximum performance, responsiveness under intensive workloads etc.
 
-### Which one do i choose?
-
-It depends but for mixed workloads meaning it could vary from gaming, programming, video editing, browsing etc. Rusty/Bpfland/Rustland or even LAVD.
-
-Gaming? then you'll have to choose what matters the most for you.
-
-FPS Stability?: Bpfland and ASDF, LAVD depending on the game
-
-Maximum performance?: Rusty, ASDF, LAVD
-
-Responsiveness no matter the workload: Rusty and Bpfland, LAVD might be able to handle it pretty well too but again it depends
-
-Battery life: LAVD or Rustland, LAVD enables Core compaction by default unless specified not to, what does this mean? it tries to use the least amount of cores for the task without harvesting too much of performance, Rustland has a low power mode which can be enabled by the flag `-l` or `--low-power`
-
-Each of these schedulers' behaviour can be tuned with flags. Refer to each scheduler's `--help` output for a brief explanation
+Each of these schedulers' behavior can be tuned with flags. Refer to each scheduler's `--help` output for a brief explanation
 of what each flag does
 
 ```sh
+# Example:
 ❯ scx_lavd --help
 
 Options:
@@ -122,13 +187,23 @@ Options:
           CPUs
 
       --prefer-smt-core
-          Use SMT logical cores before using other physcial cores in core compaction
+          Use SMT logical cores before using other physical cores in core compaction
 
       --no-freq-scaling
           Disable frequency scaling by scx_lavd
 ```
 
-## GitHub
+### The use cases of these schedulers are quite similar... why is that?
 
-- scx-scheds (Schedulers): https://github.com/sched-ext/scx
-- https://github.com/sched-ext/scx-kernel-releases
+Mainly because they are (for now) multipurpose schedulers, meaning they adapt to many workloads even if they don't excel at all of them.
+
+In order to find out which one fits you best, there is no other shortcut than to test it yourself.
+
+## Learn More
+
+If you want to learn more about the sched-ext framework. Take a look at the links below.
+
+- [Sched-ext Schedulers Source Code](<https://github.com/sched-ext/scx/tree/main/scheds/rust>)
+- [Changwoo Min: Introduction to sched-ext & CPU Scheduling Part 1](<https://blogs.igalia.com/changwoo/sched-ext-a-bpf-extensible-scheduler-class-part-1/>)
+  - [Part 2](<https://blogs.igalia.com/changwoo/sched-ext-scheduler-architecture-and-interfaces-part-2/>)
+- [Andrea Righi: Re-implementing my Linux Rust scheduler in eBPF](<https://arighi.blogspot.com/2024/08/re-implementing-my-linux-rust-scheduler.html>)
