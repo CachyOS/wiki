@@ -37,7 +37,7 @@ BTRFS is a modern copy-on-write(COW) filesystem created in 2007 and declared sta
 - Sometimes requires defragmentation or balancing.
 - Worse on rotational drives due to aforementioned fragmentation.
 ### Userspace utility
-Btrfs's userspace utility package is `btrfs-progs`
+Btrfs userspace utility package is `btrfs-progs`
 
 ### Subvolume Layout
 CachyOS provides a subvolume layout out of the box to allow easy snapshot functionality.
