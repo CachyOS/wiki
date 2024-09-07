@@ -203,7 +203,7 @@ export default defineConfig({
           label: 'CachyOS Features',
           items: [
             {
-              label: 'cachy-chroot',
+              label: 'CachyOS chroot Helper (cachy-chroot)',
               link: 'features/cachy_chroot',
             },
             {
