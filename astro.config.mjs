@@ -207,6 +207,10 @@ export default defineConfig({
               link: 'features/cachy_chroot',
             },
             {
+              label: 'CachyOS Hardware Detection (chwd)',
+              link: 'features/chwd',
+            },
+            {
               label: 'CachyOS Kernel',
               link: 'features/kernel',
             },
