@@ -215,6 +215,14 @@ export default defineConfig({
               link: 'features/kernel',
             },
             {
+              label: 'Kernel Manager',
+              translations: {
+              sk: 'Správca jadra',
+              cs: 'Správce jader',
+              },
+              link: 'features/kernel_manager',
+            },
+            {
               label: 'CachyOS Settings',
               link: 'features/cachyos_settings',
             },
@@ -278,14 +286,6 @@ export default defineConfig({
                 cs: 'sched-ext Tutoriál',
               },
               link: 'configuration/sched-ext',
-            },
-            {
-              label: 'Kernel Manager',
-              translations: {
-                sk: 'Správca jadra',
-                cs: 'Správce jader',
-              },
-              link: 'configuration/kernel-manager',
             },
             {
               label: 'Shell Configuration',
