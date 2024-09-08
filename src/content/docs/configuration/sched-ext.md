@@ -207,3 +207,4 @@ If you want to learn more about the sched-ext framework. Take a look at the link
 - [Changwoo Min: Introduction to sched-ext & CPU Scheduling Part 1](<https://blogs.igalia.com/changwoo/sched-ext-a-bpf-extensible-scheduler-class-part-1/>)
   - [Part 2](<https://blogs.igalia.com/changwoo/sched-ext-scheduler-architecture-and-interfaces-part-2/>)
 - [Andrea Righi: Re-implementing my Linux Rust scheduler in eBPF](<https://arighi.blogspot.com/2024/08/re-implementing-my-linux-rust-scheduler.html>)
+- [Andrea Righi:  AI-generated Linux kernel schedulers in Rust](<https://arighi.blogspot.com/2024/09/ai-generated-linux-kernel-schedulers-in.html>)
