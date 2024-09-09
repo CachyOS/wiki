@@ -288,14 +288,6 @@ export default defineConfig({
               link: 'configuration/sched-ext',
             },
             {
-              label: 'KDE Plasma',
-              link: 'configuration/kde_plasma',
-            },
-            {
-              label: 'GNOME',
-              link: 'configuration/gnome',
-            },
-            {
               label: 'Hyprland',
               link: 'configuration/hyprland',
             },
@@ -322,14 +314,6 @@ export default defineConfig({
                 cs: 'Často kladené otázky',
               },
               link: 'support/faq',
-            },
-            {
-              label: 'Troubleshooting',
-              translations: {
-                sk: 'Riešenie problémov',
-                cs: 'Řešení potíží',
-              },
-              link: 'support/troubleshooting',
             },
             {
               label: 'Submitting Bugs',
