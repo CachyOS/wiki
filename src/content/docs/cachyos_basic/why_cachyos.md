@@ -11,7 +11,7 @@ Besides performance changes, we provide a ready to go setup for NVIDIA GPUs, ZFS
 
 CachyOS offers optimized packages for various hardware configurations, including x86-64, x86-64-v3, x86-64-v4, and Zen4 to enhance performance and reduce latency.
 
-Check out [this](/cachyos_repositories/what_are_the_cachyos_repo) page for a more detailed explanation of the optimized repositories that we provide.
+Check out [this](/features/optimized_repos) page for a more detailed explanation of the optimized repositories that we provide.
 
 ## Advanced CPU Scheduler Support
 
@@ -22,14 +22,14 @@ ensuring efficient use of system resources to allow multiple tasks to run simult
 By default CachyOS provides BORE (Burst-Oriented Response Enhancer) scheduler in the default kernel,
 an extended version of EEVDF + sched-ext, a framework to load userspace schedulers. We also provide other kernels with individual versions of EEVDF and the sched-ext framework separately. You can choose your preferred kernel variant and its corresponding scheduler using the kernel manager bundled with the installation.
 
-For more information about the kernels that we offer, check out the [variants](/kernel/kernel#variants) page.
+For more information about the kernels that we offer, check out the [variants](/features/kernel#variants) page.
 
 ## Customizable Installation Process
 
 Start your CachyOS journey by booting from the [bootable USB](/installation/installation_prepare/#creating-a-bootable-cachyos-usb-drive) that you created,
 You’ll be welcomed by our Hello program, a helpful introduction to CachyOS. Our customized Calamares installer provides a wide range of possibilities.
 We offer a variety of [desktop environments](/installation/desktop_environments/), [boot managers](/installation/boot_managers/)
-and [kernels](/kernel/kernel#variants) to choose from.
+and [kernels](/features/kernel#variants) to choose from.
 You can choose what you need and deselect whatever you don't. Your system, your choices.
 
 :::caution[WARNING]
