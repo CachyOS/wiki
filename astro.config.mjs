@@ -287,17 +287,23 @@ export default defineConfig({
               },
               link: 'configuration/sched-ext',
             },
-            {
-              label: 'Hyprland',
-              link: 'configuration/hyprland',
-            },
+
+          ],
+        },
+        {
+          label: 'Desktop Environments',
+          items: [
             {
               label: 'i3',
-              link: 'configuration/i3',
+              link: 'desktop_environments/i3',
+            },
+            {
+              label: 'Hyprland',
+              link: 'desktop_environments/hyprland',
             },
             {
               label: 'Qtile',
-              link: 'configuration/qtile',
+              link: 'desktop_environments/qtile',
             },
           ],
         },
