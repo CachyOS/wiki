@@ -33,7 +33,7 @@ CachyOS offers a diverse range of kernel options. Below you can find an explanat
 ### linux-cachyos (Default Kernel)
 
 The default kernel is our main recommendation in terms of scheduler choice and configuration. Currently, our default kernel
-is using the **BORE/EEVDF** scheduler as the default option, along with our **base patchset**. However, we also include the sched-ext framework, which enables switching to different schedulers at runtime. See our [sched-ext tutorial](/kernel/sched-ext)
+is using the **BORE/EEVDF** scheduler as the default option, along with our **base patchset**. However, we also include the sched-ext framework, which enables switching to different schedulers at runtime. See our [sched-ext tutorial](/configuration/sched-ext)
 for recommendations of these schedulers.
 
 Feel free to open an issue in our [GitHub](https://github.com/CachyOS/linux-cachyos) or reach out
