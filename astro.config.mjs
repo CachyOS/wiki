@@ -288,10 +288,6 @@ export default defineConfig({
               link: 'configuration/sched-ext',
             },
             {
-              label: 'Shell Configuration',
-              link: 'configuration/shell',
-            },
-            {
               label: 'KDE Plasma',
               link: 'configuration/kde_plasma',
             },
