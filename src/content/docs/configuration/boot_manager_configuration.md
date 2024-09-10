@@ -9,6 +9,7 @@ systemd-boot has two kinds of configuration files, one for systemd-boot itself i
 individual kernel entry in `/boot/loader/entry`.
 
 ### Loader configuration
+
 In this configuration file, you can change the default entry and the timeout of systemd-boot
 
 ```shell
@@ -20,6 +21,7 @@ timeout 5
 ```
 
 ### Kernel Commandline Configuration
+
 We provide a tool for easier configuration of systemd-boot [`sdboot-manage`](https://github.com/CachyOS/CachyOS-PKGBUILDS/tree/master/systemd-boot-manager).
 One of the perks of this tool is global kernel commandline configuration. The configuration file for `sdboot-manage` is located in `/etc/sdboot-manage.conf`.
 Edit the `LINUX_OPTIONS=` line in `/etc/sdboot-manage.conf` to change kernel parameters.
@@ -82,7 +84,7 @@ To pass kernel parameters to the commandline with GRUB, we need to edit `GRUB_CM
 GRUB_CMDLINE_LINUX_DEFAULT='nowatchdog zswap.enabled=0 quiet splash'
 ```
 
-Everytime we modify the GRUB configuration file, we need to remake the config with the following command
+Every time we modify the GRUB configuration file, we need to remake the config with the following command
 
 ```shell
 ❯ sudo grub-mkconfig -o /boot/grub/grub.cfg
