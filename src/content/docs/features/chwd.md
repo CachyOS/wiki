@@ -17,7 +17,7 @@ to use it post-install.
 We can get class IDs by running `lspci`
 
 ```sh
-❯ lscpi -nn
+❯ lspci -nn
 01:00.0 VGA compatible controller [0300]: NVIDIA Corporation GA107BM [GeForce RTX 3050 Mobile] [10de:25e2] (rev a1)
 #                                  ^ ^ ^ -- This is the class ID!
 ```
