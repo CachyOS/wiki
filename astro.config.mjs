@@ -287,25 +287,23 @@ export default defineConfig({
               },
               link: 'configuration/sched-ext',
             },
+
+          ],
+        },
+        {
+          label: 'Desktop Environments',
+          items: [
             {
-              label: 'KDE Plasma',
-              link: 'configuration/kde_plasma',
-            },
-            {
-              label: 'GNOME',
-              link: 'configuration/gnome',
+              label: 'i3',
+              link: 'desktop_environments/i3',
             },
             {
               label: 'Hyprland',
-              link: 'configuration/hyprland',
-            },
-            {
-              label: 'i3',
-              link: 'configuration/i3',
+              link: 'desktop_environments/hyprland',
             },
             {
               label: 'Qtile',
-              link: 'configuration/qtile',
+              link: 'desktop_environments/qtile',
             },
           ],
         },
@@ -322,14 +320,6 @@ export default defineConfig({
                 cs: 'Často kladené otázky',
               },
               link: 'support/faq',
-            },
-            {
-              label: 'Troubleshooting',
-              translations: {
-                sk: 'Riešenie problémov',
-                cs: 'Řešení potíží',
-              },
-              link: 'support/troubleshooting',
             },
             {
               label: 'Submitting Bugs',
