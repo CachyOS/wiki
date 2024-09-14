@@ -12,7 +12,7 @@ Even their "stable" version is also broken and buggy therefore we do not plan to
 
 Our main goal with our setup is to have a working Hyprland but keeping it simple therefore some essential tools and programs might be missing such as a GUI File Manager.
 
-Take a look into our [FAQ.](/configuration/hyprland#faq)
+Take a look into our [Hyprland FAQ.](/desktop_environments/hyprland#faq)
 
 ## Keybinds
 
