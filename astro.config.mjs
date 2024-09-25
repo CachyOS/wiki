@@ -287,6 +287,10 @@ export default defineConfig({
               },
               link: 'configuration/sched-ext',
             },
+            {
+              label: 'NVIDIA Wayland Overclocking',
+              link: 'configuration/nvidia-wayland-overclock',
+            },
 
           ],
         },
