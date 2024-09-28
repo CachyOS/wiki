@@ -12,24 +12,13 @@ This includes systems running NVIDIA's graphics cards, T2 Macbooks and handheld 
 **`chwd`** is typically ran during installation time to provide the necessary packages for your system. However, it is also possible
 to use it post-install.
 
-### Auto Configuration via Class IDs
+### Auto Configuration
 
-We can get class IDs by running the following command
-
-```sh
-❯ chwd --detail --list
-> PCI Device:  (0300:1002:1681)
-#               ^^^^ This is the ClassID !
-  VGA compatible controller Advanced Micro Devices, Inc. [AMD/ATI] Rembrandt [Radeon 680M]
-
-```
-
-After finding the necessary class ID, we can pass it to chwd to install **all** the necessary profiles for your system.
+Our hardware detection program supports installing and configuring necessary drivers and packages so that your system
+can work at optimal condition.
 
 ```sh
-❯ sudo chwd -a 0300
-> Using profile 'amd' for device: 0000:05:00.0 (0300:1002:1681) VGA compatible controller Advanced Micro Devices, Inc. [AMD/ATI] Rembrandt [Radeon 680M]
-> Using profile 'nvidia-open-dkms.prime' for device: 0000:01:00.0 (0300:10de:25e2) VGA compatible controller NVIDIA Corporation GA107BM [GeForce RTX 3050 Mobile]
+❯ sudo chwd -a
 ```
 
 ### Installing a profile
