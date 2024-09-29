@@ -12,22 +12,13 @@ This includes systems running NVIDIA's graphics cards, T2 Macbooks and handheld 
 **`chwd`** is typically ran during installation time to provide the necessary packages for your system. However, it is also possible
 to use it post-install.
 
-### Auto Configuration via Class IDs
+### Auto Configuration
 
-We can get class IDs by running `lspci`
-
-```sh
-❯ lspci -nn
-01:00.0 VGA compatible controller [0300]: NVIDIA Corporation GA107BM [GeForce RTX 3050 Mobile] [10de:25e2] (rev a1)
-#                                  ^ ^ ^ -- This is the class ID!
-```
-
-After finding the necessary class ID, we can pass it to chwd to install **all** the necessary profiles for your system.
+Our hardware detection program supports installing and configuring necessary drivers and packages so that your system
+can work at optimal condition.
 
 ```sh
-❯ sudo chwd -a pci nonfree 0300
-> Using profile 'amd' for device: 0000:05:00.0 (0300:1002:1681) VGA compatible controller Advanced Micro Devices, Inc. [AMD/ATI] Rembrandt [Radeon 680M]
-> Using profile 'nvidia-open-dkms.prime' for device: 0000:01:00.0 (0300:10de:25e2) VGA compatible controller NVIDIA Corporation GA107BM [GeForce RTX 3050 Mobile]
+❯ sudo chwd -a
 ```
 
 ### Installing a profile
@@ -58,7 +49,7 @@ An alternative to the above method is to install each specific profile. You can 
 After that, we can install a profile with the `-i` flag
 
 ```sh title='Installing a chwd profile'
-❯ sudo chwd -i pci amd
+❯ sudo chwd -i amd
 > Installing amd ...
 
 > Successfully installed amd
@@ -73,20 +64,18 @@ Consult the help output of **`chwd`** for command syntax and other usage.
 Usage: chwd [OPTIONS]
 
 Options:
-      --pci                                               Show PCI
-  -i, --install <usb/pci> <profile>                       Install profile
-  -r, --remove <usb/pci> <profile>                        Remove profile
-  -d, --detail                                            Show detailed info for listings
-  -f, --force                                             Force reinstall
-      --list-installed                                    List installed kernels
-      --list                                              List available profiles for all devices
-      --list-all                                          List all profiles
-  -a, --autoconfigure <usb/pci> <free/nonfree> <classid>  Autoconfigure
-      --is_nvidia_card                                    Print if nvidia card found
-      --ai_sdk                                            Toggle AI SDK profiles
-      --pmcachedir <PMCACHEDIR>                           [default: /var/cache/pacman/pkg]
-      --pmconfig <PMCONFIG>                               [default: /etc/pacman.conf]
-      --pmroot <PMROOT>                                   [default: /]
-  -h, --help                                              Print help
-  -V, --version                                           Print version
+  -i, --install <profile>          Install profile
+  -r, --remove <profile>           Remove profile
+  -d, --detail                     Show detailed info for listings
+  -f, --force                      Force reinstall
+      --list-installed             List installed kernels
+      --list                       List available profiles for all devices
+      --list-all                   List all profiles
+  -a, --autoconfigure [<classid>]  Autoconfigure
+      --ai_sdk                     Toggle AI SDK profiles
+      --pmcachedir <PMCACHEDIR>    [default: /var/cache/pacman/pkg]
+      --pmconfig <PMCONFIG>        [default: /etc/pacman.conf]
+      --pmroot <PMROOT>            [default: /]
+  -h, --help                       Print help
+  -V, --version                    Print version
 ```
