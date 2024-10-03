@@ -2,6 +2,17 @@
 title: GUI Installer Changelogs
 description: Changelogs of Calamares and the GUI Live ISO
 ---
+24.10
+----
+
+**Features:**
+- Package Updates: linux-cachyos 6.11.1, mesa 24.2.4, scx-scheds 1.0.5, python 3.12.7
+
+**Bug Fixes:**
+- sddm: Pulled in newer sddm to fix wayland session logins
+- ISO: Added xf86-video-amdgpu to fix graphical session loading on some setups
+- chwd: Fixed reinstallation of profiles
+
 24.09
 ----
 
