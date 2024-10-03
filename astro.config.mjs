@@ -291,7 +291,10 @@ export default defineConfig({
               label: 'NVIDIA Wayland Overclocking',
               link: 'configuration/nvidia-wayland-overclock',
             },
-
+            {
+              label: 'Automounting Additional Drives',
+              link: 'configuration/automount_with_fstab',
+            },
           ],
         },
         {
