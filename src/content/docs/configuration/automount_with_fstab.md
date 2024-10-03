@@ -12,21 +12,7 @@ This tutorial will describe the basics of utilizing the fstab file located in /e
 
 *Click [here](automount_with_fstab#tldr) to skip to the tl;dr*
 
-### 1. Creating the Mount Location
-
-Before we can mount our drive with fstab, or ***f***ile ***s***ystems ***tab***le, we will need to create a mount point for our drive.
-
-The [Linux Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html) says that `/media/` is the proper location for removable drives to be mounted. For this reason we will create a new directory to mount our drive to inside of the `/media/` directory. In this example we will be mounting a Windows partition. Despite that though these same instructions apply universally, with rare exceptions, such as a NAS or a btrfs subvolume. 
-
-Create the mount point:
-
-```
-sudo mkdir /media/windows
-```
-
-Because `/media/` is owned by root, we need to run this command as root to create the mount point.
-
-### 2. List the UUIDs of your partitions
+### 1. List the UUIDs of your partitions
 In the terminal emulator of your choice (Konsole, Alacritty, Kitty, etc.) run the following:
 
 ```
@@ -49,7 +35,7 @@ nvme0n1
 
 In our example, we know that we want to mount a Windows partition, which is ntfs, and we know that roughly half its space is available. Thus we can determine that the partition we want to mount is `nvme0n1p3` and its UUID to be `08A24E90A24E81E4`, with a file system of `ntfs` in this example.
 
-### 3. Identifying your partition
+### 2. Identifying your partition
 
 Often `lsblk -f` will provide all the information you need to mount your disk through /etc/fstab at this point. Should you find the information lacking however you can run the following:
 
@@ -77,7 +63,7 @@ That should make it abundantly clear to us that the partition we want is `nvme0n
 Once you are confident you've found the correct partition, copy the UUID. Copying from the terminal emulator is typically done with `ctrl+shift+C`.
 
 
-### 4. Adding an Entry to /etc/fstab
+### 3. Adding an Entry to /etc/fstab
 
 Now that we've obtained the UUID of our partition, it's time to open up the fstab file. 
 
@@ -96,7 +82,7 @@ The break down of this entry is as follows:
 
 `UUID=08A24E90A24E81E4` This is the file system we want to mount, indentified by its UUID. There are other methods to identify your filesystem, though UUID tends to be safest. Additional methods listed [here](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems).
 
-`/media/windows` This is the mount point we created earlier in step 1. Each additional drive will need its own separate mount point.
+`/media/windows` The [Linux Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html) says that `/media/` is the proper location for removable drives to be mounted. `windows` indicates the directory we wish to mount our drive to. Each drive we want to mount will need its own directory.
 
 `ntfs3` This is the filesystem type for our file system. We are explicitly using the ntfs3 kernel driver in our example. Other examples would be `ext4`, `xfs` or similar. This explicit filesystem type declaration can be replaced with `auto` to allow the mount command to make its best guess.
 
@@ -129,7 +115,7 @@ If you do not set umask=000 some files may be unwritable depending
 
 
 
-### 5. Finishing Up
+### 4. Finishing Up
 
 If you wish to mount the drive you created an entry for now, you need to run the following:
 
@@ -187,10 +173,6 @@ ls /media/windows
 
 
 ### tl;dr
-- Create a mount point in /media/
-```
-sudo mkdir /media/foo
-```
 - Find the UUID of your partition
 ```
 lsblk -f
