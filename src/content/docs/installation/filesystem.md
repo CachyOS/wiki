@@ -71,7 +71,13 @@ EXT4 is recommended for users who want the simplest and most commonly used files
 
 
 ## ZFS
+
 ZFS is an advanced filesystem originally developed by Sun Microsystems in 2005. ZFS has many features however it licensed under CDDL which means it can not be included inside the linux kernel and requires a separate module installed.
+
+:::caution
+Do not use a Real-time kernel together with ZFS because its not compatible due to licensing issues.
+:::
+
 ### Pros
 - Pooled storage (zpool)
 - Snapshots using COW
@@ -82,6 +88,7 @@ ZFS is an advanced filesystem originally developed by Sun Microsystems in 2005. 
 - Very complicated to use and understand due to features like zpool and ARC.
 - ARC requires a lot of ram to be effective.
 - Not included in the linux kernel therefore dependent on a third party kernel module (OpenZFS)
+- Incompatible with Real-time preemption
 
 ### Required tools
 'ZFS-Module' CachyOS provides a precompiled zfs module for each kernel version.
