@@ -24,7 +24,7 @@ The "Erase Disk" Option in Calamares will wipe the selected disk and install the
 4. Configure your **Keyboard Layout**.
 
 5. Select **Erase Disk** and choose a [Filesystem](/installation/filesystem).
-  
+
 6. Pick the **Desktop Environment** you'd like to use, see [Desktop Environments](/installation/desktop_environments).
 
 7. Select the specific packages you wish to install from the provided list, and deselect any that you do not require.
@@ -185,7 +185,7 @@ GRUB is the only boot manager available for a MBR/BIOS system.
     * Size: ***At least 20000MiB***
     * Filesystem: Any, refer [Filesystem](/installation/filesystem)
     * Mount point: ***/***
-    * Flags: 
+    * Flags:
 
 6. Double check that ***Install boot loader on:*** is pointing to your boot drive e.g: /dev/sda
 
@@ -198,6 +198,86 @@ GRUB is the only boot manager available for a MBR/BIOS system.
 10. Review the installation summary on the Overview Page carefully. If all the settings look correct for you, proceed with the installation by clicking on ***Install Now***. Otherwise, go back and make any necessary changes.
 
 </Steps>
+
+## Dual Booting
+
+After manual partitioning, there may be some additional setup needed to achieve a dual boot setup, particularly with `systemd-boot` and `GRUB`.
+
+<Tabs>
+    <TabItem label='systemd-boot'>
+        After doing a manual partition install, we need to copy over Windows's EFI binaries to Linux's EFI partition so the boot manager can
+        recognize them.
+
+        <Steps>
+        1. Locate your Windows's EFI partition with `lsblk`
+
+            ```sh
+            ❯ lsblk -o NAME,FSTYPE,SIZE,MOUNTPOINT
+            NAME        FSTYPE   SIZE MOUNTPOINT
+            zram0               15.3G [SWAP]
+            nvme0n1            476.9G
+            ├─nvme0n1p1 vfat     100M
+            ├─nvme0n1p2           16M
+            ├─nvme0n1p3 ntfs   234.4G
+            ├─nvme0n1p4 ntfs     830M
+            ├─nvme0n1p5 vfat       2G /boot
+            └─nvme0n1p6 btrfs  239.6G /var/tmp
+            ```
+
+            EFI partition are almost always partitoned as FAT32/vfat, and since `nvme0n1p1` doesn't have a Linux mountpoint, we can assume that partition
+            is the Windows's EFI partition
+
+        2. Mount Window's EFI partition temporarily
+
+            ```sh
+            ❯ sudo mount /dev/nvme0n1p1 /mnt/WinBoot # Replace `nvme0n1p1` with the partition of your Windows's EFI partition
+            ```
+
+        3. Copy the EFI binaries from Windows's EFI partition to Linux's EFI partition
+
+            ```sh
+            ❯ sudo cp -r /mnt/WinBoot/EFI/* /boot/EFI
+            ```
+
+        4. Unmount the previously mounted partition and Windows should show up in the boot menu on the next boot!
+
+            ```sh
+            ❯ sudo umount /mnt/WinBoot
+            ```
+
+        </Steps>
+    </TabItem>
+
+    <TabItem label='GRUB'>
+        GRUB can rely on `os-prober` to autodetect the Windows EFI partition and add it to the boot menu.
+
+        <Steps>
+        1. Install and run os-prober
+
+            ```sh
+            ❯ sudo pacman -S os-prober
+            ❯ sudo os-prober
+            ```
+
+        2. Enable os-prober in GRUB's configuration file
+
+            ```sh
+            ❯ sudo micro /etc/default/grub
+            # /etc/default/grub
+            # Probing for other operating systems is disabled for security reasons. Read
+            # documentation on GRUB_DISABLE_OS_PROBER, if still want to enable this
+            # functionality install os-prober and uncomment to detect and include other
+            # operating systems.
+            GRUB_DISABLE_OS_PROBER=false
+
+            ❯ sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+
+        3. Windows should be added into the boot menu now.
+
+        </Steps>
+    </TabItem>
+</Tabs>
 
 ## Common Issues
 
@@ -223,3 +303,7 @@ timedatectl set-ntp true
 ```
 
 Having done that, click on ***Launch Installer*** and proceed with the installation.
+
+## More Information
+
+- [Lord Vexy's dual boot installation walkthrough with the rEFInd boot manager](https://www.youtube.com/watch?v=0Toaq3Vn5qs)

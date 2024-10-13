@@ -158,14 +158,6 @@ export default defineConfig({
               link: 'installation/installation_on_root',
             },
             {
-              label: 'Installation Dual Boot',
-              translations: {
-                sk: 'Inštalácia Dual Root',
-                cs: 'Instalace duálního zavaděče',
-              },
-              link: 'installation/installation_dualboot',
-            },
-            {
               label: 'Installation T2 MacBook',
               translations: {
                 sk: 'Inštalácia na T2 MacBook',
