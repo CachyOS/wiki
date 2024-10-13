@@ -158,22 +158,6 @@ export default defineConfig({
               link: 'installation/installation_on_root',
             },
             {
-              label: 'Installation on VirtualBox',
-              translations: {
-                sk: 'Inštalácia na VirtualBox',
-                cs: 'Instalace na VirtualBox',
-              },
-              link: 'installation/installation_virtualbox',
-            },
-            {
-              label: 'Installation on VMware Workstation',
-              translations: {
-                sk: 'Inštalácia na VMware Workstation',
-                cs: 'Instalace na VMware Workstation',
-              },
-              link: 'installation/installation_vmware',
-            },
-            {
               label: 'Installation Dual Boot',
               translations: {
                 sk: 'Inštalácia Dual Root',
