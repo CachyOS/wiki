@@ -3,7 +3,7 @@ title: Qtile Configuration
 description: CachyOS Qtile keybinds & FAQ
 ---
 
-Credits go to [Aarrayy](<https://github.com/aarrayy>) for making this Qtile setup.
+Credits go to [Shendisx](<https://github.com/Shendisx>) for making this Qtile setup.
 
 > X11 and Wayland session
 
