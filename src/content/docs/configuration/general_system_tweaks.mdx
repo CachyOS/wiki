@@ -122,28 +122,33 @@ Available preferences: `performance`, `power`, `balance_power`, `balance_perform
 Benchmarks for each preference can be found here:
 [https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/](https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/)
 
-4\. AMD P-State Preferred Core Handling
+5\. AMD 3D V Cache Optimizer
 ---------------------------------
 
-AMD Pstate driver will provide an initial core ordering at boot time. It relies on the CPPC interface to communicate core rankings to the operating system and scheduler, ensuring the OS prioritizes higher-performance cores for process scheduling. When AMD Pstate driver receives a message with the highest performance change, it will update the core ranking.
+AMD posted a patch to optimize the Cache Scheduling on Dual CCD 3D CPUs, like 7950X3D and 7900X3D.
+You need to set in the BIOS under the CPPC Option to the "Driver" Option. This will allow to override with the sysfs the used mode.
 
-This can result into a better performance and process handling.
-More information here:
-https://lore.kernel.org/linux-pm/20230808081001.2215240-1-li.meng@amd.com/
+There are two modes:
+1. Frequency
+2. Cache
 
-:::note
-AMD P-State Preferred Core Handling is enabled by default for all supported CPUs.
-:::
+If `cache` is set, the driver will try to put the tasks first on the CCD with the higher Cache, this is mainly profitable on games.
+The `frequency` option will try to put the tasks on the second CCD, which has a higher frequency then the 3D Cache CCD.
 
-You can use the following command to check if your CPU supports it:
+Frequency (Default):
 ```sh
-cat /sys/devices/system/cpu/amd_pstate/prefcore
+echo frequency | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
 ```
-or
+
+Cache:
 ```sh
-cat /sys/devices/system/cpu/amd_pstate/status
+echo cache | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
 ```
-to check if it's enabled.
+
+After you changed the modes, the amd preffered core stats should provide a different ranking. You can read it out with:
+```sh
+grep -v /sys/devices/system/cpu/cpu*/cpufreq/amd_pstate_prefcore_ranking
+```
 
 5\. AMD P-State Core Performance Boost
 ---------------------------------
