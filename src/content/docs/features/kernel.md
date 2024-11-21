@@ -85,7 +85,7 @@ Additionally it also contains our CachyOS Base patch set, sched-ext Framework an
 
 ### linux-cachyos-rt-bore
 
-The RT (Real Time) kernel contains the CachyOS Base patch set, Real Time Patch and BORE/EEVDF Scheduler. RT Preemption enabled by default.
+Our default kernel but with `preempt=rt` enabled. **Intel GPUs are not supported**
 
 ### linux-cachyos-server
 
