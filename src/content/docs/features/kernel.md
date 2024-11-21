@@ -87,14 +87,6 @@ Additionally it also contains our CachyOS Base patch set, sched-ext Framework an
 
 The RT (Real Time) kernel contains the CachyOS Base patch set, Real Time Patch and BORE/EEVDF Scheduler. RT Preemption enabled by default.
 
-### linux-cachyos-sched-ext
-
-:::note
-Soon to be deprecated because this framework is included in +6.12 Linux Kernel.
-:::
-
-The sched-ext kernel contains the CachyOS Base patch set and the sched-ext Framework + EEVDF as the base scheduler.
-
 ### linux-cachyos-server
 
 The Server Kernel is targeted for servers and more throughput. **The kernel is NOT tuned for interactivity and is not suggested for desktop users**.
