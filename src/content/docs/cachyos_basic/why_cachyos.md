@@ -36,6 +36,11 @@ first-class support for [sched-ext schedulers](https://github.com/sched-ext/scx)
 
 For more information about the kernels that we offer and sched-ext schedulers, see [kernels](/features/kernels) and [sched-ext](/configuration/sched-ext/).
 
+## Hardware Detection
+
+Our own [hardware detection tool](https://github.com/CachyOS/chwd) correctly installs necessary packages and drivers for each system to lighten the burden of 
+post-install setups from users.
+
 ## Customizable Installation Process
 
 Start your CachyOS journey by booting from the [bootable USB](/installation/installation_prepare/#creating-a-bootable-cachyos-usb-drive) that you created,
