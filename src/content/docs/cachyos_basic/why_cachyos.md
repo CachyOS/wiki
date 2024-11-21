@@ -3,15 +3,14 @@ title: Why CachyOS?
 description: Why CachyOS may be better for you
 ---
 
-CachyOS offers a polished Arch experience, complete with a user-friendly installer, pre-configured desktops, performance optimizations without compromising the user experience and security of the system.
-
-Besides performance changes, we provide a ready to go setup for NVIDIA GPUs, ZFS which is built into some of our kernels and miscellaneous tools.
+CachyOS offers a polished Arch experience, complete with a user-friendly installer, pre-configured desktops and performance optimizations without compromising the user experience and security of the system. Below are some of the highlight features that we provide to ensure an amazing desktop experience.
 
 ## Optimized Packages and Repositories
 
-CachyOS offers optimized packages for various hardware configurations, including x86-64, x86-64-v3, x86-64-v4, and Zen 4 to enhance performance and reduce latency.
+CachyOS offers optimized packages for various hardware configurations, including x86-64-v3, x86-64-v4, and Zen4+ systems to improve overall
+performance of the system. Additionally, we ship highly-requested [AUR](https://aur.archlinux.org/) packages from users for QoL improvements.
 
-Check out [this](/features/optimized_repos) page for a more detailed explanation of the optimized repositories that we provide.
+For a better idea of the various packages we have optimized, learn more at our [optimized repositories page](/features/optimized_repos)
 
 ## Advanced CPU Scheduler Support
 
