@@ -50,19 +50,22 @@ Our installer guarantees that users can have the choice of what system they want
 - [Filesystems](/installation/filesystem)
 - Custom Packages to install during the installation process
 
-## User Friendly OS
+## CachyOS Applications
 
 By default, we provide our own applications, such as CachyOS Hello or CachyOS Package Installer
 among others to simplify and enhance your Linux experience. For example, CachyOS Hello provides options to update your system, enable services and rank the mirrors. Package Installer will help you to install packages. Also some tweaks and quick access for fixes to the most common issues found in Arch e.G: removing pacman's db lock.
-CachyOS has a really good and friendly Discord community that like to help and assist each other. Join us at [Discord](https://discord.com/invite/cachyos-862292009423470592) or our [forum](https://discuss.cachyos.org/)
 
-CachyOS Applications
-
---------------------
+List of applications we develop and maintain:
 
 - **Cachy Browser**: Browser based on Firefox, with a more secure config and patches from Gentoo + Performance optimizations.
-- **cachyos-kernel-manager**: Easily install kernels from the repository or configure your own kernel and include your own patches and even manage the sched-ext framework via the [scx_loader](<https://github.com/sched-ext/scx/tree/main/rust/scx_loader>).
+- **CachyOS Kernel Manager**: Easily install kernels from the repository or configure your own kernel and include your own patches and even manage the sched-ext framework via the [scx_loader](<https://github.com/sched-ext/scx/tree/main/rust/scx_loader>).
 - **CachyOS Hello**: Application for controlling tweaks, applying fixes, package installation and more information about CachyOS.
-- **CachyOS-ApplicationInstaller**: GUI for an easy installation of commonly used applications.
+- **CachyOS Package Installer**: GUI for an easy installation of commonly used applications.
 - **cachyos-rate-mirrors**: Automatically rank Arch and CachyOS mirrors for optimal download speeds.
 - **systemd-boot-manager**: Automatically generates new entries for the systemd-boot-manager and can be easily configured in `/etc/sdboot-manage.conf`.
+
+## Friendly and Active Community
+
+Finally, our ever-growing community is the most important part of our highlight. Without the community, CachyOS would never be able to reach where it is now.
+The community assist each other and share tips and tricks for a better linux experience. If you would like to be part of our family, join us in our 
+[Discord](https://discord.com/invite/cachyos-862292009423470592) or our [forum](https://discuss.cachyos.org/).
