@@ -6,7 +6,7 @@ description: Description and recommendations for the available filesystems. (ext
 CachyOS offers 5 filesystems to allow the user to choose what best fits their needs. The following will go over advantages, disadvantages and recommendations for each filesystem. Each filesystem comes with its requirements/utilities preinstalled on CachyOS.
 
 :::note
-CachyOS defaults to BTRFS if no other filesystem is selected when installing.
+BTRFS is our default and recommended filesystem of choice. Choose that if unsure.
 :::
 
 ## XFS
