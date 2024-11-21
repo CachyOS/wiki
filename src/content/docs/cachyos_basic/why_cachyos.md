@@ -44,10 +44,6 @@ We offer a variety of [desktop environments](/installation/desktop_environments/
 and [kernels](/features/kernel#variants) to choose from.
 You can choose what you need and deselect whatever you don't. Your system, your choices.
 
-:::caution[WARNING]
-Selecting multiple desktop environments is not allowed due to possible breakage. For example, KDE and GNOME. We recommend choosing a single desktop environment to avoid an installation error.
-:::
-
 ## User Friendly OS
 
 By default, we provide our own applications, such as CachyOS Hello or CachyOS Package Installer
