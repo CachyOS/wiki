@@ -3,21 +3,9 @@ title: sched-ext Tutorial
 description: Tutorial how to use LAVD, Rusty, Rustland and bpfland
 ---
 
-`sched-ext` is a Linux kernel feature which enables implementing kernel thread schedulers in BPF (Berkeley Package Filter)
-and dynamically loading them. Essentially this allows end-users to change their schedulers in userspace without the need to
-build another kernel for a different scheduler.
-
-- Planned release for being an official kernel feature: 6.12
-
-## Installing a Kernel with sched-ext support
-
-CachyOS provides kernels, which have OOB support for the sched-ext framework.
-Following kernels are supported:
-
-- linux-cachyos (default kernel)
-- linux-cachyos-sched-ext (latest Stable release)
-- linux-cachyos-sched-ext-dbg (This is mainly for developers to develop and work on sched-ext)
-- linux-cachyos-rc (latest testing release with the latest features)
+Extensible Scheduler Class, or better known as `sched-ext` is a Linux kernel feature which enables implementing kernel thread schedulers in 
+BPF (Berkeley Package Filter) and dynamically loading them. Essentially this allows end-users to change their schedulers in userspace without 
+the need to build another kernel for a different scheduler.
 
 ## Starting and using the scx schedulers
 
