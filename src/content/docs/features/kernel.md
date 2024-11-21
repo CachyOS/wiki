@@ -105,6 +105,7 @@ Because it's expensive to build since it basically requires building the kernel 
 
 So for now it's another variant but it will become the default kernel in the near future. ETA (6.12.1 - 6.12.2)
 
-### I always heard that using the Real Time variant helps in Gaming!
+### I always heard that using the Real Time variant helps in Gaming! Is that true?
 
-Not really and on the other hand, it results in worse results with barely any benefit. The non Real Time kernels are more than enough & capable for Gaming (excluding Server & Hardened variants)
+Real time scheduling necessitates a task to be processed on a specified deadline. Gaming on the other hand spawns a lot of processes every second. Real time
+scheduling may cause these processes to end prematurely or even stall, leading to worse performance overall.
