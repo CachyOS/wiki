@@ -18,16 +18,23 @@ Aside from our main patchset that tunes various kernel tunables to improve deskt
 mainlined or not in the stable revision of the kernel. These patches undergo internal testing before being shipped to users to ensure that stability isn't
 impacted. For a complete list of patches that we provide, visit [our kernel page](/features/kernel).
 
-## Advanced CPU Scheduler Support
+## Custom CPU Scheduler Support
 
-Firstly let's understand what a CPU scheduler is. In the Linux Kernel, the CPU scheduler is a crucial component
-that manages how tasks (or processes) are executed on the system. It decides which task should run next,
-ensuring efficient use of system resources to allow multiple tasks to run simultaneously.
+CPU scheduling is an important part of the kernel to ensure all tasks are allocated CPU time fairly. The Linux kernel implements various scheduling classes
+to ensure that each and every task gets scheduled appropriately. The fair scheduling class, more well known as just "default scheduler" is based on the
+[EEVDF (Earliest Eligible Virtual Deadline First)](https://lwn.net/Articles/925371/) algorithm.
 
-By default CachyOS provides BORE (Burst-Oriented Response Enhancer) scheduler in the default kernel,
-an extended version of EEVDF + sched-ext, a framework to load userspace schedulers. We also provide other kernels with individual versions of EEVDF and the sched-ext framework separately. You can choose your preferred kernel variant and its corresponding scheduler using the kernel manager bundled with the installation.
+By default EEVDF is tuned to divide available CPU time fairly among all tasks and is mostly geared for throughput-oriented workloads. Our kernel
+[configures some EEVDF tunables](https://github.com/CachyOS/linux/blob/6.12/cachy/kernel/sched/fair.c#L76-L79) to prioritize desktop responsiveness over 
+sheer throughput, but there are limitations.
 
-For more information about the kernels that we offer, check out the [variants](/features/kernel#variants) page.
+With that in mind, we go one step further and patch our kernel with the [BORE (Burst-Oriented Response Enhancer)](https://github.com/firelzrd/bore-scheduler)
+that introduces an additional property to assign tasks requiring high responsiveness more CPU time compared to tasks that don't based on their "burstiness".
+
+In 6.12, we also have the ability to hotplug BPF schedulers and replace the fair scheduling class with a different scheduler. To facilitate this, we provide
+first-class support for [sched-ext schedulers](https://github.com/sched-ext/scx)
+
+For more information about the kernels that we offer and sched-ext schedulers, see [kernels](/features/kernels) and [sched-ext](/configuration/sched-ext/).
 
 ## Customizable Installation Process
 
