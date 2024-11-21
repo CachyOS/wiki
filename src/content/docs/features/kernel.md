@@ -90,7 +90,8 @@ The RT (Real Time) kernel contains the CachyOS Base patch set, Real Time Patch a
 ### linux-cachyos-server
 
 The Server Kernel is targeted for servers and more throughput. **The kernel is NOT tuned for interactivity and is not suggested for desktop users**.
-The main differences here are a lower tickrate (300Hz), No Preemption and CONFIG_CACHY not applied. This kernel only contains the CachyOS Base patch set.
+The main differences here are a lower tickrate (300Hz), [Lazy Preemption](https://lwn.net/Articles/994322/) and CONFIG_CACHY not applied. 
+This kernel only contains the CachyOS Base patch set.
 
 ## FAQ
 
