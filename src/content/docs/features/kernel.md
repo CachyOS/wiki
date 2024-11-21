@@ -35,15 +35,15 @@ BORE is an enhancement for EEVDF resulting in a more capable scheduler at handli
 ### linux-cachyos (Default Kernel)
 
 The default kernel is our main recommendation in terms of scheduler choice and configuration. Currently, our default kernel
-is using the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler as the default option, along with our **base patch set**. However, we also include the sched-ext framework, which enables switching to different schedulers at runtime. See our [sched-ext tutorial](/configuration/sched-ext)
-for recommendations of these schedulers.
+is using [BORE](https://github.com/firelzrd/bore-scheduler) scheduler as the default option, along with our **base patch set**. It is built
+with the [clang](https://clang.llvm.org/) C compiler with ThinLTO enabled to produce more optimized binaries.
 
 Feel free to open an issue in our [GitHub](https://github.com/CachyOS/linux-cachyos) or reach out
 to us in [Discord](https://discord.gg/cachyos-862292009423470592) for suggestions and improvements that should be added to the default kernel.
 
 ### linux-cachyos-autofdo
 
-Variant slightly more performant in some workloads, For example y-cruncher. It contains the same patch set as the default kernel + BORE/EEVDF Scheduler + sched-ext framework. For more information about AutoFDO, check out the links down below:
+Variant slightly more performant in some workloads, For example y-cruncher. It contains the same patch set as the default kernel + BORE/EEVDF Scheduler. For more information about AutoFDO, check out the links down below:
 
 - [Optimizing the Kernel with AutoFDO on CachyOS](https://cachyos.org/blog/2411-kernel-autofdo/)
 
@@ -52,7 +52,7 @@ Variant slightly more performant in some workloads, For example y-cruncher. It c
 
 ### linux-cachyos-bore
 
-This variant includes the CachyOS Base Patch set + BORE/EEVDF Scheduler with its default configuration but without including the sched-ext framework.
+This variant includes the CachyOS Base Patch set + BORE/EEVDF Scheduler with its default configuration.
 
 ### linux-cachyos-bmq
 
@@ -81,7 +81,7 @@ This kernel uses the BORE/EEVDF scheduler.
 
 The RC Kernel is based on the latest available Release Candidate. This contains the latest features and changes from upstream but can lead to a more unstable experience due to being experimental/bleeding edge.
 
-Additionally it also contains our CachyOS Base patch set, sched-ext Framework and the BORE/EEVDF Scheduler.
+Additionally it also contains our CachyOS Base patch set and the BORE/EEVDF Scheduler.
 
 ### linux-cachyos-rt-bore
 
