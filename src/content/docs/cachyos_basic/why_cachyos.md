@@ -10,7 +10,13 @@ CachyOS offers a polished Arch experience, complete with a user-friendly install
 CachyOS offers optimized packages for various hardware configurations, including x86-64-v3, x86-64-v4, and Zen4+ systems to improve overall
 performance of the system. Additionally, we ship highly-requested [AUR](https://aur.archlinux.org/) packages from users for QoL improvements.
 
-For a better idea of the various packages we have optimized, learn more at our [optimized repositories page](/features/optimized_repos)
+For a better idea of the various packages we have optimized, learn more at our [optimized repositories page](/features/optimized_repos).
+
+## Custom Kernel Tuned for Performance and Stability
+
+Aside from our main patchset that tunes various kernel tunables to improve desktop responsivness, we also cherrypick promising patchsets that have not been
+mainlined or not in the stable revision of the kernel. These patches undergo internal testing before being shipped to users to ensure that stability isn't
+impacted. For a complete list of patches that we provide, visit [our kernel page](/features/kernel).
 
 ## Advanced CPU Scheduler Support
 
