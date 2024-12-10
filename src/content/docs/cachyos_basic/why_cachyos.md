@@ -34,7 +34,7 @@ that introduces an additional property to assign tasks requiring high responsive
 In 6.12, we also have the ability to hotplug BPF schedulers and replace the fair scheduling class with a different scheduler. To facilitate this, we provide
 first-class support for [sched-ext schedulers](https://github.com/sched-ext/scx)
 
-For more information about the kernels that we offer and sched-ext schedulers, see [kernels](/features/kernels) and [sched-ext](/configuration/sched-ext/).
+For more information about the kernels that we offer and sched-ext schedulers, see [kernel](/features/kernel) and [sched-ext](/configuration/sched-ext/).
 
 ## Hardware Detection
 
