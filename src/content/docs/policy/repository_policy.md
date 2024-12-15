@@ -20,9 +20,9 @@ In no event and under no legal theory, whether in tort (including negligence), c
 be liable to repository users for damages, including any direct, indirect, special, incidental, or consequential damages of any character arising as a result of this policy or out of the use or inability to use the repository 
 (including but not limited to damages for loss of goodwill, work stoppage, computer failure or malfunction, or any and all other commercial damages or losses), even if the CachyOS team has been advised of the possibility of such damages.
 
-## 4. User Scope
+## 4. Supported Users
 
-The CachyOS repository (and its mirrors) is designed exclusively for the following users:
+The CachyOS repository (and its mirrors) provides support exclusively for the following users:
 
 - CachyOS Users
 - ArchLinux Users
@@ -35,21 +35,21 @@ Users from other distributions are **NOT SUPPORTED** and **HIGHLY DISCOURAGED** 
 - EndeavourOS
 - ArcoLinux
 - Parabola
-- Users of any other Linux distribution not explicitly mentioned in the "User Scope" section.
+- Users of any other Linux distribution not explicitly mentioned in the "Supported Users" section.
 
 ## 5. Redistribution of the Repository
 
-By "redistribution", we mean the behaviors of inclusion of the CachyOS repository (and its mirrors) or packages obtained from the CachyOS repository as a part of the distributed image of the operating system. 
-This also applies to the behaviors of providing the utilities that enable CachyOS repository by users' choice, or providing any distributed or official document that guide users to enable CachyOS 
+This policy defines "redistribution" as the behaviors of inclusion of the CachyOS repository (and its mirrors) or packages obtained from the CachyOS repository as a part of the distributed image of the operating system or sysroots. 
+Redistribution also includes the behaviors of providing the utilities that enable CachyOS repository by users' choice, or providing any distributed or official document that guide users to enable CachyOS 
 repository (and its mirrors) by their means. 
 
-The CachyOS repository is exclusively authorized for redistribution in the following distributions:
+Redistribution of CachyOS repository is exclusively authorized to the following distributions:
 
 - CachyOS
 - ArchLinux
 
 ## 6. Prohibited Redistribution
-Redistribution of the CachyOS repository (and its mirrors) in any unauthorized Linux distribution, including other Arch-based distributions, is strictly **STRICTLY PROHIBITED**. This includes, but is not limited to:
+Redistribution of the CachyOS repository (and its mirrors) in any unauthorized Linux distribution, including other Arch-based distributions, is **STRICTLY PROHIBITED**. This includes, but is not limited to:
 
 - Manjaro
 - EndeavourOS
