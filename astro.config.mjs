@@ -165,14 +165,6 @@ export default defineConfig({
               },
               link: 'installation/installation_t2macbook',
             },
-            {
-              label: 'Installation Handheld Edition',
-              translations: {
-                sk: 'Inštalácia Handheld Edition',
-                cs: 'Instalace verze pro přenosné zařízení',
-              },
-              link: 'installation/installation_handheld',
-            },
           ],
         },
         {
