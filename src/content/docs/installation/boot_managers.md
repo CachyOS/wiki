@@ -11,17 +11,15 @@ configuration, please see [Boot Manager Configuration](/configuration/boot_manag
 Part of systemd family, systemd-boot was created to be as simple as possible, therefore it only has support for UEFI based systems. This simple yet efficient design ensures it is reliable and fast. However this comes at the cost of advanced features supported by other boot managers.
 
 ### Pros
-- Fastest out of the three boot managers.
 - Very simple configuration.
 - Boot entries are separated into multiple files making it easier to manage.
-- Simple yet modern design.
 
 ### Cons
  - Does not support BIOS systems.
- - Lacks any kind of theming or customization.
+ - Very barebones design and lacks any kind of theming or customization.
  - Config is not auto-generated unless configured to do so. CachyOS includes systemd-boot manager to offer auto-generated configuration.
- - Only able to read boot images on EFI supported filesystems (FAT, FAT16, FAT32)
- - Inability to find boot images on partitions other than its own without manual intervention.
+ - Only able to read boot images on EFI supported filesystems (FAT, FAT16, FAT32).
+ - Inability to find boot images on partitions other than its own.
 
 ### Recommendation
 Systemd-boot is the recommended boot manager for CachyOS. Choose this one if you do not need any of the features specific to GRUB and rEFInd.
@@ -33,15 +31,12 @@ A fork of rEFIt, rEFInd was primarily made to make it easier for MacOS users to 
 ### Pros
 - Autodetection of all operating systems and kernels on storage devices.
 - Little to no configuration required due to aforementioned auto-detection.
-- Easily able to support secure boot
 - Much more graphical UI reminiscent of the MacOS Boot selector.
 - Great theming support
-- CachyOS provides a different partition layout for rEFInd to further increase multi-booting compatibility with other OS such as Windows.
 - Able to read boot images from EFI filesystems (FAT,FAT16,FAT32) as well as EXT4 and BTRFS.
 
 ### Cons
 - Does not support BIOS systems.
-- Slightly slower due to the auto-detection feature.
 
 ### Recommendation
 rEFInd is the recommended boot manager for booting with multiple operating systems.
@@ -60,8 +55,7 @@ The following is a list of its main pros and cons.
 
 ### Cons
 - Bloated due to needing to support much older hardware and needing lots of filesystem drivers.
-- Slightly slower than other boot managers due to aforementioned bloat.
-- Complicated config that needs to be regenerated every time a kernel is updated. (However this is done automatically).
+- Noticeably slower compared to systemd-boot and rEFInd.
 
 ### Recommendation
 GRUB is the only available boot manager if your machine only supports BIOS booting. It is also the only boot manager that supports boot partition encryption (Different from disk encryption). If you do not fit those criteria alternative boot managers are recommended.
