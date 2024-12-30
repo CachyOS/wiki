@@ -13,6 +13,7 @@ The CachyOS Kernel is a customized kernel which utilizes enhancements, configura
 - le9uo for significantly improved responsiveness during high memory load
 - Up-to-date NTSYNC patchset, used with a compatible build of wine/proton
 - Compatibility with T2 MacOS devices with patches from [t2linux](https://github.com/t2linux/linux-t2-patches/)
+- Allows reading per-core CPU energy usage for AMD users
 - ACS Override and v412loopback
 - VHBA module for emulating CD/DVD-ROM devices
 - Latest ZSTD patchset
@@ -24,59 +25,51 @@ and [our linux source tree](https://github.com/CachyOS/linux).
 
 ## Variants
 
-CachyOS offers a diverse range of kernel options. Below you can find an explanation of each one.
+CachyOS offers a diverse range of kernel options. Below you can find an explanation of each one. All of the kernels we provide are shipped with
+our [base patchset](https://github.com/CachyOS/kernel-patches). For each of the kernels, there is a corresponding `-lto` variant that is built 
+with [clang](https://clang.llvm.org/) instead of [GCC](https://gcc.gnu.org/). Both the default and `-rc` kernel are exceptions to this because they are
+built with [ThinLTO](https://blog.llvm.org/2016/06/thinlto-scalable-and-incremental-lto.html) by default and therefore has corresponding `-gcc` kernel variants instead.
 
-### linux-cachyos (Default Kernel)
+- **linux-cachyos**
+    - Default kernel. This is the recommended kernel if you're unsure about which kernel should be used.
+    - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
+    - Built with clang and ThinLTO by default to produce more optimized binaries.
+    - Profiled with our own [AutoFDO](https://cachyos.org/blog/2411-kernel-autofdo/) profile for improved performance. [Script](https://github.com/CachyOS/cachyos-benchmarker/blob/master/kernel-autofdo.sh) used to profile the kernel.
+- **linux-cachyos-bore**
+    - Uses the BORE scheduler.
+- **linux-cachyos-bmq**
+    - Uses the BMQ scheduler from [Project C](https://gitlab.com/alfredchen/projectc/) by Alfred Chen. 
+        - **Does not support sched-ext**.
+- **linux-cachyos-deckify**
+    - Default kernel for handhelds. It is **not recommended** and **unsupported** to use any other kernel on handhelds other than this kernel.
+    - Uses the BORE scheduler.
+    - Handheld specific patches on top of the base patchset to improve compatibility and overall experience on handheld devices.
+- **linux-cachyos-eevdf** 
+    - Tweaks the default kernel scheduler for improved responsiveness.
+- **linux-cachyos-lts** 
+    - Based on the latest Long Term Support kernel. 
+    - Uses the BORE scheduler.
+    - Minimally patched compared to other kernels to ensure maximum stability.
+- **linux-cachyos-hardened**
+    - Uses the BORE scheduler.
+    - Includes [linux-hardened](https://github.com/anthraxx/linux-hardened) patchset. 
+    - Kernel config based on [linux-hardened config](https://gitlab.archlinux.org/archlinux/packaging/packages/linux-hardened/-/blob/main/config).
+        - Contains very aggressive hardening that significantly stifles performance and user experience.
+        - **Does not support sched-ext**.
+- **linux-cachyos-rc**
+    - Based on the latest mainline kernel from [Linus's tree](https://github.com/torvalds/linux/).
+    - Uses the BORE scheduler.
+    - Main kernel to introduce new features in our patchset.
+- **linux-cachyos-server**
+    - Tuned for server workloads compared to desktop usage.
+        - 300Hz tickrate.
+        - No preemption.
+        - Stock EEVDF.
+- **linux-cachyos-rt-bore**
+    - Real-time preemption.
+    - Uses the BORE scheduler.
 
-The default kernel is our main recommendation in terms of scheduler choice and configuration. Currently, our default kernel
-is using [BORE](https://github.com/firelzrd/bore-scheduler) scheduler as the default option, along with our **base patch set**. It is built
-with the [clang](https://clang.llvm.org/) C compiler with ThinLTO enabled to produce more optimized binaries + [AutoFDO](https://cachyos.org/blog/2411-kernel-autofdo/)
-
-Feel free to open an issue in our [GitHub](https://github.com/CachyOS/linux-cachyos) or reach out
-to us in [Discord](https://discord.gg/cachyos-862292009423470592) for suggestions and improvements that should be added to the default kernel.
-
-### linux-cachyos-bore
-
-This variant includes the CachyOS Base Patch set + BORE/EEVDF Scheduler with its default configuration.
-
-### linux-cachyos-bmq
-
-This variant includes the CachyOS Base Patch set + BMQ - Bit Map Queue - Design based on existing PDS development experience and inspired by the scheduler found in Zircon by Google.
-
-### linux-cachyos-deckify
-
-The deckify kernel contains the same patches as the default kernel, but offers extra functionality to ensure compatibility for the Steam
-Deck and other Handhelds. This kernel is the default in the CachyOS Handheld Edition.
-
-### linux-cachyos-eevdf
-
-The EEVDF (Earliest Eligible Virtual Deadline First) kernel includes the CachyOS Base patch set and the default kernel scheduler (EEVDF).
-
-### linux-cachyos-hardened
-
-The hardened kernel contains the CachyOS Base patch set and hardened patches from linux-hardened. This kernel uses the BORE scheduler.
-
-### linux-cachyos-lts
-
-The LTS (Long-term Support) Kernel is based on the latest release of the Long-term branch. Patches in the LTS variant are fewer in number
-compared to the latest variants to ensure more stability. These patches include configuration changes, latest ZSTD patches and BBRv3.
-This kernel uses the BORE/EEVDF scheduler.
-
-### linux-cachyos-rc
-
-The RC Kernel is based on the latest available Release Candidate. This contains the latest features and changes from upstream but can lead to a more unstable experience due to being experimental/bleeding edge.
-
-Additionally it also contains our CachyOS Base patch set and the BORE/EEVDF Scheduler.
-
-### linux-cachyos-rt-bore
-
-Our default kernel but with `preempt=rt` enabled. **Intel GPUs are not supported**
-
-### linux-cachyos-server
-
-The Server Kernel is targeted for servers and more throughput. **The kernel is NOT tuned for interactivity and is not suggested for desktop users**.
-The main differences here are a lower tickrate (300Hz), [Lazy Preemption](https://lwn.net/Articles/994322/) and CONFIG_CACHY not applied.
-This kernel only contains the CachyOS Base patch set.
+Please open an issue in our [GitHub](https://github.com/CachyOS/linux-cachyos) for suggestions and improvements that can be added to the default kernel.
 
 ## FAQ
 
