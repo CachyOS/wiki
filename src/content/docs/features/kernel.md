@@ -4,24 +4,23 @@ description: Features and changes on the CachyOS kernel
 ---
 
 The CachyOS Kernel is a customized kernel which utilizes enhancements, configurations and patches from upstream.
-This results into a more optimized kernel for the user. Most of the kernel variants that we provide are tuned for interactivity.
-However, we also provide [one](#linux-cachyos-server) that is better geared for server workloads.
 
-## CachyOS Base patch set
+## Features
 
-The base patch set contains a bunch of changes compared to upstream. Here is a brief list, which is commonly included each branch:
+- Choose between 3 kernel schedulers and various [sched-ext](/configuration/sched-ext) schedulers for improved responsiveness
+- AMD P-State Improvements
+- Latest BBRv3 by Google
+- le9uo for significantly improved responsiveness during high memory load
+- Up-to-date NTSYNC patchset, used with a compatible build of wine/proton
+- Compatibility with T2 MacOS devices with patches from [t2linux](https://github.com/t2linux/linux-t2-patches/)
+- ACS Override and v412loopback
+- VHBA module for emulating CD/DVD-ROM devices
+- Latest ZSTD patchset
+- Various other patches that focus on improving performance (optimized compiler flags, cryptographic improvements, memory management tweaks)
 
-- **amd-pstate**: This contains the latest improvements and changes for the amd-pstate driver. Patches are commonly fetched from the mailing list.
-- **amd-cache-optimizer**: [AMD 3D V-Cache Optimizer](https://lore.kernel.org/platform-driver-x86/20241010094252.3892406-1-Basavaraj.Natikar@amd.com/) allows users to switch CPU core rankings dynamically.
-- **bbr3**: Replaces BBRv2 with the latest BBRv3 provided by Google.
-- **cachy**: Various configuration changes for scheduler and interactivity (CONFIG_CACHY), OpenRGB Patch, ACS Override, MM improvements, v4l2loopback, Clear Linux patches and HDR enabling.
-- **crypto**: Contains AES-128 and CRC32 patches.
-- **fixes**: Various fixes that are queued for our stable kernel.
-- **ntsync**: Contains the latest kernel driver NTSync patch set.
-- **perf-per-core**: Enables `perf` to read energy usage from each core.
-- **pksm**: Provides new syscalls for KSM. Identifies sets using identical memory pages and merges them into one saving memory space.
-- **t2**: Provides compatibility for T2 MacBooks.
-- **zstd**: Patches the ZSTD API inside the kernel to the latest release (1.5.6). Used for compression tasks with zstd (BTRFS, ZRAM and ZSWAP)
+For a more comprehensive list of the patches we offer, please see the the more complete
+[feature list](https://github.com/CachyOS/linux-cachyos/?tab=readme-ov-file#features), [kernel-patches repository](https://github.com/CachyOS/kernel-patches)
+and [our linux source tree](https://github.com/CachyOS/linux).
 
 ## Variants
 
