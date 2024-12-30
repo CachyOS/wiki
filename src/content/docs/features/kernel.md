@@ -26,10 +26,6 @@ and [our linux source tree](https://github.com/CachyOS/linux).
 
 CachyOS offers a diverse range of kernel options. Below you can find an explanation of each one.
 
-:::note
-BORE is an enhancement for EEVDF resulting in a more capable scheduler at handling heavy workloads while keeping the system responsive.
-::::
-
 ### linux-cachyos (Default Kernel)
 
 The default kernel is our main recommendation in terms of scheduler choice and configuration. Currently, our default kernel
