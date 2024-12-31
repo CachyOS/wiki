@@ -198,10 +198,6 @@ export default defineConfig({
               label: 'Optimized Repositories',
               link: 'features/optimized_repos',
             },
-            {
-              label: 'Prebuilt Kernel Modules (NVIDIA/ZFS)',
-              link: 'features/modules',
-            },
           ],
         },
         {

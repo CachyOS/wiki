@@ -71,6 +71,24 @@ built with [ThinLTO](https://blog.llvm.org/2016/06/thinlto-scalable-and-incremen
 
 Please open an issue in our [GitHub](https://github.com/CachyOS/linux-cachyos) for suggestions and improvements that can be added to the default kernel.
 
+## Prebuilt Kernel Modules
+
+To accomodate a larger userbase, CachyOS ships some well-known and highly used kernel modules along with the kernel. This means that users will no longer
+have to recompile those modules after every kernel update or on every new kernel install, but will only have to install them from the repository as it is
+already precompiled. This effectively obsoletes any `-dkms` packages that a user might have that provides the same module as the precompiled version.
+
+### ZFS
+
+[ZFS](https://openzfs.org/wiki/Main_Page) is one of the many filesystems that is supported in CachyOS. Due to it being licensed under 
+[CDDL](https://opensource.org/license/cddl-1-0), it is incompatible with Linux kernel's license and therefore cannot be merged in-tree. The shipped module includes
+the latest upstream features and fixes to ensure compatibility with the latest kernel.
+
+### NVIDIA
+
+CachyOS ships both precompiled versions of the close-sourced and [open-sourced](https://github.com/NVIDIA/open-gpu-kernel-modules/) kernel modules. Due to the development
+of NVIDIA's kernel module being out-of-tree and thus does not follow the kernel's release cadence, the stock configuration can sometimes be incompatible with the latest
+kernel. As a workaround, CachyOS patches the modules with community-created patches or patches shared by NVIDIA directly.
+
 ## FAQ
 
 ### Why is AutoFDO not being used for all the other kernel variants?
