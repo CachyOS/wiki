@@ -26,8 +26,8 @@ and [our linux source tree](https://github.com/CachyOS/linux).
 ## Variants
 
 CachyOS offers a diverse range of kernel options. Below you can find an explanation of each one. All of the kernels we provide are shipped with
-our [base patchset](https://github.com/CachyOS/kernel-patches). For each of the kernels, there is a corresponding `-lto` variant that is built 
-with [clang](https://clang.llvm.org/) instead of [GCC](https://gcc.gnu.org/). Both the default and `-rc` kernel are exceptions to this because they are
+our [base patchset](https://github.com/CachyOS/kernel-patches). For each of the kernels, there is a [corresponding `-lto` variant](#package-naming-convention) that 
+is built  with [clang](https://clang.llvm.org/) instead of [GCC](https://gcc.gnu.org/). Both the default and `-rc` kernel are exceptions to this because they are
 built with [ThinLTO](https://blog.llvm.org/2016/06/thinlto-scalable-and-incremental-lto.html) by default and therefore has corresponding `-gcc` kernel variants instead.
 
 - **linux-cachyos**
@@ -96,6 +96,26 @@ The CachyOS kernel also has some other notable features that are subtle yet impr
 - Includes a debug variant of the kernel that provides an unstripped kernel binary for debugging purposes. This package is needed to profile the kernel with AutoFDO.
 - [Binder](https://developer.android.com/reference/android/os/Binder), the module needed for [Waydroid](https://waydro.id/) is enabled by default in the kernel config
 and already [set up](https://github.com/CachyOS/linux-cachyos/blob/master/linux-cachyos/config#L10559).
+
+## Package Naming Convention
+
+```sh
+linux-cachyos # Base kernel package for the default kernel. Compiled with clang
+linux-cachyos-gcc # GCC-compiled counterpart for linux-cachyos
+linux-cachyos-{,gcc-}headers # Kernel headers, mainly for building
+linux-cachyos-{,gcc-}nvidia # Precompiled closed source NVIDIA modules for linux-cachyos kernel
+linux-cachyos-{,gcc-}nvidia-open
+linux-cachyos-{,gcc-}zfs # Precompiled ZFS modules for linux-cachyos kernel
+linux-cachyos-{,gcc-}dbg # Unstripped linux binary for debugging
+
+linux-cachyos-hardened # Base kernel package for the hardened kernel. Compiled with GCC
+linux-cachyos-hardened-lto # clang-compiled counterpart for linux-cachyos-hardened
+linux-cachyos-hardened-{,lto-}headers
+linux-cachyos-hardened-{,lto-}nvidia
+linux-cachyos-hardened-{,lto-}nvidia-open
+linux-cachyos-hardened-{,lto-}zfs
+linux-cachyos-hardened-{,lto-}dbg
+```
 
 ## FAQ
 
