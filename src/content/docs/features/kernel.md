@@ -131,7 +131,7 @@ Therefore for now it's only present in the [linux-cachyos](/features/kernel#linu
 
 For more information about AutoFDO, click [here.](https://cachyos.org/blog/2411-kernel-autofdo/)
 
-### I always heard that using the Real Time variant helps in Gaming! is that true?
+### Does the realtime kernel improve gaming performance?
 
-Real time scheduling necessitates a task to be processed on a specified deadline. Gaming on the other hand spawns a lot of processes every second. Real time
-scheduling may cause these processes to end prematurely or even stall, leading to worse performance overall.
+No, it does not. The realtime kernel makes much more code preemptible compared to a normal fully preemptible kernel. This means that much more tasks (gaming processes
+included) are frequently preempted and will forcefully yield system resources, leading to worse performance.
