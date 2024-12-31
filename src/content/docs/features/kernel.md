@@ -89,6 +89,14 @@ CachyOS ships both precompiled versions of the close-sourced and [open-sourced](
 of NVIDIA's kernel module being out-of-tree and thus does not follow the kernel's release cadence, the stock configuration can sometimes be incompatible with the latest
 kernel. As a workaround, CachyOS patches the modules with community-created patches or patches shared by NVIDIA directly.
 
+## Other
+
+The CachyOS kernel also has some other notable features that are subtle yet improve the user experience
+
+- Includes a debug variant of the kernel that provides an unstripped kernel binary for debugging purposes. This package is needed to profile the kernel with AutoFDO.
+- [Binder](https://developer.android.com/reference/android/os/Binder), the module needed for [Waydroid](https://waydro.id/) is enabled by default in the kernel config
+and already [set up](https://github.com/CachyOS/linux-cachyos/blob/master/linux-cachyos/config#L10559).
+
 ## FAQ
 
 ### Why is AutoFDO not being used for all the other kernel variants?
