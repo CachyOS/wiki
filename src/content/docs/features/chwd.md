@@ -3,19 +3,17 @@ title: CachyOS Hardware Detection
 description: Hardware Detection and Configuration for CachyOS
 ---
 
-[CachyOS Hardware Detection](https://github.com/CachyOS/chwd/) or better known as **`chwd`** is our hardware detection tool that
-enables us to power a variety of hardware.
-This includes systems running NVIDIA's graphics cards, T2 Macbooks and handheld devices such as Steam Deck and ROG Ally.
+[CachyOS Hardware Detection](https://github.com/CachyOS/chwd/) or better known as **`chwd`** enables us to power a variety of hardware by installing the necessary
+packages and drivers for the running system. This includes systems running NVIDIA's graphics cards, T2 Macbooks and handheld devices such as Steam Deck and ROG Ally.
 
 ## Usage
 
-**`chwd`** is typically ran during installation time to provide the necessary packages for your system. However, it is also possible
+**`chwd`** is typically ran during installation time to provide the necessary packages for the system. However, it is also possible
 to use it post-install.
 
 ### Auto Configuration
 
-Our hardware detection program supports installing and configuring necessary drivers and packages so that your system
-can work at optimal condition.
+**`chwd`** supports installing and configuring necessary drivers and packages so that the system can work at optimal conditions.
 
 ```sh
 ❯ sudo chwd -a
@@ -23,7 +21,7 @@ can work at optimal condition.
 
 ### Installing a profile
 
-An alternative to the above method is to install each specific profile. You can find what profiles exist from `chwd` itself
+An alternative to the above method is to install each specific profile.
 
 ```sh title='List all available profiles'
 ❯ chwd --list-all
@@ -45,8 +43,6 @@ An alternative to the above method is to install each specific profile. You can 
 │ intel                   ┆ false   │
 ╰─────────────────────────┴─────────╯
 ```
-
-After that, we can install a profile with the `-i` flag
 
 ```sh title='Installing a chwd profile'
 ❯ sudo chwd -i amd

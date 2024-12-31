@@ -19,14 +19,14 @@ The CachyOS Kernel is a customized kernel which utilizes enhancements, configura
 - Latest ZSTD patchset
 - Various other patches that focus on improving performance (optimized compiler flags, cryptographic improvements, memory management tweaks)
 
-For a more comprehensive list of the patches we offer, please see the the more complete
+For a more comprehensive list of the patches that CachyOS offers, please see the the more complete
 [feature list](https://github.com/CachyOS/linux-cachyos/?tab=readme-ov-file#features), [kernel-patches repository](https://github.com/CachyOS/kernel-patches)
-and [our linux source tree](https://github.com/CachyOS/linux).
+and [CachyOS's Linux Source Tree](https://github.com/CachyOS/linux).
 
 ## Variants
 
-CachyOS offers a diverse range of kernel options. Below you can find an explanation of each one. All of the kernels we provide are shipped with
-our [base patchset](https://github.com/CachyOS/kernel-patches). For each of the kernels, there is a [corresponding `-lto` variant](#package-naming-convention) that 
+CachyOS offers a diverse range of kernel options. All of the kernels we provide are shipped with the [CachyOS Base Patchset](https://github.com/CachyOS/kernel-patches). 
+For each of the kernels, there is a [corresponding `-lto` variant](#package-naming-convention) that 
 is built  with [clang](https://clang.llvm.org/) instead of [GCC](https://gcc.gnu.org/). Both the default and `-rc` kernel are exceptions to this because they are
 built with [ThinLTO](https://blog.llvm.org/2016/06/thinlto-scalable-and-incremental-lto.html) by default and therefore has corresponding `-gcc` kernel variants instead.
 
@@ -69,7 +69,7 @@ built with [ThinLTO](https://blog.llvm.org/2016/06/thinlto-scalable-and-incremen
     - Real-time preemption.
     - Uses the BORE scheduler.
 
-Please open an issue in our [GitHub](https://github.com/CachyOS/linux-cachyos) for suggestions and improvements that can be added to the default kernel.
+Please open an issue in [linux-cachyos GitHub](https://github.com/CachyOS/linux-cachyos) for suggestions and improvements that can be added to the default kernel.
 
 ## Prebuilt Kernel Modules
 

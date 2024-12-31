@@ -31,14 +31,14 @@ Info: Unmounting partition at /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-
 ? Do you want to use CachyOS BTRFS preset to auto mount root subvolume? (y/n) › # Enter y if on CachyOS
 ```
 
-After selecting the root partition, you will also be prompted to mount additional partitions, e.g. your `/boot` partition
+After selecting the root partition, the program will prompt to mount additional partitions, e.g. the `/boot` partition
 
 ```sh title="Mounting additional partitions"
 ✔ Do you want to mount additional partitions? · yes
 ? Enter the mount point for additional partition (e.g. /boot) type 'skip' to cancel:  › # /boot on systemd-boot, /boot/efi on GRUB and rEFInd
 ```
 
-When you are done, you can exit the chroot environment by passing `exit` to the prompt or pressing `CTRL+D` in your keyboard
+When finished, exit the chroot environment by passing `exit` to the prompt or pressing `CTRL+D` on the keyboard.
 
 ```sh title="Exiting chroot"
 exit

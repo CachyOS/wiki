@@ -22,7 +22,7 @@ Part of systemd family, systemd-boot was created to be as simple as possible, th
  - Inability to find boot images on partitions other than its own.
 
 ### Recommendation
-Systemd-boot is the recommended boot manager for CachyOS. Choose this one if you do not need any of the features specific to GRUB and rEFInd.
+Systemd-boot is the recommended and default boot manager for CachyOS. Choose this one if unsure.
 
 
 ## rEFInd
@@ -58,8 +58,8 @@ The following is a list of its main pros and cons.
 - Noticeably slower compared to systemd-boot and rEFInd.
 
 ### Recommendation
-GRUB is the only available boot manager if your machine only supports BIOS booting. It is also the only boot manager that supports boot partition encryption (Different from disk encryption). If you do not fit those criteria alternative boot managers are recommended.
+GRUB is the only available boot loader that supports BIOS booting. It is also the only boot manager that supports boot partition encryption (Different from disk encryption).
 
 
 ## TL:DR
-Choose GRUB if your machine is BIOS only, pick rEFInd if you plan on having multiple operating systems on your machine (Especially Windows), otherwise go with systemd-boot.
+Choose GRUB if the used machine is BIOS only, pick rEFInd if planning on having multiple operating systems on the machine (Especially Windows), otherwise go with systemd-boot.
