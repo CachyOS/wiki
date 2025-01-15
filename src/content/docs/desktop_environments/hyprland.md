@@ -55,7 +55,7 @@ Most of the key combinations require the use of the mod key which in our case is
 
 ### Open Rofi (Program Launcher)
 
-* CTRL + Space
+* SUPER + Space
   
 ### Close focused window
 
