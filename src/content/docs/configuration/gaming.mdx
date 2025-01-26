@@ -72,16 +72,21 @@ To check if your game is compatible or how does it run with Linux, visit [proton
 
 Check out this [explanation about it.](/configuration/gaming#proton-cachyos)
 
-### How to properly combine multiple launch options
+### How to properly set multiple launch options
+The order of launch options in Steam follows the following order
+- `<env variables> <wrappers> %command% <application arguments>`
+    - `<env variables>`: These are options in the form of `VARIABLE=value`. For example `PROTON_DXVK_D3D8=1` or `DXVK_HUD="fps,memory,version,api"`
+    - `<wrappers>`: Applications and scripts that modify how the real application is run. Arguments to the wrapper usually go after the executable. For example `mangohud --dlsym` or `gamescope -W 1680 -H 1050 -w 1280 -h 720 -S fit -F fsr --mangoapp --`
+    - `%command%`: This is the real application. This should be specified exactly as is and Steam will replace it with the actuall command when the application is run.
+    - `<application arguments>`: These are various arguments to the actual application, and they depend on the application. For example `-dx11` should go here if the application supports it.
 
-- Add the environment variables or commands you want and at the end include a `%command%`
-    - Example: `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1 prime-run game-performance %command%`
+- Example: `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1 prime-run game-performance %command% -dx11`
 
 :::caution
 Don't add multiple `%command%` by using them as separators for multiple launch options.
 
 Example: `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1 %command% game-performance %command% prime-run %command%`
-    - On this case, everything after the first `%command%` is going to be ignored because it's being treated as game arguments therefore only `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1` got recognized as a launch option.
+    - In this case, everything after the first `%command%` is going to be ignored because it's being treated as game arguments therefore only `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1` got recognized as a launch option.
 :::
 
 ### Fix stuttering caused by the Steam Game Recorder Feature
@@ -173,33 +178,66 @@ has similar a behavior but it should not be used as CachyOS already ships with [
 
 ## Proton-CachyOS
 
-Proton-CachyOS is based on the `proton-bleeding-edge branch` and applies a number of patches and changes on top of it.
+Proton-CachyOS is based on Proton's `bleeding-edge` branch and applies a number of modifications on top of it.
 - **Wine-staging patches**
 - **Wine Fullscreen FSR**
-- **Reflex support: `Only DX12 titles`**
-- **Support for umu-launcher**
+- **Includes video and audio codecs for game cutscenes**
+- **Support for `umu-launcher` including UMU-Protonfixes**
+- **Adds early hotfixes/workarounds for games**
 
-*In addition, proton-cachyos is compiled against native system libraries and compiler instructions which can further improve performance.*
+:::note
+The `proton-cachyos` package from the CachyOS repositories is compiled against native system libraries, it doesn't use the Steam Linux Runtime. The target architecture depends on the repository. Currently `x86_64_v3`, `x86_64_v4` and `znver4` repositories use the same `x86_64_v3` binaries.
+:::
+
+:::caution
+If you encounter issues with games using **Easy Anti-Cheat** (EAC) or **BattlEye** (BE), for example refusing to log in the game servers, you can use the version of [Proton-CachyOS built using Steam Linux Runtime](https://github.com/CachyOS/proton-cachyos/releases)
+:::
+
+**Additional configuration options**
+
+- `PROTON_NO_WM_DECORATION=1`: Disables window decorations using the Linux window manager. It can fix issues with **borderless fullscreen** and the mouse clicking through the window.
+- `PROTON_PREFER_SDL_INPUT=1`: Enable to work-around issues with proper controller detection.
+
 
 ## Wine-CachyOS
 
-This is a solution similar to proton-cachyos, but as standalone version, which can be used by Lutris, Heroic, Bottles and others.
+This is the same `wine` that is at the core of `proton-cachyos`, but as a standalone package, which can be used in Lutris, Heroic, Bottles and others.
 
-:::caution
-Although it can be used as a system-wide Wine for Desktop Applications, be aware that it might lead to some unexpected behaviors & issues due to being more gaming focused with the patches and changes.
+- **All the Wine modifications included with Proton-CachyOS**
+- **Adds early hotfixes/workarounds for games**
+
+:::note
+In the CachyOS repositories **Wine-CachyOS** is offered by two different packages. `wine-cachyos` installs it as the default system Wine and replaces `wine` or `wine-staging`. `wine-cachyos-opt` installs it in a different location, which allows multiple wine versions to co-exist in the system.
 :::
 
-- **Based on Valve's bleeding-edge Wine**
-- **Adds early hotfixes/workarounds for games**
-- **protonfixes**
-- **Support for `umu-launcher`**
+:::caution
+**Wine-CachyOS's** primarily intended use is for **gaming**. Although it can be used as a system Wine with desktop applications, be aware that it might lead to some unexpected behavior and issues due to the gaming focused modifications.
 
-**QoL Modifications**
+If you want to use desktop application, we suggest using `wine` or `wine-staging` as your system's Wine and installing `wine-cachyos-opt` for gaming.
+:::
 
-- `WINE_WMCLASS:` env variable to set the wm class of all wine windows, allowing the wm to control the window through rules.
-- `WINEUSERSANDBOX:` env variable to disable creating symlinks from Wine folders such as Documents/Pictures etc, to the equivalent folders in the user's directory
-- `Disabled Native Window Decorations`
-- `Changes for optimizing Wine's performance similar as we do with proton-cachyos`
+**Additional configuration options**
+
+- `WINE_WMCLASS="<name>"`: Sets the `WM_CLASS` of all wine windows, allowing the window manager to control the Wine's windows through rules.
+- `WINEUSERSANDBOX=1`: Disables the creation of symlinks from Wine user folders such as Documents/Pictures, to the equivalent folders in the user's `HOME` directory
+- `WINE_NO_WM_DECORATION=1`: Disables window decorations using the Linux window manager. It can fix issues with **borderless fullscreen** and the mouse clicking through the window.
+- `WINE_PREFER_SDL_INPUT=1`: Enable to work-around issues with proper controller detection.
+
+
+### How to setup `wine-cachyos-opt`
+Normally running `/opt/wine-cachyos/bin/wine` instead of just `wine` should be enough for an application to run using `wine-cachyos-opt`.
+
+If a more strict configuration is required, it could look like this
+```shell
+export PATH="/opt/wine-cachyos/bin/:$PATH"
+export WINEDLLPATH="/opt/wine-cachyos/lib/wine:/opt/wine-cachyos/lib32/wine:$WINEDLLPATH"
+export LD_LIBRARY_PATH="/opt/wine-cachyos/lib/:/opt/wine-cachyos/lib32/:$LD_LIBRARY_PATH"
+```
+
+If you want to use `winetricks` with `wine-cachyos-opt` you can invoke it like this
+```shell
+WINE=/opt/wine-cachyos/bin/wine WINEPRFIX=<your prefix> winetricks <verb>
+```
 
 ## Bottles
 
@@ -222,9 +260,9 @@ Lutris serves as a central hub for all your games on CachyOS.
 
 With Lutris, you can efficiently manage your game runners, including Wine, Proton, and emulators.
 
-- **You can launch games through Lutris simply by clicking the `Play button`.**
+- **You can launch games through Lutris simply by clicking the `Play` button.**
 - **Add any game you want clicking the `+` sign in the top left.**
-- **Set up a store in the `Sources` at the left panel and connecting your account, it will then proceed to install said store and then you'll be able to run games from within the store, just like you do on Windows.**
+- **Set up a store in the `Sources` at the left panel and connecting your account, it will then proceed to install said store, and then you'll be able to run games from within the store, just like you do on Windows.**
 - **And more!**
 
 ### Games stores supported in Lutris
@@ -246,19 +284,19 @@ With Lutris, you can efficiently manage your game runners, including Wine, Proto
 
 ## Lutris FAQ
 
-### How can i add a parameter when launching a game? For example -dx11
+### How can I add a parameter to a game?
 
-- Right click on the game icon > `Configure` > `Game options` > `Arguments` > Add any argument you need.
+- Right-click on the game icon > `Configure` > `Game options` > `Arguments` > Add any argument you need.
 
 ### Does game-performance work on Lutris?
 
 - Yes. Look [here](/configuration/gaming#how-to-add-game-performance-to-steam-lutris-heroic-games-launcher-and-bottles)
 
-### How can i use wine-cachyos in Lutris?
+### How can I use wine-cachyos in Lutris?
 
 - In the `Runner Options` > `Wine version` it appears named as `System 9.0 Staging Default`
 
-### How can i setup umu-launcher with proton-cachyos in Lutris?
+### How can I setup umu-launcher with proton-cachyos in Lutris?
 
 :::tip
 Make sure you have umu-launcher installed in your system. Install it with the following command:
@@ -289,7 +327,6 @@ Make sure you have umu-launcher installed in your system. Install it with the fo
     5. Add the following environment variables:
         - **Key**: `UMU_NO_RUNTIME`
             - **Value**: `1` *if you are using umu-launcher `1.1.4` from CachyOS*
-            - **Value**: `pressure-vessel` *if you are using umu-launcher `1.1.3` bundled with Lutris*
         - **Key**: `UMU_RUNTIME_UPDATE` *optional*
             - **Value**: `0` *skips Steam Linux Runtime updates for `proton-cachyos`*
         - **Key**: `PROTON_VERB` *optional*
@@ -322,7 +359,6 @@ Make sure you have umu-launcher installed in your system. Install it with the fo
     5. Add the following environment variables:
         - **Key**: `UMU_NO_RUNTIME`
             - **Value**: `1` *if you are using umu-launcher `1.1.4` from CachyOS*
-            - **Value**: `pressure-vessel` *if you are using umu-launcher `1.1.3` bundled with Lutris*
         - **Key**: `UMU_RUNTIME_UPDATE` *optional*
             - **Value**: `0` *skips Steam Linux Runtime updates for `proton-cachyos`*
         - **Key**: `PROTON_VERB` *optional*
