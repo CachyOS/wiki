@@ -8,6 +8,7 @@ This wiki article will describe the feature set of each boot manager and also in
 configuration, please see [Boot Manager Configuration](/configuration/boot_manager_configuration).
 
 ## systemd-boot
+
 Part of systemd family, systemd-boot was created to be as simple as possible, therefore it only has support for UEFI based systems. This simple yet efficient design ensures it is reliable and fast. However this comes at the cost of advanced features supported by other boot managers.
 
 ### Pros
@@ -23,25 +24,29 @@ Part of systemd family, systemd-boot was created to be as simple as possible, th
  - Does not properly support Btrfs snapshot rollbacks due to requirement to store kernel images on the boot partition rather than the root filesystem.
 
 ### Recommendation
+
 Systemd-boot is the recommended and default boot manager for CachyOS. Choose this one if unsure.
 
-
 ## rEFInd
+
 A fork of rEFIt, rEFInd was primarily made to make it easier for MacOS users to multi-boot. However rEFInd has evolved into being hardware agnostic making it a great choice for multi-booting on any system. The main draw of rEFInd is its ability to scan all storage devices at boot and correspondingly display entries for each OS/Kernel found.
 
 ### Pros
+
 - Autodetection of all operating systems and kernels on storage devices.
 - Little to no configuration required due to aforementioned auto-detection.
 - Much more graphical UI reminiscent of the MacOS Boot selector.
 - Great theming support
-- Able to read boot images from EFI filesystems (FAT,FAT16,FAT32) as well as EXT4 and BTRFS.
+- Optional touch screen support
+- Able to read boot images from EFI filesystems (FAT,FAT16,FAT32) as well as EXT4 and BTRFS. Support for other file systems can be added through installation of EFI drivers from the ``efifs`` package.
 
 ### Cons
+
 - Does not support BIOS systems.
 
 ### Recommendation
-rEFInd is the recommended boot manager for booting with multiple operating systems.
 
+rEFInd is the recommended boot manager for booting with multiple operating systems.
 
 ## GRUB
 GRUB is the oldest of the available boot managers and consequently the only one that supports BIOS booting. It has a very large feature set, works on almost every machine and is the most commonly used Linux boot manager.
