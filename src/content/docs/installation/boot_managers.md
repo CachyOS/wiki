@@ -20,6 +20,7 @@ Part of systemd family, systemd-boot was created to be as simple as possible, th
  - Config is not auto-generated unless configured to do so. CachyOS includes systemd-boot manager to offer auto-generated configuration.
  - Only able to read boot images on EFI supported filesystems (FAT, FAT16, FAT32).
  - Inability to find boot images on partitions other than its own.
+ - Does not properly support Btrfs snapshot rollbacks due to requirement to store kernel images on the boot partition rather than the root filesystem.
 
 ### Recommendation
 Systemd-boot is the recommended and default boot manager for CachyOS. Choose this one if unsure.
