@@ -67,20 +67,24 @@ The following is a list of its main pros and cons.
 GRUB is the only available boot loader that supports BIOS booting. It is also the only boot manager that supports boot partition encryption (Different from disk encryption).
 
 ## Limine
+
 Limine is a modern, advanced, and portable multiprotocol bootloader. It serves as the reference implementation for the Limine boot protocol and supports booting Linux as well as chainloading other boot loaders.
 
 ### Pros
+
 - Supports multiple boot protocols, including Multiboot2 and the Linux boot protocols.
 - It can boot on both UEFI and BIOS systems, making it versatile for different hardware configurations.
-- Has theming similar to GRUB and direct support for Btrfs snapshots, which is enabled by default for installations using Btrfs as a filesystem.
+- Has theming capabilities similar to GRUB.
+- Direct support for Btrfs snapshots, which is enabled by default for installations using Btrfs as a filesystem.
 
 ### Cons
-- Only supports a few filesystems, such as FAT12, FAT16, FAT32, and ISO9660, which may require additional setup for systems using other filesystems.
-- Unlike some other boot loaders, Limine does not automatically add an entry to the NVRAM on UEFI systems; this must be done manually using tools like `efibootmgr`.
+
+- Only supports a few filesystems, such as FAT12, FAT16, FAT32, and ISO9660 for the `/boot` partition, which may require additional setup for systems using other filesystems.
+- Unlike some other boot loaders, Limine does not automatically add an entry to the NVRAM on UEFI systems; this must be done manually using tools like `efibootmgr` or handled via `limine-entry-tool`, which is preinstalled out of the box on CachyOS.
 
 ### Recommendation
-Limine is recommended for users who need a lightweight and versatile bootloader that supports both UEFI and BIOS systems. It is particularly suitable for those who prefer a simple setup with theming options and Btrfs snapshot support.
 
+Limine is recommended for users who need a lightweight and versatile bootloader that supports both UEFI and BIOS systems. It is particularly suitable for those who prefer a simple setup with theming options and Btrfs snapshot support. Additionally, Limine serves as a modern replacement for GRUB, which has seen fewer updates recently and has faced multiple security issues due to its EFI/filesystem drivers.
 
 ## TL:DR
 Choose GRUB if the used machine is BIOS only, pick rEFInd if planning on having multiple operating systems on the machine (Especially Windows), otherwise go with systemd-boot.
