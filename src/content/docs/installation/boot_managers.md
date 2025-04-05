@@ -49,8 +49,10 @@ A fork of rEFIt, rEFInd was primarily made to make it easier for MacOS users to 
 rEFInd is the recommended boot manager for booting with multiple operating systems.
 
 ## GRUB
-GRUB is the oldest of the available boot managers and consequently the only one that supports BIOS booting. It has a very large feature set, works on almost every machine and is the most commonly used Linux boot manager.
-The following is a list of its main pros and cons.
+
+GRUB is the oldest of the available boot managers. It has a very large feature
+set, works on almost every machine and is the most commonly used Linux boot
+manager. The following is a list of its main pros and cons.
 
 ### Pros
 - Able to read boot images from almost all available Linux filesystems.
@@ -64,7 +66,8 @@ The following is a list of its main pros and cons.
 - Noticeably slower compared to systemd-boot and rEFInd.
 
 ### Recommendation
-GRUB is the only available boot loader that supports BIOS booting. It is also the only boot manager that supports boot partition encryption (Different from disk encryption).
+
+GRUB is the only boot manager that supports boot partition encryption (Different from disk encryption).
 
 ## Limine
 
