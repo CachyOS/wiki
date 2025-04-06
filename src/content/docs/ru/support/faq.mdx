@@ -1,0 +1,203 @@
+---
+title: FAQ
+description: Часто задаваемые вопросы и советы
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::note
+Следующие вопросы и ответы относятся к CachyOS и дистрибутивам на базе Arch.
+:::
+
+## Установка
+
+### Почему KDE Plasma - единственный доступный вариант в live-окружении?
+
+KDE Plasma можно считать нашим "флагманским" окружением рабочего стола, поэтому оно получает больше всего поддержки. Другие ISO-образы CachyOS поддерживались спустя рукава, поэтому, чтобы избежать каких-либо нежелательных проблем и неудобств для пользователя, мы решили отказаться от них, чтобы сосредоточить наши усилия на предоставлении наилучшего пользовательского опыта.
+
+Мы рекомендуем устанавливать CachyOS в виртуальной машине для тестирования различных окружений рабочего стола и оконных менеджеров, поскольку live-ISO используется только для установки и восстановления сломанной установки с помощью [cachy-chroot](https://github.com/CachyOS/cachy-chroot).
+
+### Когда я нажимаю "Запустить установщик", ничего не происходит...?
+
+:::caution
+Убедитесь, что у вас есть активное/работающее подключение к Интернету, иначе ничего не произойдет после нажатия этой кнопки.
+:::
+
+Хотя может показаться, что ничего не произошло, в фоновом режиме запускается скрипт после нажатия этой кнопки. И что он делает? Он запускает скрипт для подготовки, который предназначен для предотвращения возможных проблем, таких как устаревший keyring.
+
+Я немного расскажу о том, что этот [скрипт](https://github.com/CachyOS/CachyOS-Live-ISO/blob/master/archiso/airootfs/usr/local/bin/calamares-online.sh) делает в фоновом режиме:
+
+<Steps>
+
+1. Удаляет существующий файл keyring, находящийся в `/etc/pacman.d/gnupg`.
+2. Начинает установку и обновление пакетов `Arch Linux & CachyOS keyring`.
+3. Инициализирует и заполняет pacman keyring.
+4. Включает синхронизацию времени по сети, чтобы обеспечить точность системных часов, выполнив `timedatectl set-ntp true`.
+5. Определяет и проверяет, является ли тип системы **UEFI или BIOS/MBR**
+6. Если запущенная система **UEFI** > предлагает пользователю выбрать загрузчик, иначе нет.
+
+</Steps>
+
+**Вот почему обычно требуется некоторое время для загрузки установщика.**
+
+### Мой процесс установки застрял на 33% уже некоторое время.
+
+Это означает, что ваше подключение к Интернету либо очень медленное, либо нестабильное, что мешает pacman при загрузке пакетов.
+
+## Управление программным обеспечением
+
+### Ошибка "unable to lock database"
+```sh
+sudo rm /var/lib/pacman/db.lck
+```
+:::tip
+Вы можете добиться того же результата, используя функцию **"Remove db lock"** в `CachyOS Hello` на вкладке **Apps/Tweaks**.
+:::
+
+### Файл поврежден (invalid or corrupted package (PGP signature))
+
+```text
+# Пример:
+:: File /var/cache/pacman/pkg/python-charset-normalizer-3.4.0-1-any.pkg.tar.zst
+is corrupted (invalid or corrupted package (PGP signature)).
+```
+
+```sh title='Выполните следующие команды'
+sudo rm -rf /etc/pacman.d/gnupg/
+sudo pacman-key --init
+sudo pacman-key --populate
+
+sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
+sudo pacman-key --lsign-key F3B607488DB35A47
+
+sudo rm -R /var/lib/pacman/sync
+```
+
+### warning local is newer than
+
+#### Пример:
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/update-warnings.png')} />
+
+```sh title='Чтобы удалить эти предупреждения, выполните следующую команду:'
+sudo pacman -Syuu
+```
+
+### error: failed retrieving file, The requested URL returned error: 404
+
+```text
+# Пример
+sudo pacman -S telegram-desktop
+resolving dependencies...
+looking for conflicting packages...
+
+Packages (4) libdbusmenu-qt5-0.9.3+16.04.20160218-5  qt5-imageformats-5.15.2-1
+             ttf-opensans-1.101-2  telegram-desktop-2.5.1-1
+
+Total Download Size:   24.10 MiB
+Total Installed Size:  67.51 MiB
+
+:: Proceed with installation? [Y/n] Y
+:: Retrieving packages...
+error: failed retrieving file 'telegram-desktop-2.5.1-1-x86_64.pkg.tar.zst'
+from archlinux.mailtunnel.eu : The requested URL returned error: 404
+```
+
+*Это означает, что ваша локальная база данных устарела, поэтому пакет, который вы запрашиваете, не может быть загружен.*
+
+```sh title='Выполните следующую команду, чтобы обновить базу данных пакетов и выполнить полное обновление:'
+sudo pacman -Syu
+# Затем попробуйте установить пакет, который вы хотите снова.
+```
+
+### Что означает -bin в конце имени пакета? Например, librewolf-bin
+
+Это означает, что вы загружаете/устанавливаете предварительно собранный пакет, поэтому вам не нужно его компилировать или собирать.
+В наших репозиториях мы храним некоторые bin-пакеты, которые в основном являются зеркалами, которые вы можете загрузить из AUR.
+
+### Когда я пытаюсь открыть Discord, открывается окно с уведомлением об обновлении
+
+#### Пример:
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/discord-update.png')} />
+
+Это потому, что Discord выпустил обновление, которое еще не доступно или не было собрано ни на одном из зеркал pacman, поэтому вы не можете использовать Discord.
+
+Чтобы обойти эту проблему, следуйте [руководству по исправлению Arch Wiki](<https://wiki.archlinux.org/title/Discord#Discord_asks_for_an_update_not_yet_available_in_the_repository>).
+
+### error: could not remove /var/cache/pacman/pkg/download
+
+:::tip
+Вы также можете очистить кеш pacman с помощью CachyOS Hello в **Apps/Tweaks** > **Clear package cache**
+:::
+
+#### Пример:
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/pacman-cache-error.png')} />
+
+*Обычно это происходит, когда в `/var/cache/pacman/pkg` остались осиротевшие пакеты, которые pacman не может удалить.*
+
+```sh title='Выполните следующую команду, чтобы исправить это'
+# Удаляет все осиротевшие пакеты, хранящиеся в кеше pkg.
+sudo rm -r /var/cache/pacman/pkg/*
+```
+
+### ERROR: module not found: 'nvidia', 'nvidia_modeset', 'nvidia_uvm', 'nvidia_drm'
+
+```sh title='Пример'
+==> ERROR: module not found: 'nvidia'
+==> ERROR: module not found: 'nvidia_modeset'
+==> ERROR: module not found: 'nvidia_uvm'
+==> ERROR: module not found: 'nvidia_drm'
+```
+
+**Две причины этой ошибки:**
+
+**1) Поскольку ранняя загрузка модулей всегда включена в chwd, mkinitcpio постоянно ожидает наличия модулей NVIDIA, поэтому эта ошибка возникает, когда эти модули отсутствуют.**
+
+**2) У вас могут отсутствовать модули NVIDIA из других установленных ядер в вашей системе.**
+
+```sh title='Установите следующий пакет, чтобы исправить эту ошибку'
+sudo pacman -S nvidia
+```
+
+## Cachy Browser
+
+### Почему этот браузер постоянно удаляет мои сохраненные учетные данные и файлы cookie?
+
+- *Это потому, что в браузере по умолчанию включена опция `Удалять файлы cookie и данные сайтов при закрытии Cachy Browser`.*
+  - **Следуйте скриншоту, показывающему, где ее отключить:**
+    <br />
+    <ImageComponent imgsrc={import('~/assets/images/cachy-browser-cookies.png')} />
+
+### Главная страница GitHub делает браузер непригодным для использования и чрезвычайно медленным.
+
+- *Cachy Browser, в силу своей ориентации на конфиденциальность, отключает WebGL по умолчанию, а GitHub зависит от него для рендеринга своей главной страницы.*
+  - **Включите его снова, как показано на скриншоте**
+    <br />
+    <ImageComponent imgsrc={import('~/assets/images/cachy-browser-webgl.png')} />
+  - *После отключения этого параметра. Перезапустите браузер и попробуйте снова.*
+*Эта рекомендация также относится к веб-сайтам, которые используют аппаратное ускорение через WebGL, например, Photopea.*
+
+### Вашим браузером управляет ваша организация. Мне нужно беспокоиться?
+
+- *Нет. Это потому, что мы включаем [файл политик](https://github.com/CachyOS/CachyOS-Browser-Settings/blob/master/distribution/policies.json), в котором мы отключаем функции и добавляем изменения в браузер. Пример: `дополнительные поисковые системы`.*
+
+### RFP (Resist Fingerprint Protection)
+
+- Cachy Browser включает `privacy.resistFingerprinting` по умолчанию. Хотя это улучшает конфиденциальность, это происходит за счет некоторых проблем для пользователей, которые не знают об этом, таких как следующие:
+  - Артефакты рендеринга
+  - Темная тема не применяется
+  - Невозможно войти на определенные веб-сайты (Twitch)
+  - Некоторые комбинации клавиш не работают
+
+- Чтобы проверить, является ли эта функция причиной проблемы, с которой вы в настоящее время сталкиваетесь. Ознакомьтесь со следующей [статьей Mozilla](https://support.mozilla.org/en-US/kb/resist-fingerprinting) и разверните раздел **Как Resist Fingerprinting может сломать веб-страницы?**.
+
+*Чтобы отключить RFP, перейдите в `about:config` и найдите **privacy.resistFingerprinting** и установите для него значение `false`*
+
+<br />
+    <ImageComponent imgsrc={import('~/assets/images/cachy-browser-resist-fingerprint.png')} />

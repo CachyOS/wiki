@@ -194,6 +194,7 @@ export default defineConfig({
               label: 'CachyOS chroot Helper (cachy-chroot)',
               link: 'features/cachy_chroot',
               translations: {
+                ru: 'CachyOS chroot помощник (cachy-chroot)',
                 cs: 'Pomůcka pro chroot CachyOS (cachy-chroot)',
                 sk: 'Pomôcka pre chroot CachyOS (cachy-chroot)',
               },
@@ -202,6 +203,7 @@ export default defineConfig({
               label: 'CachyOS Hardware Detection (chwd)',
               link: 'features/chwd',
               translations: {
+                ru: 'CachyOS Обнаружение оборудования (chwd)',
                 cs: 'Detekce hardwaru CachyOS (chwd)',
                 sk: 'Detekcia hardvéru CachyOS (chwd)',
               },
@@ -292,6 +294,7 @@ export default defineConfig({
               label: 'Gaming',
               link: 'configuration/gaming',
               translations: {
+                ru: 'Игры',
                 cs: 'Hraní her',
                 sk: 'Hranie hier',
               },
@@ -371,6 +374,7 @@ export default defineConfig({
             {
               label: 'FAQ',
               translations: {
+                ru: 'Часто задаваемые вопросы',
                 cs: 'Často kladené otázky',
                 sk: 'Najčastejšie kladené otázky',
               },
@@ -408,6 +412,7 @@ export default defineConfig({
         {
           label: 'Changelogs',
           translations: {
+            ru: 'История изменений',
             sk: 'Zmenové logy',
             cs: 'Změny',
           },
@@ -453,6 +458,7 @@ export default defineConfig({
             {
               label: 'Code of Conduct',
               translations: {
+                ru: 'Кодекс поведения',
                 sk: 'Kódex správania',
                 cs: 'Kodex chování',
               },

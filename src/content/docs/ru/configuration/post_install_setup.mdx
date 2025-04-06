@@ -1,0 +1,337 @@
+---
+title: После установки
+description: Шаги по настройке после установки CachyOS
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+## Обновление системы
+
+<Tabs>
+
+<TabItem label="Использование Octopi (GUI)">
+
+Octopi — это графический менеджер пакетов для дистрибутивов на основе Arch, который предоставляет удобный способ управления пакетами и обновлениями.
+Чтобы обновить систему с помощью Octopi, выполните следующие действия:
+
+<Steps>
+
+1. Запустите **Octopi** из меню приложений.
+2. В главном окне нажмите кнопку **Проверить обновления** (вверху слева), а затем рядом с ней **Обновление системы**.
+3. Octopi проверит наличие доступных обновлений и предложит установить их либо в самом Octopi, либо в терминале.
+4. Чтобы продолжить обновление, нажмите кнопку **Применить**.
+5. Octopi загрузит и установит обновления.
+6. Рекомендуется перезагрузить компьютер после большого обновления **(особенно если было обновление ядра)**.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Использование Pacman">
+
+<Steps>
+
+1. Откройте эмулятор терминала (или нажмите **`ctrl + alt + t`** - **`mod + return`** в WM, например, Qtile).
+2. Выполните следующую команду, чтобы обновить систему:
+
+   ```sh
+   sudo pacman -Syu
+   ```
+3. Рекомендуется перезагрузить компьютер после большого обновления **(особенно если было обновление ядра)**.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Автономное обновление системы">
+
+*CachyOS поддерживает автономные обновления системы с помощью скрипта [`pacman-offline`](https://github.com/eworm-de/pacman-offline). Это позволяет вашей системе загружать обновления пакетов и применять их при следующей перезагрузке. (Да, как в Windows)*
+
+:::note
+Инструмент `pacman-offline` интегрируется с функцией автономных обновлений systemd. Он автоматически обрабатывает обновления ядра и загрузку модулей.
+
+Файл `/etc/pacman.d/offline.conf` имеет решающее значение для управления тем, какие пакеты обновляются во время обычных и автономных обновлений. Убедитесь, что он правильно настроен для нужного вам ядра, или добавьте пакеты, которые вы хотите, чтобы они обновлялись только во время выполнения pacman-offline и игнорировались при обычном обновлении. Пример: `pacman -Syu`.
+
+**Если вы включите автоматический таймер обновления, вам больше не нужно будет обновлять систему вручную.**
+:::
+
+<Steps>
+
+1. **Установите пакет pacman-offline**
+
+   ```bash
+   sudo pacman -S pacman-offline
+   ```
+
+2. **Укажите Pacman читать из отдельного списка игнорирования пакетов.**
+
+   ```bash title='Добавьте следующую строку в файл /etc/pacman.conf'
+   Include = /etc/pacman.d/offline.conf
+   ```
+   *Пример*
+   ```bash
+   # REPOSITORIES
+   #   - can be defined here or included from another file
+   #   - pacman will search repositories in the order defined here
+   #   - local/custom mirrors can be added here or in separate files
+   #   - repositories listed first will take precedence when packages
+   #     have identical names, regardless of version number
+   #   - URLs will have $repo replaced by the name of the current repo
+   #   - URLs will have $arch replaced by the name of the architecture
+   #
+   # Repository entries are of the format:
+   #       [repo-name]
+   #       Server = ServerName
+   #       Include = IncludePath
+   #
+   # The header [repo-name] is crucial - it must be present and
+   # uncommented to enable the repo.
+   #
+
+   Include = /etc/pacman.d/offline.conf
+   ```
+3. **Добавление ядер CachyOS, чтобы pacman игнорировал их во время обычных обновлений**
+
+   Инструмент `pacman-offline` использует этот файл, чтобы определить, какие пакеты игнорировать во время традиционных обновлений pacman.
+   
+   **Пример: когда вы запускаете `sudo pacman -Syu`**
+
+   *Замените содержимое файла `/etc/pacman.d/offline.conf` следующим:*
+
+   ```text 
+   # Arch Linux kernels
+   IgnorePkg = linux linux-headers linux-docs
+   IgnorePkg = linux-lts linux-lts-headers linux-lts-docs
+   IgnorePkg = linux-zen linux-zen-headers linux-zen-docs
+   IgnorePkg = linux-hardened linux-hardened-headers linux-hardened-docs
+
+   # CachyOS kernels
+   IgnorePkg = linux-cachyos linux-cachyos-headers
+   IgnorePkg = linux-cachyos-bmq linux-cachyos-bmq-headers
+   IgnorePkg = linux-cachyos-bore linux-cachyos-bore-headers
+   IgnorePkg = linux-cachyos-deckify linux-cachyos-deckify-headers
+   IgnorePkg = linux-cachyos-eevdf linux-cachyos-eevdf-headers
+   IgnorePkg = linux-cachyos-gcc linux-cachyos-gcc-headers
+   IgnorePkg = linux-cachyos-hardened linux-cachyos-hardened-headers
+   IgnorePkg = linux-cachyos-lts linux-cachyos-lts-headers
+   IgnorePkg = linux-cachyos-rc linux-cachyos-rc-headers
+   IgnorePkg = linux-cachyos-rt-bore linux-cachyos-rt-bore-headers
+   IgnorePkg = linux-cachyos-sched-ext linux-cachyos-sched-ext-headers
+   IgnorePkg = linux-cachyos-server linux-cachyos-server-headers
+   IgnorePkg = linux-cachyos-lto linux-cachyos-lto-headers
+   IgnorePkg = linux-cachyos-bmq-lto linux-cachyos-bmq-lto-headers
+   IgnorePkg = linux-cachyos-bore-lto linux-cachyos-bore-lto-headers
+   IgnorePkg = linux-cachyos-deckify-lto linux-cachyos-deckify-lto-headers
+   IgnorePkg = linux-cachyos-eevdf-lto linux-cachyos-eevdf-lto-headers
+   IgnorePkg = linux-cachyos-gcc-lto linux-cachyos-gcc-lto-headers
+   IgnorePkg = linux-cachyos-hardened-lto linux-cachyos-hardened-lto-headers
+   IgnorePkg = linux-cachyos-lts-lto linux-cachyos-lts-lto-headers
+   IgnorePkg = linux-cachyos-rc-lto linux-cachyos-rc-lto-headers
+   IgnorePkg = linux-cachyos-rt-bore-lto linux-cachyos-rt-bore-lto-headers
+   IgnorePkg = linux-cachyos-sched-ext-lto linux-cachyos-sched-ext-lto-headers
+   IgnorePkg = linux-cachyos-server-lto linux-cachyos-server-lto-headers
+   ```
+
+   *Теперь все эти пакеты будут игнорироваться при обычных обновлениях, но проверяться во время автономной подготовки.*
+
+3. **Запустите подготовку к автономному обновлению только один раз**
+
+   ```bash title='Выполните следующую команду'
+   sudo systemctl start pacman-offline-prepare.service
+   ```
+   Эта команда заставит pacman-offline выполниться один раз, синхронизировать базы данных пакетов и приступить к загрузке обновлений, но не устанавливает их.
+
+</Steps>
+
+*Если вы хотите, чтобы этот скрипт был автоматизирован. Выполните следующие действия:*
+
+<Steps>
+
+1. **Включите таймер подготовки**
+
+   Включение `pacman-offline-prepare.timer` позволит systemd запускать этот скрипт для загрузки обновлений ежедневно через несколько минут после каждого запуска системы.
+
+   ```bash
+   sudo systemctl enable pacman-offline-prepare.timer
+   ```
+
+2. **Перезагрузите систему:**
+
+   Обновления будут установлены во время следующей перезагрузки системы.
+
+3. **(Необязательно) Автоматическая перезагрузка системы:**
+
+    Включите `pacman-offline-reboot.timer`, чтобы автоматически перезагружать систему по умолчанию в **3 часа ночи** (по вашему часовому поясу), если есть ожидающие обновления. Имейте в виду, что это не всегда происходит в одно и то же время из-за включения `RandomizedDelaySec`, которое по умолчанию установлено на 2 часа.
+
+    ```bash
+    sudo systemctl enable pacman-offline-reboot.timer
+    ```
+
+    :::tip
+    Вы можете отредактировать файл `pacman-offline-reboot.timer`, чтобы изменить время перезагрузки системы при наличии ожидающих обновлений или отключить рандомизированное расписание.
+    :::
+
+</Steps>
+
+</TabItem>
+
+</Tabs>
+
+## Настройка брандмауэра (ufw)
+:::note
+UFW включен по умолчанию после установки.
+:::
+Чтобы настроить ufw, выполните следующие действия:
+
+<Tabs>
+
+<TabItem label="Включить">
+
+```bash
+sudo ufw enable
+```
+
+</TabItem>
+
+<TabItem label="Выключить">
+
+```bash
+sudo ufw disable
+```
+
+</TabItem>
+
+<TabItem label="Разрешить">
+
+По умолчанию ufw разрешает весь входящий и исходящий трафик, вы можете добавить определенные правила в брандмауэр, чтобы заблокировать или разрешить определенные соединения.
+
+```bash
+# Например:
+sudo ufw allow ssh
+```
+
+</TabItem>
+
+<TabItem label="Запретить">
+
+```bash
+# Чтобы запретить определенный порт, посмотрите следующий пример:
+sudo ufw deny 80
+```
+
+</TabItem>
+
+<TabItem label="Статус">
+
+```bash
+sudo ufw status verbose
+```
+
+</TabItem>
+
+</Tabs>
+
+:::note
+Будьте осторожны при настройке правил брандмауэра, так как неправильно настроенные правила могут заблокировать вам доступ к вашей собственной системе.
+:::
+
+:::note
+Вы также можете настроить его графически, используя раздел «Брандмауэр» в настройках KDE Plasma.
+:::
+
+## Включение глобального меню
+Для некоторых приложений, таких как Visual Studio Code, глобальное меню может не работать или может быть привязано к родительскому приложению вместо панели.
+
+```sh
+# Чтобы включить поддержку глобального меню, выполните команду и перезапустите приложение.
+sudo pacman -S appmenu-gtk-module libdbusmenu-glib
+```
+
+## Включите поддержку AppArmor с помощью профилей AppArmor.d (необязательно)
+
+<Steps>
+
+1. Добавьте следующие параметры ядра в свой диспетчер загрузки, см. [Конфигурация диспетчера загрузки](/ru/configuration/boot_manager_configuration) для справки.
+
+   ```text
+   lsm=landlock,lockdown,yama,integrity,apparmor,bpf
+   ```
+
+2. Установите пакеты apparmor и apparmord **(Набор из более чем +1500 профилей)**
+   ```bash
+   sudo pacman -S apparmor apparmor.d-git
+   ```
+
+3. Включите/запустите службу AppArmor
+
+   ```bash
+   systemctl enable --now apparmor.service
+   ```
+
+4. Включите кэширование для профилей AppArmor
+
+   ```shell
+   # /etc/apparmor/parser.conf
+   ## Добавьте следующие строки:
+   write-cache
+   Optimize=compress-fast
+   ```
+   Сохраните файл и перезагрузите компьютер.
+</Steps>
+
+## Изменение оболочки по умолчанию
+
+В настоящее время CachyOS использует [fish](https://fishshell.com/) в качестве оболочки входа пользователя по умолчанию. Однако вы можете изменить
+оболочку по умолчанию на любую, какую захотите.
+
+<Tabs>
+   <TabItem label='bash'>
+
+      Это оболочка по умолчанию практически в каждом дистрибутиве Linux. Она также по-прежнему используется в качестве оболочки входа пользователя root. bash
+      имеет базовую функциональность автозаполнения и простое управление историей. Она отличается от zsh и fish тем, что у нее нет
+      модной настройки и экосистемы плагинов, которые есть у fish и zsh.
+
+
+      ```sh title='Изменение оболочки по умолчанию на bash'
+      ❯ chsh -s /usr/bin/bash
+      ```
+
+   </TabItem>
+
+   <TabItem label='zsh'>
+
+      Мы предоставляем [конфигурацию zsh](https://github.com/CachyOS/cachyos-zsh-config) с часто используемыми плагинами и конфигурациями.
+      Она стремится иметь функциональность 1:1 с нашей [конфигурацией fish](https://github.com/CachyOS/cachyos-fish-config).
+      Это также оболочка по умолчанию, используемая в MacOS.
+
+      ```sh title='Изменение оболочки по умолчанию на zsh'
+      ❯ chsh -s /usr/bin/zsh
+      ```
+
+   </TabItem>
+</Tabs>
+
+## Обновление/использование [tldr](https://github.com/tldr-pages/tldr)
+
+:::note
+CachyOS использует [tealdeer](https://github.com/tealdeer-rs/tealdeer), который является более быстрой реализацией оригинала tldr на основе Rust.
+:::
+
+Этот инструмент чрезвычайно полезен для тех, кто не хочет много читать или тратить время на чтение страницы справки/man.
+
+<Steps>
+
+1. ```sh title="Откройте терминал и выполните следующую команду"
+   tldr --update         
+   ```
+2. Пример использования tldr:
+   ```sh
+   tldr java
+     Execute a `.jar` program:
+
+      java -jar filename.jar
+   
+   # Как видите, это действительно полезно, и со временем добавляются новые инструменты/страницы.
+   ```
+
+</Steps>

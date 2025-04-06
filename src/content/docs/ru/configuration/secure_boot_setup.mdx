@@ -1,0 +1,148 @@
+---
+title: Настройка Secure Boot
+description: Настройка Secure Boot с помощью sbctl после установки CachyOS
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+# sbctl
+
+[`sbctl`](https://github.com/Foxboron/sbctl) — это удобный менеджер ключей Secure Boot, способный настроить безопасную загрузку,
+предлагает возможности управления ключами и отслеживает файлы, которые необходимо подписать в цепочке загрузки.
+
+## Установка sbctl
+
+```bash
+❯ sudo pacman -S sbctl
+```
+
+## Предварительная настройка
+
+### GRUB Boot Manager
+
+Если вы используете GRUB, выполните следующую команду, чтобы включить поддержку Secure Boot в GRUB с использованием ключей ЦС.
+
+```bash
+❯ sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
+```
+
+:::note
+Загрузка ненужных модулей в ваш загрузчик может представлять угрозу безопасности.
+Выполняйте эту команду, только если вам действительно нужна безопасная загрузка.
+:::
+
+### Вход в режим настройки в UEFI
+Во-первых, нам нужно перейти в настройки прошивки и установить режим Secure Boot в "Setup Mode". Вы можете перезагрузиться из
+уже работающей системы в настройки прошивки с помощью следующей команды.
+
+```bash
+❯ systemctl reboot --firmware-setup
+```
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/ideapad-bios-secure-boot.jpg')} />
+
+Вот как выглядит BIOS на Lenovo Ideapad 5 Pro. Сбросьте настройки в режим настройки или восстановите заводские ключи и перезагрузитесь обратно
+в систему.
+
+## Настройка sbctl
+
+```bash
+❯ sudo sbctl status # Если режим настройки включен, мы можем перейти к следующему шагу
+Installed:      ✘ sbctl is not installed
+Setup Mode:     ✘ Enabled
+Secure Boot     ✘ Disabled
+
+❯ sudo sbctl create-keys # Создайте свои собственные ключи Secure Boot
+Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Creating secure boot keys...✔
+Secure boot keys created!
+
+❯ sudo sbctl enroll-keys -m # Зарегистрируйте свои ключи с помощью ключей Microsoft
+Enrolling keys to EFI variables...✔
+Enrolled keys to the EFI variables!
+
+❯ sudo sbctl status
+# Теперь sbctl должен быть установлен, и мы можем перейти к подписанию образов ядра и загрузчика
+Installed:      ✔ sbctl is installed
+Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Setup Mode:     ✔ Disabled
+Secure Boot     ✘ Disabled
+Vendor Keys:    microsoft
+```
+
+## Подписание образа ядра и загрузчика
+
+CachyOS предоставляет скрипт [`sbctl-batch-sign`](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign),
+который берет список файлов, которые необходимо подписать, из `sudo sbctl verify` и подписывает их все.
+
+```bash
+❯ sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is not signed
+✘ /boot/EFI/BOOT/BOOTX64.EFI is not signed
+✘ /boot/EFI/systemd/systemd-bootx64.efi is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is not signed
+
+❯ sudo sbctl-batch-sign
+
+❯ sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is signed
+✔ /boot/EFI/BOOT/BOOTX64.EFI is signed
+✔ /boot/EFI/systemd/systemd-bootx64.efi is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
+```
+
+:::caution
+В системах с отдельной структурой разделов `/boot` и `/boot/efi` `sbctl` может сканировать EFI-двоичные файлы только в `/boot/efi`.
+Это приводит к тому, что образы ядра, находящиеся в `/boot`, не обнаруживаются. `sbctl-batch-sign` обходит это, **всегда** сканируя
+`/boot` на наличие файлов `vmlinuz-*`.
+:::
+
+Теперь, когда все файлы подписаны, мы можем перезагрузиться обратно в настройки UEFI и включить безопасную загрузку.
+Обратите внимание, что это одноразовый процесс, поскольку подписание файлов с флагом `-s` сохранит эти файлы в базе данных `sbctl`.
+`sbctl` поставляется с [хуком pacman](https://wiki.archlinux.org/title/Pacman_hook), что означает, что он будет автоматически
+подписывать все новые файлы при обновлении ядра или загрузчика.
+
+### systemd-boot
+
+CachyOS использует `systemd-boot-update.service`, предоставляемый systemd, для обновления загрузчика при перезагрузке. Это означает, что
+хук pacman `sbctl` **не** будет подписывать обновленные EFI-двоичные файлы. В качестве обходного пути мы можем подписать загрузчик напрямую.
+
+```sh
+❯ sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+```
+
+## Убедитесь, что безопасная загрузка включена
+
+Чтобы убедиться, что безопасная загрузка действительно включена. Вы можете выполнить одну из следующих команд.
+
+```bash
+❯ sudo sbctl status
+Installed:      ✓ sbctl is installed
+Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Setup Mode:     ✓ Disabled
+Secure Boot:    ✓ Enabled
+Vendor Keys:    microsoft
+
+❯ bootctl
+System:
+      Firmware: UEFI 2.80 (INSYDE Corp. 28724.16435)
+ Firmware Arch: x64
+   Secure Boot: enabled (user)
+  TPM2 Support: yes
+  Measured UKI: no
+  Boot into FW: supported
+```
+
+## Ссылки и благодарности
+
+- [Arch Wiki](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
+заложил основу для этого руководства. Большая часть материала взята оттуда.
+- [sbctl](https://github.com/Foxboron/sbctl) — это простое руководство по включению поддержки Secure Boot было бы невозможно, если бы не
+удивительная работа, проделанная для создания этого программного обеспечения.
+- [Улучшение опыта Secure Boot от Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) — сообщение в блоге Morten
+"Foxboron" Linderud о том, насколько сложным был опыт Secure Boot до `sbctl`.

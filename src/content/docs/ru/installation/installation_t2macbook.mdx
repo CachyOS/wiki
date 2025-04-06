@@ -1,0 +1,100 @@
+---
+title: Установка на T2 MacBook
+description: Как установить CachyOS на T2 MacBook
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+## Установка
+
+### Общая информация
+
+CachyOS предоставляет готовую поддержку для T2 MacBook. Необходимые патчи ядра включены во все ядра, предоставляемые CachyOS.
+
+**WiFi соединение** **недоступно** из коробки, поскольку это прошивка с закрытым исходным кодом, которую CachyOS не имеет права распространять.
+Для продолжения установки требуется интернет, поэтому используйте либо LAN-сеть, либо следуйте [этому разделу](#getting-wifi-firmware-for-the-installation), чтобы получить прошивку WiFi.
+
+### Получение прошивки WiFi для установки
+
+<Steps>
+
+1. Сначала загрузитесь в macOS и выполните эту команду:
+    ```sh
+    curl -sL https://wiki.t2linux.org/tools/firmware.sh | bash -s copy_to_efi
+    ```
+
+2. Теперь загрузитесь в CachyOS ISO. Откройте там Konsole и выполните следующие команды:
+    ```sh
+    sudo mkdir -p /tmp/apple-wifi-efi
+    sudo mount /dev/nvme0n1p1 /tmp/apple-wifi-efi
+    bash /tmp/apple-wifi-efi/firmware.sh get_from_efi
+    sudo umount /tmp/apple-wifi-efi
+    ```
+
+3. Настройте `iwd` в качестве бэкенда для NetworkManager. Вы можете выполнить следующие команды в Konsole, чтобы сделать это:
+    ```sh
+    cat <<EOF | sudo tee /etc/NetworkManager/conf.d/wifi_backend.conf
+    [device]
+    wifi.backend=iwd
+    EOF
+    sudo systemctl restart NetworkManager
+    ```
+
+</Steps>
+
+Теперь вы можете подключиться к сети WiFi и продолжить установку.
+
+### Продолжение установки
+
+Следуйте инструкциям в [Подготовка к установке](/ru/installation/installation_prepare#creating-a-bootable-cachyos-usb-drive) о том, как скачать
+ISO и создать загрузочный USB-накопитель.
+
+Вам необходимо выполнить дополнительные шаги для подготовки T2 MacBook к установке Linux, такие как разбиение диска с помощью macOS и отключение безопасной загрузки. Вы можете следовать [руководству по предварительной установке t2linux](https://wiki.t2linux.org/guides/preinstall/) для получения инструкций.
+
+После создания загрузочного USB-накопителя обратитесь к [Установка на Root](/ru/installation/installation_on_root).
+CachyOS применяет необходимые параметры загрузки и конфигурации к T2 MacBook пользователя с помощью [Обнаружение оборудования CachyOS](/features/chwd).
+
+### Установка прошивки
+
+Прошивку можно загрузить и получить с другого зеркала, который не размещен CachyOS.
+
+Выполните следующие команды после загрузки в установленную систему:
+
+<Steps>
+
+1. Получите пакет прошивки, используя один из следующих инструментов:
+
+    <Tabs>
+
+    <TabItem label="используя curl">
+
+    ```sh
+    curl https://mirror.funami.tech/arch-mact2/os/x86_64/apple-bcm-firmware-14.0-1-any.pkg.tar.zst -o apple-bcm-firmware-14.0-1-any.pkg.tar.zst
+    ```
+
+    </TabItem>
+    <TabItem label="используя wget">
+
+    ```sh
+    wget https://mirror.funami.tech/arch-mact2/os/x86_64/apple-bcm-firmware-14.0-1-any.pkg.tar.zst
+    ```
+    > Если `wget` недоступен, установите его с помощью `sudo pacman -S wget`
+
+    </TabItem>
+    </Tabs>
+
+2. Установите пакет прошивки
+    ```sh
+    sudo pacman -U apple-bcm-firmware-14.0-1-any.pkg.tar.zst
+    ```
+
+</Steps>
+
+После этого modprobe прошивку и перезагрузите драйвер wifi:
+```bash
+sudo modprobe -r brcmfmac_wcc
+sudo modprobe -r brcmfmac
+sudo modprobe brcmfmac
+```
+
+Дополнительные способы получения прошивки см. на [странице вики t2linux](https://wiki.t2linux.org/guides/wifi-bluetooth/)
