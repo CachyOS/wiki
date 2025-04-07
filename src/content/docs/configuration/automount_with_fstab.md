@@ -135,7 +135,7 @@ Your drive should now appear under `/media/windows`, and will appear there the n
  If you wish to create a link to your newly mounted drive in your home directory you can run the following
 
  ```sh
- ❯ ln -s /media/windows ~/Windows`
+ ❯ ln -s /media/windows ~/Windows
  ```
 
  To show it worked
