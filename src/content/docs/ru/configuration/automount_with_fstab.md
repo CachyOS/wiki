@@ -132,7 +132,7 @@ UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail 0 0
  Если вы хотите создать ссылку на ваш недавно смонтированный диск в вашем домашнем каталоге, вы можете выполнить следующее
 
  ```sh
- ❯ ln -s /media/windows ~/Windows`
+ ❯ ln -s /media/windows ~/Windows
  ```
 
  Чтобы показать, что это сработало
