@@ -2,8 +2,6 @@
 title: Кодекс Поведения участника
 ---
 
-# Кодекс Поведения участника
-
 ## Наши обязательства
 
 Мы, как участники, авторы и лидеры обязуемся сделать участие в сообществе
@@ -111,7 +109,7 @@ title: Кодекс Поведения участника
 
 Данный Кодекс Поведения основан на [Кодекс Поведения участника][homepage],
 версии 2.0, доступной по адресу
-https://www.contributor-covenant.org/version/2/0/code_of_conduct.html.
+https://www.contributor-covenant.org/ru/version/2/0/code_of_conduct.html.
 
 Принципы Воздействия в Сообществе были вдохновлены [Mozilla's code of conduct
 enforcement ladder](https://github.com/mozilla/diversity).
