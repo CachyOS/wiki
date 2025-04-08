@@ -46,14 +46,28 @@ export default defineConfig({
       editLink: {
         baseUrl: 'https://github.com/cachyos/wiki/edit/next/',
       },
-      social: {
-        github: 'https://github.com/cachyos',
-        twitter: 'https://twitter.com/cachyos',
-        telegram: 'https://t.me/+oR-kWT47vRdmMDli',
-        discord: 'https://discord.gg/cachyos-862292009423470592',
-        //reddit: 'https://www.reddit.com/r/cachyos',
-        //patreon: 'https://www.patreon.com/CachyOS'
-      },
+      social: [
+        {
+          icon: 'github',
+          label: 'GitHub',
+          href: 'https://github.com/cachyos',
+        },
+        {
+          icon: 'twitter',
+          label: 'Twitter',
+          href: 'https://twitter.com/cachyos',
+        },
+        {
+          icon: 'telegram',
+          label: 'Telegram',
+          href: 'https://t.me/+oR-kWT47vRdmMDli',
+        },
+        {
+          icon: 'discord',
+          label: 'Discord',
+          href: 'https://discord.gg/cachyos-862292009423470592',
+        },
+      ],
       head: [
         {
           tag: 'meta',
