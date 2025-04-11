@@ -16,19 +16,19 @@ CachyOS или любую установку на базе Arch. Она пере
 ❯ sudo su # Войдите в систему как root-пользователь в Live ISO
 ❯ pacman -Sy cachy-chroot # Убедитесь, что cachy-chroot имеет последнюю версию
 ❯ cachy-chroot
-Info: Найдено 3 блочных устройства
-Info: Найден раздел: Partition: /dev/nvme0n1p1: FS: vfat UUID: EDA6-ED98
-Info: Найден раздел: Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
-Info: Найден раздел: Partition: /dev/nvme0n1p4: FS: btrfs UUID: 66e84339-8c77-4131-afce-50ec2cf67a80
-? Выберите блочное устройство для корневого раздела (используйте клавиши со стрелками):  ›
+Info: Found 3 block devices
+Info: Found partition: Partition: /dev/nvme0n1p1: FS: vfat UUID: EDA6-ED98
+Info: Found partition: Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+Info: Found partition: Partition: /dev/nvme0n1p4: FS: btrfs UUID: 66e84339-8c77-4131-afce-50ec2cf67a80
+? Select the block device for the root partition (use arrow keys):  ›
   Partition: /dev/nvme0n1p1: FS: vfat UUID: EDA6-ED98
 ❯ Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
   Partition: /dev/nvme0n1p4: FS: btrfs UUID: 66e84339-8c77-4131-afce-50ec2cf67a80
-✔ Выберите блочное устройство для корневого раздела (используйте клавиши со стрелками):  · Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
-Info: Выбран раздел BTRFS, монтируем и перечисляем подтома...
-Info: Монтируем раздел /dev/nvme0n1p2 в /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-858f-2e02be61b342-hwAeIm с параметрами: []
-Info: Размонтируем раздел в /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-858f-2e02be61b342-hwAeIm
-? Хотите ли вы использовать предустановку CachyOS BTRFS для автоматического монтирования корневого подтома? (y/n) › # Введите y, если используете CachyOS
+✔ Select the block device for the root partition (use arrow keys):  · Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+Info: Selected BTRFS partition, mounting and listing subvolumes...
+Info: Mounting partition /dev/nvme0n1p2 at /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-858f-2e02be61b342-hwAeIm with options: []
+Info: Unmounting partition at /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-858f-2e02be61b342-hwAeIm
+? Do you want to use CachyOS BTRFS preset to auto mount root subvolume? (y/n) › # Введите y, если используете CachyOS
 ```
 
 После выбора корневого раздела программа предложит смонтировать дополнительные разделы, например, раздел `/boot`.
