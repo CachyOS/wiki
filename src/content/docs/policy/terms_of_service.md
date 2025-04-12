@@ -15,7 +15,7 @@ Only natural persons of legal age and with full legal capacity are permitted to 
 
 ### 1.3. Access to Terms of Service
 
-The latest version of the Terms of Service can be accessed at any time on our website: https://cachyos.org/terms.
+The latest version of the Terms of Service can be accessed at any time on our website: https://wiki.cachyos.org/policy/terms_of_service.
 
 ## 2. Registration, Conclusion of Contract, and Subject Matter
 

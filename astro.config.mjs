@@ -90,6 +90,7 @@ export default defineConfig({
           label: 'Getting Started',
           translations: {
             ru: 'Начало работы',
+            de: 'Erste Schritte',
             sk: 'Začíname',
             cs: 'Začínáme',
           },
@@ -98,6 +99,7 @@ export default defineConfig({
               label: 'Why CachyOS?',
               translations: {
                 ru: 'Почему CachyOS?',
+                de: 'Warum CachyOS?',
                 sk: 'Prečo CachyOS?',
                 cs: 'Proč CachyOS?',
               },
@@ -107,6 +109,7 @@ export default defineConfig({
               label: 'Downloading CachyOS',
               translations: {
                 ru: 'Загрузка CachyOS',
+                de: 'CachyOS herunterladen',
                 sk: 'Sťahovanie CachyOS',
                 cs: 'Stažení CachyOS',
               },
@@ -118,6 +121,7 @@ export default defineConfig({
           label: 'Installation',
           translations: {
             ru: 'Установка',
+            de: 'Installation',
             sk: 'Inštalácia',
             cs: 'Instalace',
           },
@@ -126,6 +130,7 @@ export default defineConfig({
               label: 'Requirements & Preinstall Setup',
               translations: {
                 ru: 'Требования и подготовка к установке',
+                de: 'Anforderungen und Vorinstallationsvorbereitung',
                 sk: 'Požiadavky CachyOS a inštalačné médium',
                 cs: 'Požadavky CachyOS a předinstalační příprava',
               },
@@ -135,6 +140,7 @@ export default defineConfig({
               label: 'Boot Managers',
               translations: {
                 ru: 'Boot менеджер',
+                de: 'Boot-Manager',
                 sk: 'Boot manažéry',
                 cs: 'Správci zavádění',
               },
@@ -144,6 +150,7 @@ export default defineConfig({
               label: 'Filesystem',
               translations: {
                 ru: 'Файловая система',
+                de: 'Dateisystem',
                 sk: 'Súborový systém',
                 cs: 'Souborový systém',
               },
@@ -153,6 +160,7 @@ export default defineConfig({
               label: 'Screenshots',
               translations: {
                 ru: 'Скриншоты',
+                de: 'Screenshots',
                 sk: 'Snímky obrazovky',
                 cs: 'Snímky obrazovky',
               },
@@ -162,6 +170,7 @@ export default defineConfig({
               label: 'Desktop Environments',
               translations: {
                 ru: 'Окружения рабочего стола',
+                de: 'Desktop-Umgebungen',
                 sk: 'Desktopové prostredia',
                 cs: 'Desktop prostředí',
               },
@@ -171,6 +180,7 @@ export default defineConfig({
               label: 'Installation on Root',
               translations: {
                 ru: 'Установка на корневой раздел',
+                de: 'Installation auf Root',
                 sk: 'Inštalácia Root',
                 cs: 'Instalace na kořenový oddíl',
               },
@@ -180,6 +190,7 @@ export default defineConfig({
               label: 'Installation T2 MacBook',
               translations: {
                 ru: 'Установка на T2 MacBook',
+                de: 'Installation auf T2 MacBook',
                 sk: 'Inštalácia na T2 MacBook',
                 cs: 'Instalace na MacBook T2',
               },
@@ -189,6 +200,7 @@ export default defineConfig({
               label: 'Installation Handheld Edition',
               translations: {
                 ru: 'Установка Handheld Edition',
+                de: 'Installation Handheld Edition',
                 sk: 'Inštalácia Handheld Edition',
                 cs: 'Instalace verze pro přenosné zařízení',
               },
@@ -200,6 +212,7 @@ export default defineConfig({
           label: 'CachyOS Features',
           translations: {
             ru: 'Возможности CachyOS',
+            de: 'CachyOS Funktionen',
             cs: 'Funkce CachyOS',
             sk: 'Funkcie CachyOS',
           },
@@ -209,6 +222,7 @@ export default defineConfig({
               link: 'features/cachy_chroot',
               translations: {
                 ru: 'CachyOS chroot помощник (cachy-chroot)',
+                de: 'CachyOS chroot-Helfer (cachy-chroot)',
                 cs: 'Pomůcka pro chroot CachyOS (cachy-chroot)',
                 sk: 'Pomôcka pre chroot CachyOS (cachy-chroot)',
               },
@@ -218,6 +232,7 @@ export default defineConfig({
               link: 'features/chwd',
               translations: {
                 ru: 'CachyOS Обнаружение оборудования (chwd)',
+                de: 'CachyOS Hardware-Erkennung (chwd)',
                 cs: 'Detekce hardwaru CachyOS (chwd)',
                 sk: 'Detekcia hardvéru CachyOS (chwd)',
               },
@@ -226,6 +241,7 @@ export default defineConfig({
               label: 'CachyOS Kernel',
               translations: {
                 ru: 'Ядро CachyOS',
+                de: 'CachyOS-Kernel',
                 cs: 'Jádro CachyOS',
                 sk: 'Jadro CachyOS',
               },
@@ -235,6 +251,7 @@ export default defineConfig({
               label: 'Kernel Manager',
               translations: {
                 ru: 'Менеджер ядер',
+                de: 'Kernel-Manager',
                 sk: 'Správca jadra',
                 cs: 'Správce jader',
               },
@@ -244,6 +261,7 @@ export default defineConfig({
               label: 'CachyOS Settings',
               translations: {
                 ru: 'Настройки CachyOS',
+                de: 'CachyOS-Einstellungen',
                 cs: 'Nastavení CachyOS',
                 sk: 'Nastavenia CachyOS',
               },
@@ -253,6 +271,7 @@ export default defineConfig({
               label: 'Optimized Repositories',
               translations: {
                 ru: 'Оптимизированные репозитории',
+                de: 'Optimierte Repositories',
                 cs: 'Optimalizované repozitáře',
                 sk: 'Optimalizované repozitáre',
               },
@@ -264,6 +283,7 @@ export default defineConfig({
           label: 'Configuration',
           translations: {
             ru: 'Конфигурация',
+            de: 'Konfiguration',
             sk: 'Konfigurácia',
             cs: 'Nastavení',
           },
@@ -272,6 +292,7 @@ export default defineConfig({
               label: 'Secure Boot Setup',
               translations: {
                 ru: 'Настройка Secure Boot',
+                de: 'Secure Boot-Einrichtung',
                 cs: 'Nastavení zabezpečeného spouštění',
                 sk: 'Nastavenie zabezpečeného spúšťania',
               },
@@ -281,6 +302,7 @@ export default defineConfig({
               label: 'Post Install Setup',
               translations: {
                 ru: 'Настройка после установки',
+                de: 'Post-Install-Einrichtung',
                 sk: 'Nastavenie po inštalácii',
                 cs: 'Nastavení po instalaci',
               },
@@ -290,6 +312,7 @@ export default defineConfig({
               label: 'Boot Manager Configuration',
               translations: {
                 ru: 'Конфигурация Boot менеджера',
+                de: 'Boot-Manager-Konfiguration',
                 sk: 'Konfigurácia Boot manažéra',
                 cs: 'Konfigurace správce spouštění',
               },
@@ -299,6 +322,7 @@ export default defineConfig({
               label: 'Dual GPU Laptops',
               translations: {
                 ru: 'Ноутбуки с двумя GPU',
+                de: 'Dual-GPU-Notebooks',
                 sk: 'Dvojité GPU notebooky',
                 cs: 'Notebooky s dvojitou GPU',
               },
@@ -309,6 +333,7 @@ export default defineConfig({
               link: 'configuration/gaming',
               translations: {
                 ru: 'Игры',
+                de: 'Spiele',
                 cs: 'Hraní her',
                 sk: 'Hranie hier',
               },
@@ -317,6 +342,7 @@ export default defineConfig({
               label: 'General System Tweaks',
               translations: {
                 ru: 'Общие настройки системы',
+                de: 'Allgemeine Systemanpassungen',
                 sk: 'Všeobecné systémové úpravy',
                 cs: 'Obecné úpravy systému',
               },
@@ -326,6 +352,7 @@ export default defineConfig({
               label: 'sched-ext Tutorial',
               translations: {
                 ru: 'Руководство по sched-ext',
+                de: 'sched-ext Anleitung',
                 sk: 'sched-ext návod',
                 cs: 'sched-ext Tutoriál',
               },
@@ -335,6 +362,7 @@ export default defineConfig({
               label: 'NVIDIA Wayland Overclocking',
               translations: {
                 ru: 'Разгон NVIDIA на Wayland',
+                de: 'NVIDIA Wayland Übertaktung',
                 cs: 'Přetaktování NVIDIA na Waylandu',
                 sk: 'Pretaktovanie NVIDIA na Waylande',
               },
@@ -344,6 +372,7 @@ export default defineConfig({
               label: 'Automounting Additional Drives',
               translations: {
                 ru: 'Автоматическое монтирование дополнительных дисков',
+                de: 'Automatisches Einhängen zusätzlicher Laufwerke',
                 cs: 'Automatické připojování dalších disků',
                 sk: 'Automatické pripájanie ďalších diskov',
               },
@@ -355,6 +384,7 @@ export default defineConfig({
           label: 'Desktop Environments',
           translations: {
             ru: 'Окружения рабочего стола',
+            de: 'Desktop-Umgebungen',
             cs: 'Desktopová prostředí',
             sk: 'Desktopové prostredia',
           },
@@ -381,6 +411,7 @@ export default defineConfig({
           label: 'Support',
           translations: {
             ru: 'Поддержка',
+            de: 'Unterstützung',
             sk: 'Podpora',
             cs: 'Podpora',
           },
@@ -389,6 +420,7 @@ export default defineConfig({
               label: 'FAQ',
               translations: {
                 ru: 'Часто задаваемые вопросы',
+                de: 'Häufig gestellte Fragen',
                 cs: 'Často kladené otázky',
                 sk: 'Najčastejšie kladené otázky',
               },
@@ -398,6 +430,7 @@ export default defineConfig({
               label: 'Submitting Bugs',
               translations: {
                 ru: 'Отправка сообщений об ошибках',
+                de: 'Fehlerberichte einreichen',
                 sk: 'Odoslanie chýb',
                 cs: 'Nahlášení chyb',
               },
@@ -407,6 +440,7 @@ export default defineConfig({
               label: 'Submitting Package Requests',
               translations: {
                 ru: 'Запросы на добавление пакетов',
+                de: 'Paketanforderungen einreichen',
                 sk: 'Odoslanie požiadaviek na balíčky',
                 cs: 'Žádosti o balíčky',
               },
@@ -416,6 +450,7 @@ export default defineConfig({
               label: 'Social',
               translations: {
                 ru: 'Социальные сети',
+                de: 'Soziale Medien',
                 sk: 'Sociálne siete',
                 cs: 'Sociální sítě',
               },
@@ -427,6 +462,7 @@ export default defineConfig({
           label: 'Changelogs',
           translations: {
             ru: 'История изменений',
+            de: 'Änderungsprotokolle',
             sk: 'Zmenové logy',
             cs: 'Změny',
           },
@@ -435,6 +471,7 @@ export default defineConfig({
               label: 'GUI Installer and ISO',
               translations: {
                 ru: 'GUI установщик и ISO',
+                de: 'GUI-Installer und ISO',
                 sk: 'GUI Inštalátor a ISO',
                 cs: 'Grafický instalátor a ISO',
               },
@@ -444,6 +481,7 @@ export default defineConfig({
               label: 'CLI Installer',
               translations: {
                 ru: 'CLI установщик',
+                de: 'CLI-Installer',
                 sk: 'CLI Inštalátor',
                 cs: 'Příkazový řádek instalátoru',
               },
@@ -455,6 +493,7 @@ export default defineConfig({
           label: 'Policy',
           translations: {
             ru: 'Политика',
+            de: 'Politik',
             sk: 'Politika',
             cs: 'Podmínky',
           },
@@ -463,6 +502,7 @@ export default defineConfig({
               label: 'Community Rules',
               translations: {
                 ru: 'Правила сообщества',
+                de: 'Gemeinschaftsregeln',
                 id: 'Peraturan Komunitas',
                 sk: 'Pravidlá komunity',
                 cs: 'Pravidla komunity',
@@ -473,6 +513,7 @@ export default defineConfig({
               label: 'Code of Conduct',
               translations: {
                 ru: 'Кодекс поведения',
+                de: 'Verhaltenskodex',
                 sk: 'Kódex správania',
                 cs: 'Kodex chování',
               },
@@ -482,6 +523,7 @@ export default defineConfig({
               label: 'Terms of Service',
               translations: {
                 ru: 'Условия обслуживания',
+                de: 'Nutzungsbedingungen',
                 sk: 'Podmienky služby',
                 cs: 'Obchodní podmínky',
               },
@@ -491,6 +533,7 @@ export default defineConfig({
               label: 'Privacy Policy',
               translations: {
                 ru: 'Политика конфиденциальности',
+                de: 'Datenschutz-Bestimmungen',
                 sk: 'Zásady ochrany osobných údajov',
                 cs: 'Zásady ochrany osobních údajů',
               },
@@ -500,6 +543,7 @@ export default defineConfig({
               label: 'Repository Policy',
               translations: {
                 ru: 'Политика репозитория',
+                de: 'Repository-Politik',
                 sk: 'Politika repozitárov',
                 cs: 'Repozitářní politika',
               },
@@ -509,6 +553,7 @@ export default defineConfig({
               label: 'Donation',
               translations: {
                 ru: 'Пожертвования',
+                de: 'Spende',
                 sk: 'Darcovstvo',
                 cs: 'Dobrovolné příspěvky',
               },

@@ -1,0 +1,213 @@
+---
+title: Optimierte Repositories
+description: Informationen über unsere optimierten Repositories
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+Unser Ziel, eine leistungsoptimierte Distribution zu liefern, erfordert die Neukompilierung essentieller Arch Linux-Pakete für die Architekturen x86-64-v3, x86-64-v4
+und Zen4.
+
+- **x86-64-v3:** 5%-20% Leistungssteigerung im Vergleich zu x86-64.
+- **x86-64-v4:** Bietet erhebliche Leistungssteigerungen durch AVX512-Unterstützung, abhängig von der Arbeitslast.
+- **Zen 4/5:** Zusätzlich zum x86-64-v4-Befehlssatz werden folgende hinzugefügt:
+
+```text
+abm, adx, aes, avx512bf16, avx512bitalg, avx512ifma, avx512vbmi, avx512vbmi2, avx512vnni,
+avx512vpopctndq, clflushopt, clwb, clzero, fsgsbase, gfni, mwaitx, pclmul, pku, prfchw,
+rpdid, rdrnd, rdseed, sha, sse4a, vaes, vockmulqdq, wbnoinvd, savec, xsaveopt, xsaves
+```
+
+## Angepasste Pakete
+
+Unser [CachyOS-PKGBUILDs](https://github.com/CachyOS/CachyOS-PKGBUILDS)-Repository enthält Pakete, die fortlaufend Updates, Patches und zurückportierte Fehlerbehebungen erhalten.
+Um die Leistung zu steigern, implementieren wir selektiv PGO-, LTO- und BOLT-Optimierungen, je nach Bedarf.
+Wir pflegen auch einige -git-Pakete, z. B. mesa-git.
+
+## Hinzufügen unserer Repositories zu einer bestehenden Arch Linux-Installation
+
+:::caution
+Die Installation von CachyOS Pacman installiert einen Fork von Pacman mit Funktionen, die von CachyOS hinzugefügt wurden, wie "INSTALLED_FROM" und eine automatische Architekturprüfung. Pacman 6.1 hat eine Feature-Validierungsfunktion hinzugefügt, die bei Verwendung des Arch Linux Pacman zu Warnungen führen kann. Wir arbeiten mit Arch Linux zusammen, um wieder eine ordnungsgemäße Kompatibilität zu gewährleisten. Wenn Sie dies vermeiden möchten, fügen Sie nicht das "cachyos"-Repository hinzu, das den angepassten Pacman enthält. Alle anderen Repositories wie cachyos-v3, cachyos-v4, cachyos-extra/core-v3/4 können problemlos hinzugefügt werden.
+:::
+
+:::tip
+Bevor Sie in Erwägung ziehen, unsere Repositories hinzuzufügen, werfen Sie bitte einen Blick auf die **[CPU-Kompatibilitätsliste](/de/installation/installation_prepare#x86_64-mikroarchitektur-level-unterstützung)**
+:::
+
+<Tabs>
+
+<TabItem label='Automatisiert'>
+
+Wir stellen ein Skript bereit, das die Installation unserer Repositories auf Ihren bestehenden Arch-basierten Installationen automatisiert.
+
+```sh
+curl https://mirror.cachyos.org/cachyos-repo.tar.xz -o cachyos-repo.tar.xz
+tar xvf cachyos-repo.tar.xz && cd cachyos-repo
+sudo ./cachyos-repo.sh
+```
+
+:::tip[Wie das Skript funktioniert]
+Dieses Skript erkennt die Befehlssätze, die Ihre CPU unterstützt, und installiert die Version unserer Repositories, die
+am besten dafür optimiert ist. Es sichert auch Ihre alte `pacman.conf` für die Entfernung des Repositories über das Skript.
+:::
+
+</TabItem>
+
+<TabItem label='Manuell'>
+
+<Steps>
+
+1. Installieren Sie den CachyOS-Keyring:
+
+   ```sh
+   # Importieren Sie den Repository-Schlüssel
+   sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
+   # Signieren Sie den Repository-Schlüssel
+   sudo pacman-key --lsign-key F3B607488DB35A47
+   ```
+2. Installieren Sie die notwendigen Pakete:
+
+   ```sh
+   sudo pacman -U 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-20240331-1-any.pkg.tar.zst' \
+   'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-mirrorlist-18-1-any.pkg.tar.zst' \
+   'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v3-mirrorlist-18-1-any.pkg.tar.zst' \
+   'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v4-mirrorlist-6-1-any.pkg.tar.zst' \
+   'https://mirror.cachyos.org/repo/x86_64/cachyos/pacman-7.0.0.r6.gc685ae6-3-x86_64.pkg.tar.zst'
+   ```
+3. Fügen Sie die CachyOS-Repositories zur Pacman-Konfigurationsdatei hinzu:
+   :::note
+   Diese Repositories sollten über den Arch Linux-Repositories stehen.
+   :::
+
+   ```shell
+   # /etc/pacman.conf
+   # Wenn Ihre CPU nur x86-64 unterstützt, fügen Sie die [cachyos]-Repositories hinzu
+   # cachyos repos
+   [cachyos]
+   Include = /etc/pacman.d/cachyos-mirrorlist
+
+   # Wenn Ihre CPU x86-64-v3 unterstützt, fügen Sie [cachyos-v3],[cachyos-core-v3],[cachyos-extra-v3] und [cachyos] hinzu
+   # cachyos repos
+
+   [cachyos-v3]
+   Include = /etc/pacman.d/cachyos-v3-mirrorlist
+   [cachyos-core-v3]
+   Include = /etc/pacman.d/cachyos-v3-mirrorlist
+   [cachyos-extra-v3]
+   Include = /etc/pacman.d/cachyos-v3-mirrorlist
+   [cachyos]
+   Include = /etc/pacman.d/cachyos-mirrorlist
+
+   # Wenn Ihre CPU x86-64-v4 unterstützt, fügen Sie [cachyos-v4], [cachyos-core-v4], [cachyos-extra-v4] und [cachyos] hinzu
+   # cachyos repos
+
+   [cachyos-v4]
+   Include = /etc/pacman.d/cachyos-v4-mirrorlist
+   [cachyos-core-v4]
+   Include = /etc/pacman.d/cachyos-v4-mirrorlist
+   [cachyos-extra-v4]
+   Include = /etc/pacman.d/cachyos-v4-mirrorlist
+   [cachyos]
+   Include = /etc/pacman.d/cachyos-mirrorlist
+
+   # Wenn Ihre CPU auf Zen 4 oder Zen 5 basiert, fügen Sie [cachyos-znver4], [cachyos-core-znver4], [cachyos-extra-znver4] und [cachyos] hinzu
+
+   [cachyos-znver4]
+   Include = /etc/pacman.d/cachyos-v4-mirrorlist
+   [cachyos-core-znver4]
+   Include = /etc/pacman.d/cachyos-v4-mirrorlist
+   [cachyos-extra-znver4]
+   Include = /etc/pacman.d/cachyos-v4-mirrorlist
+   [cachyos]
+   Include = /etc/pacman.d/cachyos-mirrorlist
+   ```
+      :::tip
+   Um den Übergang von den `v4`-Repositories zu den `znver4`-Repositories zu vollziehen,
+
+   fügen Sie die entsprechenden Einträge aus dem vorherigen Schritt hinzu und führen Sie die folgenden Befehle aus:
+    ```sh
+    sudo pacman -Scc # Geben Sie in beiden Fällen Y ein
+    sudo pacman -Sy
+    pacman -Qqn | sudo pacman -S - # Um alle v4-Pakete durch die znver4-Pakete zu ersetzen
+    # Starten Sie Ihr System neu
+    ```
+   :::
+
+4. Aktualisieren Sie abschließend Ihr System mit CachyOS-Paketen:
+   ```sh
+   sudo pacman -Syu
+   ```
+
+</Steps>
+
+</TabItem>
+
+</Tabs>
+
+### Deinstallation von CachyOS-Repositories
+
+<Tabs>
+<TabItem label='Automatisiert'>
+
+**Führen Sie die folgenden Befehle aus, um die CachyOS-Repositories von Ihrem System zu entfernen:**
+```sh
+curl https://mirror.cachyos.org/cachyos-repo.tar.xz -o cachyos-repo.tar.xz
+tar xvf cachyos-repo.tar.xz
+cd cachyos-repo
+sudo ./cachyos-repo.sh --remove
+```
+
+</TabItem>
+
+<TabItem label='Manuell'>
+
+<Steps>
+
+1. Installieren Sie den originalen Pacman von Arch Linux neu:
+   ```sh
+   sudo pacman -S core/pacman
+   ```
+2. Führen Sie den folgenden Befehl aus:
+   ```sh
+   # Dies vermeidet %INSTALLED_DB%-Warnungen
+   sudo find /var/lib/pacman/local/ -type f -name "desc" -exec sed -i '/^%INSTALLED_DB%$/,+2d' {} \;
+   ```
+3. Erstellen Sie eine Sicherungskopie der Pacman-Konfigurationsdatei:
+   ```sh
+   sudo mv /etc/pacman.conf.bak /etc/pacman.conf
+   ```
+4. Wechseln Sie mit den folgenden Befehlen zurück zu den Standardpaketen von Arch Linux:
+   ```sh
+   pacman -Qqn | sudo pacman -S -
+   sudo pacman -Syu
+   ```
+</Steps>
+
+</TabItem>
+</Tabs>
+
+## Tests und Benchmarks
+
+Michael von Phoronix hat CachyOS bereits einige Male einem Benchmark unterzogen, der in den Benchmark-Diagrammen und im geometrischen Mittel aller Testergebnisse meist führend ist.
+Seit dem ersten Benchmark im Jahr 2022 hat sich CachyOS in Bezug auf Benutzerfreundlichkeit und Leistung stark weiterentwickelt und ist gereift.
+
+Wenn Sie mehr über die Leistungssteigerung durch unsere Repositories erfahren möchten, überprüfen Sie bitte die folgenden Links.
+
+* **14.03.2021:** In einer RFC-Diskussion über die Auswirkungen von x86-64-v3 wurden von **Mateusz Jończyk** von Arch Linux erste Ergebnisse gezeigt.
+  * [RFC: Use x86_64-v2 architecture](https://lists.archlinux.org/pipermail/arch-general/2021-March/048739.html)
+
+* **09.12.2022:** Erster Benchmark von Michael.
+  * [The Performance Of Arch Linux Powered CachyOS](https://www.phoronix.com/review/cachyos-linux-perf)
+
+* **29.02.2024:** Phoronix führte einen weiteren Benchmark durch, der den Unterschied zwischen x86-64-v4-, x86-64-v3- und x86-64-(generischen) Paketen demonstriert. Betrachtet man die Beispiele wie PHP oder GCC, wo wir unsere PKGBUILDs anpassen, ist eine spürbare Leistungsverbesserung festzustellen.
+  * [Arch Linux CachyOS Benchmarks Of x86-64-v3 & x86-64-v4 Repositories](https://www.phoronix.com/review/cachyos-x86-64-v3-v4)
+
+* **20.08.2024:** Michael veröffentlichte einen neuen Benchmark für den AMD Ryzen 9950x, der CachyOS und einige andere Linux-Distributionen enthält.
+  * [Intel Continues To Show AMD The Importance Of Software Optimizations: 16% More Ryzen 9 9950X Performance](https://www.phoronix.com/review/linux-os-amd-ryzen9-9950x)
+   :::note
+   Liquid-DSP und RocksDB wurden mit der Phoronix Benchmark Suite kompiliert, wobei die in /etc/makepkg.conf angegebenen Kompilierungsflags ignoriert wurden, was zu einem unerwarteten Leistungsergebnis für CachyOS führte.
+   :::
+
+## Mehr erfahren
+
+- [Befehlssätze für die verschiedenen x86-64-Mikroarchitekturen](https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels)

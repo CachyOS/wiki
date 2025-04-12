@@ -1,0 +1,147 @@
+---
+title: Secure Boot Einrichtung
+description: Richten Sie Secure Boot mit sbctl nach der Installation von CachyOS ein
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+# sbctl
+
+[`sbctl`](https://github.com/Foxboron/sbctl) ist ein benutzerfreundlicher Secure-Boot-Key-Manager, der Secure Boot einrichten kann,
+bietet Key-Management-Funktionen und verfolgt Dateien, die in der Boot-Kette signiert werden müssen.
+
+## sbctl installieren
+
+```bash
+❯ sudo pacman -S sbctl
+```
+
+## Vorbereitung
+
+### GRUB Bootmanager
+
+Wenn Sie GRUB verwenden, führen Sie den folgenden Befehl aus, um die Secure-Boot-Unterstützung in GRUB mithilfe von CA-Schlüsseln zu aktivieren.
+
+```bash
+❯ sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
+```
+
+:::note
+Das Laden unnötiger Module in Ihrem Bootmanager birgt potenziell ein Sicherheitsrisiko.
+Führen Sie diesen Befehl nur aus, wenn Sie Secure Boot tatsächlich benötigen.
+:::
+
+### Aufrufen des Setup-Modus im UEFI
+Zuerst müssen wir in die Firmware-Einstellungen gehen und den Secure-Boot-Modus auf "Setup Mode" setzen. Sie können von einem
+bereits laufenden System mit dem folgenden Befehl in die Firmware-Einstellungen neu starten.
+
+```bash
+❯ systemctl reboot --firmware-setup
+```
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/ideapad-bios-secure-boot.jpg')} />
+
+So sieht das BIOS auf einem Lenovo Ideapad 5 Pro aus. Setzen Sie es in den Setup-Modus zurück oder stellen Sie die Werksschlüssel wieder her und starten Sie das System neu.
+
+## sbctl einrichten
+
+```bash
+❯ sudo sbctl status # Wenn der Setup-Modus aktiviert ist, können wir mit dem nächsten Schritt fortfahren
+Installed:      ✘ sbctl is not installed
+Setup Mode:     ✘ Enabled
+Secure Boot     ✘ Disabled
+
+❯ sudo sbctl create-keys # Erstellen Sie Ihre benutzerdefinierten Secure-Boot-Schlüssel
+Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Creating secure boot keys...✔
+Secure boot keys created!
+
+❯ sudo sbctl enroll-keys -m # Registrieren Sie Ihre Schlüssel mit den Schlüsseln von Microsoft
+Enrolling keys to EFI variables...✔
+Enrolled keys to the EFI variables!
+
+❯ sudo sbctl status
+# sbctl sollte jetzt installiert sein und wir können mit dem Signieren der Kernel-Images und des Bootmanagers fortfahren
+Installed:      ✔ sbctl is installed
+Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Setup Mode:     ✔ Disabled
+Secure Boot     ✘ Disabled
+Vendor Keys:    microsoft
+```
+
+## Signieren des Kernel-Images und des Bootmanagers
+
+CachyOS stellt ein Skript [`sbctl-batch-sign`](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign) bereit,
+das die Liste der zu signierenden Dateien von `sudo sbctl verify` übernimmt und alle signiert.
+
+```bash
+❯ sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is not signed
+✘ /boot/EFI/BOOT/BOOTX64.EFI is not signed
+✘ /boot/EFI/systemd/systemd-bootx64.efi is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is not signed
+
+❯ sudo sbctl-batch-sign
+
+❯ sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is signed
+✔ /boot/EFI/BOOT/BOOTX64.EFI is signed
+✔ /boot/EFI/systemd/systemd-bootx64.efi is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
+```
+
+:::caution
+Auf Systemen mit einer separaten `/boot`- und `/boot/efi`-Partitionsstruktur scannt `sbctl` möglicherweise nur nach EFI-Binärdateien in `/boot/efi`.
+Dies führt dazu, dass Kernel-Images, die sich in `/boot` befinden, nicht erkannt werden. `sbctl-batch-sign` umgeht dies, indem es **immer**
+`/boot` nach `vmlinuz-*`-Dateien scannt.
+:::
+
+Nachdem alle Dateien signiert sind, können wir zurück zu den UEFI-Einstellungen booten und Secure Boot aktivieren.
+Beachten Sie, dass dies ein einmaliger Vorgang ist, da das Signieren von Dateien mit dem Flag `-s` diese Dateien in der Datenbank von `sbctl` speichert.
+`sbctl` wird mit einem [Pacman-Hook](https://wiki.archlinux.org/title/Pacman_hook) ausgeliefert, was bedeutet, dass es automatisch
+alle neuen Dateien bei einem Kernel- oder Bootmanager-Update signiert.
+
+### systemd-boot
+
+CachyOS verwendet `systemd-boot-update.service`, das von systemd bereitgestellt wird, um den Bootmanager beim Neustart zu aktualisieren. Dies bedeutet, dass der `sbctl`
+Pacman-Hook die aktualisierten EFI-Binärdateien **nicht** signiert. Als Workaround können wir den Bootmanager direkt signieren
+
+```sh
+❯ sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+```
+
+## Überprüfen, ob Secure Boot aktiviert ist
+
+Um zu überprüfen, ob Secure Boot tatsächlich aktiviert ist, können Sie einen der folgenden Befehle ausführen
+
+```bash
+❯ sudo sbctl status
+Installed:      ✓ sbctl is installed
+Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Setup Mode:     ✓ Disabled
+Secure Boot:    ✓ Enabled
+Vendor Keys:    microsoft
+
+❯ bootctl
+System:
+      Firmware: UEFI 2.80 (INSYDE Corp. 28724.16435)
+ Firmware Arch: x64
+   Secure Boot: enabled (user)
+  TPM2 Support: yes
+  Measured UKI: no
+  Boot into FW: supported
+```
+
+## Links und Credits
+
+- [Das Arch Wiki](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
+hat die Grundlage für diesen Leitfaden gelegt. Das meiste hier wurde von dort übernommen
+- [sbctl](https://github.com/Foxboron/sbctl) - Dieser einfache Leitfaden zur Aktivierung der Secure-Boot-Unterstützung wäre nicht möglich gewesen, wenn nicht
+für die erstaunliche Arbeit, die geleistet wurde, um dieses Stück Software zu erstellen.
+- [Verbesserung der Secure-Boot-Erfahrung von Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) - Blog-Post von Morten
+"Foxboron" Linderud darüber, wie kompliziert die Secure-Boot-Erfahrung vor `sbctl` war
