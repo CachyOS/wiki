@@ -1,12 +1,8 @@
 import { PhotoProvider, PhotoView } from 'react-image-previewer';
 import { CloseButton, SlideToolbar } from 'react-image-previewer/ui';
+import React from 'react';
 
-type ImageComponentProps = {
-  images: string[] | undefined;
-  alt?: string;
-};
-
-const MultipleImageComponent = ({ images }: ImageComponentProps) => {
+const MultipleImageComponent = ({ images }) => {
   if (images == undefined) {
     return <div>Failed</div>;
   }
