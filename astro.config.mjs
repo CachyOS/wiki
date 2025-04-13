@@ -333,7 +333,7 @@ export default defineConfig({
               link: 'configuration/gaming',
               translations: {
                 ru: 'Игры',
-                de: 'Spiele',
+                de: 'Gaming',
                 cs: 'Hraní her',
                 sk: 'Hranie hier',
               },
@@ -492,8 +492,8 @@ export default defineConfig({
         {
           label: 'Policy',
           translations: {
-            ru: 'Политика',
-            de: 'Politik',
+            ru: 'Правила',
+            de: 'Regeln',
             sk: 'Politika',
             cs: 'Podmínky',
           },
@@ -542,8 +542,8 @@ export default defineConfig({
             {
               label: 'Repository Policy',
               translations: {
-                ru: 'Политика репозитория',
-                de: 'Repository-Politik',
+                ru: 'Правила репозитория',
+                de: 'Repository Regeln',
                 sk: 'Politika repozitárov',
                 cs: 'Repozitářní politika',
               },

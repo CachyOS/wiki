@@ -19,7 +19,7 @@ um sicherzustellen, dass die Stabilität nicht beeinträchtigt wird. Eine vollst
 
 ## Unterstützung für benutzerdefinierte CPU-Scheduler
 
-Die CPU-Planung ist ein wichtiger Bestandteil des Kernels, um sicherzustellen, dass alle Aufgaben fair CPU-Zeit zugewiesen bekommen. Der Linux-Kernel implementiert verschiedene Planungsklassen,
+Die CPU Scheduler ist ein wichtiger Bestandteil des Kernels, um sicherzustellen, dass alle Aufgaben fair CPU-Zeit zugewiesen bekommen. Der Linux-Kernel implementiert verschiedene Planungsklassen,
 um sicherzustellen, dass jede Aufgabe angemessen geplant wird. Die Fair-Scheduling-Klasse, besser bekannt als "Standard-Scheduler", basiert auf dem
 [EEVDF-Algorithmus (Earliest Eligible Virtual Deadline First)](https://lwn.net/Articles/925371/).
 
