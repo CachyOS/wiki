@@ -116,6 +116,8 @@ Limine allows organizing boot entries into directories:
 To ensure autoboot works with subentries, modify your configuration at `/boot/limine.conf` to include a `default_entry` option, and ensure that a `+` prefix is used for the directory to expand it by default.
 
 ```shell
+# /boot/limine.conf
+
 timeout: 5
 wallpaper: boot():/splash.png
 default_entry: 2 # Points to the specific entry you want to autoboot
