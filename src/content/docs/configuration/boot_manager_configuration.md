@@ -90,8 +90,47 @@ Every time we modify the GRUB configuration file, we need to remake the config w
 ❯ sudo grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
+## Limine
+
+Limine is a modern, feature-rich bootloader that uses a simple configuration file format.
+
+### Automatic Boot Configuration
+
+Limine supports automatic booting after a timeout. However, there are some important considerations:
+
+- **Default Entry**: If you don't specify a `default_entry` option, Limine will default to 1.
+- **Directory vs Entry**: When the default entry is set to a directory (rather than a bootable entry), **Limine will disable autoboot**.
+- **Subentries**: For autoboot to work with subentries, you need to explicitly set the `default_entry` to point to the specific subentry.
+
+#### Using Directories and Subentries
+
+Limine allows organizing boot entries into directories:
+
+- Directories are denoted with a `/` prefix
+- Subdirectories use `//` prefix
+- The `/+` prefix expands a directory by default in the menu
+- For autoboot to work with entries inside directories, you must explicitly set the default entry
+
+#### Example with Default Entry
+
+To ensure autoboot works with subentries, modify your configuration at `/boot/limine.conf` to include a `default_entry` option, and ensure that a `+` prefix is used for the directory to expand it by default.
+
+```shell
+timeout: 5
+wallpaper: boot():/splash.png
+default_entry: 2 # Points to the specific entry you want to autoboot
+
+/+CachyOS # Entry 1 (Directory)
+//linux-cachyos # Entry 2 (Actual boot entry)
+	protocol: linux
+	kernel_path: boot():/vmlinuz-linux-cachyos
+	cmdline: quiet splash nowatchdog rw rootflags=subvol=/@ root=UUID=12d404a8-ca5e-49a2-8e06-403587625ece
+	module_path: boot():/initramfs-linux-cachyos.img
+```
+
 ## Learn more
 
 - [loader.conf manual page](https://man.archlinux.org/man/loader.conf.5)
 - [rEFInd: Configuring the boot manager](https://www.rodsbooks.com/refind/configfile.html)
 - [GRUB Manual: Configuration](https://www.gnu.org/software/grub/manual/grub/grub.html#Configuration)
+- [Limine configuration file](https://github.com/limine-bootloader/limine/blob/v9.x/CONFIG.md)
