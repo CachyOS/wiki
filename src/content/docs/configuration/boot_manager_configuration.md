@@ -92,184 +92,184 @@ Every time we modify the GRUB configuration file, we need to remake the config w
 
 ## Limine
 
-Limine is a modern, feature-rich bootloader that uses a simple configuration file format.
+[Limine](/installation/boot_managers#limine) is a modern bootloader known for its simple configuration. This guide covers the basics to get you started.
 
-### Automatic Boot Configuration
+All configuration happens in the `/boot/limine.conf` file (or sometimes in the EFI system partition). Changes take effect immediately after saving – no extra commands needed!
 
-Limine supports automatic booting after a timeout. However, there are some important considerations:
+### Automatic Booting (Autoboot)
 
-- **Default Entry**: If you don't specify a `default_entry` option, Limine will default to 1.
-- **Directory vs Entry**: When the default entry is set to a directory (rather than a bootable entry), **Limine will disable autoboot**.
-- **Subentries**: For autoboot to work with subentries, you need to explicitly set the `default_entry` to point to the specific subentry.
+Limine can automatically boot an operating system after a set time (`timeout`).
 
-#### Using Directories and Subentries
+* **Timeout:** Set how many seconds to wait before auto-booting.
+  ```shell
+  # /boot/limine.conf
 
-Limine allows organizing boot entries into directories:
+  timeout: 5
+  ```
+* **Default Entry:** Choose which entry boots by default. If not set, it defaults to the first one (entry `1`).
+  ```shell
+  # /boot/limine.conf
 
-- Directories are denoted with a `/` prefix
-- Subdirectories use `//` prefix
-- The `/+` prefix expands a directory by default in the menu
-- For autoboot to work with entries inside directories, you must explicitly set the default entry
+  default_entry: 2
+  ```
+* **Important:** If the default entry points to a directory (like `/+MyOS`), autoboot will be **disabled**. To autoboot an entry inside a directory, you *must* set `default_entry` to point directly to that specific entry (like entry `2` in the example below).
 
-#### Example with Default Entry
-
-To ensure autoboot works with subentries, modify your configuration at `/boot/limine.conf` to include a `default_entry` option, and ensure that a `+` prefix is used for the directory to expand it by default.
+**Example (`/boot/limine.conf`):**
 
 ```shell
 # /boot/limine.conf
 
 timeout: 5
-wallpaper: boot():/splash.png
-default_entry: 2 # Points to the specific entry you want to autoboot
+default_entry: 2 # Points directly to the 'linux-cachyos' entry below
 
-/+CachyOS # Entry 1 (Directory)
-//linux-cachyos # Entry 2 (Actual boot entry)
-	protocol: linux
-	kernel_path: boot():/vmlinuz-linux-cachyos
-	cmdline: quiet splash nowatchdog rw rootflags=subvol=/@ root=UUID=12d404a8-ca5e-49a2-8e06-403587625ece
-	module_path: boot():/initramfs-linux-cachyos.img
+/+CachyOS        # Entry 1: A directory (use /+ to expand by default)
+//linux-cachyos  # Entry 2: The actual bootable entry
+    protocol: linux
+    kernel_path: boot():/vmlinuz-linux-cachyos
+    cmdline: quiet splash root=UUID=... rw
+    module_path: boot():/initramfs-linux-cachyos.img
 ```
+*(Note: `boot():/` refers to the root of the boot drive)*
 
-### Limine Bootloader Theming
+### Customizing Appearance (Theming)
 
-Limine bootloader offers several options to customize its appearance. Here's how you can theme your Limine bootloader:
+You can change how Limine looks:
 
-#### Wallpaper and Background
-
-- **wallpaper**: Set a custom background image using BMP, PNG, or JPEG formats
+* **Wallpaper:** Set a background image (BMP, PNG, JPEG).
   ```shell
   # /boot/limine.conf
 
   wallpaper: boot():/splash.png
+  wallpaper_style: stretched # Or 'tiled', 'centered'
+  backdrop: 000000           # Background color (RRGGBB) if style is 'centered'
   ```
-  
-- **Multiple wallpapers**: You can specify multiple wallpaper options, and Limine will randomly select one
-  ```shell
-  # /boot/limine.conf
-
-  wallpaper: boot():/splash1.png
-  wallpaper: boot():/splash2.png
-  ```
-
-- **wallpaper_style**: Control how the wallpaper is displayed
-  ```shell
-  # /boot/limine.conf
-
-  wallpaper_style: stretched    # Default option
-  # Other options: tiled, centered
-  ```
-
-- **backdrop**: When using centered wallpaper style, this sets the color for areas not covered by the image (in RRGGBB format)
-  ```shell
-  # /boot/limine.conf
-
-  backdrop: 000000    # Black background
-  ```
-
-#### Terminal Appearance
-
-- **term_font**: Use a custom font file instead of the default. See [compatible fonts](https://github.com/viler-int10h/vga-text-mode-fonts)
+* **Fonts:** Use a custom font and adjust its appearance.
   ```shell
   # /boot/limine.conf
 
   term_font: boot():/custom_font.F16
+  term_font_scale: 2x2 # Make font bigger on high-res screens
   ```
-
-- **term_font_size**: Set the font size (default is ```8x16```)
+* **Colors:** Change terminal text colors.
   ```shell
   # /boot/limine.conf
 
-  term_font_size: 8x16
+  term_background: 80000000 # Semi-transparent black (TTRRGGBB)
+  term_foreground: FFFFFF   # White text
   ```
-
-- **term_font_scale**: Scale the font for better visibility on high-DPI displays
-  ```shell
-  # /boot/limine.conf
-
-  term_font_scale: 2x2    # Double size in both directions
-  ```
-
-- **term_font_spacing**: Set horizontal spacing between characters (in pixels)
-  ```shell
-  # /boot/limine.conf
-
-  term_font_spacing: 1    # Default value
-  ```
-
-#### Color Customization
-
-- **term_palette**: Customize the 8 basic terminal colors (RRGGBB format, separated by semicolons)
-  ```shell
-  # /boot/limine.conf
-
-  term_palette: 000000;FF0000;00FF00;FFFF00;0000FF;FF00FF;00FFFF;FFFFFF
-  ```
-
-- **term_palette_bright**: Customize the 8 bright terminal colors
-  ```shell
-  # /boot/limine.conf
-
-  term_palette_bright: 808080;FF8080;80FF80;FFFF80;8080FF;FF80FF;80FFFF;FFFFFF
-  ```
-
-- **term_background/term_foreground**: Set terminal text background/foreground colors
-  ```shell
-  # /boot/limine.conf
-
-  term_background: 80000000    # TTRRGGBB format (TT = transparency)
-  term_foreground: FFFFFF
-  ```
-
-- **interface_branding_colour**: Change the color of the branding text (value 0-7)
-  ```shell
-  # /boot/limine.conf
-
-  interface_branding_colour: 6    # Default is cyan (6)
-  ```
-
-#### Interface Customization
-
-- **interface_branding**: Display custom text at the top of the interface
+* **Interface:** Add branding or change the layout.
   ```shell
   # /boot/limine.conf
 
   interface_branding: My Custom Bootloader
+  term_margin: 32 # Pixels around the text area
   ```
 
-- **interface_resolution**: Set a specific screen resolution for the Limine interface
-  ```shell
-  # /boot/limine.conf
+### Changing Kernel Parameters
 
-  interface_resolution: 1920x1080
+Kernel parameters control how your operating system (like Linux) starts. You modify them using the `cmdline` option for your boot entry.
+
+1. **Edit the config file:** `sudo nano /boot/limine.conf`
+2. **Find your boot entry:** Look for the title (e.g., `//linux-cachyos`).
+3. **Modify the `cmdline`:** Add or remove parameters like `quiet`, `splash`, `nowatchdog`, `rootflags=subvol=/@`, etc.
+4. **Save the file.**
+
+**Example `cmdline`:**
+
+```shell
+#/boot/limine.conf
+
+cmdline: quiet splash nowatchdog rw root=UUID=... rootflags=subvol=/@
+```
+
+**Tip:** You can define reusable parameter sets using macros:
+```shell
+# /boot/limine.conf
+
+${COMMON_PARAMS}=quiet splash
+
+//My Linux Entry
+    protocol: linux
+    path: boot():/vmlinuz-linux
+    cmdline: root=UUID=... rw ${COMMON_PARAMS}
+```
+
+### Automation Tools for Easier Management
+
+Manually editing `limine.conf` is simple, but it can become tedious, especially when you install or remove kernels frequently (common on rolling-release distributions like CachyOS). Automation tools help manage these entries for you.
+
+#### `limine-entry-tool`
+
+This is the core command-line utility for managing Limine boot entries programmatically. You can use it to:
+
+* **Add new kernel entries:** It copies the kernel (`vmlinuz`) and initial RAM disk (`initramfs`) files to your ESP (EFI System Partition) and creates the corresponding entry in `limine.conf`.
+  ```bash
+  # Add an entry for kernel 6.10.1
+  sudo limine-entry-tool --add "kernel-6.10.1" "/path/to/initramfs-6.10.1.img" "/path/to/vmlinuz-6.10.1"
+  ```
+* **Add Unified Kernel Image (UKI) entries:** UKIs bundle the kernel, initramfs, and kernel command line into a single EFI file.
+  ```bash
+  # Add a UKI entry
+  sudo limine-entry-tool --add-uki "kernel-6.12.1" "/path/to/my-uki.efi"
+  ```
+* **Add other EFI application entries:** You can add entries to boot other `.efi` files (like the Windows Boot Manager or rEFInd).
+  ```bash
+  # Add an entry for a fallback EFI loader
+  sudo limine-entry-tool --add-efi "Fallback Loader" "/boot/EFI/BOOT/BOOTX64.EFI" --priority 10
+  ```
+* **Remove entries:** Cleanly removes entries from `limine.conf` and optionally deletes the associated kernel files from the ESP.
+  ```bash
+  # Remove the kernel entry AND its files
+  sudo limine-entry-tool --remove "kernel-6.10.1"
+
+  # Remove ONLY the entry from limine.conf, keep files
+  sudo limine-entry-tool --remove-entry "kernel-6.10.1"
+  ```
+* **Scan existing EFI entries:** Detect other bootable EFI applications on your system.
+  ```bash
+  # Scan for existing EFI entries
+  sudo limine-entry-tool --scan
   ```
 
-- **interface_help_hidden**: Hide the help text showing key bindings
-  ```shell
-  # /boot/limine.conf
+#### Configuration (`/etc/default/limine`)
 
-  interface_help_hidden: yes
-  ```
+`limine-entry-tool` uses a configuration file, typically `/etc/default/limine`, to control its behavior. Key settings include:
 
-- **term_margin**: Set the margin around the terminal
-  ```shell
-  # /boot/limine.conf
+* `ESP_PATH`: The mount point of your EFI System Partition (often auto-detected if using systemd).
+* `KERNEL_CMDLINE[default]`: Default kernel parameters applied to new entries. You can also define specific parameters for fallback kernels (`KERNEL_CMDLINE[fallback]`) or named kernels (`KERNEL_CMDLINE["linux-zen"]`).
+* `ENABLE_UKI`: Set to `yes` to automatically generate UKIs instead of separate kernel/initramfs files (requires a hook like `limine-mkinitcpio-hook`).
+* `BOOT_ORDER`: Define the order of entries in the Limine menu.
 
-  term_margin: 32
-  ```
+#### Initramfs Hooks (`limine-mkinitcpio-hook` / `limine-dracut-support`)
 
-- **term_margin_gradient**: Set the thickness of the gradient around the terminal
-  ```shell
-  # /boot/limine.conf
+While you *can* use `limine-entry-tool` manually, its real power comes when integrated with your system's initramfs generation process.
 
-  term_margin_gradient: 8
-  ```
+* **`limine-mkinitcpio-hook`:** For systems using `mkinitcpio` (like CachyOS).
+* **`limine-dracut-support`:** For systems using `dracut`.
 
-These theming options allow you to fully customize the appearance of your Limine bootloader to match your preferences or system theme. All changes to the configuration file take effect immediately without needing to run any additional commands.
+**How they work:** When you install, update, or remove a kernel package:
+1. Your package manager triggers the initramfs generator (`mkinitcpio` or `dracut`).
+2. The hook runs as part of this process.
+3. The hook automatically calls `limine-entry-tool` with the correct arguments to add or remove the corresponding boot entry in `limine.conf`.
+4. It uses the settings from `/etc/default/limine` (like your default kernel parameters) when creating entries.
 
+**Benefit:** You don't need to manually run `limine-entry-tool` or edit `limine.conf` every time your kernel updates. The hooks handle it automatically, ensuring your boot menu stays synchronized with your installed kernels.
+
+**Manual Setup:**
+1. Install the appropriate hook package (e.g., `sudo pacman -S limine-mkinitcpio-hook`). This usually pulls in `limine-entry-tool` as a dependency.
+2. Configure your desired kernel parameters and options in `/etc/default/limine`.
+3. Run the initramfs generator once (e.g., `sudo mkinitcpio -P` or `sudo limine-mkinitcpio`) to generate initial entries for your currently installed kernels.
+4. After this, kernel package updates should automatically manage the Limine entries.
+
+**NB: If you installed Limine via the CachyOS installer, the `limine-mkinitcpio-hook` is already set up for you.**
+
+Using these automation tools makes managing Limine significantly easier on systems with frequent kernel changes.
 
 ## Learn more
 
 - [loader.conf manual page](https://man.archlinux.org/man/loader.conf.5)
 - [rEFInd: Configuring the boot manager](https://www.rodsbooks.com/refind/configfile.html)
 - [GRUB Manual: Configuration](https://www.gnu.org/software/grub/manual/grub/grub.html#Configuration)
-- [Limine configuration file](https://github.com/limine-bootloader/limine/blob/v9.x/CONFIG.md)
+- [Official Limine Configuration Docs](https://github.com/limine-bootloader/limine/blob/v9.x/CONFIG.md)
+- [limine-entry-tool Project](https://gitlab.com/Zesko/limine-entry-tool)
+
