@@ -135,7 +135,7 @@ default_entry: 2 # Points directly to the 'linux-cachyos' entry below
 `boot():/` refers to the root of the boot drive.
 :::
 
-### Theming (`/boot/limine.conf`)
+### Theming
 
 You can customize the visual appearance of the Limine boot menu:
 
