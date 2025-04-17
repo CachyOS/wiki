@@ -168,7 +168,7 @@ On CachyOS, kernel entries in the Limine boot menu are **automatically managed**
 
 While entries are handled automatically, you can **configure the kernel parameters** (also known as the kernel command line) that are passed to the kernel when it boots.
 
-1. **Edit the configuration file:** Modify the `KERNEL_CMDLINE` variables in `/etc/default/limine`. You can set default parameters for all kernels or specific parameters for certain kernel names (e.g., `linux-zen`).
+1. **Edit the configuration file:** Modify the `KERNEL_CMDLINE` variables in `/etc/default/limine`. You can set default parameters for all kernels or specific parameters for certain kernel names (e.g., `linux-cachyos`).
    ```shell
    # /etc/default/limine
 
