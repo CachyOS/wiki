@@ -187,9 +187,6 @@ While entries are handled automatically, you can **configure the kernel paramete
    ```
    This command triggers the `mkinitcpio` process, which includes the `limine-mkinitcpio-hook`, ensuring your changes in `/etc/default/limine` are incorporated into the boot entries at `/boot/limine.conf`.
 
-:::note
-If you installed CachyOS with Limine, the necessary hooks (`limine-mkinitcpio-hook`) should be already set up.
-:::
 
 ## Learn more
 
