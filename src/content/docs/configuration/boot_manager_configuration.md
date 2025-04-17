@@ -95,7 +95,7 @@ Limine is a modern bootloader known for its simple configuration. This guide cov
 
 Configuration primarily happens in `/boot/limine.conf` (or sometimes in the EFI system partition) for menu settings and `/etc/default/limine` for kernel parameters.
 
-### Boot Menu Configuration (`/boot/limine.conf`)
+### Boot Menu Configuration
 
 This file controls the boot menu's behavior and appearance. Changes made here take effect immediately after saving – no extra commands are needed.
 
