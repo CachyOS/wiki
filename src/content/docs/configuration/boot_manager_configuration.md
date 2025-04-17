@@ -162,7 +162,7 @@ You can customize the visual appearance of the Limine boot menu:
   # Other color options like term_foreground, etc., are available.
   ```
 
-### Kernel Command Configuration (`/etc/default/limine`)
+### Kernel Command Configuration
 
 On CachyOS, kernel entries in the Limine boot menu are **automatically managed**. When you install or remove kernels, the `limine-mkinitcpio-hook` uses the `limine-entry-tool` utility in the background to update the boot entries.
 
