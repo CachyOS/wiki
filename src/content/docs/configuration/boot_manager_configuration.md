@@ -164,29 +164,58 @@ You can customize the visual appearance of the Limine boot menu:
 
 ### Kernel Command Configuration
 
-On CachyOS, kernel entries in the Limine boot menu are **automatically managed**. When you install or remove kernels, the `limine-mkinitcpio-hook` uses the `limine-entry-tool` utility in the background to update the boot entries.
+On CachyOS with the Limine bootloader, you can configure the kernel parameters (also known as the kernel command line) passed during boot. The method differs slightly depending on whether your system uses UEFI or legacy BIOS firmware.
 
-While entries are handled automatically, you can **configure the kernel parameters** (also known as the kernel command line) that are passed to the kernel when it boots.
+#### UEFI Systems
 
-1. **Edit the configuration file:** Modify the `KERNEL_CMDLINE` variables in `/etc/default/limine`. You can set default parameters for all kernels or specific parameters for certain kernel names (e.g., `linux-cachyos`).
+On UEFI systems, CachyOS utilizes the `limine-entry-tool` utility to **automatically manage kernel entries and parameters** based on a configuration file.
+
+1.  **Edit the configuration file:** Modify the `KERNEL_CMDLINE` variables in `/etc/default/limine`. You can set default parameters for all kernels or specific parameters for certain kernel names (e.g., `linux-cachyos`).
+    ```shell
+    # /etc/default/limine
+
+    # Default parameters for most kernels
+    KERNEL_CMDLINE[default]="quiet splash rd.udev.log_priority=3"
+
+    # Specific parameters for the 'linux-cachyos' kernel
+    KERNEL_CMDLINE["linux-cachyos"]="quiet splash mitigations=off"
+
+    # Parameters for fallback entries (if generated)
+    # KERNEL_CMDLINE[fallback]="..."
+    ```
+2.  **Apply the changes:** After saving `/etc/default/limine`, regenerate your initramfs images and update the Limine entries. This incorporates your changes into the boot configuration file (`/boot/limine.conf`) automatically. Run:
+    ```bash
+    sudo limine-mkinitcpio
+    ```
+
+#### BIOS Systems
+
+On legacy BIOS systems, the `limine-entry-tool` utility has limitations and is not applicable for modifying kernel parameters through `/etc/default/limine`. Therefore, you need to **manually edit the Limine configuration file**.
+
+1. **Edit the config file:** `sudo nano /boot/limine.conf`
+2. **Find your boot entry:** Look for the title (e.g., `//linux-cachyos`).
+3. **Modify the `cmdline`:** Add or remove parameters like `quiet`, `splash`, `nowatchdog`, etc.
    ```shell
-   # /etc/default/limine
+   # /boot/limine.conf
 
-   # Default parameters for most kernels
-   KERNEL_CMDLINE[default]="quiet splash rd.udev.log_priority=3"
-
-   # Specific parameters for the 'linux-cachyos' kernel
-   KERNEL_CMDLINE["linux-cachyos"]="quiet splash mitigations=off"
-
-   # Parameters for fallback entries (if generated)
-   # KERNEL_CMDLINE[fallback]="..."
+   cmdline: quiet splash nowatchdog rw root=UUID=... rootflags=subvol=/@
    ```
-2. **Apply the changes:** After saving `/etc/default/limine`, you need to regenerate your initramfs images and update the Limine entries to apply the new kernel parameters. Run the following command:
-   ```bash
-   sudo limine-mkinitcpio
-   ```
-   This command triggers the `mkinitcpio` process, which includes the `limine-mkinitcpio-hook`, ensuring your changes in `/etc/default/limine` are incorporated into the boot entries at `/boot/limine.conf`.
+   :::tip
+   You can define reusable parameter sets using macros:
+   ```shell
+   # /boot/limine.conf
 
+   ${COMMON_PARAMS}=quiet splash nowatchdog
+
+   /+CachyOS
+   //linux-cachyos
+       protocol: linux
+       kernel_path: boot():/vmlinuz-linux-cachyos
+       cmdline: ${COMMON_PARAMS} root=UUID=... rw  
+       module_path: boot():/initramfs-linux-cachyos.img
+   ```
+   :::
+4. **Save the file:** Save your changes to `/boot/limine.conf`. The changes will take effect on the next boot.
 
 ## Learn more
 
