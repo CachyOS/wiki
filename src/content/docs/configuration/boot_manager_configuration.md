@@ -112,7 +112,11 @@ Limine can automatically boot an operating system after a set time (`timeout`).
 
   default_entry: 2
   ```
-* **Important:** If the default entry points to a directory (like `/+MyOS`), autoboot will be **disabled**. To autoboot an entry inside a directory, you *must* set `default_entry` to point directly to that specific entry (like entry `2` in the example below).
+
+:::note
+If the default entry points to a directory (like `/+MyOS`), autoboot will be **disabled**.
+To autoboot an entry inside a directory, you *must* set `default_entry` to point directly to that specific entry (like entry `2` in the example below).
+:::
 
 **Example (`/boot/limine.conf`):**
 
@@ -129,7 +133,10 @@ default_entry: 2 # Points directly to the 'linux-cachyos' entry below
     cmdline: quiet splash root=UUID=... rw
     module_path: boot():/initramfs-linux-cachyos.img
 ```
-*(Note: `boot():/` refers to the root of the boot drive)*
+
+:::note
+`boot():/` refers to the root of the boot drive
+:::
 
 ### Customizing Appearance (Theming)
 
