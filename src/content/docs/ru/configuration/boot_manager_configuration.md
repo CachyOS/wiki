@@ -192,5 +192,5 @@ default_entry: 2 # Указывает непосредственно на пун
 - [Страница руководства loader.conf](https://man.archlinux.org/man/loader.conf.5)
 - [rEFInd: Настройка Boot менеджера](https://www.rodsbooks.com/refind/configfile.html)
 - [Руководство GRUB: Конфигурация](https://www.gnu.org/software/grub/manual/grub/grub.html#Configuration)
-- [Официальная документация по конфигурации Limine](https://github.com/limine-bootloader/limine/blob/v9.x/CONFIG.md)
+- [Официальная документация по настройке Limine](https://github.com/limine-bootloader/limine/blob/v9.x/CONFIG.md)
 - [Проект limine-entry-tool](https://gitlab.com/Zesko/limine-entry-tool)
