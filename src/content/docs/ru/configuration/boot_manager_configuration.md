@@ -185,7 +185,7 @@ default_entry: 2 # Указывает непосредственно на пун
     ```bash
     sudo limine-mkinitcpio
     ```
-    Эта команда запускает процесс `mkinitcpio`, который включает `limine-mkinitcpio-hook`, гарантируя, что ваши изменения в `/etc/default/limine` будут включены в загрузочные записи в `/boot/limine.conf`.
+    Эта команда запускает процесс `mkinitcpio`, который включает `limine-mkinitcpio-hook`, гарантируя, что ваши изменения для `/etc/default/limine` станут частью главного конфигурационного файла в `/boot/limine.conf`.
 
 ## Узнать больше
 
