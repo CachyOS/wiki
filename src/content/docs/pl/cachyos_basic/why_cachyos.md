@@ -3,22 +3,22 @@ title: Dlaczego CachyOS?
 description: Dlaczego CachyOS może być dla Ciebie lepszym wyborem
 ---
 
-CachyOS oferuje dopracowane doświadczenie Arch Linux, wraz z przyjaznym dla użytkownika instalatorem, wstępnie skonfigurowanymi pulpitami oraz optymalizacjami wydajności, nie rezygnując przy tym z komfortu użytkowania i bezpieczeństwa systemu. Poniżej znajdują się niektóre z kluczowych funkcji, które CachyOS zapewnia, aby zagwarantować niesamowite wrażenia z użytkowania pulpitu.
+CachyOS oferuje dopracowane środowisko Arch Linux, wraz z przyjaznym dla użytkownika instalatorem, wstępnie skonfigurowanymi pulpitami oraz optymalizacjami wydajności, nie rezygnując przy tym z komfortu użytkowania i bezpieczeństwa systemu. Poniżej znajdują się niektóre z kluczowych funkcji, które CachyOS zapewnia, aby zagwarantować niesamowite wrażenia z użytkowania pulpitu.
 
-## Zoptymalizowane Pakiety i Repozytoria
+## Zoptymalizowane pakiety i repozytoria
 
 CachyOS oferuje zoptymalizowane pakiety dla różnych konfiguracji sprzętowych, w tym dla systemów x86-64-v3, x86-64-v4 i Zen4+, aby poprawić ogólną
 wydajność systemu. Dodatkowo CachyOS dostarcza popularne pakiety z [AUR](https://aur.archlinux.org/), o które prosili użytkownicy, w celu poprawy komfortu użytkowania (QoL).
 
 Aby lepiej zrozumieć różnorodność zoptymalizowanych pakietów CachyOS, zobacz [Zoptymalizowane Repozytoria](/pl/features/optimized_repos).
 
-## Niestandardowe Jądro Zoptymalizowane pod kątem Wydajności i Stabilności
+## Niestandardowe jądro zoptymalizowane pod kątem wydajności i stabilności
 
 Oprócz podstawowego zestawu łatek jądra CachyOS, który dostraja różne parametry jądra w celu poprawy responsywności pulpitu, CachyOS włącza również obiecujące
 zestawy łatek, które nie zostały jeszcze włączone do głównej gałęzi rozwoju jądra lub nie znajdują się w jego stabilnej wersji. Łatki te przechodzą wewnętrzne testy przed udostępnieniem użytkownikom,
 aby upewnić się, że stabilność nie zostanie naruszona. Pełną listę łatek dostarczanych przez CachyOS można znaleźć w sekcji [Jądro](/pl/features/kernel).
 
-## Wsparcie dla Niestandardowych Harmonogramów CPU
+## Wsparcie dla niestandardowych harmonogramów CPU
 
 Planowanie zadań procesora (CPU scheduling) jest ważną częścią jądra, zapewniającą sprawiedliwy przydział czasu procesora dla wszystkich zadań. Jądro Linux implementuje różne klasy planowania,
 aby zapewnić odpowiednie szeregowanie każdego zadania. Klasa planowania sprawiedliwego (fair scheduling class), bardziej znana jako "domyślny planista", opiera się na
@@ -36,12 +36,12 @@ CachyOS zapewnia pełne wsparcie dla [planistów sched-ext](https://github.com/s
 
 Więcej informacji na temat jąder oferowanych przez CachyOS oraz planistów sched-ext można znaleźć w sekcjach [Jądro](/pl/features/kernel) i [sched-ext](/pl/configuration/sched-ext/).
 
-## Wykrywanie Sprzętu
+## Wykrywanie sprzętu
 
 CachyOS dostarcza własne [narzędzie do wykrywania sprzętu](https://github.com/CachyOS/chwd), które poprawnie instaluje niezbędne pakiety i sterowniki dla każdego systemu, aby odciążyć
 użytkowników od konieczności konfiguracji po instalacji.
 
-## Konfigurowalny Proces Instalacji
+## Personalizowany proces instalacji
 
 Instalator CachyOS gwarantuje użytkownikom możliwość wyboru systemu, jakiego oczekują. Ta możliwość konfiguracji obejmuje między innymi:
 - [Środowiska graficzne](/pl/installation/desktop_environments/)
@@ -65,7 +65,7 @@ Lista aplikacji rozwijanych i utrzymywanych przez CachyOS:
 - **cachyos-rate-mirrors**: Automatycznie ocenia serwery lustrzane Arch i CachyOS w celu uzyskania optymalnych prędkości pobierania.
 - **systemd-boot-manager**: Automatycznie generuje nowe wpisy dla menedżera rozruchu systemd-boot i można go łatwo skonfigurować w `/etc/sdboot-manage.conf`.
 
-## Przyjazna i Aktywna Społeczność
+## Przyjazna i aktywna Społeczność
 
 Najważniejszym punktem jest stale rosnąca społeczność CachyOS. Bez społeczności CachyOS nigdy nie osiągnąłby obecnej pozycji.
 Członkowie społeczności pomagają sobie nawzajem oraz dzielą się poradami i wskazówkami, aby ulepszyć doświadczenia z Linuksem. Dołącz do nas na

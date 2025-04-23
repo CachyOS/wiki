@@ -152,4 +152,4 @@ systemctl status nvidia-oc.service
 
 ## Podsumowanie
 
-Masz teraz niestandardowe taktowania i potencjalnie undervolting dla swojej karty NVIDIA, stosowane automatycznie przy starcie systemu. Pamiętaj, aby dokładnie przetestować konfigurację i w razie potrzeby dostosować wartości w celu zapewnienia stabilności i wydajności.
+Masz teraz niestandardowe taktowania i opcjonalnie undervolting dla swojej karty NVIDIA, stosowane automatycznie przy starcie systemu. Pamiętaj, aby dokładnie przetestować konfigurację i w razie potrzeby dostosować wartości w celu zapewnienia stabilności i wydajności.

@@ -239,7 +239,7 @@ export default defineConfig({
               translations: {
                 ru: 'CachyOS chroot помощник (cachy-chroot)',
                 de: 'CachyOS chroot-Helfer (cachy-chroot)',
-                pl: 'CachyOS chroot pomocnik (cachy-chroot)',
+                pl: 'CachyOS chroot menedżer (cachy-chroot)',
                 cs: 'Pomůcka pro chroot CachyOS (cachy-chroot)',
                 sk: 'Pomôcka pre chroot CachyOS (cachy-chroot)',
               },
@@ -292,7 +292,7 @@ export default defineConfig({
               translations: {
                 ru: 'Оптимизированные репозитории',
                 de: 'Optimierte Repositories',
-                pl: 'Optymalizowane repozytoria',
+                pl: 'Zoptymalizowane repozytoria',
                 cs: 'Optimalizované repozitáře',
                 sk: 'Optimalizované repozitáre',
               },

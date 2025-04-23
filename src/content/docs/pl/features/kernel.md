@@ -14,7 +14,7 @@ Jądro CachyOS to dostosowane jądro, które wykorzystuje ulepszenia, konfigurac
 - Aktualny zestaw łatek NTSYNC, używany z kompatybilną wersją wine/proton
 - Kompatybilność z urządzeniami T2 MacOS dzięki łatkom z [t2linux](https://github.com/t2linux/linux-t2-patches/)
 - Umożliwia odczyt zużycia energii CPU dla każdego rdzenia dla użytkowników AMD
-- Nadpisanie ACS i v412loopback
+- Dodanie ACS i v412loopback
 - Moduł VHBA do emulacji urządzeń CD/DVD-ROM
 - Najnowszy zestaw łatek ZSTD
 - Różne inne łatki skupiające się na poprawie wydajności (zoptymalizowane flagi kompilatora, ulepszenia kryptograficzne, poprawki zarządzania pamięcią)
@@ -71,7 +71,7 @@ są budowane z [ThinLTO](https://blog.llvm.org/2016/06/thinlto-scalable-and-incr
 
 Prosimy o zgłaszanie problemów (issues) w [repozytorium linux-cachyos na GitHubie](https://github.com/CachyOS/linux-cachyos) w celu sugestii i ulepszeń, które można dodać do domyślnego jądra.
 
-## Prekompilowane Moduły Jądra
+## Prekompilowane moduły jądra
 
 Aby zaspokoić potrzeby szerszej bazy użytkowników, CachyOS dostarcza niektóre dobrze znane i często używane moduły jądra wraz z samym jądrem. Oznacza to, że użytkownicy nie będą już musieli
 rekompilować tych modułów po każdej aktualizacji jądra lub przy każdej nowej instalacji jądra, ale będą musieli jedynie zainstalować je z repozytorium, ponieważ są one
@@ -96,7 +96,7 @@ Jądro CachyOS posiada również kilka innych godnych uwagi funkcji, które są 
 - [Binder](https://developer.android.com/reference/android/os/Binder), moduł potrzebny do [Waydroid](https://waydro.id/), jest domyślnie włączony w konfiguracji jądra
 i już [skonfigurowany](https://github.com/CachyOS/linux-cachyos/blob/master/linux-cachyos/config#L10559).
 
-## Konwencja Nazewnictwa Pakietów
+## Konwencja nazewnictwa pakietów
 
 ```sh
 linux-cachyos # Podstawowy pakiet jądra dla domyślnego jądra. Skompilowany przy użyciu clang
