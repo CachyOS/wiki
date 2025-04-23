@@ -127,7 +127,7 @@ Because it's expensive to build since it basically requires building the kernel 
 2) Create a profile meaning executing workloads in order to gather profiling data for the possible optimizations.
 3) Rebuild the kernel with the AutoFDO profile.
 
-Therefore for now it's only present in the [linux-cachyos](/features/kernel#linux-cachyos-default-kernel) variant.
+Therefore for now it's only present in the [linux-cachyos](/features/kernel#variants) variant.
 
 For more information about AutoFDO, click [here.](https://cachyos.org/blog/2411-kernel-autofdo/)
 

@@ -1,0 +1,161 @@
+---
+title: Przewodnik konfiguracji laptopa z podwójnym GPU
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+## Czym jest grafika hybrydowa?
+
+Grafika hybrydowa to konfiguracja sprzętowa, w której masz dwie karty graficzne,
+które mogą współpracować ze sobą. Takie rozwiązanie występuje głównie w
+laptopach, gdzie masz zintegrowaną kartę graficzną (iGPU) procesora oraz dedykowaną
+kartę graficzną (dGPU). Główną zaletą jest to, że zintegrowana grafika powinna (ale nie
+koniecznie) być używana tylko do zadań o niskim obciążeniu, takich jak przeglądanie Internetu,
+oglądanie filmów itp. Z drugiej strony, dedykowana grafika jest używana do zadań
+wymagających wysokiej wydajności, takich jak granie, edycja wideo, modelowanie 3D i tak dalej. W konsekwencji, jeśli dwie
+karty graficzne dzielą między siebie "duże" i "małe" zadania, to jeśli w danym momencie wykonujemy tylko "małe" zadania,
+nie musimy używać naszej dGPU, więc może ona zostać po prostu wyłączona (jakby uśpiona),
+co znacznie zmniejsza zużycie energii. W ten sposób, gdy nasza
+dGPU będzie ponownie potrzebna (uruchomimy aplikację z jej użyciem), obudzi się i
+zacznie działać.
+
+## Czym jest Odciążanie PRIME?
+
+PRIME to technologia unifikująca pracę z różnymi zestawami hybrydowych
+kart graficznych w Linuksie, takimi jak NVIDIA Optimus/AMD Dynamic Switchable Graphics. Odciążanie
+PRIME (PRIME Offload) to implementacja idei przenoszenia renderowania
+z jednego GPU na drugie w Linuksie. Wsparcie PRIME w zamkniętym sterowniku NVIDIA
+faktycznie zaczęło się dopiero od wersji 435.17. Więc jeśli jesteś użytkownikiem przestarzałych
+gałęzi sterowników 390xx lub nawet 340xx, Odciążanie PRIME nie zadziała dla Ciebie. Pamiętaj, że również
+zdecydowanie odradzamy używanie przestarzałych sposobów obsługi grafiki hybrydowej,
+takich jak nvidia-xrun czy Bumblebee. Są one przestarzałe i niewspierane (Bumblebee
+nie było aktualizowane od ponad 8 lat), działają wyłącznie na hackach i mają niską
+wydajność. Jednocześnie sterownik Nouveau obsługuje Odciążanie PRIME, co
+może być alternatywą dla starszych dGPU.
+
+W CachyOS **nie musisz niczego konfigurować, aby Odciążanie PRIME działało**.
+Z pakietem nvidia-utils i cachyos-settings masz już wszystko,
+czego potrzebujesz, aby używać Odciążania PRIME.
+
+Unikaj również używania narzędzi takich jak optimus-manager. Mogą wydawać Ci się
+całkiem poręczne, ale uwierz nam, mogą powodować wiele problemów i naprawdę ich nie
+potrzebujesz, jeśli Twoja dGPU obsługuje Odciążanie PRIME i dynamiczne zarządzanie energią.
+
+### Jak używać Odciążania PRIME
+
+Aby wskazać PRIME, że chcesz użyć dedykowanej karty graficznej zamiast zintegrowanej,
+musisz określić kilka zmiennych środowiskowych przed uruchomieniem
+programu:
+
+```bash
+__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia <program>
+```
+
+Ten zestaw zmiennych wygląda bardzo nieporęcznie i łatwo go zapomnieć, więc możesz
+zainstalować pakiet ``nvidia-prime`` (``sudo pacman -S nvidia-prime``), który
+zawiera alias skryptu dla wszystkich tych zmiennych. Wtedy uruchomienie aplikacji
+przy jego użyciu będzie wyglądać tak:
+
+```bash
+prime-run <program>
+```
+
+Gdzie ``<program>`` to nazwa polecenia uruchamiającego Twoją aplikację.
+
+:::note
+Niektóre gry DX12 mają problem z wyborem dGPU nawet z `prime-run`.
+Aby obejść ten problem, dodaj zmienną środowiskową `VK_DRIVER_FILES=/usr/share/vulkan/icd.d/nvidia_icd.json`
+przed skryptem opakowującym `prime-run`.
+:::
+
+W konfiguracjach, gdzie obie karty graficzne są zarządzane przez otwarte sterowniki Mesa
+(np. AMD+AMD, AMD+Intel lub nawet Intel+NVIDIA, gdzie dedykowana grafika NVIDIA
+jest zarządzana przez otwarty sterownik Nouveau), nic nie trzeba konfigurować, a
+do użycia dedykowanej grafiki wystarczy podać zmienną środowiskową ``DRI_PRIME=1``
+przed uruchomieniem aplikacji lub gier, podobnie jak wszystkie
+te zmienne opisane wcześniej dla NVIDIA, lub użyć gotowych metod graficznych
+omówionych poniżej.
+
+## Metoda graficzna
+
+Uruchamianie wszystkich potrzebnych aplikacji przez terminal za pomocą ``prime-run`` może być dla Ciebie niewygodne.
+Na szczęście niektóre aplikacje i środowiska graficzne dostarczają narzędzi do kontrolowania, która karta graficzna jest używana dla konkretnych aplikacji.
+
+### Lutris
+
+Aby skonfigurować gry do uruchamiania z dedykowaną kartą graficzną w Lutris, musisz przejść do
+ustawień (trzy paski w prawym dolnym rogu okna i przycisk
+"Preferencje"). Następnie przejdź do *"Opcje globalne"* -> *"Wyświetlanie"*. Tutaj możesz wybrać GPU, na którym gra będzie uruchamiana.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/lutris-prime.png')} />
+
+### Steam
+
+Steam nie ma konkretnego ustawienia wymuszającego użycie przez grę dedykowanej karty graficznej. Możesz jednak uzyskać dostęp do właściwości gry, klikając ikonę koła zębatego przed jej uruchomieniem. W polu "Opcje uruchamiania" możesz dodać polecenie prime-run lub zmienne środowiskowe.
+Przykład:
+
+```bash
+prime-run %command%
+```
+
+Pamiętaj, aby dodać ``%command%`` po ``prime-run``. Pamiętaj, że opcje gry znajdują się po symbolu zastępczym,
+podczas gdy systemowe zmienne środowiskowe lub polecenia powinny go poprzedzać.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/steam-prime.png')} />
+
+### KDE Plasma
+
+Plasma ma bardzo wygodny sposób na skonfigurowanie uruchamiania aplikacji z dedykowaną
+kartą graficzną. Jednak ta metoda działa tylko wtedy, gdy pakiet switcheroo-control i odpowiadająca mu usługa są zainstalowane w systemie.
+
+W świeżej instalacji CachyOS ten pakiet i usługa powinny być już
+domyślnie włączone przez chwd.
+
+```bash
+sudo pacman -S switcheroo-control
+sudo systemctl enable --now switcheroo-control
+```
+
+Po wykonaniu obu poleceń, kliknij prawym przyciskiem myszy na aktywator aplikacji, który chcesz mieć na pulpicie lub w
+menu aplikacji, a następnie przejdź do *"Właściwości"* -> *"Aplikacja"* -> *"Opcje zaawansowane"*.
+
+Powinieneś mieć zaznaczone pole wyboru *"Uruchom używając dedykowanej karty graficznej"*.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/plasma-prime.jpg')} />
+
+:::note
+Użycie switcheroo-control pozwala tym polom wyboru działać we wszystkich konfiguracjach PRIME,
+które nawet nie mają dGPU NVIDIA, takich jak AMD-APU+AMD-Dedykowana.
+:::
+
+### GNOME
+
+W GNOME również powinieneś zainstalować switcheroo-control, jak pokazano powyżej, i
+kliknąć prawym przyciskiem myszy ikonę aplikacji, a następnie wybrać *"Uruchom używając dedykowanej karty graficznej"*.
+Pamiętaj jednak, że GNOME nie zapamiętuje tego wyboru na później, a przy następnym
+uruchomieniu aplikacji z ikony, uruchomi się ona przy użyciu zintegrowanej karty graficznej zamiast dedykowanej.
+
+### Cinnamon
+
+Podobnie jak Plasma, Cinnamon również pozwala wybrać GPU dla konkretnych aplikacji. Kliknij prawym przyciskiem myszy aktywator aplikacji, przejdź do Właściwości i włącz odpowiednią opcję.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cinnamon-prime.png')} />
+
+Jeśli nie jest dostępna, upewnij się, że masz zainstalowany ``switcheroo-control`` i
+jego usługa jest włączona, ponieważ wszystkie środowiska graficzne polegają na nim w tej
+funkcjonalności.
+
+## Rozwiązywanie problemów
+
+### "Mój zewnętrzny monitor bardzo laguje na PRIME"
+
+Jest to znany problem ze sterownikiem NVIDIA. Powinieneś mieć zainstalowany najnowszy sterownik NVIDIA
+i używać Waylanda z kompozytorem obsługującym synchronizację jawną (explicit sync).
+Dla GNOME zostało to naprawione w wersji 46.2. Dla Plasmy 6 prawdopodobnie zostanie
+naprawione w wersji 6.1, chociaż niektórzy użytkownicy zgłaszają normalną wydajność już w 6.0.
+Inne środowiska/menedżery okien nadal mają ten problem, więc musisz przełączyć się
+na najnowszą wersję GNOME lub Plasmy, aby go naprawić.

@@ -1,0 +1,373 @@
+---
+title: Poradnik sched-ext
+description: Poradnik dotyczący korzystania z frameworka oraz różne informacje
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Rozszerzalna Klasa Harmonogramu (Extensible Scheduler Class), lepiej znana jako `sched-ext`, to funkcja jądra Linuksa, która umożliwia implementację harmonogramów wątków jądra w
+BPF (Berkeley Package Filter) i ich dynamiczne ładowanie. Zasadniczo pozwala to użytkownikom końcowym na zmianę harmonogramów w przestrzeni użytkownika bez
+konieczności budowania kolejnego jądra tylko po to, aby mieć inny harmonogram.
+
+## Metody uruchamiania i zarządzania harmonogramami
+
+- **Harmonogramy można znaleźć w pakietach `scx-scheds` i `scx-scheds-git`.**
+  ```sh
+  # Stabilna gałąź
+  sudo pacman -S scx-scheds
+
+  # Najnowsza gałąź rozwojowa (ta gałąź zawiera najnowsze zmiany
+  # i może zawierać harmonogram, który jeszcze nie został wydany.)
+  sudo pacman -S scx-scheds-git
+  ```
+
+### Uruchamianie harmonogramu w terminalu
+
+- *Aby uruchomić harmonogram, otwórz terminal i wprowadź następujące polecenie:*
+  ```sh title='Przykład uruchomienia rusty'
+  sudo scx_rusty
+  ```
+
+*Spowoduje to uruchomienie harmonogramu rusty i odłączenie domyślnego harmonogramu.*
+
+Aby zatrzymać harmonogram. Naciśnij `CTRL + C`, a harmonogram zostanie zatrzymany, a domyślny harmonogram jądra ponownie przejmie kontrolę.
+
+### Usługa Systemd
+
+:::note
+Ta usługa zostanie wycofana i zastąpiona przez **[scx_loader](https://github.com/sched-ext/scx/tree/main/rust/scx_loader)**
+:::
+
+Pakiet scx zawiera usługę systemd, która korzysta z konfiguracji określonej w pliku `/etc/default/scx`.
+
+W tym pliku konfiguracyjnym możesz określić harmonogram, który usługa uruchamia, oraz opcjonalnie dołączyć niestandardowe flagi dla pożądanego harmonogramu.
+
+- **Jeśli chcesz zmienić harmonogram uruchamiany przez usługę, po prostu zmodyfikuj linię `SCX_SCHEDULER=` na harmonogram, który chcesz domyślnie uruchamiać.**
+
+  - ```sh title='Przykład'
+    SCX_SCHEDULER=scx_lavd
+    ```
+
+- **Dodawanie flag**
+  - Odkomentuj `SCX_FLAGS` i dodaj pożądane flagi.
+    ```sh title='Przykład'
+    SCX_FLAGS='--performance'
+    ```
+
+*Teraz możesz uruchamiać/włączać/zatrzymywać harmonogram tak, jak każdą inną usługę systemd.*
+
+**Sprawdź poniższy krótki przewodnik, jak nią zarządzać.**
+
+```sh title='Włączanie i uruchamianie usługi systemd'
+sudo systemctl enable --now scx
+```
+
+```sh title='Jednorazowe uruchomienie harmonogramu za pomocą usługi systemd'
+sudo systemctl start scx
+```
+
+```sh title='Zatrzymywanie harmonogramu SCX za pomocą usługi systemd'
+sudo systemctl stop scx
+```
+
+*Więcej informacji o tej usłudze: [Usługa systemd Sched-ext](<https://github.com/sched-ext/scx/blob/main/services/README.md>)*
+
+### [scx_loader](https://github.com/sched-ext/scx/tree/main/rust/scx_loader)
+
+*Jak sama nazwa wskazuje, jest to narzędzie, które funkcjonuje jako ładowarka i menedżer dla frameworka sched-ext przy użyciu interfejsu D-Bus.*
+
+*Chociaż nie wymaga systemd, nadal może być używane w połączeniu z nim.* [Sprawdź przewodnik po przejściu jako odniesienie](/pl/configuration/sched-ext#przejście-z-scxservice-na-scx_loader-kompleksowy-przewodnik)
+
+- **Ma możliwość zatrzymywania, uruchamiania, ponownego uruchamiania, odczytywania informacji o harmonogramie scx i nie tylko.**
+  - *Możesz używać narzędzi takich jak `dbus-send` lub `gdbus` do komunikacji z nim.*
+- **Ten przewodnik wyjaśnia, jak używać scx_loader z poleceniem dbus-send.**
+  - ```sh title='Uruchamianie scx_rusty z domyślnymi argumentami'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartScheduler string:scx_rusty uint32:0
+    ```
+  - ```sh title='Uruchamianie harmonogramu z argumentami'
+    # Ten przykład uruchamia scx_bpfland z następującymi flagami: -k -c 0
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title='Zatrzymywanie aktualnie działającego harmonogramu'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StopScheduler
+    ```
+  - ```sh title='Przełączanie na inny harmonogram w Trybie 2'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchScheduler string:scx_lavd uint32:2
+    # To przełącza na scx_lavd z trybem harmonogramu 2, co oznacza uruchomienie LAVD w trybie oszczędzania energii
+    ```
+  - ```sh title='Przełączanie na inny harmonogram z argumentami'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title='Pobieranie informacji o aktualnie działającym harmonogramie'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:CurrentScheduler
+    ```
+  - ```sh title='Pobieranie listy obsługiwanych harmonogramów'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:SupportedSchedulers
+    ```
+:::tip
+Oto wyjaśnienie, co oznacza każdy tryb w scx_loader.
+
+- **Tryb 0** = `Domyślne flagi harmonogramu`
+- **Tryb 1** = `Granie`
+- **Tryb 2** = `Oszczędzanie energii`
+- **Tryb 3** = `Niskie opóźnienia`
+- **Tryb 4** = `Serwer` *Obecnie dostępny tylko dla bpfland*
+
+Przykład: LAVD działający w Trybie 1 jest odpowiednikiem `scx_lavd --performance`
+
+*TLDR: Każdy tryb to zestaw różnych flag mających na celu poprawę zamierzonego przypadku użycia.*
+
+[Aby uzyskać bardziej szczegółowy wgląd w to, co te Tryby zmieniają w każdym harmonogramie](https://github.com/sched-ext/scx/blob/main/rust/scx_loader/src/config.rs#L175)
+:::
+
+### Menedżer jądra CachyOS
+
+**Harmonogramy scx można konfigurować za pomocą zupełnie nowego [scx_loader](/pl/features/kernel_manager#zarządzanie-frameworkiem-sched-ext).**
+
+## Wprowadzenie do głównych harmonogramów
+
+Ponieważ istnieje wiele harmonogramów do wyboru, chcemy przedstawić krótkie wprowadzenie do dostępnych harmonogramów.
+
+:::note
+Te harmonogramy są w ciągłym rozwoju i testowaniu, więc oczekuj, że niektóre z ich funkcji/flag mogą ulec zmianie.
+:::
+
+Zachęcamy do zgłaszania wszelkich problemów lub opinii na ich [GitHub](/pl/configuration/sched-ext#github) podanym poniżej.
+
+### [scx_bpfland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_bpfland>)
+
+**Opracowany przez: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Harmonogram sched_ext oparty na vruntime, który priorytetyzuje obciążenia interaktywne. Bardzo elastyczny i łatwy do adaptacji.
+
+Bpfland, podejmując decyzje o tym, które rdzenie użyć, bierze pod uwagę ich układ pamięci podręcznej oraz które rdzenie współdzielą tę samą pamięć podręczną L2/L3, co prowadzi do mniejszej liczby chybionych trafień do pamięci podręcznej = większa wydajność.
+
+**Przypadki użycia:**
+
+- Granie
+- Użytkowanie pulpitu
+- Produkcja multimedialna/audio
+- Świetna interaktywność przy intensywnych obciążeniach
+- Oszczędzanie energii
+- Obciążenia serwerowe
+
+### [scx_flash](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_flash>)
+
+**Opracowany przez: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Harmonogram, który koncentruje się na zapewnieniu sprawiedliwości między zadaniami i przewidywalności wydajności. Ten harmonogram jest wprowadzony jako zastępstwo dla trybu "lowlatency" w scx_bpfland.
+
+**Przypadki użycia:**
+
+- Granie
+- Obciążenia wrażliwe na opóźnienia, takie jak multimedia lub przetwarzanie audio w czasie rzeczywistym
+- Potrzeba responsywności w sytuacjach przeciążenia
+- Spójność wydajności
+
+### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>)
+
+**Opracowany przez: Changwoo Min (multics69 [GitHub](<https://github.com/multics69>)).**
+
+**Krótkie wprowadzenie do LAVD od Changwoo:**
+
+***LAVD to nowy algorytm szeregowania, który jest wciąż w fazie rozwoju. Jest
+zmotywowany obciążeniami związanymi z grami, które są krytyczne pod względem opóźnień i
+intensywne komunikacyjnie. Ma na celu minimalizację skoków opóźnień przy jednoczesnym zachowaniu
+ogólnie dobrej przepustowości i sprawiedliwego wykorzystania czasu procesora między zadaniami.***
+
+**Przypadki użycia:**
+
+- Granie
+- Produkcja audio
+- Obciążenia wrażliwe na opóźnienia
+- Użytkowanie pulpitu
+- Świetna interaktywność przy intensywnych obciążeniach
+- Oszczędzanie energii
+
+Jedną z głównych i niesamowitych możliwości, jakie oferuje LAVD, jest **Kompaktowanie Rdzeni.** co, nie wchodząc w szczegóły techniczne: Gdy użycie procesora < 50%, aktualnie aktywne rdzenie będą działać dłużej i z wyższą częstotliwością. Tymczasem bezczynne rdzenie pozostaną w stanie C (uśpieniu) przez znacznie dłuższy czas, osiągając mniejsze ogólne zużycie energii.
+
+### [scx_rusty](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rusty>)
+
+**Opracowany przez: David Vernet (Byte-Lab [GitHub](<https://github.com/Byte-Lab>))**
+
+Rusty oferuje szeroki zakres funkcji, które rozszerzają jego możliwości, zapewniając większą elastyczność dla różnych przypadków użycia.
+Jedną z tych funkcji jest możliwość dostrajania, pozwalająca dostosować Rusty do własnych preferencji i specyficznych wymagań.
+
+**Przypadki użycia:**
+
+- Granie
+- Obciążenia wrażliwe na opóźnienia
+- Użytkowanie pulpitu
+- Produkcja multimedialna/audio
+- Obciążenia wrażliwe na opóźnienia
+- Świetna interaktywność przy intensywnych obciążeniach
+- Oszczędzanie energii
+
+Aby uzyskać bardziej szczegółowy wgląd w to, co można dostroić w Rusty, sprawdź stronę pomocy
+
+```text
+scx_rusty --help
+```
+
+## Ogólne zalecenia
+
+### LAVD Autopilot & Autopower
+
+***Cytaty od Changwoo Min:***
+- **W trybie autopilota harmonogram dostosowuje swój tryb zasilania `Oszczędzanie energii, Zrównoważony lub Wydajność` w oparciu o obciążenie systemu, w szczególności wykorzystanie procesora**
+
+- **Autopower: Automatycznie decyduj o trybie zasilania harmonogramu na podstawie profilu energetycznego systemu, znanego jako EPP (Energy Performance Preference).**
+
+:::note
+LAVD domyślnie włącza teraz tryb autopilota.
+:::
+
+```sh
+# Autopower można aktywować za pomocą następującej flagi:
+--autopower
+# np.:
+scx_lavd --autopower
+```
+
+### Wyłącz ananicy-cpp
+
+:::caution
+Podczas korzystania z dowolnego harmonogramu z frameworka sched-ext zdecydowanie zaleca się wyłączenie i unikanie używania ananicy-cpp z powodu możliwych konfliktów, ponieważ wzmacnia on różnicę priorytetów, którą harmonogram już tworzy/obsługuje, wzmacniając zadania interaktywne, tworząc nadmierną priorytetyzację, głodząc inne zadania, co zwiększa szansę na osiągnięcie limitu czasu watchdog sched_ext, wyrzucając działający harmonogram, czyli powodując zatrzymanie.
+:::
+
+**Aby wyłączyć/zatrzymać ananicy-cpp, uruchom następujące polecenie:**
+
+```sh
+systemctl disable --now ananicy-cpp
+```
+
+## Przejście z scx.service na scx_loader: Kompleksowy przewodnik
+
+:::caution
+Nie próbuj uruchamiać scx_loader.service równocześnie z scx.service, w przeciwnym razie usługa loadera uruchomi się, ale nic nie zrobi.
+
+Ten konflikt powstaje, ponieważ obie usługi nie wiedzą o sobie nawzajem, zwłaszcza o tym, która z nich zarządza harmonogramami.
+:::
+
+:::tip
+Menedżer jądra CachyOS zawiera już [GUI do zarządzania scx_loader.](/pl/features/kernel_manager#zarządzanie-frameworkiem-sched-ext)
+:::
+
+**Najpierw zacznijmy od dokładnego porównania struktury pliku scx.service ze strukturą pliku konfiguracyjnego scx_loader.**
+
+*Jeśli wcześniej miałeś uruchomiony LAVD ze starą usługą scx.service jak w poniższym przykładzie:*
+
+```sh title='Struktura pliku scx.service'
+# Lista harmonogramów scx: scx_bpfland scx_central scx_flash scx_lavd scx_layered scx_nest scx_qmap scx_rlfifo scx_rustland scx_rusty scx_simple scx_userland
+SCX_SCHEDULER=scx_lavd
+
+# Ustaw niestandardowe flagi dla harmonogramu
+SCX_FLAGS='--performance'
+```
+
+**Wówczas odpowiednik w pliku konfiguracyjnym scx_loader będzie wyglądał następująco:**
+
+```sh title='Struktura pliku scx_loader'
+default_sched = "scx_lavd"
+default_mode = "Auto"
+
+[scheds.scx_lavd]
+auto_mode = ["--performance"]
+```
+
+**[Więcej informacji o tym, jak skonfigurować plik scx_loader](https://github.com/sched-ext/scx/blob/main/rust/scx_loader/configuration.md)**
+
+  **Postępuj zgodnie z poniższym przewodnikiem, aby łatwo przejść z `usługi systemd scx` na nowe narzędzie `scx_loader`.**
+  <Steps>
+  1. ```sh title='Wyłączanie scx.service na rzecz scx_loader.service'
+      systemctl disable --now scx.service && systemctl enable --now scx_loader.service
+      ```
+  2. ```sh title='Tworzenie pliku konfiguracyjnego dla scx_loader i dodawanie domyślnej struktury'
+     # Edytor Micro utworzy nowy plik.
+     sudo micro /etc/scx_loader.toml
+     # Dodaj następujące linie:
+
+     default_sched = "scx_bpfland" # Edytuj tę linię, aby wskazać harmonogram, który scx_loader ma uruchomić przy starcie systemu
+     default_mode = "Auto" # Możliwe wartości: "Auto", "Gaming", "LowLatency", "PowerSave".
+
+     # Naciśnij CTRL + S, aby zapisać zmiany i CTRL + Q, aby wyjść z Micro.
+     ```
+  3. ```sh title='Ponowne uruchomienie scx_loader'
+     systemctl restart scx_loader.service
+     ```
+     - **Gotowe, scx_loader załaduje i uruchomi teraz pożądany harmonogram.**
+
+  </Steps>
+
+### Debugowanie w scx_loader
+
+  - ```sh title='Sprawdzanie statusu usługi'
+    systemctl status scx_loader.service
+    ```
+  - ```sh title='Wyświetlanie wszystkich wpisów dziennika usługi'
+    journalctl -u scx_loader.service
+    ```
+  - ```sh title='Wyświetlanie tylko logów bieżącej sesji.'
+    journalctl -u scx_loader.service -b 0
+    ```
+- **Zaawansowane logowanie**
+
+*Aby uzyskać bardziej szczegółowy log, wykonaj następujące kroki.*
+  1) ```sh title='Edytuj plik usługi'
+     sudo systemctl edit scx_loader.service
+     ```
+  2) ```sh title='Dodaj następującą linię w sekcji [Service]'
+     Environment=RUST_LOG=trace
+     ```
+  3) ```sh title='Uruchom ponownie usługę'
+     sudo systemctl restart scx_loader.service
+     ```
+- **Sprawdź ponownie logi, aby uzyskać bardziej szczegółowe informacje debugowania.**
+
+## FAQ
+
+### Dlaczego harmonogram X działa gorzej niż inny?
+
+- **Istnieje wiele zmiennych do rozważenia podczas ich porównywania. Na przykład, jak mierzą wagę zadania? Czy priorytetyzują zadania interaktywne nad nieinteraktywnymi?
+  Ostatecznie zależy to od ich wyborów projektowych.**
+
+### Dlaczego wszyscy mówią, że ten harmonogram X jest najlepszy dla przypadku X, ale u mnie nie działa tak dobrze?
+
+- **Podobnie jak w poprzedniej odpowiedzi, wybór procesora i jego konstrukcja, taka jak układ rdzeni, sposób współdzielenia pamięci podręcznej między rdzeniami i inne powiązane czynniki, mogą prowadzić do mniej wydajnego działania harmonogramu.**
+- **Dlatego posiadanie wyboru jest jedną z głównych zalet frameworka sched-ext, więc nie bój się wypróbować któregoś i zobaczyć, który działa najlepiej w Twoim przypadku użycia. `Przykłady: stabilność klatek na sekundę, maksymalna wydajność, responsywność przy intensywnych obciążeniach itp.`**
+
+### Przypadki użycia tych harmonogramów są dość podobne... dlaczego tak jest?
+
+- **Głównie dlatego, że są to harmonogramy wielozadaniowe, co oznacza, że mogą obsługiwać różnorodne obciążenia, nawet jeśli nie wyróżniają się w każdej dziedzinie.**
+
+- **Aby określić, który harmonogram najbardziej Ci odpowiada, nie ma lepszej rady niż wypróbować go samemu.**
+
+### Brakuje mi harmonogramu, o którym niektórzy użytkownicy wspominają lub testują na serwerze Discord CachyOS
+**Upewnij się, że używasz najnowszej wersji rozwojowej pakietu scx-scheds o nazwie `scx-scheds-git`**
+
+- **Jednym z powodów może być to, że ten harmonogram jest bardzo nowy i jest obecnie testowany przez użytkowników, dlatego jeszcze nie został dodany do pakietu `scx-scheds-git`.**
+
+### Dlaczego harmonogram nagle się zawiesił? Czy jest niestabilny?
+
+- *Może być kilka powodów, dlaczego tak się stało:*
+  - **Jednym z najczęstszych powodów jest używanie ananicy-cpp równocześnie z harmonogramem. Dlatego dodaliśmy to [ostrzeżenie](/pl/configuration/sched-ext#wyłącz-ananicy-cpp)**
+  - **Innym powodem może być to, że obciążenie, które uruchamiałeś, przekroczyło limity i możliwości harmonogramu, powodując jego zatrzymanie.**
+    - **Przykład nierozsądnego obciążenia: `hackbench`**
+  - **Lub bardziej oczywisty powód, znalazłeś błąd w harmonogramie, jeśli tak. Zgłoś to jako problem na ich [GitHub](https://github.com/sched-ext/scx/issues) lub poinformuj ich
+    o tym na kanale Discord CachyOS `sched-ext`**
+
+### Wcześniej używałem scx_loader w GUI Menedżera Jądra. Czy nadal muszę postępować zgodnie z krokami przejścia?
+
+- **W tym konkretnym przypadku nie jest to konieczne, ponieważ Menedżer Jądra już obsługuje proces przejścia.**
+  - *Chyba że wcześniej dodałeś niestandardowe flagi w `/etc/default/scx` i nadal chcesz ich używać.*
+
+## Dowiedz się więcej
+
+Jeśli chcesz dowiedzieć się więcej o frameworku sched-ext, zapoznaj się z poniższymi linkami.
+
+- [Kod źródłowy harmonogramów Sched-ext](<https://github.com/sched-ext/scx/tree/main/scheds/rust>)
+- [Oficjalna Wiki Sched-ext](<https://github.com/sched-ext/scx/wiki>)
+- [Changwoo Min: Wprowadzenie do sched-ext & Szeregowanie CPU Część 1](<https://blogs.igalia.com/changwoo/sched-ext-a-bpf-extensible-scheduler-class-part-1/>)
+  - [Część 2](<https://blogs.igalia.com/changwoo/sched-ext-scheduler-architecture-and-interfaces-part-2/>)
+- [Andrea Righi: Ponowna implementacja mojego harmonogramu Linuksa w Rust w eBPF](<https://arighi.blogspot.com/2024/08/re-implementing-my-linux-rust-scheduler.html>)
+- [Andrea Righi: Harmonogramy jądra Linuksa generowane przez AI w Rust](<https://arighi.blogspot.com/2024/09/ai-generated-linux-kernel-schedulers-in.html>)

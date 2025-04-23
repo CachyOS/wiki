@@ -3,7 +3,7 @@ title: Offered Boot Managers
 description: Description and recommendations for the currently offered boot managers
 ---
 
-To offer the best experience across a range of devices, CachyOS currently offers the following boot managers: systemd-boot, rEFInd and GRUB.
+To offer the best experience across a range of devices, CachyOS currently offers the following boot managers: systemd-boot, rEFInd, GRUB and Limine.
 This wiki article will describe the feature set of each boot manager and also includes our recommendations for when choosing them. For
 configuration, please see [Boot Manager Configuration](/configuration/boot_manager_configuration).
 

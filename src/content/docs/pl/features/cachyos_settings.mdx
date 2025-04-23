@@ -1,0 +1,122 @@
+---
+title: Ustawienia CachyOS
+---
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+
+Oprócz naszych zoptymalizowanych jąder i repozytoriów, dostarczamy również ustawienia, które dodatkowo poprawiają wrażenia z użytkowania pulpitu.
+Dołączamy także kilka skryptów pomocniczych w celu poprawy jakości życia (QoL). Wszystkie te konfiguracje i skrypty znajdują się w pakiecie `cachyos-settings`.
+
+## Poprawki sysctl
+
+Dostarczamy wiele poprawek sysctl, które mają na celu poprawę ogólnej wydajności pulpitu. Każdy wpis sysctl jest dobrze udokumentowany
+w pliku [`99-cachyos-settings.conf`](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/sysctl.d/99-cachyos-settings.conf)
+
+Aby wprowadzić zmiany w którejkolwiek z tych wartości, skopiuj oryginalny wpis i utwórz nowy plik w `/etc/sysctl.d/` dla zmodyfikowanej wartości.
+
+### Modyfikowanie wartości sysctl
+
+<Steps>
+
+1. Spójrz na oryginalną wartość z `cachyos-settings`
+
+    ```sh
+    ❯ cat /usr/lib/sysctl.d/99-cachyos-settings.conf
+    # Only experimental!
+    # Let Realtime tasks run as long they need
+    # sched: RT throttling activated
+    kernel.sched_rt_runtime_us=-1
+    ```
+
+2. Utwórz nowy plik w `/etc/sysctl.d`, aby wprowadzić zmiany w ustawieniach sysctl
+
+    ```sh title="Przywracanie domyślnej wartości kernel.sched_rt_runtime_us="
+    ❯ sudo micro /etc/sysctl.d/99-kernel-sched-rt.conf # Jeśli plik nie istnieje, to polecenie tworzy go i pozwala na edycję
+    kernel.sched_rt_runtime_us=950000
+    ```
+
+</Steps>
+
+## Reguły udev
+
+- [Reguły ZRAM](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/30-zram.rules) - Ustawia swappiness ZRAM na bardziej agresywną
+wartość, aby pamięć podręczna była bardziej skłonna do wymiany do ZRAM
+- [Uprawnienia HPET](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/40-hpet-permissions.rules) - Zezwala na dostęp do węzłów urządzeń `rtc0`
+i `hpet` przez grupę audio.
+- [Zarządzanie energią SATA](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/50-sata.rules) - Ustawia politykę zarządzania energią urządzeń SATA na `max_performance` (maksymalna wydajność)
+- [Reguły planisty I/O](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/60-ioschedulers.rules) - Wybiera optymalny planista dla każdego typu dysku (HDD, SSD, NVMe)
+- [Reguły hdparm](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/69-hdparm.rules) - Ustawia dyski twarde SATA i IDE na maksymalną wydajność
+- [NVIDIA RTD3](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/71-nvidia.rules) - Konfiguruje funkcjonalność dynamicznego zarządzania energią dla generacji GPU Turing. **RTD3 nie działa poprawnie na GPU Turing z otwartymi modułami**
+- [Opóźnienie CPU DMA](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/99-cpu-dma-latency.rules) -
+Zezwala na dostęp do węzła urządzenia `cpu_dma_latency` przez grupę audio.
+
+## Opcje modprobe
+
+- Wymusza sterownik AMDGPU na Southern Islands (GCN 1.0) i Sea Islands (GCN 2.0)
+- Włącza [różne poprawki](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/modprobe.d/nvidia.conf) dla NVIDIA
+- Dodaje do czarnej listy moduły watchdog
+
+## Skrypty pomocnicze
+
+- **`amdpstate-guided`** - Ustawia sterownik skalowania `amd-pstate` na `guided` i przełącza zarządcę procesora na `schedutil`
+- **`cachyos-bugreport.sh`** - Zbiera różne logi z `inxi`, `dmesg` i `journalctl`, aby pomóc w rozwiązywaniu problemów
+- **`game-performance`** - Skrypt opakowujący dla `powerprofilesctl`, aby przełączyć na profil wydajności na żądanie.
+Zobacz [Przełączanie profili zasilania na żądanie](/pl/configuration/gaming#przełączanie-profilu-zasilania-na-żądanie)
+- **`kerver`** - Skrypt QoL (jakości życia) pokazujący informacje o bieżącym jądrze
+- **`paste-cachyos`** - Skrypt do wklejania danych wyjściowych terminala dla plików tekstowych z systemu
+
+    <Tabs>
+        <TabItem label="Przesyłanie plików tekstowych">
+            ```sh
+            ❯ paste-cachyos /ścieżka/do/pliku
+            ```
+        </TabItem>
+        <TabItem label="Przesyłanie danych wyjściowych terminala">
+            ```sh
+            ❯ <polecenie> | paste-cachyos
+            ```
+        </TabItem>
+    </Tabs>
+- [`pci-latency`](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/pci-latency)
+    ```sh title="Włączanie pci-latency w całym systemie"
+    ❯ sudo systemctl enable --now pci-latency.service
+    ```
+- **`sbctl-batch-sign`** - Skrypt pomocniczy do łatwego podpisywania obrazów jądra i plików binarnych EFI dla bezpiecznego rozruchu, zapisujący je w bazie danych sbctl
+- **`topmem`** - Pokazuje statystyki RAM, swap i KSM dla 10 procesów w porządku malejącym.
+
+
+## Inne konfiguracje
+
+### Poprawki użycia pamięci
+
+- Konfiguracja THP Shrinker (max_ptes_none = 409)
+- Ustawienie maksymalnego rozmiaru dziennika systemd na 50MB
+- [Generator ZRAM](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/systemd/zram-generator.conf) - Ustawia ZRAM na rozmiar równy RAM i używa ZSTD do kompresji
+
+### Reguły Ananicy-cpp
+
+- [ananicy-cpp](https://gitlab.com/ananicy-cpp/ananicy-cpp) z [zestawami reguł utrzymywanymi przez społeczność](https://github.com/CachyOS/ananicy-rules)
+
+### Modyfikacje sieciowe
+
+- [systemd-resolved jako domyślny resolver DNS](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/NetworkManager/conf.d/dns.conf) dla NetworkManager
+
+### RTC
+
+- Zwiększenie najwyższej żądanej częstotliwości przerwań RTC do **3072**
+
+### Ulepszenia NTP (QoL)
+
+- Preferowany serwer ustawiony na **Cloudflare**
+- Serwery zapasowe > **Google i Arch Linux**
+
+### Poprawki usług systemd
+
+- Limit czasu na uruchomienie usługi/jednostki ustawiony na **15s**
+- Limit czasu na zatrzymanie usługi/jednostki ustawiony na **10s**
+- Miękki limit otwartych deskryptorów plików ustawiony na **2048**
+- Twardy limit otwartych deskryptorów plików ustawiony na **2097152**
+
+### X.Org
+
+- Włączenie [Stuknij, by kliknąć](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/share/X11/xorg.conf.d/20-touchpad.conf) domyślnie dla wszystkich sesji X11

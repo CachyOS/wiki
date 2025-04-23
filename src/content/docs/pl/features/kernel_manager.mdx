@@ -1,0 +1,116 @@
+---
+title: Zarządzanie jądrami Linuksa i frameworkiem Sched-ext za pomocą Menedżera Jądra CachyOS
+description: Menedżer Jądra CachyOS to potężne narzędzie do zarządzania jądrami, pozwalające użytkownikom łatwo instalować lub budować niestandardowe jądra.
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+Instalacja jądra z repozytorium
+---------------------------------------
+
+**Menedżer Jądra CachyOS ułatwia instalację i zarządzanie jądrami z dowolnego repozytorium Arch Linux.**
+
+Aby zainstalować jądro, uruchom aplikację `Menedżer Jądra CachyOS` i wybierz żądane jądro, zaznaczając pole `[]` z listy wszystkich dostępnych opcji, a następnie po prostu naciśnij `Wykonaj`, aby rozpocząć instalację jądra.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km1.png')} />
+
+:::note
+Przycisk `Wykonaj` staje się niedostępny, gdy wybierzesz już zainstalowane jądro.
+:::
+
+Konfiguracja i budowanie niestandardowego jądra CachyOS
+---------------------------------
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km2.png')} />
+
+**Menedżer Jądra CachyOS ułatwia konfigurację i budowanie niestandardowego jądra CachyOS.**
+
+:::note
+Menedżer Jądra CachyOS jest specjalnie zaprojektowany do budowania niestandardowych jąder dla **wariantów CachyOS** i nie obsługuje budowania ani konfigurowania standardowego jądra Arch Linux ani żadnego innego wariantu.
+:::
+
+*Aby rozpocząć, otwórz Menedżera Jądra i kliknij przycisk `Konfiguruj`, aby rozpocząć dostosowywanie różnych ustawień, takich jak pożądany harmonogram, częstotliwość taktowania i inne. Po wprowadzeniu żądanych zmian kliknij przycisk `Zbuduj jądro`, aby rozpocząć budowanie niestandardowego jądra CachyOS.*
+
+**Dostępne opcje konfiguracji:**
+
+* *`Niestandardowa nazwa pakietu`: **Dzięki tej opcji możesz nazwać swoje jądro jakkolwiek chcesz, na przykład: `linux-custom-cachy`***
+* *Harmonogram (BORE, RC, RT, RT+BORE, EEVDF i BMQ)*
+* *Włącz konfigurację CachyOS*
+* *Dostosuj konfigurację za pomocą nconfig, menuconfig, xconfig lub gconfig*
+* *Włącz/Wyłącz NUMA*
+* *Włącz/Wyłącz Modprobed-db*
+* *KBUILD CFLAGS (-O3 lub -O2)*
+* *Gubernator wydajności jako domyślny*
+* *Włącz BBR3*
+* *Wybór częstotliwości taktowania (100Hz, 250Hz, 300Hz, 500Hz, 600Hz, 750Hz, 1000Hz)*
+* *Tryb beztyknięciowy (bezczynny, okresowy, pełny)*
+* *Wywłaszczanie (Pełne, Dobrowolne lub Serwerowe)*
+* *Transparentne Hugepages (Zawsze lub Madvise)*
+* *Włącz/Wyłącz DAMON*
+* *Włącz/Wyłącz automatyczne wykrywanie architektury procesora*
+* *Zastosuj optymalizacje jądra dla określonych architektur procesora*
+* *Włącz LTO (Pełne, Cienkie, Brak)*
+* *Zbuduj moduł ZFS*
+* *Zbuduj zamknięty moduł NVIDIA*
+* *Zbuduj otwarty moduł NVIDIA*
+* *Dołącz vmlinux z informacjami/symbolami debugowania*
+* *Wczytaj/Zapisz preset konfiguracji Menedżera Jądra: `(Tylko presety z samego menedżera)`*
+* *Zarządzanie łatkami jądra (Wsparcie zdalne i lokalne)*
+
+**Po pomyślnym zbudowaniu jądra zostaniesz poproszony o podanie hasła sudo w celu zainstalowania jądra.**
+
+## Zarządzanie frameworkiem Sched-ext
+
+**Menedżer Jądra zapewnia graficzny interfejs użytkownika (GUI) do zarządzania i kontrolowania harmonogramów sched-ext. Dostęp do GUI uzyskasz, klikając przycisk `Konfiguracja harmonogramu sched-ext` w głównym oknie.**
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km3.png')} />
+
+Ten interfejs graficzny pozwala na:
+
+- **Przełączanie między różnymi harmonogramami sched-ext (scx).**
+- **Włączanie lub wyłączanie usługi harmonogramu.**
+- **Sprawdzanie aktualnie działającego harmonogramu.**
+- **Ustawianie flag i profili harmonogramu. `Obecnie tylko bpfland i lavd obsługują profile.`**
+
+Aby to osiągnąć, Menedżer Jądra używa `scx_loader` z konfiguracją przechowywaną w:
+
+`/etc/scx_loader.toml`. Więcej informacji na temat pliku konfiguracyjnego `scx_loader` znajdziesz w [tej dokumentacji](https://github.com/sched-ext/scx/blob/main/rust/scx_loader/configuration.md).
+
+- **Jak działa `scx_loader`?**
+    - Po wybraniu harmonogramu i profilu, scx_loader uruchomi harmonogram z wybranym profilem i zapisze tę konfigurację w pliku `/etc/scx_loader.toml`, aby zapewnić trwałość ustawień po ponownym uruchomieniu komputera. Przykład tego, jak będzie wyglądał plik po wybraniu `scx_bpfland` z profilem `Gaming`:
+        ```toml
+        default_sched = "scx_bpfland"
+        default_mode = "Gaming"
+
+        [scheds.scx_bpfland]
+        auto_mode = []
+        gaming_mode = ["-m", "performance"]
+        lowlatency_mode = ["-k", "-s", "5000", "-l", "5000"]
+        powersave_mode = ["-m", "powersave"]
+        ```
+
+### Profile harmonogramu
+
+- **Do czego służą "profile"?**
+  - Są to predefiniowane ustawienia harmonogramu, które modyfikują flagi w oparciu o sprawdzone kombinacje w celu zwiększenia efektywności w określonych przypadkach użycia, takich jak "Gaming".
+
+**Sprawdź tabelę, aby uzyskać bardziej szczegółowe informacje.**
+
+#### Bpfland
+
+|   Nazwa profilu    |  Flagi wiersza poleceń |                                                         Opis                                                         	|
+|:------------------:|:----------------------:|:---------------------------------------------------------------------------------------------------------------------------:	|
+| **Niskie opóźnienie** | `-k -s 5000 -l 5000` 	| Ma na celu zmniejszenie opóźnień kosztem przepustowości. Odpowiedni dla aplikacji czasu rzeczywistego, takich jak przetwarzanie dźwięku i multimedia. 	|
+| **Gaming**      	| `-m performance`  	| Optymalizuje pod kątem wysokiej wydajności w grach. Priorytetyzuje rdzenie P nad rdzeniami E w procesorach Intel oraz CCD w procesorach Ryzen X3D.         	|
+| **Oszczędzanie energii**  	| `-m powersave`       	| Priorytetyzuje efektywność energetyczną. Preferuje mniej wydajne rdzenie (np. rdzenie E w procesorach Intel).                                          	|
+| **Serwer**        | `-c 0`                | Wyłącza interaktywną klasyfikację zadań w Bpfland, czyniąc go bardziej odpowiednim dla serwera; oczekiwany jest wzrost wydajności w obciążeniach serwerowych o około 2-3%
+
+#### LAVD
+
+|       Nazwa profilu       	| Flagi wiersza poleceń 	|                                                             Opis                                                            	|
+|:------------------------:	|:------------------:	|:----------------------------------------------------------------------------------------------------------------------------------:	|
+| **Gaming i Niskie opóźnienie** 	|   `--performance`  	| Maksymalizuje wydajność, wykorzystując wszystkie dostępne rdzenie, priorytetyzując rdzenie fizyczne.                                                   	|
+|      **Oszczędzanie energii**      	|    `--powersave`   	| Minimalizuje zużycie energii przy zachowaniu rozsądnej wydajności. Priorytetyzuje wydajne rdzenie i wątki ponad rdzeniami fizycznymi. 	|

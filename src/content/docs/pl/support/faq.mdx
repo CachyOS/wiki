@@ -1,0 +1,208 @@
+---
+title: FAQ
+description: Często zadawane pytania i wskazówki
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::note
+Poniższe pytania i odpowiedzi dotyczą CachyOS oraz dystrybucji opartych na Arch Linux.
+:::
+
+## Instalacja
+
+### Dlaczego KDE Plasma jest jedyną dostępną opcją w środowisku live?
+
+KDE Plasma można uznać za nasze "flagowe" środowisko graficzne, dlatego poświęcamy mu najwięcej uwagi. Pozostałe obrazy ISO CachyOS
+były utrzymywane po macoszemu, więc aby uniknąć niepożądanych problemów i niedogodności dla użytkownika, zdecydowaliśmy się je wycofać, abyśmy mogli skupić nasze wysiłki na dostarczaniu
+najlepszych wrażeń z użytkowania.
+
+Zalecamy instalowanie CachyOS w maszynie wirtualnej w celu przetestowania różnych środowisk graficznych i menedżerów okien, ponieważ ISO live jest używane tylko
+do instalacji i odzyskiwania uszkodzonej instalacji za pomocą [cachy-chroot](https://github.com/CachyOS/cachy-chroot).
+
+### Kiedy naciskam "Uruchom instalator", nic się nie dzieje...?
+
+:::caution
+Upewnij się, że masz aktywne/działające połączenie internetowe, w przeciwnym razie nic się nie stanie po naciśnięciu tego przycisku.
+:::
+
+Chociaż może się wydawać, że nic się nie stało, w tle uruchamiany jest skrypt po naciśnięciu tego przycisku. A co on robi? Uruchamia skrypt przygotowawczy, który ma na celu uniknięcie możliwych problemów, takich jak posiadanie przestarzałego pęku kluczy (keyring).
+
+Dam ci małe wprowadzenie do tego, co ten [skrypt](https://github.com/CachyOS/CachyOS-Live-ISO/blob/master/archiso/airootfs/usr/local/bin/calamares-online.sh) robi w tle:
+
+<Steps>
+
+1. Usuwa istniejący plik pęku kluczy znaleziony w `/etc/pacman.d/gnupg`.
+2. Rozpoczyna instalację i aktualizację pakietów pęków kluczy `Arch Linux i CachyOS`.
+3. Inicjuje i wypełnia pęk kluczy pacmana.
+4. Włącza synchronizację czasu sieciowego, aby upewnić się, że zegar systemowy jest dokładny, wykonując `timedatectl set-ntp true`.
+5. Określa i sprawdza, czy typ systemu to **UEFI czy BIOS/MBR**.
+6. Jeśli działający system to **UEFI** > poproś użytkownika o wybranie programu rozruchowego, w przeciwnym razie nie.
+
+</Steps>
+
+**Dlatego zazwyczaj załadowanie instalatora zajmuje trochę czasu.**
+
+### Mój proces instalacji utknął na 33% już od jakiegoś czasu.
+
+Oznacza to, że Twoje połączenie internetowe jest albo bardzo wolne, albo niestabilne, co powoduje, że pacman ma problemy z pobieraniem pakietów.
+
+## Zarządzanie oprogramowaniem
+
+### Błąd "unable to lock database" (nie można zablokować bazy danych)
+```sh
+sudo rm /var/lib/pacman/db.lck
+```
+:::tip
+Możesz osiągnąć ten sam rezultat, używając funkcji **"Usuń blokadę bazy danych"** w `CachyOS Hello` w zakładce **Aplikacje/Ustawienia**.
+:::
+
+### Plik jest uszkodzony (nieprawidłowy lub uszkodzony pakiet (podpis PGP))
+
+```text
+# Przykład:
+:: File /var/cache/pacman/pkg/python-charset-normalizer-3.4.0-1-any.pkg.tar.zst
+is corrupted (invalid or corrupted package (PGP signature)).
+```
+
+```sh title='Uruchom następujące polecenia'
+sudo rm -rf /etc/pacman.d/gnupg/
+sudo pacman-key --init
+sudo pacman-key --populate
+
+sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
+sudo pacman-key --lsign-key F3B607488DB35A47
+
+sudo rm -R /var/lib/pacman/sync
+```
+
+### ostrzeżenie: wersja lokalna jest nowsza niż (warning local is newer than)
+
+#### Przykład:
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/update-warnings.png')} />
+
+```sh title='Aby usunąć te ostrzeżenia, wykonaj następujące polecenie:'
+sudo pacman -Syuu
+```
+
+### błąd: nie udało się pobrać pliku, Żądany adres URL zwrócił błąd: 404 (error: failed retrieving file, The requested URL returned error: 404)
+
+```text
+# Przykład
+sudo pacman -S telegram-desktop
+rozwiązywanie zależności...
+szukanie sprzecznych pakietów...
+
+Pakiety (4) libdbusmenu-qt5-0.9.3+16.04.20160218-5  qt5-imageformats-5.15.2-1
+             ttf-opensans-1.101-2  telegram-desktop-2.5.1-1
+
+Całkowity rozmiar do pobrania:   24.10 MiB
+Całkowity rozmiar po instalacji:  67.51 MiB
+
+:: Kontynuować instalację? [T/n] T
+:: Pobieranie pakietów...
+błąd: nie udało się pobrać pliku 'telegram-desktop-2.5.1-1-x86_64.pkg.tar.zst'
+z archlinux.mailtunnel.eu : Żądany adres URL zwrócił błąd: 404
+```
+
+*Oznacza to, że Twoja lokalna baza danych jest nieaktualna, dlatego pakiet, o który prosisz, nie może zostać pobrany.*
+
+```sh title='Odśwież bazę pakietów i wykonaj pełną aktualizację:'
+sudo pacman -Syu
+# Następnie spróbuj ponownie zainstalować żądany pakiet.
+```
+
+### Co oznacza -bin na końcu nazwy pakietu? Na przykład librewolf-bin
+
+Oznacza to, że pobierasz/instalujesz gotowy (prekompilowany) pakiet, więc nie musisz go kompilować ani budować.
+W naszych repozytoriach przechowujemy niektóre pakiety bin, które są zasadniczo kopiami lustrzanymi (mirrorami), które można pobrać z AUR.
+
+### Kiedy próbuję otworzyć Discord, otwiera się okno informujące mnie o aktualizacji
+
+#### Przykład:
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/discord-update.png')} />
+
+Dzieje się tak, ponieważ Discord wydał aktualizację, która nie jest jeszcze dostępna lub nie została zbudowana na żadnym z serwerów lustrzanych pacmana, przez co utkniesz,
+nie mogąc używać Discorda.
+
+Aby obejść ten problem, postępuj zgodnie z [przewodnikiem naprawy na Arch Wiki](<https://wiki.archlinux.org/title/Discord#Discord_asks_for_an_update_not_yet_available_in_the_repository>).
+
+
+### błąd: nie można usunąć /var/cache/pacman/pkg/download (error: could not remove /var/cache/pacman/pkg/download)
+
+:::tip
+Możesz również wyczyścić pamięć podręczną pacmana za pomocą CachyOS Hello w **Aplikacje/Ustawienia** > **Wyczyść pamięć podręczną pakietów**
+:::
+
+#### Przykład:
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/pacman-cache-error.png')} />
+
+*Zazwyczaj pojawia się to, gdy w `/var/cache/pacman/pkg` pozostały jakieś osierocone pakiety, których pacman nie może usunąć.*
+
+```sh title='Uruchom następujące polecenie, aby to naprawić'
+# Usuwa wszystkie osierocone pakiety przechowywane w pamięci podręcznej pkg.
+sudo rm -r /var/cache/pacman/pkg/*
+```
+
+### BŁĄD: nie znaleziono modułu: 'nvidia', 'nvidia_modeset', 'nvidia_uvm', 'nvidia_drm' (ERROR: module not found: 'nvidia', 'nvidia_modeset', 'nvidia_uvm', 'nvidia_drm')
+
+```sh title='Przykład'
+==> ERROR: module not found: 'nvidia'
+==> ERROR: module not found: 'nvidia_modeset'
+==> ERROR: module not found: 'nvidia_uvm'
+==> ERROR: module not found: 'nvidia_drm'
+```
+
+**Dwa powody tego błędu:**
+
+**1) Ponieważ Wczesne Ładowanie Modułów jest zawsze włączone w chwd, mkinitcpio konsekwentnie oczekuje obecności modułów NVIDIA, dlatego ten błąd pojawia się, gdy tych modułów brakuje.**
+
+**2) Może brakować modułów NVIDIA z innych zainstalowanych jąder w Twoim systemie.**
+
+```sh title='Zainstaluj następujący pakiet, aby naprawić ten błąd'
+sudo pacman -S nvidia
+```
+
+## Cachy Browser
+
+### Dlaczego ta przeglądarka ciągle usuwa moje zapisane dane logowania i ciasteczka?
+
+- *Dzieje się tak, ponieważ przeglądarka ma domyślnie włączoną opcję `Usuwaj ciasteczka i dane witryn po zamknięciu Cachy Browser`.*
+  - **Postępuj zgodnie ze zrzutem ekranu pokazującym, gdzie to wyłączyć:**
+    <br />
+    <ImageComponent imgsrc={import('~/assets/images/cachy-browser-cookies.png')} />
+
+### Strona główna GitHub sprawia, że przeglądarka jest nieużywalna i ekstremalnie wolna.
+
+- *Cachy Browser, ze względu na swoją naturę skłaniającą się ku prywatności, domyślnie wyłącza WebGL, a GitHub zależy od niego do renderowania swojej strony głównej.*
+  - **Włącz go ponownie, jak pokazano na zrzucie ekranu**
+    <br />
+    <ImageComponent imgsrc={import('~/assets/images/cachy-browser-webgl.png')} />
+  - *Po wyłączeniu tego parametru. Uruchom ponownie przeglądarkę i spróbuj ponownie.*
+*Ta rekomendacja dotyczy również stron internetowych, które korzystają z Akceleracji Sprzętowej za pośrednictwem WebGL, takich jak Photopea.*
+
+### Twoja przeglądarka jest zarządzana przez Twoją organizację. Czy muszę się martwić?
+
+- *Nie. Dzieje się tak, ponieważ dołączamy [plik zasad (polityk)](https://github.com/CachyOS/CachyOS-Browser-Settings/blob/master/distribution/policies.json), w którym wyłączamy funkcje i dodajemy modyfikacje do przeglądarki. Przykład: `dodatkowe wyszukiwarki.`*
+
+### RFP (Ochrona przed Fingerprintingiem)
+
+- Cachy Browser domyślnie włącza `privacy.resistFingerprinting`. Chociaż poprawia to prywatność, odbywa się to kosztem pewnych problemów dla użytkowników, którzy nie są tego świadomi, takich jak następujące:
+  - Artefakty renderowania
+  - Ciemny motyw nie jest stosowany
+  - Brak możliwości zalogowania się na niektórych stronach internetowych (Twitch)
+  - Niektóre kombinacje klawiszy nie działają
+
+- Aby zweryfikować, czy ta funkcja jest przyczyną problemu, którego obecnie doświadczasz, zapoznaj się z następującym [Artykułem Mozilli](https://support.mozilla.org/en-US/kb/resist-fingerprinting) i rozwiń sekcję **How might Resist Fingerprinting break web pages?** (Jak Ochrona przed Fingerprintingiem może psuć strony internetowe?).
+
+*Aby wyłączyć RFP, przejdź do `about:config`, wyszukaj **privacy.resistFingerprinting** i ustaw wartość na `false`*
+
+<br />
+    <ImageComponent imgsrc={import('~/assets/images/cachy-browser-resist-fingerprint.png')} />

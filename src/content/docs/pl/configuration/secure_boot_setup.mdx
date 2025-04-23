@@ -1,0 +1,156 @@
+---
+title: Konfiguracja Secure Boot
+description: Skonfiguruj Secure Boot za pomocą sbctl po zainstalowaniu CachyOS
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+# sbctl
+
+[`sbctl`](https://github.com/Foxboron/sbctl) to przyjazny dla użytkownika menedżer kluczy Secure Boot, który umożliwia konfigurację Secure Boot,
+oferuje funkcje zarządzania kluczami i śledzi pliki, które muszą być podpisane w łańcuchu rozruchowym.
+
+## Instalacja sbctl
+
+```bash
+❯ sudo pacman -S sbctl
+```
+
+## Konfiguracja wstępna
+
+### Menedżer rozruchu GRUB
+
+Jeśli używasz GRUB-a, uruchom następujące polecenie, aby włączyć obsługę Secure Boot w GRUB-ie przy użyciu kluczy CA.
+
+```bash
+❯ sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
+```
+
+:::note
+Ładowanie niepotrzebnych modułów w menedżerze rozruchu może stanowić potencjalne ryzyko bezpieczeństwa.
+Uruchom to polecenie tylko wtedy, gdy faktycznie potrzebujesz Secure Boot.
+:::
+
+### Wchodzenie w tryb konfiguracji w UEFI
+Najpierw musimy przejść do ustawień oprogramowania układowego (firmware) i ustawić tryb Secure Boot na "Setup Mode". Możesz ponownie uruchomić system, aby wejść do ustawień oprogramowania układowego za pomocą następującego polecenia:
+
+```bash
+❯ systemctl reboot --firmware-setup
+```
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/ideapad-bios-secure-boot.jpg')} />
+
+Tak wygląda BIOS na Lenovo Ideapad 5 Pro. Zresetuj do trybu konfiguracji lub przywróć klucze fabryczne i uruchom ponownie system.
+
+## Konfiguracja sbctl
+
+```bash
+❯ sudo sbctl status # Jeśli tryb konfiguracji jest włączony, możemy przejść do następnego kroku
+Installed:      ✘ sbctl is not installed
+Setup Mode:     ✘ Enabled
+Secure Boot     ✘ Disabled
+
+❯ sudo sbctl create-keys # Utwórz własne klucze Secure Boot
+Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Creating secure boot keys...✔
+Secure boot keys created!
+
+❯ sudo sbctl enroll-keys -m # Zarejestruj swoje klucze wraz z kluczami Microsoft
+Enrolling keys to EFI variables...✔
+Enrolled keys to the EFI variables!
+
+❯ sudo sbctl status
+# sbctl powinien być teraz zainstalowany i możemy przejść do podpisywania obrazów jądra i menedżera rozruchu
+Installed:      ✔ sbctl is installed
+Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Setup Mode:     ✔ Disabled
+Secure Boot     ✘ Disabled
+Vendor Keys:    microsoft
+```
+
+## Podpisywanie obrazu jądra i menedżera rozruchu
+
+CachyOS dostarcza skrypt [`sbctl-batch-sign`](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign),
+który pobiera listę plików wymagających podpisania z wyniku polecenia `sudo sbctl verify` i podpisuje je wszystkie.
+
+```bash
+❯ sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is not signed
+✘ /boot/EFI/BOOT/BOOTX64.EFI is not signed
+✘ /boot/EFI/systemd/systemd-bootx64.efi is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is not signed
+
+❯ sudo sbctl-batch-sign
+
+❯ sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is signed
+✔ /boot/EFI/BOOT/BOOTX64.EFI is signed
+✔ /boot/EFI/systemd/systemd-bootx64.efi is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
+```
+
+:::caution
+W systemach z oddzielnymi partycjami `/boot` i `/boot/efi`, `sbctl` może skanować pliki binarne EFI tylko w `/boot/efi`.
+Powoduje to, że obrazy jądra znajdujące się w `/boot` nie są wykrywane. `sbctl-batch-sign` obchodzi ten problem, **zawsze** skanując `/boot` w poszukiwaniu plików `vmlinuz-*`.
+:::
+
+Teraz, gdy wszystkie pliki są podpisane, możemy ponownie uruchomić komputer, wejść do ustawień UEFI i włączyć Secure Boot.
+Zauważ, że jest to proces jednorazowy, ponieważ podpisanie plików z flagą `-s` zapisze te pliki w bazie danych `sbctl`.
+`sbctl` jest dostarczany z [hakiem pacmana](https://wiki.archlinux.org/title/Pacman_hook), co oznacza, że automatycznie podpisze wszystkie nowe pliki podczas aktualizacji jądra lub menedżera rozruchu.
+
+### systemd-boot
+
+CachyOS używa usługi `systemd-boot-update.service` dostarczanej przez systemd do aktualizacji menedżera rozruchu podczas ponownego uruchamiania. Oznacza to, że hak pacmana `sbctl` **nie** podpisze zaktualizowanych plików binarnych EFI. Jako obejście tego problemu możemy podpisać menedżer rozruchu bezpośrednio
+
+```sh
+❯ sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+```
+
+### Limine
+
+Limine to specjalny menedżer rozruchu, który umożliwia sprawdzanie skrótów (hash) obrazów jądra i innych plików używanych przez Limine podczas rozruchu. Jeśli ta funkcja jest włączona, jakakolwiek ręczna konfiguracja wykonana przez użytkownika, np. podpisanie obrazu za pomocą `sbctl-batch-sign`, zmodyfikuje skrót odpowiednich plików i spowoduje niepowodzenie weryfikacji sumy kontrolnej przez Limine.
+
+Jednak podpisywanie tych plików nie jest konieczne w przypadku Limine, ponieważ ma on specjalny proces rozruchowy, który omija ładowanie łańcuchowe EFI (chainloading) i sprawdzanie podpisów. Jedyne pliki binarne EFI, które muszą być podpisane, to sam Limine oraz zapasowy plik binarny EFI znajdujący się we wszystkich systemach UEFI.
+
+```sh
+# Użyj limine-enroll-config, aby podpisać plik binarny EFI Limine
+# Wykorzystuje to sbctl pod spodem
+❯ sudo limine-enroll-config
+
+# Podpisz specjalny plik binarny EFI
+❯ sudo sbctl sign -s /boot/EFI/BOOT/BOOTX64.EFI
+```
+
+## Sprawdź, czy Secure Boot jest włączony
+
+Aby sprawdzić, czy Secure Boot jest rzeczywiście włączony, możesz uruchomić jedno z następujących poleceń
+
+```bash
+❯ sudo sbctl status
+Zainstalowany:      ✓ sbctl jest zainstalowany
+GUID właściciela:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Tryb konfiguracji: ✓ Wyłączony
+Secure Boot:    ✓ Włączony
+Klucze dostawcy:    microsoft
+
+❯ bootctl
+System:
+      Oprogramowanie układowe: UEFI 2.80 (INSYDE Corp. 28724.16435)
+ Architektura oprogramowania układowego: x64
+   Secure Boot: włączony (użytkownik)
+  Wsparcie TPM2: tak
+  Zmierzony UKI: nie
+  Rozruch do FW: obsługiwany
+```
+
+## Linki i podziękowania
+
+- [Arch Wiki](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
+stanowiło podstawę tego przewodnika. Większość materiału została zaczerpnięta stamtąd
+- [sbctl](https://github.com/Foxboron/sbctl) - Ten prosty przewodnik umożliwiający włączenie obsługi Secure Boot nie byłby możliwy, gdyby nie niesamowita praca włożona w stworzenie tego oprogramowania.
+- [Improving the Secure Boot Experience by Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) - Wpis na blogu Mortena "Foxborona" Linderuda o tym, jak skomplikowane było doświadczenie z Secure Boot przed `sbctl`
