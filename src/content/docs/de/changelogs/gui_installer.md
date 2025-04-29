@@ -2,6 +2,22 @@
 title: GUI-Installer-Änderungsprotokolle
 description: Änderungsprotokolle von Calamares und der GUI-Live-ISO
 ---
+25.04
+----
+
+**Funktionen:**
+- **occt**: OCCT wurde zum ISO hinzugefügt, um eine Live-Umgebung für Stresstests bereitzustellen
+  - Danke an Marek für diese Idee!
+
+**Fehlerbehebungen:**
+- **kernel**: Behebt Modulabsturz auf Asus-Laptops
+- **limine**: Limine hat jetzt mkinitcpio-limine-hook installiert und erstellt automatisch Bootloader-Einträge
+
+
+**Änderungsprotokoll für die Handheld Edition:**
+- **audio**: Audioprofile für ROG Ally X und Legion Go hinzugefügt
+- **gamescope**: gamescope-plus durch Upstream-Gamescope ersetzt
+
 25.03
 ----
 
