@@ -3,6 +3,12 @@ title: Einfaches Übertakten und/oder Undervolting von NVIDIA-Karten unter Cachy
 description: Übertakten und Undervolten von NVIDIA-Karten einfach unter Wayland
 ---
 
+:::caution[WARNUNG]
+Diese Anleitung ist **veraltet** und muss aktualisiert werden.
+
+Eine aktuellere Lösung zum Übertakten unter Linux finden Sie in der Zwischenzeit im [LACT](https://github.com/ilya-zlobintsev/LACT)-Projekt.
+:::
+
 Dieses Tutorial beschreibt, wie man NVIDIA-Karten unter Linux übertakten und/oder undervolten kann. Während NVIDIA-Karten nicht die gleiche Bandbreite an Tools wie unter Windows haben (kein MSI Afterburner oder direkte Kontrolle über die Spannungskurve), gibt es dennoch relativ einfache Möglichkeiten, die Taktraten zu erhöhen oder die Karte zu undervolten, wenn man weiß, wie es geht.
 
 In diesem Tutorial richten wir Python-Skripte ein, um verschiedene Boosts/Offsets anzupassen, und erstellen einen Dienst, der diese Skripte automatisch nach dem Booten ausführt.

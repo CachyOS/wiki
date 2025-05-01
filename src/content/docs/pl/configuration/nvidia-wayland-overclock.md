@@ -3,6 +3,12 @@ title: Łatwe podkręcanie i/lub undervolting kart NVIDIA w CachyOS
 description: Łatwe podkręcanie i undervolting kart NVIDIA w Wayland
 ---
 
+:::caution[OSTRZEŻENIE]
+Ten poradnik jest **nieaktualny** i wymaga aktualizacji.
+
+W międzyczasie, proszę sprawdzić projekt [LACT](https://github.com/ilya-zlobintsev/LACT), aby znaleźć bardziej aktualne rozwiązanie do podkręcania na Linuksie.
+:::
+
 Ten poradnik opisuje, jak podkręcać i/lub obniżać napięcie (undervolting) kart NVIDIA pod Linuksem. Chociaż dla kart NVIDIA nie ma tak szerokiej gamy narzędzi jak w systemie Windows (brak MSI Afterburner czy bezpośredniej kontroli nad krzywą napięcia), nadal istnieją stosunkowo proste sposoby na zwiększenie taktowania lub obniżenie napięcia karty, jeśli wiesz, jak to zrobić.
 
 W tym poradniku skonfigurujemy skrypty Python do dostosowywania różnych wartości boost/offsetów oraz utworzymy usługę systemową, która będzie automatycznie uruchamiać te skrypty po starcie systemu.

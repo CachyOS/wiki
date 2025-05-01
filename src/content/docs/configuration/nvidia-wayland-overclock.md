@@ -3,6 +3,12 @@ title: Easy Overclocking and/or Undervolting NVIDIA Cards on CachyOS
 description: Overclock and Unvervolt NVIDIA Cards easily on wayland
 ---
 
+:::caution[WARNING]
+This guide is **outdated** and needs to be updated.
+
+In the meantime, please check the [LACT](https://github.com/ilya-zlobintsev/LACT) project for a more up-to-date solution to overclocking on Linux.
+:::
+
 This tutorial describes how to overclock and/or undervolt NVIDIA cards under Linux. While NVIDIA cards don't have the same breadth of tools available as under Windows (no MSI Afterburner or direct control over the voltage curve), there are still relatively easy ways to boost clocks or undervolt your card if you know how to do it.
 
 In this tutorial, we'll set up Python scripts for adjusting various boosts/offsets and create a service to run these scripts automatically after boot.

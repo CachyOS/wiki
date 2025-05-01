@@ -3,6 +3,12 @@ title: Snadné přetaktování a/nebo podvoltování karet NVIDIA v CachyOS
 description: Snadné přetaktování a podvoltování karet NVIDIA na Waylandu
 ---
 
+:::upozornění[VAROVÁNÍ]
+Tento návod je **zastaralý** a je třeba ho aktualizovat.
+
+Mezitím se prosím podívejte na projekt [LACT](https://github.com/ilya-zlobintsev/LACT), kde najdete aktuálnější řešení pro přetaktování na Linuxu.
+:::
+
 Tento návod popisuje, jak přetaktovat a/nebo podvoltovat karty NVIDIA v Linuxu. Zatímco karty NVIDIA nemají tak širokou škálu dostupných nástrojů jako v systému Windows (žádný MSI Afterburner ani přímé ovládání napěťové křivky), stále existují relativně snadné způsoby, jak zvýšit takty nebo podvoltovat vaši kartu, pokud víte, jak na to.
 
 V tomto návodu nastavíme Python skripty pro úpravu různých zvýšení/posunů a vytvoříme službu pro automatické spouštění těchto skriptů po spuštění systému.
