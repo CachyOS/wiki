@@ -388,17 +388,6 @@ export default defineConfig({
               link: 'configuration/sched-ext',
             },
             {
-              label: 'NVIDIA Wayland Overclocking',
-              translations: {
-                ru: 'Разгон NVIDIA на Wayland',
-                de: 'NVIDIA Wayland Übertaktung',
-                pl: 'NVIDIA Wayland Przetaktowanie',
-                cs: 'Přetaktování NVIDIA na Waylandu',
-                sk: 'Pretaktovanie NVIDIA na Waylande',
-              },
-              link: 'configuration/nvidia-wayland-overclock',
-            },
-            {
               label: 'Automounting Additional Drives',
               translations: {
                 ru: 'Автоматическое монтирование дополнительных дисков',
