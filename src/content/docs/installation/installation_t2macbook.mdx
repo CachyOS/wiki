@@ -94,7 +94,28 @@ After the installation is complete and you have rebooted into your new CachyOS s
 <Steps>
 
 1.  **Install Wi-Fi Firmware Permanently:**
-    *   If you have followed [Enable Wi-Fi in the Live Environment](#installation-process) step to get firmware in the live ISO, you can simply follow it again. Otherwise connect to the internet (e.g., Ethernet, USB tethering) and follow the steps below:
+    *   If you will not be using the Wi-Fi firmware from the EFI partition, you can skip configuring the NetworkManager and proceed to installing the firmware package.
+        <details>
+            <summary>(Optional) Configure NetworkManager for Wi-Fi</summary>
+            *   Run these commands to copy the firmware from the EFI partition (created in [Extract Wi-Fi Firmware](#optional-extract-wi-fi-firmware)) and configure the NetworkManager:
+                ```sh
+                # Mount the EFI partition (usually nvme0n1p1 on T2 Macs)
+                sudo mkdir -p /tmp/apple-wifi-efi
+                sudo mount /dev/nvme0n1p1 /tmp/apple-wifi-efi
+
+                # Copy firmware from EFI to the live environment
+                bash /tmp/apple-wifi-efi/firmware.sh get_from_efi
+                sudo umount /tmp/apple-wifi-efi
+
+                # Configure NetworkManager to use iwd backend
+                cat <<EOF | sudo tee /etc/NetworkManager/conf.d/wifi_backend.conf
+                [device]
+                wifi.backend=iwd
+                EOF
+                sudo systemctl restart NetworkManager
+                ```
+            *   You should now be able to connect to Wi-Fi networks using the network applet in the system tray.
+        </details>
     *   Open a terminal and download the firmware package from the Arch Linux T2 mirror:
         ```sh
         curl https://mirror.funami.tech/arch-mact2/os/x86_64/apple-bcm-firmware-14.0-1-any.pkg.tar.zst -o apple-bcm-firmware-14.0-1-any.pkg.tar.zst
