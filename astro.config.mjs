@@ -32,6 +32,11 @@ export const locales = {
     label: 'Indonesian',
     lang: 'id',
   },
+  jp:{
+    label: 'Japanese',
+    lang: 'ja',
+  }
+
 };
 const site = 'https://wiki.cachyos.org/';
 

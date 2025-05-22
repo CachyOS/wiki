@@ -1,0 +1,116 @@
+---
+title: Verwalten von Linux-Kerneln und des Sched-ext-Frameworks mit dem CachyOS Kernel Manager
+description: Der CachyOS Kernel Manager ist ein leistungsstarkes Tool zur Verwaltung von Kerneln, mit dem Benutzer auf einfache Weise benutzerdefinierte Kernel installieren oder erstellen können.
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+Kernelinstallation aus einem Repository
+---------------------------------------
+
+**Der CachyOS Kernel Manager vereinfacht die Installation und Verwaltung von Kerneln aus jedem Arch Linux-Repository.**
+
+Um einen Kernel zu installieren, starten Sie die Anwendung `CachyOS Kernel Manager` und wählen Sie den gewünschten Kernel aus, indem Sie das Kästchen `[]` in der Liste aller verfügbaren Optionen aktivieren. Klicken Sie dann einfach auf `Ausführen`, um die Kernelinstallation zu starten.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km1.png')} />
+
+:::note
+Die Schaltfläche `Ausführen` ist nicht verfügbar, wenn Sie einen bereits installierten Kernel auswählen.
+:::
+
+Konfigurieren und Erstellen eines benutzerdefinierten CachyOS-Kernels
+---------------------------------
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km2.png')} />
+
+**Der CachyOS Kernel Manager erleichtert das Konfigurieren und Erstellen eines benutzerdefinierten CachyOS-Kernels.**
+
+:::note
+Der CachyOS Kernel Manager wurde speziell für die Erstellung benutzerdefinierter Kernel für **CachyOS-Varianten** entwickelt und unterstützt nicht die Erstellung oder Konfiguration eines Standard-Arch-Linux-Kernels oder einer anderen Variante.
+:::
+
+*Um zu beginnen, öffnen Sie den Kernel Manager und klicken Sie auf die Schaltfläche `Konfigurieren`, um verschiedene Einstellungen anzupassen, z. B. den gewünschten Scheduler, die Tick-Rate und mehr. Nachdem Sie die gewünschten Änderungen vorgenommen haben, klicken Sie auf die Schaltfläche `Kernel erstellen`, um mit dem Erstellen Ihres benutzerdefinierten CachyOS-Kernels zu beginnen.*
+
+**Verfügbare Konfigurationsoptionen:**
+
+* *`Benutzerdefinierter Paketname`: **Mit dieser Option können Sie Ihren Kernel beliebig benennen, z. B. `linux-custom-cachy`***
+* *Scheduler (BORE, RC, RT, RT+BORE, EEVDF und BMQ)*
+* *CachyOS-Konfiguration aktivieren*
+* *Konfiguration über nconfig, menuconfig, xconfig oder gconfig optimieren*
+* *NUMA aktivieren/deaktivieren*
+* *Modprobed-db aktivieren/deaktivieren*
+* *KBUILD CFLAGS (-O3 oder -O2)*
+* *Performance-Governor als Standard*
+* *BBR3 aktivieren*
+* *Tick-Rate-Auswahl (100 Hz, 250 Hz, 300 Hz, 500 Hz, 600 Hz, 750 Hz, 1000 Hz)*
+* *Tickless-Modus (idle, periodic, full)*
+* *Preemption (Full, Voluntary oder Server)*
+* *Transparent Hugepages (Always oder Madvise)*
+* *DAMON aktivieren/deaktivieren*
+* *Automatische CPU-Architekturerkennung aktivieren/deaktivieren*
+* *Kernel-Optimierung für bestimmte CPU-Architekturen anwenden*
+* *LTO aktivieren (Full, Thin, No)*
+* *ZFS-Modul erstellen*
+* *NVIDIA Closed-Modul erstellen*
+* *NVIDIA Open-Modul erstellen*
+* *vmlinux mit Debug-Informationen/Symbolen einbeziehen*
+* *Kernel Manager-Konfigurationsvoreinstellung laden/speichern: `(Nur Voreinstellungen aus dem Manager selbst)`*
+* *Kernel-Patch-Verwaltung (Remote- und Local-Unterstützung)*
+
+**Sobald der Kernel erfolgreich erstellt wurde, werden Sie zur Eingabe Ihres Sudo-Passworts aufgefordert, um den Kernel zu installieren.**
+
+## Sched-ext-Framework-Verwaltung
+
+**Der Kernel Manager bietet eine grafische Benutzeroberfläche (GUI) zum Verwalten und Steuern von Sched-ext-Schedulern. Greifen Sie auf die GUI zu, indem Sie im Hauptfenster auf die Schaltfläche `sched-ext scheduler config` klicken.**
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km3.png')} />
+
+Diese GUI ermöglicht Ihnen Folgendes:
+
+- **Wechseln zwischen verschiedenen Sched-ext- (scx-) Schedulern.**
+- **Aktivieren oder Deaktivieren des Scheduler-Dienstes.**
+- **Überprüfen des aktuell laufenden Schedulers.**
+- **Festlegen von Scheduler-Flags und -Profilen. `Derzeit unterstützen nur bpfland und lavd Profile.`**
+
+Um dies zu erreichen, verwendet der Kernel Manager den `scx_loader` mit einer Konfiguration, die in folgender Datei gespeichert ist:
+
+`/etc/scx_loader.toml`. Weitere Informationen zur Konfigurationsdatei `scx_loader` finden Sie in [dieser Dokumentation](https://github.com/sched-ext/scx/blob/main/rust/scx_loader/configuration.md).
+
+- **Wie funktioniert der `scx_loader`?**
+    - Sobald Sie den Scheduler und das Profil ausgewählt haben, startet der scx_loader den Scheduler mit dem ausgewählten Profil und speichert diese Konfiguration in der Datei `/etc/scx_loader.toml`, um die Persistenz über Neustarts hinweg zu gewährleisten. Ein Beispiel dafür, wie die Datei bei der Auswahl von `scx_bpfland` mit dem Profil `Gaming` aussehen würde:
+        ```toml
+        default_sched = "scx_bpfland"
+        default_mode = "Gaming"
+
+        [scheds.scx_bpfland]
+        auto_mode = []
+        gaming_mode = ["-m", "performance"]
+        lowlatency_mode = ["-k", "-s", "5000", "-l", "5000"]
+        powersave_mode = ["-m", "powersave"]
+        ```
+
+### Scheduler-Profile
+
+- **Wozu dienen die "Profile"?**
+  - Es handelt sich um Voreinstellungen für den Scheduler, die Flags basierend auf bewährten Kombinationen ändern, um die Effektivität für bestimmte Anwendungsfälle wie "Gaming" zu verbessern.
+
+**In der Tabelle finden Sie eine detailliertere Übersicht.**
+
+#### Bpfland
+
+| Profilname        	| Befehlszeilen-Flags 	|                                                                                              Beschreibung                                                                                             |
+|:-----------------:	|:-------------------:	|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:	|
+| **Geringe Latenz** 	| `-k -s 5000 -l 5000`	| Soll die Latenz auf Kosten des Durchsatzes verringern. Geeignet für Echtzeitanwendungen wie Audioverarbeitung und Multimedia.                                                                  	|
+| **Gaming**         	| `-m performance`   	| Optimiert für hohe Leistung in Spielen. Priorisiert P-Kerne gegenüber E-Kernen auf Intel-CPUs und CCDs auf Ryzen X3D-CPUs.                                                                 	|
+| **Energiesparen**  	| `-m powersave`      	| Priorisiert die Energieeffizienz. Bevorzugt weniger leistungsstarke Kerne (z. B. E-Kerne auf Intel).                                                                                             	|
+| **Server**         | `-c 0`               | Deaktiviert die interaktive Aufgabenklassifizierung in Bpfland, wodurch es besser für einen Server geeignet ist. Eine Steigerung von ca. 2-3 % bei Server-Workloads wird erwartet. |
+
+#### LAVD
+
+| Profilname             	| Befehlszeilen-Flags 	|                                                                                                Beschreibung                                                                                               |
+|:----------------------:	|:-------------------:	|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:	|
+| **Gaming & Geringe Latenz** 	| `--performance`   	| Maximiert die Leistung, indem alle verfügbaren Kerne verwendet werden, wobei physische Kerne priorisiert werden.                                                                               	|
+| **Energiesparen**      	| `--powersave`      	| Minimiert den Stromverbrauch bei gleichzeitiger Aufrechterhaltung einer angemessenen Leistung. Priorisiert effiziente Kerne und Threads gegenüber physischen Kernen. |

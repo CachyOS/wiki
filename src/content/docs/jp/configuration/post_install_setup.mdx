@@ -1,0 +1,337 @@
+---
+title: Nach der Installation
+description: Schritte zur Konfiguration nach der Installation von CachyOS
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+## System aktualisieren
+
+<Tabs>
+
+<TabItem label="Mit Octopi (GUI)">
+
+Octopi ist ein grafischer Paketmanager für Arch-basierte Distributionen, der eine bequeme Möglichkeit bietet, Pakete und Aktualisierungen zu verwalten.
+Um Ihr System mit Octopi zu aktualisieren, folgen Sie diesen Schritten:
+
+<Steps>
+
+1. Starten Sie **Octopi** über das Anwendungsmenü.
+2. Klicken Sie im Hauptfenster auf die Schaltfläche **Nach Aktualisierungen suchen** (oben links), dann daneben auf **System aktualisieren**.
+3. Octopi sucht nun nach verfügbaren Aktualisierungen und fordert Sie auf, diese entweder in Octopi selbst oder in einem Terminal zu installieren.
+4. Um mit der Aktualisierung fortzufahren, klicken Sie auf die Schaltfläche **Anwenden**.
+5. Octopi lädt die Aktualisierungen herunter und installiert sie.
+6. Es wird empfohlen, Ihren Computer nach einem großen Update neu zu starten **(besonders wenn der Kernel ein Update erhalten hat)**.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Mit Pacman">
+
+<Steps>
+
+1. Öffnen Sie einen Terminalemulator (oder drücken Sie **`Strg + Alt + T`** - **`mod + return`** in einem WM wie z.B. Qtile).
+2. Führen Sie den folgenden Befehl aus, um das System zu aktualisieren:
+
+   ```sh
+   sudo pacman -Syu
+   ```
+3. Es wird empfohlen, Ihren Computer nach einem großen Update neu zu starten **(besonders wenn der Kernel ein Update erhalten hat)**.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Offline-Systemaktualisierung">
+
+*CachyOS unterstützt Offline-Systemaktualisierungen mit dem Skript [`pacman-offline`](https://github.com/eworm-de/pacman-offline). Dies ermöglicht es Ihrem System, Paketaktualisierungen herunterzuladen und sie beim nächsten Neustart anzuwenden. (Ja, wie unter Windows)*
+
+:::note
+Das Tool `pacman-offline` integriert sich in die Offline-Update-Funktion von systemd. Es behandelt automatisch Kernel-Updates und das Laden von Modulen.
+
+Die Datei `/etc/pacman.d/offline.conf` ist entscheidend für die Verwaltung, welche Pakete während regulärer und Offline-Updates aktualisiert werden. Stellen Sie sicher, dass sie korrekt für Ihren gewünschten Kernel konfiguriert ist, oder fügen Sie die Pakete hinzu, die Sie möchten, damit sie nur während der Ausführung von pacman-offline aktualisiert und bei einer regulären Aktualisierung ignoriert werden. Beispiel: `pacman -Syu`.
+
+**Wenn Sie den automatischen Aktualisierungs-Timer aktivieren, müssen Sie Ihr System nicht mehr manuell aktualisieren.**
+:::
+
+<Steps>
+
+1. **Installieren Sie das Paket pacman-offline**
+
+   ```bash
+   sudo pacman -S pacman-offline
+   ```
+
+2. **Weisen Sie Pacman an, aus der separaten Paket-Ignorierliste zu lesen.**
+
+   ```bash title='Fügen Sie die folgende Zeile zur Datei /etc/pacman.conf hinzu'
+   Include = /etc/pacman.d/offline.conf
+   ```
+   *Beispiel*
+   ```bash
+   # REPOSITORIES
+   #   - can be defined here or included from another file
+   #   - pacman will search repositories in the order defined here
+   #   - local/custom mirrors can be added here or in separate files
+   #   - repositories listed first will take precedence when packages
+   #     have identical names, regardless of version number
+   #   - URLs will have $repo replaced by the name of the current repo
+   #   - URLs will have $arch replaced by the name of the architecture
+   #
+   # Repository entries are of the format:
+   #       [repo-name]
+   #       Server = ServerName
+   #       Include = IncludePath
+   #
+   # The header [repo-name] is crucial - it must be present and
+   # uncommented to enable the repo.
+   #
+
+   Include = /etc/pacman.d/offline.conf
+   ```
+3. **Hinzufügen der CachyOS-Kernel, um zu verhindern, dass Pacman sie bei regulären Aktualisierungen ignoriert**
+
+   Das Tool `pacman-offline` verwendet diese Datei, um zu bestimmen, welche Pakete während der traditionellen Pacman-Aktualisierungen ignoriert werden sollen.
+   
+   **Beispiel: wenn Sie `sudo pacman -Syu` ausführen**
+
+   *Ersetzen Sie den Inhalt der Datei `/etc/pacman.d/offline.conf` durch Folgendes:*
+
+   ```text
+   # Arch Linux kernels
+   IgnorePkg = linux linux-headers linux-docs
+   IgnorePkg = linux-lts linux-lts-headers linux-lts-docs
+   IgnorePkg = linux-zen linux-zen-headers linux-zen-docs
+   IgnorePkg = linux-hardened linux-hardened-headers linux-hardened-docs
+
+   # CachyOS kernels
+   IgnorePkg = linux-cachyos linux-cachyos-headers
+   IgnorePkg = linux-cachyos-bmq linux-cachyos-bmq-headers
+   IgnorePkg = linux-cachyos-bore linux-cachyos-bore-headers
+   IgnorePkg = linux-cachyos-deckify linux-cachyos-deckify-headers
+   IgnorePkg = linux-cachyos-eevdf linux-cachyos-eevdf-headers
+   IgnorePkg = linux-cachyos-gcc linux-cachyos-gcc-headers
+   IgnorePkg = linux-cachyos-hardened linux-cachyos-hardened-headers
+   IgnorePkg = linux-cachyos-lts linux-cachyos-lts-headers
+   IgnorePkg = linux-cachyos-rc linux-cachyos-rc-headers
+   IgnorePkg = linux-cachyos-rt-bore linux-cachyos-rt-bore-headers
+   IgnorePkg = linux-cachyos-sched-ext linux-cachyos-sched-ext-headers
+   IgnorePkg = linux-cachyos-server linux-cachyos-server-headers
+   IgnorePkg = linux-cachyos-lto linux-cachyos-lto-headers
+   IgnorePkg = linux-cachyos-bmq-lto linux-cachyos-bmq-lto-headers
+   IgnorePkg = linux-cachyos-bore-lto linux-cachyos-bore-lto-headers
+   IgnorePkg = linux-cachyos-deckify-lto linux-cachyos-deckify-lto-headers
+   IgnorePkg = linux-cachyos-eevdf-lto linux-cachyos-eevdf-lto-headers
+   IgnorePkg = linux-cachyos-gcc-lto linux-cachyos-gcc-lto-headers
+   IgnorePkg = linux-cachyos-hardened-lto linux-cachyos-hardened-lto-headers
+   IgnorePkg = linux-cachyos-lts-lto linux-cachyos-lts-lto-headers
+   IgnorePkg = linux-cachyos-rc-lto linux-cachyos-rc-lto-headers
+   IgnorePkg = linux-cachyos-rt-bore-lto linux-cachyos-rt-bore-lto-headers
+   IgnorePkg = linux-cachyos-sched-ext-lto linux-cachyos-sched-ext-lto-headers
+   IgnorePkg = linux-cachyos-server-lto linux-cachyos-server-lto-headers
+   ```
+
+   *Jetzt werden alle diese Pakete bei den regulären Aktualisierungen ignoriert, aber während der Offline-Vorbereitung überprüft.*
+
+4. **Starten Sie die Vorbereitung für das Offline-Update nur einmal**
+
+   ```bash title='Führen Sie den folgenden Befehl aus'
+   sudo systemctl start pacman-offline-prepare.service
+   ```
+   Dieser Befehl veranlasst pacman-offline, einmalig ausgeführt zu werden, die Paketdatenbanken zu synchronisieren und mit dem Herunterladen von Aktualisierungen fortzufahren, diese aber nicht zu installieren.
+
+</Steps>
+
+*Wenn Sie möchten, dass dieses Skript automatisiert wird. Folgen Sie den folgenden Schritten:*
+
+<Steps>
+
+1. **Aktivieren Sie den Vorbereitungs-Timer**
+
+   Wenn `pacman-offline-prepare.timer` aktiviert ist, kann systemd dieses Skript auslösen, um Aktualisierungen täglich nach einigen Minuten nach jedem Systemstart herunterzuladen.
+
+   ```bash
+   sudo systemctl enable pacman-offline-prepare.timer
+   ```
+
+2. **Starten Sie Ihr System neu:**
+
+   Die Aktualisierungen werden während des nächsten Systemneustarts installiert.
+
+3. **(Optional) Automatische Systemneustarts:**
+
+    Aktivieren Sie den `pacman-offline-reboot.timer`, um Ihr System standardmäßig um **3 Uhr morgens** (Ihrer Zeitzone) automatisch neu zu starten, wenn ausstehende Aktualisierungen vorhanden sind. Beachten Sie, dass dies aufgrund der Einbeziehung von `RandomizedDelaySec`, die standardmäßig auf 2 Stunden eingestellt ist, nicht immer zum gleichen Zeitpunkt erfolgt.
+
+    ```bash
+    sudo systemctl enable pacman-offline-reboot.timer
+    ```
+
+    :::tip
+    Sie können die Datei `pacman-offline-reboot.timer` bearbeiten, um entweder zu ändern, zu welcher Zeit Ihr System neu gestartet werden soll, wenn ausstehende Aktualisierungen vorhanden sind, oder um den zufälligen Zeitplan zu deaktivieren.
+    :::
+
+</Steps>
+
+</TabItem>
+
+</Tabs>
+
+## Firewall konfigurieren (ufw)
+:::note
+UFW ist nach der Installation standardmäßig aktiviert.
+:::
+Um ufw zu konfigurieren, folgen Sie diesen Schritten:
+
+<Tabs>
+
+<TabItem label="Aktivieren">
+
+```bash
+sudo ufw enable
+```
+
+</TabItem>
+
+<TabItem label="Deaktivieren">
+
+```bash
+sudo ufw disable
+```
+
+</TabItem>
+
+<TabItem label="Erlauben">
+
+Standardmäßig erlaubt ufw allen eingehenden und ausgehenden Datenverkehr. Sie können der Firewall spezifische Regeln hinzufügen, um bestimmte Verbindungen zu blockieren oder zuzulassen.
+
+```bash
+# Zum Beispiel:
+sudo ufw allow ssh
+```
+
+</TabItem>
+
+<TabItem label="Verweigern">
+
+```bash
+# Um einen bestimmten Port zu verweigern, überprüfen Sie das folgende Beispiel:
+sudo ufw deny 80
+```
+
+</TabItem>
+
+<TabItem label="Status">
+
+```bash
+sudo ufw status verbose
+```
+
+</TabItem>
+
+</Tabs>
+
+:::note
+Seien Sie vorsichtig bei der Konfiguration von Firewall-Regeln, da falsch konfigurierte Regeln Sie von Ihrem eigenen System aussperren können.
+:::
+
+:::note
+Sie können es auch grafisch über den Abschnitt "Firewall" in den KDE Plasma-Einstellungen konfigurieren.
+:::
+
+## Globales Menü aktivieren
+Bei einigen Apps wie Visual Studio Code funktioniert das globale Menü möglicherweise nicht oder ist stattdessen an die übergeordnete App anstelle des Panels angehängt.
+
+```sh
+# Um die Unterstützung für das globale Menü zu aktivieren, führen Sie den Befehl aus und starten Sie die App neu.
+sudo pacman -S appmenu-gtk-module libdbusmenu-glib
+```
+
+## AppArmor-Unterstützung mit AppArmor.d-Profilen aktivieren (Optional)
+
+<Steps>
+
+1. Fügen Sie die folgenden Kernelparameter zu Ihrem Bootmanager hinzu, siehe [Bootmanager-Konfiguration](/de/configuration/boot_manager_configuration) als Referenz
+
+   ```text
+   lsm=landlock,lockdown,yama,integrity,apparmor,bpf
+   ```
+
+2. Installieren Sie die Pakete apparmor und apparmord **(Satz von über +1500 Profilen)**
+   ```bash
+   sudo pacman -S apparmor apparmor.d-git
+   ```
+
+3. AppArmor-Dienst aktivieren/starten
+
+   ```bash
+   systemctl enable --now apparmor.service
+   ```
+
+4. Aktivieren Sie das Caching für AppArmor-Profile
+
+   ```shell
+   # /etc/apparmor/parser.conf
+   ## Fügen Sie die folgenden Zeilen hinzu:
+   write-cache
+   Optimize=compress-fast
+   ```
+   Speichern Sie die Datei und starten Sie sie neu.
+</Steps>
+
+## Ändern der Standard-Shell
+
+Derzeit verwendet CachyOS [fish](https://fishshell.com/) als Standard-Login-Shell des Benutzers. Sie können jedoch
+die Standard-Shell nach Belieben ändern.
+
+<Tabs>
+   <TabItem label='bash'>
+
+      Dies ist die Standard-Shell auf fast jeder Linux-Distribution. Sie wird auch weiterhin als Login-Shell des Root-Benutzers verwendet. bash
+      verfügt über grundlegende Autovervollständigungsfunktionen und eine einfache Verlaufsverwaltung. Sie unterscheidet sich von zsh und fish dadurch, dass sie nicht über
+      die ausgefallene Anpassungs- und Plugin-Umgebung verfügt, die sowohl fish als auch zsh haben.
+
+
+      ```sh title='Ändern Ihrer Standard-Shell in bash'
+      ❯ chsh -s /usr/bin/bash
+      ```
+
+   </TabItem>
+
+   <TabItem label='zsh'>
+
+      Wir stellen eine [zsh-Konfiguration](https://github.com/CachyOS/cachyos-zsh-config) mit häufig verwendeten Plugins und Konfigurationen bereit.
+      Ziel ist es, eine 1:1-Funktionalität mit unserer [fish-Konfiguration](https://github.com/CachyOS/cachyos-fish-config) zu erreichen.
+      Dies ist auch die Standard-Shell, die in MacOS verwendet wird.
+
+      ```sh title='Ändern der Standard-Shell in zsh'
+      ❯ chsh -s /usr/bin/zsh
+      ```
+
+   </TabItem>
+</Tabs>
+
+## Aktualisieren/Verwenden von [tldr](https://github.com/tldr-pages/tldr)
+
+:::note
+CachyOS verwendet [tealdeer](https://github.com/tealdeer-rs/tealdeer), eine schnellere Rust-basierte Implementierung des ursprünglichen tldr
+:::
+
+Dieses Tool ist äußerst nützlich für diejenigen, die nicht viel lesen oder Zeit mit dem Lesen einer Hilfe-/Man-Page verschwenden möchten.
+
+<Steps>
+
+1. ```sh title="Öffnen Sie ein Terminal und führen Sie den folgenden Befehl aus"
+   tldr --update
+   ```
+2. Beispiel für die Verwendung von tldr:
+   ```sh
+   tldr java
+     Execute a `.jar` program:
+
+      java -jar filename.jar
+   
+   # Wie Sie sehen, ist es wirklich nützlich und es werden im Laufe der Zeit neue Tools/Seiten hinzugefügt
+   ```
+
+</Steps>

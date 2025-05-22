@@ -1,0 +1,206 @@
+---
+title: Allgemeine Systemoptimierungen
+description: Dinge, die Sie nach der Installation optimieren können
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## AMD Ryzen
+
+### AMD P-State Treiber
+---------------------------
+
+`amd-pstate` ist der AMD CPU-Leistungsanpassungstreiber, der einen neuen CPU-Frequenzsteuerungsmechanismus auf modernen AMD APU- und CPU-Serien im Linux-Kernel einführt. Der neue Mechanismus basiert auf Collaborative Processor Performance Control (CPPC), das eine feinere Frequenzverwaltung als ältere ACPI-Hardware-P-States bietet. Aktuelle AMD CPU/APU-Plattformen verwenden den ACPI-P-States-Treiber, um die CPU-Frequenz und -Takte zu verwalten, wobei nur zwischen 3 P-States gewechselt wird. CPPC ersetzt die ACPI-P-States-Steuerung und ermöglicht eine flexible Schnittstelle mit geringer Latenz, über die der Linux-Kernel Leistungshinweise direkt an die Hardware übermitteln kann.
+
+Im Folgenden sind 3 Betriebsmodi des `amd-pstate`-Treibers und Kernel-Cmdline-Einträge aufgeführt, um sie beim Booten zu verwenden:
+
+- **AMD P-State (Nicht-Autonomer Modus)**: `amd-pstate=passive`
+- **AMD P-State Guided (Geführter Autonomer Modus)**: `amd-pstate=guided`
+- **AMD P-State EPP (Autonomer Modus)**: `amd-pstate=active`
+
+:::note
+Der AMD P-State EPP-Treiber wird standardmäßig verwendet, wenn keine explizite Konfiguration vorgenommen wird.
+:::
+
+Sie können auch zur Laufzeit zwischen den Betriebsmodi wechseln, um die Optionen zu testen:
+
+- **Autonomer Modus**: Die Plattform berücksichtigt nur die Werte, die für minimale Leistung, maximale Leistung und Energieeffizienzeinstellung festgelegt wurden.
+   ```sh
+   echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+- **Geführt-autonomer Modus**: Die Plattform legt die Betriebsleistung entsprechend der aktuellen Arbeitslast und innerhalb der Grenzen fest, die das Betriebssystem durch minimale und maximale Leistungsregister setzt.
+   ```sh
+   echo guided | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+- **Nicht-autonomer Modus**: Die Plattform erhält die gewünschte Leistung direkt vom Betriebssystem über das Register für die gewünschte Leistung.
+   ```sh
+   echo passive | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+Für weitere Informationen:
+
+*   [https://www.kernel.org/doc/html/v6.9/admin-guide/pm/amd-pstate.html](https://www.kernel.org/doc/html/v6.9/admin-guide/pm/amd-pstate.html)
+*   [https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/](https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/)
+*   [https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/](https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/)
+
+### Konfigurieren von AMD P-State EPP
+
+Um P-State EPP zu verwenden, stehen zwei CPU-Frequenzskalierungs-Governors zur Verfügung: **powersave** und **performance**. Es wird empfohlen, den Powersave-Governor zu verwenden und eine Präferenz festzulegen.
+
+*   Powersave-Governor festlegen: `sudo cpupower frequency-set -g powersave`
+*   Performance-Governor festlegen: `sudo cpupower frequency-set -g performance`
+
+Um eine Präferenz festzulegen, führen Sie den folgenden Befehl mit der gewünschten Präferenz aus:
+
+```sh
+echo power | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
+```
+
+Verfügbare Präferenzen: `performance`, `power`, `balance_power`, `balance_performance`
+
+Benchmarks für jede Präferenz finden Sie hier:
+[https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/](https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/)
+
+### AMD 3D V-Cache Optimierer
+
+AMD hat einen Patch veröffentlicht, um die Cache-Planung auf Dual-CCD-3D-CPUs wie 7950X3D und 7900X3D zu optimieren.
+Sie müssen im BIOS unter der CPPC-Option die Option "Treiber" einstellen. Dadurch kann der verwendete Modus mit dem Sysfs überschrieben werden.
+
+Es gibt zwei Modi:
+1. Frequenz
+2. Cache
+
+Wenn `cache` eingestellt ist, versucht der Treiber, die Aufgaben zuerst auf den CCD mit dem höheren Cache zu legen, was hauptsächlich bei Spielen von Vorteil ist.
+Die Option `frequency` versucht, die Aufgaben auf den zweiten CCD zu legen, der eine höhere Frequenz als der 3D-Cache-CCD hat.
+
+Frequenz (Standard):
+```sh
+echo frequency | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
+```
+
+Cache:
+```sh
+echo cache | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
+```
+
+Nachdem Sie die Modi geändert haben, sollten die AMD Preferred Core Stats ein anderes Ranking liefern. Sie können es mit folgendem Befehl auslesen:
+```sh
+grep -v /sys/devices/system/cpu/cpu*/cpufreq/amd_pstate_prefcore_ranking
+```
+
+### AMD P-State Core Performance Boost
+
+AMD Core Performance Boost, auch bekannt als AMD Turbo Core, ist eine dynamische Frequenzskalierungstechnologie von AMD, die es dem Prozessor ermöglicht, die Betriebsfrequenz des Prozessors in bestimmten Versionen seiner Prozessoren dynamisch anzupassen und zu steuern, was bei Bedarf eine höhere Leistung ermöglicht und gleichzeitig niedrigere Leistungs- und thermische Parameter im normalen Betrieb beibehält.
+
+Seit `linux-cachyos` 6.9.6 ist der Kernel mit CPB-Unterstützung für die P-State-Treiber von AMD gepatcht (einschließlich `passive`, `active` und `guided`).
+Benutzer können den Boost-Status jeder CPU über die Sysfs-Boost-Datei `/sys/devices/system/cpu/cpuX/cpufreq/boost` ändern
+(X bezieht sich auf die Kernnummer, z. B. cpu0 ist der erste Kern, cpu1 der zweite usw.).
+
+```sh
+❯ echo 0 | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/boost # Deaktiviert Boost für alle Kerne
+❯ lscpu -ae # Dies zeigt, dass AMD CPB global deaktiviert ist
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
+  0    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1212.8250
+  1    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1394.2180
+  2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 1204.4600
+
+❯ echo 1 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/boost # Aktiviert Boost auf cpu0
+❯ lscpu -ae
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
+  0    0      0    0 0:0:0:0          yes 4564.0000 400.0000 1393.2380
+  1    0      0    0 0:0:0:0          yes 3301.0000 400.0000  400.0000
+  2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 2157.8469
+```
+
+CachyOS bietet auch eine Version von `power-profiles-daemon` an, die einen Commit zurückportiert, der die Unterstützung für AMD CPB ermöglicht. AMD CPB wird deaktiviert, wenn das Profil `powersave` verwendet wird, und wird unter `balanced` oder `performance` aktiviert.
+
+Weitere Informationen finden Sie unter:
+- https://lore.kernel.org/linux-pm/1a78eeaa-fadd-4734-aaeb-2fe11e96e198@amd.com/T/#m4a0c8917ea8fb033504055bd61512c80c85410c8
+- https://lore.kernel.org/linux-pm/20240624213400.67773-1-mario.limonciello@amd.com/
+
+## Mögliche Leistungsverbesserungen
+
+### Deaktivieren von Split Lock Mitigate
+
+In einigen Fällen kann Split Lock Mitigate die Leistung in einigen Anwendungen und Spielen verlangsamen. Ein Patch ist verfügbar, um es über Sysctl zu deaktivieren.
+
+*   Split Lock Mitigate deaktivieren: `sudo sysctl kernel.split_lock_mitigate=0`
+*   Split Lock Mitigate aktivieren: `sudo sysctl kernel.split_lock_mitigate=1`
+
+Um die Änderung dauerhaft zu machen, fügen Sie die folgende Zeile zu `/etc/sysctl.d/99-splitlock.conf` hinzu:
+
+```text
+kernel.split_lock_mitigate=0
+```
+
+Weitere Informationen zu Split Lock finden Sie unter:
+
+- https://www.phoronix.com/news/Linux-Splitlock-Hurts-Gaming
+- https://github.com/doitsujin/dxvk/issues/2938
+
+## Energiespar-Optimierungen
+
+### RCU Lazy aktivieren
+
+RCU Lazy hilft, den Stromverbrauch im Leerlauf oder bei geringer Last zu reduzieren. Dies kann für Laptops und Handheld-Geräte nützlich sein.
+Die Verbesserung beträgt zwischen 5-10 % in Bezug auf die Energieeinsparung. Es ist jedoch wichtig zu beachten, dass diese Energiesparfunktion je nach Szenario mit einer geringfügig reduzierten Leistung einhergehen kann.
+Der Linux-Cachyos-Deckify-Kernel hat diese Option standardmäßig aktiviert, da das Energiesparen für diese Geräte von entscheidender Bedeutung ist.
+
+Um RCU Lazy zu aktivieren, fügen Sie den folgenden Parameter zu Ihrer Kernel-[Cmdline](/de/configuration/boot_manager_configuration/)-Parameterliste hinzu:
+```text
+rcutree.enable_rcu_lazy=1
+```
+
+## NVIDIA Workarounds
+
+### Deaktivieren des SDDM Wayland Backends
+
+:::note
+Ab cachyos-kde-settings 4.3 verwendet SDDM standardmäßig KWin als Wayland-Compositor.
+:::
+
+Obwohl dies ein schöner Fortschritt ist, kann es einige Ärgernisse mit sich bringen, wie z. B. das Brechen der Unterstützung für das Übertakten mit nvidia-settings oder die Inkompatibilität mit älteren GPUs, die unter Wayland zu kämpfen haben.
+
+Um diese Änderung rückgängig zu machen. **Entfernen** Sie cachyos-kde-settings:
+```sh
+sudo pacman -R cachyos-kde-settings
+```
+
+### NVIDIA GSP Firmware
+
+Die NVIDIA GSP Firmware kann **"in einigen Fällen"** zu einer verminderten Leistung führen. Obwohl der NVIDIA-Treiber 555.58.02 dieses Problem weitgehend behoben hat, kann es auf bestimmten Systemen weiterhin bestehen.
+Wenn Sie in KDE Probleme haben oder in einigen Fällen eine schlechte Leistung feststellen, können Sie die GSP-Firmware mit der folgenden Konfigurationsdatei deaktivieren:
+`/etc/modprobe.d/nvidia-gsp.conf`
+
+```text
+options nvidia NVreg_EnableGpuFirmware=0
+```
+
+Führen Sie nach dem Erstellen der Datei den folgenden Befehl aus:
+```sh
+sudo mkinitcpio -P
+```
+
+:::note
+Die [Open-Kernel-Module](https://github.com/NVIDIA/open-gpu-kernel-modules) von NVIDIA basieren auf der GSP-Firmware. Aus diesem Grund kann GSP nicht deaktiviert werden und diese Modprobe-Option wird bei Verwendung ignoriert. Verwenden Sie `linux-cachyos-nvidia` oder `nvidia-dkms`.
+:::
+
+Es wird generell empfohlen, die GSP-Firmware nach jeder neuen NVIDIA-Treiberinstallation zu testen, da sie oft nützliche Funktionen einführt. Darüber hinaus hat NVIDIA hauptsächlich mit QA-Tests unter Verwendung der GSP-Firmware begonnen.
+
+## Audio-Verbesserungen
+
+### Echtzeit-Privilegien für den Benutzer gewähren
+
+:::note
+Es kann von Vorteil sein, zu versuchen, Audioprobleme wie Unterbrechungen oder Störungen zu beheben.
+:::
+
+```sh
+# Installieren Sie das folgende Paket:
+sudo pacman -S realtime-privileges
+# Führen Sie den folgenden Befehl aus:
+sudo gpasswd -a $USER realtime
+# Starten Sie Ihr System neu.
+```
