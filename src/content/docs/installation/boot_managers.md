@@ -63,7 +63,7 @@ manager. The following is a list of its main pros and cons.
 
 ### Cons
 - Bloated due to needing to support much older hardware and needing lots of filesystem drivers.
-- Noticeably slower compared to systemd-boot and rEFInd.
+- Noticeably slower compared to systemd-boot, rEFInd and Limine.
 
 ### Recommendation
 
@@ -90,4 +90,5 @@ Limine is a modern, advanced, and portable multiprotocol bootloader. It serves a
 Limine is recommended for users who need a lightweight and versatile bootloader that supports both UEFI and BIOS systems. It is particularly suitable for those who prefer a simple setup with theming options and Btrfs snapshot support. Additionally, Limine serves as a modern replacement for GRUB, which has seen fewer updates recently and has faced multiple security issues due to its EFI/filesystem drivers.
 
 ## TL:DR
-Choose GRUB if the used machine is BIOS only, pick rEFInd if planning on having multiple operating systems on the machine (Especially Windows), otherwise go with systemd-boot.
+
+Choose **Limine** for most users: it offers easy setup with built-in Btrfs snapshot support, works on both BIOS and UEFI systems, and handles multi-booting with Windows well. Choose **GRUB** only if you specifically need encrypted boot partition support. Consider **rEFInd** if you prioritize a polished graphical interface and primarily multi-boot on UEFI systems. Choose **systemd-boot** if you want the simplest setup and don't need Btrfs snapshot support out of the box.
