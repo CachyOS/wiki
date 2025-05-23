@@ -91,4 +91,4 @@ Limine is recommended for users who need a lightweight and versatile bootloader 
 
 ## TL:DR
 
-Choose **Limine** for most users: it offers easy setup with built-in Btrfs snapshot support, works on both BIOS and UEFI systems, and handles multi-booting with Windows well. Choose **GRUB** only if you specifically need encrypted boot partition support. Consider **rEFInd** if you prioritize a polished graphical interface and primarily multi-boot on UEFI systems. Choose **systemd-boot** if you want the simplest setup and don't need Btrfs snapshot support out of the box.
+Choose **Limine** for most users: it offers easy setup with built-in BTRFS snapshot support, works on both BIOS and UEFI systems, and handles multi-booting with Windows well. Choose **GRUB** only if you specifically need encrypted boot partition support. Consider **rEFInd** if you prioritize a polished graphical interface and primarily multi-boot on UEFI systems. Choose **systemd-boot** if you want the simplest setup and don't need BTRFS snapshot support out of the box.
