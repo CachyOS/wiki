@@ -60,7 +60,7 @@ GRUB jest najstarszym z dostępnych menedżerów rozruchu. Posiada bardzo duży 
 
 ### Wady
 - Przeładowany z powodu konieczności obsługi znacznie starszego sprzętu i potrzeby posiadania wielu sterowników systemów plików.
-- Zauważalnie wolniejszy w porównaniu do systemd-boot i rEFInd.
+- Zauważalnie wolniejszy w porównaniu do systemd-boot, rEFInd i Limine.
 
 ### Rekomendacja
 
@@ -87,4 +87,5 @@ Limine to nowoczesny, zaawansowany i przenośny wieloprotokołowy program rozruc
 Limine jest zalecany dla użytkowników potrzebujących lekkiego i wszechstronnego programu rozruchowego, który obsługuje zarówno systemy UEFI, jak i BIOS. Jest szczególnie odpowiedni dla tych, którzy preferują prostą konfigurację z opcjami motywów i wsparciem dla migawek Btrfs. Dodatkowo, Limine służy jako nowoczesny zamiennik dla GRUB-a, który ostatnio otrzymywał mniej aktualizacji i borykał się z wieloma problemami bezpieczeństwa z powodu swoich sterowników EFI/systemów plików.
 
 ## TL:DR (W skrócie)
-Wybierz GRUB, jeśli używana maszyna obsługuje tylko BIOS, wybierz rEFInd, jeśli planujesz mieć wiele systemów operacyjnych na maszynie (szczególnie Windows), w przeciwnym razie wybierz systemd-boot.
+
+Wybierz **Limine** dla większości użytkowników: oferuje łatwą konfigurację z wbudowaną obsługą migawek BTRFS, działa zarówno na systemach BIOS jak i UEFI, i dobrze radzi sobie z wielokrotnym uruchamianiem z Windowsem. Wybierz **GRUB** tylko jeśli konkretnie potrzebujesz obsługi zaszyfrowanej partycji rozruchowej. Rozważ **rEFInd** jeśli cenisz sobie dopracowany interfejs graficzny i głównie używasz wielokrotnego uruchamiania na systemach UEFI. Wybierz **systemd-boot** jeśli chcesz najprostszą konfigurację i nie potrzebujesz od razu obsługi migawek BTRFS.

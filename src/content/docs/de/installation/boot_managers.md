@@ -61,7 +61,7 @@ GRUB ist der älteste der verfügbaren Bootmanager. Er verfügt über einen sehr
 
 ### Nachteile
 - Aufgebläht, da er viel ältere Hardware und viele Dateisystemtreiber unterstützen muss.
-- Deutlich langsamer im Vergleich zu systemd-boot und rEFInd.
+- Deutlich langsamer im Vergleich zu systemd-boot, rEFInd und Limine.
 
 ### Empfehlung
 
@@ -88,4 +88,5 @@ Limine ist ein moderner, fortschrittlicher und portabler Multiprotokoll-Bootload
 Limine wird für Benutzer empfohlen, die einen schlanken und vielseitigen Bootloader benötigen, der sowohl UEFI- als auch BIOS-Systeme unterstützt. Er eignet sich besonders für diejenigen, die eine einfache Einrichtung mit Theming-Optionen und Btrfs-Snapshot-Unterstützung bevorzugen. Darüber hinaus dient Limine als moderner Ersatz für GRUB, das in letzter Zeit weniger Updates erhalten hat und aufgrund seiner EFI/Dateisystemtreiber mit mehreren Sicherheitsproblemen konfrontiert war.
 
 ## TL;DR
-Wählen Sie GRUB, wenn die verwendete Maschine nur BIOS unterstützt, wählen Sie rEFInd, wenn Sie planen, mehrere Betriebssysteme auf der Maschine zu haben (insbesondere Windows), andernfalls wählen Sie systemd-boot.
+
+Wählen Sie **Limine** für die meisten Nutzer: Es bietet eine einfache Einrichtung mit integrierter BTRFS-Snapshot-Unterstützung, funktioniert sowohl auf BIOS- als auch UEFI-Systemen und bewältigt Multi-Boot mit Windows gut. Wählen Sie **GRUB** nur, wenn Sie speziell Unterstützung für verschlüsselte Boot-Partitionen benötigen. Ziehen Sie **rEFInd** in Betracht, wenn Sie Wert auf eine ausgefeilte grafische Benutzeroberfläche legen und hauptsächlich Multi-Boot auf UEFI-Systemen verwenden. Wählen Sie **systemd-boot**, wenn Sie die einfachste Einrichtung wollen und keine BTRFS-Snapshot-Unterstützung von Haus aus benötigen.

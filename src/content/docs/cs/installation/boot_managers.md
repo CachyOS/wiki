@@ -51,10 +51,31 @@ GRUB je nejstarší z dostupných správců bootování a jediný, který podpor
 
 ### Zápory
 - Zbytečně robustní kvůli nutnosti podporovat velmi starý hardware a zahrnout mnoho ovladačů systémů souborů.
-- Znatelně pomalejší ve srovnání se systemd-boot a rEFInd.
+- Znatelně pomalejší ve srovnání se systemd-boot, rEFInd a Limine.
 
 ### Doporučení
 GRUB je jediný dostupný boot loader, který podporuje bootování přes BIOS. Je také jediným správcem bootování, který podporuje šifrování bootovacího oddílu (odlišné od šifrování disku).
 
+## Limine
+
+Limineje moderní, pokročilý a přenosný multiprotokolový zavaděč. Slouží jako referenční implementace protokolu Limine boot a podporuje zavádění Linuxu i řetězové zavádění jiných zavaděčů.
+
+### Výhody
+
+- Podporuje více protokolů zavádění, včetně Multiboot2 a protokolů zavádění Linuxu.
+- Dokáže zavádět systém jak na UEFI, tak na BIOS systémech, což ho činí univerzálním pro různé hardwarové konfigurace.
+- Má možnosti přizpůsobení vzhledu podobné GRUBu.
+- Přímá podpora pro snímky Btrfs, která je ve výchozím nastavení povolena pro instalace používající Btrfs jako souborový systém.
+
+### Nevýhody
+
+- Podporuje pouze několik souborových systémů, jako jsou FAT12, FAT16, FAT32 a ISO9660 pro oddíl `/boot`, což může vyžadovat dodatečné nastavení pro systémy používající jiné souborové systémy.
+- Na rozdíl od některých jiných zavaděčů Limine automaticky nepřidává záznam do NVRAM na UEFI systémech; toto musí být provedeno ručně pomocí nástrojů jako `efibootmgr` nebo prostřednictvím `limine-entry-tool`, který je v CachyOS předinstalován.
+
+### Doporučení
+
+Limine je doporučován pro uživatele, kteří potřebují lehký a univerzální zavaděč podporující jak UEFI, tak BIOS systémy. Je obzvláště vhodný pro ty, kteří preferují jednoduché nastavení s možnostmi přizpůsobení vzhledu a podporou snímků Btrfs. Navíc Limine slouží jako moderní náhrada za GRUB, který v poslední době zaznamenal méně aktualizací a čelil několika bezpečnostním problémům kvůli svým EFI/souborovým ovladačům.
+
 ## Shrnutí
-Vyberte GRUB, pokud je zařízení založené pouze na BIOS, zvolte rEFInd, pokud plánujete mít více operačních systémů na zařízení (zejména Windows), jinak zvolte systemd-boot.
+
+Vyberte **Limine** pro většinu uživatelů: nabízí snadné nastavení s vestavěnou podporou snímků BTRFS, funguje jak na BIOS, tak na UEFI systémech a dobře zvládá multi-boot s Windows. Vyberte **GRUB** pouze pokud konkrétně potřebujete podporu šifrovaného zaváděcího oddílu. Zvažte **rEFInd**, pokud upřednostňujete kvalitní grafické rozhraní a primárně používáte multi-boot na UEFI systémech. Vyberte **systemd-boot**, pokud chcete nejjednodušší nastavení a nepotřebujete podporu snímků BTRFS přímo z výroby.
