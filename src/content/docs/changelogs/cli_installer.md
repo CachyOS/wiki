@@ -1,5 +1,5 @@
 ---
-title: CachyOS CLI Installer Chagelog
+title: CachyOS CLI Installer Changelog
 description: Changelogs CLI Installer
 ---
 # 0.8.4
