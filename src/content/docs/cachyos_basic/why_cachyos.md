@@ -60,7 +60,6 @@ common issues. Package Installer will help you to install packages.
 
 List of applications CachyOS develops and maintains:
 
-- **Cachy Browser**: Browser based on Firefox, with a more secure config and patches from Gentoo + Performance optimizations.
 - **CachyOS Kernel Manager**: Easily install kernels from the repository or configure your own kernel and include your own patches and even manage the sched-ext framework via the [scx_loader](<https://github.com/sched-ext/scx/tree/main/rust/scx_loader>).
 - **CachyOS Hello**: Application for controlling tweaks, applying fixes, package installation and more information about CachyOS.
 - **CachyOS Package Installer**: GUI for an easy installation of commonly used applications.

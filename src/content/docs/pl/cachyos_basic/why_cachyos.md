@@ -58,7 +58,6 @@ częstych problemów. Instalator Pakietów pomoże Ci w instalacji oprogramowani
 
 Lista aplikacji rozwijanych i utrzymywanych przez CachyOS:
 
-- **Cachy Browser**: Przeglądarka oparta na Firefoksie, z bezpieczniejszą konfiguracją, łatkami z Gentoo oraz optymalizacjami wydajności.
 - **CachyOS Kernel Manager**: Łatwo instaluj jądra z repozytorium lub skonfiguruj własne jądro, dołączając własne łatki, a nawet zarządzaj frameworkiem sched-ext za pomocą [scx_loader](<https://github.com/sched-ext/scx/tree/main/rust/scx_loader>).
 - **CachyOS Hello**: Aplikacja do zarządzania usprawnieniami, stosowania poprawek, instalacji pakietów i uzyskiwania informacji o CachyOS.
 - **CachyOS Package Installer**: Graficzny interfejs ułatwiający instalację popularnych aplikacji.

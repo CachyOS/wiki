@@ -57,7 +57,6 @@ CachyOS Hello bietet beispielsweise Optionen zum Aktualisieren Ihres Systems, zu
 
 Liste der Anwendungen, die CachyOS entwickelt und pflegt:
 
-- **Cachy Browser**: Browser basierend auf Firefox, mit einer sichereren Konfiguration und Patches von Gentoo + Leistungsoptimierungen.
 - **CachyOS Kernel Manager**: Installieren Sie einfach Kernel aus dem Repository oder konfigurieren Sie Ihren eigenen Kernel und fügen Sie Ihre eigenen Patches hinzu und verwalten Sie sogar das Sched-Ext-Framework über den [scx_loader](<https://github.com/sched-ext/scx/tree/main/rust/scx_loader>).
 - **CachyOS Hello**: Anwendung zur Steuerung von Tweaks, zum Anwenden von Fixes, zur Paketinstallation und für weitere Informationen über CachyOS.
 - **CachyOS Package Installer**: GUI für eine einfache Installation häufig verwendeter Anwendungen.

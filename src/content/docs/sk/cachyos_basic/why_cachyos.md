@@ -47,7 +47,6 @@ Predvolene sú používateľom poskytované pomocné aplikácie, ako napríklad 
 
 Zoznam aplikácií, ktoré CachyOS vyvíja a udržiava:
 
-- **Cachy Browser**: Prehliadač založený na Firefoxe, s bezpečnejšou konfiguráciou a záplatami od Gentoo + optimalizácie výkonu.
 - **CachyOS Kernel Manager**: Jednoducho inštalujte jadrá z repozitára alebo konfigurujte vlastné jadro a zahrňte vlastné záplaty a dokonca spravujte rámec sched-ext prostredníctvom [scx_loader](<https://github.com/sched-ext/scx/tree/main/rust/scx_loader>).
 - **CachyOS Hello**: Aplikácia na ovládanie vylepšení, aplikovanie opráv, inštaláciu balíčkov a ďalšie informácie o CachyOS.
 - **CachyOS Package Installer**: GUI pre jednoduchú inštaláciu bežne používaných aplikácií.
