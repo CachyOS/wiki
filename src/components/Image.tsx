@@ -1,7 +1,7 @@
 import { PhotoProvider, PhotoView } from 'react-image-previewer';
 import { CloseButton } from 'react-image-previewer/ui';
 
-const ImageComponent = ({ imgsrc, alt }: { imgsrc: string; alt?: string }) => {
+const Image = ({ imgsrc, alt }: { imgsrc?: string; alt?: string }) => {
   if (!imgsrc) {
     return (
       <div>
@@ -23,4 +23,4 @@ const ImageComponent = ({ imgsrc, alt }: { imgsrc: string; alt?: string }) => {
   );
 };
 
-export default ImageComponent;
+export default Image;

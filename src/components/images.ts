@@ -1,33 +1,40 @@
 interface ImageObject {
-  src: string;
+  src: string | Promise<{ default: { src: string } }>;
   width: number;
   height: number;
   format: string;
 }
 
-export const getImgPath = async (img_input: string | object) => {
-  // for remote images, only validate the width and height props
-  if (typeof img_input === 'string') {
-    return img_input;
+export const getImgPath = async (
+  imgInput: string | object | Promise<{ default: ImageObject }>
+): Promise<string> => {
+  // If input is a remote image URL string, return as is
+  if (typeof imgInput === 'string') {
+    return imgInput;
   }
 
-  const promised_input = (
-    'then' in img_input ? (await img_input).default : img_input
-  ) as ImageObject;
+  // Await if input is a promise (ESM import), else use directly
+  const imageObj: ImageObject =
+    'then' in imgInput ? (await imgInput).default : (imgInput as ImageObject);
 
-  // for remote images, only validate the width and height props
-  if (typeof promised_input.src === 'string') {
-    return promised_input.src;
-  }
-
-  if (typeof promised_input.src === 'undefined') {
+  // If src is missing or undefined, return empty string
+  if (!imageObj.src) {
     return '';
   }
 
-  // resolve the metadata promise, usually when the ESM import is inlined
-  const metadata =
-    'then' in promised_input.src ? (await promised_input.src).default : promised_input.src;
-  return metadata.src;
+  // If src is a string, return it directly
+  if (typeof imageObj.src === 'string') {
+    return imageObj.src;
+  }
+
+  // If src is a promise (inlined ESM import), resolve and return src
+  if ('then' in imageObj.src) {
+    const metadata = (await imageObj.src).default;
+    return metadata.src;
+  }
+
+  // Fallback: return empty string for unexpected cases
+  return '';
 };
 
 export default getImgPath;

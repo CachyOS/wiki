@@ -1,8 +1,7 @@
 import { PhotoProvider, PhotoView } from 'react-image-previewer';
 import { CloseButton, SlideToolbar } from 'react-image-previewer/ui';
-import React from 'react';
 
-const MultipleImageComponent = ({ images }) => {
+const MultipleImages = ({ images }: { images?: string[] }) => {
   if (images == undefined) {
     return <div>Failed</div>;
   }
@@ -30,4 +29,4 @@ const MultipleImageComponent = ({ images }) => {
   );
 };
 
-export default MultipleImageComponent;
+export default MultipleImages;
