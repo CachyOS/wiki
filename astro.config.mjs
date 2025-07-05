@@ -38,7 +38,6 @@ const site = 'https://wiki.cachyos.org/';
 // https://astro.build/config
 export default defineConfig({
   site,
-
   integrations: [
     react(),
     starlight({
