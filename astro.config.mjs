@@ -1,7 +1,7 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
-import tailwind from '@astrojs/tailwind';
+import tailwindcss from '@tailwindcss/vite';
 
 export const locales = {
   root: {
@@ -38,6 +38,7 @@ const site = 'https://wiki.cachyos.org/';
 // https://astro.build/config
 export default defineConfig({
   site,
+
   integrations: [
     react(),
     starlight({
@@ -599,6 +600,9 @@ export default defineConfig({
         },
       ],
     }),
-    tailwind({ applyBaseStyles: false }),
   ],
+  vite: {
+    plugins: [tailwindcss()],
+  },
 });
+
