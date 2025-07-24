@@ -2,6 +2,7 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
+import starlightKbd from 'starlight-kbd';
 
 export const locales = {
   root: {
@@ -87,6 +88,12 @@ export default defineConfig({
             content: site + 'og.jpg?v=1',
           },
         },
+      ],
+      plugins: [
+        starlightKbd({
+          globalPicker: false,
+          types: [{ id: 'linux', label: 'Linux', default: true }],
+        }),
       ],
       locales,
       sidebar: [
