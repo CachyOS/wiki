@@ -444,6 +444,10 @@ export default defineConfig({
               label: 'KDE Plasma',
               link: 'desktop_environments/kde',
             },
+            {
+              label: 'Niri',
+              link: 'desktop_environments/niri',
+            },
           ],
         },
         {
