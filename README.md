@@ -55,6 +55,8 @@ Happy contributing!
 
 We are always open to community members adding new translations to the wiki. This helps **immensely** for non-English speakers.
 
+You can use the localization tracker at [https://wiki.cachyos.org/localization](https://wiki.cachyos.org/localization) to see the status of our existing translations.
+
 ### Getting started
 
 Firstly, you need to add your language to the list of available locales to the site. This is done in `astro.config.mjs`.

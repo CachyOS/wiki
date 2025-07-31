@@ -3,37 +3,21 @@ import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import starlightKbd from 'starlight-kbd';
+import lunaria from '@lunariajs/starlight';
+import lunariaConfig from './lunaria.config.json';
 
-export const locales = {
-  root: {
-    label: 'English',
-    lang: 'en',
-  },
-  ru: {
-    label: 'Русский',
-    lang: 'ru',
-  },
-  de: {
-    label: 'Deutsch',
-    lang: 'de',
-  },
-  pl: {
-    label: 'Polski',
-    lang: 'pl',
-  },
-  sk: {
-    label: 'Slovensky',
-    lang: 'sk',
-  },
-  cs: {
-    label: 'Čeština',
-    lang: 'cs',
-  },
-  id: {
-    label: 'Indonesian',
-    lang: 'id',
-  },
+const locales = {
+  root: lunariaConfig.defaultLocale,
+  ...lunariaConfig.locales.reduce((acc, locale) => {
+    // @ts-expect-error Can't add types for accumulator
+    acc[locale.lang] = {
+      label: locale.label,
+      lang: locale.lang,
+    };
+    return acc;
+  }, {}),
 };
+
 const site = 'https://wiki.cachyos.org/';
 
 // https://astro.build/config
@@ -90,6 +74,9 @@ export default defineConfig({
         },
       ],
       plugins: [
+        lunaria({
+          route: '/localization',
+        }),
         starlightKbd({
           globalPicker: false,
           types: [{ id: 'linux', label: 'Linux', default: true }],
