@@ -59,22 +59,19 @@ You can use the localization tracker at [https://wiki.cachyos.org/localization](
 
 ### Getting started
 
-Firstly, you need to add your language to the list of available locales to the site. This is done in `astro.config.mjs`.
+Firstly, you need to add your language to the list of available locales to the site. This is done in `lunaria.config.json`.
 Please refer to the [ISO 639-1 list of language codes](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes#Table).
 
-```mjs
-// astro.config.mjs
-
-export const locales = {
-  root: {
-    label: 'English',
-    lang: 'en',
-  },
-  xx: {
-    label: 'Your Language',
-    lang: 'xx', // Refer to two-letter language codes from the ISO 639-1 list linked above.
-  },
-};
+```jsonc
+// lunaria.config.json
+//...
+"locales": [
+  {
+    "label": "Your Language",
+    "lang": "xx", // Refer to two-letter language codes from the ISO 639-1 list linked above.
+  }
+];
+//...
 ```
 
 Next, you can start adding your own translations. To do this, add a subdirectory to `src/content/docs` with your two-letter language code.
@@ -83,6 +80,8 @@ Next, you can start adding your own translations. To do this, add a subdirectory
 ├── astro.config.mjs
 ├── src
 │   └── content
+│       └── i18n
+│           └── xx.json # Your language code
 │       └── docs
 │           ├── cachyos_basic
 │           │   ├── download.mdx
@@ -110,7 +109,7 @@ As a final step, you want your translated page to be indexed, this is done again
     },
 ```
 
-Please refer to our [basic guide](#basic-guide) for comitting and pushing changes.
+Please refer to our [basic guide](#basic-guide) for committing and pushing changes.
 When you're done, you can open a [pull request](https://github.com/CachyOS/wiki/compare)
 
 Happy translating!
