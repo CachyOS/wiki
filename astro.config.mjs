@@ -480,6 +480,13 @@ export default defineConfig({
             {
               label: 'AUR Safety: Quick Checklist for CachyOS Users',
               link: 'support/aur_safety_best_practices',
+              translations: {
+                ru: 'Безопасность AUR: Краткий контрольный список для пользователей CachyOS',
+                de: 'AUR-Sicherheit: Kurze Checkliste für CachyOS-Benutzer',
+                pl: 'Bezpieczeństwo AUR: Szybka lista kontrolna dla użytkowników CachyOS',
+                sk: 'Bezpečnosť AUR: Rýchly kontrolný zoznam pre používateľov CachyOS',
+                cs: 'Bezpečnost AUR: Rychlý kontrolní seznam pro uživatele CachyOS',
+              },
             },
             {
               label: 'Social',

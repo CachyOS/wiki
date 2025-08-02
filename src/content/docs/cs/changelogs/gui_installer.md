@@ -2,6 +2,132 @@
 title: GUI Installer Changelogs
 description: Changelogs of Calamares and the GUI Live ISO
 ---
+
+25.07
+----
+**Novinky:**
+-   **Shell**: Uživatelský shell lze nyní vybrat při instalaci mezi fish, zsh a bash. Fish zůstává nadále výchozím.
+-   **chwd**: Instalace plasma-x11 pro starší ovladače NVIDIA.
+-   **Netinstall**: Přidán fwupd do KDE Plasma a Gnome.
+-   **mesa-git**: Přidána podpora pro AMD Anti Lag.
+-   **firefox**: Představen alternativní firefox nazvaný "firefox-pure", který obsahuje vylepšení s profilem userjs. Dále byl přidán balíček "cachyos-firefox-settings", který lze nainstalovat nad stávající firefox.
+-   **Proton-CachyOS**:
+    -   Importovány upstream commity pro wine-wayland.
+    -   Přidána proměnná prostředí "PROTON_FSR4_UPGRADE", která automaticky stáhne nejnovější FSR4 DLL a nahradí ji pro automatický upgrade u her podporujících FSR 3.1.
+    -   Přidáno mnoho patchů souvisejících s Waylandem z upstreamu Wine, které byly vydány po Wine 10.0.
+    -   Přidány patche pro lepší integraci s anticheatem. Díky NelloKudo.
+    -   Přidány patche pro AMD Anti Lag 2 pro vkd3d-proton a wine.
+    -   Aktualizovány umu-protonfixes na nejnovější commit.
+
+**Opravy:**
+-   **Klíčenka (Keyring)**: Vylepšeno zpracování instalace klíčenky, aby se předešlo problémům, a přidáno několik pokusů o opakování.
+-   **systemd-oomd**: Vypnut systemd-oomd, protože měl problémy se zpracováním společně s le9 a ukončoval aplikace příliš brzy.
+
+**Změny pro Handheld Edition:**
+-   **handheld-settings**: Importováno několik vylepšení ze SteamOS do Handheld Edition.
+-   **pipewire**: Nastaveno minimální kvantum na 256.
+-   **SteamDeck-OLED**: Instalace galileo-mura pro Steam Deck OLED.
+-   **Lenovo Legion Go S**: Přidána podpora pro Lenovo Legion Go S.
+
+25.05
+----
+**Novinky:**
+-   **ISO**: Přidána automatická detekce během spouštění ISO pro identifikaci NVIDIA GPU a načtení příslušného modulu (např. nvidia-open, nvidia), což poskytuje lepší podporu pro řadu 10xx a starší.
+-   **Plymouth**: Přidána nová animace Plymouth.
+    -   Díky Erenovi ([https://github.com/erenyldz89](https://github.com/erenyldz89)) za práci na tomto!
+-   **Prohlížeč**: Cachy-Browser byl ukončen. Nyní poskytujeme Firefox jako výchozí předinstalovaný prohlížeč. Průvodce migrací profilů do Firefoxu (a jeho forků) naleznete zde: [https://wiki.cachyos.org/support/faq/#migrating-your-profile-from-cachy-browser-to-firefox](https://wiki.cachyos.org/support/faq/#migrating-your-profile-from-cachy-browser-to-firefox)
+-   **netinstall**: Přidány kcalc, filelight, plymouth-kcm a kio-admin do instalace KDE.
+-   **mkinitcpio**: Ve výchozím nastavení vypnut záložní initramfs. Ušetří se tak značné množství místa.
+-   **Zrcadla**: Přidáno nové 10 Gbps zrcadlo v Bangladéši. Díky Limda za hostování!
+-   **Proton**:
+    -   Přenesena téměř všechna vylepšení z **Proton CachyOS 9.0**.
+    -   Povolena podpora ovladače Wayland pro sestavení Steam Linux Runtime. Povolte pomocí `PROTON_ENABLE_WAYLAND=1`. Díky [GloriousEggroll](https://github.com/GloriousEggroll) za realizaci.
+    -   Přidáno mnoho patchů souvisejících s Waylandem z upstreamu Wine, které byly vydány po Wine 10.0.
+    -   Opraveny různé problémy s ovladačem Wayland a Vulkan hrami. Díky [Etaash-mathamsetty](https://github.com/Etaash-mathamsetty) za všechnu tvrdou práci.
+    -   Přidána stub implementace pro `amdxc64.dll` pro povolení FSR4. Použijte `FSR4_UPGRADE=1` pro upgrade her s FSR3.1 na FSR4. Opět díky [Etaash-mathamsetty](https://github.com/Etaash-mathamsetty). Pokyny: [https://github.com/Etaash-mathamsetty/wine-builds/releases/tag/fsr4](https://github.com/Etaash-mathamsetty/wine-builds/releases/tag/fsr4)
+    -   Přidány patche související s DualSense pro kompletnější detekci audio zařízení pro haptiku založenou na zvuku přes kabel. Některé hry, které se na toto chování spoléhaly, by nyní měly mít tuto funkci. Díky [ClearlyClaire](https://github.com/ClearlyClaire) za původní patche a [Exotic0015](https://github.com/Exotic0015), který se tomu věnoval od **Proton CachyOS 9.0**. Upstream: [https://gitlab.winehq.org/wine/wine/-/merge_requests/7238](https://gitlab.winehq.org/wine/wine/-/merge_requests/7238)
+    -   Odstraněn patch pro Dragon Age Inquisition, protože nefungoval. Pro tuto hru prosím zatím používejte **Proton CachyOS 9.0**.
+-   **GRUB**: Přidán nový motiv GRUB. Díky [diegons490](https://github.com/diegons490/cachyos-grub-theme).
+
+**Opravy:**
+-   **Zrcadla**: Opraven problém, kdy uživatelé z Ruska nemohli provést instalaci. To bylo zmírněno nepoužíváním CDN77, které Rusko začalo blokovat.
+-   **kde-settings**: Vypnuta ikona Discover na hlavním panelu.
+-   **ddcutil**: Nasazena předběžná verze ddcutil 2.2.1 pro opravu problému, kdy AMD GPU zamrzaly při sledování videí na YouTube.
+
+**Změny pro Handheld Edition:**
+-   **os-branch**: Herní režim (Game Mode) nyní správně ukazuje, že je používán CachyOS Linux.
+-   **audio**: Aktualizovány profily convolveru.
+-   **steamos-manager**: Slouží pro správu taktů GPU a TDP, aktualizace BIOS/doku, údržbu úložných zařízení, formátování externích úložišť a limit nabíjení baterie pro Steam Deck.
+-   **steamos-powerbuttond**: Tato komponenta nahrazuje standardní powerbuttond pro lepší zážitek z režimu spánku.
+-   **jupiter-hw-support**: Aktualizováno na verzi 20250501.
+
+25.04
+----
+
+**Novinky:**
+- **occt**: Přidán OCCT do ISO pro možnost provádění zátěžových testů v živém prostředí.
+  - Díky Marekovi za tento nápad!
+
+**Opravy:**
+- **kernel**: Opraven pád modulu na noteboocích Asus.
+- **limine**: Limine má nyní nainstalovaný mkinitcpio-limine-hook a bude automaticky vytvářet položky zavaděče.
+
+
+**Změny pro Handheld Edition:**
+- **audio**: Přidány zvukové profily pro ROG Ally X a Legion Go.
+- **gamescope**: Nahrazen gamescope-plus za upstream gamescope.
+
+
+25.03
+----
+
+**Novinky**:
+- **Zavaděč**: Přidána podpora pro zavaděč Limine.
+- **Zavaděč**: Přidána podpora pro automatické snímky pro zavaděč Limine.
+- **Samba**: Přidán balíček "cachyos-samba-settings" pro snadné nastavení sdílení Samba.
+- **NVIDIA**: Znovu povolen GSP Firmware pro uzavřený modul NVIDIA.
+- **Kernel**: Přidána podpora pro ovladač Asus Armoury.
+- **Secure Boot**: Vylepšen skript "sbctl-batch-sign" pro podepisování pouze požadovaných souborů.
+- **udev**: Vráceno použití ntfs3 jako výchozího ovladače pro oddíly NTFS.
+  - Info: Použití ovladače kernelu NTFS3 jako výchozího způsobovalo problémy některým uživatelům. Proto jsme to opět vrátili.
+- **wine**: Wine a Wine-Staging nyní ve výchozím nastavení používají WoW64 a NTSync.
+- **scx-manager**: Přesunut GUI manažer sched-ext z Kernel Manageru do vlastní aplikace.
+- **Hardwarová podpora**: Přidána podpora pro RDNA4, RTX 5070 Ti a 5070.
+- **Nastavení**: Přidána podpora DLSS Swapper - jedná se o skript, který automaticky aktualizuje a používá nejnovější verzi a přednastavení DLSS.
+- **Aktualizace balíčků**: linux-cachyos 6.14.0, NVIDIA 570.133.07, Gnome 48, Plasma 6.3.3, mesa 25.0.2, linux-api-headers 6.14.0, linux-tools 6.14.0.
+
+**Opravy**:
+- **initcpiocfg**: Odstraněn modul "crc32c-intel" přidávaný do mkinitcpio - byl zastaralý a nyní se ve výchozím nastavení používá modul "crc32c".
+- **chwd**: Pro T2 MacBook vypnuto přesměrovávání (offloading) brcmfmac.
+- **chwd**: Neinstalovat ovladač NVIDIA 390.xx pro notebooky.
+
+25.02
+----
+
+**Novinky**:
+- **Kernel**:
+  - Propeller Optimization je nyní aplikována na výchozí kernel **linux-cachyos** pro všechny dostupné architektury.
+    - **Poznámka**: V kombinaci s AutoFDO to může zlepšit výkon o přibližně 10 %, v závislosti na zátěži.
+- **NVIDIA**: Přidána podpora pro architekturu Blackwell.
+- **ISO**: Použití modulu nvidia-open jako výchozího pro poskytnutí podpory Blackwell. Uživatelé s GPU staršími než Turing by měli použít první nebo záložní možnost spouštění.
+- **Nastavení**: Povoleno tap-to-click pro X11 sezení ve výchozím nastavení.
+- **udev**: Použití ntfs3 jako výchozího ovladače pro oddíly NTFS.
+- **game-performance**: Vypnut spořič obrazovky při spuštění her.
+- **kernel-manager (sched-ext)**: Přidána podpora pro serverový režim.
+- **kernel**: Přidány opravy pro funkci preferovaných jader AMD.
+- **chwd**: Znovu přidáno dočasné řešení pro RTD3.
+- **Aktualizace balíčků**: linux-cachyos 6.13.0, NVIDIA 570.86.16, LLVM 19, glibc 2.41, mesa 24.3.4.
+
+**Opravy**:
+- **chwd**: Opraven problém, kdy hybridní notebooky s hardwarem Intel a NVIDIA nemohly používat své GPU v DaVinci Resolve.
+- **glibc**: Přidána oprava pro CVE-2025-0395.
+- **kernel-manager**: Pokus o instalaci předkompilovaného modulu NVIDIA, pokud je k dispozici pro výchozí kernel Arch.
+- **kernel-manager**: Přidána dodatečná kontrola, aby se zabránilo přepsání hodnoty v případě, že modul není k dispozici.
+
+**Změny pro Handheld Edition**:
+- **hooks**: Znovu povoleno použití nativně kompilovaného Protonu.
+- **různé**: Několik aktualizací a oprav.
+
 24.12
 ----
 

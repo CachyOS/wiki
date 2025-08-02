@@ -1,40 +1,41 @@
 ---
-title: Obecná Vylepšení Systému
-description: Co můžete udělat pro vylepšení po instalaci
+title: Obecná vylepšení systému
+description: Věci, které můžete po instalaci vylepšit
 ---
 
 import { Steps } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
 
 ## AMD Ryzen
 
 ### Ovladač AMD P-State
 ---------------------------
 
-`amd-pstate` je ovladač pro škálování výkonu CPU od AMD, který zavádí nový mechanismus řízení frekvence CPU na moderních sériích APU a CPU od AMD v jádře Linuxu. Nový mechanismus je založen na Collaborative Processor Performance Control (CPPC), který poskytuje jemnější řízení frekvence než starší ACPI hardware P-States. Současné platformy CPU/APU od AMD používají ovladač ACPI P-states ke správě frekvence a taktů CPU s přepínáním pouze ve 3 P-stavech. CPPC nahrazuje ovládací prvky ACPI P-states a umožňuje flexibilní rozhraní s nízkou latencí pro jádro Linuxu, aby mohlo přímo komunikovat s hardwarem ohledně nápověd k výkonu.
+`amd-pstate` je ovladač pro škálování výkonu procesorů AMD, který v linuxovém kernelu zavádí nový mechanismus řízení frekvence CPU pro moderní řady AMD APU a CPU. Nový mechanismus je založen na Collaborative Processor Performance Control (CPPC), který poskytuje jemnější správu frekvence než starší hardwarové P-States z ACPI. Současné platformy AMD CPU/APU používají ovladač ACPI P-states pro správu frekvence a taktů CPU s přepínáním pouze mezi 3 P-stavy. CPPC nahrazuje ovládání ACPI P-states a umožňuje flexibilní rozhraní s nízkou latencí, aby linuxový kernel mohl přímo komunikovat hardwaru nápovědy k výkonu.
 
-Níže jsou uvedeny 3 provozní režimy ovladače `amd-pstate` a položky příkazového řádku jádra pro jejich použití při spuštění:
+Níže jsou uvedeny 3 provozní režimy ovladače `amd-pstate` a parametry příkazového řádku kernelu pro jejich použití při startu:
 
-- **AMD P-State (Neautonomní režim)**: `amd-pstate=passive`
-- **AMD P-State Guided (Řízený autonomní režim)**: `amd-pstate=guided`
-- **AMD P-State EPP (Autonomní režim)**: `amd-pstate=active`
+- **AMD P-State (neautonomní režim)**: `amd-pstate=passive`
+- **AMD P-State Guided (řízený autonomní režim)**: `amd-pstate=guided`
+- **AMD P-State EPP (autonomní režim)**: `amd-pstate=active`
 
 :::note
-Ovladač AMD P-State EPP se používá ve výchozím nastavení, pokud není provedena žádná explicitní konfigurace.
+Ovladač AMD P-State EPP je použit ve výchozím nastavení, pokud není provedena žádná explicitní konfigurace.
 :::
 
-Mezi provozními režimy můžete také přepínat za běhu a otestovat tak možnosti:
+Mezi provozními režimy můžete také přepínat za běhu a otestovat tak jednotlivé možnosti:
 
-- **Autonomní režim**: platforma bere v úvahu pouze hodnoty nastavené pro Minimální výkon, Maximální výkon a Přednost energetické účinnosti.
+- **Autonomní režim**: platforma zohledňuje pouze hodnoty nastavené pro minimální výkon, maximální výkon a preferenci energetického výkonu.
    ```sh
    echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status
    ```
 
-- **Řízený autonomní režim**: platforma nastavuje úroveň provozního výkonu podle aktuálního zatížení a v mezích stanovených OS prostřednictvím registrů minimálního a maximálního výkonu.
+- **Řízený-autonomní režim**: platforma nastavuje provozní úroveň výkonu podle aktuální zátěže a v mezích stanovených OS prostřednictvím registrů minimálního a maximálního výkonu.
    ```sh
    echo guided | sudo tee /sys/devices/system/cpu/amd_pstate/status
    ```
 
-- **Neautonomní režim**: platforma získává požadovanou úroveň výkonu přímo z OS prostřednictvím registru požadovaného výkonu.
+- **Neautonomní režim**: platforma získává požadovanou úroveň výkonu přímo od OS prostřednictvím registru požadovaného výkonu.
    ```sh
    echo passive | sudo tee /sys/devices/system/cpu/amd_pstate/status
    ```
@@ -47,10 +48,11 @@ Pro více informací:
 
 ### Konfigurace AMD P-State EPP
 
-Pro použití P-State EPP jsou k dispozici dva regulátory škálování frekvence CPU: **powersave** a **performance**. Doporučuje se používat regulátor powersave a nastavit preferenci.
 
-*   Nastavení regulátoru powersave: `sudo cpupower frequency-set -g powersave`
-*   Nastavení regulátoru performance: `sudo cpupower frequency-set -g performance`
+Pro použití P-State EPP jsou k dispozici dva guvernéry pro škálování frekvence CPU: **powersave** a **performance**. Doporučuje se používat governor powersave a nastavit preferenci.
+
+*   Nastavit governor powersave: `sudo cpupower frequency-set -g powersave`
+*   Nastavit governor performance: `sudo cpupower frequency-set -g performance`
 
 Pro nastavení preference spusťte následující příkaz s požadovanou preferencí:
 
@@ -63,52 +65,52 @@ Dostupné preference: `performance`, `power`, `balance_power`, `balance_performa
 Benchmarky pro každou preferenci naleznete zde:
 [https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/](https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/)
 
-### AMD 3D V-Cache Optimizer
+### Optimalizátor pro AMD 3D V-Cache
 
-Společnost AMD vydala patch pro optimalizaci plánování mezipaměti na procesorech Dual CCD 3D, jako jsou 7950X3D a 7900X3D.
-V systému BIOS musíte v nastavení CPPC Option vybrat možnost "Driver". To umožní přepsat použitý režim pomocí sysfs.
+Společnost AMD zveřejnila patch pro optimalizaci plánování mezipaměti na procesorech s duálním CCD a 3D V-Cache, jako jsou 7950X3D a 7900X3D.
+Musíte v BIOSu pod volbou CPPC nastavit možnost "Driver". To umožní přepsat použitý režim pomocí sysfs.
 
 Existují dva režimy:
 1. Frekvence
-2. Mezipaměť
+2. Cache
 
-Pokud je nastavena možnost `cache`, ovladač se pokusí umístit úlohy nejprve na CCD s vyšší mezipamětí, což je výhodné zejména u her.
-Možnost `frequency` se pokusí umístit úlohy na druhý CCD, který má vyšší frekvenci než CCD s 3D mezipamětí.
+Pokud je nastaveno `cache`, ovladač se pokusí umístit úlohy nejprve na CCD s větší mezipamětí, což je výhodné hlavně ve hrách.
+Volba `frequency` se pokusí umístit úlohy na druhé CCD, které má vyšší frekvenci než CCD s 3D V-Cache.
 
 Frekvence (výchozí):
 ```sh
 echo frequency | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
 ```
 
-Mezipaměť:
+Cache:
 ```sh
 echo cache | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
 ```
 
-Po změně režimu by statistiky preferovaných jader amd měly poskytovat jiné pořadí. Můžete si je přečíst pomocí:
+Po změně režimů by statistiky preferovaných jader AMD měly poskytnout jiné pořadí. Můžete si ho přečíst pomocí:
 ```sh
 grep -v /sys/devices/system/cpu/cpu*/cpufreq/amd_pstate_prefcore_ranking
 ```
 
-### Zvýšení výkonu jader AMD P-State
+### AMD P-State Core Performance Boost
 
-AMD Core Performance Boost, známý také jako AMD Turbo Core, je technologie dynamického škálování frekvence od společnosti AMD, která umožňuje
-procesoru dynamicky upravovat a řídit provozní frekvenci procesoru u některých verzí svých procesorů,
-což umožňuje zvýšení výkonu, když je to potřeba, při zachování nižší spotřeby energie a tepelných parametrů během běžného provozu.
+AMD Core Performance Boost, známý také jako AMD Turbo Core, je technologie dynamického škálování frekvence od AMD, která umožňuje
+procesoru dynamicky upravovat a řídit svou provozní frekvenci u určitých verzí procesorů,
+což umožňuje zvýšený výkon v případě potřeby při zachování nižší spotřeby energie a tepelných parametrů během normálního provozu.
 
-Od verze `linux-cachyos` 6.9.6 je jádro opraveno s podporou CPB pro ovladače p-state společnosti AMD (včetně `passive`, `active` a `guided`).
-Uživatelé mohou změnit stav boostu každého CPU prostřednictvím souboru boost sysfs `/sys/devices/system/cpu/cpuX/cpufreq/boost`
+Od verze 6.9.6 je kernel `linux-cachyos` opatchován s podporou CPB pro ovladače p-state od AMD (zahrnuje `passive`, `active` a `guided`).
+Uživatelé mohou měnit stav boostu každého jádra CPU prostřednictvím souboru sysfs boost `/sys/devices/system/cpu/cpuX/cpufreq/boost`
 (X odkazuje na číslo jádra, např. cpu0 je první jádro, cpu1 druhé atd.).
 
 ```sh
-❯ echo 0 | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/boost # Zakáže boost pro všechna jádra
-❯ lscpu -ae # Zobrazuje, že AMD CPB je globálně zakázáno
+❯ echo 0 | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/boost # Vypne boost pro všechna jádra
+❯ lscpu -ae # Toto ukazuje, že AMD CPB je globálně vypnutý
 CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
   0    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1212.8250
   1    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1394.2180
   2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 1204.4600
 
-❯ echo 1 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/boost # Povolí boost na cpu0
+❯ echo 1 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/boost # Zapne boost na cpu0
 ❯ lscpu -ae
 CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
   0    0      0    0 0:0:0:0          yes 4564.0000 400.0000 1393.2380
@@ -116,67 +118,88 @@ CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
   2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 2157.8469
 ```
 
-CachyOS také poskytuje verzi `power-profiles-daemon`, která backportuje commit, který umožňuje
-podporu AMD CPB. AMD CPB bude zakázáno, pokud se používá profil `powersave`, a bude povoleno u profilů `balanced` nebo `performance`.
+CachyOS také poskytuje verzi `power-profiles-daemon`, která zpětně portuje commit, jenž povoluje
+podporu pro AMD CPB. AMD CPB bude vypnut, pokud je používán profil `powersave`, a bude zapnut při profilech `balanced` nebo `performance`.
 
-Pro více informací se podívejte na:
+Pro více informací viz:
 - https://lore.kernel.org/linux-pm/1a78eeaa-fadd-4734-aaeb-2fe11e96e198@amd.com/T/#m4a0c8917ea8fb033504055bd61512c80c85410c8
 - https://lore.kernel.org/linux-pm/20240624213400.67773-1-mario.limonciello@amd.com/
 
-## Možná Zvýšení Výkonu
+## Možná vylepšení výkonu
 
-### Zakázání Mitigace Rozděleného Zámku
+### Vypnutí Split Lock Mitigate
 
-V některých případech může mitigace rozděleného zámku zpomalit výkon některých aplikací a her. K dispozici je patch pro jeho zakázání prostřednictvím sysctl.
+V některých případech může zmírňování split locků (split lock mitigate) zpomalit výkon v některých aplikacích a hrách. K dispozici je patch, který umožňuje jeho vypnutí přes sysctl.
 
-*   Zakázání mitigace rozděleného zámku: `sudo sysctl kernel.split_lock_mitigate=0`
-*   Povolení mitigace rozděleného zámku: `sudo sysctl kernel.split_lock_mitigate=1`
+*   Vypnout split lock mitigate: `sudo sysctl kernel.split_lock_mitigate=0`
+*   Zapnout split lock mitigate: `sudo sysctl kernel.split_lock_mitigate=1`
 
-Chcete-li provést trvalou změnu, přidejte následující řádek do `/etc/sysctl.d/99-splitlock.conf`:
+Aby byla změna trvalá, přidejte následující řádek do `/etc/sysctl.d/99-splitlock.conf`:
 
 ```text
 kernel.split_lock_mitigate=0
 ```
 
-Pro více informací o rozděleném zámku se podívejte na:
+Pro více informací o split lock, viz:
 
 - https://www.phoronix.com/news/Linux-Splitlock-Hurts-Gaming
 - https://github.com/doitsujin/dxvk/issues/2938
 
-## Vylepšení Úspory Energie
+## Vylepšení pro úsporu energie
 
 ### Povolení RCU Lazy
 
-RCU Lazy pomáhá snižovat spotřebu energie na nečinných nebo málo zatížených systémech. To může být užitečné pro notebooky a handheld zařízení.
-Zlepšení se pohybuje mezi 5-10 % z hlediska úspory energie. Je však důležité poznamenat, že tato funkce úspory energie může být na úkor mírně sníženého výkonu v závislosti na scénáři.
-Jádro linux-cachyos-deckify bude mít tuto možnost ve výchozím nastavení povolenu, protože úspora energie je pro tato zařízení klíčová a nezbytná.
+RCU Lazy pomáhá snižovat spotřebu energie u systémů v nečinnosti nebo s lehkou zátěží. To může být užitečné pro notebooky a přenosná zařízení.
+Zlepšení se pohybuje mezi 5-10 % v úspoře energie. Je však důležité si uvědomit, že tato funkce úspory energie může být na úkor mírně sníženého výkonu v závislosti na scénáři.
+Kernel linux-cachyos-deckify bude mít tuto možnost ve výchozím nastavení povolenou, protože úspora energie je pro tato zařízení klíčová a nezbytná.
 
-Chcete-li povolit RCU Lazy, přidejte následující parametr do seznamu parametrů [příkazového řádku](/configuration/boot_manager_configuration/) jádra:
+Pro povolení RCU Lazy přidejte následující parametr do seznamu parametrů vašeho [příkazového řádku kernelu](/configuration/boot_manager_configuration/):
 ```text
 rcutree.enable_rcu_lazy=1
 ```
 
-## Řešení Problémů s NVIDIA
+## Řešení problémů s NVIDIA
 
-### Zakázání SDDM Wayland Backend
+### Vypnutí Wayland backendu pro SDDM
 
 :::note
-Počínaje verzí cachyos-kde-settings 4.3 používá SDDM ve výchozím nastavení KWin jako svůj Wayland kompozitor.
+Počínaje cachyos-kde-settings 4.3 používá SDDM ve výchozím nastavení KWin jako svůj Wayland kompozitor.
 :::
 
-I když je to hezký krok vpřed, může to přinést určité nepříjemnosti, jako je nefunkčnost podpory přetaktování pomocí nvidia-settings nebo nekompatibilita se staršími GPU, které mají problémy s Waylandem.
+I když je to pěkný krok vpřed, může to přinést některé nepříjemnosti, jako je narušení podpory pro přetaktování pomocí nvidia-settings nebo způsobit nekompatibilitu se staršími GPU, které mají problémy pod Waylandem.
 
-Chcete-li tuto změnu vrátit. **Odeberte** cachyos-kde-settings:
+Pro navrácení této změny **odeberte** cachyos-kde-settings:
 ```sh
 sudo pacman -R cachyos-kde-settings
 ```
 
-## Vylepšení Zvuku
+### Firmware NVIDIA GSP
 
-### Udělení Uživateli Práva Realtime
+Firmware NVIDIA GSP může **"v některých případech"** vést ke snížení výkonu. Ačkoli ovladač NVIDIA 555.58.02 tento problém z velké části vyřešil, na některých systémech může přetrvávat.
+Pokud se potýkáte se záseky v KDE nebo špatným výkonem v některých případech, můžete firmware GSP vypnout pomocí následujícího konfiguračního souboru:
+`/etc/modprobe.d/nvidia-gsp.conf`
+
+```text
+options nvidia NVreg_EnableGpuFirmware=0
+```
+
+Po vytvoření souboru spusťte následující příkaz:
+```sh
+sudo mkinitcpio -P
+```
 
 :::note
-Důrazně doporučeno pro Pipewire. To zmírňuje mnoho běžných problémů, jako je zasekávání nebo vypadávání zvuku v určitých scénářích.
+[Otevřené moduly kernelu](https://github.com/NVIDIA/open-gpu-kernel-modules) od NVIDIA jsou založeny na firmwaru GSP. Z tohoto důvodu nelze GSP vypnout a tato možnost modprobe bude při jejich použití ignorována. Použijte `linux-cachyos-nvidia` nebo `nvidia-dkms`.
+:::
+
+Obecně se doporučuje testovat firmware GSP po každé nové instalaci ovladače NVIDIA, protože často přináší prospěšné funkce. Navíc NVIDIA začala primárně provádět testování kvality s použitím firmwaru GSP.
+
+## Vylepšení zvuku
+
+### Udělení realtime oprávnění pro uživatele
+
+:::note
+Může být prospěšné pokusit se vyřešit problémy se zvukem, jako jsou přerušení nebo závady.
 :::
 
 ```sh
@@ -186,3 +209,70 @@ sudo pacman -S realtime-privileges
 sudo gpasswd -a $USER realtime
 # Restartujte systém.
 ```
+
+### Vylepšení zvuku reproduktorů notebooku
+
+Reproduktory notebooků často produkují tenký a nevýrazný zvuk kvůli své kompaktní velikosti a omezeným hardwarovým schopnostem. [EasyEffects](https://wiki.archlinux.org/title/PipeWire#EasyEffects) může výrazně zlepšit kvalitu zvuku vestavěných reproduktorů vašeho notebooku aplikováním různých zvukových efektů a vlastních konfigurací.
+
+Pro začátek je třeba nainstalovat EasyEffects a požadované závislosti:
+
+```bash
+# Instalace EasyEffects
+sudo pacman -S easyeffects
+# Instalace lsp-plugins pro další efekty a jalv pro podporu LV2 pluginů
+sudo pacman -S lsp-plugins-lv2```
+
+#### Konfigurace
+
+Pro konfiguraci EasyEffects postupujte podle těchto kroků:
+
+1. Spusťte **EasyEffects** z nabídky aplikací nebo zadáním `easyeffects` do terminálu.
+2. Přejděte na kartu **Výstup** pro správu efektů aplikovaných na zvuk vašich reproduktorů.
+3. Přepněte na kartu **Efekty** pro přidání, úpravu nebo nastavení zvukových efektů.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects.png')} />
+
+##### Použití komunitních přednastavení
+
+Pro rychlé a efektivní nastavení začněte s **přednastaveními vytvořenými komunitou**, která jsou přizpůsobena pro různé zvukové scénáře:
+
+1. Stáhněte si přednastavení z repozitáře [EasyEffects Community Presets](https://github.com/wwmm/easyeffects/wiki/Community-presets).
+2. V EasyEffects klikněte na tlačítko **Přednastavení** a zvolte **"Importovat přednastavení z místního úložiště"**.
+3. Najděte a vyberte stažený soubor přednastavení.
+4. Po importu se přednastavení objeví ve vašem seznamu – klikněte na **"Načíst"** pro jeho aplikaci na váš zvukový výstup.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects-presets.png')} />
+
+##### Vytvoření vlastního profilu
+
+Pro personalizovanější zvukový zážitek vytvořte vlastní profil přizpůsobený reproduktorům vašeho notebooku:
+
+1. Klikněte na tlačítko **"+"** v nabídce Přednastavení pro vytvoření nového přednastavení (např. pojmenujte ho **"Reproduktory notebooku"**).
+2. Vyberte **"Načíst"** pro aktivaci nového přednastavení.
+3. Přidejte a nakonfigurujte efekty na kartě **Výstup** > **Efekty**, experimentujte s možnostmi jako jsou ekvalizéry, zesilovače basů nebo rozšíření sterea.
+
+##### Použití efektu Convolver (notebooky s Dolby Atmos)
+
+Efekt **Convolver** může dramaticky zlepšit zvuk aplikováním impulzních odezev, které simulují vysoce kvalitní zvuková prostředí. Vyžaduje to však přesné nastavení:
+
+1. Přidejte efekt **Convolver** do svého řetězce efektů na kartě **Efekty**.
+2. Načtěte soubor impulzní odezvy (ve formátu `.wav`) specifický pro váš model notebooku, pokud je k dispozici. Tyto soubory můžete hledat online na zdrojích jako:
+   - https://wiki.archlinux.org/title/Lenovo_ThinkPad_T14_(AMD)_Gen_4#Speakers
+   - https://github.com/m4tx/thinkpad-p14s-g4-linux/#sound
+   - https://github.com/shuhaowu/linux-thinkpad-speaker-improvements/
+3. **Zabraňte ořezávání (clipping)**: Efekt Convolver může výrazně zvýšit hlasitost. Přidejte efekt **Limiter** za Convolver ve svém řetězci efektů, abyste kontrolovali špičky a předešli zkreslení.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects-convolver.png')} />
+
+#### Tipy pro optimální výsledky
+
+- **Experimentujte s různými přednastaveními**, abyste našli nejlepší shodu pro váš konkrétní model notebooku a osobní zvukové preference.
+- **Provádějte postupné úpravy** jednotlivých efektů, abyste předešli zkreslení nebo nepřirozenému zvukovému výstupu.
+- **Porovnávejte přepínáním**: Často přepínejte EasyEffects **zapnuto/vypnuto**, abyste zhodnotili vylepšení oproti výchozímu zvuku.
+- Hledejte **přednastavení specifická pro zařízení nebo impulzní odezvy Convolveru** pro populární modely notebooků, jako jsou **Framework Laptop 13** nebo **ThinkPad T14**, abyste dosáhli přizpůsobených výsledků.
+- **Automatizujte spuštění**: Nakonfigurujte EasyEffects tak, aby se spouštěl automaticky při startu systému prostřednictvím předvoleb aplikace, abyste zajistili, že váš vlastní profil bude vždy aplikován.
+- **Automatické načítání přednastavení pro více zařízení**: Použijte kartu **PipeWire** > **Automatické načítání přednastavení** k přiřazení specifických přednastavení k různým výstupním zařízením (např. Reproduktory vs. Sluchátka) pro plynulé přepínání. <ImageComponent imgsrc={import('~/assets/images/easyeffects-autoloading.png')} />
+
+#### Alternativa k EasyEffects
+
+Jako alternativu můžete vyzkoušet [JDSP4Linux](https://github.com/Audio4Linux/JDSP4Linux), což je procesor zvukových efektů pro klienty PipeWire a PulseAudio.

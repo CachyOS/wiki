@@ -1,14 +1,14 @@
 ---
-title: Nastavení zabezpečeného spouštění
-description: Nastavení zabezpečeného spouštění pomocí sbctl po instalaci CachyOS
+title: Nastavení Secure Boot
+description: Nastavení Secure Boot pomocí sbctl po instalaci CachyOS
 ---
 
 import ImageComponent from '~/components/image-component.astro';
 
 # sbctl
 
-[`sbctl`](https://github.com/Foxboron/sbctl) je uživatelsky přívětivý správce klíčů zabezpečeného spouštění, který umí nastavit zabezpečené spouštění,
-nabízí možnosti správy klíčů a sleduje soubory, které je třeba podepsat v řetězci spouštění.
+[`sbctl`](https://github.com/Foxboron/sbctl) je uživatelsky přívětivý správce klíčů pro Secure Boot, schopný nastavit Secure Boot,
+nabízí možnosti správy klíčů a sleduje soubory, které je třeba podepsat ve spouštěcím řetězci.
 
 ## Instalace sbctl
 
@@ -16,24 +16,23 @@ nabízí možnosti správy klíčů a sleduje soubory, které je třeba podepsat
 ❯ sudo pacman -S sbctl
 ```
 
-## Přednastavení
+## Příprava před nastavením
 
-### Správce spouštění GRUB
+### Zavaděč GRUB
 
-Pokud používáte GRUB, spusťte následující příkaz, abyste povolili podporu zabezpečeného spouštění v GRUBu pomocí klíčů CA.
+Pokud používáte GRUB, spusťte následující příkaz pro povolení podpory Secure Boot v GRUBu pomocí CA klíčů.
 
 ```bash
 ❯ sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
 ```
 
 :::note
-Načítání nepotřebných modulů do správce spouštění může představovat bezpečnostní riziko.
-Spusťte tento příkaz pouze v případě, že skutečně potřebujete zabezpečené spouštění.
+Načítání nepotřebných modulů ve vašem zavaděči může představovat bezpečnostní riziko.
+Tento příkaz spouštějte pouze pokud skutečně potřebujete Secure Boot.
 :::
 
-### Vstup do režimu nastavení v UEFI
-Nejprve musíme přejít do nastavení firmwaru a nastavit režim zabezpečeného spouštění na "Režim nastavení". Můžete restartovat z
-již spuštěného systému do nastavení firmwaru pomocí následujícího příkazu.
+### Vstup do režimu Setup Mode v UEFI
+Nejprve musíme přejít do nastavení firmwaru a nastavit režim Secure Boot na "Setup Mode". Z již běžícího systému můžete do nastavení firmwaru restartovat následujícím příkazem.
 
 ```bash
 ❯ systemctl reboot --firmware-setup
@@ -48,84 +47,106 @@ do systému.
 ## Nastavení sbctl
 
 ```bash
-❯ sudo sbctl status # Pokud je povolen režim nastavení, můžeme pokračovat k dalšímu kroku
-Installed:      ✘ sbctl není nainstalován
-Setup Mode:     ✘ Povoleno
-Secure Boot     ✘ Zakázáno
+❯ sudo sbctl status # Pokud je povolen režim nastavení, můžeme přejít k dalšímu kroku
+Installed:      ✘ sbctl is not installed
+Setup Mode:     ✘ Enabled
+Secure Boot     ✘ Disabled
 
-❯ sudo sbctl create-keys # Vytvořte si vlastní klíče zabezpečeného spouštění
+❯ sudo sbctl create-keys # Vytvoření vlastních klíčů pro Secure Boot
 Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
 Creating secure boot keys...✔
-Klíče zabezpečeného spouštění vytvořeny!
+Secure boot keys created!
 
-❯ sudo sbctl enroll-keys -m # Zaregistrujte své klíče pomocí klíčů společnosti Microsoft
+❯ sudo sbctl enroll-keys -m # Zapsání vašich klíčů spolu s klíči od Microsoftu
 Enrolling keys to EFI variables...✔
-Klíče registrovány do proměnných EFI!
+Enrolled keys to the EFI variables!
 
 ❯ sudo sbctl status
-# sbctl by nyní měl být nainstalován a můžeme pokračovat k podepisování obrazů jádra a správce spouštění
-Installed:      ✔ sbctl je nainstalován
+# sbctl by nyní měl být nainstalován a můžeme přejít k podepisování obrazů kernelu a zavaděče
+Installed:      ✔ sbctl is installed
 Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-Setup Mode:     ✔ Zakázáno
-Secure Boot     ✘ Zakázáno
+Setup Mode:     ✔ Disabled
+Secure Boot     ✘ Disabled
 Vendor Keys:    microsoft
 ```
 
-## Podepisování obrazu jádra a správce spouštění
+## Podepisování obrazu kernelu a zavaděče
 
 CachyOS poskytuje skript [`sbctl-batch-sign`](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign),
-který vezme seznam souborů, které je třeba podepsat, z `sudo sbctl verify` a všechny je podepíše.
+který vezme seznam souborů, které je třeba podepsat, z výstupu `sudo sbctl verify` a všechny je podepíše.
 
 ```bash
 ❯ sudo sbctl verify
 Verifying file database and EFI images in /boot...
-✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux není podepsán
-✘ /boot/EFI/BOOT/BOOTX64.EFI není podepsán
-✘ /boot/EFI/systemd/systemd-bootx64.efi není podepsán
-✘ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux není podepsán
-✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux není podepsán
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is not signed
+✘ /boot/EFI/BOOT/BOOTX64.EFI is not signed
+✘ /boot/EFI/systemd/systemd-bootx64.efi is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is not signed
 
 ❯ sudo sbctl-batch-sign
 
 ❯ sudo sbctl verify
 Verifying file database and EFI images in /boot...
-✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux je podepsán
-✔ /boot/EFI/BOOT/BOOTX64.EFI je podepsán
-✔ /boot/EFI/systemd/systemd-bootx64.efi je podepsán
-✔ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux je podepsán
-✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux je podepsán
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is signed
+✔ /boot/EFI/BOOT/BOOTX64.EFI is signed
+✔ /boot/EFI/systemd/systemd-bootx64.efi is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
 ```
 
 :::caution
-Na systémech se samostatným rozvržením oddílů `/boot` a `/boot/efi` může `sbctl` skenovat EFI binárky pouze v `/boot/efi`.
-To způsobí, že obrazy jádra, které jsou v `/boot`, nebudou detekovány. `sbctl-batch-sign` to řeší **vždy** skenováním
+Na systémech s odděleným uspořádáním oddílů `/boot` a `/boot/efi`, `sbctl` může prohledávat EFI binární soubory pouze v `/boot/efi`.
+To způsobuje, že obrazy kernelu, které jsou v `/boot`, nejsou detekovány. `sbctl-batch-sign` toto obchází tím, že **vždy** prohledává
 `/boot` pro soubory `vmlinuz-*`.
 :::
 
-Nyní, když jsou všechny soubory podepsány, můžeme restartovat zpět do nastavení UEFI a povolit zabezpečené spouštění.
+Nyní, když jsou všechny soubory podepsány, můžeme restartovat zpět do nastavení UEFI a povolit Secure Boot.
 Všimněte si, že se jedná o jednorázový proces, protože podepisování souborů s příznakem `-s` uloží tyto soubory do databáze `sbctl`.
-`sbctl` se dodává s [háčkem pro pacman](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl), což znamená, že automaticky
-podepíše všechny nové soubory při aktualizaci jádra nebo správce spouštění.
+`sbctl` se dodává s [pacman hookem](https://wiki.archlinux.org/title/Pacman_hook), což znamená, že automaticky
+podepíše všechny nové soubory při aktualizaci kernelu nebo zavaděče.
 
 ### systemd-boot
 
-CachyOS používá `systemd-boot-update.service` poskytovanou systemd k aktualizaci správce spouštění při restartu. To znamená, že
-háček pacman pro `sbctl` **nepodepíše** aktualizované EFI binárky. Jako řešení můžeme podepsat správce spouštění přímo.
+CachyOS používá `systemd-boot-update.service` poskytovaný systemd k aktualizaci zavaděče při restartu. To znamená, že `sbctl`
+pacman hook **nepodepíše** aktualizované EFI binární soubory. Jako náhradní řešení můžeme zavaděč podepsat přímo.
 
 ```sh
 ❯ sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
 ```
 
-## Ověření, že je zabezpečené spouštění povoleno
+### Limine
 
-Chcete-li zkontrolovat, zda je zabezpečené spouštění skutečně povoleno. Můžete spustit jeden z následujících příkazů.
+Limine je speciální zavaděč, který umožňuje kontrolu hashe obrazů
+kernelu a dalších souborů, které Limine používá během spouštění. Pokud je toto povoleno, jakákoli
+ruční konfigurace provedená uživatelem, např. podepsání obrazu pomocí
+`sbctl-batch-sign`, změní hash odpovídajících souborů a
+ověření kontrolního součtu Limine selže.
+
+Podepisování těchto souborů však na Limine není nutné, protože má speciální
+proces spouštění, který obchází řetězení EFI a kontroly podpisů. Jediné EFI
+binární soubory, které je třeba podepsat, jsou samotný Limine a záložní EFI binární soubor,
+který se nachází na všech systémech UEFI.
+
+```sh
+# Podepsání speciálního EFI binárního souboru
+❯ sudo sbctl sign -s /boot/EFI/BOOT/BOOTX64.EFI
+
+# Použití limine-enroll-config k podepsání EFI binárního souboru Limine
+# Toto používá sbctl pod kapotou
+❯ sudo limine-enroll-config
+```
+
+## Ověření, že je Secure Boot povolen
+
+Chcete-li zkontrolovat, že je Secure Boot skutečně povolen, můžete spustit jeden z následujících příkazů.
 
 ```bash
 ❯ sudo sbctl status
-Installed:      ✓ sbctl je nainstalován
+Installed:      ✓ sbctl is installed
 Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-Setup Mode:     ✓ Zakázáno
-Secure Boot:    ✓ Povoleno
+Setup Mode:     ✓ Disabled
+Secure Boot:    ✓ Enabled
 Vendor Keys:    microsoft
 
 ❯ bootctl
@@ -141,8 +162,8 @@ System:
 ## Odkazy a poděkování
 
 - [Arch Wiki](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
-položil základy pro tohoto průvodce. Většina věcí zde byla převzata odtamtud.
-- [sbctl](https://github.com/Foxboron/sbctl) - Tento snadný průvodce k povolení podpory zabezpečeného spouštění by nebyl možný, kdyby nebylo
-úžasné práce odvedené při vytváření tohoto softwaru.
-- [Zlepšení uživatelského prostředí zabezpečeného spouštění od Mortena Linderuda](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) - Blogový příspěvek od Mortena
-"Foxboron" Linderuda o tom, jak bylo uživatelské prostředí zabezpečeného spouštění komplikované před `sbctl`.
+položila základy pro tento průvodce. Většina věcí zde byla převzata odtud.
+- [sbctl](https://github.com/Foxboron/sbctl) - Tento snadný průvodce pro povolení podpory Secure Boot by nebyl možný, nebýt
+úžasné práce, která byla vynaložena na vytvoření tohoto softwaru.
+- [Improving the Secure Boot Experience by Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) - Blogový příspěvek od Mortena
+"Foxborona" Linderuda o tom, jak byla zkušenost se Secure Boot komplikovaná před `sbctl`.

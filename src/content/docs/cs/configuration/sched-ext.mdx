@@ -1,44 +1,46 @@
 ---
-title: Návod k sched-ext
-description: Návod k používání frameworku a různé informace
+title: Návod na sched-ext
+description: Návod, jak používat tento framework, a různé další informace
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
-Rozšiřitelná třída plánovače, známější jako `sched-ext`, je funkce jádra Linuxu, která umožňuje implementovat plánovače vláken jádra v BPF (Berkeley Package Filter) a dynamicky je načítat. V podstatě to koncovým uživatelům umožňuje měnit své plánovače v uživatelském prostoru bez nutnosti sestavovat další jádro jen kvůli jinému plánovači.
+Extensible Scheduler Class, neboli lépe známý jako `sched-ext`, je funkce linuxového kernelu, která umožňuje implementovat plánovače vláken kernelu v
+BPF (Berkeley Packet Filter) a dynamicky je načítat. V podstatě to umožňuje koncovým uživatelům měnit své plánovače v uživatelském prostoru bez
+nutnosti sestavovat další kernel jen pro jiný plánovač.
 
-## Metody spouštění a správy plánovačů
+## Metody pro spouštění a správu plánovačů
 
-- **Plánovače lze nalézt v balíčcích `scx-scheds` a `scx-scheds-git`.**
+- **Plánovače naleznete v balíčcích `scx-scheds` a `scx-scheds-git`.**
   ```sh
   # Stabilní větev
   sudo pacman -S scx-scheds
 
-  # Vývojová větev (Tato větev obsahuje nejnovější změny
+  # Nejnovější vývojová větev (Tato větev obsahuje nejnovější změny
   # a může obsahovat plánovač, který ještě nebyl vydán.)
   sudo pacman -S scx-scheds-git
   ```
 
 ### Spuštění plánovače v terminálu
 
-- *Chcete-li spustit plánovač, otevřete terminál a zadejte následující příkaz:*
+- *Pro spuštění plánovače otevřete terminál a zadejte následující příkaz:*
   ```sh title='Příklad spuštění rusty'
   sudo scx_rusty
   ```
 
-*Tím se spustí plánovač rusty a odpojí výchozí plánovač.*
+*Tím se spustí plánovač rusty a odpojí se výchozí plánovač.*
 
-Chcete-li plánovač zastavit. Stiskněte `CTRL + C` a plánovač se zastaví a znovu převezme řízení výchozí plánovač jádra.
+Pro zastavení plánovače stiskněte `CTRL + C`. Plánovač se poté zastaví a opět převezme řízení výchozí plánovač kernelu.
 
 ### Služba Systemd
 
 :::note
-Tato služba bude brzy zrušena a nahrazena **[scx_loaderem](https://github.com/sched-ext/scx/tree/main/rust/scx_loader)**
+Tato služba bude zastaralá a nahrazena **[scx_loaderem](https://github.com/sched-ext/scx/tree/main/rust/scx_loader)**.
 :::
 
-Balíček scx obsahuje službu systemd, která používá konfiguraci určenou v souboru `/etc/default/scx`.
+Balíček scx obsahuje službu systemd, která používá konfiguraci specifikovanou v souboru `/etc/default/scx`.
 
-V tomto konfiguračním souboru můžete určit plánovač, který služba spouští, a volitelně zahrnout vlastní příznaky pro požadovaný plánovač.
+V tomto konfiguračním souboru můžete specifikovat plánovač, který služba spouští, a volitelně zahrnout vlastní příznaky pro požadovaný plánovač.
 
 - **Pokud chcete změnit plánovač spouštěný službou, jednoduše upravte řádek `SCX_SCHEDULER=` na plánovač, který chcete spouštět ve výchozím nastavení.**
 
@@ -52,15 +54,15 @@ V tomto konfiguračním souboru můžete určit plánovač, který služba spou�
     SCX_FLAGS='--performance'
     ```
 
-*Nyní můžete spouštět/povolovat/zastavovat plánovač stejně jako jakoukoli jinou službu systemd.*
+*Nyní můžete plánovač spouštět/povolovat/zastavovat jako jakoukoli jinou službu systemd.*
 
-**Níže si prohlédněte stručný návod, jak ji spravovat.**
+**Níže se podívejte na stručný návod, jak jej spravovat.**
 
 ```sh title='Povolení a spuštění služby systemd'
 sudo systemctl enable --now scx
 ```
 
-```sh title='Spuštění plánovače jednorázově prostřednictvím služby systemd'
+```sh title='Jednorázové spuštění plánovače prostřednictvím služby systemd'
 sudo systemctl start scx
 ```
 
@@ -68,192 +70,240 @@ sudo systemctl start scx
 sudo systemctl stop scx
 ```
 
-*Pro více informací o této službě: [Služba Sched-ext systemd](<https://github.com/sched-ext/scx/blob/main/services/README.md>)*
+*Pro více informací o této službě: [Sched-ext systemd service](<https://github.com/sched-ext/scx/blob/main/services/README.md>)*
 
 ### [scx_loader](https://github.com/sched-ext/scx/tree/main/rust/scx_loader)
 
 *Jak název napovídá, jedná se o nástroj, který funguje jako zavaděč a správce pro framework sched-ext pomocí rozhraní D-Bus.*
 
-*I když nevyžaduje systemd, stále jej lze používat v kombinaci s ním.* [Podívejte se na průvodce přechodem pro referenci](/configuration/sched-ext#transitioning-from-scxservice-to-scx_loader-a-comprehensive-guide))
+*Ačkoliv nevyžaduje systemd, může být stále používán ve spojení s ním.* [Pro referenci se podívejte na průvodce přechodem](/configuration/sched-ext#transitioning-from-scxservice-to-scx_loader-a-comprehensive-guide))
 
-- **Má schopnost zastavit, spustit, restartovat, číst informace o scx plánovači a další.**
-  - *Pro komunikaci s ním můžete použít nástroje jako `dbus-send` nebo `gdbus`.*
-- **Tento návod vysvětluje, jak používat scx_loader s příkazem dbus-send.**
-  - ```sh title='Spuštění scx_rusty s jeho výchozími argumenty'
+- **Má schopnost zastavit, spustit, restartovat, číst informace o plánovači scx a další.**
+  - *Můžete použít nástroje jako `dbus-send` nebo `gdbus` pro komunikaci s ním.*
+- **Tento průvodce vysvětluje, jak používat scx_loader s příkazem dbus-send.**
+  - ```sh title='Spuštění scx_rusty s výchozími argumenty'
     dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartScheduler string:scx_rusty uint32:0
     ```
   - ```sh title='Spuštění plánovače s argumenty'
     # Tento příklad spouští scx_bpfland s následujícími příznaky: -k -c 0
     dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
     ```
-  - ```sh title='Zastavení aktuálně spuštěného plánovače'
+  - ```sh title='Zastavení aktuálně běžícího plánovače'
     dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StopScheduler
     ```
   - ```sh title='Přepnutí na jiný plánovač v režimu 2'
     dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchScheduler string:scx_lavd uint32:2
-    # Tím se přepne na scx_lavd s režimem plánovače 2, což znamená, že se LAVD spustí v úsporném režimu
+    # Tímto se přepne na scx_lavd s režimem plánovače 2, což znamená, že se LAVD spustí v režimu úspory energie
     ```
   - ```sh title='Přepnutí na jiný plánovač s argumenty'
     dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
     ```
-  - ```sh title='Získání aktuálně spuštěného plánovače'
+  - ```sh title='Zjištění aktuálně běžícího plánovače'
     dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:CurrentScheduler
     ```
   - ```sh title='Získání seznamu podporovaných plánovačů'
     dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:SupportedSchedulers
     ```
 :::tip
-Zde je vysvětlení, co každý režim znamená v scx_loaderu.
+Zde je vysvětlení, co jednotlivé režimy v scx_loaderu znamenají.
 
 - **Režim 0** = `Výchozí příznaky plánovače`
 - **Režim 1** = `Hraní her`
 - **Režim 2** = `Úspora energie`
 - **Režim 3** = `Nízká latence`
-- **Režim 4** = `Server` *Aktuálně dostupné pouze pro bpfland*
+- **Režim 4** = `Server`
 
-Příklad: LAVD běžící v režimu 1 je ekvivalentní `scx_lavd --performance`
+Příklad: LAVD běžící v režimu 1 je ekvivalentem `scx_lavd --performance`
 
 *TLDR: Každý režim je sada různých příznaků určených ke zlepšení zamýšleného případu použití.*
 
-[Pro podrobnější pohled na to, co tyto režimy mění u každého plánovače](https://github.com/sched-ext/scx/blob/main/rust/scx_loader/src/config.rs#L175)
+[Pro podrobnější pohled na to, co tyto režimy mění u jednotlivých plánovačů](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/src/config.rs#L174>)
 :::
 
-### Správce jádra CachyOS
+### CachyOS Kernel Manager
 
-**K plánovačům scx lze přistupovat a konfigurovat je pomocí zcela nového [scx_loaderu](/features/kernel_manager#sched-ext-framework-management).**
+**Plánovače scx lze přistupovat a konfigurovat pomocí zbrusu nového [scx_loaderu](/features/kernel_manager#sched-ext-framework-management).**
 
-## Úvod k hlavním plánovačům
+## Představení hlavních plánovačů
 
-Vzhledem k tomu, že existuje mnoho plánovačů, ze kterých si můžete vybrat, chceme vám poskytnout krátký úvod k dostupným plánovačům.
+Jelikož je na výběr mnoho plánovačů, chceme vám poskytnout malé představení těch, které jsou k dispozici.
 
 :::note
-Tyto plánovače jsou v neustálém vývoji a zároveň jsou testovány, takže očekávejte, že některé z jejich funkcí/příznaků se mohou změnit.
+Tyto plánovače jsou v neustálém vývoji a zároveň jsou testovány, takže očekávejte, že některé jejich funkce/příznaky se mohou měnit.
 :::
 
-Neváhejte nahlásit jakýkoli problém nebo zpětnou vazbu na jejich [GitHub](/configuration/sched-ext#github) uvedeném níže.
+Neváhejte nahlásit jakýkoli problém nebo zpětnou vazbu v repozitáři daného plánovače.
 
 ### [scx_bpfland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_bpfland>)
 
 **Vyvinul: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
 
-Plánovač sched_ext založený na vruntime, který upřednostňuje interaktivní pracovní zátěže. Vysoce flexibilní a snadno se přizpůsobí.
+Plánovač sched_ext založený na vruntime, který upřednostňuje interaktivní úlohy. Vysoce flexibilní a snadno přizpůsobitelný.
 
-Při rozhodování o tom, která jádra použít, bere Bpfland v úvahu jejich rozložení mezipaměti a která jádra sdílejí stejnou mezipaměť L2/L3, což vede k menšímu počtu chyb mezipaměti = vyšší výkon.
+Když Bpfland rozhoduje, která jádra použít, bere v úvahu jejich uspořádání mezipaměti a která jádra sdílejí stejnou mezipaměť L2/L3, což vede k menšímu počtu minutí mezipaměti = vyššímu výkonu.
 
 **Případy použití:**
 
-- Hraní her
-- Použití na desktopu
-- Multimediální/audio produkce
-- Skvělá interaktivita při intenzivním zatížení
-- Úspora energie
-- Serverové pracovní zátěže
+- **Hraní her**
+- **Použití na desktopu**
+- **Multimediální/audio produkce**
+- **Skvělá interaktivita při náročných úlohách**
+- **Úspora energie**
+- **Server** *(Vyžaduje [`server_mode`](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/configuration.md#configuration-structure>) s scx_loaderem)*
+
+### [scx_rustland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland>)
+
+**Vyvinul: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Sdílí podobnosti s bpfland, vytvořen s úmyslem být snadno čitelný a srozumitelný díky své implementaci v uživatelském prostoru.
+
+Mějte na paměti, že při použití plánovače v uživatelském prostoru dochází k mírnému snížení propustnosti. Ačkoliv rustland má možnost bezproblémové integrace se sofistikovanými knihovnami, nástroji pro sledování, externími službami (např. AI) atd.
+
+**Případy použití:**
+
+- **Úlohy s nízkou latencí (hraní her, videokonference a živé streamování)**
+- **Použití na desktopu**
+
 
 ### [scx_flash](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_flash>)
 
 **Vyvinul: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
 
-Plánovač, který se zaměřuje na zajištění spravedlnosti mezi úlohami a předvídatelnosti výkonu. Tento plánovač je představen jako náhrada režimu „lowlatency“ v scx_bpfland.
+Plánovač, který se zaměřuje na zajištění spravedlnosti mezi úlohami a předvídatelnosti výkonu. Tento plánovač je představen jako náhrada za režim "lowlatency" v scx_bpfland.
 
 **Případy použití:**
 
-- Hraní her
-- Pracovní zátěže citlivé na latenci, jako je multimediální nebo audio zpracování v reálném čase
-- Potřeba odezvy v situacích s nadměrným zatížením
-- Konzistence výkonu
+- **Hraní her**
+- **Úlohy citlivé na latenci, jako je multimediální nebo real-time zpracování zvuku**
+- **Potřeba odezvy v přetížených situacích**
+- **Konzistence výkonu**
+- **Server** *(Vyžaduje [`server_mode`](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/configuration.md#configuration-structure>) s scx_loaderem)*
 
 ### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>)
 
 **Vyvinul: Changwoo Min (multics69 [GitHub](<https://github.com/multics69>)).**
 
-**Stručný úvod k LAVD od Changwoo:**
+**Stručné představení LAVD od Changwoo:**
 
-***LAVD je nový algoritmus plánování, který je stále ve vývoji. Jeho
-motivací jsou herní pracovní zátěže, které jsou kritické z hlediska latence a
-náročné na komunikaci. Jeho cílem je minimalizovat špičky latence při zachování
-celkově dobré propustnosti a spravedlivého využití času procesoru mezi úlohami.***
+***LAVD je nový plánovací algoritmus, který je stále ve vývoji. Je
+motivován herními úlohami, které jsou kritické z hlediska latence a
+náročné na komunikaci. Cílem je minimalizovat špičky latence při zachování
+celkově dobré propustnosti a spravedlivého využití času CPU mezi úlohami.***
 
 **Případy použití:**
 
-- Hraní her
-- Audio produkce
-- Pracovní zátěže citlivé na latenci
-- Použití na desktopu
-- Skvělá interaktivita při intenzivním zatížení
-- Úspora energie
+- **Hraní her**
+- **Audio produkce**
+- **Úlohy citlivé na latenci**
+- **Použití na desktopu**
+- **Skvělá interaktivita při náročných úlohách**
+- **Úspora energie**
 
-Jednou z hlavních a skvělých funkcí, které LAVD zahrnuje, je **Core Compaction.**, což bez zabíhání do technických detailů znamená: Když je využití procesoru < 50 %, aktuálně aktivní jádra poběží déle a s vyšší frekvencí. Mezitím nečinná jádra zůstanou v C-stavu (spánek) mnohem déle, čímž se dosáhne menší celkové spotřeby energie.
+Jednou z hlavních a úžasných schopností, které LAVD zahrnuje, je **Kompakce jader.** což, aniž bychom zabíhali do technických detailů: Když je využití CPU < 50 %, aktuálně aktivní jádra poběží déle a na vyšší frekvenci. Mezitím nečinná jádra zůstanou ve stavu C-State (spánek) po mnohem delší dobu, čímž se dosáhne nižší celkové spotřeby energie.
 
 ### [scx_rusty](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rusty>)
 
 **Vyvinul: David Vernet (Byte-Lab [GitHub](<https://github.com/Byte-Lab>))**
 
-Rusty nabízí širokou škálu funkcí, které zlepšují jeho schopnosti a poskytují větší flexibilitu pro různé případy použití.
-Jednou z těchto funkcí je nastavitelnost, která vám umožňuje přizpůsobit Rusty tak, aby vyhovoval vašim preferencím a specifickým požadavkům.
+Rusty nabízí širokou škálu funkcí, které vylepšují jeho schopnosti a poskytují větší flexibilitu pro různé případy použití.
+Jednou z těchto funkcí je laditelnost, která vám umožňuje přizpůsobit Rusty vašim preferencím a specifickým požadavkům.
 
 **Případy použití:**
 
-- Hraní her
-- Pracovní zátěže citlivé na latenci
-- Použití na desktopu
-- Multimediální/audio produkce
-- Pracovní zátěže citlivé na latenci
-- Skvělá interaktivita při intenzivním zatížení
-- Úspora energie
+- **Hraní her**
+- **Úlohy citlivé na latenci**
+- **Použití na desktopu**
+- **Multimediální/audio produkce**
+- **Úlohy citlivé na latenci**
+- **Skvělá interaktivita při náročných úlohách**
+- **Úspora energie**
 
-Pro podrobnější informace o tom, co lze u Rustyho ladit. Podívejte se na stránku nápovědy
+Pro podrobnější pohled na to, co lze pro Rusty ladit, se podívejte na stránku nápovědy.
 
 ```text
 scx_rusty --help
 ```
 
+### [scx_p2dq](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_p2dq>)
+
+**Vyvinul: Daniel Hodges (hodgesds [GitHub](<https://github.com/hodgesds>))**
+
+Univerzální plánovač, který se zaměřuje na vyvažování zátěže "pick two" mezi
+LLC. Udržuje vysokou lokalitu mezipaměti a zachování práce, přičemž poskytuje
+rozumnou latenci.
+
+**Případy použití:**
+
+- **Server** *(Vyžaduje [`server_mode`](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/configuration.md#configuration-structure>) s scx_loaderem)*
+- **Desktopová prostředí**
+- **Hraní her (s určitým ručním laděním)**
+
+### [scx_tickless](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_tickless>)
+
+**Vyvinul: Andrea Righi (arighi [Github](<https://github.com/arighi>))**
+
+:::note
+Aby bylo možné efektivně zakázat tiky na "tickless" CPU, musí být kernel spuštěn s `nohz_full`. Mějte na paměti, že `nohz_full` zavádí režii systémových volání, takže to může zhoršit úlohy citlivé na latenci.
+:::
+
+scx_tickless je serverově orientovaný plánovač určený pro cloud computing, virtualizaci a úlohy vysoce výkonného počítání.
+
+Plánovač funguje tak, že směruje všechny události plánování přes fond primárních CPU určených pro zpracování těchto událostí. To umožňuje zakázat tik plánovače na ostatních CPU, čímž se snižuje šum operačního systému.
+
+**Případy použití:**
+
+- **Cloud computing**
+- **Virtualizace**
+- **Úlohy vysoce výkonného počítání**
+- **Server** *(Vyžaduje [`server_mode`](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/configuration.md#configuration-structure>) s scx_loaderem)*
+
 ## Obecná doporučení
 
 ### LAVD Autopilot & Autopower
 
-***Citáty od Changwoo Min:***
-- **V režimu autopilota plánovač upravuje svůj režim napájení `Úsporný, Vyvážený nebo Výkonný` na základě zatížení systému, konkrétně využití procesoru**
+***Citace od Changwoo Min:***
+- **V režimu autopilota si plánovač upravuje svůj napájecí režim `Powersave, Balanced nebo Performance` na základě zátěže systému, konkrétně využití CPU**
 
-- **Autopower: Automaticky rozhoduje o režimu napájení plánovače na základě energetického profilu systému, tj. EPP (Energy Performance Preference).**
+- **Autopower: Automaticky rozhoduje o napájecím režimu plánovače na základě energetického profilu systému, tzv. EPP (Energy Performance Preference).**
 
 :::note
 LAVD nyní ve výchozím nastavení povoluje autopilota.
 :::
 
 ```sh
-# Autopower lze aktivovat pomocí následujícího příznaku:
+# Autopower lze aktivovat následujícím příznakem:
 --autopower
-# např.:
+# např:
 scx_lavd --autopower
 ```
 
-### Zakázat ananicy-cpp
+### Zakázání ananicy-cpp
 
 :::caution
-Při používání kteréhokoli z plánovačů z frameworku sched-ext se důrazně doporučuje zakázat a vyhnout se používání ananicy-cpp kvůli možným konfliktům, protože zesiluje rozdíl v prioritách, který plánovač již vytváří/řeší, tím, že posiluje interaktivní úlohy a vytváří nadměrnou prioritizaci, která strádá ostatní úlohy, čímž se zvyšuje šance na dosažení časového limitu watchdogu sched_ext, který odpojí běžící plánovač, tj. způsobí zablokování.
+Při použití kteréhokoli z plánovačů z frameworku sched-ext se důrazně doporučuje zakázat a nepoužívat ananicy-cpp kvůli možným konfliktům, protože zesiluje rozdíl v prioritách, který plánovač již vytváří/spravuje, tím, že posiluje interaktivní úlohy, což vede k nadměrné prioritizaci, která způsobuje hladovění ostatních úloh a zvyšuje šanci na dosažení časového limitu watchdogu sched_ext, což vyhodí běžící plánovač, tj. způsobí zastavení.
 :::
 
-**Chcete-li zakázat/zastavit ananicy-cpp, spusťte následující příkaz:**
+**Pro zakázání/zastavení ananicy-cpp spusťte následující příkaz:**
 
 ```sh
 systemctl disable --now ananicy-cpp
 ```
 
-## Přechod ze scx.service na scx_loader: Komplexní průvodce
+## Přechod z scx.service na scx_loader: Komplexní průvodce
 
 :::caution
-Nepokoušejte se spouštět scx_loader.service společně se scx.service, jinak se služba zavaděče spustí, ale nebude nic dělat.
+Nepokoušejte se spouštět službu scx_loader.service současně se službou scx.service, jinak se služba loaderu sice spustí, ale nic neudělá.
 
-Tento konflikt vzniká proto, že obě služby o sobě navzájem nevědí, zejména pokud jde o to, která z nich spravuje plánovače.
+Tento konflikt vzniká, protože obě služby o sobě nevědí, zejména pokud jde o to, která z nich spravuje plánovače.
 :::
 
 :::tip
-Správce jádra CachyOS již obsahuje [GUI pro správu scx_loaderu.](/features/kernel_manager#sched-ext-framework-management)
+CachyOS Kernel Manager již obsahuje [GUI pro správu scx_loaderu](/features/kernel_manager#sched-ext-framework-management).
 :::
 
-**Nejprve začněme s podrobným porovnáním struktury souboru scx.service se strukturou konfiguračního souboru scx_loader.**
+**Začněme nejprve podrobným porovnáním struktury souboru scx.service se strukturou konfiguračního souboru scx_loaderu.**
 
-*Pokud jste dříve měli spuštěný LAVD se starou scx.service, jako v následujícím příkladu:*
+*Pokud jste dříve měli spuštěný LAVD se starou službou scx.service jako v příkladu níže:*
 
 ```sh title='Struktura souboru scx.service'
 # Seznam scx_plánovačů: scx_bpfland scx_central scx_flash scx_lavd scx_layered scx_nest scx_qmap scx_rlfifo scx_rustland scx_rusty scx_simple scx_userland
@@ -263,9 +313,9 @@ SCX_SCHEDULER=scx_lavd
 SCX_FLAGS='--performance'
 ```
 
-**Pak bude ekvivalent v konfiguračním souboru scx_loader vypadat takto:**
+**Pak ekvivalent v konfiguračním souboru scx_loaderu bude vypadat takto:**
 
-```sh title='Struktura souboru scx_loader'
+```sh title='Struktura souboru scx_loaderu'
 default_sched = "scx_lavd"
 default_mode = "Auto"
 
@@ -273,9 +323,9 @@ default_mode = "Auto"
 auto_mode = ["--performance"]
 ```
 
-**[Pro více informací o tom, jak konfigurovat soubor scx_loader](https://github.com/sched-ext/scx/blob/main/rust/scx_loader/configuration.md)**
+**[Pro více informací o tom, jak konfigurovat soubor scx_loaderu](https://github.com/sched-ext/scx/blob/main/rust/scx_loader/configuration.md)**
 
-  **Pro snadný přechod ze `služby systemd scx` na nový nástroj `scx_loader` postupujte podle níže uvedeného průvodce.**
+  **Následujte níže uvedený průvodce pro snadný přechod ze `systémové služby scx` na nový nástroj `scx_loader`.**
   <Steps>
   1. ```sh title='Zakázání scx.service ve prospěch scx_loader.service'
       systemctl disable --now scx.service && systemctl enable --now scx_loader.service
@@ -285,10 +335,10 @@ auto_mode = ["--performance"]
      sudo micro /etc/scx_loader.toml
      # Přidejte následující řádky:
 
-     default_sched = "scx_bpfland" # Upravte tento řádek na plánovač, který má scx_loader spouštět při spuštění
+     default_sched = "scx_bpfland" # Upravte tento řádek na plánovač, který chcete, aby scx_loader spustil při startu
      default_mode = "Auto" # Možné hodnoty: "Auto", "Gaming", "LowLatency", "PowerSave".
 
-     # Stisknutím CTRL + S uložte změny a CTRL + Q pro ukončení Micro.
+     # Stiskněte CTRL + S pro uložení změn a CTRL + Q pro ukončení Micro.
      ```
   3. ```sh title='Restartování scx_loaderu'
      systemctl restart scx_loader.service
@@ -302,70 +352,70 @@ auto_mode = ["--performance"]
   - ```sh title='Kontrola stavu služby'
     systemctl status scx_loader.service
     ```
-  - ```sh title='Zobrazení všech záznamů protokolu služby'
+  - ```sh title='Zobrazení všech záznamů v logu služby'
     journalctl -u scx_loader.service
     ```
-  - ```sh title='Zobrazení pouze protokolů aktuální relace.'
+  - ```sh title='Zobrazení pouze logů aktuální relace.'
     journalctl -u scx_loader.service -b 0
     ```
-- **Rozšířené protokolování**
+- **Pokročilé logování**
 
-*Chcete-li získat podrobnější protokol, postupujte podle těchto kroků.*
-  1) ```sh title='Úprava souboru služby'
+*Pro získání podrobnějšího logu postupujte podle těchto kroků.*
+  1) ```sh title='Upravte soubor služby'
      sudo systemctl edit scx_loader.service
      ```
-  2) ```sh title='Přidejte následující řádek do sekce [Service]'
+  2) ```sh title='Přidejte následující řádek pod sekci [Service]'
      Environment=RUST_LOG=trace
      ```
-  3) ```sh title='Restartování služby'
+  3) ```sh title='Restartujte službu'
      sudo systemctl restart scx_loader.service
      ```
-- **Znovu zkontrolujte protokoly pro podrobnější informace o ladění.**
+- **Znovu zkontrolujte logy pro podrobnější informace k ladění.**
 
 ## FAQ
 
-### Proč plánovač X funguje hůře než ostatní?
+### Proč plánovač X funguje hůře než jiný?
 
-- **Při jejich porovnávání je třeba zvážit mnoho proměnných. Například, jak měří váhu úlohy? Upřednostňují interaktivní úlohy před neinteraktivními?
-  V konečném důsledku to závisí na jejich konstrukčních rozhodnutích.**
+- **Při porovnávání je třeba zvážit mnoho proměnných. Například, jak měří váhu úlohy? Upřednostňují interaktivní úlohy před neinteraktivními?
+  Nakonec to závisí na jejich návrhových rozhodnutích.**
 
-### Proč všichni tvrdí, že tento plánovač X je nejlepší pro případ X, ale pro mě nefunguje tak dobře?
+### Proč všichni říkají, že tento plánovač X je nejlepší pro případ Y, ale mně nefunguje tak dobře?
 
-- **Stejně jako v předchozí odpovědi, volba procesoru a jeho konstrukce, jako je rozložení jader, způsob sdílení mezipaměti mezi jádry a další související faktory, mohou vést k méně efektivnímu fungování plánovače.**
-- **Proto je jednou z hlavních výhod frameworku sched-ext možnost výběru, takže se nebojte vyzkoušet jeden a zjistit, který nejlépe vyhovuje vašemu případu použití. `Příklady: stabilita fps, maximální výkon, odezva při intenzivním zatížení atd.`**
+- **Stejně jako v předchozí odpovědi, volba CPU a jeho design, jako je uspořádání jader, způsob sdílení mezipaměti mezi jádry a další související faktory, mohou vést k tomu, že plánovač pracuje méně efektivně.**
+- **Proto je jednou z hlavních předností frameworku sched-ext možnost volby, takže se nebojte nějaký vyzkoušet a zjistit, který nejlépe vyhovuje vašemu případu použití. `Příklady: stabilita fps, maximální výkon, odezva při náročných úlohách atd.`**
 
-### Případy použití těchto plánovačů jsou si docela podobné... proč tomu tak je?
+### Případy použití těchto plánovačů jsou si dost podobné... proč tomu tak je?
 
-- **Především proto, že se jedná o víceúčelové plánovače, což znamená, že se dokážou přizpůsobit různým pracovním zátěžím, i když v každé oblasti nemusí vynikat.**
+- **Především proto, že se jedná o víceúčelové plánovače, což znamená, že mohou vyhovět různým úlohám, i když nemusí vynikat v každé oblasti.**
 
-- **Chcete-li zjistit, který plánovač vám nejlépe vyhovuje, není lepší rady, než si ho sami vyzkoušet.**
+- **Abyste zjistili, který plánovač vám nejlépe vyhovuje, není lepší rady, než si ho sami vyzkoušet.**
 
-### Chybí mi plánovač, o kterém se někteří uživatelé zmiňují nebo testují na serveru CachyOS Discord
-**Ujistěte se, že používáte vývojovou verzi balíčku scx-scheds s názvem `scx-scheds-git`**
+### Chybí mi plánovač, o kterém někteří uživatelé mluví nebo ho testují na Discord serveru CachyOS
+**Ujistěte se, že používáte nejnovější vývojovou verzi balíčku scx-scheds s názvem `scx-scheds-git`**
 
-- **Jedním z důvodů bude, že tento plánovač je velmi nový a v současné době je testován uživateli, proto ještě nebyl přidán do balíčku `scx-scheds-git`.**
+- **Jedním z důvodů bude, že tento plánovač je velmi nový a je v současné době testován uživateli, a proto ještě nebyl přidán do balíčku `scx-scheds-git`.**
 
 ### Proč se plánovač náhle zhroutil? Je nestabilní?
 
 - *Může existovat několik důvodů, proč se to stalo:*
-  - **Jedním z nejčastějších důvodů je, že jste používali ananicy-cpp společně s plánovačem. Proto jsme přidali toto [varování](/configuration/sched-ext#disable-ananicy-cpp)**
-  - **Dalším důvodem může být, že pracovní zátěž, kterou jste spouštěli, překročila limity a kapacitu plánovače, což způsobilo jeho zablokování.**
-    - **Příklad nepřiměřené pracovní zátěže: `hackbench`**
-  - **Nebo zjevnější důvod, našli jste chybu v plánovači, pokud ano. Nahlaste ji prosím jako problém v jejich [GitHubu](https://github.com/sched-ext/scx/issues) nebo jim o ní dejte vědět
-    na kanálu CachyOS Discord `sched-ext`**
+  - **Jedním z nejčastějších důvodů je, že jste používali ananicy-cpp souběžně s plánovačem. Proto jsme přidali toto [varování](/configuration/sched-ext#disable-ananicy-cpp)**
+  - **Dalším důvodem může být, že zátěž, kterou jste spouštěli, překročila limity a kapacitu plánovače, což způsobilo jeho zastavení.**
+    - **Příklad nerozumné zátěže: `hackbench`**
+  - **Nebo zjevnější důvod, našli jste chybu v plánovači, pokud ano. Nahlaste ji prosím jako problém v jejich [GitHubu](https://github.com/sched-ext/scx/issues) nebo jim o tom dejte vědět
+    v kanálu `sched-ext` na Discordu CachyOS**
 
-### Dříve jsem používal scx_loader v GUI Správce jádra. Musím stále dodržovat kroky přechodu?
+### Dříve jsem používal scx_loader v GUI Kernel Manageru. Musím stále postupovat podle kroků přechodu?
 
-- **V tomto konkrétním případě to není nutné, protože Správce jádra již proces přechodu řeší.**
+- **V tomto konkrétním případě to není nutné, protože Kernel Manager již proces přechodu zvládá.**
   - *Pokud jste dříve nepřidali vlastní příznaky do `/etc/default/scx` a stále je chcete používat.*
 
-## Zjistěte více
+## Další informace
 
-Pokud se chcete dozvědět více o frameworku sched-ext. Podívejte se na odkazy níže.
+Pokud se chcete dozvědět více o frameworku sched-ext, podívejte se na níže uvedené odkazy.
 
 - [Zdrojový kód plánovačů Sched-ext](<https://github.com/sched-ext/scx/tree/main/scheds/rust>)
 - [Oficiální Wiki Sched-ext](<https://github.com/sched-ext/scx/wiki>)
-- [Changwoo Min: Úvod do sched-ext & plánování CPU, 1. část](<https://blogs.igalia.com/changwoo/sched-ext-a-bpf-extensible-scheduler-class-part-1/>)
-  - [2. část](<https://blogs.igalia.com/changwoo/sched-ext-scheduler-architecture-and-interfaces-part-2/>)
-- [Andrea Righi: Opětovná implementace mého linuxového Rust plánovače v eBPF](<https://arighi.blogspot.com/2024/08/re-implementing-my-linux-rust-scheduler.html>)
-- [Andrea Righi:  Plánovače jádra Linuxu generované umělou inteligencí v Rustu](<https://arighi.blogspot.com/2024/09/ai-generated-linux-kernel-schedulers-in.html>)
+- [Changwoo Min: Úvod do sched-ext a plánování CPU, část 1](<https://blogs.igalia.com/changwoo/sched-ext-a-bpf-extensible-scheduler-class-part-1/>)
+  - [Část 2](<https://blogs.igalia.com/changwoo/sched-ext-scheduler-architecture-and-interfaces-part-2/>)
+- [Andrea Righi: Reimplementace mého plánovače Linuxu v Rustu do eBPF](<https://arighi.blogspot.com/2024/08/re-implementing-my-linux-rust-scheduler.html>)
+- [Andrea Righi:  Plánovače linuxového kernelu generované AI v Rustu](<https://arighi.blogspot.com/2024/09/ai-generated-linux-kernel-schedulers-in.html>)

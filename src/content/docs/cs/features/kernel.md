@@ -1,115 +1,113 @@
 ---
-title: Jádro CachyOS
-description: Vlastnosti a změny v jádře CachyOS
+title: CachyOS Kernel
+description: Vlastnosti a změny v kernelu CachyOS
 ---
 
-Jádro CachyOS je upravené jádro, které využívá vylepšení, konfigurace a záplaty z upstreamu.
+Kernel CachyOS je upravený kernel, který využívá vylepšení, konfigurace a patche z upstreamu.
 
 ## Vlastnosti
 
-- Vyberte si mezi 3 schedulery jádra a různými [sched-ext](/configuration/sched-ext) schedulery pro lepší odezvu
+- Možnost volby mezi 3 plánovači kernelu a různými [sched-ext](/configuration/sched-ext) plánovači pro zlepšení odezvy
 - Vylepšení AMD P-State
 - Nejnovější BBRv3 od Googlu
-- le9uo pro výrazně lepší odezvu při vysokém zatížení paměti
-- Aktuální sada záplat NTSYNC, používaná s kompatibilním sestavením wine/protonu
-- Kompatibilita se zařízeními T2 MacOS se záplatami z [t2linux](https://github.com/t2linux/linux-t2-patches/)
+- le9uo pro výrazně zlepšenou odezvu při vysokém zatížení paměti
+- Aktuální sada patchů NTSYNC, používaná s kompatibilním sestavením wine/protonu
+- Kompatibilita se zařízeními T2 MacOS s patchy z [t2linux](https://github.com/t2linux/linux-t2-patches/)
 - Umožňuje čtení spotřeby energie CPU pro jednotlivá jádra pro uživatele AMD
 - ACS Override a v412loopback
 - Modul VHBA pro emulaci zařízení CD/DVD-ROM
-- Nejnovější sada záplat ZSTD
-- Různé další záplaty, které se zaměřují na zlepšení výkonu (optimalizované příznaky kompilátoru, vylepšení kryptografie, úpravy správy paměti)
+- Nejnovější sada patchů ZSTD
+- Různé další patche, které se zaměřují na zlepšení výkonu (optimalizované příznaky kompilátoru, kryptografická vylepšení, úpravy správy paměti)
 
-Podrobnější seznam záplat, které CachyOS nabízí, naleznete v úplnějším
-[seznamu funkcí](https://github.com/CachyOS/linux-cachyos/?tab=readme-ov-file#features), [repozitáři záplat jádra](https://github.com/CachyOS/kernel-patches)
-a [zdrojovém stromu Linuxu CachyOS](https://github.com/CachyOS/linux).
+Pro podrobnější seznam patchů, které CachyOS nabízí, se prosím podívejte na kompletnější
+[seznam vlastností](https://github.com/CachyOS/linux-cachyos/?tab=readme-ov-file#features), [repozitář kernel-patches](https://github.com/CachyOS/kernel-patches)
+a [strom zdrojového kódu Linuxu CachyOS](https://github.com/CachyOS/linux).
 
 ## Varianty
 
-CachyOS nabízí rozmanitou škálu možností jádra. Všechna jádra, která poskytujeme, jsou dodávána se [základní sadou záplat CachyOS](https://github.com/CachyOS/kernel-patches).
-Pro každé z jader existuje [odpovídající varianta `-lto`](#konvence-pojmenování-balíčků), která je
-sestavena pomocí [clang](https://clang.llvm.org/) namísto [GCC](https://gcc.gnu.org/). Výjimkou jsou výchozí jádro a jádro `-rc`, protože jsou
-ve výchozím nastavení sestavena s [ThinLTO](https://blog.llvm.org/2016/06/thinlto-scalable-and-incremental-lto.html), a proto mají místo toho odpovídající varianty jádra `-gcc`.
+CachyOS nabízí širokou škálu možností kernelu. Všechny kernely, které poskytujeme, jsou dodávány se [základní sadou patchů CachyOS](https://github.com/CachyOS/kernel-patches).
+Pro každý z kernelů existuje [odpovídající varianta `-lto`](#package-naming-convention), která
+je sestavena s [clang](https://clang.llvm.org/) namísto [GCC](https://gcc.gnu.org/).
 
 - **linux-cachyos**
-    - Výchozí jádro. Toto je doporučené jádro, pokud si nejste jisti, které jádro by se mělo použít.
-    - Používá scheduler [BORE](https://github.com/firelzrd/bore-scheduler).
-    - Ve výchozím nastavení je sestaveno s clang a ThinLTO pro produkci optimalizovanějších binárních souborů.
-    - Profilováno s naším vlastním [AutoFDO](https://cachyos.org/blog/2411-kernel-autofdo/) profilem pro lepší výkon. [Skript](https://github.com/CachyOS/cachyos-benchmarker/blob/master/kernel-autofdo.sh) použitý k profilování jádra.
+    - Tickrate 1000Hz pro zlepšenou odezvu.
+    - Výchozí kernel. Toto je doporučený kernel, pokud si nejste jisti, který kernel by měl být použit.
+    - Používá plánovač [BORE](https://github.com/firelzrd/bore-scheduler).
+    - Sestaveno s GCC.
+    - Profilováno naším vlastním profilem [AutoFDO](https://cachyos.org/blog/2411-kernel-autofdo/) pro zlepšení výkonu. [Skript](https://github.com/CachyOS/cachyos-benchmarker/blob/master/kernel-autofdo.sh) použitý pro profilování kernelu.
 - **linux-cachyos-bore**
-    - Používá scheduler BORE.
+    - Používá plánovač [BORE](https://github.com/firelzrd/bore-scheduler).
 - **linux-cachyos-bmq**
-    - Používá scheduler BMQ z [Project C](https://gitlab.com/alfredchen/projectc/) od Alfreda Chena.
+    - Používá plánovač BMQ z [Project C](https://gitlab.com/alfredchen/projectc/) od Alfreda Chena.
         - **Nepodporuje sched-ext**.
 - **linux-cachyos-deckify**
-    - Výchozí jádro pro handheldy. **Nedoporučuje se** a **není podporováno** používat na handheldech jiné jádro než toto.
-    - Používá scheduler BORE.
-    - Specifické záplaty pro handheldy nad rámec základní sady záplat pro zlepšení kompatibility a celkového zážitku na handheldech.
+    - Výchozí kernel pro handheldy. **Není doporučeno** a **nepodporováno** používat na handheldech jakýkoli jiný kernel než tento.
+    - Používá plánovač [BORE](https://github.com/firelzrd/bore-scheduler).
+    - Specifické patche pro handheldy navíc k základní sadě patchů pro zlepšení kompatibility a celkového zážitku na handheld zařízeních.
 - **linux-cachyos-eevdf**
-    - Vylepšuje výchozí scheduler jádra pro lepší odezvu.
+    - Upravuje výchozí plánovač kernelu pro zlepšení odezvy.
 - **linux-cachyos-lts**
-    - Založeno na nejnovějším jádře s dlouhodobou podporou.
-    - Používá scheduler BORE.
-    - Minimálně záplatováno ve srovnání s jinými jádry, aby byla zajištěna maximální stabilita.
+    - Založeno na nejnovějším Long Term Support kernelu.
+    - Používá plánovač [BORE](https://github.com/firelzrd/bore-scheduler).
+    - Minimálně opatchován ve srovnání s ostatními kernely pro zajištění maximální stability.
 - **linux-cachyos-hardened**
-    - Používá scheduler BORE.
-    - Zahrnuje sadu záplat [linux-hardened](https://github.com/anthraxx/linux-hardened).
-    - Konfigurace jádra založená na [konfiguraci linux-hardened](https://gitlab.archlinux.org/archlinux/packaging/packages/linux-hardened/-/blob/main/config).
-        - Obsahuje velmi agresivní hardening, který výrazně snižuje výkon a uživatelský komfort.
+    - Používá plánovač [BORE](https://github.com/firelzrd/bore-scheduler).
+    - Zahrnuje sadu patchů [linux-hardened](https://github.com/anthraxx/linux-hardened).
+    - Konfigurace kernelu založená na [konfiguraci linux-hardened](https://gitlab.archlinux.org/archlinux/packaging/packages/linux-hardened/-/blob/main/config).
+        - Obsahuje velmi agresivní zabezpečení, které výrazně omezuje výkon a uživatelský zážitek.
         - **Nepodporuje sched-ext**.
 - **linux-cachyos-rc**
-    - Založeno na nejnovějším jádře mainline z [Linusova stromu](https://github.com/torvalds/linux/).
-    - Používá scheduler BORE.
-    - Hlavní jádro pro zavádění nových funkcí do naší sady záplat.
+    - Založeno na nejnovějším mainline kernelu ze [stromu Linuse](https://github.com/torvalds/linux/).
+    - Používá plánovač [BORE](https://github.com/firelzrd/bore-scheduler).
+    - Hlavní kernel pro zavádění nových funkcí do naší sady patchů.
 - **linux-cachyos-server**
-    - Laděno pro serverové úlohy ve srovnání s desktopovým použitím.
-        - Frekvence časovače 300 Hz.
-        - Bez preempce.
-        - Základní EEVDF.
+    - Vyladěno pro serverové zátěže ve srovnání s desktopovým použitím.
+        - Tickrate 300Hz.
+        - Žádná preempce.
+        - Standardní EEVDF.
 - **linux-cachyos-rt-bore**
     - Preempce v reálném čase.
-    - Používá scheduler BORE.
+    - Používá plánovač [BORE](https://github.com/firelzrd/bore-scheduler).
 
-Otevřete prosím issue v [linux-cachyos GitHub](https://github.com/CachyOS/linux-cachyos) pro návrhy a vylepšení, která lze přidat do výchozího jádra.
+:::note
+Pokud není uvedeno jinak, je bezpečné předpokládat, že všechny ostatní varianty kernelu
+mají stejnou konfiguraci jako výchozí kernel.
+:::
 
-## Předkompilované moduly jádra
+Prosím, otevřete issue na [linux-cachyos GitHubu](https://github.com/CachyOS/linux-cachyos) pro návrhy a vylepšení, která mohou být přidána do výchozího kernelu.
 
-Aby se přizpůsobilo širší uživatelské základně, CachyOS dodává s jádrem některé známé a hojně používané moduly jádra. To znamená, že uživatelé již nebudou muset
-po každé aktualizaci jádra nebo při každé instalaci nového jádra tyto moduly znovu kompilovat, ale budou je muset pouze nainstalovat z repozitáře, protože jsou
-již předkompilované. To efektivně zneplatňuje všechny balíčky `-dkms`, které uživatel může mít a které poskytují stejný modul jako předkompilovaná verze.
+## Předkompilované moduly kernelu
+
+Aby vyhověl širší uživatelské základně, CachyOS dodává některé dobře známé a hojně používané moduly kernelu spolu s kernelem. To znamená, že uživatelé již nebudou
+muset tyto moduly znovu kompilovat po každé aktualizaci kernelu nebo při každé nové instalaci kernelu, ale budou je muset pouze nainstalovat z repozitáře, protože jsou
+již předkompilované. Tím se efektivně stávají zastaralými jakékoli balíčky `-dkms`, které by uživatel mohl mít a které poskytují stejný modul jako předkompilovaná verze.
 
 ### ZFS
 
-[ZFS](https://openzfs.org/wiki/Main_Page) je jedním z mnoha souborových systémů, které jsou podporovány v CachyOS. Vzhledem k tomu, že je licencován pod
-[CDDL](https://opensource.org/license/cddl-1-0), je nekompatibilní s licencí jádra Linuxu, a proto nemůže být začleněn do stromu jádra. Dodávaný modul obsahuje
-nejnovější funkce a opravy z upstreamu, aby byla zajištěna kompatibilita s nejnovějším jádrem.
+[ZFS](https://openzfs.org/wiki/Main_Page) je jedním z mnoha souborových systémů, které jsou v CachyOS podporovány. Kvůli tomu, že je licencován pod
+[CDDL](https://opensource.org/license/cddl-1-0), je nekompatibilní s licencí linuxového kernelu a proto nemůže být začleněn do hlavního stromu. Dodávaný modul zahrnuje
+nejnovější upstreamové funkce a opravy pro zajištění kompatibility s nejnovějším kernelem.
 
 ### NVIDIA
 
-CachyOS dodává jak předkompilované verze uzavřených, tak [open-source](https://github.com/NVIDIA/open-gpu-kernel-modules/) modulů jádra. Vzhledem k tomu, že vývoj
-modulu jádra NVIDIA probíhá mimo strom jádra, a proto nesleduje kadenci vydávání jádra, může být výchozí konfigurace někdy nekompatibilní s nejnovějším
-jádrem. Jako řešení CachyOS záplatuje moduly záplatami vytvořenými komunitou nebo záplatami sdílenými přímo společností NVIDIA.
+CachyOS dodává předkompilované verze jak uzavřených, tak [otevřených](https://github.com/NVIDIA/open-gpu-kernel-modules/) modulů kernelu. Kvůli tomu, že vývoj
+modulu kernelu NVIDIA probíhá mimo hlavní strom a tudíž nesleduje vydávací cyklus kernelu, může být standardní konfigurace někdy nekompatibilní s nejnovějším
+kernelem. Jako řešení CachyOS patchuje moduly komunitou vytvořenými patchy nebo patchy sdílenými přímo společností NVIDIA.
 
 ## Ostatní
 
-Jádro CachyOS má také některé další pozoruhodné vlastnosti, které jsou nenápadné, ale zlepšují uživatelský komfort
+Kernel CachyOS má také některé další pozoruhodné vlastnosti, které jsou nenápadné, ale zlepšují uživatelský zážitek.
 
-- Zahrnuje ladicí variantu jádra, která poskytuje neodstraněný binární soubor jádra pro účely ladění. Tento balíček je potřebný k profilování jádra pomocí AutoFDO.
-- [Binder](https://developer.android.com/reference/android/os/Binder), modul potřebný pro [Waydroid](https://waydro.id/), je ve výchozím nastavení povolen v konfiguraci jádra
-a je již [nastaven](https://github.com/CachyOS/linux-cachyos/blob/master/linux-cachyos/config#L10559).
+- Zahrnuje debug variantu kernelu, která poskytuje ne-stripnutý binární soubor kernelu pro účely ladění. Tento balíček je potřebný pro profilování kernelu pomocí AutoFDO.
+- [Binder](https://developer.android.com/reference/android/os/Binder), modul potřebný pro [Waydroid](https://waydro.id/), je ve výchozím nastavení povolen v konfiguraci kernelu
+a již [nastaven](https://github.com/CachyOS/linux-cachyos/blob/master/linux-cachyos/config#L10559).
 
 ## Konvence pojmenování balíčků
 
 ```sh
-linux-cachyos # Základní balíček jádra pro výchozí jádro. Kompilováno s clang
-linux-cachyos-gcc # Protičást linux-cachyos kompilovaná s GCC
-linux-cachyos-{,gcc-}headers # Hlavičky jádra, hlavně pro sestavování
-linux-cachyos-{,gcc-}nvidia # Předkompilované uzavřené moduly NVIDIA pro jádro linux-cachyos
-linux-cachyos-{,gcc-}nvidia-open
-linux-cachyos-{,gcc-}zfs # Předkompilované moduly ZFS pro jádro linux-cachyos
-linux-cachyos-{,gcc-}dbg # Neodstraněný binární soubor linuxu pro ladění
-
-linux-cachyos-hardened # Základní balíček jádra pro hardened jádro. Kompilováno s GCC
-linux-cachyos-hardened-lto # Protičást linux-cachyos-hardened kompilovaná s clang
+linux-cachyos # Základní balíček kernelu pro výchozí kernel. Kompilováno s GCC
+linux-cachyos-hardened # Základní balíček kernelu pro hardened kernel. Kompilováno s GCC
+linux-cachyos-hardened-lto # clang-kompilovaný protějšek pro linux-cachyos-hardened
 linux-cachyos-hardened-{,lto-}headers
 linux-cachyos-hardened-{,lto-}nvidia
 linux-cachyos-hardened-{,lto-}nvidia-open
@@ -117,23 +115,20 @@ linux-cachyos-hardened-{,lto-}zfs
 linux-cachyos-hardened-{,lto-}dbg
 ```
 
-## FAQ
+## Často kladené otázky (FAQ)
 
-### Proč se AutoFDO nepoužívá pro všechny ostatní varianty jádra?
+### Proč se AutoFDO nepoužívá pro všechny ostatní varianty kernelu?
 
-Protože je to drahé na sestavení, protože to v podstatě vyžaduje sestavení jádra dvakrát, a proto vyžaduje více prostředků a času věnovaného kompilaci. Proces sestavování jádra s AutoFDO zahrnuje následující kroky:
+Protože je jeho sestavení nákladné, v podstatě vyžaduje sestavení kernelu dvakrát, a proto vyžaduje více zdrojů a času věnovaného kompilaci. Proces sestavení kernelu s AutoFDO zahrnuje následující kroky:
 
-1)  Sestavte jádro s povolenými funkcemi AutoFDO a ladění.
-2)  Vytvořte profil, což znamená provedení zátěžových testů za účelem shromáždění dat pro profilování pro možné optimalizace.
-3)  Znovu sestavte jádro s profilem AutoFDO.
+1) Sestavení kernelu s povoleným AutoFDO a ladícími schopnostmi.
+2) Vytvoření profilu, což znamená spouštění zátěží za účelem shromáždění profilovacích dat pro možné optimalizace.
+3) Znovu sestavení kernelu s profilem AutoFDO.
 
-Proto je prozatím přítomno pouze ve variantě [linux-cachyos](https://www.google.com/url?sa=E&source=gmail&q=/features/kernel#linux-cachyos-výchozí-jádro).
+Proto je prozatím přítomen pouze ve variantě [linux-cachyos](/features/kernel#variants).
 
-Další informace o AutoFDO naleznete [zde.](https://cachyos.org/blog/2411-kernel-autofdo/)
+Pro více informací o AutoFDO klikněte [zde.](https://cachyos.org/blog/2411-kernel-autofdo/)
 
-### Zlepšuje jádro pro real-time výkon ve hrách?
+### Zlepšuje kernel v reálném čase výkon při hraní her?
 
-Ne, nezlepšuje. Jádro pro real-time umožňuje preemptovat mnohem více kódu ve srovnání s normálním plně preemptivním jádrem. To znamená, že mnohem více úloh (včetně
-herních procesů) je často preemptováno a bude nuceno uvolnit systémové prostředky, což vede k horšímu výkonu.
-
-```
+Ne, nezlepšuje. Kernel v reálném čase činí mnohem více kódu preemptibilním ve srovnání s normálním plně preemptibilním kernelem. To znamená, že mnohem více úloh (včetně herních procesů) je často přerušováno a bude nuceně uvolňovat systémové prostředky, což vede k horšímu výkonu.
