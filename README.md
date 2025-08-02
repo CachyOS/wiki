@@ -45,6 +45,9 @@ git push origin <new-branch>
 ```bash
 bun install # Install dependencies used by our wiki
 bun run dev # Runs a local copy of the wiki, complete with your modifications!
+
+bun run build # Builds the wiki for production to make sure everything works as expected
+bun run preview # Preview the production build (lunaria might show an error if there are uncommitted changes, this is normal)
 ```
 
 Finally, you can open a [pull request](https://github.com/CachyOS/wiki/compare) to get your changes reviewed and hopefully merged.
