@@ -5,11 +5,11 @@ description: Changelogs of Calamares and the GUI Live ISO
 25.07
 ----
 **Features:**
--   **Shell**: The user shell can be now choosen at installation time between fish, zsh and bash. Fish still stays to be default enabled. 
+-   **Shell**: The user shell can now be chosen at installation time between fish, zsh and bash. Fish stays enabled by default.
 -   **chwd**: Install plasma-x11 for legacy NVIDIA Drivers
 -   **Netinstall**: Added fwupd to KDE Plasma and Gnome
 -   **mesa-git**: Added support for AMD Anti Lag
--   **firefox**: Introduced an alternative firefox called "firefox-pure", which includes improvement with the userjs profile. Additionally there has been "cachyos-firefox-settings" added, which can be installed on top of firefox.
+-   **firefox**: Introduced an alternative firefox called "firefox-pure", which includes improvement with the userjs profile. Additionally, there has been "cachyos-firefox-settings" added, which can be installed on top of firefox.
 -   **Proton-CachyOS**:
     -   Imported upstream wine-wayland commits
     -   Added "PROTON_FSR4_UPGRADE" env variable, which will automatically download the latest FSR4 DLL and then replace it for an automatic upgrade on FSR 3.1 supported games
@@ -177,7 +177,7 @@ description: Changelogs of Calamares and the GUI Live ISO
 **Bug Fixes:**
 - refind: partitioning: changed from 3 way partiton layout to 2 way
 - netinstall: added kdeplasma-addons to the Plasma installation
-- calamares: Fixed a issue, while partitioning with a swap partition
+- calamares: Fixed an issue, while partitioning with a swap partition
 
 **Changelog Handheld Edition:**
 - Rog Ally X Support should have been improved
@@ -276,9 +276,9 @@ description: Changelogs of Calamares and the GUI Live ISO
 - kernel-manager: Added support for managing sched-ext schedulers and getting information via GUI
 - steam/proton: There is now a "game-performance" script, which can be added to steam's launch options
 - power-profiles: On AMD Pstate supported CPUs the lowest Linear frequency is now set higher, this can improve latency and 1% lows
-- kwin: Added back-port for tearing, this has been tested. On NVIDIA it only works on native wayland applications
+- kwin: Added back-port for tearing, this has been tested. On NVIDIA, it only works on native wayland applications
 - netinstall: Cutefish has been dropped as installable Desktop Environment
-- Mirrors: Added Austria and China Mirror, the China Mirror is hosted by the TUNA University. This should help a lot of users from china
+- Mirrors: Added Austria and China Mirror, the China Mirror is hosted by the TUNA University. This should help a lot of users from China
 - Package Updates: linux-cachyos 6.9.9, mesa 24.1.3, NVIDIA 555.58.02, Plasma 6.1.2, LLVM 18.1.8
 
 **Bug Fixes:**
@@ -351,7 +351,7 @@ description: Changelogs of Calamares and the GUI Live ISO
 - CachyOS-Deckify: Provide variant for Handhelds (experimental), see [here](https://discuss.cachyos.org/t/information-experimental-cachyos-deckify/203) for more details
 - BTRFS: Automatic Snapper for snapshots, can be installed from within the CachyOS hello app.
 - ISO: Drop Offline Installer
-- Package Updates: Python 3.12, gcc 14.1.1, mesa 24.0.6, xwayland 24.1rc2 , NVIDIA 550.78
+- Package Updates: Python 3.12, gcc 14.1.1, mesa 24.0.6, xwayland 24.1rc2, NVIDIA 550.78
 
 **Bug-Fixes:**
 - settings.conf: Move hardware detection before netinstall
@@ -393,7 +393,7 @@ description: Changelogs of Calamares and the GUI Live ISO
 - Package Updates: linux-cachyos 6.8.1, pacman 6.1, mesa 24.0.3, Plasma 6.0.2, llvm 17.0.6
 
 **Bug-Fixes:**
-- NVIDIA: patched nvidia module to take the owner ship of nvidia.drm.modeset earlier to avoid issues on nvidia graphics
+- NVIDIA: patched nvidia module to take the ownership of nvidia.drm.modeset earlier to avoid issues on nvidia graphics
 - Refind: Don't install the lts kernel to avoid issues
 - shellprocess: Remove the liveusers directory completly
 

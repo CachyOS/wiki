@@ -5,12 +5,12 @@ description: Configure boot manager settings and pass kernel parameters to the c
 
 ## systemd-boot
 
-systemd-boot has two kinds of configuration files, one for systemd-boot itself in `/boot/loader/loader.conf` and one for each
+systemd-boot has two kinds of configuration files: one for systemd-boot itself in `/boot/loader/loader.conf`, and one for each
 individual kernel entry in `/boot/loader/entry`.
 
 ### Loader configuration
 
-In this configuration file, you can change the default entry and the timeout of systemd-boot
+In this configuration file, you can change the default entry and timeout of systemd-boot
 
 ```shell
 # /boot/loader/loader.conf
@@ -22,8 +22,9 @@ timeout 5
 
 ### Kernel Commandline Configuration
 
-We provide a tool for easier configuration of systemd-boot [`sdboot-manage`](https://github.com/CachyOS/CachyOS-PKGBUILDS/tree/master/systemd-boot-manager).
+We provide a tool for easier configuration of systemd-boot: [`sdboot-manage`](https://github.com/CachyOS/CachyOS-PKGBUILDS/tree/master/systemd-boot-manager).
 One of the perks of this tool is global kernel commandline configuration. The configuration file for `sdboot-manage` is located in `/etc/sdboot-manage.conf`.
+
 Edit the `LINUX_OPTIONS=` line in `/etc/sdboot-manage.conf` to change kernel parameters.
 
 ```shell
@@ -40,7 +41,7 @@ After making changes, regenerate all systemd-boot entries with the following com
 ## rEFInd
 
 Like [systemd-boot](/configuration/boot_manager_configuration#systemd-boot), rEFInd has two configuration files. `refind.conf` located in
-`boot/efi/EFI/refind` is mainly for changing how rEFind behaves while `/boot/refind_linux.conf` is for managing your boot options.
+`boot/efi/EFI/refind` is mainly for changing how rEFind behaves, while `/boot/refind_linux.conf` is for managing your boot options.
 `refind.conf` contains extensive comments explaining all its options.
 
 ### Kernel Commandline Configuration
@@ -76,7 +77,7 @@ Press ESC to get access to the GRUB prompt. From here run `normal` or `exit` to 
 
 ### Kernel Commandline Configuration
 
-To pass kernel parameters to the commandline with GRUB, we need to edit `GRUB_CMDLINE_LINUX_DEFAULT` within `/etc/default/grub`
+To pass kernel parameters to the commandline with GRUB, we need to edit `GRUB_CMDLINE_LINUX_DEFAULT` within `/etc/default/grub`.
 
 ```shell
 # /etc/default/grub
@@ -84,7 +85,7 @@ To pass kernel parameters to the commandline with GRUB, we need to edit `GRUB_CM
 GRUB_CMDLINE_LINUX_DEFAULT='nowatchdog zswap.enabled=0 quiet splash'
 ```
 
-Every time we modify the GRUB configuration file, we need to remake the config with the following command
+Every time we modify the GRUB configuration file, we need to remake the config with the following command:
 
 ```shell
 ❯ sudo grub-mkconfig -o /boot/grub/grub.cfg
@@ -93,7 +94,7 @@ Every time we modify the GRUB configuration file, we need to remake the config w
 ## Limine
 Limine is a modern bootloader known for its simple configuration. This guide covers the basics to get you started.
 
-Configuration primarily happens in `/boot/limine.conf` (or sometimes in the EFI system partition) for menu settings and `/etc/default/limine` for kernel parameters.
+Configuration primarily happens in `/boot/limine.conf` (or sometimes in the EFI system partition) for menu settings, and `/etc/default/limine` for kernel parameters.
 
 ### Boot Menu Configuration
 

@@ -9,19 +9,19 @@ Below are some of the key features that CachyOS provides to ensure an enhanced d
 
 ## Optimized Packages and Repositories
 
-CachyOS offers a large selection of  optimized packages for various hardware configurations, including `x86-64-v3`, `x86-64-v4`, and `Zen4+` systems to improve overall performance.
+CachyOS offers a large selection of optimized packages for various hardware configurations, including `x86-64-v3`, `x86-64-v4`, and `Zen4+` systems to improve overall performance.
 
 For more information, check [**Optimized Repositories.**](/features/optimized_repos)
 
 ## Custom Kernel Tuned for Performance and Stability
 
-Aside from the CachyOS base kernel patch set that tunes various kernel parameters to improve desktop responsiveness, CachyOS cherry picks patch sets that have not been mainlined or they're not included in the stable revision of the kernel.
+Aside from the CachyOS base kernel patch set that tunes various kernel parameters to improve desktop responsiveness, CachyOS cherry-picks patch sets that have not been mainlined or are not included in the stable revision of the kernel.
 
 Therefore, these patches undergo internal testing before being released to users to ensure that stability isn't impacted. For a complete list of the patches that CachyOS provides, see [Kernel](/features/kernel).
 
 ## Custom CPU Scheduler Support
 
-By default EEVDF is tuned to divide the available CPU time fairly among all tasks and it's mostly geared for throughput-oriented workloads. The CachyOS kernel [**configures some EEVDF tunables**](https://github.com/CachyOS/linux/blob/6.15/cachy/kernel/sched/fair.c#L79-81) to prioritize desktop interactivity.
+By default, EEVDF is tuned to divide the available CPU time fairly among all tasks, and it's mostly geared for throughput-oriented workloads. The CachyOS kernel [**configures some EEVDF tunables**](https://github.com/CachyOS/linux/blob/6.15/cachy/kernel/sched/fair.c#L79-81) to prioritize desktop interactivity.
 
 However, EEVDF by design wasn't meant to be used for desktop interactivity. With that in mind, CachyOS ships kernels patched with the
 [BORE (Burst-Oriented Response Enhancer)](https://github.com/firelzrd/bore-scheduler) scheduler which enhances EEVDF to improve interactivity under heavy workloads.

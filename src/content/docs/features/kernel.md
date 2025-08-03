@@ -30,8 +30,8 @@ For each of the kernels, there is a [corresponding `-lto` variant](#package-nami
 is built  with [clang](https://clang.llvm.org/) instead of [GCC](https://gcc.gnu.org/).
 
 - **linux-cachyos**
+    - Default kernel. This is the recommended kernel if you're unsure which one to use.
     - 1000Hz tickrate for improved responsiveness.
-    - Default kernel. This is the recommended kernel if you're unsure about which kernel should be used.
     - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
     - Built with GCC.
     - Profiled with our own [AutoFDO](https://cachyos.org/blog/2411-kernel-autofdo/) profile for improved performance. [Script](https://github.com/CachyOS/cachyos-benchmarker/blob/master/kernel-autofdo.sh) used to profile the kernel.
@@ -79,8 +79,8 @@ Please open an issue in [linux-cachyos GitHub](https://github.com/CachyOS/linux-
 ## Prebuilt Kernel Modules
 
 To accommodate a larger userbase, CachyOS ships some well-known and highly used kernel modules along with the kernel. This means that users will no longer
-have to recompile those modules after every kernel update or on every new kernel install, but will only have to install them from the repository as it is
-already precompiled. This effectively obsoletes any `-dkms` packages that a user might have that provides the same module as the precompiled version.
+have to recompile those modules after every kernel update or on every new kernel install, but will only have to install them from the repository as they
+are already precompiled. This effectively obsoletes any `-dkms` packages a user might have that provides the same module as the precompiled version.
 
 ### ZFS
 
@@ -119,13 +119,13 @@ linux-cachyos-hardened-{,lto-}dbg
 
 ### Why is AutoFDO not being used for all the other kernel variants?
 
-Because it's expensive to build since it basically requires building the kernel twice therefore it requires more resources and time dedicated to the compilation. The process of building a kernel with AutoFDO involves the following steps:
+Because it's expensive to build since it basically requires building the kernel twice, resulting in more time and resources dedicated to the compilation. The process of building a kernel with AutoFDO involves the following steps:
 
 1) Build the kernel with AutoFDO and debugging capabilities enabled.
 2) Create a profile meaning executing workloads in order to gather profiling data for the possible optimizations.
 3) Rebuild the kernel with the AutoFDO profile.
 
-Therefore for now it's only present in the [linux-cachyos](/features/kernel#variants) variant.
+Therefore it's only present in the [linux-cachyos](/features/kernel#variants) variant for now.
 
 For more information about AutoFDO, click [here.](https://cachyos.org/blog/2411-kernel-autofdo/)
 

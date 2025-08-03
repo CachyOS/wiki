@@ -3,17 +3,17 @@ title: Offered Boot Managers
 description: Description and recommendations for the currently offered boot managers
 ---
 
-To offer the best experience across a range of devices, CachyOS currently offers the following boot managers: systemd-boot, rEFInd, GRUB and Limine.
-This wiki article will describe the feature set of each boot manager and also includes our recommendations for when choosing them. For
+To offer the best experience across a range of devices, CachyOS currently offers the following boot managers: systemd-boot, rEFInd, GRUB, and Limine.
+This wiki article will describe the feature set of each boot manager and includes our recommendations for when to choose them. For
 configuration, please see [Boot Manager Configuration](/configuration/boot_manager_configuration).
 
 ## systemd-boot
 
-Part of systemd family, systemd-boot was created to be as simple as possible, therefore it only has support for UEFI based systems. This simple yet efficient design ensures it is reliable and fast. However this comes at the cost of advanced features supported by other boot managers.
+Part of the systemd family, systemd-boot was created to be as simple as possible. Therefore, it only has support for UEFI based systems. This simple yet efficient design ensures it is reliable and fast. However, this comes at the cost of advanced features supported by other boot managers.
 
 ### Pros
 - Very simple configuration.
-- Boot entries are separated into multiple files making it easier to manage.
+- Boot entries are separated into multiple files, making it easier to manage.
 
 ### Cons
  - Lacks proper support for BIOS/MBR.

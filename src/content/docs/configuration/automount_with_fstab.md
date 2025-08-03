@@ -3,7 +3,7 @@ title: Automount Additional Drives Through fstab at Boot
 description: Mount additional static drives at boot by utilizing the file found at /etc/fstab
 ---
 
-This tutorial will describe the basics of utilizing the fstab file located in /etc/ in order to mount static drives during boot. It will briefly explain how to find a partition or drive's UUID, what some options do, and further reading should the information provided be insufficient.
+This tutorial describes the basics of utilizing the fstab file located in /etc/ in order to mount static drives during boot. It briefly explains how to find a partition or drive's UUID, what some options do, and further reading should the information provided be insufficient.
 
 ## Prerequisites
 - Root access
@@ -26,11 +26,11 @@ nvme0n1
 └─nvme0n1p6 ntfs
 ```
 
-In our example, we know that we want to mount a Windows partition, which is ntfs, and we know that roughly half its space is available. Thus we can determine that the partition we want to mount is `nvme0n1p3` and its UUID to be `08A24E90A24E81E4`, with a file system of `ntfs` in this example.
+In our example, we know that we want to mount a Windows partition, which is ntfs. We also know that roughly half its space is available. Therefore, we can determine that the partition we want to mount is `nvme0n1p3` and its UUID to be `08A24E90A24E81E4`, with a file system of `ntfs` in this example.
 
 ### 2. Identifying your partition
 
-Often `lsblk -f` will provide all the information you need to mount your disk through /etc/fstab at this point. Should you find the information lacking however you can run the following:
+Often `lsblk -f` will provide all the information you need to mount your disk through /etc/fstab at this point. If you're still unsure which is the correct partition, you can run the following command:
 
 ```sh
 ❯ sudo fdisk -l
@@ -43,7 +43,7 @@ Device              Start        End    Sectors  Size Type
 /dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
 ```
 
-We already know our UUID in this example, however, `fdisk -l` can make it a bit more clear to us by showing the exact size of the partition (1.4T) as well as its type (Microsoft basic data)
+We already know our UUID in this example. However, `fdisk -l` can make it a bit more clear to us by showing the exact size of the partition (1.4T) as well as its type (Microsoft basic data).
 
 That should make it abundantly clear to us that the partition we want is `nvme0n1p3` with a UUID of `08A24E90A24E81E4` as described earlier. We knew earlier, but now we just know it for sure.
 
@@ -54,30 +54,30 @@ Once you are confident you've found the correct partition, copy the UUID. Copyin
 
 Now that we've obtained the UUID of our partition, it's time to open up the fstab file.
 
-Feel free to use your text editor of choice, in this example we will use nano. In order to edit the fstab file it must be opened as root:
+Feel free to use your text editor of choice. In this example, we will use nano. In order to edit the fstab file, it must be opened as root:
 
 ```sh
 ❯ sudo nano /etc/fstab
 ```
 
-Using the arrow keys, navigate to the bottom of the fstab file, and then on a new line we'll create our new entry:
+Using the arrow keys, navigate to the bottom of the fstab file, then create our new entry on an empty new line:
 
 ```sh
 UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail 0 0
 ```
 The break down of this entry is as follows:
 
-- `UUID=08A24E90A24E81E4` This is the file system we want to mount, identified by its UUID. There are other methods to identify your filesystem, though UUID tends to be safest. Additional methods listed [here](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems).
+- `UUID=08A24E90A24E81E4` is the file system we want to mount, identified by its UUID. There are other methods to identify your filesystem, though UUID tends to be safest. Additional methods listed [here](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems).
 
-- `/media/windows` The [Linux Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html) says that `/media/` is the proper location for removable drives to be mounted. `windows` indicates the directory we wish to mount our drive to. Each drive we want to mount will need its own directory.
+- `/media/windows` is the mount point of our drive. The [Linux Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html) says that `/media/` is the proper location for removable drives to be mounted. `windows` indicates the directory we wish to mount our drive to. Each drive we want to mount will need its own directory.
 
-- `ntfs3` This is the filesystem type for our file system. We are explicitly using the ntfs3 kernel driver in our example. Other examples would be `ext4`, `xfs` or similar. This explicit filesystem type declaration can be replaced with `auto` to allow the mount command to make its best guess.
+- `ntfs3` is the filesystem type to be used. We are explicitly using the ntfs3 kernel driver in our example. Other examples would be `ext4`, `xfs` or similar. This explicit filesystem type declaration can be replaced with `auto` to allow the mount command to make its best guess.
 
-- `defaults,nofail` The options we want to pass to the mount command for this drive. `nofail` meaning that should this drive fail to mount, it will not cause an error while booting. Booting will continue like normal. `defaults` implies a standard set of logical options. Typically `rw`, `ro`, or similar.
+- `defaults,nofail` are the options we want to pass to the mount command for this drive. `nofail` meaning that should this drive fail to mount, it will not cause an error while booting. Booting will continue like normal. `defaults` implies a standard set of logical options. Typically `rw`, `ro`, or similar.
 
-- `the first 0` dump, this is typically deprecated in modern systems. Leaving this at 0 won't hurt anything. Feel free to read more about it [here](https://linux.die.net/man/8/dump).
+- `the first 0` dump is typically deprecated in modern systems. Leaving this at 0 won't hurt anything. Feel free to read more about it [here](https://linux.die.net/man/8/dump).
 
-- `the second 0` This sets the order for file system checks at boot time. For a root partition (unless your root file system is btrfs or xfs, which should be set to 0) this should be 1. All other file systems in your fstab should be either 0 (disabled) or 2. More information [here](https://man.archlinux.org/man/fsck.8).
+- `the second 0` sets the order for file system checks at boot time. For a root partition, this should be 1 unless your root file system is btrfs or xfs, which should otherwise be set to 0. All other file systems in your fstab should be either 0 (disabled) or 2. More information [here](https://man.archlinux.org/man/fsck.8).
 
 Options are explained [here](https://man7.org/linux/man-pages/man5/fstab.5.html) and [here](https://man7.org/linux/man-pages/man8/mount.8.html) in much more detail.
 
@@ -96,9 +96,9 @@ are equivalent.  `somefs` followed by nothing is implicitly `somefs defaults 0 0
 
 #### Important for Windows Partitions
 
-If you are following this guide with a Windows partition your options should be `uid=1000,gid=1000,rw,user,exec,umask=000` replacing uid and gid with your user id and group id. If you do not give user, and exec permissions, Windows may lock your drive leaving you unable to modify anything. This may happen regardless of permissions if you do not disable fast boot.
+If you are following this guide with a Windows partition your options should be `uid=1000,gid=1000,rw,user,exec,umask=000` replacing uid and gid with your user id and group id. If you do not give user and exec permissions, Windows may lock your drive leaving you unable to modify anything. This may happen regardless of permissions if you do not disable fast boot.
 
-If you do not set umask=000 some files may be unwritable depending
+If you do not set `umask=000`, some files may be unwritable depending on default mount permissions.
 
 
 
@@ -116,7 +116,7 @@ and then:
 ❯ sudo mount -a
 ```
 
-Your drive should now appear under `/media/windows`, and will appear there the next time you boot, as well as moving forward.
+Your drive should now appear under `/media/windows`, and will appear there each time you reboot.
 
 ```sh
 ❯ ls /media/windows
@@ -132,13 +132,13 @@ Your drive should now appear under `/media/windows`, and will appear there the n
  Intel                    'Ship of Harkinian'
  ```
 
- If you wish to create a link to your newly mounted drive in your home directory you can run the following
+ If you wish to create a link to your newly mounted drive in your home directory, you can run the following:
 
  ```sh
  ❯ ln -s /media/windows ~/Windows
  ```
 
- To show it worked
+ To show it worked:
 
  ```sh
  ❯ ls ~/Windows
