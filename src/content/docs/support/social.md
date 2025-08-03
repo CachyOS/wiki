@@ -3,11 +3,11 @@ title: Official CachyOS Community
 description: Discord, Reddit, X, Forum and Telegram
 ---
 
-The following Social Media is maintained by the CachyOS Team.
+The following Social Media are maintained by the CachyOS Team.
 
-You can chat and ask for help.
+You can follow the links to chat and ask for help.
 
-Feel free to join!.
+Feel free to join!
 
 - [Discord](<https://discord.gg/cachyos-862292009423470592>)
 - [Reddit](<https://www.reddit.com/r/cachyos>)

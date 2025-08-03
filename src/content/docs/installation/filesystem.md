@@ -3,7 +3,7 @@ title: Filesystems
 description: Description and recommendations for the available filesystems. (ext4, f2fs, btrfs, xfs, zfs, bcachefs)
 ---
 
-CachyOS offers 5 filesystems to allow the user to choose what best fits their needs. The following will go over advantages, disadvantages and recommendations for each filesystem. Each filesystem comes with its requirements/utilities preinstalled on CachyOS.
+CachyOS offers 5 filesystems to allow the user to choose what best fits their needs. The following will go over advantages, disadvantages, and recommendations for each filesystem. Each filesystem comes with its requirements/utilities preinstalled on CachyOS.
 
 :::note
 BTRFS is the default and recommended filesystem for CachyOS. Choose it if unsure.
@@ -75,7 +75,7 @@ EXT4 is recommended for users who want the simplest and most commonly used files
 ZFS is an advanced filesystem originally developed by Sun Microsystems in 2005. ZFS has many features however it licensed under CDDL which means it can not be included inside the linux kernel and requires a separate module installed.
 
 :::caution
-Do not use a Real-time kernel together with ZFS because its not compatible due to licensing issues.
+Do not use a Real-time kernel together with ZFS, it's not compatible due to licensing issues.
 :::
 
 ### Pros
@@ -121,7 +121,7 @@ F2FS is only recommended for users who want to maximize the life of their NAND f
 Bcachefs is an advanced new filesystem for Linux, with an emphasis on reliability and robustness and the complete set of features one would expect from a modern filesystem.
 
 :::caution[ATTENTION]
-Bcachefs is still considered as experimental and can have issues.
+Bcachefs is still considered as experimental and may have issues.
 :::
 
 ### Pros
