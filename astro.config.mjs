@@ -90,6 +90,8 @@ export default defineConfig({
           translations: {
             cs: 'Začínáme',
             de: 'Erste Schritte',
+            es: 'Empezando',
+            et: 'Alustamine',
             id: 'Memulai',
             pl: 'Zaczynamy',
             ru: 'Начало работы',
@@ -101,6 +103,8 @@ export default defineConfig({
               translations: {
                 cs: 'Proč CachyOS?',
                 de: 'Warum CachyOS?',
+                es: '¿Por qué CachyOS?',
+                et: 'Miks CachyOS?',
                 id: 'Mengapa CachyOS?',
                 pl: 'Dlaczego CachyOS?',
                 ru: 'Почему CachyOS?',
@@ -113,6 +117,8 @@ export default defineConfig({
               translations: {
                 cs: 'Stažení CachyOS',
                 de: 'CachyOS herunterladen',
+                es: 'Descargando CachyOS',
+                et: 'CachyOS allalaadimine',
                 id: 'Mengunduh CachyOS',
                 pl: 'Pobieranie CachyOS',
                 ru: 'Загрузка CachyOS',
