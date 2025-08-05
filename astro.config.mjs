@@ -36,6 +36,9 @@ export default defineConfig({
       editLink: {
         baseUrl: 'https://github.com/cachyos/wiki/edit/next/',
       },
+      expressiveCode: {
+        themes: ['ayu-dark', 'light-plus'],
+      },
       social: [
         {
           icon: 'github',
