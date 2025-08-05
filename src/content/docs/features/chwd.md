@@ -4,7 +4,7 @@ description: Hardware Detection and Configuration for CachyOS
 ---
 
 [CachyOS Hardware Detection](https://github.com/CachyOS/chwd/) (better known as **`chwd`**) enables us to power a variety of hardware by installing the necessary
-packages and drivers for the running system. This includes systems running NVIDIA's graphics cards, T2 Macbooks, and handheld devices such as Steam Deck and ROG Ally.
+packages and drivers for the running system. This includes systems running NVIDIA's graphics cards, T2 Macbooks, and handheld devices such as the Steam Deck and ROG Ally.
 
 ## Usage
 

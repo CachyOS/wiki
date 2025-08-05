@@ -30,7 +30,7 @@ For each of the kernels, there is a [corresponding `-lto` variant](#package-nami
 is built  with [clang](https://clang.llvm.org/) instead of [GCC](https://gcc.gnu.org/).
 
 - **linux-cachyos**
-    - Default kernel. This is the recommended kernel if you're unsure which one to use.
+    - The default kernel. This is the recommended kernel if you're unsure which one to use.
     - 1000Hz tickrate for improved responsiveness.
     - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
     - Built with GCC.
@@ -41,7 +41,7 @@ is built  with [clang](https://clang.llvm.org/) instead of [GCC](https://gcc.gnu
     - Uses the BMQ scheduler from [Project C](https://gitlab.com/alfredchen/projectc/) by Alfred Chen.
         - **Does not support sched-ext**.
 - **linux-cachyos-deckify**
-    - Default kernel for handhelds. It is **not recommended** and **unsupported** to use any other kernel on handhelds other than this kernel.
+    - The default kernel for handhelds. It is **not recommended** and **unsupported** to use any other kernel on handhelds.
     - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
     - Handheld specific patches on top of the base patchset to improve compatibility and overall experience on handheld devices.
 - **linux-cachyos-eevdf**
@@ -96,7 +96,7 @@ kernel. As a workaround, CachyOS patches the modules with community-created patc
 
 ## Other
 
-The CachyOS kernel also has some other notable features that are subtle yet improve the user experience
+The CachyOS kernel also has some other notable features that are subtle yet improve the user experience:
 
 - Includes a debug variant of the kernel that provides an unstripped kernel binary for debugging purposes. This package is needed to profile the kernel with AutoFDO.
 - [Binder](https://developer.android.com/reference/android/os/Binder), the module needed for [Waydroid](https://waydro.id/) is enabled by default in the kernel config

@@ -4,6 +4,7 @@ description: Description and recommendations for the currently offered boot mana
 ---
 
 To offer the best experience across a range of devices, CachyOS currently offers the following boot managers: systemd-boot, rEFInd, GRUB, and Limine.
+
 This wiki article will describe the feature set of each boot manager and includes our recommendations for when to choose them. For
 configuration, please see [Boot Manager Configuration](/configuration/boot_manager_configuration).
 
@@ -25,7 +26,7 @@ Part of the systemd family, systemd-boot was created to be as simple as possible
 
 ## rEFInd
 
-A fork of rEFIt, rEFInd was primarily made to make it easier for MacOS users to multi-boot. However rEFInd has evolved into being hardware agnostic making it a great choice for multi-booting on any system. The main draw of rEFInd is its ability to scan all storage devices at boot and correspondingly display entries for each OS/Kernel found.
+A fork of rEFIt, rEFInd was primarily made to make it easier for MacOS users to multi-boot. However, rEFInd has evolved into being hardware agnostic, making it a great choice for multi-booting on any system. The main draw of rEFInd is its ability to scan all storage devices at boot and correspondingly display entries for each OS/Kernel found.
 
 ### Pros
 
@@ -43,19 +44,19 @@ A fork of rEFIt, rEFInd was primarily made to make it easier for MacOS users to 
 ## GRUB
 
 GRUB is the oldest of the available boot managers. It has a very large feature
-set, works on almost every machine and is the most commonly used Linux boot
-manager. The following is a list of its main pros and cons.
+set, works on almost every machine, and is the most commonly used Linux boot
+manager.
 
 ### Pros
 - Able to read boot images from almost all available Linux filesystems.
-- Widely used and very easy to find information online.
+- Widely used and information online is easily found.
 - Able to decrypt encrypted boot partitions.
-- The only boot loader offered allowing it to boot BIOS machines.
-- Looks dated. However has great theme support to compensate.
+- Allows booting into BIOS machines.
+- Looks dated, but has great theme support to compensate.
 
 ### Cons
-- Bloated due to needing to support much older hardware and needing lots of filesystem drivers.
-- Noticeably slower compared to systemd-boot, rEFInd and Limine.
+- Bloated due to supporting much older hardware and requiring lots of filesystem drivers.
+- Noticeably slower compared to systemd-boot, rEFInd, and Limine.
 
 ## Limine
 
@@ -64,13 +65,13 @@ Limine is a modern, advanced, and portable multiprotocol bootloader. It serves a
 ### Pros
 
 - Supports multiple boot protocols, including Multiboot2 and the Linux boot protocols.
-- It can boot on both UEFI and BIOS systems, making it versatile for different hardware configurations.
+- Can boot on both UEFI and BIOS systems, making it versatile for different hardware configurations.
 - Has theming capabilities similar to GRUB.
-- Direct support for Btrfs snapshots, which is enabled by default for installations using Btrfs as a filesystem.
+- Directly supports Btrfs snapshots, which is enabled by default for installations that use Btrfs as the filesystem.
 
 ### Cons
 
-- Only supports a few filesystems, such as FAT12, FAT16, FAT32, and ISO9660 for the `/boot` partition, which may require additional setup for systems using other filesystems.
+- Only supports a few filesystems, such as FAT12, FAT16, FAT32, and ISO9660 for the `/boot` partition. May require additional setup for systems using other filesystems.
 - Unlike some other boot loaders, Limine does not automatically add an entry to the NVRAM on UEFI systems; this must be done manually using tools like `efibootmgr` or handled via `limine-entry-tool`, which is preinstalled out of the box on CachyOS.
 
 ## TL:DR
