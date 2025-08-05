@@ -3,7 +3,7 @@ title: Filesystems
 description: Description and recommendations for the available filesystems. (ext4, f2fs, btrfs, xfs, zfs, bcachefs)
 ---
 
-CachyOS offers 5 filesystems to allow the user to choose what best fits their needs. The following will go over advantages, disadvantages, and recommendations for each filesystem. Each filesystem comes with its requirements/utilities preinstalled on CachyOS.
+CachyOS offers 5 different filesystems to allow the user to choose what best fits their needs. The following will go over advantages, disadvantages, and recommendations for each filesystem. Each filesystem comes with its requirements/utilities preinstalled on CachyOS.
 
 :::note
 BTRFS is the default and recommended filesystem for CachyOS. Choose it if unsure.
@@ -56,7 +56,7 @@ BTRFS is recommended for users who want snapshot/backup functionality and transp
 ## EXT4
 EXT4 (fourth extended filesystem) is the most commonly used Linux filesystem. EXT4 was made stable in the linux kernel in 2008.
 ### Pros
-- Very common allowing easy access to plenty of resources.
+- Very common, allowing easy access to plenty of resources.
 - Reliable. EXT4 has a proven track record of being very reliable.
 - Able to grow or shrink.
 ### Cons
@@ -72,7 +72,7 @@ EXT4 is recommended for users who want the simplest and most commonly used files
 
 ## ZFS
 
-ZFS is an advanced filesystem originally developed by Sun Microsystems in 2005. ZFS has many features however it licensed under CDDL which means it can not be included inside the linux kernel and requires a separate module installed.
+ZFS is an advanced filesystem originally developed by Sun Microsystems in 2005. ZFS has many features, but is licensed under CDDL which means it cannot be included inside the linux kernel and requires a separate module installed.
 
 :::caution
 Do not use a Real-time kernel together with ZFS, it's not compatible due to licensing issues.
@@ -95,20 +95,20 @@ Do not use a Real-time kernel together with ZFS, it's not compatible due to lice
 `zfs-utils` for the userspace utilities.
 
 ### Recommendation:
-ZFS should only be used by advanced users who want the advanced features of ZFS such as pooled storage or the ARC cache.
+ZFS should only be used by advanced users who want to use its advanced features, such as pooled storage or the ARC cache.
 
 
 ## F2FS
-F2FS or the Flash-Friendly File System, is a flash file system created and developed by Samsung originally for the linux kernel. F2FS was created to cater specifically for the NAND flash used in modern day storage.
+F2FS (Flash-Friendly File System) is a flash file system originally created and developed by Samsung for the linux kernel. F2FS was created to cater specifically for the NAND flash used in modern day storage.
 ### Pros
 - Designed with flash friendliness in mind.
-- Transparent compression used to reduce disk writes (Space savings not currently usable by user)
+- Transparent compression used to reduce disk writes (space savings not currently usable by the user).
 - Faster than other filesystems like EXT4.
-- Better wear leveling further prolonging the life of NAND flash.
+- Better wear leveling, which further prolongs the life of NAND flash.
 ### Cons
 - Cannot shrink.
 - Space savings from compression cannot currently be used by the user. This may be added in the future.
-- Relatively weak fsck. (filesystem check)
+- Relatively weak fsck (filesystem check).
 - Downgrading to a kernel older than the version that created the filesystem may cause issues.
 
 ### Userspace utilities

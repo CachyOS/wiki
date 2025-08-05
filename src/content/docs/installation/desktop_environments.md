@@ -13,10 +13,10 @@ Please select only one Desktop Environment during the installation.
 The available options are:
 
 1. **KDE Plasma:** a comprehensive and flexible desktop environment that offers multiple styles of menus to access applications. It features the KWin window manager. KDE Plasma also boasts an intuitive interface that allows you to easily download and install new themes, widgets, and more from the web.
-2. **GNOME:** a user-friendly desktop environment with a touch-style interface for accessing applications. While it is easy to learn, it may have limited customization options and can be difficult to configure.
+2. **GNOME:** a user-friendly desktop environment with a touch-style interface for accessing applications. While it is easy to learn, it has limited customization options and can be difficult to configure.
 3. **XFCE:** a lightweight and flexible desktop environment with a traditional drop-down/pop-up menu for accessing applications. It is also compatible with Compiz.
-4. **bspwm:** a C-based X11 window manager offering flexible tiling,stacking, and tabbing layouts.
-5. **Budgie:** a simple and elegant desktop environment built using the GTK toolkit. It is designed to provide a modern and attractive interface that is easy to use, while also being highly configurable.
+4. **bspwm:** a C-based X11 window manager offering flexible tiling, stacking, and tabbing layouts.
+5. **Budgie:** a simple and elegant desktop environment built using the GTK toolkit. It is designed to provide a modern and attractive interface that is easy to use while also being highly configurable.
 6. **Cinnamon:** a desktop environment for Linux that balances advanced features with a traditional user experience.
 7. **Cosmic:** **`Currently in alpha.`** a modern, performance-oriented desktop environment built with Rust and Smithay. Designed for productivity and power users, it aims to offer advanced features while maintaining a clean but intuitive interface.
 8. **i3:** a popular X11 tiling window manager known for its single, self-contained configuration file and its efficient use of screen space. Find our i3 [dotfiles here](https://github.com/CachyOS/cachyos-i3wm-settings).
@@ -25,7 +25,7 @@ The available options are:
 11. **LXQt:** a lightweight desktop environment formed from the merger of the LXDE and Razor-qt projects and built with Qt.
 12. **Mate Desktop:** a traditional desktop environment forked from GNOME 2. It is characterized by its classic look and feel, with a simple and intuitive user interface. Mate provides an easy-to-use and highly customizable desktop experience for users who prefer a more classic look and feel.
 13. **Openbox:** a highly popular X11 window manager known for its excellent documentation and a wide selection of available themes.
-14. **Qtile:** a X11/Wayland window manager that is configured with the Python programming language. offering various layouts and widgets. Find our [dotfiles here](https://github.com/CachyOS/cachyos-qtile-settings).
+14. **Qtile:** a X11/Wayland window manager that is configured with the Python programming language. Offers various layouts and widgets. Find our [dotfiles here](https://github.com/CachyOS/cachyos-qtile-settings).
 15. **Sway:** a tiling Wayland compositor and a drop-in replacement for the i3 window manager for X11. It works with your existing i3 configuration and supports most of i3's features plus a few extras.
 16. **UKUI:** a lightweight desktop environment that is efficient and works well on older computers. It uses both GTK and Qt technologies, and has a visual appearance similar to Windows 7, making it user-friendly for new Linux users.
 17. **Wayfire:** a Wayland compositor based on wlroots that balances customization, extensibility, and aesthetics. Find our Wayfire [dotfiles](https://github.com/CachyOS/cachyos-wayfire-settings).
