@@ -14,16 +14,17 @@ This tutorial describes the basics of utilizing the fstab file located in /etc/ 
 In the terminal emulator of your choice (Konsole, Alacritty, Kitty, etc.) run the following:
 
 ```sh
-❯ lsblk -f
-NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
-zram0                                                                              [SWAP]
-nvme0n1
-├─nvme0n1p1 vfat   FAT32       E04D-9F05
-├─nvme0n1p2
-├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
-├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
-├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
-└─nvme0n1p6 ntfs
+lsblk -f
+
+# NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+# zram0                                                                              [SWAP]
+# nvme0n1
+# ├─nvme0n1p1 vfat   FAT32       E04D-9F05
+# ├─nvme0n1p2
+# ├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
+# ├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
+# ├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
+# └─nvme0n1p6 ntfs
 ```
 
 In our example, we know that we want to mount a Windows partition, which is ntfs. We also know that roughly half its space is available. Therefore, we can determine that the partition we want to mount is `nvme0n1p3` and its UUID to be `08A24E90A24E81E4`, with a file system of `ntfs` in this example.
@@ -33,14 +34,15 @@ In our example, we know that we want to mount a Windows partition, which is ntfs
 Often `lsblk -f` will provide all the information you need to mount your disk through /etc/fstab at this point. If you're still unsure which is the correct partition, you can run the following command:
 
 ```sh
-❯ sudo fdisk -l
-Device              Start        End    Sectors  Size Type
-/dev/nvme0n1p1       2048     206847     204800  100M EFI System
-/dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
-/dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
-/dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
-/dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
-/dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
+sudo fdisk -l
+
+# Device              Start        End    Sectors  Size Type
+# /dev/nvme0n1p1       2048     206847     204800  100M EFI System
+# /dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
+# /dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
+# /dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
+# /dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
+# /dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
 ```
 
 We already know our UUID in this example. However, `fdisk -l` can make it a bit more clear to us by showing the exact size of the partition (1.4T) as well as its type (Microsoft basic data).
@@ -57,7 +59,7 @@ Now that we've obtained the UUID of our partition, it's time to open up the fsta
 Feel free to use your text editor of choice. In this example, we will use nano. In order to edit the fstab file, it must be opened as root:
 
 ```sh
-❯ sudo nano /etc/fstab
+sudo nano /etc/fstab
 ```
 
 Using the arrow keys, navigate to the bottom of the fstab file, then create our new entry on an empty new line:
@@ -107,62 +109,62 @@ If you do not set `umask=000`, some files may be unwritable depending on default
 If you wish to mount the drive you created an entry for now, you need to run the following:
 
 ```sh
-❯ sudo systemctl daemon-reload
+sudo systemctl daemon-reload
 ```
 
 and then:
 
 ```sh
-❯ sudo mount -a
+sudo mount -a
 ```
 
 Your drive should now appear under `/media/windows`, and will appear there each time you reboot.
 
 ```sh
-❯ ls /media/windows
-'$Recycle.Bin'             Linux                  SteamLibrary
- AMD                       Modding                swapfile.sys
- Apps                      pagefile.sys          'System Volume Information'
- bootTel.dat               PerfLogs               Users
- Development               ProgramData            WiiU
-'Documents and Settings'  'Program Files'         Windows
- DumpStack.log.tmp        'Program Files (x86)'   XboxGames
- FanControl                Recovery               xiv_modding
- Games                     RetroArch-Win64
- Intel                    'Ship of Harkinian'
+ls /media/windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+# 'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
  ```
 
  If you wish to create a link to your newly mounted drive in your home directory, you can run the following:
 
  ```sh
- ❯ ln -s /media/windows ~/Windows
+ ln -s /media/windows ~/Windows
  ```
 
  To show it worked:
 
  ```sh
- ❯ ls ~/Windows
- '$Recycle.Bin'             Linux                  SteamLibrary
- AMD                       Modding                swapfile.sys
- Apps                      pagefile.sys          'System Volume Information'
- bootTel.dat               PerfLogs               Users
- Development               ProgramData            WiiU
-'Documents and Settings'  'Program Files'         Windows
- DumpStack.log.tmp        'Program Files (x86)'   XboxGames
- FanControl                Recovery               xiv_modding
- Games                     RetroArch-Win64
- Intel                    'Ship of Harkinian'
+ ls ~/Windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+#'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
  ```
 
 
 ## tl;dr
 
-- Find the UUID of your partition
+- Find the **UUID** of your partition
 ```sh
 lsblk -f
 ```
 
-- Open /etc/fstab
+- Open `/etc/fstab`
 ```sh
 sudo nano /etc/fstab
 ```
@@ -176,12 +178,12 @@ Replacing `<partition UUID>`, `foo`, and `somefs` with your UUID, directory, and
 - Reload your daemon
 
 ```sh
-❯ sudo systemctl daemon-reload
+sudo systemctl daemon-reload
 ```
 
 - Mount your drive
 ```sh
-❯ sudo mount -a
+sudo mount -a
 ```
 
 This drive is now mounted, and will now be mounted on boot moving forward as well.
