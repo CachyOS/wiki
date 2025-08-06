@@ -14,7 +14,7 @@ The CachyOS Kernel is a customized kernel which utilizes enhancements, configura
 - Up-to-date NTSYNC patchset, used with a compatible build of wine/proton
 - Compatibility with T2 MacOS devices with patches from [t2linux](https://github.com/t2linux/linux-t2-patches/)
 - Allows reading per-core CPU energy usage for AMD users
-- ACS Override and v412loopback
+- ACS Override and v4l2loopback
 - VHBA module for emulating CD/DVD-ROM devices
 - Latest ZSTD patchset
 - Various other patches that focus on improving performance (optimized compiler flags, cryptographic improvements, memory management tweaks)
