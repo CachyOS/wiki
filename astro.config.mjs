@@ -28,7 +28,7 @@ export default defineConfig({
     starlight({
       lastUpdated: true,
       customCss: ['./src/tailwind.css'],
-      routeMiddleware: './src/middleware/outdated.ts',
+      routeMiddleware: ['./src/middleware/outdated.ts', './src/middleware/ignore-fallback.ts'],
       title: 'CachyOS',
       logo: {
         src: '/src/assets/logo.svg',
