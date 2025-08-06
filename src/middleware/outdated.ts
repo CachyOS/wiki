@@ -9,6 +9,13 @@ const normalizePathToRoot = (path: string, locale: string): string => {
   return path.replace(`/${locale}/`, '/');
 };
 
+/**
+ * Middleware to display a banner for outdated localized files.
+ * It checks if the current locale's file is outdated and displays a banner
+ * with a link to the root path of the localized file.
+ *
+ * @see https://starlight.astro.build/reference/frontmatter/#banner
+ */
 export const onRequest = defineRouteMiddleware((context) => {
   const locale = context.currentLocale ?? '';
   if (!locale || locale === 'en') {
