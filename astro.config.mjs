@@ -515,34 +515,13 @@ export default defineConfig({
         },
         {
           label: 'Changelogs',
-          translations: {
-            ru: 'История изменений',
-            de: 'Änderungsprotokolle',
-            pl: 'Dzienniki zmian',
-            sk: 'Zmenové logy',
-            cs: 'Změny',
-          },
           items: [
             {
               label: 'GUI Installer and ISO',
-              translations: {
-                ru: 'GUI установщик и ISO',
-                de: 'GUI-Installer und ISO',
-                pl: 'GUI instalator i ISO',
-                sk: 'GUI Inštalátor a ISO',
-                cs: 'Grafický instalátor a ISO',
-              },
               link: 'changelogs/gui_installer',
             },
             {
               label: 'CLI Installer',
-              translations: {
-                ru: 'CLI установщик',
-                de: 'CLI-Installer',
-                pl: 'CLI instalator',
-                sk: 'CLI Inštalátor',
-                cs: 'Příkazový řádek instalátoru',
-              },
               link: 'changelogs/cli_installer',
             },
           ],
