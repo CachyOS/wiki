@@ -452,6 +452,7 @@ export default defineConfig({
           translations: {
             cs: 'Desktopová prostředí',
             de: 'Desktop-Umgebungen',
+            fr: 'Environnements de bureau',
             pl: 'Środowiska graficzne',
             ru: 'Окружения рабочего стола',
             sk: 'Desktopové prostredia',
