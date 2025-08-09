@@ -1,0 +1,196 @@
+---
+title: FAQ
+description: Questions fréquentes et astuces
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::note
+Les questions et réponses suivantes s'appliquent à CachyOS et aux distributions basées sur Arch.
+:::
+
+## Installation
+
+### Pourquoi KDE Plasma est-il la seule option disponible dans l'environnement live ?
+
+KDE Plasma peut être considéré comme notre environnement de bureau « phare », c'est pourquoi il bénéficie de la plus grande partie de notre maintenance. Les autres ISO CachyOS
+étaient maintenues de manière peu rigoureuse, donc pour éviter tout problème indésirable et tout désagrément pour l'utilisateur, nous avons décidé de les abandonner afin de
+concentrer nos efforts sur la meilleure expérience utilisateur possible.
+
+Nous recommandons d'installer CachyOS dans une machine virtuelle pour tester différents environnements de bureau et gestionnaires de fenêtres, car l'ISO live n'est utilisée que
+pour l'installation et la récupération d'une installation défectueuse via [cachy-chroot](https://github.com/CachyOS/cachy-chroot).
+
+### Quand j'appuie sur « Lancer l'installateur », rien ne semble se passer… ?
+
+:::caution
+Assurez-vous d'avoir une connexion internet active, sinon rien ne se passera après avoir cliqué sur ce bouton.
+:::
+
+Même si l'on pourrait croire que rien ne s'est passé, un script est déclenché en arrière-plan après avoir appuyé sur le bouton. Ce script prépare l'installation et vise à éviter d'éventuels problèmes, comme un trousseau de clés obsolète.
+
+Voici une version courte de ce que [le script](https://github.com/CachyOS/CachyOS-Live-ISO/blob/master/archiso/airootfs/usr/local/bin/calamares-online.sh) fait en arrière-plan :
+
+<Steps>
+
+1.  Supprime le fichier de trousseau existant dans `/etc/pacman.d/gnupg`.
+2.  Commence l'installation et la mise à jour des paquets de trousseaux `Arch Linux & CachyOS`.
+3.  Initialise et remplit le trousseau de pacman.
+4.  Active la synchronisation de l'heure réseau pour s'assurer que l'horloge système est précise en exécutant `timedatectl set-ntp true`.
+5.  Détermine et vérifie si le type de système est **UEFI ou BIOS/MBR**.
+6.  Si le système en cours d'exécution est **UEFI** > invite l'utilisateur à sélectionner un chargeur de démarrage, sinon ne le fait pas.
+
+</Steps>
+
+**C'est pourquoi le chargement de l'installateur prend généralement un peu de temps.**
+
+### Mon processus d'installation est bloqué à 33 % depuis un moment.
+
+Cela signifie que votre connexion internet est soit très lente, soit instable, ce qui empêche pacman de télécharger correctement les paquets.
+
+## Gestion des logiciels
+
+### Erreur « unable to lock database » (impossible de verrouiller la base de données)
+```sh
+sudo rm /var/lib/pacman/db.lck
+```
+:::tip
+Vous pouvez obtenir le même résultat en utilisant la fonction **« Remove db lock »** dans `CachyOS Hello`, onglet **« Apps/Tweaks »**.
+:::
+
+### File is corrupted (invalid or corrupted package (PGP signature)) (Le fichier est corrompu (paquet invalide ou corrompu (signature PGP)))
+
+```text
+# Exemple :
+:: File /var/cache/pacman/pkg/python-charset-normalizer-3.4.0-1-any.pkg.tar.zst
+is corrupted (invalid or corrupted package (PGP signature)).
+```
+
+```sh title='Exécutez les commandes suivantes'
+sudo rm -rf /etc/pacman.d/gnupg/
+sudo pacman-key --init
+sudo pacman-key --populate
+
+sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
+sudo pacman-key --lsign-key F3B607488DB35A47
+
+sudo rm -R /var/lib/pacman/sync
+```
+
+### warning: local is newer than... (avertissement : la version locale est plus récente que...)
+
+#### Exemple :
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/update-warnings.png')} />
+
+```sh title='Pour supprimer ces avertissements, exécutez la commande suivante :'
+sudo pacman -Syuu
+```
+
+### error: failed retrieving file, The requested URL returned error: 404 (erreur : échec de la récupération du fichier, l'URL demandée a retourné une erreur 404)
+
+```text
+# Exemple
+sudo pacman -S telegram-desktop
+résolution des dépendances...
+recherche des conflits entre paquets...
+
+Paquets (4) libdbusmenu-qt5-0.9.3+16.04.20160218-5  qt5-imageformats-5.15.2-1
+             ttf-opensans-1.101-2  telegram-desktop-2.5.1-1
+
+Taille totale du téléchargement : 24,10 MiB
+Taille totale installée :         67,51 MiB
+
+:: Procéder à l'installation ? [O/n] O
+:: Récupération des paquets...
+erreur: échec de la récupération du fichier 'telegram-desktop-2.5.1-1-x86_64.pkg.tar.zst'
+depuis archlinux.mailtunnel.eu : The requested URL returned error: 404
+```
+
+*Cela signifie que votre base de données locale est obsolète, et que le paquet que vous demandez ne peut pas être téléchargé.*
+
+```sh title='Exécutez la commande suivante pour rafraîchir la base de données des paquets et effectuer une mise à jour complète :'
+sudo pacman -Syu
+# Essayez ensuite d'installer à nouveau le paquet que vous souhaitez.
+```
+
+### Problèmes de miroirs
+
+#### Téléchargements de paquets lents ou erreurs de connexion
+
+```text
+# Exemples d'erreurs :
+error: failed retrieving file '...' from ... : Connection timed out
+error: failed retrieving file '...' from ... : Couldn't resolve host name  
+error: failed retrieving file '...' from ... : The requested URL returned error: 526
+```
+
+Ces erreurs indiquent généralement des problèmes avec vos miroirs actuels - ils peuvent être lents, inaccessibles ou rencontrer des problèmes temporaires.
+
+```sh title='Exécutez la commande suivante pour obtenir des miroirs plus rapides et plus fiables :'
+sudo cachyos-rate-mirrors
+# Ensuite, vous pouvez mettre à jour votre système avec :
+sudo pacman -Syu
+```
+
+:::tip
+La commande `cachyos-rate-mirrors` teste les miroirs CachyOS disponibles en fonction de leur vitesse et de leur état de synchronisation, puis met à jour votre fichier de liste de miroirs (`/etc/pacman.d/cachyos-mirrorlist`) avec les plus performants.
+
+Pensez à l'exécuter périodiquement, surtout si vous remarquez des ralentissements lors des mises à jour du système.
+:::
+
+### Que signifie -bin à la fin du nom d'un paquet ? Par exemple librewolf-bin
+
+Cela signifie que vous téléchargez/installez un paquet précompilé, vous n'avez donc pas besoin de le compiler ou de le construire vous-même.
+Dans nos dépôts, nous stockons certains paquets bin qui sont essentiellement des miroirs que vous pouvez télécharger depuis l'AUR.
+
+### Lorsque j'essaie d'ouvrir Discord, une fenêtre s'ouvre pour me notifier d'une mise à jour
+
+#### Exemple :
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/discord-update.png')} />
+
+Cela se produit car Discord a publié une mise à jour qui n'est pas encore disponible ou n'a pas encore été construite sur l'un des miroirs de pacman, ce qui vous empêche
+d'utiliser Discord.
+
+Pour contourner ce problème, suivez [le guide de correction de l'Arch Wiki](https://wiki.archlinux.org/title/Discord#Discord_asks_for_an_update_not_yet_available_in_the_repository).
+
+
+### error: could not remove /var/cache/pacman/pkg/download (erreur : impossible de supprimer /var/cache/pacman/pkg/download)
+
+:::tip
+Vous pouvez également nettoyer le cache de pacman en utilisant CachyOS Hello dans **Apps/Tweaks** > **Clear package cache**
+:::
+
+#### Exemple :
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/pacman-cache-error.png')} />
+
+*Cela apparaît généralement lorsqu'il reste des paquets orphelins dans `/var/cache/pacman/pkg` que pacman ne peut pas supprimer.*
+
+```sh title='Exécutez la commande suivante pour corriger le problème'
+# Supprime tous les paquets orphelins stockés dans le cache pkg.
+sudo rm -r /var/cache/pacman/pkg/*
+```
+
+### ERROR: module not found: 'nvidia', 'nvidia_modeset', 'nvidia_uvm', 'nvidia_drm' (ERREUR : module non trouvé)
+
+```sh title='Exemple'
+== >ERROR: module not found: 'nvidia'
+== >ERROR: module not found: 'nvidia_modeset'
+== >ERROR: module not found: 'nvidia_uvm'
+== >ERROR: module not found: 'nvidia_drm'
+```
+
+**Deux raisons pour cette erreur :**
+
+**1) Comme le chargement anticipé des modules est toujours activé dans cachy-chroot, mkinitcpio s'attend systématiquement à la présence des modules NVIDIA ; cette erreur survient lorsque ces modules sont absents.**
+
+**2) Il se peut qu'il vous manque les modules NVIDIA pour d'autres noyaux installés sur votre système.**
+
+```sh title='Installez le paquet suivant pour corriger cette erreur'
+sudo pacman -S nvidia
+```

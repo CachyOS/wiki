@@ -481,6 +481,7 @@ export default defineConfig({
           translations: {
             cs: 'Podpora',
             de: 'Unterstützung',
+            fr: 'Support',
             pl: 'Wsparcie',
             ru: 'Поддержка',
             sk: 'Podpora',
@@ -491,6 +492,7 @@ export default defineConfig({
               translations: {
                 cs: 'Často kladené otázky',
                 de: 'Häufig gestellte Fragen',
+                fr: 'FAQ',
                 pl: 'Najczęściej zadawane pytania',
                 ru: 'Часто задаваемые вопросы',
                 sk: 'Najčastejšie kladené otázky',
@@ -502,6 +504,7 @@ export default defineConfig({
               translations: {
                 cs: 'Nahlášení chyb',
                 de: 'Fehlerberichte einreichen',
+                fr: 'Soumettre des bugs',
                 pl: 'Zgłaszanie błędów',
                 ru: 'Отправка сообщений об ошибках',
                 sk: 'Odoslanie chýb',
@@ -513,6 +516,7 @@ export default defineConfig({
               translations: {
                 cs: 'Žádosti o balíčky',
                 de: 'Paketanforderungen einreichen',
+                fr: 'Demande de paquets',
                 pl: 'Zgłaszanie próśb o pakiety',
                 ru: 'Запросы на добавление пакетов',
                 sk: 'Odoslanie požiadaviek na balíčky',
@@ -525,6 +529,7 @@ export default defineConfig({
               translations: {
                 cs: 'Bezpečnost AUR: Rychlý kontrolní seznam pro uživatele CachyOS',
                 de: 'AUR-Sicherheit: Kurze Checkliste für CachyOS-Benutzer',
+                fr: 'Sécurité AUR : Liste de contrôle rapide pour les utilisateurs de CachyOS',
                 pl: 'Bezpieczeństwo AUR: Szybka lista kontrolna dla użytkowników CachyOS',
                 ru: 'Безопасность AUR: Краткий контрольный список для пользователей CachyOS',
                 sk: 'Bezpečnosť AUR: Rýchly kontrolný zoznam pre používateľov CachyOS',
@@ -535,6 +540,7 @@ export default defineConfig({
               translations: {
                 cs: 'Sociální sítě',
                 de: 'Soziale Medien',
+                fr: 'Réseaux sociaux',
                 pl: 'Media społecznościowe',
                 ru: 'Социальные сети',
                 sk: 'Sociálne siete',
