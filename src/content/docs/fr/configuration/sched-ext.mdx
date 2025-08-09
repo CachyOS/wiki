@@ -1,0 +1,421 @@
+---
+title: Tutoriel sched-ext
+description: Tutoriel sur l'utilisation du framework et informations diverses
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Extensible Scheduler Class (mieux connu sous le nom de `sched-ext`) est une fonctionnalité du noyau Linux qui permet d'implémenter des ordonnanceurs de threads du noyau en
+BPF (Berkeley Packet Filter) et de les charger dynamiquement. Essentiellement, cela permet aux utilisateurs finaux de changer leurs ordonnanceurs depuis l'espace utilisateur sans
+avoir besoin de recompiler un autre noyau juste pour avoir un ordonnanceur différent.
+
+## Méthodes pour démarrer et gérer les ordonnanceurs
+
+- **Les ordonnanceurs se trouvent dans les paquets `scx-scheds` et `scx-scheds-git`.**
+  ```sh
+  # Branche stable
+  sudo pacman -S scx-scheds
+
+  # Branche de pointe (Cette branche inclut les derniers changements
+  # et peut contenir un ordonnanceur qui n'a pas encore été publié.)
+  sudo pacman -S scx-scheds-git
+  ```
+
+### Démarrer l'ordonnanceur dans le terminal
+
+- *Pour démarrer l'ordonnanceur, ouvrez votre terminal et entrez la commande suivante :*
+  ```sh title="Exemple de démarrage de rusty"
+  sudo scx_rusty
+  ```
+
+*Cela lancera l'ordonnanceur rusty et détachera l'ordonnanceur par défaut.*
+
+Pour arrêter l'ordonnanceur, appuyez sur `CTRL + C`. L'ordonnanceur sera alors arrêté et l'ordonnanceur par défaut du noyau reprendra le contrôle.
+
+### Service Systemd
+
+:::note
+Ce service va être déprécié et remplacé par **[scx_loader](https://github.com/sched-ext/scx/tree/main/rust/scx_loader)**
+:::
+
+Le paquet scx inclut un service systemd qui utilise la configuration spécifiée dans le fichier `/etc/default/scx`.
+
+Dans ce fichier de configuration, vous pouvez spécifier l'ordonnanceur que le service démarre et éventuellement inclure des options personnalisées pour l'ordonnanceur souhaité.
+
+- **Si vous voulez changer l'ordonnanceur démarré par le service, modifiez simplement la ligne `SCX_SCHEDULER=` pour l'ordonnanceur que vous souhaitez démarrer par défaut.**
+
+  - ```sh title='Exemple'
+    SCX_SCHEDULER=scx_lavd
+    ```
+
+- **Ajouter des options (flags)**
+  - Décommentez `SCX_FLAGS` et ajoutez les options que vous désirez.
+    ```sh title='Exemple'
+    SCX_FLAGS='--performance'
+    ```
+
+*Vous pouvez maintenant démarrer/activer/arrêter l'ordonnanceur comme s'il s'agissait de n'importe quel autre service systemd.*
+
+**Consultez le guide rapide ci-dessous sur la manière de le gérer.**
+
+```sh title='Activation et démarrage du service systemd'
+sudo systemctl enable --now scx
+```
+
+```sh title="Exécution de l'ordonnanceur une seule fois via le service systemd"
+sudo systemctl start scx
+```
+
+```sh title="Arrêt de l'ordonnanceur SCX à l'aide du service systemd"
+sudo systemctl stop scx
+```
+
+*Pour plus d'informations sur ce service : [Service systemd Sched-ext](<https://github.com/sched-ext/scx/blob/main/services/README.md>)*
+
+### [scx_loader](https://github.com/sched-ext/scx/tree/main/rust/scx_loader)
+
+*Comme son nom l'indique, c'est un utilitaire qui fonctionne comme un chargeur et un gestionnaire pour le framework sched-ext en utilisant l'interface D-Bus.*
+
+*Bien qu'il ne nécessite pas systemd, il peut tout de même être utilisé en conjonction avec lui.* [Consultez le guide de transition pour référence](/fr/configuration/sched-ext#transition-du-service-scx-vers-scx_loader--un-guide-complet).
+
+- **A la capacité d'arrêter, démarrer, redémarrer, lire des informations sur un ordonnanceur scx et plus encore.**
+  - *Vous pouvez utiliser des outils comme `dbus-send` ou `gdbus` pour communiquer avec lui.*
+- **Ce guide explique comment utiliser scx_loader avec la commande dbus-send.**
+  - ```sh title='Démarrer scx_rusty avec ses arguments par défaut'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartScheduler string:scx_rusty uint32:0
+    ```
+  - ```sh title='Démarrer un ordonnanceur avec des arguments'
+    # Cet exemple démarre scx_bpfland avec les options suivantes : -k -c 0
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title="Arrêter l'ordonnanceur en cours d'exécution"
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StopScheduler
+    ```
+  - ```sh title="Passer à un autre ordonnanceur en Mode 2"
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchScheduler string:scx_lavd uint32:2
+    # Cela passe à scx_lavd avec le mode d'ordonnancement 2, ce qui signifie qu'il démarre LAVD en mode économie d'énergie
+    ```
+  - ```sh title='Passer à un autre ordonnanceur avec des arguments'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title="Obtenir l'ordonnanceur en cours d'exécution"
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:CurrentScheduler
+    ```
+  - ```sh title='Obtenir la liste des ordonnanceurs pris en charge'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:SupportedSchedulers
+    ```
+:::tip
+Voici une explication de ce que chaque mode signifie dans scx_loader :
+
+- **Mode 0** = `Options par défaut de l'ordonnanceur`
+- **Mode 1** = `Jeux vidéo`
+- **Mode 2** = `Économie d'énergie`
+- **Mode 3** = `Basse latence`
+- **Mode 4** = `Serveur`
+
+Exemple : LAVD fonctionnant en Mode 1 est l'équivalent de `scx_lavd --performance`
+
+*En bref : Chaque mode est un ensemble d'options différentes destinées à améliorer le cas d'utilisation prévu.*
+
+[Pour un aperçu plus détaillé de ce que ces Modes changent sur chaque ordonnanceur](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/src/config.rs#L174>)
+:::
+
+### CachyOS Kernel Manager
+
+**Les ordonnanceurs scx sont accessibles et configurables à l'aide du tout nouveau [scx_loader](/fr/features/kernel_manager#gestion-du-framework-sched-ext).**
+
+## Introduction aux principaux ordonnanceurs
+
+Comme il y a beaucoup d'ordonnanceurs à choisir, nous voulons donner une petite introduction sur les ordonnanceurs disponibles.
+
+:::note
+Ces ordonnanceurs sont en développement constant tout en étant testés, attendez-vous donc à ce que certaines de leurs fonctionnalités/options soient sujettes à changement.
+:::
+
+N'hésitez pas à signaler tout problème ou à donner votre avis sur le dépôt de leur ordonnanceur.
+
+### [scx_bpfland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_bpfland>)
+
+**Développé par : Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Un ordonnanceur sched_ext basé sur vruntime qui priorise les charges de travail interactives. Très flexible et facile à adapter.
+
+Lorsque bpfland prend des décisions sur les cœurs à utiliser, il prend en considération leur topologie de cache et quels cœurs partagent le même cache L2/L3, ce qui conduit à moins de défauts de cache = plus de performances.
+
+**Cas d'utilisation :**
+
+- **Jeux vidéo**
+- **Usage bureautique**
+- **Production multimédia/audio**
+- **Grande interactivité sous des charges de travail intensives**
+- **Économie d'énergie**
+- **Serveur** *(Nécessite [`server_mode`](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/configuration.md#configuration-structure>) avec scx_loader)*
+
+### [scx_rustland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland>)
+
+**Développé par : Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Partage des similitudes avec bpfland, conçu dans l'intention d'être facile à lire et à comprendre son fonctionnement grâce à son implémentation en espace utilisateur.
+
+Gardez à l'esprit qu'il y a un léger inconvénient de débit lors de l'utilisation d'un ordonnanceur en espace utilisateur. Cependant, rustland a la possibilité d'une intégration transparente avec des bibliothèques sophistiquées, des outils de traçage, des services externes (par ex., IA), etc.
+
+**Cas d'utilisation :**
+
+- **Charges de travail à faible latence (Jeux vidéo, visioconférences et streaming en direct)**
+- **Usage bureautique**
+
+
+### [scx_flash](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_flash>)
+
+**Développé par : Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Un ordonnanceur qui se concentre sur l'équité entre les tâches et la prévisibilité des performances. Cet ordonnanceur est introduit en remplacement du mode "lowlatency" dans scx_bpfland.
+
+**Cas d'utilisation :**
+
+- **Jeux vidéo**
+- **Charges de travail sensibles à la latence telles que le multimédia ou le traitement audio en temps réel**
+- **Besoin de réactivité dans des situations de surcharge**
+- **Cohérence des performances**
+- **Serveur** *(Nécessite [`server_mode`](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/configuration.md#configuration-structure>) avec scx_loader)*
+
+### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>)
+
+**Développé par : Changwoo Min (multics69 [GitHub](<https://github.com/multics69>)).**
+
+**Brève introduction à LAVD par Changwoo :**
+
+***LAVD est un nouvel algorithme d'ordonnancement qui est toujours en cours de développement. Il est
+motivé par les charges de travail des jeux vidéo, qui sont critiques en termes de latence et
+intensives en communication. Il vise à minimiser les pics de latence tout en maintenant
+un bon débit global et une utilisation équitable du temps CPU entre les tâches.***
+
+**Cas d'utilisation :**
+
+- **Jeux vidéo**
+- **Production audio**
+- **Charges de travail sensibles à la latence**
+- **Usage bureautique**
+- **Grande interactivité sous des charges de travail intensives**
+- **Économie d'énergie**
+
+L'une des capacités principales et géniales que LAVD inclut est la **Compaction des Cœurs (Core Compaction).** qui, sans entrer dans les détails techniques : Lorsque l'utilisation du CPU < 50%, les cœurs actuellement actifs fonctionneront plus longtemps et à une fréquence plus élevée. Pendant ce temps, les cœurs inactifs resteront en C-State (veille) pour une durée beaucoup plus longue, réalisant une consommation d'énergie globale moindre.
+
+### [scx_rusty](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rusty>)
+
+**Développé par : David Vernet (Byte-Lab [GitHub](<https://github.com/Byte-Lab>))**
+
+Rusty offre un large éventail de fonctionnalités qui améliorent ses capacités, offrant une plus grande flexibilité pour divers cas d'utilisation.
+L'une de ces fonctionnalités est la possibilité de réglage, vous permettant de personnaliser Rusty pour l'adapter à vos préférences et à vos exigences spécifiques.
+
+**Cas d'utilisation :**
+
+- **Jeux vidéo**
+- **Charges de travail sensibles à la latence**
+- **Usage bureautique**
+- **Production multimédia/audio**
+- **Charges de travail sensibles à la latence**
+- **Grande interactivité sous des charges de travail intensives**
+- **Économie d'énergie**
+
+Pour un aperçu plus détaillé de ce qui peut être réglé pour Rusty, consultez la page d'aide.
+
+```text
+scx_rusty --help
+```
+
+### [scx_p2dq](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_p2dq>)
+
+**Développé par : Daniel Hodges (hodgesds [GitHub](<https://github.com/hodgesds>))**
+
+Un ordonnanceur généraliste qui se concentre sur l'équilibrage de charge "pick two" entre
+les LLC. Maintient une haute localité de cache et la conservation du travail tout en fournissant
+une latence raisonnable.
+
+**Cas d'utilisation :**
+
+- **Serveur** *(Nécessite [`server_mode`](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/configuration.md#configuration-structure>) avec scx_loader)*
+- **Environnements de bureau**
+- **Jeux vidéo (avec quelques réglages manuels)**
+
+### [scx_tickless](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_tickless>)
+
+**Développé par : Andrea Righi (arighi [Github](<https://github.com/arighi>))**
+
+:::note
+Pour désactiver efficacement les ticks sur les CPU "tickless", le noyau doit être démarré avec `nohz_full`. Gardez à l'esprit que `nohz_full` introduit une surcharge sur les appels système, ce qui peut dégrader les performances des charges de travail sensibles à la latence.
+:::
+
+scx_tickless est un ordonnanceur orienté serveur conçu pour le cloud computing, la virtualisation et les charges de travail de calcul haute performance.
+
+L'ordonnanceur fonctionne en acheminant tous les événements d'ordonnancement à travers un pool de CPU primaires assignés à la gestion de ces événements. Cela permet de désactiver le tick de l'ordonnanceur sur les autres CPU, réduisant ainsi le bruit du système d'exploitation.
+
+**Cas d'utilisation :**
+
+- **Cloud computing**
+- **Virtualisation**
+- **Charges de travail de calcul haute performance**
+- **Serveur** *(Nécessite [`server_mode`](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/configuration.md#configuration-structure>) avec scx_loader)*
+
+## Recommandations générales
+
+### Pilote automatique et alimentation automatique de LAVD
+
+***Citations de Changwoo Min :***
+- **En mode pilote automatique, l'ordonnanceur ajuste son mode d'alimentation `Économie d'énergie, Équilibré ou Performance` en fonction de la charge du système, spécifiquement l'utilisation du CPU**
+
+- **Alimentation automatique : Décide automatiquement du mode d'alimentation de l'ordonnanceur en fonction du profil énergétique du système, alias EPP (Energy Performance Preference).**
+
+:::note
+LAVD active maintenant le pilote automatique par défaut.
+:::
+
+```sh
+# L'alimentation automatique peut être activée par l'option suivante :
+--autopower
+# par ex :
+scx_lavd --autopower
+```
+
+### Désactiver ananicy-cpp
+
+:::caution
+Lors de l'utilisation de l'un des ordonnanceurs du framework sched-ext, il est fortement conseillé de désactiver et d'éviter d'utiliser ananicy-cpp en raison de conflits possibles, car il amplifie l'écart de priorité que l'ordonnanceur crée/gère déjà en donnant un coup de pouce aux tâches interactives. Cela crée une priorisation excessive, affamant les autres tâches et augmentant le risque d'atteindre le délai d'expiration du chien de garde sched_ext, ce qui éjecte l'ordonnanceur en cours d'exécution, provoquant ainsi un blocage.
+:::
+
+**Pour désactiver/arrêter ananicy-cpp, exécutez la commande suivante :**
+
+```sh
+systemctl disable --now ananicy-cpp
+```
+
+## Transition du service scx vers scx_loader : Un guide complet
+
+:::caution
+N'essayez pas d'exécuter le service scx_loader.service en même temps que le service scx.service, sinon le service du chargeur démarrera mais ne fera rien.
+
+Ce conflit survient parce que les deux services ne sont pas conscients l'un de l'autre, notamment en ce qui concerne celui qui gère les ordonnanceurs.
+:::
+
+:::tip
+Le CachyOS Kernel Manager inclut déjà une [interface graphique pour gérer scx_loader.](/fr/features/kernel_manager#gestion-du-framework-sched-ext)
+:::
+
+**Commençons par une comparaison détaillée entre la structure du fichier scx.service et la structure du fichier de configuration de scx_loader.**
+
+*Si vous utilisiez précédemment LAVD avec l'ancien service scx.service comme dans l'exemple ci-dessous :*
+
+```sh title='Structure du fichier scx.service'
+# Liste des ordonnanceurs scx : scx_bpfland scx_central scx_flash scx_lavd scx_layered scx_nest scx_qmap scx_rlfifo scx_rustland scx_rusty scx_simple scx_userland
+SCX_SCHEDULER=scx_lavd
+
+# Définir des options personnalisées pour l'ordonnanceur
+SCX_FLAGS='--performance'
+```
+
+**L'équivalent dans le fichier de configuration de scx_loader ressemblera à ceci :**
+
+```sh title='Structure du fichier scx_loader'
+default_sched = "scx_lavd"
+default_mode = "Auto"
+
+[scheds.scx_lavd]
+auto_mode = ["--performance"]
+```
+
+**[Pour plus d'informations sur la configuration du fichier scx_loader](https://github.com/sched-ext/scx/blob/main/rust/scx_loader/configuration.md)**
+
+  **Suivez le guide ci-dessous pour une transition facile du `service systemd scx` vers le nouvel utilitaire `scx_loader`.**
+  <Steps>
+  1. ```sh title='Désactivation de scx.service au profit de scx_loader.service'
+      systemctl disable --now scx.service && systemctl enable --now scx_loader.service
+      ```
+  2. ```sh title='Création du fichier de configuration pour scx_loader et ajout de la structure par défaut'
+     # L'éditeur Micro va créer un nouveau fichier.
+     sudo micro /etc/scx_loader.toml
+     # Ajoutez les lignes suivantes :
+
+     default_sched = "scx_bpfland" # Modifiez cette ligne pour l'ordonnanceur que vous voulez que scx_loader démarre au boot
+     default_mode = "Auto"         # Valeurs possibles : "Auto", "Gaming", "LowLatency", "PowerSave".
+
+     # Appuyez sur CTRL + S pour sauvegarder les changements et CTRL + Q pour quitter Micro.
+     ```
+  3. ```sh title='Redémarrage de scx_loader'
+     systemctl restart scx_loader.service
+     ```
+     - **Vous avez terminé, scx_loader va maintenant charger et démarrer l'ordonnanceur désiré.**
+
+  </Steps>
+
+### Débogage dans scx_loader
+
+  - ```sh title="Vérification de l'état du service"
+    systemctl status scx_loader.service
+    ```
+  - ```sh title='Affichage de toutes les entrées de journal du service'
+    journalctl -u scx_loader.service
+    ```
+  - ```sh title='Affichage uniquement des journaux de la session en cours.'
+    journalctl -u scx_loader.service -b 0
+    ```
+- **Journalisation avancée**
+
+*Pour obtenir un journal plus détaillé, suivez ces étapes.*
+  1) ```sh title='Modifier le fichier de service'
+     sudo systemctl edit scx_loader.service
+     ```
+  2) ```sh title='Ajoutez la ligne suivante sous la section [Service]'
+     Environment=RUST_LOG=trace
+     ```
+  3) ```sh title='Redémarrez le service'
+     sudo systemctl restart scx_loader.service
+     ```
+- **Vérifiez à nouveau les journaux pour des informations de débogage plus détaillées.**
+
+## FAQ
+
+### Pourquoi l'ordonnanceur X est-il moins performant que l'autre ?
+
+- **Il y a de nombreuses variables à prendre en compte lors de leur comparaison. Par exemple, comment mesurent-ils le poids d'une tâche ? Privilégient-ils les tâches interactives par rapport aux non-interactives ?
+  En fin de compte, cela dépend de leurs choix de conception.**
+
+### Pourquoi tout le monde ne cesse de dire que cet ordonnanceur X est le meilleur pour le cas Y, mais il ne fonctionne pas aussi bien pour moi ?
+
+- **Comme la réponse précédente, le choix du CPU et sa conception, comme la disposition des cœurs, la façon dont ils partagent le cache entre les cœurs et d'autres facteurs connexes, peuvent amener l'ordonnanceur à fonctionner de manière moins efficace.**
+- **C'est pourquoi avoir des choix est l'un des points forts du framework sched-ext, alors n'ayez pas peur d'en essayer un et de voir lequel fonctionne le mieux pour votre cas d'utilisation. `Exemples : stabilité des FPS, performances maximales, réactivité sous des charges de travail intensives, etc.`**
+
+### Les cas d'utilisation de ces ordonnanceurs sont assez similaires... pourquoi ?
+
+- **Principalement parce que ce sont des ordonnanceurs polyvalents, ce qui signifie qu'ils peuvent s'adapter à une variété de charges de travail, même s'ils n'excellent pas dans tous les domaines.**
+
+- **Pour déterminer quel ordonnanceur vous convient le mieux, il n'y a pas de meilleur conseil que de l'essayer vous-même.**
+
+### Pourquoi me manque-t-il un ordonnanceur que certains utilisateurs mentionnent ou testent sur le serveur Discord de CachyOS ?
+**Assurez-vous que vous utilisez la version de pointe du paquet scx-scheds nommée `scx-scheds-git`**
+
+- **L'une des raisons sera que cet ordonnanceur est très récent et est actuellement testé par les utilisateurs, par conséquent, il n'a pas encore été ajouté au paquet `scx-scheds-git`.**
+
+### Pourquoi l'ordonnanceur s'est-il soudainement planté ? Est-il instable ?
+
+- *Il pourrait y avoir plusieurs raisons à cela :*
+  - **L'une des raisons les plus courantes est que vous utilisiez ananicy-cpp en même temps que l'ordonnanceur. C'est pourquoi nous avons ajouté cet [avertissement](/fr/configuration/sched-ext#désactiver-ananicy-cpp)**
+  - **Une autre raison pourrait être que la charge de travail que vous exécutiez a dépassé les limites et la capacité de l'ordonnanceur, le faisant se bloquer.**
+    - **Exemple d'une charge de travail déraisonnable : `hackbench`**
+  - **Ou la raison la plus évidente, vous avez trouvé un bogue dans l'ordonnanceur. Si c'est le cas, veuillez le signaler comme un problème sur leur [GitHub](https://github.com/sched-ext/scx/issues) ou faites-le leur savoir
+    sur le canal Discord de CachyOS `sched-ext`**
+
+### J'ai déjà utilisé scx_loader dans l'interface graphique du Kernel Manager. Dois-je quand même suivre les étapes de transition ?
+
+- **Dans ce cas particulier, non, ce n'est pas nécessaire car le Kernel Manager gère déjà le processus de transition.**
+  - *Sauf si vous avez précédemment ajouté des options personnalisées dans `/etc/default/scx` et que vous souhaitez toujours les utiliser.*
+
+## En savoir plus
+
+Si vous souhaitez en savoir plus sur le framework sched-ext, consultez les liens ci-dessous.
+
+- [Code source des ordonnanceurs Sched-ext](<https://github.com/sched-ext/scx/tree/main/scheds/rust>)
+- [Wiki officiel de Sched-ext](<https://github.com/sched-ext/scx/wiki>)
+- [Changwoo Min : Introduction à sched-ext & Ordonnancement CPU Partie 1](<https://blogs.igalia.com/changwoo/sched-ext-a-bpf-extensible-scheduler-class-part-1/>)
+  - [Partie 2](<https://blogs.igalia.com/changwoo/sched-ext-scheduler-architecture-and-interfaces-part-2/>)
+- [Andrea Righi : Réimplémenter mon ordonnanceur Linux Rust en eBPF](<https://arighi.blogspot.com/2024/08/re-implementing-my-linux-rust-scheduler.html>)
+- [Andrea Righi : Ordonnanceurs du noyau Linux générés par IA en Rust](<https://arighi.blogspot.com/2024/09/ai-generated-linux-kernel-schedulers-in.html>)

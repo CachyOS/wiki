@@ -1,0 +1,265 @@
+---
+title: Optimisations générales du système
+description: Choses que vous pouvez faire pour peaufiner votre système après l'installation
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+## AMD Ryzen
+
+### Pilote AMD P-State
+---------------------------
+
+`amd-pstate` est le pilote d'ajustement des performances des processeurs AMD qui introduit un nouveau mécanisme de contrôle de la fréquence du processeur pour les séries de processeurs et d'APU AMD modernes dans le noyau Linux. Ce nouveau mécanisme est basé sur le « Collaborative Processor Performance Control » (CPPC) qui offre une gestion de la fréquence plus fine que les P-States matériels ACPI traditionnels.
+
+Les plateformes de processeurs/APU AMD actuelles utilisent le pilote ACPI P-states pour gérer la fréquence et la cadence du processeur avec seulement 3 P-states. Le CPPC remplace les contrôles ACPI P-states et offre une interface flexible et à faible latence permettant au noyau Linux de communiquer directement les indicateurs de performance au matériel.
+
+Voici les 3 modes de fonctionnement du pilote `amd-pstate` et les entrées de ligne de commande du noyau pour les utiliser au démarrage :
+
+- **AMD P-State (Mode non autonome)** : `amd-pstate=passive`
+- **AMD P-State Guidé (Mode autonome guidé)** : `amd-pstate=guided`
+- **AMD P-State EPP (Mode autonome)** : `amd-pstate=active`
+
+:::note
+Le pilote AMD P-State EPP est utilisé par défaut lorsqu'aucune configuration explicite n'est faite.
+:::
+
+Vous pouvez également basculer entre les modes de fonctionnement à l'exécution pour tester les options :
+
+- **Mode autonome** : la plateforme ne prend en compte que les valeurs définies pour la performance minimale, la performance maximale et la préférence de performance énergétique.
+   ```sh
+   echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+- **Mode autonome guidé** : la plateforme définit le niveau de performance de fonctionnement en fonction de la charge de travail actuelle et dans les limites fixées par le système d'exploitation via les registres de performance minimale et maximale.
+   ```sh
+   echo guided | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+- **Mode non autonome** : la plateforme obtient le niveau de performance souhaité directement du système d'exploitation via le registre de performance désirée.
+   ```sh
+   echo passive | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+Pour plus d'informations :
+
+*   [https://www.kernel.org/doc/html/v6.9/admin-guide/pm/amd-pstate.html](https://www.kernel.org/doc/html/v6.9/admin-guide/pm/amd-pstate.html)
+*   [https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/](https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/)
+*   [https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/](https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/)
+
+### Configuration de l'AMD P-State EPP
+
+
+Pour utiliser le P-State EPP, deux régulateurs de fréquence CPU sont disponibles : **powersave** et **performance**. Il est recommandé d'utiliser le régulateur powersave et de définir une préférence.
+
+*   Définir le régulateur powersave : `sudo cpupower frequency-set -g powersave`
+*   Définir le régulateur performance : `sudo cpupower frequency-set -g performance`
+
+Pour définir une préférence, exécutez la commande suivante avec la préférence souhaitée :
+
+```sh
+echo power | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
+```
+
+Préférences disponibles : `performance`, `power`, `balance_power`, `balance_performance`
+
+Des benchmarks pour chaque préférence peuvent être trouvés ici :
+[https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/](https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/)
+
+### Optimiseur AMD 3D V-Cache
+
+AMD a publié un patch pour optimiser l'ordonnancement du cache sur les processeurs 3D à double CCD, comme les 7950X3D et 7900X3D.
+Vous devez configurer l'option CPPC dans le BIOS sur « Driver ». Cela permettra de surcharger le mode utilisé via sysfs.
+
+Il existe deux modes :
+1. Fréquence
+2. Cache
+
+Si `cache` est défini, le pilote tentera de placer les tâches en premier sur le CCD ayant le plus de cache, ce qui est principalement avantageux pour les jeux.
+L'option `frequency` tentera de placer les tâches sur le second CCD, qui a une fréquence plus élevée que le CCD avec 3D V-Cache.
+
+Fréquence (Par défaut) :
+```sh
+echo frequency | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
+```
+
+Cache :
+```sh
+echo cache | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
+```
+
+Après avoir changé de mode, les statistiques de cœurs préférés d'AMD devraient afficher un classement différent. Vous pouvez le lire avec :
+```sh
+grep -v /sys/devices/system/cpu/cpu*/cpufreq/amd_pstate_prefcore_ranking
+```
+
+### AMD P-State Core Performance Boost
+
+L'AMD Core Performance Boost, aussi connu sous le nom d'AMD Turbo Core, est une technologie d'ajustement dynamique de la fréquence par AMD qui permet au processeur d'ajuster et de contrôler dynamiquement sa fréquence de fonctionnement dans certaines versions de ses processeurs. Cela permet d'augmenter les performances lorsque c'est nécessaire tout en maintenant des paramètres de consommation et de chaleur plus bas en fonctionnement normal.
+
+Depuis `linux-cachyos` 6.9.6, le noyau est patché avec le support du CPB pour les pilotes p-state d'AMD (incluant `passive`, `active` et `guided`).
+Les utilisateurs peuvent changer l'état du boost de chaque cœur de CPU via le fichier sysfs `/sys/devices/system/cpu/cpuX/cpufreq/boost`
+(X fait référence au numéro du cœur, ex: cpu0 est le premier cœur, cpu1 le second, etc.).
+
+```sh
+❯ echo 0 | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/boost # Désactiver le boost pour tous les cœurs
+❯ lscpu -ae                                                    # Ceci montre que l'AMD CPB est désactivé globalement
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE MAXMHZ MINMHZ MHZ
+0 0 0 0 0:0:0:0 yes 3301.0000 400.0000 1212.8250
+1 0 0 0 0:0:0:0 yes 3301.0000 400.0000 1394.2180
+2 0 0 1 1:1:1:0 yes 3301.0000 400.0000 1204.4600
+
+❯ echo 1 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/boost # Activer le boost sur cpu0
+❯ lscpu -ae
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE MAXMHZ MINMHZ MHZ
+0 0 0 0 0:0:0:0 yes 4564.0000 400.0000 1393.2380
+1 0 0 0 0:0:0:0 yes 3301.0000 400.0000 400.0000
+2 0 0 1 1:1:1:0 yes 3301.0000 400.0000 2157.8469
+```
+
+CachyOS fournit également une version de `power-profiles-daemon` qui rétroporte un commit activant le support pour l'AMD CPB. L'AMD CPB sera désactivé si le profil `powersave` est utilisé, et sera activé avec `balanced` ou `performance`.
+
+Pour plus d'informations, voir :
+- https://lore.kernel.org/linux-pm/1a78eeaa-fadd-4734-aaeb-2fe11e96e198@amd.com/T/#m4a0c8917ea8fb033504055bd61512c80c85410c8
+- https://lore.kernel.org/linux-pm/20240624213400.67773-1-mario.limonciello@amd.com/
+
+## Améliorations de performance possibles
+
+### Désactiver la mitigation des Split Lock
+
+Dans certains cas, la mitigation des « split lock » peut ralentir les performances dans certaines applications et certains jeux. Un patch est disponible pour la désactiver via sysctl.
+
+*   Désactiver la mitigation des split lock : `sudo sysctl kernel.split_lock_mitigate=0`
+*   Activer la mitigation des split lock : `sudo sysctl kernel.split_lock_mitigate=1`
+
+Pour rendre le changement persistant, ajoutez la ligne suivante à `/etc/sysctl.d/99-splitlock.conf` :
+
+```text
+kernel.split_lock_mitigate=0
+```
+
+Pour plus d'informations sur les split lock, voir :
+
+- https://www.phoronix.com/news/Linux-Splitlock-Hurts-Gaming
+- https://github.com/doitsujin/dxvk/issues/2938
+
+## Optimisations pour l'économie d'énergie
+
+### Activer RCU Lazy
+
+RCU Lazy aide à réduire la consommation d'énergie sur les systèmes inactifs ou peu sollicités. Cela peut être utile pour les ordinateurs portables et les appareils de poche.
+L'amélioration se situe entre 5 et 10 % en termes d'économie d'énergie. Cependant, il est important de noter que cette fonction d'économie d'énergie peut se faire au détriment de performances légèrement réduites selon le scénario.
+Le noyau linux-cachyos-deckify aura cette option activée par défaut, car l'économie d'énergie est essentielle et nécessaire pour ces appareils.
+
+Pour activer RCU Lazy, ajoutez le paramètre suivant à la liste de paramètres de [ligne de commande](/fr/configuration/boot_manager_configuration/) de votre noyau :
+```text
+rcutree.enable_rcu_lazy=1
+```
+
+## Solutions de contournement pour NVIDIA
+
+### Désactivation du backend Wayland de SDDM
+
+:::note
+À partir de cachyos-kde-settings 4.3, SDDM utilise KWin comme compositeur Wayland par défaut.
+:::
+
+Bien que ce soit une belle avancée, cela peut introduire certains désagréments tels que la rupture du support pour l'overclocking via nvidia-settings ou causer une incompatibilité avec les anciens GPU qui ont des difficultés sous Wayland.
+
+Pour annuler ce changement, **supprimez** cachyos-kde-settings :
+```sh
+sudo pacman -R cachyos-kde-settings
+```
+
+### Firmware NVIDIA GSP
+
+Le firmware NVIDIA GSP peut **"dans certains cas"** entraîner une baisse des performances. Bien que le pilote NVIDIA 555.58.02 ait largement résolu ce problème, il peut persister sur certains systèmes.
+Si vous rencontrez des saccades dans KDE ou de mauvaises performances dans certains cas, vous pouvez désactiver le firmware GSP avec le fichier de configuration suivant :
+`/etc/modprobe.d/nvidia-gsp.conf`
+
+```text
+options nvidia NVreg_EnableGpuFirmware=0
+```
+
+Après avoir créé le fichier, exécutez la commande suivante :
+```sh
+sudo mkinitcpio -P
+```
+
+:::note
+Les [modules open-source du noyau NVIDIA](https://github.com/NVIDIA/open-gpu-kernel-modules) sont basés sur le firmware GSP. Pour cette raison, le GSP ne peut pas être désactivé et cette option modprobe sera ignorée lors de leur utilisation. Utilisez `linux-cachyos-nvidia` ou `nvidia-dkms`.
+:::
+
+Il est généralement recommandé de tester le firmware GSP après chaque nouvelle installation de pilote NVIDIA, car il introduit souvent des fonctionnalités bénéfiques. De plus, NVIDIA a principalement commencé à effectuer ses tests d'assurance qualité en utilisant le firmware GSP.
+
+## Améliorations audio
+
+### Améliorer le son des haut-parleurs d'ordinateur portable
+
+Les haut-parleurs d'ordinateurs portables produisent souvent un son plat et décevant en raison de leur taille compacte et de leurs capacités matérielles limitées. [EasyEffects](https://wiki.archlinux.org/title/PipeWire#EasyEffects) peut considérablement améliorer la qualité sonore des haut-parleurs intégrés de votre ordinateur portable en appliquant divers effets audio et des configurations personnalisées.
+
+Pour commencer, vous devez installer EasyEffects et les dépendances requises :
+
+```bash
+# Installer EasyEffects
+sudo pacman -S easyeffects
+# Installer lsp-plugins pour des effets supplémentaires et jalv pour le support des plugins LV2
+sudo pacman -S lsp-plugins-lv2
+```
+
+#### Configuration
+
+Suivez ces étapes pour configurer EasyEffects :
+
+1. Lancez **EasyEffects** depuis votre menu d'applications ou en tapant `easyeffects` dans le terminal.
+2. Naviguez vers l'onglet **Sortie** pour gérer les effets appliqués à l'audio de vos haut-parleurs.
+3. Passez à l'onglet **Effets** pour ajouter, modifier ou ajuster les effets audio.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects.png')} />
+
+##### Utiliser les préréglages de la communauté
+
+Pour une configuration rapide et efficace, commencez avec des **préréglages créés par la communauté** adaptés à divers scénarios audio :
+
+1. Téléchargez les préréglages depuis le dépôt [EasyEffects Community Presets](https://github.com/wwmm/easyeffects/wiki/Community-presets).
+2. Dans EasyEffects, cliquez sur le bouton **Préréglages** et choisissez **« Importer un préréglage depuis le stockage local »**.
+3. Localisez et sélectionnez le fichier de préréglage téléchargé.
+4. Une fois importé, le préréglage apparaîtra dans votre liste — cliquez sur **« Charger »** pour l'appliquer à votre sortie audio.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects-presets.png')} />
+
+##### Créer un profil personnalisé
+
+Pour une expérience audio plus personnalisée, créez un profil personnalisé adapté aux haut-parleurs de votre ordinateur portable :
+
+1. Cliquez sur le bouton **« + »** dans le menu des préréglages pour créer un nouveau préréglage (par exemple, nommez-le **« Haut-parleurs portable »**).
+2. Sélectionnez **« Charger »** pour activer le nouveau préréglage.
+3. Ajoutez et configurez des effets dans l'onglet **Sortie** > **Effets**, en expérimentant avec des options comme les égaliseurs, les amplificateurs de basses ou les élargisseurs stéréo.
+
+##### Utiliser l'effet Convolver (ordinateurs portables Dolby Atmos)
+
+L'effet **Convolver** peut améliorer considérablement le son en appliquant des réponses impulsionnelles qui simulent des environnements audio de haute qualité. Cependant, cela nécessite une configuration précise :
+
+1. Ajoutez l'effet **Convolver** à votre chaîne d'effets dans l'onglet **Effets**.
+2. Chargez un fichier de réponse impulsionnelle (au format `.wav`) spécifique à votre modèle d'ordinateur portable, si disponible. Vous pouvez rechercher ces fichiers en ligne sur des ressources comme :
+   - https://wiki.archlinux.org/title/Lenovo_ThinkPad_T14_(AMD)_Gen_4#Speakers
+   - https://github.com/m4tx/thinkpad-p14s-g4-linux/#sound
+   - https://github.com/shuhaowu/linux-thinkpad-speaker-improvements/
+3. **Prévenir le clipping** : L'effet Convolver peut augmenter considérablement le volume. Ajoutez un effet **Limiteur** après le Convolver dans votre chaîne d'effets pour contrôler les pics et éviter la distorsion.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects-convolver.png')} />
+
+#### Conseils pour des résultats optimaux
+
+- **Expérimentez avec différents préréglages** pour identifier celui qui correspond le mieux à votre modèle d'ordinateur portable spécifique et à vos préférences sonores personnelles.
+- **Faites des ajustements progressifs** aux effets individuels pour éviter la distorsion ou une sortie sonore non naturelle.
+- **Comparez en activant/désactivant** : Activez et désactivez fréquemment EasyEffects pour évaluer les améliorations par rapport à l'audio par défaut.
+- Recherchez des **préréglages spécifiques à l'appareil ou des réponses impulsionnelles Convolver** pour les modèles d'ordinateurs portables populaires comme le **Framework Laptop 13** ou le **ThinkPad T14** afin d'obtenir des résultats sur mesure.
+- **Automatiser au démarrage** : Configurez EasyEffects pour qu'il se lance automatiquement au démarrage via les préférences de l'application afin que votre profil personnalisé soit toujours appliqué.
+- **Chargement automatique des préréglages pour plusieurs appareils** : Utilisez l'onglet **PipeWire** > **Chargement auto des préréglages** pour associer des préréglages spécifiques à différents périphériques de sortie (par exemple, Haut-parleurs vs Casque) pour une commutation transparente. <ImageComponent imgsrc={import('~/assets/images/easyeffects-autoloading.png')} />
+
+#### Alternative à EasyEffects
+
+Comme alternative, vous pouvez essayer d'utiliser [JDSP4Linux](https://github.com/Audio4Linux/JDSP4Linux), qui est un processeur d'effets audio pour les clients PipeWire et PulseAudio.
+

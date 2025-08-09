@@ -331,6 +331,7 @@ export default defineConfig({
           translations: {
             cs: 'Nastavení',
             de: 'Konfiguration',
+            fr: 'Configuration',
             pl: 'Konfiguracja',
             ru: 'Конфигурация',
             sk: 'Konfigurácia',
@@ -341,6 +342,7 @@ export default defineConfig({
               translations: {
                 cs: 'Nastavení zabezpečeného spouštění',
                 de: 'Secure Boot-Einrichtung',
+                fr: 'Configuration de Secure Boot',
                 pl: 'Konfiguracja Secure Boot',
                 ru: 'Настройка Secure Boot',
                 sk: 'Nastavenie zabezpečeného spúšťania',
@@ -352,6 +354,7 @@ export default defineConfig({
               translations: {
                 cs: 'Nastavení po instalaci',
                 de: 'Post-Install-Einrichtung',
+                fr: 'Configuration après installation',
                 pl: 'Konfiguracja po instalacji',
                 ru: 'Настройка после установки',
                 sk: 'Nastavenie po inštalácii',
@@ -363,6 +366,7 @@ export default defineConfig({
               translations: {
                 cs: 'Konfigurace správce spouštění',
                 de: 'Boot-Manager-Konfiguration',
+                fr: 'Configuration du gestionnaire de démarrage',
                 pl: 'Konfiguracja Boot Managera',
                 ru: 'Конфигурация Boot менеджера',
                 sk: 'Konfigurácia Boot manažéra',
@@ -374,6 +378,7 @@ export default defineConfig({
               translations: {
                 cs: 'Notebooky s dvojitou GPU',
                 de: 'Dual-GPU-Notebooks',
+                fr: 'Ordinateurs portables à double GPU',
                 pl: 'Laptopy z podwójnym GPU',
                 ru: 'Ноутбуки с двумя GPU',
                 sk: 'Dvojité GPU notebooky',
@@ -386,6 +391,7 @@ export default defineConfig({
               translations: {
                 cs: 'Hraní her',
                 de: 'Gaming',
+                fr: 'Jeux',
                 pl: 'Gry',
                 ru: 'Игры',
                 sk: 'Hranie hier',
@@ -396,6 +402,7 @@ export default defineConfig({
               translations: {
                 cs: 'Obecné úpravy systému',
                 de: 'Allgemeine Systemanpassungen',
+                fr: 'Ajustements généraux du système',
                 pl: 'Ogólne poprawki systemowe',
                 ru: 'Общие настройки системы',
                 sk: 'Všeobecné systémové úpravy',
@@ -407,6 +414,7 @@ export default defineConfig({
               translations: {
                 cs: 'sched-ext Tutoriál',
                 de: 'sched-ext Anleitung',
+                fr: 'Guide sched-ext',
                 pl: 'sched-ext Poradnik',
                 ru: 'Руководство по sched-ext',
                 sk: 'sched-ext návod',
@@ -418,6 +426,7 @@ export default defineConfig({
               translations: {
                 cs: 'Automatické připojování dalších disků',
                 de: 'Automatisches Einhängen zusätzlicher Laufwerke',
+                fr: 'Montage automatique des disques supplémentaires',
                 pl: 'Automatyczne montowanie dodatkowych dysków',
                 ru: 'Автоматическое монтирование дополнительных дисков',
                 sk: 'Automatické pripájanie ďalších diskov',
@@ -429,6 +438,7 @@ export default defineConfig({
               translations: {
                 cs: 'Povolení hardwarové akcelerace v Google Chrome',
                 de: 'Hardware-Beschleunigung in Google Chrome aktivieren',
+                fr: 'Activer l’accélération matérielle dans Google Chrome',
                 pl: 'Włączanie akceleracji sprzętowej w Google Chrome',
                 ru: 'Включение аппаратного ускорения в Google Chrome',
                 sk: 'Povolenie hardvérovej akcelerácie v Google Chrome',

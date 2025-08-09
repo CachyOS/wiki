@@ -1,0 +1,391 @@
+---
+title: Après l'installation
+description: Étapes de configuration après l'installation de CachyOS
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+## Mise à jour du système
+
+<Tabs>
+
+<TabItem label="Avec Octopi (GUI)">
+
+Octopi est un gestionnaire de paquets graphique pour les distributions basées sur Arch qui offre un moyen pratique de gérer les paquets et les mises à jour.
+Pour mettre à jour votre système avec Octopi, suivez ces étapes :
+
+<Steps>
+
+1. Lancez **Octopi** depuis le menu des applications.
+2. Dans la fenêtre principale, cliquez sur le bouton **Vérifier les mises à jour** (en haut à gauche), puis à côté sur **Mise à niveau du système**.
+3. Octopi vérifiera alors les mises à jour disponibles et vous invitera à les installer soit dans Octopi lui-même, soit dans un terminal.
+4. Pour continuer la mise à jour, cliquez sur le bouton **Appliquer**.
+5. Octopi téléchargera et installera les mises à jour.
+6. Il est conseillé de redémarrer votre ordinateur après une mise à jour importante **(surtout si le noyau a été mis à jour)**.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Avec Pacman">
+
+<Steps>
+
+1. Ouvrez un émulateur de terminal (ou appuyez sur **`ctrl + alt + t`** - **`mod + entrée`** dans un WM comme Qtile).
+2. Exécutez la commande suivante pour mettre à jour le système :
+
+   ```sh
+   sudo pacman -Syu
+   ```
+3. Il est conseillé de redémarrer votre ordinateur après une mise à jour importante **(surtout si le noyau a été mis à jour)**.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Mise à jour hors ligne du système">
+
+*CachyOS prend en charge les mises à jour hors ligne du système grâce au script [`pacman-offline`](https://github.com/eworm-de/pacman-offline). Cela permet à votre système de télécharger les mises à jour des paquets et de les appliquer au prochain redémarrage. (Oui, comme sur Windows)*
+
+:::note
+L'outil `pacman-offline` s'intègre à la fonctionnalité de mises à jour hors ligne de systemd. Il gère automatiquement les mises à jour du noyau et le chargement des modules.
+
+Le fichier `/etc/pacman.d/offline.conf` est crucial pour gérer quels paquets sont mis à jour lors des mises à jour régulières et hors ligne. Assurez-vous qu'il est correctement configuré pour le noyau souhaité ou ajoutez les paquets que vous voulez ignorer lors d'une mise à jour classique pour qu'ils ne soient mis à jour que lors de l'exécution de pacman-offline. Exemple : `pacman -Syu`.
+
+**Si vous activez le minuteur de mise à jour automatique, vous n'avez plus besoin de mettre à jour manuellement votre système.**
+:::
+
+<Steps>
+
+1. **Installez le paquet pacman-offline**
+
+   ```bash
+   sudo pacman -S pacman-offline
+   ```
+
+2. **Indiquer à Pacman de lire la liste séparée des paquets à ignorer.**
+
+   ```bash title='Ajoutez la ligne suivante au fichier /etc/pacman.conf'
+   Include = /etc/pacman.d/offline.conf
+   ```
+   *Exemple*
+   ```bash
+   # DÉPÔTS
+   #   - peuvent être définis ici ou inclus depuis un autre fichier
+   #   - pacman recherchera les dépôts dans l'ordre défini ici
+   #   - les miroirs locaux/personnalisés peuvent être ajoutés ici ou dans des fichiers séparés
+   #   - les dépôts listés en premier auront la priorité lorsque les paquets
+   #     auront des noms identiques, quel que soit le numéro de version
+   #   - les URL remplaceront $repo par le nom du dépôt actuel
+   #   - les URL remplaceront $arch par le nom de l'architecture
+   #
+   # Les entrées de dépôt ont le format suivant :
+   #       [nom-du-depot]
+   #       Server = NomDuServeur
+   #       Include = CheminDinclusion
+   #
+   # L'en-tête [nom-du-depot] est crucial - il doit être présent et
+   # non commenté pour activer le dépôt.
+   #
+
+   Include = /etc/pacman.d/offline.conf
+   ```
+3. **Ajouter les noyaux CachyOS pour que pacman les ignore lors des mises à jour régulières**
+
+   L'outil `pacman-offline` utilise ce fichier pour déterminer quels paquets ignorer lors des mises à jour traditionnelles avec pacman.
+   
+   **Exemple : lorsque vous exécutez `sudo pacman -Syu`**
+
+   *Remplacez le contenu du fichier `/etc/pacman.d/offline.conf` par ce qui suit :*
+
+   ```text 
+   # Noyaux Arch Linux
+   IgnorePkg = linux linux-headers linux-docs
+   IgnorePkg = linux-lts linux-lts-headers linux-lts-docs
+   IgnorePkg = linux-zen linux-zen-headers linux-zen-docs
+   IgnorePkg = linux-hardened linux-hardened-headers linux-hardened-docs
+
+   # Noyaux CachyOS
+   IgnorePkg = linux-cachyos linux-cachyos-headers
+   IgnorePkg = linux-cachyos-bmq linux-cachyos-bmq-headers
+   IgnorePkg = linux-cachyos-bore linux-cachyos-bore-headers
+   IgnorePkg = linux-cachyos-deckify linux-cachyos-deckify-headers
+   IgnorePkg = linux-cachyos-eevdf linux-cachyos-eevdf-headers
+   IgnorePkg = linux-cachyos-gcc linux-cachyos-gcc-headers
+   IgnorePkg = linux-cachyos-hardened linux-cachyos-hardened-headers
+   IgnorePkg = linux-cachyos-lts linux-cachyos-lts-headers
+   IgnorePkg = linux-cachyos-rc linux-cachyos-rc-headers
+   IgnorePkg = linux-cachyos-rt-bore linux-cachyos-rt-bore-headers
+   IgnorePkg = linux-cachyos-sched-ext linux-cachyos-sched-ext-headers
+   IgnorePkg = linux-cachyos-server linux-cachyos-server-headers
+   IgnorePkg = linux-cachyos-lto linux-cachyos-lto-headers
+   IgnorePkg = linux-cachyos-bmq-lto linux-cachyos-bmq-lto-headers
+   IgnorePkg = linux-cachyos-bore-lto linux-cachyos-bore-lto-headers
+   IgnorePkg = linux-cachyos-deckify-lto linux-cachyos-deckify-lto-headers
+   IgnorePkg = linux-cachyos-eevdf-lto linux-cachyos-eevdf-lto-headers
+   IgnorePkg = linux-cachyos-gcc-lto linux-cachyos-gcc-lto-headers
+   IgnorePkg = linux-cachyos-hardened-lto linux-cachyos-hardened-lto-headers
+   IgnorePkg = linux-cachyos-lts-lto linux-cachyos-lts-lto-headers
+   IgnorePkg = linux-cachyos-rc-lto linux-cachyos-rc-lto-headers
+   IgnorePkg = linux-cachyos-rt-bore-lto linux-cachyos-rt-bore-lto-headers
+   IgnorePkg = linux-cachyos-sched-ext-lto linux-cachyos-sched-ext-lto-headers
+   IgnorePkg = linux-cachyos-server-lto linux-cachyos-server-lto-headers
+   ```
+
+   *Désormais, tous ces paquets seront ignorés lors des mises à jour régulières mais vérifiés pendant la préparation hors ligne.*
+
+3. **Démarrer la préparation de la mise à jour hors ligne une seule fois**
+
+   ```bash title='Exécutez la commande suivante'
+   sudo systemctl start pacman-offline-prepare.service
+   ```
+   Cette commande lancera pacman-offline une fois pour synchroniser les bases de données des paquets et télécharger les mises à jour, mais sans les installer.
+
+</Steps>
+
+*Si vous souhaitez automatiser ce script, suivez les étapes suivantes :*
+
+<Steps>
+
+1. **Activer le minuteur de préparation**
+
+   L'activation de `pacman-offline-prepare.timer` permettra à systemd de déclencher ce script pour télécharger les mises à jour quotidiennement, quelques minutes après chaque démarrage du système.
+
+   ```bash
+   sudo systemctl enable pacman-offline-prepare.timer
+   ```
+
+2. **Redémarrez votre système :**
+
+   Les mises à jour seront installées lors du prochain redémarrage du système.
+
+3. **(Facultatif) Redémarrages automatiques du système :**
+
+    Activez le `pacman-offline-reboot.timer` pour redémarrer automatiquement votre système par défaut à **3h du matin** (votre fuseau horaire) si des mises à jour sont en attente. Sachez que l'heure n'est pas toujours exactement la même en raison de l'inclusion de `RandomizedDelaySec` qui est réglé sur 2 heures par défaut.
+
+    ```bash
+    sudo systemctl enable pacman-offline-reboot.timer
+    ```
+
+    :::tip
+    Vous pouvez modifier le fichier `pacman-offline-reboot.timer` pour changer l'heure à laquelle vous souhaitez que votre système redémarre en cas de mise à jour en attente, ou pour désactiver la planification aléatoire.
+    :::
+
+</Steps>
+
+</TabItem>
+
+</Tabs>
+
+## Configuration du pare-feu (ufw)
+:::note
+UFW est activé par défaut après l'installation.
+:::
+Pour configurer ufw, suivez ces étapes :
+
+<Tabs>
+
+<TabItem label="Activer">
+
+```bash
+sudo ufw enable
+```
+
+</TabItem>
+
+<TabItem label="Désactiver">
+
+```bash
+sudo ufw disable
+```
+
+</TabItem>
+
+<TabItem label="Autoriser">
+
+Par défaut, ufw autorise tout le trafic entrant et sortant. Vous pouvez ajouter des règles spécifiques au pare-feu pour bloquer ou autoriser des connexions spécifiques.
+
+```bash
+# Par exemple :
+sudo ufw allow ssh
+```
+
+</TabItem>
+
+<TabItem label="Refuser">
+
+```bash
+# Pour refuser un port spécifique, consultez l'exemple suivant :
+sudo ufw deny 80
+```
+
+</TabItem>
+
+<TabItem label="État">
+
+```bash
+sudo ufw status verbose
+```
+
+</TabItem>
+
+</Tabs>
+
+:::note
+Soyez prudent lors de la configuration des règles du pare-feu, car des règles mal configurées peuvent vous bloquer l'accès à votre propre système.
+:::
+
+:::note
+Vous pouvez également le configurer graphiquement en utilisant la section "Pare-feu" dans les paramètres de KDE Plasma.
+:::
+
+## Configurer le domaine réglementaire Wi-Fi
+
+Le paquet `wireless-regdb` inclut une **base de données de règles sans fil** (fréquences autorisées, canaux, limites de puissance) pour divers pays. Définir la bonne région pour votre emplacement **peut débloquer des canaux Wi-Fi spécifiques** (tels que les canaux 12/13 ou les bandes 5GHz/6GHz) qui peuvent être limités par défaut, aidant à **améliorer les performances et la qualité de votre connexion Wi-Fi**.
+
+**Configuration :**
+
+1. **Modifiez la configuration :**
+   Ouvrez `/etc/conf.d/wireless-regdom` avec les privilèges root.
+   ```bash
+   sudo micro /etc/conf.d/wireless-regdom
+   ```
+2. **Définissez votre pays :**
+   Décommentez la ligne avec votre **code pays [ISO à deux lettres](https://fr.wikipedia.org/wiki/ISO_3166-1_alpha-2#Codes_officiellement_attribués)** (par exemple, `WIRELESS_REGDOM="FR"`). Assurez-vous qu'un seul pays est décommenté.
+3. **Redémarrez :**
+   Un redémarrage est généralement nécessaire pour que le changement prenne effet.
+
+**Vérification :**
+
+Pour **vérifier le domaine réglementaire actuellement appliqué**, utilisez cette commande :
+
+```bash
+❯ iw reg get
+global
+country 00: DFS-UNSET # Le pays 00 utilise les valeurs par défaut globales
+	(755 - 928 @ 2), (N/A, 20), (N/A), PASSIVE-SCAN
+	(2402 - 2472 @ 40), (N/A, 20), (N/A)
+	(2457 - 2482 @ 20), (N/A, 20), (N/A), AUTO-BW, PASSIVE-SCAN
+	(2474 - 2494 @ 20), (N/A, 20), (N/A), NO-OFDM, PASSIVE-SCAN
+	(5170 - 5250 @ 80), (N/A, 20), (N/A), AUTO-BW, PASSIVE-SCAN
+	(5250 - 5330 @ 80), (N/A, 20), (0 ms), DFS, AUTO-BW, PASSIVE-SCAN
+	(5490 - 5730 @ 160), (N/A, 20), (0 ms), DFS, PASSIVE-SCAN
+	(5735 - 5835 @ 80), (N/A, 20), (N/A), PASSIVE-SCAN
+	(57240 - 63720 @ 2160), (N/A, 0), (N/A)
+```
+
+Recherchez la ligne `country XX:`, où `XX` doit correspondre au code que vous avez défini. Si elle affiche `country 00:`, le système utilise peut-être les restrictions par défaut ou n'a pas encore déterminé la région.
+
+```bash
+❯ iw reg get
+global
+country US: DFS-FCC # Le pays s'affiche correctement comme US
+	(902 - 904 @ 2), (N/A, 30), (N/A)
+	(904 - 920 @ 16), (N/A, 30), (N/A)
+	(920 - 928 @ 8), (N/A, 30), (N/A)
+	(2400 - 2472 @ 40), (N/A, 30), (N/A)
+	(5150 - 5250 @ 80), (N/A, 23), (N/A), AUTO-BW
+	(5250 - 5350 @ 80), (N/A, 24), (0 ms), DFS, AUTO-BW
+	(5470 - 5730 @ 160), (N/A, 24), (0 ms), DFS
+	(5730 - 5850 @ 80), (N/A, 30), (N/A), AUTO-BW
+	(5850 - 5895 @ 40), (N/A, 27), (N/A), NO-OUTDOOR, AUTO-BW, PASSIVE-SCAN
+	(5925 - 7125 @ 320), (N/A, 12), (N/A), NO-OUTDOOR, PASSIVE-SCAN
+	(57240 - 71000 @ 2160), (N/A, 40), (N/A)
+```
+
+## Activation du menu global
+Pour certaines applications comme Visual Studio Code, le menu global peut ne pas fonctionner ou être attaché à l'application parente au lieu du tableau de bord.
+
+```sh
+# Pour activer la prise en charge du menu global, exécutez la commande et redémarrez l'application.
+sudo pacman -S appmenu-gtk-module libdbusmenu-glib
+```
+
+## Activer la prise en charge d'AppArmor avec les profils AppArmor.d (Facultatif)
+
+<Steps>
+
+1. Ajoutez les paramètres de noyau suivants à votre gestionnaire de démarrage, consultez la [Configuration du gestionnaire de démarrage](/fr/configuration/boot_manager_configuration) pour référence
+
+   ```text
+   lsm=landlock,lockdown,yama,integrity,apparmor,bpf
+   ```
+
+2. Installez les paquets apparmor et apparmor.d **(Ensemble de plus de 1500 profils)**
+   ```bash
+   sudo pacman -S apparmor apparmor.d-git
+   ```
+
+3. Activez/Démarrez le service AppArmor
+
+   ```bash
+   systemctl enable --now apparmor.service
+   ```
+
+4. Activez la mise en cache pour les profils AppArmor
+
+   ```shell
+   # /etc/apparmor/parser.conf
+   ## Ajoutez les lignes suivantes :
+   write-cache
+   Optimize=compress-fast
+   ```
+   Enregistrez le fichier et redémarrez.
+</Steps>
+
+## Changer le shell par défaut
+
+Actuellement, CachyOS utilise [fish](https://fishshell.com/) comme shell de connexion par défaut de l'utilisateur. Cependant, vous pouvez changer
+le shell par défaut pour celui que vous préférez.
+
+<Tabs>
+   <TabItem label='bash'>
+
+      C'est le shell par défaut sur presque toutes les distributions Linux. Il est également toujours utilisé comme shell de connexion de l'utilisateur root. bash
+      dispose d'une fonctionnalité d'auto-complétion de base et d'une gestion facile de l'historique. Il diffère de zsh et fish en ce qu'il n'a pas
+      l'écosystème de personnalisation et de plugins sophistiqué que possèdent à la fois fish et zsh.
+
+
+      ```sh title='Changer votre shell par défaut pour bash'
+      ❯ chsh -s /usr/bin/bash
+      ```
+
+   </TabItem>
+
+   <TabItem label='zsh'>
+
+      Nous fournissons une [configuration zsh](https://github.com/CachyOS/cachyos-zsh-config) avec des plugins et des configurations couramment utilisés.
+      Elle vise à avoir une fonctionnalité 1:1 avec notre [configuration fish](https://github.com/CachyOS/cachyos-fish-config).
+      C'est aussi le shell par défaut utilisé dans MacOS.
+
+      ```sh title='Changer le shell par défaut pour zsh'
+      ❯ chsh -s /usr/bin/zsh
+      ```
+
+   </TabItem>
+</Tabs>
+
+## Mettre à jour/utiliser [tldr](https://github.com/tldr-pages/tldr)
+
+:::note
+CachyOS utilise [tealdeer](https://github.com/tealdeer-rs/tealdeer) qui est une implémentation plus rapide en Rust du tldr original.
+:::
+
+Cet outil est extrêmement utile pour ceux qui ne veulent pas lire beaucoup ou perdre du temps à lire une page d'aide/man.
+
+<Steps>
+
+1. ```sh title="Ouvrez un terminal et exécutez la commande suivante"
+   tldr --update
+   ```
+2. Exemple d'utilisation de tldr :
+   ```sh
+   tldr java
+   Exécuter un programme $(.jar) :
+
+   java -jar nom_du_fichier.jar
+
+   # Comme vous pouvez le voir, c'est vraiment utile, et de nouveaux outils/pages sont ajoutés au fil du temps.
+   ```
+
+</Steps>
