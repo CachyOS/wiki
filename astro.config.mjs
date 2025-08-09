@@ -247,6 +247,7 @@ export default defineConfig({
           translations: {
             cs: 'Funkce CachyOS',
             de: 'CachyOS Funktionen',
+            fr: 'Fonctionnalités de CachyOS',
             pl: 'Funkcje CachyOS',
             ru: 'Возможности CachyOS',
             sk: 'Funkcie CachyOS',
@@ -258,6 +259,7 @@ export default defineConfig({
               translations: {
                 cs: 'Pomůcka pro chroot CachyOS (cachy-chroot)',
                 de: 'CachyOS chroot-Helfer (cachy-chroot)',
+                fr: 'CachyOS chroot Helper (cachy-chroot)',
                 pl: 'CachyOS chroot menedżer (cachy-chroot)',
                 ru: 'CachyOS chroot помощник (cachy-chroot)',
                 sk: 'Pomôcka pre chroot CachyOS (cachy-chroot)',
@@ -269,6 +271,7 @@ export default defineConfig({
               translations: {
                 cs: 'Detekce hardwaru CachyOS (chwd)',
                 de: 'CachyOS Hardware-Erkennung (chwd)',
+                fr: 'CachyOS Détection du matériel (chwd)',
                 pl: 'CachyOS Wykrywanie sprzętu (chwd)',
                 ru: 'CachyOS Обнаружение оборудования (chwd)',
                 sk: 'Detekcia hardvéru CachyOS (chwd)',
@@ -279,6 +282,7 @@ export default defineConfig({
               translations: {
                 cs: 'Jádro CachyOS',
                 de: 'CachyOS-Kernel',
+                fr: 'CachyOS Noyau',
                 pl: 'Jądro CachyOS',
                 ru: 'Ядро CachyOS',
                 sk: 'Jadro CachyOS',
@@ -290,6 +294,7 @@ export default defineConfig({
               translations: {
                 cs: 'Správce jader',
                 de: 'Kernel-Manager',
+                fr: 'Gestionnaire de noyau',
                 ru: 'Менеджер ядер',
                 sk: 'Správca jadra',
               },
@@ -300,6 +305,7 @@ export default defineConfig({
               translations: {
                 cs: 'Nastavení CachyOS',
                 de: 'CachyOS-Einstellungen',
+                fr: 'Paramètres de CachyOS',
                 pl: 'Ustawienia CachyOS',
                 ru: 'Настройки CachyOS',
                 sk: 'Nastavenia CachyOS',
@@ -311,6 +317,7 @@ export default defineConfig({
               translations: {
                 cs: 'Optimalizované repozitáře',
                 de: 'Optimierte Repositories',
+                fr: 'Dépôts optimisés',
                 pl: 'Zoptymalizowane repozytoria',
                 ru: 'Оптимизированные репозитории',
                 sk: 'Optimalizované repozitáre',

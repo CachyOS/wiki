@@ -1,0 +1,142 @@
+---
+title: Gestion des noyaux Linux et du framework sched-ext avec le CachyOS Kernel Manager
+description: Le CachyOS Kernel Manager est un outil puissant pour gérer les noyaux, permettant aux utilisateurs d'installer ou de compiler facilement des noyaux personnalisés.
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+Installer un noyau depuis un dépôt
+---------------------------------------
+
+**Le CachyOS Kernel Manager simplifie l'installation et la gestion des noyaux depuis n'importe quel dépôt Arch Linux.**
+
+Pour installer un noyau, lancez l'application `CachyOS Kernel Manager` et choisissez le noyau désiré en cochant la case `[]` dans la liste de toutes les options disponibles, puis appuyez simplement sur `Exécuter` pour lancer l'installation du noyau.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km1.png')} />
+
+:::note
+Le bouton `Exécuter` devient indisponible lorsque vous choisissez un noyau déjà installé.
+:::
+
+Configurer et compiler un noyau CachyOS personnalisé
+---------------------------------
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km2.png')} />
+
+**Le CachyOS Kernel Manager facilite la configuration et la compilation d'un noyau CachyOS personnalisé.**
+
+:::note
+Le CachyOS Kernel Manager est spécifiquement conçu pour compiler des noyaux personnalisés pour les **variantes de CachyOS** et ne prend pas en charge la compilation ou la configuration d'un noyau Arch Linux standard ou de toute autre variante.
+:::
+
+*Pour commencer, ouvrez le Kernel Manager et cliquez sur le bouton `Configurer` pour commencer à ajuster divers paramètres, tels que l'ordonnanceur désiré, la fréquence du tick et plus encore. Une fois que vous avez effectué les modifications souhaitées, cliquez sur `Compiler le noyau` pour commencer la compilation de votre noyau CachyOS personnalisé.*
+
+**Options de configuration disponibles :**
+
+* *`Nom de paquet personnalisé` : **Avec cette option, vous pouvez nommer votre noyau comme vous le souhaitez. Par exemple : `linux-custom-cachy`***
+* *Ordonnanceur (BORE, RC, RT, RT+BORE, EEVDF et BMQ)*
+* *Activer la configuration CachyOS*
+* *Ajuster la configuration via nconfig, menuconfig, xconfig ou gconfig*
+* *Activer/Désactiver NUMA*
+* *Activer/Désactiver Modprobed-db*
+* *KBUILD CFLAGS (-O3 ou -O2)*
+* *Gouverneur de performance par défaut*
+* *Activer BBR3*
+* *Sélection de la fréquence du tick (100Hz, 250Hz, 300Hz, 500Hz, 600Hz, 750Hz, 1000Hz)*
+* *Mode Tickless (idle, periodic, full)*
+* *Préemption (Full, Voluntary ou Server)*
+* *Transparent Hugepages (Always ou Madvise)*
+* *Activer/Désactiver DAMON*
+* *Activer/Désactiver la détection automatique de l'architecture du CPU*
+* *Appliquer l'optimisation du noyau pour des architectures CPU spécifiques*
+* *Activer LTO (Full, Thin, No)*
+* *Compiler le module ZFS*
+* *Compiler le module propriétaire NVIDIA*
+* *Compiler le module open-source NVIDIA*
+* *Inclure vmlinux avec les informations/symboles de débogage*
+* *Charger/Sauvegarder un préréglage de configuration du Kernel Manager : `(Uniquement les préréglages du gestionnaire lui-même)`*
+* *Gestion des patches du noyau (support distant et local)*
+
+**Une fois le noyau compilé avec succès, votre mot de passe sudo vous sera demandé pour installer le noyau.**
+
+## Gestion du framework Sched-ext
+
+**Le Kernel Manager fournit une interface utilisateur graphique (GUI) pour gérer et contrôler les ordonnanceurs sched-ext. Accédez à la GUI en cliquant sur le bouton `Configuration de l'ordonnanceur sched-ext` dans la fenêtre principale.**
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km3.png')} />
+
+Cette GUI vous permet de :
+
+- **Changer entre différents ordonnanceurs sched-ext (scx).**
+- **Activer ou désactiver le service de l'ordonnanceur.**
+- **Vérifier l'ordonnanceur actuellement en cours d'exécution.**
+- **Définir les indicateurs et les profils de l'ordonnanceur. `Actuellement, seuls bpfland et lavd supportent les profils.`**
+
+Pour ce faire, le Kernel Manager utilise `scx_loader` avec une configuration stockée dans `/etc/scx_loader.toml`.
+
+Pour plus d'informations sur le fichier de configuration de `scx_loader`, consultez [cette documentation](https://github.com/sched-ext/scx/blob/main/rust/scx_loader/configuration.md).
+
+- **Comment fonctionne `scx_loader` ?**
+    - Une fois que vous avez sélectionné l'ordonnanceur et le profil, scx_loader démarrera l'ordonnanceur avec le profil sélectionné et enregistrera cette configuration dans le fichier `/etc/scx_loader.toml` afin d'assurer la persistance entre les redémarrages. Voici un exemple de ce à quoi ressemblera le fichier en choisissant `scx_bpfland` avec le profil `Gaming` :
+        ```toml
+        default_sched = "scx_bpfland"
+        default_mode = "Gaming"
+
+        [scheds.scx_bpfland]
+        auto_mode = []
+        gaming_mode = ["-m", "performance"]
+        lowlatency_mode = ["-k", "-s", "5000", "-l", "5000"]
+        powersave_mode = ["-m", "powersave"]
+        ```
+
+### Profils d'ordonnanceur
+
+- **À quoi servent les "profils" ?**
+  - Ce sont des préréglages pour l'ordonnanceur qui modifient les indicateurs en fonction de combinaisons éprouvées pour améliorer l'efficacité dans des cas d'utilisation spécifiques, comme le "Gaming".
+
+**Consultez le tableau pour un aperçu plus détaillé.**
+
+#### Bpfland
+
+|   Nom du profil  	| Indicateurs de ligne de commande 	|                                                         Description                                                         	|
+|:---------------:	|:--------------------:	|:---------------------------------------------------------------------------------------------------------------------------:	|
+| **Faible latence** 	| `-s 5000 -S 500 -l 5000 -m performance` 	| Conçu pour réduire la latence au détriment du débit. Convient aux applications temps réel souples comme le traitement audio et le multimédia. 	|
+| **Gaming**      	| `-m performance`  	| Optimise la cohérence des performances dans les jeux sur les systèmes avec des cœurs hybrides. Priorise les P-cores par rapport aux E-cores sur les CPU Intel et les CCD sur les CPU Ryzen X3D.         	|
+| **Économie d'énergie**  	| `-m powersave`       	| Priorise l'efficacité énergétique. Favorise les cœurs moins performants (par ex. les E-cores sur Intel).                                          	|
+| **Serveur**        | `-p`                | Priorise les tâches avec une affinité stricte. Cette option peut augmenter le débit au détriment de la latence et convient mieux aux charges de travail de type serveur.
+
+#### Flash
+
+|   Nom du profil     | Indicateurs de ligne de commande  |                                                         Description                                                           |
+|:---------------:  |:--------------------: |:---------------------------------------------------------------------------------------------------------------------------:  |
+| **Faible latence**   | `-m performance -w -C 0`   | Conçu pour réduire la latence au détriment du débit. Convient aux applications temps réel souples comme le traitement audio et le multimédia.   |
+| **Gaming**        | `-m all`      | Optimise pour une haute performance dans les jeux.           |
+| **Économie d'énergie**    | `-m powersave -I 10000 -t 10000 -s 10000 -S 1000`        | Priorise l'efficacité énergétique. Favorise les cœurs moins performants (par ex. les E-cores sur Intel) et introduit un cycle de repos forcé toutes les 10 ms pour augmenter les économies d'énergie. 
+                                            |
+| **Serveur**        | `-m all -s 20000 -S 1000 -I -1 -D -L`                | Optimisé pour les charges de travail de type serveur. Troque la réactivité contre le débit.
+
+#### LAVD
+
+|       Nom du profil       	| Indicateurs de ligne de commande 	|                                                             Description                                                            	|
+|:------------------------:	|:------------------:	|:----------------------------------------------------------------------------------------------------------------------------------:	|
+| **Gaming & Faible latence** 	|   `--performance`  	| Maximise les performances en utilisant tous les cœurs disponibles, en priorisant les cœurs physiques.                                                   	|
+|      **Économie d'énergie**      	|    `--powersave`   	| Minimise la consommation d'énergie tout en maintenant des performances raisonnables. Priorise les cœurs et threads efficaces par rapport aux cœurs physiques. 	|
+
+#### P2DQ
+
+|       Nom du profil        | Indicateurs de ligne de commande    |                                                             Description                                                               |
+|:------------------------: |:------------------:   |:----------------------------------------------------------------------------------------------------------------------------------:   |
+| **Faible latence**  |   `-y`     | Réduit la latence en faisant en sorte que les tâches interactives restent davantage sur le CPU auquel elles ont été assignées.                                                     |
+|      **Serveur**       |    `--keep-running`      | Améliore les charges de travail de type serveur en permettant aux tâches de s'exécuter au-delà de leur tranche de temps si le CPU est inactif.    |
+
+#### Tickless
+
+|   Nom du profil    |  Indicateurs de ligne de commande   |                                                         Description                                                           |
+|:---------------:  |:--------------------: |:---------------------------------------------------------------------------------------------------------------------------:  |
+| **Gaming**   | `-f 5000 -s 5000`   | Améliore les performances de jeu en augmentant la fréquence à laquelle l'ordonnanceur détecte les contentions CPU et déclenche des changements de contexte avec une tranche de temps plus courte.    |
+| **Économie d'énergie**        | `-f 50 -p`      | Améliore l'efficacité énergétique en réduisant les vérifications de contention et en essayant agressivement de maintenir les tâches sur le même CPU.          |
+| **Faible latence**    | `-f 5000 -s 1000`        | Similaire au profil de jeu mais avec une tranche de temps encore plus réduite.                                            |
+| **Serveur**        | `-f 100`                | Réduit la fréquence à laquelle l'ordonnanceur vérifie les contentions CPU pour améliorer le débit au détriment de la réactivité.
