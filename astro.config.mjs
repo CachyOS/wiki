@@ -139,6 +139,7 @@ export default defineConfig({
           translations: {
             cs: 'Instalace',
             de: 'Installation',
+            fr: 'Installation',
             pl: 'Instalacja',
             ru: 'Установка',
             sk: 'Inštalácia',
@@ -149,6 +150,7 @@ export default defineConfig({
               translations: {
                 cs: 'Požadavky CachyOS a předinstalační příprava',
                 de: 'Anforderungen und Vorinstallationsvorbereitung',
+                fr: 'Exigences et préparation à l’installation',
                 pl: 'Wymagania i przygotowanie do instalacji',
                 ru: 'Требования и подготовка к установке',
                 sk: 'Požiadavky CachyOS a inštalačné médium',
@@ -160,6 +162,7 @@ export default defineConfig({
               translations: {
                 cs: 'Správci zavádění',
                 de: 'Boot-Manager',
+                fr: 'Gestionnaires de démarrage',
                 pl: 'Boot menedżer',
                 ru: 'Boot менеджер',
                 sk: 'Boot manažéry',
@@ -171,6 +174,7 @@ export default defineConfig({
               translations: {
                 cs: 'Souborový systém',
                 de: 'Dateisystem',
+                fr: 'Système de fichiers',
                 pl: 'System plików',
                 ru: 'Файловая система',
                 sk: 'Súborový systém',
@@ -182,6 +186,7 @@ export default defineConfig({
               translations: {
                 cs: 'Snímky obrazovky',
                 de: 'Screenshots',
+                fr: 'Captures d’écran',
                 pl: 'Zrzuty ekranu',
                 ru: 'Скриншоты',
                 sk: 'Snímky obrazovky',
@@ -193,6 +198,7 @@ export default defineConfig({
               translations: {
                 cs: 'Desktop prostředí',
                 de: 'Desktop-Umgebungen',
+                fr: 'Environnements de bureau',
                 pl: 'Środowiska graficzne',
                 ru: 'Окружения рабочего стола',
                 sk: 'Desktopové prostredia',
@@ -204,6 +210,7 @@ export default defineConfig({
               translations: {
                 cs: 'Instalace na kořenový oddíl',
                 de: 'Installation auf Root',
+                fr: 'Installation sur la racine',
                 ru: 'Установка на корневой раздел',
                 sk: 'Inštalácia Root',
               },
@@ -214,6 +221,7 @@ export default defineConfig({
               translations: {
                 ru: 'Установка на T2 MacBook',
                 de: 'Installation auf T2 MacBook',
+                fr: 'Installation sur T2 MacBook',
                 pl: 'Instalacja na T2 MacBook',
                 sk: 'Inštalácia na T2 MacBook',
                 cs: 'Instalace na MacBook T2',
@@ -225,6 +233,7 @@ export default defineConfig({
               translations: {
                 cs: 'Instalace verze pro přenosné zařízení',
                 de: 'Installation Handheld Edition',
+                fr: 'Installation Handheld Edition',
                 pl: 'Instalacja Handheld Edition',
                 ru: 'Установка Handheld Edition',
                 sk: 'Inštalácia Handheld Edition',
