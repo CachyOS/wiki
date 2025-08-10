@@ -99,6 +99,7 @@ export default defineConfig({
             pl: 'Zaczynamy',
             ru: 'Начало работы',
             sk: 'Začíname',
+            sv: 'Kom igång',
           },
           items: [
             {
@@ -112,6 +113,7 @@ export default defineConfig({
                 pl: 'Dlaczego CachyOS?',
                 ru: 'Почему CachyOS?',
                 sk: 'Prečo CachyOS?',
+                sv: 'Varför CachyOS?',
               },
               link: 'cachyos_basic/why_cachyos',
             },
@@ -126,6 +128,7 @@ export default defineConfig({
                 pl: 'Pobieranie CachyOS',
                 ru: 'Загрузка CachyOS',
                 sk: 'Sťahovanie CachyOS',
+                sv: 'Ladda ner CachyOS',
               },
               link: 'cachyos_basic/download',
             },
