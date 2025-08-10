@@ -47,4 +47,3 @@ exit
 ## Learn More
 
 - [Arch Wiki - chroot](https://wiki.archlinux.org/title/Chroot)
-

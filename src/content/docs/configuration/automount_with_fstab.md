@@ -6,11 +6,13 @@ description: Mount additional static drives at boot by utilizing the file found 
 This tutorial describes the basics of utilizing the fstab file located in /etc/ in order to mount static drives during boot. It briefly explains how to find a partition or drive's UUID, what some options do, and further reading should the information provided be insufficient.
 
 ## Prerequisites
+
 - Root access
 
 ## Adding Entries to /etc/fstab
 
 ### 1. List the UUIDs of your partitions
+
 In the terminal emulator of your choice (Konsole, Alacritty, Kitty, etc.) run the following:
 
 ```sh
@@ -51,7 +53,6 @@ That should make it abundantly clear to us that the partition we want is `nvme0n
 
 Once you are confident you've found the correct partition, copy the UUID. Copying from the terminal emulator is typically done with `ctrl+shift+C`.
 
-
 ### 3. Adding an Entry to /etc/fstab
 
 Now that we've obtained the UUID of our partition, it's time to open up the fstab file.
@@ -67,6 +68,7 @@ Using the arrow keys, navigate to the bottom of the fstab file, then create our 
 ```sh
 UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail 0 0
 ```
+
 The break down of this entry is as follows:
 
 - `UUID=08A24E90A24E81E4` is the file system we want to mount, identified by its UUID. There are other methods to identify your filesystem, though UUID tends to be safest. Additional methods listed [here](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems).
@@ -84,6 +86,7 @@ The break down of this entry is as follows:
 Options are explained [here](https://man7.org/linux/man-pages/man5/fstab.5.html) and [here](https://man7.org/linux/man-pages/man8/mount.8.html) in much more detail.
 
 #### More info
+
 As an aside, all options after the filesystem type declaration are optional if you do not change them from the default.
 
 Thus
@@ -101,8 +104,6 @@ are equivalent.  `somefs` followed by nothing is implicitly `somefs defaults 0 0
 If you are following this guide with a Windows partition your options should be `uid=1000,gid=1000,rw,user,exec,umask=000` replacing uid and gid with your user id and group id. If you do not give user and exec permissions, Windows may lock your drive leaving you unable to modify anything. This may happen regardless of permissions if you do not disable fast boot.
 
 If you do not set `umask=000`, some files may be unwritable depending on default mount permissions.
-
-
 
 ### 4. Finishing Up
 
@@ -156,23 +157,26 @@ ls /media/windows
 # Intel                    'Ship of Harkinian'
  ```
 
-
 ## tl;dr
 
 - Find the **UUID** of your partition
+
 ```sh
 lsblk -f
 ```
 
 - Open `/etc/fstab`
+
 ```sh
 sudo nano /etc/fstab
 ```
 
 - Create an entry in the bottom of the file
+
 ```sh
 UUID=<partition UUID> /media/foo somefs defaults 0 0
 ```
+
 Replacing `<partition UUID>`, `foo`, and `somefs` with your UUID, directory, and filesystem. eg., ext4, as well as setting any other options you may want after defaults, such as `_netdev` for a NAS, or `nofail` for any non-critical drive.
 
 - Reload your daemon
@@ -182,6 +186,7 @@ sudo systemctl daemon-reload
 ```
 
 - Mount your drive
+
 ```sh
 sudo mount -a
 ```
@@ -189,9 +194,10 @@ sudo mount -a
 This drive is now mounted, and will now be mounted on boot moving forward as well.
 
 ## Additional reading
-- https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html - Filesystem Hierarchy Standard
-- https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html - FHS on `/media/`
-- https://linux.die.net/man/8/dump - manual for `dump`
-- https://man.archlinux.org/man/fsck.8 - manual for `fsck`
-- https://man.archlinux.org/man/fstab.5.en - man page for fstab
-- https://wiki.archlinux.org/title/Fstab - Arch Linux wiki for fstab
+
+- <https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html> - Filesystem Hierarchy Standard
+- <https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html> - FHS on `/media/`
+- <https://linux.die.net/man/8/dump> - manual for `dump`
+- <https://man.archlinux.org/man/fsck.8> - manual for `fsck`
+- <https://man.archlinux.org/man/fstab.5.en> - man page for fstab
+- <https://wiki.archlinux.org/title/Fstab> - Arch Linux wiki for fstab

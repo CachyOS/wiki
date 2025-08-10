@@ -14,6 +14,7 @@ title: Submitting Bugs
 
 CachyOS provides a great tool to gather logs from the system called `cachyos-bugreport.sh`.
 This tool will collect logs from:
+
 - dmesg
 - journalctl
 - inxi `(To collect hardware information)`
@@ -21,6 +22,7 @@ This tool will collect logs from:
 When the logs are collected, the user will be prompted to decide whether to upload them to our paste website.
 
 **Run the following command in the terminal, and post the link with the bugs into the topic:**
+
 ```sh
 sudo cachyos-bugreport.sh
 ```

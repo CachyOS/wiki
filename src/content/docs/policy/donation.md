@@ -16,11 +16,11 @@ Here a list of the current costs per months:
 
 ### Patreon
 
-https://www.patreon.com/CachyOS
+<https://www.patreon.com/CachyOS>
 
 ### PayPal
 
-https://paypal.me/pttrr
+<https://paypal.me/pttrr>
 
 ### Ethereum
 

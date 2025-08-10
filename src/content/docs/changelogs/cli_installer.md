@@ -35,7 +35,7 @@ description: Changelogs CLI Installer
 
 - Updated the CPR dependency to a newer version for improved functionality.
 - Explicitly instructed CTRE (Compile Time Regular Expressions library) to utilize the C++23 standard for consistency and potential performance enhancements.
-- Increased the connection check timeout in the utilities section to accommodate potential network delays or slow responses. 
+- Increased the connection check timeout in the utilities section to accommodate potential network delays or slow responses.
 
 # 0.8.2
 
@@ -57,7 +57,7 @@ description: Changelogs CLI Installer
 
 ## Chores 🧹
 
-- Removed unnecessary ucode logic related to refind, streamlining the codebase. 
+- Removed unnecessary ucode logic related to refind, streamlining the codebase.
 
 # 0.8.0
 

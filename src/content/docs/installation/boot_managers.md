@@ -13,16 +13,18 @@ configuration, please see [Boot Manager Configuration](/configuration/boot_manag
 Part of the systemd family, systemd-boot was created to be as simple as possible. Therefore, it only has support for UEFI based systems. This simple yet efficient design ensures it is reliable and fast. However, this comes at the cost of advanced features supported by other boot managers.
 
 ### Pros
+
 - Very simple configuration.
 - Boot entries are separated into multiple files, making it easier to manage.
 
 ### Cons
- - Lacks proper support for BIOS/MBR.
- - Very barebones design and lacks any kind of theming or customization.
- - Config is not auto-generated unless configured to do so. CachyOS includes systemd-boot manager to offer auto-generated configuration.
- - Only able to read boot images on EFI supported filesystems (FAT, FAT16, FAT32).
- - Inability to find boot images on partitions other than its own.
- - Does not properly support Btrfs snapshot rollbacks due to requirement to store kernel images on the boot partition rather than the root filesystem.
+
+- Lacks proper support for BIOS/MBR.
+- Very barebones design and lacks any kind of theming or customization.
+- Config is not auto-generated unless configured to do so. CachyOS includes systemd-boot manager to offer auto-generated configuration.
+- Only able to read boot images on EFI supported filesystems (FAT, FAT16, FAT32).
+- Inability to find boot images on partitions other than its own.
+- Does not properly support Btrfs snapshot rollbacks due to requirement to store kernel images on the boot partition rather than the root filesystem.
 
 ## rEFInd
 
@@ -48,6 +50,7 @@ set, works on almost every machine, and is the most commonly used Linux boot
 manager.
 
 ### Pros
+
 - Able to read boot images from almost all available Linux filesystems.
 - Widely used and information online is easily found.
 - Able to decrypt encrypted boot partitions.
@@ -55,6 +58,7 @@ manager.
 - Looks dated, but has great theme support to compensate.
 
 ### Cons
+
 - Bloated due to supporting much older hardware and requiring lots of filesystem drivers.
 - Noticeably slower compared to systemd-boot, rEFInd, and Limine.
 

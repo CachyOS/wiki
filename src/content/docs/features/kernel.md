@@ -30,44 +30,44 @@ For each of the kernels, there is a [corresponding `-lto` variant](#package-nami
 is built  with [clang](https://clang.llvm.org/) instead of [GCC](https://gcc.gnu.org/).
 
 - **linux-cachyos**
-    - The default kernel. This is the recommended kernel if you're unsure which one to use.
-    - 1000Hz tickrate for improved responsiveness.
-    - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
-    - Built with GCC.
-    - Profiled with our own [AutoFDO](https://cachyos.org/blog/2411-kernel-autofdo/) profile for improved performance. [Script](https://github.com/CachyOS/cachyos-benchmarker/blob/master/kernel-autofdo.sh) used to profile the kernel.
+  - The default kernel. This is the recommended kernel if you're unsure which one to use.
+  - 1000Hz tickrate for improved responsiveness.
+  - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
+  - Built with GCC.
+  - Profiled with our own [AutoFDO](https://cachyos.org/blog/2411-kernel-autofdo/) profile for improved performance. [Script](https://github.com/CachyOS/cachyos-benchmarker/blob/master/kernel-autofdo.sh) used to profile the kernel.
 - **linux-cachyos-bore**
-    - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
+  - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
 - **linux-cachyos-bmq**
-    - Uses the BMQ scheduler from [Project C](https://gitlab.com/alfredchen/projectc/) by Alfred Chen.
-        - **Does not support sched-ext**.
+  - Uses the BMQ scheduler from [Project C](https://gitlab.com/alfredchen/projectc/) by Alfred Chen.
+    - **Does not support sched-ext**.
 - **linux-cachyos-deckify**
-    - The default kernel for handhelds. It is **not recommended** and **unsupported** to use any other kernel on handhelds.
-    - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
-    - Handheld specific patches on top of the base patchset to improve compatibility and overall experience on handheld devices.
+  - The default kernel for handhelds. It is **not recommended** and **unsupported** to use any other kernel on handhelds.
+  - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
+  - Handheld specific patches on top of the base patchset to improve compatibility and overall experience on handheld devices.
 - **linux-cachyos-eevdf**
-    - Tweaks the default kernel scheduler for improved responsiveness.
+  - Tweaks the default kernel scheduler for improved responsiveness.
 - **linux-cachyos-lts**
-    - Based on the latest Long Term Support kernel.
-    - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
-    - Minimally patched compared to other kernels to ensure maximum stability.
+  - Based on the latest Long Term Support kernel.
+  - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
+  - Minimally patched compared to other kernels to ensure maximum stability.
 - **linux-cachyos-hardened**
-    - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
-    - Includes [linux-hardened](https://github.com/anthraxx/linux-hardened) patchset.
-    - Kernel config based on [linux-hardened config](https://gitlab.archlinux.org/archlinux/packaging/packages/linux-hardened/-/blob/main/config).
-        - Contains very aggressive hardening that significantly stifles performance and user experience.
-        - **Does not support sched-ext**.
+  - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
+  - Includes [linux-hardened](https://github.com/anthraxx/linux-hardened) patchset.
+  - Kernel config based on [linux-hardened config](https://gitlab.archlinux.org/archlinux/packaging/packages/linux-hardened/-/blob/main/config).
+    - Contains very aggressive hardening that significantly stifles performance and user experience.
+    - **Does not support sched-ext**.
 - **linux-cachyos-rc**
-    - Based on the latest mainline kernel from [Linus's tree](https://github.com/torvalds/linux/).
-    - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
-    - Main kernel to introduce new features in our patchset.
+  - Based on the latest mainline kernel from [Linus's tree](https://github.com/torvalds/linux/).
+  - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
+  - Main kernel to introduce new features in our patchset.
 - **linux-cachyos-server**
-    - Tuned for server workloads compared to desktop usage.
-        - 300Hz tickrate.
-        - No preemption.
-        - Stock EEVDF.
+  - Tuned for server workloads compared to desktop usage.
+    - 300Hz tickrate.
+    - No preemption.
+    - Stock EEVDF.
 - **linux-cachyos-rt-bore**
-    - Real-time preemption.
-    - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
+  - Real-time preemption.
+  - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
 
 :::note
 Unless otherwise specified, it is safe to assume that all other kernel variants

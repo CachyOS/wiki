@@ -25,16 +25,18 @@ This guide is extensible. If you have a working hardware acceleration setup for 
 
 ## Setup Steps
 
-1.  **Identify Flags File:** Locate your browser's flags file path in "GPU & Browser Configurations."
-2.  **Edit Flags File:** Open/create the file using `nano` (or your preferred text editor like `micro`, `vim`).
+1. **Identify Flags File:** Locate your browser's flags file path in "GPU & Browser Configurations."
+2. **Edit Flags File:** Open/create the file using `nano` (or your preferred text editor like `micro`, `vim`).
+
     ```bash
     nano [PATH_TO_YOUR_BROWSER_FLAGS_FILE]
     # Example: nano ~/.config/chrome-flags.conf
     ```
-3.  **Add Flags:** Paste the relevant GPU/browser flags into the file.
-4.  **Save & Close.**
-5.  **Restart Browser:** Close all browser instances and relaunch.
-6.  **Verify:** Navigate to `chrome://gpu` (or `brave://gpu`, `edge://gpu`, etc.). Confirm "Hardware accelerated" status under "Video Acceleration Information" and "Graphics Feature Status."
+
+3. **Add Flags:** Paste the relevant GPU/browser flags into the file.
+4. **Save & Close.**
+5. **Restart Browser:** Close all browser instances and relaunch.
+6. **Verify:** Navigate to `chrome://gpu` (or `brave://gpu`, `edge://gpu`, etc.). Confirm "Hardware accelerated" status under "Video Acceleration Information" and "Graphics Feature Status."
 
 ## Verification Tips
 
@@ -55,30 +57,28 @@ While a video is playing in your browser (e.g., YouTube), observe the `media` se
 This method provides direct confirmation from the browser itself:
 
 1. Open your Chromium-based browser.
-    
+
 2. Start playing a video (e.g., on YouTube or a local file).
-    
+
 3. Open Developer Tools: Press `F12` or `Ctrl+Shift+I`.
-    
+
 4. Navigate to the **Media** tab. If you don't see it, click the three dots (`...`) or `>>` (More tabs) on the Developer Tools toolbar, then select `Media`.
-    
+
 5. In the "Players" section on the left, click on the entry corresponding to your video.
-    
+
 6. In the main panel, scroll down to the **Video Decoder** section.
-    
+
 7. Look for the `Hardware decoder` label. It should be `true`. If it says `false` or shows a software decoder name (e.g., `FFmpegVideoDecoder`, `VpxVideoDecoder`, `Dav1dVideoDecoder`), hardware acceleration is not active for that video.
-    
 
 ## GPU & Browser Configurations
 
 ### AMD Radeon RX 6900 XT (Google Chrome)
 
-- **Browser:** Google Chrome
-    
-- **GPU:** AMD Radeon RX 6900 XT
-    
-- **Flags File:** `~/.config/chrome-flags.conf`
-    
+* **Browser:** Google Chrome
+
+* **GPU:** AMD Radeon RX 6900 XT
+
+* **Flags File:** `~/.config/chrome-flags.conf`
 
 ```bash
 --use-gl=angle
@@ -95,22 +95,21 @@ This method provides direct confirmation from the browser itself:
 
 ### [Your Browser] - [Your GPU Model] (Contributed by [Your Name/Handle])
 
-- **Browser:** [e.g., Brave, Ungoogled Chromium, Microsoft Edge, Vivaldi, Opera, Chromium]
-    
-- **GPU:** [e.g., NVIDIA GeForce RTX 3080, Intel Iris Xe]
-    
-- **Flags File Path:** (Crucial, varies per browser!)
-    
-    - **Common `.conf` paths:**
-        
-        - **Chromium:** `~/.config/chromium-flags.conf`
-            
-        - **Brave Browser:** `~/.config/brave-browser-flags.conf`
-            
-        - **Ungoogled Chromium:** `~/.config/ungoogled-chromium-flags.conf`
-            
-    - **`.desktop` file modification:** Some browsers (Brave, Edge, Vivaldi, Opera) might require editing the `Exec=` line in their `.desktop` file (copy from `/usr/share/applications/` to `~/.local/share/applications/` first).
-        
+* **Browser:** [e.g., Brave, Ungoogled Chromium, Microsoft Edge, Vivaldi, Opera, Chromium]
+
+* **GPU:** [e.g., NVIDIA GeForce RTX 3080, Intel Iris Xe]
+
+* **Flags File Path:** (Crucial, varies per browser!)
+
+  * **Common `.conf` paths:**
+
+    * **Chromium:** `~/.config/chromium-flags.conf`
+
+    * **Brave Browser:** `~/.config/brave-browser-flags.conf`
+
+    * **Ungoogled Chromium:** `~/.config/ungoogled-chromium-flags.conf`
+
+  * **`.desktop` file modification:** Some browsers (Brave, Edge, Vivaldi, Opera) might require editing the `Exec=` line in their `.desktop` file (copy from `/usr/share/applications/` to `~/.local/share/applications/` first).
 
 **Flags Content (for `.conf` file or `Exec=` line):**
 
@@ -121,6 +120,6 @@ This method provides direct confirmation from the browser itself:
 
 **Notes (Optional):**
 
-- Required drivers (e.g., `nvidia-dkms`, `intel-media-driver`).
-    
-- Specific setup considerations or `.desktop` file modification instructions.
+* Required drivers (e.g., `nvidia-dkms`, `intel-media-driver`).
+
+* Specific setup considerations or `.desktop` file modification instructions.

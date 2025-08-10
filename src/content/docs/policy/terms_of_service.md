@@ -15,7 +15,7 @@ Only natural persons of legal age and with full legal capacity are permitted to 
 
 ### 1.3. Access to Terms of Service
 
-The latest version of the Terms of Service can be accessed at any time on our website: https://wiki.cachyos.org/policy/terms_of_service.
+The latest version of the Terms of Service can be accessed at any time on our website: <https://wiki.cachyos.org/policy/terms_of_service>.
 
 ## 2. Registration, Conclusion of Contract, and Subject Matter
 
@@ -134,4 +134,4 @@ If any provision of these Terms of Service is found to be invalid, the remaining
 
 ### 10.3. Disputes
 
-The European Commission's online dispute resolution platform can be accessed at https://ec.europa.eu/consumers/odr. We are not obligated to participate in dispute resolution procedures before a consumer arbitration board.
+The European Commission's online dispute resolution platform can be accessed at <https://ec.europa.eu/consumers/odr>. We are not obligated to participate in dispute resolution procedures before a consumer arbitration board.

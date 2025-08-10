@@ -8,6 +8,6 @@ Users can create requests for AUR packages, which, if approved, are automaticall
 
 If you want us to add a package, you can submit a request on GitHub or in the forum.
 
-- GitHub: https://github.com/CachyOS/distribution/issues
-- Forum: https://discuss.cachyos.org/c/feedback/repository/11
+- GitHub: <https://github.com/CachyOS/distribution/issues>
+- Forum: <https://discuss.cachyos.org/c/feedback/repository/11>
 - Discord: [Feedback Channel](https://discord.com/channels/862292009423470592/1150723027986813018)

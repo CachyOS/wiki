@@ -37,6 +37,7 @@ CachyOS includes its own hardware detection tool, which automatically identifies
 ## Customizable Installation Process
 
 The CachyOS installer lets users customize their system by choosing the desktop environment, packages, filesystem, boot manager, kernel, and more to fit their needs:
+
 - [**Desktop Environments**](/installation/desktop_environments/)
 - [**Boot Managers**](/installation/boot_managers/)
 - [**Kernel Flavors**](/features/kernel#variants)
