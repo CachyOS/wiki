@@ -130,6 +130,10 @@ export default defineConfig({
               link: 'cachyos_basic/download',
             },
             {
+              label: 'ISO Changelogs',
+              autogenerate: { directory: 'cachyos_basic/changelogs'}
+            },
+            {
               label: 'FAQ',
               translations: {
                 ru: 'Часто задаваемые вопросы',
@@ -499,19 +503,6 @@ export default defineConfig({
                 cs: 'Sociální sítě',
               },
               link: 'support/social',
-            },
-          ],
-        },
-        {
-          label: 'Changelogs',
-          items: [
-            {
-              label: 'GUI Installer and ISO',
-              link: 'changelogs/gui_installer',
-            },
-            {
-              label: 'CLI Installer',
-              link: 'changelogs/cli_installer',
             },
           ],
         },

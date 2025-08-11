@@ -1,5 +1,5 @@
 ---
-title: GUI Installer Changelogs
+title: GUI Installer
 description: Changelogs of Calamares and the GUI Live ISO
 ---
 25.07
