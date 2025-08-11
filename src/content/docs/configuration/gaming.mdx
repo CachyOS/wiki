@@ -42,207 +42,6 @@ Follow the steps below to start with the gaming setup.
     </TabItem>
 </Tabs>
 
-## Steam FAQ & Tips
-
-:::note
-Laptop users with discrete NVIDIA GPUs should refer to the [Dual GPU Laptops guide](https://wiki.cachyos.org/configuration/dual_gpu/)
-:::
-
-:::tip
-CachyOS provides various Proton versions that we build & maintain for further performance improvements:
-- `proton-cachyos` `(included in the cachyos-gaming-meta package)` is the one that we develop with added QoL changes + cherry picked patches + compilation optimizations `(x86-64-v3 & x86-64-v4)`
-- `proton-ge-custom`, `proton-tkg-git`, `proton-experimental` and `proton stable releases` are built against native libs.
-- `proton-ge-custom-bin` pulled from AUR.
-:::
-
-:::tip
-To check if your game is compatible or how it runs with Linux, visit **[ProtonDB](https://www.protondb.com/)** or **[Are We Anti-Cheat Yet?](https://areweanticheatyet.com/).**
-:::
-
-### Which Proton version should be used in Steam?
-
-- [`proton-cachyos`](https://github.com/CachyOS/proton-cachyos) is the one we build and maintain; it should work in most cases. Using it is highly recommended unless it has an issue with the game you want to play.
-- [`proton-cachyos-slr`](https://github.com/CachyOS/proton-cachyos/releases) is for games using **BattlEye** or **Easy Anti-Cheat**.
-- `Proton Experimental` is the bleeding edge release from `Valve`. Use this if the game you want to play is relatively new, doesn't work well with the current Proton stable release, or if people recommend it on [ProtonDB](https://www.protondb.com/).
-- `Proton 9.0.4 or lower` are the stable releases from `Valve`. Use this if the game you want to play only works in a previous Proton release.
-- `Proton-GE` is a custom build made by [GloriousEggroll](https://github.com/GloriousEggroll/proton-ge-custom). It includes various fixes and optimizations, and can be useful in certain situations.
-
-### How to properly set multiple launch options
-The launch options in Steam are constructed using the following pattern
-- `<env variables> <wrappers> %command% <application arguments>`
-    - `<env variables>`: These are options in the form of `VARIABLE=value`. For example `PROTON_DXVK_D3D8=1` or `DXVK_HUD="fps,memory,version,api"`
-    - `<wrappers>`: Applications and scripts that modify how the real application is run. Arguments to the wrapper usually go after the wrapper's executable. For example `mangohud --dlsym` or `gamescope -W 1680 -H 1050 -w 1280 -h 720 -S fit -F fsr --mangoapp --`
-    - `%command%`: This is the real application. This should be specified exactly as is and Steam will replace it with the proper command when the application is run.
-    - `<application arguments>`: These are various arguments to the real application, and they depend on the application. For example `-dx11` should go here if the application supports it.
-
-- Example: `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1 prime-run game-performance %command% -dx11`
-
-:::caution
-Don't add multiple `%command%` by using them as separators for multiple launch options.
-
-Example: `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1 %command% game-performance %command% prime-run %command%`
-    - In this case, everything after the first `%command%` is going to be ignored because it's being treated as game arguments, therefore only `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1` gets recognized as a launch option.
-:::
-
-### Fix stuttering caused by the Steam Game Recorder Feature
-
-:::caution
-Adding this environment variable causes **Steam's Overlay** to stop functioning. 
-:::
-
-```sh title='Add the following launch option to your game'
-LD_PRELOAD="" %command%
-```
-
-### Pre-caching shaders with Proton-CachyOS, -GE and -EM
-
-:::note
-It's advised to disable the `Steam Precache of Shaders` feature when utilizing Proton-CachyOS, Proton-GE or Proton-EM. They already contain all the necessary codecs to play videos inside games, and nowadays a relatively modern GPU-CPU combo should be more than capable of dealing with compiling shaders in-game.
-
-But if you have time to spare, then you can ignore this tip and let Steam pre compile some shaders for your game.
-
-**`Keep in mind that not everything gets cached during this process.`**
-:::
-
-**Here is how to disable this feature:**
-
-<ImageComponent imgsrc={import('~/assets/images/steam-setting.png')} />
-<ImageComponent imgsrc={import('~/assets/images/steam-shader-cache.png')} />
-
-### Repurposing a Windows NTFS game partition
-
-:::caution
-Avoid using Proton on NTFS drives. Valve does not support this configuration, and it can cause games to behave unpredictably.
-
-If you're willing to proceed. Follow their **[unofficial guide.](<https://github.com/ValveSoftware/Proton/wiki/Using-a-NTFS-disk-with-Linux-and-Windows>)**
-:::
-
-
-
-
-## Performance tips
-
-### Power Profile Switching on Demand
-
-:::note
-This behavior is slightly different with `intel_pstate`. On Intel, the governor remains at powersave but the
-EPP/EPB values are set to performance.
-:::
-
-CachyOS provides a wrapper script [`game-performance`](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/game-performance)
-which uses `power-profiles-daemon` to temporarily switch the current power profile to `performance`.
-The `performance` profile increases the system power levels and changes the CPU governor to `performance`.
-
-When this script is used to run a game, the system will be set to use the `performance` profile as long as the game is running.
-The previously used power profile will be restored once the game is closed.
-
-*[Feral's GameMode](https://github.com/FeralInteractive/gamemode)
-has similar a behavior but it should **not** be used as CachyOS already ships with [`ananicy-cpp`](https://gitlab.com/ananicy-cpp/ananicy-cpp)*
-
-### How to add game-performance to Steam, Lutris and Heroic Games Launcher
-
-<Tabs>
-
-<TabItem label='Steam'>
-
-<Steps>
-1. Open your `Steam Library`.
-2. Right click the game's title and select `Properties`.
-3. On the `General` tab you'll find `Launch Options` section.
-4. Add the following Launch Option:
-    ```sh
-    game-performance %command%
-    ```
-</Steps>
-
-</TabItem>
-
-<TabItem label='Heroic Games Launcher'>
-
-<Steps>
-1. On the left panel open `Settings`.
-2. Go to `Game defaults` then click on `Advanced`.
-3. In the `wrapper` command section. Add the following line without any argument:
-   ```sh
-   game-performance
-   ```
-4. Click on the `+` sign to save changes.
-</Steps>
-
-</TabItem>
-
-<TabItem label='Lutris'>
-
-<Steps>
-1. On the top right open the `hamburger menu`.
-2. Go to `Preferences/Global options`.
-3. Enable `Advanced Mode` on the top right.
-4. Scroll down to `Command prefix` and add the following line:
-   ```sh
-   game-performance
-   ```
-5. Save changes.
-</Steps>
-
-</TabItem>
-
-</Tabs>
-
-### Increase maximum shader cache size
-
-Game shaders are compiled automatically while playing, which may cause long loading times and stuttering the first time you encounter them. These shaders are stored on your system to be re-used when needed.
-
-However, there is a maximum limit to the shader cache's file size, causing old shaders to be forgotten when exceeding the default size. This can be an issue since large games can have shaders over 1GB in size, causing them to re-compile shaders every launch.
-
-To avoid long loading times and stuttering, we can increase the global shader cache size:
-
-<Tabs>
-
-<TabItem label='Nvidia GPU'>
-
-<Steps>
-1. Open the terminal.
-2. Enter this command:
-	```sh
-	sudo nano /etc/profile.d/increase-shadercache.sh
-	```
-3. Paste the following into the file:
-	```sh
-	# Increase Nvidia's shader cache size to 12GB
-	export __GL_SHADER_DISK_CACHE_SIZE=12000000000
-	```
-4. Save the file by pressing `CTRL+X`, `Y`, then `Enter`.
-5. Restart your system.
-</Steps>
-
-</TabItem>
-
-<TabItem label='AMD GPU'>
-
-<Steps>
-1. Open the terminal.
-2. Enter this command:
-	```sh
-	sudo nano /etc/profile.d/increase-shadercache.sh
-	```
-3. Paste the following into the file:
-	```sh
-	# Enforces RADV Vulkan implementation
-	export AMD_VULKAN_ICD=RADV
-    
-	# Increase AMD's shader cache size to 12GB
-	export MESA_SHADER_CACHE_MAX_SIZE=12G
-	```
-4. Save the file by pressing `CTRL+X`, `Y`, then `Enter`.
-5. Restart your system.
-</Steps>
-
-</TabItem>
-
-</Tabs>
-
-After restarting, the maximum shader cache size should be permanently increased. Thanks to [psygreg's shader booster](https://github.com/psygreg/shader-booster/) for helping this guide.
-
 ## Proton-CachyOS
 
 :::caution
@@ -445,6 +244,81 @@ If you want to use desktop application, we suggest using `wine` or `wine-staging
     </TabItem>
 </Tabs>
 
+## Steam FAQ & Tips
+
+:::note
+Laptop users with discrete NVIDIA GPUs should refer to the [Dual GPU Laptops guide](https://wiki.cachyos.org/configuration/dual_gpu/)
+:::
+
+:::tip
+CachyOS provides various Proton versions that we build & maintain for further performance improvements:
+- `proton-cachyos` `(included in the cachyos-gaming-meta package)` is the one that we develop with added QoL changes + cherry picked patches + compilation optimizations `(x86-64-v3 & x86-64-v4)`
+- `proton-ge-custom`, `proton-tkg-git`, `proton-experimental` and `proton stable releases` are built against native libs.
+- `proton-ge-custom-bin` pulled from AUR.
+:::
+
+:::tip
+To check if your game is compatible or how it runs with Linux, visit **[ProtonDB](https://www.protondb.com/)** or **[Are We Anti-Cheat Yet?](https://areweanticheatyet.com/).**
+:::
+
+### Which Proton version should be used in Steam?
+
+- [`proton-cachyos`](https://github.com/CachyOS/proton-cachyos) is the one we build and maintain; it should work in most cases. Using it is highly recommended unless it has an issue with the game you want to play.
+- [`proton-cachyos-slr`](https://github.com/CachyOS/proton-cachyos/releases) is for games using **BattlEye** or **Easy Anti-Cheat**.
+- `Proton Experimental` is the bleeding edge release from `Valve`. Use this if the game you want to play is relatively new, doesn't work well with the current Proton stable release, or if people recommend it on [ProtonDB](https://www.protondb.com/).
+- `Proton 9.0.4 or lower` are the stable releases from `Valve`. Use this if the game you want to play only works in a previous Proton release.
+- `Proton-GE` is a custom build made by [GloriousEggroll](https://github.com/GloriousEggroll/proton-ge-custom). It includes various fixes and optimizations, and can be useful in certain situations.
+
+### How to properly set multiple launch options
+The launch options in Steam are constructed using the following pattern
+- `<env variables> <wrappers> %command% <application arguments>`
+    - `<env variables>`: These are options in the form of `VARIABLE=value`. For example `PROTON_DXVK_D3D8=1` or `DXVK_HUD="fps,memory,version,api"`
+    - `<wrappers>`: Applications and scripts that modify how the real application is run. Arguments to the wrapper usually go after the wrapper's executable. For example `mangohud --dlsym` or `gamescope -W 1680 -H 1050 -w 1280 -h 720 -S fit -F fsr --mangoapp --`
+    - `%command%`: This is the real application. This should be specified exactly as is and Steam will replace it with the proper command when the application is run.
+    - `<application arguments>`: These are various arguments to the real application, and they depend on the application. For example `-dx11` should go here if the application supports it.
+
+- Example: `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1 prime-run game-performance %command% -dx11`
+
+:::caution
+Don't add multiple `%command%` by using them as separators for multiple launch options.
+
+Example: `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1 %command% game-performance %command% prime-run %command%`
+    - In this case, everything after the first `%command%` is going to be ignored because it's being treated as game arguments, therefore only `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1` gets recognized as a launch option.
+:::
+
+### Fix stuttering caused by the Steam Game Recorder Feature
+
+:::caution
+Adding this environment variable causes **Steam's Overlay** to stop functioning. 
+:::
+
+```sh title='Add the following launch option to your game'
+LD_PRELOAD="" %command%
+```
+
+### Pre-caching shaders with Proton-CachyOS, -GE and -EM
+
+:::note
+It's advised to disable the `Steam Precache of Shaders` feature when utilizing Proton-CachyOS, Proton-GE or Proton-EM. They already contain all the necessary codecs to play videos inside games, and nowadays a relatively modern GPU-CPU combo should be more than capable of dealing with compiling shaders in-game.
+
+But if you have time to spare, then you can ignore this tip and let Steam pre compile some shaders for your game.
+
+**`Keep in mind that not everything gets cached during this process.`**
+:::
+
+**Here is how to disable this feature:**
+
+<ImageComponent imgsrc={import('~/assets/images/steam-setting.png')} />
+<ImageComponent imgsrc={import('~/assets/images/steam-shader-cache.png')} />
+
+### Repurposing a Windows NTFS game partition
+
+:::caution
+Avoid using Proton on NTFS drives. Valve does not support this configuration, and it can cause games to behave unpredictably.
+
+If you're willing to proceed. Follow their **[unofficial guide.](<https://github.com/ValveSoftware/Proton/wiki/Using-a-NTFS-disk-with-Linux-and-Windows>)**
+:::
+
 ## Lutris Introduction & Tips
 
 Lutris serves as a central hub for all your games on CachyOS.
@@ -468,19 +342,136 @@ With Lutris, you can efficiently manage your game runners, including Wine, Proto
 
 - Right-click on the game icon > `Configure` > `Game options` > `Arguments` > Add any argument you need.
 
-## Ray tracing Support
-The Arch Wiki has already provides comprehensive instructions on how to enable [ray tracing](https://wiki.archlinux.org/title/Hardware_raytracing) for various hardware platforms.
-- [Ray tracing on NVIDIA](https://wiki.archlinux.org/title/Hardware_raytracing#NVIDIA)
-- [Ray tracing on AMD](https://wiki.archlinux.org/title/Hardware_raytracing#AMD)
-- [Ray tracing on Intel](https://wiki.archlinux.org/title/Hardware_raytracing#Intel)
+## Performance & Misc tips
 
-## Forcing the latest DLSS preset
+### Power Profile Switching on Demand
+
+:::note
+This behavior is slightly different with `intel_pstate`. On Intel, the governor remains at powersave but the
+EPP/EPB values are set to performance.
+:::
+
+CachyOS provides a wrapper script [`game-performance`](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/game-performance)
+which uses `power-profiles-daemon` to temporarily switch the current power profile to `performance`.
+The `performance` profile increases the system power levels and changes the CPU governor to `performance`.
+
+When this script is used to run a game, the system will be set to use the `performance` profile as long as the game is running.
+The previously used power profile will be restored once the game is closed.
+
+*[Feral's GameMode](https://github.com/FeralInteractive/gamemode)
+has similar a behavior but it should **not** be used as CachyOS already ships with [`ananicy-cpp`](https://gitlab.com/ananicy-cpp/ananicy-cpp)*
+
+### How to add game-performance to Steam, Lutris and Heroic Games Launcher
+
+<Tabs>
+
+<TabItem label='Steam'>
+
+<Steps>
+1. Open your `Steam Library`.
+2. Right click the game's title and select `Properties`.
+3. On the `General` tab you'll find `Launch Options` section.
+4. Add the following Launch Option:
+    ```sh
+    game-performance %command%
+    ```
+</Steps>
+
+</TabItem>
+
+<TabItem label='Heroic Games Launcher'>
+
+<Steps>
+1. On the left panel open `Settings`.
+2. Go to `Game defaults` then click on `Advanced`.
+3. In the `wrapper` command section. Add the following line without any argument:
+   ```sh
+   game-performance
+   ```
+4. Click on the `+` sign to save changes.
+</Steps>
+
+</TabItem>
+
+<TabItem label='Lutris'>
+
+<Steps>
+1. On the top right open the `hamburger menu`.
+2. Go to `Preferences/Global options`.
+3. Enable `Advanced Mode` on the top right.
+4. Scroll down to `Command prefix` and add the following line:
+   ```sh
+   game-performance
+   ```
+5. Save changes.
+</Steps>
+
+</TabItem>
+
+</Tabs>
+
+### Increase maximum shader cache size
+
+Game shaders are compiled automatically while playing, which may cause long loading times and stuttering the first time you encounter them. These shaders are stored on your system to be re-used when needed.
+
+However, there is a maximum limit to the shader cache's file size, causing old shaders to be forgotten when exceeding the default size. This can be an issue since large games can have shaders over 1GB in size, causing them to re-compile shaders every launch.
+
+To avoid long loading times and stuttering, we can increase the global shader cache size:
+
+<Tabs>
+
+<TabItem label='Nvidia GPU'>
+
+<Steps>
+1. Open the terminal.
+2. Enter this command:
+	```sh
+	sudo nano /etc/profile.d/increase-shadercache.sh
+	```
+3. Paste the following into the file:
+	```sh
+	# Increase Nvidia's shader cache size to 12GB
+	export __GL_SHADER_DISK_CACHE_SIZE=12000000000
+	```
+4. Save the file by pressing `CTRL+X`, `Y`, then `Enter`.
+5. Restart your system.
+</Steps>
+
+</TabItem>
+
+<TabItem label='AMD GPU'>
+
+<Steps>
+1. Open the terminal.
+2. Enter this command:
+	```sh
+	sudo nano /etc/profile.d/increase-shadercache.sh
+	```
+3. Paste the following into the file:
+	```sh
+	# Enforces RADV Vulkan implementation
+	export AMD_VULKAN_ICD=RADV
+    
+	# Increase AMD's shader cache size to 12GB
+	export MESA_SHADER_CACHE_MAX_SIZE=12G
+	```
+4. Save the file by pressing `CTRL+X`, `Y`, then `Enter`.
+5. Restart your system.
+</Steps>
+
+</TabItem>
+
+</Tabs>
+
+After restarting, the maximum shader cache size should be permanently increased. Thanks to [psygreg's shader booster](https://github.com/psygreg/shader-booster/) for helping this guide.
+
+### Forcing the latest DLSS preset
 
 CachyOS provides a wrapper script `dlss-swapper` for making games supporting DLSS 2 and later utilize the latest preset, improving visual clarity (but potentially reducing performance, especially on older cards).
 
 If `dlss-swapper` is not working or causing issues try updating game's DLSS implementation manually by replacing `nvngx_dlss.dll` with an up-to-date version and using the `dlss-swapper-dll` wrapper script instead.
 
-### How to add dlss-swapper to Steam, Lutris and Heroic Games Launcher
+#### How to add dlss-swapper to Steam, Lutris and Heroic Games Launcher
 
 <Tabs>
 
@@ -529,4 +520,8 @@ If `dlss-swapper` is not working or causing issues try updating game's DLSS impl
 
 </Tabs>
 
-**By finishing this guide, you are now ready to start gaming on CachyOS. Enjoy!**
+### Ray tracing Support
+The Arch Wiki has already provides comprehensive instructions on how to enable [ray tracing](https://wiki.archlinux.org/title/Hardware_raytracing) for various hardware platforms.
+- [Ray tracing on NVIDIA](https://wiki.archlinux.org/title/Hardware_raytracing#NVIDIA)
+- [Ray tracing on AMD](https://wiki.archlinux.org/title/Hardware_raytracing#AMD)
+- [Ray tracing on Intel](https://wiki.archlinux.org/title/Hardware_raytracing#Intel)
