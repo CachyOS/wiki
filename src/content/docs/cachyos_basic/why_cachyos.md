@@ -9,7 +9,7 @@ Below are some of the key features that CachyOS provides to ensure an enhanced d
 
 ## Optimized Packages and Repositories
 
-CachyOS offers a large selection of optimized packages for various hardware configurations, including `x86-64-v3`, `x86-64-v4`, and `Zen4+` systems to improve overall performance.
+CachyOS offers a large selection of **[optimized packages](<https://dashboard.cachyos.org/>)** for various hardware configurations, including `x86-64-v3`, `x86-64-v4`, and `Zen4+` systems to improve overall performance.
 
 For more information, check [**Optimized Repositories.**](/features/optimized_repos)
 
