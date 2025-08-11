@@ -1,6 +1,9 @@
 ---
 title: FAQ
 description: Frequently asked questions and tips
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
 ---
 
 import ImageComponent from '~/components/image-component.astro';
@@ -82,45 +85,32 @@ For maximum stability and reliability, we **highly recommend** managing system p
 If you prefer a graphical interface, GUI front-ends like **[Octopi](</configuration/post_install_setup/#updating-the-system>)** or the **CachyOS Package Installer** are considered as safe alternatives, as they are more direct wrappers for `pacman`'s functionality.
 :::
 
-### "unable to lock database" error
-```sh
-sudo rm /var/lib/pacman/db.lck
-```
-:::tip
-You can achieve the same outcome by using **"Remove db lock"** function in `CachyOS Hello` in the **Apps/Tweaks** tab.
-:::
+### Mirror issues & Common pacman errors
 
-### File is corrupted (invalid or corrupted package (PGP signature))
+#### Slow package downloads or connection errors
 
 ```text
-# Example:
-:: File /var/cache/pacman/pkg/python-charset-normalizer-3.4.0-1-any.pkg.tar.zst
-is corrupted (invalid or corrupted package (PGP signature)).
+# Example errors:
+error: failed retrieving file '...' from ... : Connection timed out
+error: failed retrieving file '...' from ... : Couldn't resolve host name
+error: failed retrieving file '...' from ... : The requested URL returned error: 526
 ```
 
-```sh title='Run the following commands'
-sudo rm -rf /etc/pacman.d/gnupg/
-sudo pacman-key --init
-sudo pacman-key --populate
+These errors typically indicate issues with your current mirrors - they might be slow, unreachable, or having temporary problems.
 
-sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
-sudo pacman-key --lsign-key F3B607488DB35A47
-
-sudo rm -R /var/lib/pacman/sync
+```sh title='Run the following command to get faster and more reliable mirrors:'
+sudo cachyos-rate-mirrors
+# Afterwards, you can update your system with:
+sudo pacman -Syu
 ```
 
-### warning: local is newer than...
+:::tip
+The `cachyos-rate-mirrors` command tests available CachyOS mirrors based on speed and synchronization status, then updates your mirror list file (`/etc/pacman.d/cachyos-mirrorlist`) with the best-performing ones.
 
-#### Example:
+Consider running it periodically, especially if you notice slowdowns during system updates.
+:::
 
-<br />
-<ImageComponent imgsrc={import('~/assets/images/update-warnings.png')} />
-
-```sh title='To remove these warnings, execute the following command:'
-sudo pacman -Syuu
-```
-
-### error: failed retrieving file, The requested URL returned error: 404
+#### error: failed retrieving file, The requested URL returned error: 404
 
 ```text
 # Example
@@ -147,56 +137,49 @@ sudo pacman -Syu
 # Then try to install the package you want again.
 ```
 
-### Mirror issues
-
-#### Slow package downloads or connection errors
-
-```text
-# Example errors:
-error: failed retrieving file '...' from ... : Connection timed out
-error: failed retrieving file '...' from ... : Couldn't resolve host name
-error: failed retrieving file '...' from ... : The requested URL returned error: 526
+#### "unable to lock database" error
+```sh
+sudo rm /var/lib/pacman/db.lck
 ```
-
-These errors typically indicate issues with your current mirrors - they might be slow, unreachable, or having temporary problems.
-
-```sh title='Run the following command to get faster and more reliable mirrors:'
-sudo cachyos-rate-mirrors
-# Afterwards, you can update your system with:
-sudo pacman -Syu
-```
-
 :::tip
-The `cachyos-rate-mirrors` command tests available CachyOS mirrors based on speed and synchronization status, then updates your mirror list file (`/etc/pacman.d/cachyos-mirrorlist`) with the best-performing ones.
-
-Consider running it periodically, especially if you notice slowdowns during system updates.
+You can achieve the same outcome by using **"Remove db lock"** function in `CachyOS Hello` in the **Apps/Tweaks** tab.
 :::
 
-### What does -bin means at the end of a package name? For example librewolf-bin
+#### File is corrupted (invalid or corrupted package (PGP signature))
 
-This means that you're downloading/installing a prebuilt package, meaning you don't need to compile or build it.
-In our repositories, we store some bin packages which are basically mirrors that you can download from the AUR.
+```text
+# Example:
+:: File /var/cache/pacman/pkg/python-charset-normalizer-3.4.0-1-any.pkg.tar.zst
+is corrupted (invalid or corrupted package (PGP signature)).
+```
 
-### When I try to open Discord, a window opens notifying me of an update
+```sh title='Run the following commands'
+sudo rm -rf /etc/pacman.d/gnupg/
+sudo pacman-key --init
+sudo pacman-key --populate
 
-#### Example:
+sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
+sudo pacman-key --lsign-key F3B607488DB35A47
+
+sudo rm -R /var/lib/pacman/sync
+```
+
+#### warning: local is newer than...
+
+**Example:**
 
 <br />
-<ImageComponent imgsrc={import('~/assets/images/discord-update.png')} />
+<ImageComponent imgsrc={import('~/assets/images/update-warnings.png')} />
 
-This is because Discord released an update that is not yet available or hasn't been built in any of the pacman mirrors, so you become
-unable to use Discord.
+```sh title='To remove these warnings, execute the following command:'
+sudo pacman -Syuu
+```
 
-In order to get around this issue, follow [Arch Wiki's fix guide](<https://wiki.archlinux.org/title/Discord#Discord_asks_for_an_update_not_yet_available_in_the_repository>).
-
-
-### error: could not remove /var/cache/pacman/pkg/download
+#### error: could not remove /var/cache/pacman/pkg/download
 
 :::tip
 You can also clean the pacman cache using CachyOS Hello in **Apps/Tweaks** > **Clear package cache**
 :::
-
-#### Example:
 
 <br />
 <ImageComponent imgsrc={import('~/assets/images/pacman-cache-error.png')} />
@@ -208,7 +191,7 @@ You can also clean the pacman cache using CachyOS Hello in **Apps/Tweaks** > **C
 sudo rm -r /var/cache/pacman/pkg/*
 ```
 
-### ERROR: module not found: 'nvidia', 'nvidia_modeset', 'nvidia_uvm', 'nvidia_drm'
+#### ERROR: module not found: 'nvidia', 'nvidia_modeset', 'nvidia_uvm', 'nvidia_drm'
 
 ```sh title='Example'
 ==> ERROR: module not found: 'nvidia'
@@ -226,3 +209,13 @@ sudo rm -r /var/cache/pacman/pkg/*
 ```sh title='Install the following package to fix this error'
 sudo pacman -S nvidia
 ```
+
+### When I try to open Discord, a window opens notifying me of an update
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/discord-update.png')} />
+
+This is because Discord released an update that is not yet available or hasn't been built in any of the pacman mirrors, so you become
+unable to use Discord.
+
+In order to get around this issue, follow [Arch Wiki's fix guide](<https://wiki.archlinux.org/title/Discord#Discord_asks_for_an_update_not_yet_available_in_the_repository>).
