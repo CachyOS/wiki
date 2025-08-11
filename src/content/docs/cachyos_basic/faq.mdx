@@ -87,28 +87,47 @@ If you prefer a graphical interface, GUI front-ends like **[Octopi](</configurat
 
 ### Mirror issues & Common pacman errors
 
-#### Slow package downloads or connection errors
+#### ERROR: module not found: 'nvidia', 'nvidia_modeset', 'nvidia_uvm', 'nvidia_drm'
 
-```text
-# Example errors:
-error: failed retrieving file '...' from ... : Connection timed out
-error: failed retrieving file '...' from ... : Couldn't resolve host name
-error: failed retrieving file '...' from ... : The requested URL returned error: 526
+```sh title='Example'
+==> ERROR: module not found: 'nvidia'
+==> ERROR: module not found: 'nvidia_modeset'
+==> ERROR: module not found: 'nvidia_uvm'
+==> ERROR: module not found: 'nvidia_drm'
 ```
 
-These errors typically indicate issues with your current mirrors - they might be slow, unreachable, or having temporary problems.
+**Two reasons for this error:**
 
-```sh title='Run the following command to get faster and more reliable mirrors:'
+**1) Since Early Module Loading is always enabled in chwd, mkinitcpio consistently expects the presence of NVIDIA modules; this error arises when those modules are missing.**
+
+**2) You might be missing NVIDIA modules from other installed kernels on your system.**
+
+```sh title='Install the following package to fix this error'
+sudo pacman -S nvidia
+```
+
+#### error: signature from CachyOS admin@cachyos.org is invalid
+
+Sometimes this could happen due to a desynchronization of a mirror and by waiting a bit they tend to fix themselves or simply your system has broken keyrings.
+But if even after waiting you are getting the same error. Try one of the two possible workarounds:
+
+<Tabs>
+
+<TabItem label='First workaround'>
+
+```sh title='Rate your mirrors'
 sudo cachyos-rate-mirrors
-# Afterwards, you can update your system with:
-sudo pacman -Syu
 ```
 
-:::tip
-The `cachyos-rate-mirrors` command tests available CachyOS mirrors based on speed and synchronization status, then updates your mirror list file (`/etc/pacman.d/cachyos-mirrorlist`) with the best-performing ones.
+</TabItem>
 
-Consider running it periodically, especially if you notice slowdowns during system updates.
-:::
+<TabItem label='Second workaround'>
+
+- Open CachyOS Hello and go to **Apps/Tweaks** and click on the **Reset keyrings** button.
+
+</TabItem>
+
+</Tabs>
 
 #### error: failed retrieving file, The requested URL returned error: 404
 
@@ -137,13 +156,21 @@ sudo pacman -Syu
 # Then try to install the package you want again.
 ```
 
-#### "unable to lock database" error
-```sh
-sudo rm /var/lib/pacman/db.lck
-```
+#### error: could not remove /var/cache/pacman/pkg/download
+
 :::tip
-You can achieve the same outcome by using **"Remove db lock"** function in `CachyOS Hello` in the **Apps/Tweaks** tab.
+You can also clean the pacman cache using CachyOS Hello in **Apps/Tweaks** > **Clear package cache**
 :::
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/pacman-cache-error.png')} />
+
+*This usually appears when they're some orphans packages left in `/var/cache/pacman/pkg` which pacman can't delete.*
+
+```sh title='Run the following command to fix it'
+# Removes all the orphans stored in pkg cache.
+sudo rm -r /var/cache/pacman/pkg/*
+```
 
 #### File is corrupted (invalid or corrupted package (PGP signature))
 
@@ -164,6 +191,37 @@ sudo pacman-key --lsign-key F3B607488DB35A47
 sudo rm -R /var/lib/pacman/sync
 ```
 
+#### "unable to lock database" error
+```sh
+sudo rm /var/lib/pacman/db.lck
+```
+:::tip
+You can achieve the same outcome by using **"Remove db lock"** function in `CachyOS Hello` in the **Apps/Tweaks** tab.
+:::
+
+#### Slow package downloads or connection errors
+
+```text
+# Example errors:
+error: failed retrieving file '...' from ... : Connection timed out
+error: failed retrieving file '...' from ... : Couldn't resolve host name
+error: failed retrieving file '...' from ... : The requested URL returned error: 526
+```
+
+These errors typically indicate issues with your current mirrors - they might be slow, unreachable, or having temporary problems.
+
+```sh title='Run the following command to get faster and more reliable mirrors:'
+sudo cachyos-rate-mirrors
+# Afterwards, you can update your system with:
+sudo pacman -Syu
+```
+
+:::tip
+The `cachyos-rate-mirrors` command tests available CachyOS mirrors based on speed and synchronization status, then updates your mirror list file (`/etc/pacman.d/cachyos-mirrorlist`) with the best-performing ones.
+
+Consider running it periodically, especially if you notice slowdowns during system updates.
+:::
+
 #### warning: local is newer than...
 
 <br />
@@ -171,41 +229,6 @@ sudo rm -R /var/lib/pacman/sync
 
 ```sh title='To remove these warnings, execute the following command:'
 sudo pacman -Syuu
-```
-
-#### error: could not remove /var/cache/pacman/pkg/download
-
-:::tip
-You can also clean the pacman cache using CachyOS Hello in **Apps/Tweaks** > **Clear package cache**
-:::
-
-<br />
-<ImageComponent imgsrc={import('~/assets/images/pacman-cache-error.png')} />
-
-*This usually appears when they're some orphans packages left in `/var/cache/pacman/pkg` which pacman can't delete.*
-
-```sh title='Run the following command to fix it'
-# Removes all the orphans stored in pkg cache.
-sudo rm -r /var/cache/pacman/pkg/*
-```
-
-#### ERROR: module not found: 'nvidia', 'nvidia_modeset', 'nvidia_uvm', 'nvidia_drm'
-
-```sh title='Example'
-==> ERROR: module not found: 'nvidia'
-==> ERROR: module not found: 'nvidia_modeset'
-==> ERROR: module not found: 'nvidia_uvm'
-==> ERROR: module not found: 'nvidia_drm'
-```
-
-**Two reasons for this error:**
-
-**1) Since Early Module Loading is always enabled in chwd, mkinitcpio consistently expects the presence of NVIDIA modules; this error arises when those modules are missing.**
-
-**2) You might be missing NVIDIA modules from other installed kernels on your system.**
-
-```sh title='Install the following package to fix this error'
-sudo pacman -S nvidia
 ```
 
 ### When I try to open Discord, a window opens notifying me of an update
