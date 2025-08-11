@@ -138,7 +138,7 @@ export default defineConfig({
                 cs: 'Často kladené otázky',
                 sk: 'Najčastejšie kladené otázky',
               },
-              link: 'support/faq',
+              link: 'cachyos_basic/faq',
             },
           ],
         },
