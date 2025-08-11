@@ -129,6 +129,17 @@ export default defineConfig({
               },
               link: 'cachyos_basic/download',
             },
+            {
+              label: 'FAQ',
+              translations: {
+                ru: 'Часто задаваемые вопросы',
+                de: 'Häufig gestellte Fragen',
+                pl: 'Najczęściej zadawane pytania',
+                cs: 'Často kladené otázky',
+                sk: 'Najčastejšie kladené otázky',
+              },
+              link: 'support/faq',
+            },
           ],
         },
         {
@@ -456,17 +467,6 @@ export default defineConfig({
             cs: 'Podpora',
           },
           items: [
-            {
-              label: 'FAQ',
-              translations: {
-                ru: 'Часто задаваемые вопросы',
-                de: 'Häufig gestellte Fragen',
-                pl: 'Najczęściej zadawane pytania',
-                cs: 'Často kladené otázky',
-                sk: 'Najčastejšie kladené otázky',
-              },
-              link: 'support/faq',
-            },
             {
               label: 'Submitting Bugs',
               translations: {
