@@ -472,6 +472,17 @@ export default defineConfig({
           },
           items: [
             {
+              label: 'Donation',
+              translations: {
+                ru: 'Пожертвования',
+                de: 'Spende',
+                pl: 'Darowizna',
+                sk: 'Darcovstvo',
+                cs: 'Dobrovolné příspěvky',
+              },
+              link: 'support/donation',
+            },
+            {
               label: 'Submitting Bugs',
               translations: {
                 ru: 'Отправка сообщений об ошибках',
@@ -571,17 +582,6 @@ export default defineConfig({
                 cs: 'Repozitářní politika',
               },
               link: 'policy/repository_policy',
-            },
-            {
-              label: 'Donation',
-              translations: {
-                ru: 'Пожертвования',
-                de: 'Spende',
-                pl: 'Darowizna',
-                sk: 'Darcovstvo',
-                cs: 'Dobrovolné příspěvky',
-              },
-              link: 'policy/donation',
             },
           ],
         },
