@@ -10,47 +10,223 @@ import ImageComponent from '~/components/image-component.astro';
 import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 :::note
-The following questions & answers apply to CachyOS and Arch Based distributions.
+The following questions & answers apply to CachyOS and Arch Based distributions. **This is not meant to replace the Arch Linux Wiki**
 :::
 
-## Installation
+## Installation & Live Environment
 
-### Why is KDE Plasma the only available option in the live environment?
+### Why is only KDE Plasma available on the CachyOS live ISO?
 
-KDE Plasma can be considered as our "flagship" desktop environment, therefore it gets the most maintenance. The other CachyOS ISOs
-were maintained in a half-assed state, so to avoid any unwanted issues & inconveniences for the user, we decided to deprecate them to
-focus our efforts on delivering the best user experience.
+We've chosen to focus our development and maintenance efforts exclusively on the KDE Plasma desktop environment. This allows us to deliver a more polished, stable, and consistent user experience on our live ISO.
 
-We recommend installing CachyOS in a VM for testing out different desktop environments and window managers, as the live ISO is only
-used for installation and recovering a broken install via [cachy-chroot](https://github.com/CachyOS/cachy-chroot).
+The live environment is primarily intended for installing CachyOS or using cachy-chroot for system recovery. For a safe way to test other desktop environments or window managers, we highly recommend trying them in a virtual machine (VM).
 
-### When i press "Launch Installer" nothing seems to happen...?
+### Why does the installer take a long time to launch after I click "Launch Installer"?
 
 :::caution
 Make sure you have an active/running internet connection, otherwise nothing will happen after you press this button.
 :::
 
-While it might seem like nothing happened, there is a script that gets triggered in the background after pressing the button. This script prepares the installation and is intended to avoid possible issues such as having an outdated keyring.
+The installer is not frozen. It is running a necessary background script to prepare your system for installation. This process ensures your system's keyrings and clock are up-to-date, which helps prevent common installation issues.
 
-Here's a short version on what [the script](https://github.com/CachyOS/CachyOS-Live-ISO/blob/master/archiso/airootfs/usr/local/bin/calamares-online.sh) is doing on the background:
-
+What the [script](https://github.com/CachyOS/CachyOS-Live-ISO/blob/master/archiso/airootfs/usr/local/bin/calamares-online.sh) does in the background:
 <Steps>
-
-1. Removes the existing keyring file found in `/etc/pacman.d/gnupg`.
-2. Starts installing and updating both `Arch Linux & CachyOS keyring packages`.
-3. Initiates and populates pacman keyring.
-4. Enables network time synchronization to ensure the system clock is accurate executing `timedatectl set-ntp true`.
-5. Determines and checks if the system type is either **UEFI or BIOS/MBR** > prompt the user to select a bootloader depending on the type.
-
+  1. Removes old keyring files.
+  2. Installs and updates the latest Arch Linux & CachyOS keyring packages.
+  3. Initializes and populates the pacman keyring.
+  4. Enables network time synchronization.
+  5. Checks your system's boot type (UEFI or BIOS/MBR) to prompt the user to select a bootloader depending on the type.
 </Steps>
 
-**This is why it usually takes a bit of time to load the installer.**
+This is why it can take a bit of time to load the installer.
 
-### My installation process got stuck in 33% for a while now.
+### Why is my installation stuck at 33%?
 
-This means that your internet connection is either very slow or unstable, causing pacman to struggle downloading the packages.
+This happens when the installer is struggling to download packages. It's usually a sign of a very slow or unstable internet connection. Please check your network connection and try again.
 
-## Software management
+## Package Management & Updates
+
+### Common pacman errors
+
+#### Why do I get the "signature is invalid" error?
+
+This error indicates a problem with the cryptographic signature of a package. **It is usually caused by an outdated mirror or a broken keyring on your system.**
+
+While mirrors often fix themselves after a short while, if the issue persists, you should try one of the following two solutions.
+
+<Tabs>
+
+<TabItem label='First Solution: Rate Your Mirrors'>
+
+```sh title='Rate your mirrors'
+sudo cachyos-rate-mirrors
+```
+
+</TabItem>
+
+<TabItem label='Second Solution: Reset Keyrings'>
+
+If rating your mirrors doesn't work, it's likely your system's keyrings are broken.
+
+- Open CachyOS Hello and navigate to **Apps/Tweaks**.
+- Click the Reset keyrings button.
+
+</TabItem>
+
+</Tabs>
+
+#### Why do I get a "404 Not Found" error when trying to install a package?
+
+This error means the package you are trying to install is not available on your current mirror. This usually happens when your local package database is out of sync with the remote repositories.
+
+**Solution:**
+
+Run the following command to refresh your package database and perform a full system upgrade. This will ensure your system knows about the latest available packages.
+
+```sh
+sudo pacman -Syu
+# Then try to install the package you want again.
+```
+
+#### Why do I get the "could not remove" error when cleaning the pacman cache?
+
+This error occurs when the pacman cache contains files that the system cannot automatically manage. This is a common issue that can be easily fixed.
+
+- Solution 1: Use CachyOS Hello.
+  - The simplest way to fix this is with the CachyOS Hello application. Open it and go to **Apps/Tweaks**, then click the **Clear package cache** button.
+
+- Solution 2: Manually remove the cache.
+  - Run the following command to remove all orphaned packages from the cache.
+  ```sh
+  sudo rm -r /var/cache/pacman/pkg/*
+  ```
+
+#### I get a "File is corrupted" or "invalid PGP signature" error. How do I fix it?
+
+```sh
+# Example:
+:: File /var/cache/pacman/pkg/python-charset-normalizer-3.4.0-1-any.pkg.tar.zst
+is corrupted (invalid or corrupted package (PGP signature)).
+```
+
+This error typically indicates a problem with your system's pacman keyrings, which verify the authenticity of packages. The following commands will reset and re-populate the keyrings to resolve the issue.
+
+```sh
+sudo rm -rf /etc/pacman.d/gnupg/ # Force-remove the old keyrings
+sudo pacman-key --init # Initialize the keyring
+sudo pacman-key --populate # Populate the keyring
+
+sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com # Manually import the CachyOS key
+sudo pacman-key --lsign-key F3B607488DB35A47 # Manually sign the key
+
+sudo rm -R /var/lib/pacman/sync # Remove the synced databases to force a fresh download
+```
+
+#### Why do I get the "unable to lock database" error?
+
+This error occurs when another pacman process is already running, which locks the database to prevent corruption. If the previous process crashed or was interrupted, the lock file `db.lck` might not have been removed.
+
+Solution 1: Use CachyOS Hello
+
+The simplest way to fix this is with the **Remove db lock** function in the **Apps/Tweaks** tab of CachyOS Hello
+
+Solution 2: Remove the lock file manually
+
+If you prefer not to use CachyOS Hello, you can remove the lock file manually:
+
+```sh
+sudo rm /var/lib/pacman/db.lck
+```
+
+#### Why are my package downloads so slow or failing?
+
+You might see errors like these:
+
+```text
+# Example errors:
+error: failed retrieving file '...' from ... : Connection timed out
+error: failed retrieving file '...' from ... : Couldn't resolve host name
+error: failed retrieving file '...' from ... : The requested URL returned error: 526
+```
+
+These errors almost always indicate a problem with your current mirrors. They may be slow, temporarily down, or unreachable from your location.
+
+Solution: The best way to fix this is to update your mirror list with faster and more reliable mirrors.
+
+```sh
+sudo cachyos-rate-mirrors
+# Afterwards, you can update your system with:
+sudo pacman -Syu
+```
+
+:::tip
+The `cachyos-rate-mirrors` command tests available CachyOS mirrors based on speed and synchronization status, then updates your mirror list file (`/etc/pacman.d/cachyos-mirrorlist`) with the best-performing ones.
+
+Consider running it periodically, especially if you notice slowdowns during system updates.
+:::
+
+#### What does the `warning: local is newer than...` message mean?
+
+This warning appears when a package version on your system is newer than the version available in the official repositories. This can happen if a mirror is out of date or if a package was downgraded in the repositories or if a package was installed from a different source.
+
+Solution: the `pacman -Syuu` command performs a full system upgrade and allows for downgrades, which will fix the warning by synchronizing your local packages with the repository versions.
+
+```sh title='To remove these warnings, execute the following command:'
+sudo pacman -Syuu
+```
+
+#### What does the "conflicting files" error mean?
+
+This error indicates that pacman is trying to install or update a package that contains files already present on your system from a different source. This is a built-in safety feature to prevent system breakage.
+
+Solution: You can resolve this issue by removing the conflicting files manually. For more information and solutions, please refer to the [Arch Wiki](https://wiki.archlinux.org/title/Pacman#%22Failed_to_commit_transaction_(conflicting_files)%22_error).
+
+```sh title='Example'
+error: failed to commit transaction (conflicting files)
+nvidia-utils: /usr/lib/environment.d/10-gsk.conf exists in filesystem
+Errors occurred, no packages were upgraded.
+ -> error installing repo packages
+```
+
+To fix this specific example, you would remove the conflicting file and then run your update command again.
+
+```sh
+sudo rm /usr/lib/environment.d/10-gsk.conf
+```
+
+### Specific Software Issues
+
+#### Discord asks for an update that isn't available in the repositories.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/discord-update.png')} />
+
+This happens because Discord uses its own update system, which gets ahead of the official repositories. A new version of the app has been released, but it hasn't been packaged for our mirrors yet.
+
+In order to get around this issue, follow [Arch Wiki's fix guide](<https://wiki.archlinux.org/title/Discord#Discord_asks_for_an_update_not_yet_available_in_the_repository>).
+
+## Drivers & Hardware
+
+#### ERROR: module not found: 'nvidia', 'nvidia_modeset', ...
+
+```sh title='Example'
+==> ERROR: module not found: 'nvidia'
+==> ERROR: module not found: 'nvidia_modeset'
+==> ERROR: module not found: 'nvidia_uvm'
+==> ERROR: module not found: 'nvidia_drm'
+```
+
+**Two reasons for this error:**
+
+**1) Since Early Module Loading is always enabled in chwd, mkinitcpio consistently expects the presence of NVIDIA modules; this error arises when those modules are missing.**
+
+**2) You might be missing NVIDIA modules from other installed kernels on your system.**
+
+```sh title='Install the following package to fix this error'
+sudo pacman -S nvidia
+```
+
+## Security & Best Practices
 
 ### AUR Safety Practices
 
@@ -70,9 +246,9 @@ The AUR offers a vast selection, but security is paramount. Here’s a concise g
 
 Stay vigilant to keep your Arch-based system secure!
 
-### GUI Package Managers
+### Are graphical package managers safe to use on CachyOS?
 
-:::caution[A Warning About GUI Package Managers]
+:::caution
 While graphical package managers offer convenience, certain ones are known to cause severe issues on rolling-release systems like CachyOS and should be avoided for managing system packages.
 
 -   **Pamac:** is known to improperly handle certain package management tasks, such as corrupting system package keyrings. This can lead to PGP signature errors that prevent you from updating your system.
@@ -83,172 +259,3 @@ For maximum stability and reliability, we **highly recommend** managing system p
 
 If you prefer a graphical interface, GUI front-ends like **[Octopi](</configuration/post_install_setup/#updating-the-system>)** or the **CachyOS Package Installer** are considered as safe alternatives, as they are more direct wrappers for `pacman`'s functionality.
 :::
-
-### Mirror issues & Common pacman errors
-
-#### ERROR: module not found: 'nvidia', 'nvidia_modeset', 'nvidia_uvm', 'nvidia_drm'
-
-```sh title='Example'
-==> ERROR: module not found: 'nvidia'
-==> ERROR: module not found: 'nvidia_modeset'
-==> ERROR: module not found: 'nvidia_uvm'
-==> ERROR: module not found: 'nvidia_drm'
-```
-
-**Two reasons for this error:**
-
-**1) Since Early Module Loading is always enabled in chwd, mkinitcpio consistently expects the presence of NVIDIA modules; this error arises when those modules are missing.**
-
-**2) You might be missing NVIDIA modules from other installed kernels on your system.**
-
-```sh title='Install the following package to fix this error'
-sudo pacman -S nvidia
-```
-
-#### error: signature from CachyOS admin@cachyos.org is invalid
-
-Sometimes this could happen due to a desynchronization of a mirror and by waiting a bit they tend to fix themselves or simply your system has broken keyrings.
-But if even after waiting you are getting the same error. Try one of the two possible workarounds:
-
-<Tabs>
-
-<TabItem label='First workaround'>
-
-```sh title='Rate your mirrors'
-sudo cachyos-rate-mirrors
-```
-
-</TabItem>
-
-<TabItem label='Second workaround'>
-
-- Open CachyOS Hello and go to **Apps/Tweaks** and click on the **Reset keyrings** button.
-
-</TabItem>
-
-</Tabs>
-
-#### error: failed retrieving file, The requested URL returned error: 404
-
-```sh
-# Example
-sudo pacman -S telegram-desktop
-resolving dependencies...
-looking for conflicting packages...
-
-Packages (4) libdbusmenu-qt5-0.9.3+16.04.20160218-5  qt5-imageformats-5.15.2-1
-             ttf-opensans-1.101-2  telegram-desktop-2.5.1-1
-
-Total Download Size:   24.10 MiB
-Total Installed Size:  67.51 MiB
-
-:: Proceed with installation? [Y/n] Y
-:: Retrieving packages...
-error: failed retrieving file 'telegram-desktop-2.5.1-1-x86_64.pkg.tar.zst'
-from archlinux.mailtunnel.eu : The requested URL returned error: 404
-```
-
-*This means that your local database is outdated, meaning the package you're asking for can't be downloaded.*
-
-```sh title='Run the following command to refresh the package database and do a full upgrade:'
-sudo pacman -Syu
-# Then try to install the package you want again.
-```
-
-#### error: could not remove /var/cache/pacman/pkg/download
-
-:::tip
-You can also clean the pacman cache using CachyOS Hello in **Apps/Tweaks** > **Clear package cache**
-:::
-
-<br />
-<ImageComponent imgsrc={import('~/assets/images/pacman-cache-error.png')} />
-
-*This usually appears when they're some orphans packages left in `/var/cache/pacman/pkg` which pacman can't delete.*
-
-```sh title='Run the following command to fix it'
-# Removes all the orphans stored in pkg cache.
-sudo rm -r /var/cache/pacman/pkg/*
-```
-
-#### File is corrupted (invalid or corrupted package (PGP signature))
-
-```sh
-# Example:
-:: File /var/cache/pacman/pkg/python-charset-normalizer-3.4.0-1-any.pkg.tar.zst
-is corrupted (invalid or corrupted package (PGP signature)).
-```
-
-```sh title='Run the following commands'
-sudo rm -rf /etc/pacman.d/gnupg/
-sudo pacman-key --init
-sudo pacman-key --populate
-
-sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
-sudo pacman-key --lsign-key F3B607488DB35A47
-
-sudo rm -R /var/lib/pacman/sync
-```
-
-#### "unable to lock database" error
-```sh
-sudo rm /var/lib/pacman/db.lck
-```
-:::tip
-You can achieve the same outcome by using **"Remove db lock"** function in `CachyOS Hello` in the **Apps/Tweaks** tab.
-:::
-
-#### Slow package downloads or connection errors
-
-```text
-# Example errors:
-error: failed retrieving file '...' from ... : Connection timed out
-error: failed retrieving file '...' from ... : Couldn't resolve host name
-error: failed retrieving file '...' from ... : The requested URL returned error: 526
-```
-
-These errors typically indicate issues with your current mirrors - they might be slow, unreachable, or having temporary problems.
-
-```sh title='Run the following command to get faster and more reliable mirrors:'
-sudo cachyos-rate-mirrors
-# Afterwards, you can update your system with:
-sudo pacman -Syu
-```
-
-:::tip
-The `cachyos-rate-mirrors` command tests available CachyOS mirrors based on speed and synchronization status, then updates your mirror list file (`/etc/pacman.d/cachyos-mirrorlist`) with the best-performing ones.
-
-Consider running it periodically, especially if you notice slowdowns during system updates.
-:::
-
-#### warning: local is newer than...
-
-<br />
-<ImageComponent imgsrc={import('~/assets/images/update-warnings.png')} />
-
-```sh title='To remove these warnings, execute the following command:'
-sudo pacman -Syuu
-```
-
-#### error: failed to commit transaction (conflicting files): package exists in filesystem
-
-As the error suggests, pacman is trying to update or install a package that contains the same files as those already present in your system. You can resolve this issue by removing the conflicting files manually. For more information, refer to the [Arch Wiki](https://wiki.archlinux.org/title/Pacman#%22Failed_to_commit_transaction_(conflicting_files)%22_error)
-
-```sh title='Example'
-error: failed to commit transaction (conflicting files)
-nvidia-utils: /usr/lib/environment.d/10-gsk.conf exists in filesystem
-Errors occurred, no packages were upgraded.
- -> error installing repo packages
- # In order to fix this case, you can remove the conflicting file by executing the following command:
- sudo rm /usr/lib/environment.d/10-gsk.conf
-```
-
-### When I try to open Discord, a window opens notifying me of an update
-
-<br />
-<ImageComponent imgsrc={import('~/assets/images/discord-update.png')} />
-
-This is because Discord released an update that is not yet available or hasn't been built in any of the pacman mirrors, so you become
-unable to use Discord.
-
-In order to get around this issue, follow [Arch Wiki's fix guide](<https://wiki.archlinux.org/title/Discord#Discord_asks_for_an_update_not_yet_available_in_the_repository>).
