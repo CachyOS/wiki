@@ -131,7 +131,7 @@ export default defineConfig({
             },
             {
               label: 'ISO Changelogs',
-              autogenerate: { directory: 'cachyos_basic/changelogs'}
+              autogenerate: { directory: 'cachyos_basic/changelogs' },
             },
             {
               label: 'FAQ',
@@ -188,17 +188,6 @@ export default defineConfig({
                 cs: 'Souborový systém',
               },
               link: 'installation/filesystem',
-            },
-            {
-              label: 'Screenshots',
-              translations: {
-                ru: 'Скриншоты',
-                de: 'Screenshots',
-                pl: 'Zrzuty ekranu',
-                sk: 'Snímky obrazovky',
-                cs: 'Snímky obrazovky',
-              },
-              link: 'installation/screenshots',
             },
             {
               label: 'Desktop Environments',
