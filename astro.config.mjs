@@ -78,9 +78,11 @@ export default defineConfig({
         },
       ],
       plugins: [
-        lunaria({
-          route: '/localization',
-        }),
+        import.meta.env.PROD
+          ? lunaria({
+              route: '/localization',
+            })
+          : { name: 'noop', hooks: { 'config:setup': () => {} } },
         starlightKbd({
           globalPicker: false,
           types: [{ id: 'linux', label: 'Linux', default: true }],
@@ -201,36 +203,49 @@ export default defineConfig({
               link: 'installation/desktop_environments',
             },
             {
-              label: 'Installation on Root',
+              label: 'Guides',
               translations: {
-                ru: 'Установка на корневой раздел',
-                de: 'Installation auf Root',
-                sk: 'Inštalácia Root',
-                cs: 'Instalace na kořenový oddíl',
+                ru: 'Руководства',
+                de: 'Anleitungen',
+                pl: 'Przewodniki',
+                sk: 'Príručky',
+                cs: 'Průvodce',
               },
-              link: 'installation/installation_on_root',
-            },
-            {
-              label: 'Installation T2 MacBook',
-              translations: {
-                ru: 'Установка на T2 MacBook',
-                de: 'Installation auf T2 MacBook',
-                pl: 'Instalacja na T2 MacBook',
-                sk: 'Inštalácia na T2 MacBook',
-                cs: 'Instalace na MacBook T2',
-              },
-              link: 'installation/installation_t2macbook',
-            },
-            {
-              label: 'Installation Handheld Edition',
-              translations: {
-                ru: 'Установка Handheld Edition',
-                de: 'Installation Handheld Edition',
-                pl: 'Instalacja Handheld Edition',
-                sk: 'Inštalácia Handheld Edition',
-                cs: 'Instalace verze pro přenosné zařízení',
-              },
-              link: 'installation/installation_handheld',
+              items: [
+                {
+                  label: 'General',
+                  translations: {
+                    ru: 'Общие',
+                    de: 'Allgemein',
+                    pl: 'Ogólne',
+                    sk: 'Všeobecné',
+                    cs: 'Obecné',
+                  },
+                  link: 'installation/installation_on_root',
+                },
+                {
+                  label: 'Handheld Edition',
+                  translations: {
+                    ru: 'Ручная версия',
+                    de: 'Handheld Edition',
+                    pl: 'Wersja handheld',
+                    sk: 'Handheld verzia',
+                    cs: 'Handheld verze',
+                  },
+                  link: 'installation/installation_handheld',
+                },
+                {
+                  label: 'T2 MacBook',
+                  translations: {
+                    ru: 'T2 MacBook',
+                    de: 'T2 MacBook',
+                    pl: 'T2 MacBook',
+                    sk: 'T2 MacBook',
+                    cs: 'T2 MacBook',
+                  },
+                  link: 'installation/installation_t2macbook',
+                },
+              ],
             },
           ],
         },
