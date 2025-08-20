@@ -366,10 +366,6 @@ export default defineConfig({
               link: 'configuration/dual_gpu',
             },
             {
-              label: 'Desktop Environments',
-              autogenerate: { directory: 'configuration/desktop_environments' },
-            },
-            {
               label: 'Gaming',
               link: 'configuration/gaming',
               translations: {
@@ -424,37 +420,9 @@ export default defineConfig({
               },
               link: 'configuration/enabling_hardware_acceleration_in_google_chrome',
             },
-          ],
-        },
-        {
-          label: 'Desktop Environments',
-          translations: {
-            ru: 'Окружения рабочего стола',
-            de: 'Desktop-Umgebungen',
-            pl: 'Środowiska graficzne',
-            cs: 'Desktopová prostředí',
-            sk: 'Desktopové prostredia',
-          },
-          items: [
             {
-              label: 'i3',
-              link: 'desktop_environments/i3',
-            },
-            {
-              label: 'Hyprland',
-              link: 'desktop_environments/hyprland',
-            },
-            {
-              label: 'Qtile',
-              link: 'desktop_environments/qtile',
-            },
-            {
-              label: 'KDE Plasma',
-              link: 'desktop_environments/kde',
-            },
-            {
-              label: 'Niri',
-              link: 'desktop_environments/niri',
+              label: 'Desktop Environments',
+              autogenerate: { directory: 'configuration/desktop_environments' },
             },
           ],
         },
