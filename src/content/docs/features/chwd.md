@@ -3,17 +3,17 @@ title: CachyOS Hardware Detection
 description: Hardware Detection and Configuration for CachyOS
 ---
 
-[CachyOS Hardware Detection](https://github.com/CachyOS/chwd/) (better known as **`chwd`**) enables us to power a variety of hardware by installing the necessary
+[CachyOS Hardware Detection](https://github.com/CachyOS/chwd/) (better known as `chwd`) enables us to power a variety of hardware by installing the necessary
 packages and drivers for the running system. This includes systems running NVIDIA's graphics cards, T2 Macbooks, and handheld devices such as the Steam Deck and ROG Ally.
 
 ## Usage
 
-**`chwd`** is typically ran during installation time to provide the necessary packages for the system. However, it is also possible
+`chwd` is typically ran during installation time to provide the necessary packages for the system. However, it is also possible
 to use it post-install.
 
 ### Auto Configuration
 
-**`chwd`** supports installing and configuring necessary drivers and packages so that the system can work at optimal conditions.
+`chwd` supports installing and configuring necessary drivers and packages so that the system can work at optimal conditions.
 
 ```sh
 ❯ sudo chwd -a
@@ -53,7 +53,7 @@ An alternative to the above method is to install each specific profile.
 
 ### Others
 
-Consult the help output of **`chwd`** for command syntax and other usage.
+Consult the help output of `chwd` for command syntax and other usage.
 
 ```sh
 ❯ chwd --help

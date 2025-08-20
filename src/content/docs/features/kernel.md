@@ -39,7 +39,7 @@ is built  with [clang](https://clang.llvm.org/) instead of [GCC](https://gcc.gnu
   - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
 - **linux-cachyos-bmq**
   - Uses the BMQ scheduler from [Project C](https://gitlab.com/alfredchen/projectc/) by Alfred Chen.
-    - **Does not support sched-ext**.
+    - `Does not support sched-ext.`
 - **linux-cachyos-deckify**
   - The default kernel for handhelds. It is **not recommended** and **unsupported** to use any other kernel on handhelds.
   - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
@@ -55,7 +55,7 @@ is built  with [clang](https://clang.llvm.org/) instead of [GCC](https://gcc.gnu
   - Includes [linux-hardened](https://github.com/anthraxx/linux-hardened) patchset.
   - Kernel config based on [linux-hardened config](https://gitlab.archlinux.org/archlinux/packaging/packages/linux-hardened/-/blob/main/config).
     - Contains very aggressive hardening that significantly stifles performance and user experience.
-    - **Does not support sched-ext**.
+    - `Does not support sched-ext.`
 - **linux-cachyos-rc**
   - Based on the latest mainline kernel from [Linus's tree](https://github.com/torvalds/linux/).
   - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.

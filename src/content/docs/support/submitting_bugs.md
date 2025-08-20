@@ -4,10 +4,10 @@ title: Submitting Bugs
 
 # Describe your Issue
 
-- *What is not working?*
-- *Does downgrading package X fix the issue?*
-- *Use the search function for equal issues*
-- *Have you made modifications on your own?*
+- What is not working?
+- Does downgrading package X fix the issue?
+- Use the search function for equal issues
+- Have you made modifications on your own?
   - Example: `Adding an additional flag in a modprobe file`
 
 # Provide Logs
@@ -21,7 +21,7 @@ This tool will collect logs from:
 
 When the logs are collected, the user will be prompted to decide whether to upload them to our paste website.
 
-**Run the following command in the terminal, and post the link with the bugs into the topic:**
+Run the following command in the terminal, and post the link with the bugs into the topic:
 
 ```sh
 sudo cachyos-bugreport.sh
