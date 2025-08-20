@@ -1,6 +1,8 @@
 ---
 title: GUI Installer
 description: Changelogs of Calamares and the GUI Live ISO
+sidebar:
+  order: 1
 ---
 25.07
 ----
