@@ -366,6 +366,10 @@ export default defineConfig({
               link: 'configuration/dual_gpu',
             },
             {
+              label: 'Desktop Environments',
+              autogenerate: { directory: 'configuration/desktop_environments' },
+            },
+            {
               label: 'Gaming',
               link: 'configuration/gaming',
               translations: {
