@@ -121,7 +121,7 @@ This file controls the boot menu's behavior and appearance. Changes made here ta
    If `default_entry` points to a directory (e.g., `/+CachyOS`), autoboot will be disabled. To autoboot an entry within a directory, `default_entry` must point directly to that specific entry number.
   :::
 
-**Example (`/boot/limine.conf`):**
+Example (`/boot/limine.conf`):
 
 ```shell
 # /boot/limine.conf
