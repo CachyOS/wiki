@@ -16,7 +16,7 @@ to use it post-install.
 `chwd` supports installing and configuring necessary drivers and packages so that the system can work at optimal conditions.
 
 ```sh
-❯ sudo chwd -a
+sudo chwd -a
 ```
 
 ### Installing a profile
@@ -24,7 +24,7 @@ to use it post-install.
 An alternative to the above method is to install each specific profile.
 
 ```sh title='List all available profiles'
-❯ chwd --list-all
+chwd --list-all
 ╭─────────────────────────┬─────────╮
 │ Name                    ┆ NonFree │
 ╞═════════════════════════╪═════════╡
@@ -45,7 +45,7 @@ An alternative to the above method is to install each specific profile.
 ```
 
 ```sh title='Installing a chwd profile'
-❯ sudo chwd -i amd
+sudo chwd -i amd
 > Installing amd ...
 
 > Successfully installed amd
@@ -56,7 +56,7 @@ An alternative to the above method is to install each specific profile.
 Consult the help output of `chwd` for command syntax and other usage.
 
 ```sh
-❯ chwd --help
+chwd --help
 Usage: chwd [OPTIONS]
 
 Options:

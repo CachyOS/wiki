@@ -35,7 +35,7 @@ LINUX_OPTIONS="zswap.enabled=0 nowatchdog quiet splash"
 After making changes, regenerate all systemd-boot entries with the following command
 
 ```shell
-❯ sudo sdboot-manage gen
+sudo sdboot-manage gen
 ```
 
 ## rEFInd
@@ -88,7 +88,7 @@ GRUB_CMDLINE_LINUX_DEFAULT='nowatchdog zswap.enabled=0 quiet splash'
 Every time we modify the GRUB configuration file, we need to remake the config with the following command:
 
 ```shell
-❯ sudo grub-mkconfig -o /boot/grub/grub.cfg
+sudo grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
 ## Limine
