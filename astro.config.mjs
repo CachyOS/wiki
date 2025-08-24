@@ -1,5 +1,3 @@
-
-
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
@@ -359,13 +357,13 @@ export default defineConfig({
               link: 'configuration/secure_boot_setup',
             },
             {
-              label: 'Post Install Setup',
+              label: 'Post Install Recommendations',
               translations: {
-                ru: 'Настройка после установки',
-                de: 'Post-Install-Einrichtung',
-                pl: 'Konfiguracja po instalacji',
-                sk: 'Nastavenie po inštalácii',
-                cs: 'Nastavení po instalaci',
+                ru: 'Рекомендации после установки',
+                de: 'Post-Install-Raten',
+                pl: 'Rekomendacje po instalacji',
+                sk: 'Rekomendácie po inštalácii',
+                cs: 'Návrhy po instalaci',
               },
               link: 'configuration/post_install_setup',
             },
