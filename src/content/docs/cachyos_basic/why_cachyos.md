@@ -50,7 +50,7 @@ By default, CachyOS provides its own suite of applications, such as CachyOS Hell
 
 List of applications that CachyOS currently develops and maintains:
 
-- [CachyOS Kernel Manager](https://github.com/CachyOS/kernel-manager): Easily install kernels from the repository or configure your own kernel and include your own patches and even manage the sched-ext framework via the [**scx_loader**](<https://github.com/sched-ext/scx/tree/main/rust/scx_loader>).
+- [CachyOS Kernel Manager](https://github.com/CachyOS/kernel-manager): Easily install kernels from the repository or configure your own kernel and include your own patches and even manage the sched-ext framework via the [**scx_loader**](<https://github.com/sched-ext/scx/tree/main/tools/scx_loader>).
 - [CachyOS Welcome](https://github.com/CachyOS/CachyOS-Welcome): Application for controlling tweaks, applying fixes, installing packages, and providing more information about CachyOS.
 - [CachyOS Package Installer](https://github.com/CachyOS/packageinstaller): GUI for easy installation of applications.
 - [cachyos-rate-mirrors](https://github.com/CachyOS/rate-mirrors): Automatically ranks Arch and CachyOS mirrors for optimal download speeds with pacman.
