@@ -1,9 +1,12 @@
 ---
 title: General System Tweaks
 description: Things you can do to tweak after installing
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
 ---
 
-import { Steps } from '@astrojs/starlight/components';
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 import ImageComponent from '~/components/image-component.astro';
 
 ## AMD Ryzen
@@ -127,7 +130,7 @@ For more information see:
 - https://lore.kernel.org/linux-pm/1a78eeaa-fadd-4734-aaeb-2fe11e96e198@amd.com/T/#m4a0c8917ea8fb033504055bd61512c80c85410c8
 - https://lore.kernel.org/linux-pm/20240624213400.67773-1-mario.limonciello@amd.com/
 
-## Possible Performance Improvements
+## Performance Improvements
 
 ### Disabling Split Lock Mitigate
 
@@ -146,6 +149,70 @@ For more information on split lock, see:
 
 - https://www.phoronix.com/news/Linux-Splitlock-Hurts-Gaming
 - https://github.com/doitsujin/dxvk/issues/2938
+
+### [ADIOS I/O Scheduler](https://github.com/firelzrd/adios)
+
+Created by [firelzrd](https://github.com/firelzrd)
+
+:::note
+CachyOS includes the stable branch of ADIOS in the kernel.
+
+Current stable version: `2.5.4`
+:::
+
+Brief introduction from README:
+
+- *ADIOS (Adaptive Deadline I/O Scheduler) is a block layer I/O scheduler for the Linux kernel, designed for modern multi-queue block devices (blk-mq). It aims to provide low latency for I/O operations by combining deadline scheduling principles with a learning-based adaptive latency control mechanism.*
+  - *Inspired by and builds upon concepts from the mq-deadline and Kyber I/O schedulers. Its core feature is the ability to predict I/O completion latency based on past performance and request characteristics (operation type, size) and use this prediction to dynamically adjust request deadlines and batching behavior.*
+
+TLDR: ADIOS works by learning the latency profile of your storage device and using that knowledge to dynamically set deadlines for I/O requests. It prioritizes requests into four tiers, from critical system operations (Tier 0) to background tasks (Tier 3), to ensure a smooth user experience. While it focuses on responsiveness, its behavior can be fine-tuned via sysfs settings to balance latency and throughput.
+
+For a live demo, you can watch this [video](https://www.youtube.com/watch?v=L9WDcEeHgy4)
+
+#### How to enable ADIOS
+
+<Tabs>
+    <TabItem label='Temporarily (takes effect at runtime)'>
+        This method sets the scheduler for the current session. The change will be lost on reboot.
+        ```sh
+        echo adios | sudo tee /sys/block/<yourdrive>/queue/scheduler
+            # Replace <yourdrive> with the actual drive identifier (e.g. sda, sdb, nvme0n1)
+        ```
+    </TabItem>
+    <TabItem label='Persistent after reboot'>
+        <Steps>
+            1. Open or create a new udev rules file in your preferred text editor (e.g., nano, micro, vim)
+                ```sh title='Example'
+                sudo nano /etc/udev/rules.d/60-ioschedulers.rules
+                ```
+            2. Add the following rules to the file. These rules automatically apply a specific I/O scheduler based on the drive type (HDD, SSD, or NVMe).
+                ```text
+                # HDD
+                ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", \
+                    ATTR{queue/scheduler}="bfq"
+
+                # SSD
+                ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="adios"
+
+                # NVMe SSD
+                ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="adios"
+                ```
+              3.  Save the file and close the editor.
+              4.  Reload the `udev` rules to apply the changes immediately without a reboot.
+                  ```sh
+                  sudo udevadm control --reload-rules
+                  sudo udevadm trigger
+                  ```
+        </Steps>
+    </TabItem>
+</Tabs>
+
+FAQ:
+
+- If it improves responsiveness, why isn't it enabled by default?
+  - ADIOS is still under active development and continuous testing. While it offers significant benefits for desktop responsiveness, it is not yet considered stable enough to be the default for all workloads and hardware types. In some edge cases, bugs could lead to issues like system lockups. For this reason, it is an optional feature for users who wish to test and benefit from its latest improvements.
 
 ## Power Saving Tweaks
 
