@@ -1,3 +1,5 @@
+
+
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
@@ -18,17 +20,38 @@ const locales = {
   }, {}),
 };
 
+const routeMiddleware = ['./src/middleware/ignore-fallback.ts'];
+const plugins = [
+  starlightKbd({
+    globalPicker: false,
+    types: [{ id: 'linux', label: 'Linux', default: true }],
+  }),
+];
+if (import.meta.env.PROD) {
+  routeMiddleware.push('./src/middleware/outdated.ts');
+  plugins.push(
+    lunaria({
+      route: '/localization',
+    })
+  );
+}
+
 const site = 'https://wiki.cachyos.org/';
 
 // https://astro.build/config
 export default defineConfig({
   site,
+  vite: {
+    plugins: [tailwindcss()],
+  },
   integrations: [
     react(),
     starlight({
+      locales,
+      plugins,
+      routeMiddleware,
       lastUpdated: true,
       customCss: ['./src/tailwind.css'],
-      routeMiddleware: ['./src/middleware/outdated.ts', './src/middleware/ignore-fallback.ts'],
       title: 'CachyOS',
       logo: {
         src: '/src/assets/logo.svg',
@@ -77,18 +100,6 @@ export default defineConfig({
           },
         },
       ],
-      plugins: [
-        import.meta.env.PROD
-          ? lunaria({
-              route: '/localization',
-            })
-          : { name: 'noop', hooks: { 'config:setup': () => {} } },
-        starlightKbd({
-          globalPicker: false,
-          types: [{ id: 'linux', label: 'Linux', default: true }],
-        }),
-      ],
-      locales,
       sidebar: [
         {
           label: 'Getting Started',
@@ -568,7 +579,4 @@ export default defineConfig({
       ],
     }),
   ],
-  vite: {
-    plugins: [tailwindcss()],
-  },
 });
