@@ -33,7 +33,7 @@ is built  with [clang](https://clang.llvm.org/) instead of [GCC](https://gcc.gnu
   - The default kernel. This is the recommended kernel if you're unsure which one to use.
   - 1000Hz tickrate for improved responsiveness.
   - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
-  - Built with GCC.
+  - Built with Clang and ThinLTO.
   - Profiled with our own [AutoFDO](https://cachyos.org/blog/2411-kernel-autofdo/) profile for improved performance. [Script](https://github.com/CachyOS/cachyos-benchmarker/blob/master/kernel-autofdo.sh) used to profile the kernel.
 - **linux-cachyos-bore**
   - Uses the [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
@@ -105,7 +105,7 @@ and already [set up](https://github.com/CachyOS/linux-cachyos/blob/master/linux-
 ## Package Naming Convention
 
 ```sh
-linux-cachyos # Base kernel package for the default kernel. Compiled with GCC
+linux-cachyos # Base kernel package for the default kernel. Compiled with Clang and ThinLTO
 linux-cachyos-hardened # Base kernel package for the hardened kernel. Compiled with GCC
 linux-cachyos-hardened-lto # clang-compiled counterpart for linux-cachyos-hardened
 linux-cachyos-hardened-{,lto-}headers
