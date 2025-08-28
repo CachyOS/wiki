@@ -13,11 +13,11 @@ This tutorial describes the basics of utilizing the fstab file located in /etc/ 
 
 ### 1. List the UUIDs of your partitions
 
-In the terminal emulator of your choice (Konsole, Alacritty, Kitty, etc.) run the following:
-
-```sh
+```sh title="Open a terminal and run the following command"
 lsblk -f
+```
 
+```text title="Example output"
 # NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
 # zram0                                                                              [SWAP]
 # nvme0n1
@@ -37,7 +37,9 @@ Often `lsblk -f` will provide all the information you need to mount your disk th
 
 ```sh
 sudo fdisk -l
+```
 
+```text title="Example output"
 # Device              Start        End    Sectors  Size Type
 # /dev/nvme0n1p1       2048     206847     204800  100M EFI System
 # /dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
