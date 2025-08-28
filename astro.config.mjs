@@ -222,13 +222,13 @@ export default defineConfig({
               },
               items: [
                 {
-                  label: 'General',
+                  label: 'Desktop Edition',
                   translations: {
-                    ru: 'Общие',
-                    de: 'Allgemein',
-                    pl: 'Ogólne',
-                    sk: 'Všeobecné',
-                    cs: 'Obecné',
+                    ru: 'Настольная версия',
+                    de: 'Desktop Edition',
+                    pl: 'Wersja desktop',
+                    sk: 'Desktop verzia',
+                    cs: 'Desktop verze',
                   },
                   link: 'installation/installation_on_root',
                 },
