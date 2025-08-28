@@ -61,7 +61,7 @@ The CachyOS kernel also has some other notable features that are subtle yet impr
 
 - Includes a debug variant of the kernel that provides an unstripped kernel binary for debugging purposes. This package is needed to profile the kernel with AutoFDO.
 - [Binder](https://developer.android.com/reference/android/os/Binder), the module needed for [Waydroid](https://waydro.id/) is enabled by default in the kernel config
-and already [set up](https://github.com/CachyOS/linux-cachyos/blob/master/linux-cachyos/config#L10559).
+and already [set up](https://github.com/CachyOS/linux-cachyos/blob/master/linux-cachyos/config#L10784).
 
 ## Variants
 
