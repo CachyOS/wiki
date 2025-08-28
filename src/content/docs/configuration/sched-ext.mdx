@@ -9,8 +9,6 @@ Extensible Scheduler Class (better known as `sched-ext`) is a Linux kernel featu
 BPF (Berkeley Package Filter) and dynamically loading them. Essentially, this allows end-users to change their schedulers in userspace without
 the need to build another kernel just to have a different scheduler.
 
-## Methods for starting and managing schedulers
-
 - *The schedulers can be found in the `scx-scheds` and `scx-scheds-git` package.*
   ```sh
   # Stable branch
@@ -21,7 +19,7 @@ the need to build another kernel just to have a different scheduler.
   sudo pacman -S scx-scheds-git
   ```
 
-### Starting the Scheduler
+## Starting the Scheduler
 
 <Tabs>
 
@@ -138,7 +136,7 @@ The scx schedulers can be accessed and configured using the [scx_loader](/featur
 
 </Tabs>
 
-## Introduction to the main schedulers
+## Available Schedulers and Use Cases
 
 Since there are many schedulers to choose from, we want to give a little introduction about the schedulers in hand.
 
@@ -147,6 +145,12 @@ These schedulers are in constant development while being tested, so expect some 
 :::
 
 Feel free to report any issue or feedback to their scheduler repository.
+
+**Use scx_schedulername --help to see the available flags for each scheduler.**
+- Example:
+  ```sh title='Example of getting help for scx_rusty'
+  scx_rusty --help
+  ```
 
 ### [scx_bpfland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_bpfland>)
 
@@ -162,7 +166,26 @@ Bpfland when making decisions on which cores to use, it takes in consideration t
   - Multimedia/Audio production
   - Great interactivity under intensive workloads
   - Power saving
-  - Server *(Requires [server_mode](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/configuration.md#configuration-structure>) with scx_loader)*
+  - Server
+
+- **Set of flags for some of the use cases by Andrea Righi:**
+
+**Low Latency**
+* **Command-line Flags:** `-s 5000 -S 500 -l 5000 -m performance`
+* **Description:** Meant to lower latency at the cost of throughput. Suitable for soft real-time applications like Audio Processing and Multimedia.
+
+**Gaming**
+* **Command-line Flags:** `-m performance`
+* **Description:** Optimizes performance consistency in games on systems with hybrid cores. Prioritizes P-cores over E-cores on Intel CPUs and CCDs on Ryzen X3D CPUs.
+
+**Power Save**
+* **Command-line Flags:** `-m powersave`
+* **Description:** Prioritizes power efficiency. Favors less performant cores (e.g E-cores on Intel).
+
+**Server**
+* **Command-line Flags:** `-p`
+* **Description:** Prioritize tasks with strict affinity. This option can increase throughput at the cost of latency and it is more suitable for server workloads.
+
 
 ### [scx_rustland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland>)
 
@@ -188,7 +211,25 @@ A scheduler that focuses on ensuring fairness among tasks and performance predic
   - Latency sensitive workloads such as multimedia or real-time audio processing
   - Need for responsiveness under over-stressed situations
   - Consistency in performance
-  - Server *(Requires [server_mode](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/configuration.md#configuration-structure>) with scx_loader)*
+  - Server
+
+- **Set of flags for some of the use cases recommended by Andrea Righi:**
+
+**Low Latency**
+* **Command-line Flags:** `-m performance -w -C 0`
+* **Description:** Meant to lower latency at the cost of throughput. Suitable for soft real-time applications like Audio Processing and Multimedia.
+
+**Gaming**
+* **Command-line Flags:** `-m all`
+* **Description:** Optimizes for high performance in games.
+
+**Power Save**
+* **Command-line Flags:** `-m powersave -I 10000 -t 10000 -s 10000 -S 1000`
+* **Description:** Prioritizes power efficiency. Favor less performant cores (e.g., E-cores on Intel) and introduces a forced idle cycle every 10ms to increase power saving.
+
+**Server**
+* **Command-line Flags:** `-m all -s 20000 -S 1000 -I -1 -D -L`
+* **Description:** Tuned for server workloads. Trades responsiveness for throughput.
 
 ### [scx_cosmos](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cosmos)
 
@@ -200,6 +241,24 @@ When the system is not saturated, the scheduler prioritizes keeping tasks on the
 
 - Use cases:
   - General-purpose scheduler: the scheduler should adapt itself both for server workloads or desktop workloads.
+
+- **Set of flags for some of the use cases recommended by Andrea Righi:**
+
+**Gaming**
+* **Command-line Flags:** `-c 0 -p 0`
+* **Description:** Disable CPU load tracking and always enforce deadline-based scheduling to improve responsiveness.
+
+**Power Save**
+* **Command-line Flags:** `-m powersave -d -p 5000`
+* **Description:** Prioritizes power efficiency. Favor less performant cores (e.g., E-cores on Intel) and disables deferred wakeups, reducing throughput while increasing power efficiency. CPU load polling increased to 5ms.
+
+**Low Latency**
+* **Command-line Flags:** `-m performance -c 0 -p 0 -w`
+* **Description:** Meant to lower latency at the cost of throughput. Suitable for soft real-time applications like Audio Processing and Multimedia. Always enforce deadline-based scheduling and synchronouse wake up optimizations to improve performance predictability.
+
+**Server**
+* **Command-line Flags:** `-a -s 20000`
+* **Description:** Enable address space affinity to improve locality and performance in certain cache-sensitive workloads. Polling increased to 20ms.
 
 ### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>)
 
@@ -221,6 +280,16 @@ overall good throughput and fair use of CPU time among tasks.*
   - Power saving
 
 One of the main and awesome capabilities that LAVD includes is **Core Compaction.** which without going into technical details: When CPU usage < 50%, Currently active cores will run for longer and at a higher frequency. Meanwhile Idle Cores will stay in C-State (Sleep) for a much longer duration achieving less overall power usage.
+
+- **Set of flags for some of the use cases recommended by Changwoo Min:**
+
+**Gaming & Low Latency**
+* **Command-line Flags:** `--performance`
+* **Description:** Maximizes performance by using all available cores, prioritizing physical cores.
+
+**Power save**
+* **Command-line Flags:** `--powersave`
+* **Description:** Minimizes power consumption while maintaining reasonable performance. Prioritizes efficient cores and threads over physical cores.
 
 ### [scx_rusty](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rusty>)
 
@@ -256,6 +325,16 @@ reasonable latency.
   - Desktop environments
   - Gaming (with some manual tuning)
 
+- **Set of flags for some of the use cases recommended by Daniel Hodges:**
+
+**Low Latency**
+* **Command-line Flags:** `-y`
+* **Description:** Lowers latency by making interactive tasks stick more to the CPU they were assigned to.
+
+**Server**
+* **Command-line Flags:** `--keep-running`
+* **Description:** Improves server workloads by allowing tasks to run beyond their slice if the CPU is idle.
+
 ### [scx_tickless](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_tickless>)
 
 **Developed by: Andrea Righi (arighi [Github](<https://github.com/arighi>))**
@@ -272,7 +351,25 @@ The scheduler works by routing all scheduling events through a pool of primary C
   - Cloud computing
   - Virtualization
   - High performance computing workloads
-  - Server *(Requires [server_mode](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/configuration.md#configuration-structure>) with scx_loader)*
+  - Server
+
+- **Set of flags for some of the use cases recommended by Andrea Righi:**
+
+**Gaming**
+* **Command-line Flags:** `-f 5000 -s 5000`
+* **Description:** Boosts gaming performance by increasing how often the scheduler detects CPU contention and triggers context switches with a shorter time slice.
+
+**Power Save**
+* **Command-line Flags:** `-f 50 -p`
+* **Description:** Enhances power efficiency by lowering contention checks and aggressively trying to keep tasks on the same CPU.
+
+**Low Latency**
+* **Command-line Flags:** `-f 5000 -s 1000`
+* **Description:** Similar to the gaming profile but with a further reduced slice.
+
+**Server**
+* **Command-line Flags:** `-f 100`
+* **Description:** Reduced how often the scheduler checks for CPU contention to improve throughput at the cost of responsiveness.
 
 ## General recommendations
 
