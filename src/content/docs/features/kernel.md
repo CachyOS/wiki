@@ -1,27 +1,67 @@
 ---
 title: CachyOS Kernel
 description: Features and changes on the CachyOS kernel
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
 ---
 
 The CachyOS Kernel is a customized kernel which utilizes enhancements, configurations and patches from upstream.
 
 ## Features
 
-- Choose between 3 kernel schedulers and various [sched-ext](/configuration/sched-ext) schedulers for improved responsiveness
-- AMD P-State Improvements
-- Latest BBRv3 by Google
-- le9uo for significantly improved responsiveness during high memory load
-- Up-to-date NTSYNC patchset, used with a compatible build of wine/proton
-- Compatibility with T2 MacOS devices with patches from [t2linux](https://github.com/t2linux/linux-t2-patches/)
-- Allows reading per-core CPU energy usage for AMD users
-- ACS Override and v4l2loopback
-- VHBA module for emulating CD/DVD-ROM devices
-- Latest ZSTD patchset
-- Various other patches that focus on improving performance (optimized compiler flags, cryptographic improvements, memory management tweaks)
+### Performance Optimizations
 
-For a more comprehensive list of the patches that CachyOS offers, please see the the more complete
-[feature list](https://github.com/CachyOS/linux-cachyos/?tab=readme-ov-file#features), [kernel-patches repository](https://github.com/CachyOS/kernel-patches)
-and [CachyOS's Linux Source Tree](https://github.com/CachyOS/linux).
+- **Advanced Compilation**: Highly customizable PKGBUILD with support for both GCC and Clang compilers
+- **Link Time Optimization (LTO)**: Thin LTO enabled by default for better performance
+- **Profile-Guided Optimization**: AutoFDO + Propeller profiling for optimal code generation ([Learn more](https://cachyos.org/blog/2411-kernel-autofdo/))
+- **Kernel Control Flow Integrity (kCFI)**: Available when using LLVM for enhanced security
+- **Timer Frequency Options**: Configurable between 300Hz, 500Hz, 600Hz, 750Hz, and 1000Hz (default: 1000Hz)
+- **Architecture Optimizations**: Support for x86-64-v3, x86-64-v4, and AMD Zen4 specific builds
+- **Compiler Optimizations**: Advanced GCC flags including `-fivopts` and `-fmodulo-sched`
+
+### CPU Enhancements
+
+- **Multiple Schedulers**: BORE, EEVDF, and BMQ schedulers for different workload optimization
+- **AMD P-State Enhancements**: Preferred Core support and latest amd-pstate improvements from linux-next
+- **Real-Time Support**: RT kernel builds available with BORE scheduler integration
+- **CachyOS Sauce**: Custom `CONFIG_CACHY` configuration with scheduler and system tweaks
+- **Low-Latency Optimizations**: Patches for improved responsiveness and reduced jitter
+
+### Filesystem & Memory
+
+- **ZFS Support**: Built-in ZFS filesystem support with pre-compiled modules
+- **NVIDIA Integration**:
+  - Proprietary NVIDIA driver modules with patches
+  - Open-source NVIDIA driver support
+  - Ready-to-use modules in repository
+- **I/O Scheduler Improvements**:
+  - Enhanced BFQ and mq-deadline performance
+  - Alternative [ADIOS](https://github.com/firelzrd/adios) I/O scheduler support
+- **Memory Management**:
+  - [le9uo](https://github.com/firelzrd/le9uo) patch for preventing page thrashing under memory pressure
+  - Zen-kernel memory management tweaks (compaction, watermark optimization)
+
+### Additional Features
+
+#### Hardware Support
+- **Gaming Hardware**: Steam Deck patches (Audio, HW Quirks, HID) and ROG Ally support
+- **Apple Hardware**: T2 MacBook support included by default
+- **ASUS Hardware**: Extended ASUS hardware compatibility patches
+- **Graphics**: HDR support enabled, AMDGPU min_powercap override (`amdgpu_ignore_min_pcap`)
+
+#### System Enhancements
+- **Multimedia**: v4l2loopback modules included by default
+- **Virtualization**: ACS Override support for VFIO/GPU passthrough
+- **Upstream Integration**: Cherry-picked patches from Clear Linux and linux-next
+
+#### Miscellaneous
+
+The CachyOS kernel also has some other notable features that are subtle yet improve the user experience:
+
+- Includes a debug variant of the kernel that provides an unstripped kernel binary for debugging purposes. This package is needed to profile the kernel with AutoFDO.
+- [Binder](https://developer.android.com/reference/android/os/Binder), the module needed for [Waydroid](https://waydro.id/) is enabled by default in the kernel config
+and already [set up](https://github.com/CachyOS/linux-cachyos/blob/master/linux-cachyos/config#L10559).
 
 ## Variants
 
@@ -76,6 +116,19 @@ have the same configuration as the default kernel.
 
 Please open an issue in [linux-cachyos GitHub](https://github.com/CachyOS/linux-cachyos) for suggestions and improvements that can be added to the default kernel.
 
+### Package Naming Convention
+
+```sh
+linux-cachyos # Base kernel package for the default kernel. Compiled with Clang and ThinLTO
+linux-cachyos-hardened # Base kernel package for the hardened kernel. Compiled with GCC
+linux-cachyos-hardened-lto # clang-compiled counterpart for linux-cachyos-hardened
+linux-cachyos-hardened-{,lto-}headers
+linux-cachyos-hardened-{,lto-}nvidia
+linux-cachyos-hardened-{,lto-}nvidia-open
+linux-cachyos-hardened-{,lto-}zfs
+linux-cachyos-hardened-{,lto-}dbg
+```
+
 ## Prebuilt Kernel Modules
 
 To accommodate a larger userbase, CachyOS ships some well-known and highly used kernel modules along with the kernel. This means that users will no longer
@@ -93,27 +146,6 @@ the latest upstream features and fixes to ensure compatibility with the latest k
 CachyOS ships both precompiled versions of the close-sourced and [open-sourced](https://github.com/NVIDIA/open-gpu-kernel-modules/) kernel modules. Due to the development
 of NVIDIA's kernel module being out-of-tree and thus does not follow the kernel's release cadence, the stock configuration can sometimes be incompatible with the latest
 kernel. As a workaround, CachyOS patches the modules with community-created patches or patches shared by NVIDIA directly.
-
-## Other
-
-The CachyOS kernel also has some other notable features that are subtle yet improve the user experience:
-
-- Includes a debug variant of the kernel that provides an unstripped kernel binary for debugging purposes. This package is needed to profile the kernel with AutoFDO.
-- [Binder](https://developer.android.com/reference/android/os/Binder), the module needed for [Waydroid](https://waydro.id/) is enabled by default in the kernel config
-and already [set up](https://github.com/CachyOS/linux-cachyos/blob/master/linux-cachyos/config#L10559).
-
-## Package Naming Convention
-
-```sh
-linux-cachyos # Base kernel package for the default kernel. Compiled with Clang and ThinLTO
-linux-cachyos-hardened # Base kernel package for the hardened kernel. Compiled with GCC
-linux-cachyos-hardened-lto # clang-compiled counterpart for linux-cachyos-hardened
-linux-cachyos-hardened-{,lto-}headers
-linux-cachyos-hardened-{,lto-}nvidia
-linux-cachyos-hardened-{,lto-}nvidia-open
-linux-cachyos-hardened-{,lto-}zfs
-linux-cachyos-hardened-{,lto-}dbg
-```
 
 ## FAQ
 
