@@ -1,6 +1,6 @@
 ---
 title: Official CachyOS Community
-description: Discord, Reddit, X, Forum
+description: Discord, Reddit, X, Forum, Mastodon
 ---
 
 The following Social Media are maintained by the CachyOS Team.
@@ -13,3 +13,4 @@ Feel free to join!
 - [Reddit](<https://www.reddit.com/r/cachyos>)
 - [Forum](<https://discuss.cachyos.org>)
 - [X](<https://x.com/cachyos>) - `Excluded from asking for help.`
+- [Mastodon](<https://fosstodon.org/@CachyOS>) - `Excluded from asking for help.`

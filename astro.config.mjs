@@ -76,6 +76,11 @@ export default defineConfig({
           label: 'Discord',
           href: 'https://discord.gg/cachyos-862292009423470592',
         },
+        {
+          icon: 'mastodon',
+          label: 'Mastodon',
+          href: 'https://fosstodon.org/@CachyOS',
+        },
       ],
       head: [
         {
