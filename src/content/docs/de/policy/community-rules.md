@@ -1,6 +1,6 @@
 ---
 title: Offizielle CachyOS Community Regeln
-description: Discord, Reddit, Twitter, Forum, Telegram
+description: Discord, Reddit, Twitter, Forum
 ---
 
 Verstöße gegen diese Regeln sind nicht erlaubt und führen zum Ausschluss des Kontos:

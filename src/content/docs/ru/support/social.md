@@ -1,6 +1,6 @@
 ---
 title: Официальное сообщество CachyOS
-description: Discord, Reddit, X, форум и Telegram
+description: Discord, Reddit, X, форум
 ---
 
 Следующие социальные сети поддерживаются командой CachyOS.
@@ -13,4 +13,3 @@ description: Discord, Reddit, X, форум и Telegram
 - [Reddit](<https://www.reddit.com/r/cachyos>)
 - [Форум](<https://discuss.cachyos.org>)
 - [X](<https://x.com/cachyos>) - **Здесь помощь не оказывается.**
-- [Telegram](<https://t.me/+oR-kWT47vRdmMDli>)

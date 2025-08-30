@@ -1,6 +1,6 @@
 ---
 title: Oficiální pravidla komunity CachyOS
-description: Discord, Reddit, Twitter, Fórum, Telegram
+description: Discord, Reddit, Twitter, Fórum
 ---
 
 Porušování těchto pravidel není povoleno a bude následovat zablokování účtu:
