@@ -1,6 +1,6 @@
 ---
 title: Oficiálna komunita CachyOS
-description: Discord, Reddit, X, Fórum a Telegram
+description: Discord, Reddit, X, Fórum
 ---
 
 Nasledujúce sociálne siete sú spravované tímom CachyOS.
@@ -13,4 +13,3 @@ Neváhajte sa pridať!
 - [Reddit](<https://www.reddit.com/r/cachyos>)
 - [Fórum](<https://discuss.cachyos.org>)
 - [X](<https://x.com/cachyos>) - **Nevhodné na žiadosti o pomoc.**
-- [Telegram](<https://t.me/+oR-kWT47vRdmMDli>)

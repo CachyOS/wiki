@@ -72,11 +72,6 @@ export default defineConfig({
           href: 'https://twitter.com/cachyos',
         },
         {
-          icon: 'telegram',
-          label: 'Telegram',
-          href: 'https://t.me/+oR-kWT47vRdmMDli',
-        },
-        {
           icon: 'discord',
           label: 'Discord',
           href: 'https://discord.gg/cachyos-862292009423470592',

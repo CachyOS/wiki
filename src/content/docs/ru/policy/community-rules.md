@@ -1,6 +1,6 @@
 ---
 title: Официальные правила сообщества CachyOS
-description: Discord, Reddit, Twitter, Форум, Telegram
+description: Discord, Reddit, Twitter, Форум
 ---
 
 Нарушение данных правил недопустимо и повлечёт за собой блокировку аккаунта:

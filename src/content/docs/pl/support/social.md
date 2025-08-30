@@ -1,6 +1,6 @@
 ---
 title: Oficjalna Społeczność CachyOS
-description: Discord, Reddit, X, Forum i Telegram
+description: Discord, Reddit, X, Forum
 ---
 
 Poniższe media społecznościowe są prowadzone przez zespół CachyOS.
@@ -13,4 +13,3 @@ Zapraszamy do dołączenia!
 - [Reddit](<https://www.reddit.com/r/cachyos>)
 - [Forum](<https://discuss.cachyos.org>)
 - [X](<https://x.com/cachyos>) - **Nie służy do uzyskiwania pomocy.**
-- [Telegram](<https://t.me/+oR-kWT47vRdmMDli>)

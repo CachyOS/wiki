@@ -1,6 +1,6 @@
 ---
 title: Oficjalne Zasady Społeczności CachyOS
-description: Discord, Reddit, Twitter, Forum, Telegram
+description: Discord, Reddit, Twitter, Forum
 ---
 
 Naruszenie poniższych zasad jest zabronione i grozi banem konta:
