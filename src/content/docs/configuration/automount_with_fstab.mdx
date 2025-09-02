@@ -7,9 +7,13 @@ This tutorial describes the basics of utilizing the fstab file located in /etc/ 
 
 ## Prerequisites
 
-- Root access
+- Root or sudo access
 
 ## Adding Entries to /etc/fstab
+
+:::note[NTFS on Linux]
+The NTFS filesystem can be unstable under Linux, whether using the ntfs3 or ntfs-3g driver. Use it at your own risk. For better stability and performance, consider Linux native filesystems like ext4, xfs, or btrfs.
+:::
 
 ### 1. List the UUIDs of your partitions
 
@@ -68,7 +72,7 @@ sudo nano /etc/fstab
 Using the arrow keys, navigate to the bottom of the fstab file, then create our new entry on an empty new line:
 
 ```sh
-UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail 0 0
+UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000 0 0
 ```
 
 The break down of this entry is as follows:
@@ -79,13 +83,27 @@ The break down of this entry is as follows:
 
 - `ntfs3` is the filesystem type to be used. We are explicitly using the ntfs3 kernel driver in our example. Other examples would be `ext4`, `xfs` or similar. This explicit filesystem type declaration can be replaced with `auto` to allow the mount command to make its best guess.
 
-- `defaults,nofail` are the options we want to pass to the mount command for this drive. `nofail` meaning that should this drive fail to mount, it will not cause an error while booting. Booting will continue like normal. `defaults` implies a standard set of logical options. Typically `rw`, `ro`, or similar.
+- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000`: These are mount options:
 
-- `the first 0` dump is typically deprecated in modern systems. Leaving this at 0 won't hurt anything. Feel free to read more about it [here](https://linux.die.net/man/8/dump).
+  - `defaults`: a standard set of options including `rw, suid, dev, exec, auto, nouser, and async.`
 
-- `the second 0` sets the order for file system checks at boot time. For a root partition, this should be 1 unless your root file system is btrfs or xfs, which should otherwise be set to 0. All other file systems in your fstab should be either 0 (disabled) or 2. More information [here](https://man.archlinux.org/man/fsck.8).
+  - `nofail`: allows the boot process to continue even if this mount fails.
 
-Options are explained [here](https://man7.org/linux/man-pages/man5/fstab.5.html) and [here](https://man7.org/linux/man-pages/man8/mount.8.html) in much more detail.
+  - `uid=1000` and `gid=1000`: sets the user and group ownership of the mounted files to the user and group with ID 1000.
+
+  - `rw`: mounts the filesystem as read-write.
+
+  - `user`: allows a non-root user to mount the filesystem.
+
+  - `exec`: allows execution of binaries on the mounted filesystem.
+
+  - `umask=000`: sets the file permission mask to allow read, write, and execute permissions for everyone.
+
+  - `the first 0` dump is typically deprecated in modern systems. Leaving this at 0 won't hurt anything. Feel free to read more about it [here](https://linux.die.net/man/8/dump).
+
+  - `the second 0` sets the order for file system checks at boot time. For a root partition, this should be 1 unless your root file system is btrfs or xfs, which should otherwise be set to 0. All other file systems in your fstab should be either 0 (disabled) or 2. More information [here](https://man.archlinux.org/man/fsck.8).
+
+For a more in depth look of each option, visit these two [fstab man page](https://man7.org/linux/man-pages/man5/fstab.5.html) and [mount man page](https://man7.org/linux/man-pages/man8/mount.8.html)
 
 #### More info
 
@@ -101,12 +119,6 @@ and
 
 are equivalent.  `somefs` followed by nothing is implicitly `somefs defaults 0 0`
 
-#### Important for Windows Partitions
-
-If you are following this guide with a Windows partition your options should be `uid=1000,gid=1000,rw,user,exec,umask=000` replacing uid and gid with your user id and group id. If you do not give user and exec permissions, Windows may lock your drive leaving you unable to modify anything. This may happen regardless of permissions if you do not disable fast boot.
-
-If you do not set `umask=000`, some files may be unwritable depending on default mount permissions.
-
 ### 4. Finishing Up
 
 If you wish to mount the drive you created an entry for now, you need to run the following:
@@ -121,7 +133,7 @@ and then:
 sudo mount -a
 ```
 
-Your drive should now appear under `/media/windows`, and will appear there each time you reboot.
+Your drive should now appear under `/media/windows` and will appear there each time you reboot.
 
 ```sh
 ls /media/windows
@@ -197,9 +209,9 @@ This drive is now mounted, and will now be mounted on boot moving forward as wel
 
 ## Additional reading
 
-- <https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html> - Filesystem Hierarchy Standard
-- <https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html> - FHS on `/media/`
-- <https://linux.die.net/man/8/dump> - manual for `dump`
-- <https://man.archlinux.org/man/fsck.8> - manual for `fsck`
-- <https://man.archlinux.org/man/fstab.5.en> - man page for fstab
-- <https://wiki.archlinux.org/title/Fstab> - Arch Linux wiki for fstab
+- [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS on /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Manual for dump](<https://linux.die.net/man/8/dump>)
+- [Manual for fsck](https://man.archlinux.org/man/fsck.8)
+- [Man page for fstab](https://man.archlinux.org/man/fstab.5.en)
+- [Arch Linux Wiki entry for fstab](https://wiki.archlinux.org/title/Fstab)
