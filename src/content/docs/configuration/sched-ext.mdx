@@ -37,98 +37,6 @@ To stop the scheduler. Press `CTRL + C` and the scheduler will then be stopped a
 
 </TabItem>
 
-<TabItem label='Systemd Service'>
-
-:::note
-This service is going to get deprecated and replaced by the **[scx_loader](https://github.com/sched-ext/scx/tree/main/rust/scx_loader)**
-:::
-
-The scx package includes a systemd service that uses the configuration specified in the `/etc/default/scx` file.
-
-In this configuration file, you can specify the scheduler that the service starts and optionally include custom flags for the desired scheduler.
-
-- If you want to change the scheduler started by the service simply modify the `SCX_SCHEDULER=` line to the scheduler you want to start by default.
-
-  - ```sh title='Example'
-    SCX_SCHEDULER=scx_lavd
-    ```
-
-- Adding flags
-  - Uncomment `SCX_FLAGS` and add the flags you desire.
-    ```sh title='Example'
-    SCX_FLAGS='--performance'
-    ```
-
-*Now you can start/enable/stop the scheduler as if it was any other systemd service.*
-
-Check the brief guide on how to manage it below.
-
-```sh title='Enabling and starting the systemd service'
-sudo systemctl enable --now scx
-```
-
-```sh title='Running the scheduler a single time through the systemd service'
-sudo systemctl start scx
-```
-
-```sh title='Stopping the SCX scheduler using the systemd service'
-sudo systemctl stop scx
-```
-
-*For more information about this service: [Sched-ext systemd service](<https://github.com/sched-ext/scx/blob/main/services/README.md>)*
-
-</TabItem>
-
-<TabItem label='scx_loader'>
-
-*As the name implies, it is a utility that functions as a loader and manager for the sched-ext framework using the D-Bus interface.*
-
-*While it does not require systemd, it can still be utilized in conjunction with it.* [Check the transition guide for reference](/configuration/sched-ext#transitioning-from-scxservice-to-scx_loader-a-comprehensive-guide).
-
-- Has the ability to stop, start, restart, read information about a scx scheduler and more.
-  - *You can use tools like `dbus-send` or `gdbus` to communicate with it.*
-- This guide explains how to use scx_loader with the dbus-send command.
-  - ```sh title='Starting scx_rusty with its default arguments'
-    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartScheduler string:scx_rusty uint32:0
-    ```
-  - ```sh title='Starting a scheduler with arguments'
-    # This example starts scx_bpfland with the following flags: -k -c 0
-    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
-    ```
-  - ```sh title='Stopping the currently running scheduler'
-    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StopScheduler
-    ```
-  - ```sh title='Switching to another scheduler in Mode 2'
-    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchScheduler string:scx_lavd uint32:2
-    # This switches to scx_lavd with the scheduler mode 2 meaning it starts LAVD in powersaving
-    ```
-  - ```sh title='Switching to another scheduler with arguments'
-    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
-    ```
-  - ```sh title='Getting the currently running scheduler'
-    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:CurrentScheduler
-    ```
-  - ```sh title='Getting a list of the supported schedulers'
-    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:SupportedSchedulers
-    ```
-:::tip
-Here is an explanation of what each mode means in scx_loader:
-
-- Mode 0 = `Default scheduler flags`
-- Mode 1 = `Gaming`
-- Mode 2 = `Power Saving`
-- Mode 3 = `Low Latency`
-- Mode 4 = `Server`
-
-Example: LAVD running in Mode 1 is the equivalent of `scx_lavd --performance`
-
-*TLDR: Each mode is a set of different flags meant to improve the intended use case.*
-
-[For a more in depth look on what these Modes change on each scheduler](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/src/config.rs#L174>)
-:::
-
-</TabItem>
-
 <TabItem label='scxctl'>
 
 :::note[Included in the `scx-scheds` and `scx-scheds-git` package]
@@ -187,6 +95,56 @@ Options:
           ```
         </TabItem>
     </Tabs>
+
+</TabItem>
+
+<TabItem label='scx_loader'>
+
+*As the name implies, it is a utility that functions as a loader and manager for the sched-ext framework using the D-Bus interface.*
+
+*While it does not require systemd, it can still be utilized in conjunction with it.* [Check the transition guide for reference](/configuration/sched-ext#transitioning-from-scxservice-to-scx_loader-a-comprehensive-guide).
+
+- Has the ability to stop, start, restart, read information about a scx scheduler and more.
+  - *You can use tools like `dbus-send` or `gdbus` to communicate with it.*
+- This guide explains how to use scx_loader with the dbus-send command.
+  - ```sh title='Starting scx_rusty with its default arguments'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartScheduler string:scx_rusty uint32:0
+    ```
+  - ```sh title='Starting a scheduler with arguments'
+    # This example starts scx_bpfland with the following flags: -k -c 0
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title='Stopping the currently running scheduler'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StopScheduler
+    ```
+  - ```sh title='Switching to another scheduler in Mode 2'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchScheduler string:scx_lavd uint32:2
+    # This switches to scx_lavd with the scheduler mode 2 meaning it starts LAVD in powersaving
+    ```
+  - ```sh title='Switching to another scheduler with arguments'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title='Getting the currently running scheduler'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:CurrentScheduler
+    ```
+  - ```sh title='Getting a list of the supported schedulers'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:SupportedSchedulers
+    ```
+:::tip
+Here is an explanation of what each mode means in scx_loader:
+
+- Mode 0 = `Default scheduler flags`
+- Mode 1 = `Gaming`
+- Mode 2 = `Power Saving`
+- Mode 3 = `Low Latency`
+- Mode 4 = `Server`
+
+Example: LAVD running in Mode 1 is the equivalent of `scx_lavd --performance`
+
+*TLDR: Each mode is a set of different flags meant to improve the intended use case.*
+
+[For a more in depth look on what these Modes change on each scheduler](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/src/config.rs#L174>)
+:::
 
 </TabItem>
 
