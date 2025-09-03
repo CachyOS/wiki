@@ -1,0 +1,287 @@
+---
+title: CachyOS FAQ y Guía de Solución de Problemas
+description: Preguntas frecuentes y consejos
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::note
+Las siguientes preguntas y respuestas se aplican a CachyOS y a distribuciones basadas en Arch. `Esto no pretende reemplazar la información de la Wiki de Arch Linux`
+:::
+
+## Instalación y Entorno Live
+
+### ¿Por qué solo KDE Plasma está disponible en la ISO live de CachyOS?
+
+Hemos decidido enfocar nuestros esfuerzos de desarrollo y mantenimiento exclusivamente en el entorno de escritorio KDE Plasma. Esto nos permite ofrecer una experiencia de usuario más pulida, estable y consistente en nuestra ISO live.
+
+El entorno live está destinado principalmente a instalar CachyOS o a usar cachy-chroot para la recuperación del sistema. Para una forma segura de probar otros entornos de escritorio o gestores de ventanas, recomendamos encarecidamente probarlos en una máquina virtual (VM).
+
+### ¿Por qué el instalador tarda mucho en iniciarse después de hacer clic en "Lanzar Instalador"?
+
+:::caution
+Asegúrate de tener una conexión a internet activa/funcionando, de lo contrario no pasará nada después de presionar este botón.
+:::
+
+El instalador no está congelado. Está ejecutando un script necesario en segundo plano para preparar tu sistema para la instalación. Este proceso asegura que los llaveros de claves y el reloj de tu sistema estén actualizados, lo que ayuda a prevenir problemas comunes de instalación.
+
+[Revisa el script en GitHub](https://github.com/CachyOS/CachyOS-Live-ISO/blob/master/archiso/airootfs/usr/local/bin/calamares-online.sh) para tener una mejor comprensión de lo que hace.
+<Steps>
+  1. Elimina archivos de llaveros de claves antiguos.
+  2. Instala y actualiza los últimos paquetes de llaveros de claves de Arch Linux y CachyOS.
+  3. Inicializa y puebla el llavero de claves de pacman.
+  4. Habilita la sincronización de la hora por red.
+  5. Comprueba el tipo de arranque de tu sistema (UEFI o BIOS/MBR) para pedir al usuario que seleccione un gestor de arranque según el tipo.
+</Steps>
+
+Por eso puede tardar un poco en cargar el instalador.
+
+### ¿Por qué mi instalación se queda atascada en el 33%?
+
+Esto sucede cuando el instalador tiene dificultades para descargar paquetes. Suele ser una señal de una conexión a internet muy lenta o inestable. Por favor, revisa tu conexión de red e inténtalo de nuevo.
+
+## Gestión de Paquetes y Actualizaciones
+
+### Solución de Problemas de Pacman
+
+#### error: signature is invalid
+
+Este error indica un problema con la firma criptográfica de un paquete. Generalmente es causado por un mirror desactualizado o un llavero de claves roto en tu sistema.
+
+Aunque los mirrors suelen solucionarse solos después de un corto tiempo, si el problema persiste, deberías probar una de las dos soluciones siguientes.
+
+<Tabs>
+
+<TabItem label='Primera Solución: Evalúa tus Mirrors'>
+
+```sh title='Evalúa tus mirrors'
+sudo cachyos-rate-mirrors
+```
+
+</TabItem>
+
+<TabItem label='Segunda Solución: Restablece los Llaveros de Claves'>
+
+Si evaluar tus mirrors no funciona, es probable que los llaveros de claves de tu sistema estén rotos.
+
+- Abre CachyOS Hello y navega a **Apps/Ajustes**.
+- Haz clic en el botón Restablecer llaveros de claves.
+
+</TabItem>
+
+</Tabs>
+
+#### error: 404 Not Found
+
+Este error significa que el paquete que intentas instalar no está disponible en tu mirror actual. Esto suele ocurrir cuando tu base de datos de paquetes local no está sincronizada con los repositorios remotos.
+
+**Solución:**
+
+Ejecuta el siguiente comando para refrescar tu base de datos de paquetes y realizar una actualización completa del sistema. Esto asegurará que tu sistema conozca los últimos paquetes disponibles.
+
+```sh
+sudo pacman -Syu
+# Después, intenta instalar de nuevo el paquete que querías.
+```
+
+#### error: could not remove
+
+Este error ocurre cuando la caché de pacman contiene archivos que el sistema no puede gestionar automáticamente. Es un problema común que se puede solucionar fácilmente.
+
+- Solución 1: Usa CachyOS Hello.
+  - La forma más sencilla de solucionarlo es con CachyOS Hello. Ábrelo y ve a **Apps/Ajustes**, luego haz clic en el botón **Limpiar caché de paquetes**.
+
+- Solución 2: Elimina la caché manualmente.
+  - Ejecuta el siguiente comando para eliminar todos los paquetes huérfanos de la caché.
+  ```sh
+  sudo rm -r /var/cache/pacman/pkg/*
+  ```
+
+#### error: File is corrupted (invalid or corrupted package (PGP signature))
+
+```sh
+# Ejemplo:
+:: File /var/cache/pacman/pkg/python-charset-normalizer-3.4.0-1-any.pkg.tar.zst
+is corrupted (invalid or corrupted package (PGP signature)).
+```
+
+Este error típicamente indica un problema con los llaveros de claves de pacman de tu sistema, los cuales verifican la autenticidad de los paquetes. Los siguientes comandos restablecerán y volverán a poblar los llaveros de claves para resolver el problema.
+
+```sh
+sudo rm -rf /etc/pacman.d/gnupg/ # Elimina forzadamente los llaveros de claves antiguos
+sudo pacman-key --init # Inicializa el llavero de claves
+sudo pacman-key --populate # Puebla el llavero de claves
+
+sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com # Importa manualmente la clave de CachyOS
+sudo pacman-key --lsign-key F3B607488DB35A47 # Firma manualmente la clave
+
+sudo rm -R /var/lib/pacman/sync # Elimina las bases de datos sincronizadas para forzar una nueva descarga
+```
+
+#### error: unable to lock database
+
+Este error ocurre cuando otro proceso de pacman ya está en ejecución, lo que bloquea la base de datos para prevenir corrupción. Si el proceso anterior se colgó o fue interrumpido, es posible que el archivo de bloqueo `db.lck` no se haya eliminado.
+
+- Solución 1: Usa CachyOS Hello
+  - La forma más sencilla de solucionarlo es con la función **Eliminar bloqueo de bd** en la pestaña **Apps/Ajustes** de CachyOS Hello.
+
+- Solución 2: Elimina el archivo de bloqueo manualmente
+  - Si prefieres no usar CachyOS Hello, puedes eliminar el archivo de bloqueo manualmente:
+
+```sh
+sudo rm /var/lib/pacman/db.lck
+```
+
+#### error: failed retrieving file ... Connection timed out
+
+Podrías ver errores como estos:
+
+```text
+# Ejemplos de errores:
+error: failed retrieving file '...' from ... : Connection timed out
+error: failed retrieving file '...' from ... : Couldn't resolve host name
+error: failed retrieving file '...' from ... : The requested URL returned error: 526
+```
+
+Estos errores casi siempre indican un problema con tus mirrors actuales. Pueden estar lentos, temporalmente caídos o inaccesibles desde tu ubicación.
+
+- Solución: La mejor manera de solucionar esto es actualizar tu lista de mirrors con unos más rápidos y fiables.
+
+```sh
+sudo cachyos-rate-mirrors
+# Después, puedes actualizar tu sistema con:
+sudo pacman -Syu
+```
+
+:::tip
+El comando `cachyos-rate-mirrors` prueba los mirrors de CachyOS disponibles basándose en la velocidad y el estado de sincronización, y luego actualiza tu archivo de lista de mirrors (`/etc/pacman.d/cachyos-mirrorlist`) con los de mejor rendimiento.
+
+Considera ejecutarlo periódicamente, especialmente si notas lentitud durante las actualizaciones del sistema.
+:::
+
+#### warning: local is newer than...
+
+Esta advertencia aparece cuando la versión de un paquete en tu sistema es más nueva que la versión disponible en los repositorios oficiales. Esto puede suceder si un mirror está desactualizado, si un paquete fue degradado en los repositorios o si un paquete fue instalado desde una fuente diferente.
+
+- Solución: el comando `pacman -Syuu` realiza una actualización completa del sistema y permite degradaciones (downgrades), lo que solucionará la advertencia al sincronizar tus paquetes locales con las versiones del repositorio.
+
+```sh title='Para eliminar estas advertencias, ejecuta el siguiente comando:'
+sudo pacman -Syuu
+```
+
+#### error: failed to commit transaction (conflicting files)
+
+Este error indica que pacman está intentando instalar o actualizar un paquete que contiene archivos que ya existen en tu sistema desde una fuente diferente. Esta es una medida de seguridad integrada para evitar que el sistema se rompa.
+
+- Solución: Puedes resolver este problema eliminando manualmente los archivos en conflicto. Para más información y soluciones, por favor consulta la [Arch Wiki](https://wiki.archlinux.org/title/Pacman#%22Failed_to_commit_transaction_(conflicting_files)%22_error).
+
+```sh title='Ejemplo'
+error: failed to commit transaction (conflicting files)
+nvidia-utils: /usr/lib/environment.d/10-gsk.conf exists in filesystem
+Errors occurred, no packages were upgraded.
+ -> error installing repo packages
+```
+
+Para solucionar este ejemplo específico, eliminarías el archivo en conflicto y luego ejecutarías tu comando de actualización nuevamente.
+
+```sh
+sudo rm /usr/lib/environment.d/10-gsk.conf
+```
+
+#### ERROR: module not found: 'nvidia', 'nvidia_modeset', ...
+
+```sh title='Ejemplo'
+==> ERROR: module not found: 'nvidia'
+==> ERROR: module not found: 'nvidia_modeset'
+==> ERROR: module not found: 'nvidia_uvm'
+==> ERROR: module not found: 'nvidia_drm'
+```
+
+**Dos razones para este error:**
+
+1) Dado que la Carga Temprana de Módulos (Early Module Loading) siempre está habilitada en chwd, mkinitcpio espera consistentemente la presencia de los módulos de NVIDIA; este error surge cuando esos módulos faltan.
+
+2) Es posible que te falten módulos de NVIDIA de otros kernels instalados en tu sistema.
+
+```sh title='Instala el siguiente paquete para corregir este error'
+sudo pacman -S nvidia
+```
+
+### Problemas con Software Específico
+
+#### Discord pide una actualización que no está disponible en los repositorios.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/discord-update.png')} />
+
+Esto sucede porque Discord utiliza su propio sistema de actualización, que se adelanta a los repositorios oficiales. Se ha lanzado una nueva versión de la aplicación, pero aún no ha sido empaquetada para nuestros mirrors.
+
+Para solucionar este problema, sigue [la guía de la Arch Wiki para solucionarlo](<https://wiki.archlinux.org/title/Discord#Discord_asks_for_an_update_not_yet_available_in_the_repository>).
+
+### Preguntas Generales
+
+#### ¿Con qué frecuencia se actualizan los paquetes -git?
+
+Generalmente una vez los lunes, aunque puede haber excepciones.
+
+#### ¿Por qué hay dos paquetes de wine idénticos en algunos repositorios?
+
+- `cachyos-v3/v4/wine` = Wine con el conjunto de parches NTSync
+- `cachyos-extra-v3/v4/znver4/wine` = Wine Vanilla **recompilado por CachyOS**
+
+Cuando Wine incorpore el conjunto de parches NTSync, eliminaremos el paquete `cachyos-v3/v4/wine`. El paquete `cachyos-extra-v3/v4/znver4/wine` seguirá estando disponible.
+
+#### Cómo deshabilitar la animación de carga de arranque (Plymouth)
+
+:::note[Esto podría resolver un problema de pantalla negra en algunos sistemas, por ejemplo, con GPUs NVIDIA antiguas]
+:::
+
+Para deshabilitar la animación de carga de arranque, necesitas editar la [configuración de tu gestor de arranque](/es/configuration/boot_manager_configuration) y añadir los siguientes parámetros del kernel:
+
+```sh
+plymouth.enable=0 disablehooks=plymouth
+```
+
+:::note[systemd-boot, GRUB y Limine requieren regenerar las imágenes del initramfs]
+systemd-boot: `sudo sdboot-manage gen`
+
+GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+
+Limine: `sudo limine-mkinitcpio`
+:::
+
+## Seguridad y Buenas Prácticas
+
+### Prácticas de Seguridad en el AUR
+
+El AUR ofrece una vasta selección, pero la seguridad es primordial. Aquí tienes una guía concisa para un uso seguro del AUR en tu sistema CachyOS.
+
+* **1. Entiende el PKGBUILD:** Es el script de compilación. Conoce su estructura, variables (`source`, `pkgname`) y funciones (`build()`, `package()`).
+* **2. Verifica los Enlaces de Origen:** Comprueba siempre que las URLs de `source` apunten a los sitios oficiales del proyecto o a repositorios de confianza. Evita enlaces sospechosos o personales.
+* **3. Revisa los Pasos de Instalación:** Inspecciona dónde se instalan los archivos (función `package()`) y si algún comando es inusual o afecta áreas sensibles del sistema. Revisa también los scripts `.install`.
+* **4. Investiga al Mantenedor:** Indaga el historial del mantenedor en el AUR en busca de problemas de seguridad pasados o actividad sospechosa.
+* **5. Verifica las Sumas de Verificación y PGP:** ¡Absolutamente crucial! Confirma que todas las sumas de verificación (SHA256, BLAKE2b, etc.) coincidan con las del proyecto original. Usa firmas PGP (`validpgpkeys`) para verificar la autenticidad cuando estén disponibles.
+* **6. Ten Cuidado con los Paquetes `-bin`:** Estos usan binarios precompilados, lo que significa que no puedes inspeccionar el código fuente. Aplica el máximo escrutinio a sus orígenes e integridad.
+* **7. Lee los Comentarios de la Comunidad:** Revisa los comentarios en la página del AUR en busca de advertencias, problemas o ideas de otros usuarios.
+* **8. Nunca Omitas las Verificaciones de Integridad:** Usar `--skipinteg` o banderas similares omite todas las verificaciones de seguridad. No lo hagas.
+* **9. Controla tu Ayudante de AUR:** Entiende cómo funciona tu ayudante (yay, paru). Asegúrate de que te muestre el PKGBUILD y sus diferencias, o compila manualmente con `makepkg`.
+* **10. Evalúa la Necesidad:** Antes de instalar, pregúntate si realmente necesitas este paquete del AUR, o si existe una alternativa en los repositorios oficiales.
+* **11. Mantén tu Sistema Actualizado:** Ejecuta regularmente `sudo pacman -Syu` para asegurarte de que todos los componentes de tu sistema, incluyendo `pacman` y `makepkg`, tengan los últimos parches de seguridad.
+
+¡Mantente alerta para mantener seguro tu sistema basado en Arch!
+
+### Elegir un Gestor de Paquetes Gráfico
+
+Aunque los gestores de paquetes gráficos ofrecen comodidad, se sabe que algunos causan problemas graves en sistemas de lanzamiento continuo (rolling-release) como CachyOS y deben evitarse para gestionar los paquetes del sistema.
+
+-   **Pamac:** es conocido por manejar incorrectamente ciertas tareas de gestión de paquetes, como corromper los llaveros de claves de los paquetes del sistema. Esto puede provocar errores de firma PGP que te impidan actualizar tu sistema.
+
+-   **Discover (KDE) y GNOME Software Center:** Estas tiendas de aplicaciones utilizan el backend PackageKit. Aunque generalmente son seguras para gestionar Flatpaks, usarlas para instalar o actualizar **paquetes del sistema** es arriesgado. Los gestores basados en PackageKit también pueden ser inestables o propensos a fallar, lo que podría dejar tu sistema en un estado roto después de una transacción fallida.
+
+Para una máxima estabilidad y fiabilidad, **recomendamos encarecidamente** gestionar los paquetes del sistema a través de la línea de comandos con `pacman`.
+
+Si prefieres una interfaz gráfica, los front-ends gráficos como **[Octopi](</es/configuration/post_install_setup/#updating-the-system>)** o el **Instalador de Paquetes de CachyOS** se consideran alternativas seguras, ya que son envoltorios más directos de la funcionalidad de pacman.
