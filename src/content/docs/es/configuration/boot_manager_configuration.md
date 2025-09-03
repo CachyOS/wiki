@@ -8,7 +8,7 @@ description: Configure los ajustes del gestor de arranque y pase parámetros del
 systemd-boot tiene dos tipos de archivos de configuración: uno para systemd-boot en `/boot/loader/loader.conf`, y otro para cada
 entrada de kernel individual en `/boot/loader/entry`.
 
-### Configuración del cargador
+### Configuración del Gestor de Arranque
 
 En este archivo de configuración, puede cambiar la entrada predeterminada y el tiempo de espera de systemd-boot.
 
