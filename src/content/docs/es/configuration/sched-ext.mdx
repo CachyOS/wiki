@@ -1,0 +1,578 @@
+---
+title: Tutorial de sched-ext
+description: Tutorial sobre cómo usar el framework e información variada
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Icon } from '@astrojs/starlight/components';
+
+Extensible Scheduler Class (mejor conocido como `sched-ext`) es una característica del kernel de Linux que permite implementar planificadores de hilos del kernel en
+BPF (Berkeley Packet Filter) y cargarlos dinámicamente. Esencialmente, esto permite a los usuarios finales cambiar sus planificadores en el espacio de usuario sin
+la necesidad de compilar otro kernel solo para tener un planificador diferente.
+
+- *Los planificadores se pueden encontrar en los paquetes `scx-scheds` y `scx-scheds-git`.*
+  ```sh
+  # Rama estable
+  sudo pacman -S scx-scheds
+
+  # Rama de vanguardia (Esta rama incluye los últimos cambios
+  # y puede contener un planificador que aún no ha sido lanzado.)
+  sudo pacman -S scx-scheds-git
+  ```
+
+## Cómo Iniciar y Gestionar el Planificador
+
+<Tabs>
+
+<TabItem label='Terminal'>
+
+- *Para iniciar el planificador, abre tu terminal e introduce el siguiente comando:*
+  ```sh title='Ejemplo de inicio de rusty'
+  sudo scx_rusty
+  ```
+
+*Esto iniciará el planificador rusty y desactivará el planificador por defecto.*
+
+Para detener el planificador. Presiona `CTRL + C` y el planificador se detendrá, y el planificador por defecto del kernel tomará el control nuevamente.
+
+</TabItem>
+
+<TabItem label='scxctl'>
+
+:::note[Incluido en los paquetes `scx-scheds` y `scx-scheds-git`]
+:::
+
+`scxctl` es un cliente DBUS de línea de comandos para interactuar con `scx_loader`.
+
+- Características:
+  - Obtener el planificador y el modo actual
+  - Listar todos los planificadores disponibles
+  - Iniciar un planificador en un modo dado, o con argumentos dados
+  - Cambiar entre planificadores y modos
+  - Detener el planificador en ejecución
+  - Reiniciar el planificador en ejecución
+
+```sh
+$ scxctl --help
+Usage: scxctl <COMMAND>
+
+Commands:
+  get     Obtiene el planificador y modo actual
+  list    Lista todos los planificadores soportados
+  start   Inicia un planificador en un modo o con argumentos
+  switch  Cambia de planificador o modo, opcionalmente con argumentos
+  stop    Detiene el planificador actual
+  restart Reinicia el planificador actual con la configuración original
+  help    Imprime este mensaje o la ayuda del subcomando(s) dado(s)
+
+Options:
+  -h, --help     Imprimir ayuda
+  -V, --version  Imprimir versión
+```
+
+    <Tabs>
+        <TabItem label='Iniciando un planificador'>
+          ```sh title='Iniciando scx_flash en modo Gaming'
+          scxctl start --sched flash --mode gaming
+          ```
+        </TabItem>
+        <TabItem label='Deteniendo un planificador'>
+          ```sh title='Deteniendo el planificador actualmente en ejecución'
+          scxctl stop
+          ```
+        </TabItem>
+        <TabItem label='Cambiando de planificador'>
+          ```sh title='Cambiando a scx_bpfland en modo Gaming'
+          scxctl switch --sched bpfland --mode gaming
+          ```
+        </TabItem>
+        <TabItem label='Iniciando y Cambiando con argumentos personalizados'>
+          ```sh title='Iniciando scx_rustland con argumentos personalizados'
+          scxctl start --sched rustland --args="-m performance -w"
+          ```
+          ```sh title='Cambiando a scx_lavd con argumentos personalizados'
+          scxctl switch --sched lavd --args="--performance"
+          ```
+        </TabItem>
+    </Tabs>
+
+</TabItem>
+
+<TabItem label='scx_loader'>
+
+*Como su nombre indica, es una utilidad que funciona como cargador y gestor para el framework sched-ext usando la interfaz D-Bus.*
+
+*Aunque no requiere systemd, aún puede ser utilizado en conjunto con él.* [Consulta la guía de transición como referencia](/es/configuration/sched-ext#transición-de-scxservice-a-scx_loader-una-guía-completa).
+
+- Tiene la capacidad de detener, iniciar, reiniciar, leer información sobre un planificador scx y más.
+  - *Puedes usar herramientas como `dbus-send` o `gdbus` para comunicarte con él.*
+- Esta guía explica cómo usar scx_loader con el comando dbus-send.
+  - ```sh title='Iniciando scx_rusty con sus argumentos por defecto'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartScheduler string:scx_rusty uint32:0
+    ```
+  - ```sh title='Iniciando un planificador con argumentos'
+    # Este ejemplo inicia scx_bpfland con las siguientes opciones: -k -c 0
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title='Deteniendo el planificador actualmente en ejecución'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StopScheduler
+    ```
+  - ```sh title='Cambiando a otro planificador en Modo 2'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchScheduler string:scx_lavd uint32:2
+    # Esto cambia a scx_lavd con el modo de planificador 2, lo que significa que inicia LAVD en modo de ahorro de energía
+    ```
+  - ```sh title='Cambiando a otro planificador con argumentos'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title='Obteniendo el planificador actualmente en ejecución'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:CurrentScheduler
+    ```
+  - ```sh title='Obteniendo una lista de los planificadores soportados'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:SupportedSchedulers
+    ```
+:::tip
+Aquí hay una explicación de lo que significa cada modo en scx_loader:
+
+- Modo 0 = `Opciones por defecto del planificador`
+- Modo 1 = `Gaming`
+- Modo 2 = `Ahorro de energía`
+- Modo 3 = `Baja latencia`
+- Modo 4 = `Servidor`
+
+Ejemplo: LAVD ejecutándose en Modo 1 es el equivalente de `scx_lavd --performance`
+
+*En resumen: cada modo es un conjunto de diferentes opciones destinadas a mejorar el caso de uso previsto.*
+
+[Para una visión más detallada de lo que estos Modos cambian en cada planificador](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/src/config.rs#L174>)
+:::
+
+</TabItem>
+
+<TabItem label='CachyOS Kernel Manager'>
+
+Los planificadores scx pueden ser accedidos y configurados usando el [scx_loader](/es/features/kernel_manager#gestión-del-framework-sched-ext).
+
+</TabItem>
+
+</Tabs>
+
+## Planificadores Disponibles y Casos de Uso
+
+Dado que hay muchos planificadores para elegir, queremos dar una pequeña introducción sobre los planificadores disponibles.
+
+:::note
+Estos planificadores están en constante desarrollo mientras se prueban, así que espera que algunas de sus características/opciones estén sujetas a cambios.
+:::
+
+Siéntete libre de reportar cualquier problema o comentario en el repositorio de su planificador.
+
+**Usa scx_nombreplanificador --help para ver las opciones disponibles para cada planificador.**
+- Ejemplo:
+  ```sh title='Ejemplo de cómo obtener ayuda para scx_rusty'
+  scx_rusty --help
+  ```
+
+### [scx_bpfland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_bpfland>)
+
+**Desarrollado por: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+¿Listo para producción? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Un planificador de sched_ext basado en vruntime que prioriza las cargas de trabajo interactivas. Altamente flexible y fácil de adaptar.
+
+Cuando Bpfland toma decisiones sobre qué núcleos usar, tiene en cuenta la disposición de su caché y qué núcleos comparten la misma caché L2/L3, lo que lleva a menos fallos de caché = más rendimiento.
+
+- Casos de uso:
+  - Videojuegos
+  - Uso de escritorio
+  - Producción multimedia/audio
+  - Gran interactividad bajo cargas de trabajo intensivas
+  - Ahorro de energía
+  - Servidor
+
+- **Conjunto de opciones para algunos de los casos de uso por Andrea Righi:**
+
+**Baja Latencia**
+* **Opciones de línea de comandos:** `-s 5000 -S 500 -l 5000 -m performance`
+* **Descripción:** Destinado a reducir la latencia a costa del rendimiento. Adecuado para aplicaciones de tiempo real blando como el procesamiento de audio y multimedia.
+
+**Videojuegos**
+* **Opciones de línea de comandos:** `-m performance`
+* **Descripción:** Optimiza la consistencia del rendimiento en juegos en sistemas con núcleos híbridos. Prioriza los P-cores sobre los E-cores en las CPUs de Intel y los CCDs en las CPUs Ryzen X3D.
+
+**Ahorro de Energía**
+* **Opciones de línea de comandos:** `-m powersave`
+* **Descripción:** Prioriza la eficiencia energética. Favorece los núcleos menos potentes (por ejemplo, los E-cores en Intel).
+
+**Servidor**
+* **Opciones de línea de comandos:** `-p`
+* **Descripción:** Prioriza tareas con afinidad estricta. Esta opción puede aumentar el rendimiento a costa de la latencia y es más adecuada para cargas de trabajo de servidor.
+
+
+### [scx_rustland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland>)
+
+**Desarrollado por: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+- ¿Listo para producción? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+
+  - Para escenarios de producción críticos en cuanto a rendimiento, es probable que otros planificadores muestren un mejor rendimiento, ya que descargar todas las decisiones de planificación al espacio de usuario tiene un cierto costo (aunque sea mínimo).
+
+  - Sin embargo, un planificador implementado completamente en el espacio de usuario tiene el potencial de una integración perfecta con bibliotecas sofisticadas, herramientas de seguimiento, servicios externos (por ejemplo, IA), etc.
+
+  - Por lo tanto, puede haber situaciones en las que los beneficios superen la sobrecarga, justificando el uso de este planificador en un entorno de producción.
+
+Comparte similitudes con bpfland, hecho con la intención de ser fácil de leer y entender cómo funciona debido a su implementación en el espacio de usuario.
+
+Ten en cuenta que hay una ligera desventaja de rendimiento al usar un planificador de espacio de usuario. Aunque rustland tiene la posibilidad de una integración perfecta con bibliotecas sofisticadas, herramientas de seguimiento, servicios externos (por ejemplo, IA), etc.
+
+- Casos de uso:
+  - Cargas de trabajo de baja latencia (videojuegos, videoconferencias y transmisiones en vivo)
+  - Uso de escritorio
+
+
+### [scx_flash](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_flash>)
+
+**Desarrollado por: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+- ¿Listo para producción? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Un planificador que se centra en garantizar la equidad entre tareas y la previsibilidad del rendimiento.
+
+- Casos de uso:
+  - Videojuegos
+  - Cargas de trabajo sensibles a la latencia como multimedia o procesamiento de audio en tiempo real
+  - Necesidad de capacidad de respuesta en situaciones de sobrecarga
+  - Consistencia en el rendimiento
+  - Servidor
+
+- **Conjunto de opciones para algunos de los casos de uso recomendados por Andrea Righi:**
+
+**Baja Latencia**
+* **Opciones de línea de comandos:** `-m performance -w -C 0`
+* **Descripción:** Destinado a reducir la latencia a costa del rendimiento. Adecuado para aplicaciones de tiempo real blando como el procesamiento de audio y multimedia.
+
+**Videojuegos**
+* **Opciones de línea de comandos:** `-m all`
+* **Descripción:** Optimiza para un alto rendimiento en juegos.
+
+**Ahorro de Energía**
+* **Opciones de línea de comandos:** `-m powersave -I 10000 -t 10000 -s 10000 -S 1000`
+* **Descripción:** Prioriza la eficiencia energética. Favorece los núcleos menos potentes (por ejemplo, E-cores en Intel) e introduce un ciclo de inactividad forzado cada 10 ms para aumentar el ahorro de energía.
+
+**Servidor**
+* **Opciones de línea de comandos:** `-m all -s 20000 -S 1000 -I -1 -D -L`
+* **Descripción:** Ajustado para cargas de trabajo de servidor. Cambia capacidad de respuesta por rendimiento.
+
+### [scx_cosmos](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cosmos)
+
+**Desarrollado por: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+- ¿Listo para producción? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Planificador ligero optimizado para preservar la localidad de la tarea en la CPU.
+
+Cuando el sistema no está saturado, el planificador prioriza mantener las tareas en la misma CPU utilizando DSQs locales. Esto no solo mantiene la localidad, sino que también reduce la contención de bloqueos en comparación con las DSQs compartidas, permitiendo una buena escalabilidad en muchas CPUs.
+
+- Casos de uso:
+  - Planificador de propósito general: el planificador debería adaptarse tanto a cargas de trabajo de servidor como a cargas de trabajo de escritorio.
+
+- **Conjunto de flags para algunos de los casos de uso recomendados por Andrea Righi:**
+
+**Gaming**
+* **Flags de línea de comandos:** `-c 0 -p 0`
+* **Descripción:** Desactiva el seguimiento de la carga de la CPU y siempre impone la planificación basada en plazos para mejorar la capacidad de respuesta.
+
+**Ahorro de energía**
+* **Flags de línea de comandos:** `-m powersave -d -p 5000`
+* **Descripción:** Prioriza la eficiencia energética. Favorece los núcleos menos potentes (por ejemplo, los E-cores en Intel) y desactiva los despertares diferidos, reduciendo el rendimiento pero aumentando la eficiencia energética. El sondeo de la carga de la CPU se incrementa a 5ms.
+
+**Baja latencia**
+* **Flags de línea de comandos:** `-m performance -c 0 -p 0 -w`
+* **Descripción:** Diseñado para reducir la latencia a costa del rendimiento. Adecuado para aplicaciones de tiempo real suave como el procesamiento de audio y multimedia. Siempre impone la planificación basada en plazos y las optimizaciones de despertador síncrono para mejorar la previsibilidad del rendimiento.
+
+**Servidor**
+* **Flags de línea de comandos:** `-a -s 20000`
+* **Descripción:** Habilita la afinidad del espacio de direcciones para mejorar la localidad y el rendimiento en ciertas cargas de trabajo sensibles a la caché. El sondeo se incrementa a 20ms.
+
+### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>)
+
+**Desarrollado por: Changwoo Min (multics69 [GitHub](<https://github.com/multics69>)).**
+
+- ¿Listo para producción? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Breve introducción a LAVD de Changwoo:
+
+*LAVD es un nuevo algoritmo de planificación que todavía está en desarrollo. Está
+motivado por las cargas de trabajo de los videojuegos, que son críticas en cuanto a latencia y
+con mucha comunicación. Su objetivo es minimizar los picos de latencia manteniendo
+un buen rendimiento general y un uso justo del tiempo de CPU entre las tareas.*
+
+- Casos de uso:
+  - Gaming
+  - Producción de audio
+  - Cargas de trabajo sensibles a la latencia
+  - Uso de escritorio
+  - Gran interactividad bajo cargas de trabajo intensivas
+  - Ahorro de energía
+
+Una de las principales e impresionantes capacidades que incluye LAVD es la **Compactación de Núcleos (Core Compaction)**, que sin entrar en detalles técnicos: Cuando el uso de la CPU es < 50%, los núcleos actualmente activos funcionarán durante más tiempo y a una frecuencia más alta. Mientras tanto, los núcleos inactivos permanecerán en estado C (reposo) durante mucho más tiempo, logrando un menor consumo de energía en general.
+
+- **Conjunto de flags para algunos de los casos de uso recomendados por Changwoo Min:**
+
+**Gaming y Baja Latencia**
+* **Flags de línea de comandos:** `--performance`
+* **Descripción:** Maximiza el rendimiento utilizando todos los núcleos disponibles, priorizando los núcleos físicos.
+
+**Ahorro de energía**
+* **Flags de línea de comandos:** `--powersave`
+* **Descripción:** Minimiza el consumo de energía manteniendo un rendimiento razonable. Prioriza los núcleos y hilos eficientes sobre los núcleos físicos.
+
+### [scx_rusty](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rusty>)
+
+**Desarrollado por: David Vernet (Byte-Lab [GitHub](<https://github.com/Byte-Lab>))**
+
+- ¿Listo para producción? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+  - Sí. Si se ajusta correctamente,
+
+Rusty ofrece una amplia gama de características que mejoran sus capacidades, proporcionando una mayor flexibilidad para diversos casos de uso.
+Una de estas características es su capacidad de ajuste, lo que le permite personalizar Rusty para adaptarlo a sus preferencias y requisitos específicos.
+
+- Casos de uso:
+  - Gaming
+  - Cargas de trabajo sensibles a la latencia
+  - Uso de escritorio
+  - Producción de multimedia/audio
+  - Gran interactividad bajo cargas de trabajo intensivas
+  - Ahorro de energía
+
+### [scx_p2dq](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_p2dq>)
+
+- ¿Listo para producción? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+  - Sí. Si se ajusta correctamente para su carga de trabajo y hardware específicos.
+
+**Desarrollado por: Daniel Hodges (hodgesds [GitHub](<https://github.com/hodgesds>))**
+
+Un planificador de propósito general que se centra en el balanceo de carga "pick two" (elegir dos) entre
+LLCs. Mantiene una alta localidad de caché y conservación del trabajo al tiempo que proporciona
+una latencia razonable.
+
+- Casos de uso:
+  - Servidor *(Requiere [server_mode](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/configuration.md#configuration-structure>) con scx_loader)*
+  - Entornos de escritorio
+  - Gaming (con algunos ajustes manuales)
+
+- **Conjunto de flags para algunos de los casos de uso recomendados por Daniel Hodges:**
+
+**Gaming**
+* **Flags de línea de comandos:** `--task-slice true -f --sched-mode performance`
+* **Descripción:** Mejora la consistencia en el rendimiento de los juegos y aumenta la tendencia a planificar en los núcleos de mayor rendimiento.
+
+**Baja Latencia**
+* **Flags de línea de comandos:** `-y -f --task-slice true`
+* **Descripción:** Reduce la latencia haciendo que las tareas interactivas se adhieran más a la CPU a la que fueron asignadas y aumentando la estabilidad en el tiempo de la porción (slice).
+
+**Ahorro de energía**
+* **Flags de línea de comandos:** `--sched-mode efficiency`
+* **Descripción:** Mejora la eficiencia energética al priorizar los núcleos de bajo consumo.
+
+**Servidor**
+* **Flags de línea de comandos:** `--keep-running`
+* **Descripción:** Mejora las cargas de trabajo del servidor al permitir que las tareas se ejecuten más allá de su porción de tiempo si la CPU está inactiva.
+
+### [scx_tickless](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_tickless>)
+
+**Desarrollado por: Andrea Righi (arighi [Github](<https://github.com/arighi>))**
+
+- ¿Listo para producción? <Icon name="close" color="var(--sl-color-text-accent)" size="2rem" />
+  - Este planificador todavía es experimental y no se recomienda para uso en producción.
+
+:::note
+Para desactivar eficazmente los ticks en las CPUs "tickless", el kernel debe arrancarse con `nohz_full`. Tenga en cuenta que `nohz_full` introduce una sobrecarga en las llamadas al sistema (syscalls), por lo que esto puede afectar negativamente a las cargas de trabajo sensibles a la latencia.
+:::
+
+scx_tickless es un planificador orientado a servidores, diseñado para computación en la nube, virtualización y cargas de trabajo de computación de alto rendimiento.
+
+El planificador funciona enrutando todos los eventos de planificación a través de un grupo de CPUs primarias asignadas para manejar estos eventos. Esto permite desactivar el tick del planificador en otras CPUs, reduciendo el ruido del sistema operativo.
+
+- Casos de uso:
+  - Computación en la nube
+  - Virtualización
+  - Cargas de trabajo de computación de alto rendimiento
+  - Servidor
+
+- **Conjunto de flags para algunos de los casos de uso recomendados por Andrea Righi:**
+
+**Gaming**
+* **Flags de línea de comandos:** `-f 5000 -s 5000`
+* **Descripción:** Mejora el rendimiento en juegos al aumentar la frecuencia con la que el planificador detecta la contención de la CPU y desencadena cambios de contexto con una porción de tiempo más corta.
+
+**Ahorro de energía**
+* **Flags de línea de comandos:** `-f 50 -p`
+* **Descripción:** Mejora la eficiencia energética al reducir las comprobaciones de contención e intentar agresivamente mantener las tareas en la misma CPU.
+
+**Baja Latencia**
+* **Flags de línea de comandos:** `-f 5000 -s 1000`
+* **Descripción:** Similar al perfil de juegos pero con una porción de tiempo aún más reducida.
+
+**Servidor**
+* **Flags de línea de comandos:** `-f 100`
+* **Descripción:** Reduce la frecuencia con la que el planificador comprueba la contención de la CPU para mejorar el rendimiento a costa de la capacidad de respuesta.
+
+## Recomendaciones generales
+
+### Piloto automático y Ahorro de energía automático de LAVD
+
+*Citas de Changwoo Min:*
+- En modo de piloto automático, el planificador ajusta su modo de energía `Powersave, Balanced o Performance` en función de la carga del sistema, específicamente la utilización de la CPU.
+
+- Ahorro de energía automático: Decide automáticamente el modo de energía del planificador basándose en el perfil energético del sistema, también conocido como EPP (Energy Performance Preference).
+
+```sh
+# El ahorro de energía automático se puede activar con el siguiente flag:
+--autopower
+# ej:
+scx_lavd --autopower
+```
+
+### Desactivar ananicy-cpp
+
+:::caution
+Al usar cualquiera de los planificadores del framework sched-ext, se recomienda encarecidamente desactivar y evitar el uso de ananicy-cpp debido a posibles conflictos, ya que amplifica la brecha de prioridad que el planificador ya está creando/manejando al potenciar las tareas interactivas. Esto crea una priorización excesiva, dejando a otras tareas sin recursos y aumentando la posibilidad de alcanzar el tiempo de espera del watchdog de sched_ext, lo que provoca la expulsión del planificador en ejecución, es decir, causa una detención (stall).
+:::
+
+Para desactivar/detener ananicy-cpp, ejecute el siguiente comando:
+
+```sh
+systemctl disable --now ananicy-cpp
+```
+
+## Transición de scx.service a scx_loader: Una guía completa
+
+:::caution
+No intente ejecutar el servicio scx_loader.service junto con scx.service, de lo contrario, el servicio del cargador se iniciará pero no hará nada.
+
+Este conflicto surge porque ambos servicios no son conscientes el uno del otro, especialmente en lo que respecta a cuál de ellos gestiona los planificadores.
+:::
+
+:::tip
+El Kernel Manager de CachyOS ya incluye una [GUI para gestionar scx_loader.](/es/features/kernel_manager#gestión-del-framework-sched-ext)
+:::
+
+Primero, comencemos con una comparación detallada entre la estructura del archivo scx.service y la estructura del archivo de configuración de scx_loader.
+
+*Si anteriormente tenías LAVD funcionando con el antiguo scx.service como en este ejemplo de abajo:*
+
+```sh title='Estructura del archivo scx.service'
+# Lista de scx_schedulers: scx_bpfland scx_central scx_flash scx_lavd scx_layered scx_nest scx_qmap scx_rlfifo scx_rustland scx_rusty scx_simple scx_userland
+SCX_SCHEDULER=scx_lavd
+
+# Establecer flags personalizados para el planificador
+SCX_FLAGS='--performance'
+```
+
+Entonces el equivalente en el archivo de configuración de scx_loader se vería así:
+
+```sh title='Estructura del archivo scx_loader'
+default_sched = "scx_lavd"
+default_mode = "Auto"
+
+[scheds.scx_lavd]
+auto_mode = ["--performance"]
+```
+
+[Para más información sobre cómo configurar el archivo scx_loader](https://github.com/sched-ext/scx/blob/main/rust/scx_loader/configuration.md)
+
+  Siga la guía a continuación para una transición fácil del `servicio systemd scx` a la nueva utilidad `scx_loader`.
+  <Steps>
+  1. ```sh title='Desactivando scx.service en favor de scx_loader.service'
+      systemctl disable --now scx.service && systemctl enable --now scx_loader.service
+      ```
+  2. ```sh title='Creando el archivo de configuración para scx_loader y añadiendo la estructura por defecto'
+     # El editor Micro va a crear un archivo nuevo.
+     sudo micro /etc/scx_loader.toml
+     # Añada las siguientes líneas:
+
+     default_sched = "scx_bpfland" # Edite esta línea con el planificador que desea que scx_loader inicie en el arranque
+     default_mode = "Auto" # Valores posibles: "Auto", "Gaming", "LowLatency", "PowerSave".
+
+     # Presione CTRL + S para guardar los cambios y CTRL + Q para salir de Micro.
+     ```
+  3. ```sh title='Reiniciando scx_loader'
+     systemctl restart scx_loader.service
+     ```
+     - Ya está, scx_loader ahora cargará e iniciará el planificador deseado.
+
+  </Steps>
+
+### Depuración en scx_loader
+
+  - ```sh title='Comprobando el estado del servicio'
+    systemctl status scx_loader.service
+    ```
+  - ```sh title='Viendo todas las entradas del registro del servicio'
+    journalctl -u scx_loader.service
+    ```
+  - ```sh title='Viendo solo los registros de la sesión actual.'
+    journalctl -u scx_loader.service -b 0
+    ```
+- Registro avanzado
+
+*Para obtener un registro más detallado, siga estos pasos.*
+  - ```sh title='Editar el archivo de servicio'
+     sudo systemctl edit scx_loader.service
+     ```
+  - ```sh title='Añada la siguiente línea bajo la sección [Service]'
+     Environment=RUST_LOG=trace
+     ```
+  - ```sh title='Reinicie el servicio'
+     sudo systemctl restart scx_loader.service
+     ```
+- Revise los registros de nuevo para obtener información de depuración más detallada.
+
+## Preguntas frecuentes
+
+### ¿Por qué el planificador X funciona peor que el otro?
+
+- Hay muchas variables a considerar al compararlos. Por ejemplo, ¿cómo miden el peso de una tarea? ¿Priorizan las tareas interactivas sobre las no interactivas?
+  En última instancia, depende de sus decisiones de diseño.
+
+### ¿Por qué todo el mundo sigue diciendo que este planificador X es el mejor para el caso X pero a mí no me funciona tan bien?
+
+- Al igual que en la respuesta anterior, la elección de la CPU y su diseño, como la disposición de los núcleos, cómo comparten la caché entre los núcleos y otros factores relacionados, pueden hacer que el planificador funcione de manera menos eficiente.
+- Es por eso que tener opciones es uno de los aspectos más destacados del framework sched-ext, así que no tema probar uno y ver cuál funciona mejor para su caso de uso. `Ejemplos: estabilidad de FPS, rendimiento máximo, capacidad de respuesta bajo cargas de trabajo intensivas, etc.`
+
+### Los casos de uso de estos planificadores son bastante similares... ¿por qué?
+
+Principalmente porque son planificadores multipropósito, lo que significa que pueden adaptarse a una variedad de cargas de trabajo, aunque quizás no sobresalgan en todas las áreas.
+
+- Para determinar qué planificador se adapta mejor a usted, no hay mejor consejo que probarlo por sí mismo.
+
+### ¿Por qué me falta un planificador que algunos usuarios mencionan o prueban en el servidor de Discord de CachyOS?
+Asegúrese de que está utilizando la versión más reciente del paquete scx-scheds, llamada `scx-scheds-git`.
+
+- Una de las razones podría ser que este planificador es muy nuevo y actualmente está siendo probado por los usuarios, por lo que todavía no se ha añadido al paquete `scx-scheds-git`.
+
+### ¿Por qué el planificador se ha colgado de repente? ¿Es inestable?
+
+- *Podría haber varias razones por las que esto sucedió:*
+  - Una de las razones más comunes es que estaba usando ananicy-cpp junto con el planificador. Por eso añadimos esta [advertencia](/es/configuration/sched-ext#desactivar-ananicy-cpp)
+  - Otra razón podría ser que la carga de trabajo que estaba ejecutando excedió los límites y la capacidad del planificador, provocando que se detuviera.
+    - Ejemplo de una carga de trabajo irrazonable: `hackbench`
+  - O la razón más obvia, ha encontrado un error en el planificador. Si es así, por favor, repórtelo como un problema en su [GitHub](https://github.com/sched-ext/scx/issues) o hágaselo saber
+    en el canal de Discord de CachyOS `sched-ext`.
+
+### He utilizado previamente scx_loader en la GUI del Kernel Manager. ¿Aún necesito seguir los pasos de transición?
+
+- En este caso particular, no, no es necesario porque el Kernel Manager ya se encarga del proceso de transición.
+  - *A menos que haya añadido previamente flags personalizados en `/etc/default/scx` y todavía quiera usarlos.*
+
+## Aprende más
+
+Si quiere aprender más sobre el framework sched-ext, eche un vistazo a los siguientes enlaces.
+
+- [Código fuente de los planificadores Sched-ext](<https://github.com/sched-ext/scx/tree/main/scheds/rust>)
+- [Wiki oficial de Sched-ext](<https://github.com/sched-ext/scx/wiki>)
+- [Changwoo Min: Introducción a sched-ext y a la Planificación de CPU Parte 1](<https://blogs.igalia.com/changwoo/sched-ext-a-bpf-extensible-scheduler-class-part-1/>)
+  - [Parte 2](<https://blogs.igalia.com/changwoo/sched-ext-scheduler-architecture-and-interfaces-part-2/>)
+- [Andrea Righi: Reimplementando mi planificador de Rust para Linux en eBPF](<https://arighi.blogspot.com/2024/08/re-implementing-my-linux-rust-scheduler.html>)
+- [Andrea Righi: Planificadores del kernel de Linux generados por IA en Rust](<https://arighi.blogspot.com/2024/09/ai-generated-linux-kernel-schedulers-in.html>)
