@@ -1,6 +1,6 @@
 ---
 title: Warum CachyOS?
-description: Warum CachyOS für Sie besser sein könnte
+description: Warum CachyOS für dich besser sein könnte
 tableOfContents:
   minHeadingLevel: 1
   maxHeadingLevel: 4
@@ -12,15 +12,15 @@ CachyOS ist eine leistungsorientierte Arch-Linux-Distribution, die entwickelt wu
 
 ### Optimierte Pakete und Repositories
 
-CachyOS bietet eine große Auswahl an **[optimierten Paketen](https://packages.cachyos.org/)**, die speziell für verschiedene moderne CPU-Architekturen kompiliert wurden. Dies beinhaltet Unterstützung für `x86-64-v3`, `x86-64-v4` und `Zen4+` Systeme, was sicherstellt, dass Ihre Software so erstellt ist, dass sie die Fähigkeiten Ihrer Hardware voll ausnutzt und einen erheblichen Leistungsschub bietet.
+CachyOS bietet eine große Auswahl an **[optimierten Paketen](https://packages.cachyos.org/)**, die speziell für verschiedene moderne CPU-Architekturen kompiliert wurden. Dies beinhaltet Unterstützung für `x86-64-v3`, `x86-64-v4` und `Zen4+` Systeme, was sicherstellt, dass deine Software so erstellt ist, dass sie die Fähigkeiten deiner Hardware voll ausnutzt und einen erheblichen Leistungsschub bietet.
 
-Für einen detaillierteren Einblick in unsere optimierten Repositories, sehen Sie sich unsere ausführliche Anleitung zu **[optimierten Repositories](/de/features/optimized_repos)** an.
+Für einen detaillierteren Einblick in unsere optimierten Repositories, sieh dir unsere ausführliche Anleitung zu **[optimierten Repositories](/de/features/optimized_repos)** an.
 
 ### Benutzerdefinierter Kernel, abgestimmt auf Leistung und Stabilität
 
 Abgesehen von dem CachyOS-Basis-Kernel-Patchset, das verschiedene Kernel-Parameter zur Verbesserung der Desktop-Reaktionsfähigkeit anpasst, wählt CachyOS gezielt Patchsets aus, die noch nicht in den Hauptzweig aufgenommen wurden oder nicht in der stabilen Version des Kernels enthalten sind.
 
-Daher durchlaufen diese Patches interne Tests, bevor sie für Benutzer freigegeben werden, um sicherzustellen, dass die Stabilität nicht beeinträchtigt wird. Eine vollständige Liste der von CachyOS bereitgestellten Patches finden Sie unter [Kernel](/de/features/kernel).
+Daher durchlaufen diese Patches interne Tests, bevor sie für Benutzer freigegeben werden, um sicherzustellen, dass die Stabilität nicht beeinträchtigt wird. Eine vollständige Liste der von CachyOS bereitgestellten Patches findest du unter [Kernel](/de/features/kernel).
 
 ### Unterstützung für fortschrittliche CPU-Scheduler
 
@@ -30,13 +30,13 @@ CachyOS liefert Kernel mit den neuesten CPU-Scheduler-Optimierungen aus, um eine
 
 * **[BORE](https://github.com/firelzrd/bore-scheduler) (Burst-Oriented Response Enhancer):** Für Benutzer, die maximale Interaktivität benötigen, unterstützen unsere Kernel den BORE-Scheduler, ein Patchset, das EEVDF erweitert, um bei intensiven Arbeitslasten ein flüssigeres Erlebnis zu bieten.
 
-Weitere Informationen über die von CachyOS angebotenen Kernel und das sched-ext Framework finden Sie in der Dokumentation zu **[Kernel](/de/features/kernel)** und **[sched-ext](/de/configuration/sched-ext)**.
+Weitere Informationen über die von CachyOS angebotenen Kernel und das sched-ext Framework findest du in der Dokumentation zu **[Kernel](/de/features/kernel)** und **[sched-ext](/de/configuration/sched-ext)**.
 
 ## Benutzerfreundliche Werkzeuge und Anpassungsmöglichkeiten
 
 ### [Automatisierte Hardware-Erkennung](/de/features/chwd)
 
-CachyOS enthält ein benutzerdefiniertes Werkzeug zur Hardware-Erkennung, das automatisch die notwendigen Treiber und Pakete für Ihr System identifiziert und installiert. Dies erspart die manuelle Treibersuche und spart Ihnen nach der Installation Zeit und Mühe.
+CachyOS enthält ein benutzerdefiniertes Werkzeug zur Hardware-Erkennung, das automatisch die notwendigen Treiber und Pakete für dein System identifiziert und installiert. Dies erspart die manuelle Treibersuche und spart dir nach der Installation Zeit und Mühe.
 
 ### Anpassbarer Installationsprozess
 
@@ -50,18 +50,18 @@ Der CachyOS-Installer ermöglicht es Benutzern, ihr System anzupassen, indem sie
 
 ### Benutzerdefinierte CachyOS-Anwendungen
 
-CachyOS entwickelt und pflegt eine eigene Suite von Anwendungen, um die Systemverwaltung zu vereinfachen und Ihr Erlebnis zu verbessern.
+CachyOS entwickelt und pflegt eine eigene Suite von Anwendungen, um die Systemverwaltung zu vereinfachen und dein Erlebnis zu verbessern.
 
 Liste der Anwendungen, die CachyOS derzeit entwickelt und pflegt:
 
 -   **[CachyOS Hello](https://github.com/CachyOS/CachyOS-Welcome):** Eine Willkommensanwendung zur Steuerung von Optimierungen, zur Anwendung von Korrekturen und zur Installation von Paketen.
 -   **[CachyOS Package Installer](https://github.com/CachyOS/packageinstaller):** Eine grafische Benutzeroberfläche (GUI) zur einfachen Installation von Anwendungen.
--   **[CachyOS Kernel Manager](https://github.com/CachyOS/kernel-manager):** Installieren Sie einfach Kernel aus dem Repository, konfigurieren Sie Ihre eigenen und verwalten Sie das `sched-ext` Framework.
+-   **[CachyOS Kernel Manager](https://github.com/CachyOS/kernel-manager):** Installiere einfach Kernel aus dem Repository, konfiguriere deine eigenen und verwalte das `sched-ext` Framework.
 -   **[cachyos-rate-mirrors](https://github.com/CachyOS/rate-mirrors):** Ordnet automatisch Arch- und CachyOS-Spiegelserver für optimale Download-Geschwindigkeiten mit `pacman`.
 -   **[systemd-boot-manager](https://github.com/CachyOS/systemd-boot-manager):** Erstellt automatisch neue Boot-Einträge für `systemd-boot`, die einfach über `/etc/sdboot-manage.conf` konfiguriert werden können.
 
 ## Eine freundliche und aktive Community
 
-Die größte Stärke von CachyOS ist seine wachsende Community. Community-Mitglieder helfen sich gegenseitig, indem sie Tipps austauschen, Unterstützung bieten und zum Erfolg des Projekts beitragen. Ihr Feedback hilft uns, das CachyOS-Erlebnis kontinuierlich zu verbessern.
+Die größte Stärke von CachyOS ist seine wachsende Community. Community-Mitglieder helfen sich gegenseitig, indem sie Tipps austauschen, Unterstützung bieten und zum Erfolg des Projekts beitragen. Dein Feedback hilft uns, das CachyOS-Erlebnis kontinuierlich zu verbessern.
 
-Schließen Sie sich uns an und werden Sie Teil der Community auf dem **[CachyOS Discord](https://discord.com/invite/cachyos-862292009423470592)** und im **[CachyOS Forum](https://discuss.cachyos.org/)**.
+Schließ dich uns an und werde Teil der Community auf dem **[CachyOS Discord](https://discord.com/invite/cachyos-862292009423470592)** und im **[CachyOS Forum](https://discuss.cachyos.org/)**.

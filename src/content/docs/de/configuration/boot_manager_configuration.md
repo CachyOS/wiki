@@ -1,6 +1,6 @@
 ---
 title: Bootmanager-Konfiguration
-description: Konfigurieren Sie die Einstellungen des Bootmanagers und übergeben Sie Kernel-Parameter an die Kommandozeile
+description: Konfiguriere die Einstellungen des Bootmanagers und übergib Kernel-Parameter an die Kommandozeile
 ---
 
 ## systemd-boot
@@ -10,7 +10,7 @@ einzelnen Kernel-Eintrag in `/boot/loader/entry`.
 
 ### Loader-Konfiguration
 
-In dieser Konfigurationsdatei können Sie den Standardeintrag und das Zeitlimit von systemd-boot ändern.
+In dieser Konfigurationsdatei kannst du den Standardeintrag und das Zeitlimit von systemd-boot ändern.
 
 ```shell
 # /boot/loader/loader.conf
@@ -25,14 +25,14 @@ timeout 5
 Wir stellen ein Werkzeug zur einfacheren Konfiguration von systemd-boot zur Verfügung: [`sdboot-manage`](https://github.com/CachyOS/CachyOS-PKGBUILDS/tree/master/systemd-boot-manager).
 Einer der Vorteile dieses Werkzeugs ist die globale Konfiguration der Kernel-Kommandozeile. Die Konfigurationsdatei für `sdboot-manage` befindet sich in `/etc/sdboot-manage.conf`.
 
-Bearbeiten Sie die Zeile `LINUX_OPTIONS=` in `/etc/sdboot-manage.conf`, um die Kernel-Parameter zu ändern.
+Bearbeite die Zeile `LINUX_OPTIONS=` in `/etc/sdboot-manage.conf`, um die Kernel-Parameter zu ändern.
 
 ```shell
 # /etc/sdboot-manage.conf
 LINUX_OPTIONS="zswap.enabled=0 nowatchdog quiet splash"
 ```
 
-Nachdem Sie Änderungen vorgenommen haben, generieren Sie alle systemd-boot-Einträge mit dem folgenden Befehl neu:
+Nachdem du Änderungen vorgenommen hast, generiere alle systemd-boot-Einträge mit dem folgenden Befehl neu:
 
 ```shell
 sudo sdboot-manage gen
@@ -41,12 +41,12 @@ sudo sdboot-manage gen
 ## rEFInd
 
 Wie [systemd-boot](/de/configuration/boot_manager_configuration#systemd-boot) hat rEFInd zwei Konfigurationsdateien. `refind.conf` in
-`boot/efi/EFI/refind` dient hauptsächlich dazu, das Verhalten von rEFInd zu ändern, während `/boot/refind_linux.conf` zur Verwaltung Ihrer Boot-Optionen dient.
+`boot/efi/EFI/refind` dient hauptsächlich dazu, das Verhalten von rEFInd zu ändern, während `/boot/refind_linux.conf` zur Verwaltung deiner Boot-Optionen dient.
 `refind.conf` enthält ausführliche Kommentare, die alle Optionen erklären.
 
 ### Kernel-Kommandozeilen-Konfiguration
 
-Um Kernel-Parameter an die Kommandozeile zu übergeben, ändern Sie "Boot using default options" in `/boot/refind_linux.conf`.
+Um Kernel-Parameter an die Kommandozeile zu übergeben, ändere "Boot using default options" in `/boot/refind_linux.conf`.
 
 ```shell
 # /boot/refind_linux.conf
@@ -64,7 +64,7 @@ jede Option bewirkt.
 
 ### Das GRUB-Bootmenü ausblenden
 
-Um das GRUB-Menü auszublenden, setzen Sie einfach die folgenden Optionen entsprechend.
+Um das GRUB-Menü auszublenden, setze einfach die folgenden Optionen entsprechend.
 
 ```shell
 # /etc/default/grub
@@ -73,7 +73,7 @@ GRUB_TIMEOUT='0'
 GRUB_TIMEOUT_STYLE=hidden
 ```
 
-Drücken Sie ESC, um zur GRUB-Eingabeaufforderung zu gelangen. Führen Sie von hier aus `normal` oder `exit` aus, um zum gewohnten GRUB-Bootmenü zurückzukehren.
+Drück ESC, um zur GRUB-Eingabeaufforderung zu gelangen. Führe von hier aus `normal` oder `exit` aus, um zum gewohnten GRUB-Bootmenü zurückzukehren.
 
 ### Kernel-Kommandozeilen-Konfiguration
 
@@ -93,7 +93,7 @@ sudo grub-mkconfig -o /boot/grub/grub.cfg
 
 ## Limine
 
-Limine ist ein moderner Bootloader, der für seine einfache Konfiguration bekannt ist. Diese Anleitung behandelt die Grundlagen, um Ihnen den Einstieg zu erleichtern.
+Limine ist ein moderner Bootloader, der für seine einfache Konfiguration bekannt ist. Diese Anleitung behandelt die Grundlagen, um dir den Einstieg zu erleichtern.
 
 Die Konfiguration findet hauptsächlich in `/boot/limine.conf` (oder manchmal in der EFI-Systempartition) für Menüeinstellungen und in `/etc/default/limine` für Kernel-Parameter statt.
 
@@ -129,7 +129,7 @@ Beispiel (`/boot/limine.conf`):
 timeout: 5
 default_entry: 2 # Verweist direkt auf den unten stehenden 'linux-cachyos'-Eintrag
 
-/+CachyOS        # Eintrag 1: Ein Verzeichnis (verwenden Sie /+, um es standardmäßig zu erweitern)
+/+CachyOS        # Eintrag 1: Ein Verzeichnis (verwende /+, um es standardmäßig zu erweitern)
 //linux-cachyos  # Eintrag 2: Der tatsächlich bootfähige Eintrag
     protocol: linux
     kernel_path: boot():/vmlinuz-linux-cachyos
@@ -143,9 +143,9 @@ default_entry: 2 # Verweist direkt auf den unten stehenden 'linux-cachyos'-Eintr
 
 ### Theming
 
-Sie können das visuelle Erscheinungsbild des Limine-Bootmenüs anpassen:
+Du kannst das visuelle Erscheinungsbild des Limine-Bootmenüs anpassen:
 
-* **Hintergrundbild:** Legen Sie ein Hintergrundbild fest. Unterstützte Formate sind BMP, PNG und JPEG.
+* **Hintergrundbild:** Lege ein Hintergrundbild fest. Unterstützte Formate sind BMP, PNG und JPEG.
 
   ```shell
   # /boot/limine.conf
@@ -155,7 +155,7 @@ Sie können das visuelle Erscheinungsbild des Limine-Bootmenüs anpassen:
   backdrop: 000000           # Hintergrundfarbe (RRGGBB hex), wenn der Stil 'centered' ist
   ```
 
-* **Schriftarten:** Verwenden Sie eine [benutzerdefinierte Schriftartdatei](https://github.com/viler-int10h/vga-text-mode-fonts) und passen Sie deren Größe an.
+* **Schriftarten:** Verwende eine [benutzerdefinierte Schriftartdatei](https://github.com/viler-int10h/vga-text-mode-fonts) und passe deren Größe an.
 
   ```shell
   # /boot/limine.conf
@@ -164,7 +164,7 @@ Sie können das visuelle Erscheinungsbild des Limine-Bootmenüs anpassen:
   term_font_scale: 2x2 # Skaliert die Schriftgröße, nützlich für hochauflösende Displays
   ```
 
-* **Farben:** Ändern Sie die Text- und Hintergrundfarben des Terminals.
+* **Farben:** Ändere die Text- und Hintergrundfarben des Terminals.
 
   ```shell
   # /boot/limine.conf
@@ -175,11 +175,11 @@ Sie können das visuelle Erscheinungsbild des Limine-Bootmenüs anpassen:
 
 ### Kernel-Kommandozeilen-Konfiguration
 
-Auf CachyOS werden Kernel-Einträge im Limine-Bootmenü **automatisch verwaltet**. Wenn Sie Kernel installieren oder entfernen, verwendet der `limine-mkinitcpio-hook` das `limine-entry-tool`-Dienstprogramm im Hintergrund, um die Boot-Einträge zu aktualisieren.
+Auf CachyOS werden Kernel-Einträge im Limine-Bootmenü **automatisch verwaltet**. Wenn du Kernel installierst oder entfernst, verwendet der `limine-mkinitcpio-hook` das `limine-entry-tool`-Dienstprogramm im Hintergrund, um die Boot-Einträge zu aktualisieren.
 
-Obwohl die Einträge automatisch gehandhabt werden, können Sie die **Kernel-Parameter** (auch als Kernel-Kommandozeile bekannt) konfigurieren, die beim Booten an den Kernel übergeben werden.
+Obwohl die Einträge automatisch gehandhabt werden, kannst du die **Kernel-Parameter** (auch als Kernel-Kommandozeile bekannt) konfigurieren, die beim Booten an den Kernel übergeben werden.
 
-1. **Konfigurationsdatei bearbeiten:** Ändern Sie die `KERNEL_CMDLINE`-Variablen in `/etc/default/limine`. Sie können Standardparameter für alle Kernel oder spezifische Parameter für bestimmte Kernel-Namen (z. B. `linux-cachyos`) festlegen.
+1. **Konfigurationsdatei bearbeiten:** Ändere die `KERNEL_CMDLINE`-Variablen in `/etc/default/limine`. Du kannst Standardparameter für alle Kernel oder spezifische Parameter für bestimmte Kernel-Namen (z. B. `linux-cachyos`) festlegen.
 
    ```shell
    # /etc/default/limine
@@ -194,15 +194,15 @@ Obwohl die Einträge automatisch gehandhabt werden, können Sie die **Kernel-Par
    # KERNEL_CMDLINE[fallback]="..."
    ```
 
-2. **Änderungen anwenden:** Nach dem Speichern von `/etc/default/limine` müssen Sie Ihre initramfs-Images neu generieren und die Limine-Einträge aktualisieren, um die neuen Kernel-Parameter anzuwenden. Führen Sie den folgenden Befehl aus:
+2. **Änderungen anwenden:** Nach dem Speichern von `/etc/default/limine` musst du deine initramfs-Images neu generieren und die Limine-Einträge aktualisieren, um die neuen Kernel-Parameter anzuwenden. Führe den folgenden Befehl aus:
 
    ```bash
    sudo limine-mkinitcpio
    ```
 
-   Dieser Befehl löst den `mkinitcpio`-Prozess aus, der den `limine-mkinitcpio-hook` enthält. Dadurch wird sichergestellt, dass Ihre Änderungen in `/etc/default/limine` in die Boot-Einträge unter `/boot/limine.conf` übernommen werden.
+   Dieser Befehl löst den `mkinitcpio`-Prozess aus, der den `limine-mkinitcpio-hook` enthält. Dadurch wird sichergestellt, dass deine Änderungen in `/etc/default/limine` in die Boot-Einträge unter `/boot/limine.conf` übernommen werden.
 
-## Erfahren Sie mehr
+## Erfahre mehr
 
 * [Manpage von loader.conf](https://man.archlinux.org/man/loader.conf.5)
 * [rEFInd: Konfigurieren des Bootmanagers](https://www.rodsbooks.com/refind/configfile.html)

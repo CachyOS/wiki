@@ -19,7 +19,7 @@ Dieses Tool sammelt Protokolle von:
 - journalctl
 - inxi `(Um Hardwareinformationen zu sammeln)`
 
-Sobald die Protokolle gesammelt sind, wird der Benutzer aufgefordert zu entscheiden, ob er sie auf unsere Paste-Webseite hochladen möchte.
+Sobald die Protokolle gesammelt sind, wirst du aufgefordert zu entscheiden, ob du sie auf unsere Paste-Webseite hochladen möchtest.
 
 Führe den folgenden Befehl im Terminal aus und poste den Link mit den Fehlern in das Thema:
 

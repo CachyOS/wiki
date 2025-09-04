@@ -4,7 +4,7 @@ description: Paketanfragen für AUR-Pakete, ...
 ---
 
 CachyOS bietet eine umfangreiche Liste von vorkompilierten AUR-Paketen, die häufig verwendet werden.
-Benutzer können Anfragen für AUR-Pakete stellen, die nach Genehmigung automatisch von unserem Build-Server aktualisiert werden.
+Du kannst Anfragen für AUR-Pakete stellen, die nach Genehmigung automatisch von unserem Build-Server aktualisiert werden.
 
 Wenn du möchtest, dass wir ein Paket hinzufügen, kannst du eine Anfrage auf GitHub oder im Forum einreichen.
 

@@ -3,17 +3,16 @@ title: CachyOS-Hardwareerkennung
 description: Hardwareerkennung und -konfiguration für CachyOS
 ---
 
-[CachyOS Hardware Detection](https://github.com/CachyOS/chwd/) (besser bekannt als `chwd`) ermöglicht es uns, eine Vielzahl von Hardware zu unterstützen, indem die notwendigen
-Pakete und Treiber für das laufende System installiert werden. Dies schließt Systeme mit NVIDIA-Grafikkarten, T2 Macbooks und Handheld-Geräte wie das Steam Deck und ROG Ally ein.
+[CachyOS Hardware Detection](https://github.com/CachyOS/chwd/) (besser bekannt als `chwd`) ermöglicht es uns, eine Vielzahl von Hardware zu unterstützen, indem es die notwendigen
+Pakete und Treiber für dein laufendes System installiert. Dies schließt Systeme mit NVIDIA-Grafikkarten, T2 Macbooks und Handheld-Geräte wie das Steam Deck und ROG Ally ein.
 
 ## Verwendung
 
-`chwd` wird typischerweise während der Installation ausgeführt, um die notwendigen Pakete für das System bereitzustellen. Es ist jedoch auch möglich,
-es nach der Installation zu verwenden.
+`chwd` wird typischerweise während der Installation ausgeführt, um die notwendigen Pakete für das System bereitzustellen. Du kannst es aber auch nach der Installation verwenden.
 
 ### Automatische Konfiguration
 
-`chwd` unterstützt die Installation und Konfiguration der notwendigen Treiber und Pakete, damit das System unter optimalen Bedingungen arbeiten kann.
+`chwd` unterstützt die Installation und Konfiguration der notwendigen Treiber und Pakete, damit dein System unter optimalen Bedingungen laufen kann.
 
 ```sh
 sudo chwd -a
@@ -53,7 +52,7 @@ sudo chwd -i amd
 
 ### Sonstiges
 
-Konsultieren Sie die Hilfeausgabe von `chwd` für die Befehlssyntax und weitere Verwendungshinweise.
+Schau dir die Hilfeausgabe von `chwd` für die Befehlssyntax und weitere Verwendungshinweise an.
 
 ```sh
 chwd --help

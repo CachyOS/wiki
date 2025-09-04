@@ -14,7 +14,7 @@ Der CachyOS-Kernel ist ein angepasster Kernel, der Verbesserungen, Konfiguration
 
 - **Erweiterte Kompilierung**: Hochgradig anpassbares PKGBUILD mit Unterstützung für sowohl GCC- als auch Clang-Compiler
 - **Link Time Optimization (LTO)**: Thin LTO ist standardmäßig für bessere Leistung aktiviert
-- **Profilgesteuerte Optimierung**: AutoFDO + Propeller-Profiling für optimale Code-Generierung ([Erfahren Sie mehr](https://cachyos.org/blog/2411-kernel-autofdo/))
+- **Profilgesteuerte Optimierung**: AutoFDO + Propeller-Profiling für optimale Code-Generierung ([Erfahre mehr](https://cachyos.org/blog/2411-kernel-autofdo/))
 - **Kernel Control Flow Integrity (kCFI)**: Verfügbar bei Verwendung von LLVM für erhöhte Sicherheit
 - **Timer-Frequenz-Optionen**: Konfigurierbar zwischen 300Hz, 500Hz, 600Hz, 750Hz und 1000Hz (Standard: 1000Hz)
 - **Architekturoptimierungen**: Unterstützung für x86-64-v3, x86-64-v4 und AMD Zen4 spezifische Builds
@@ -70,7 +70,7 @@ Für jeden der Kernel gibt es eine [entsprechende `-lto`-Variante](#paket-namens
 mit [clang](https://clang.llvm.org/) anstelle von [GCC](https://gcc.gnu.org/) gebaut wird.
 
 - **linux-cachyos**
-  - Der Standard-Kernel. Dies ist der empfohlene Kernel, wenn Sie unsicher sind, welchen Sie verwenden sollen.
+  - Der Standard-Kernel. Das ist der empfohlene Kernel, wenn du unsicher bist, welchen du verwenden sollst.
   - 1000Hz Tickrate für verbesserte Reaktionsfähigkeit.
   - Verwendet den [BORE](https://github.com/firelzrd/bore-scheduler)-Scheduler.
   - Gebaut mit Clang und ThinLTO.
@@ -110,11 +110,11 @@ mit [clang](https://clang.llvm.org/) anstelle von [GCC](https://gcc.gnu.org/) ge
   - Verwendet den [BORE](https://github.com/firelzrd/bore-scheduler)-Scheduler.
 
 :::note
-Sofern nicht anders angegeben, kann davon ausgegangen werden, dass alle anderen Kernel-Varianten
+Sofern nicht anders angegeben, kannst du davon ausgehen, dass alle anderen Kernel-Varianten
 dieselbe Konfiguration wie der Standard-Kernel haben.
 :::
 
-Bitte eröffnen Sie ein Issue im [linux-cachyos GitHub](https://github.com/CachyOS/linux-cachyos) für Vorschläge und Verbesserungen, die dem Standard-Kernel hinzugefügt werden können.
+Bitte eröffne ein Issue im [linux-cachyos GitHub](https://github.com/CachyOS/linux-cachyos) für Vorschläge und Verbesserungen, die dem Standard-Kernel hinzugefügt werden können.
 
 ### Paket-Namenskonvention
 
@@ -131,9 +131,9 @@ linux-cachyos-hardened-{,lto-}dbg
 
 ## Vorkompilierte Kernel-Module
 
-Um eine größere Nutzerbasis zu unterstützen, liefert CachyOS einige bekannte und häufig genutzte Kernel-Module zusammen mit dem Kernel aus. Dies bedeutet, dass Benutzer diese
-Module nicht mehr nach jedem Kernel-Update oder bei jeder neuen Kernel-Installation neu kompilieren müssen, sondern sie nur aus dem Repository installieren müssen, da sie
-bereits vorkompiliert sind. Dies macht jegliche `-dkms`-Pakete, die ein Benutzer möglicherweise hat und die das gleiche Modul wie die vorkompilierte Version bereitstellen, effektiv überflüssig.
+Um eine größere Nutzerbasis zu unterstützen, liefert CachyOS einige bekannte und häufig genutzte Kernel-Module zusammen mit dem Kernel aus. Das bedeutet, dass du diese
+Module nicht mehr nach jedem Kernel-Update oder bei jeder neuen Kernel-Installation neu kompilieren musst, sondern sie nur aus dem Repository installieren musst, da sie
+bereits vorkompiliert sind. Das macht jegliche `-dkms`-Pakete, die du möglicherweise hast und die das gleiche Modul wie die vorkompilierte Version bereitstellen, effektiv überflüssig.
 
 ### ZFS
 
@@ -159,9 +159,9 @@ Weil das Erstellen teuer ist, da es im Grunde genommen erfordert, den Kernel zwe
 
 Daher ist es vorerst nur in der [linux-cachyos](/de/features/kernel#varianten)-Variante vorhanden.
 
-Für weitere Informationen über AutoFDO, klicken Sie [hier.](https://cachyos.org/blog/2411-kernel-autofdo/)
+Für weitere Informationen über AutoFDO, klicke [hier.](https://cachyos.org/blog/2411-kernel-autofdo/)
 
 ### Verbessert der Echtzeit-Kernel die Gaming-Leistung?
 
-Nein, das tut er nicht. Der Echtzeit-Kernel macht wesentlich mehr Code präemptiv im Vergleich zu einem normalen, vollständig präemptiven Kernel. Dies bedeutet, dass viel mehr Aufgaben (einschließlich Gaming-Prozesse)
+Nein, das tut er nicht. Der Echtzeit-Kernel macht wesentlich mehr Code präemptiv im Vergleich zu einem normalen, vollständig präemptiven Kernel. Das bedeutet, dass viel mehr Aufgaben (einschließlich Gaming-Prozesse)
 häufig unterbrochen werden und Systemressourcen zwangsweise abgeben müssen, was zu einer schlechteren Leistung führt.

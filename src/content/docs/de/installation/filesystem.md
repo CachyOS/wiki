@@ -3,10 +3,10 @@ title: Dateisysteme
 description: Beschreibung und Empfehlungen für die verfügbaren Dateisysteme. (ext4, f2fs, btrfs, xfs, zfs, bcachefs)
 ---
 
-CachyOS bietet 5 verschiedene Dateisysteme an, damit der Benutzer das für seine Bedürfnisse am besten geeignete auswählen kann. Im Folgenden werden die Vor- und Nachteile sowie Empfehlungen für jedes Dateisystem erläutert. Jedes Dateisystem wird mit den erforderlichen Programmen/Werkzeugen auf CachyOS vorinstalliert geliefert.
+CachyOS bietet 5 verschiedene Dateisysteme an, damit du das für deine Bedürfnisse am besten geeignete auswählen kannst. Im Folgenden werden die Vor- und Nachteile sowie Empfehlungen für jedes Dateisystem erläutert. Jedes Dateisystem wird mit den erforderlichen Programmen/Werkzeugen auf CachyOS vorinstalliert geliefert.
 
 :::note
-BTRFS ist das standardmäßige und empfohlene Dateisystem für CachyOS. Wählen Sie es, wenn Sie sich unsicher sind.
+BTRFS ist das standardmäßige und empfohlene Dateisystem für CachyOS. Wähle es, wenn du dir unsicher bist.
 :::
 
 ## XFS
@@ -29,7 +29,7 @@ Das Paket, das die Userspace-Tools zur Verwaltung von XFS-Dateisystemen enthält
 
 ### Empfehlung
 
-XFS ist das empfohlene Dateisystem für Benutzer, die keine fortgeschrittenen Funktionen benötigen und einfach ein schnelles und zuverlässiges Dateisystem wünschen.
+XFS ist das empfohlene Dateisystem für dich, wenn du keine fortgeschrittenen Funktionen benötigst und einfach ein schnelles und zuverlässiges Dateisystem wünschst.
 
 ## BTRFS
 
@@ -37,7 +37,7 @@ BTRFS ist ein modernes Copy-on-Write(COW)-Dateisystem, das 2007 entwickelt und 2
 
 ### Vorteile
 
-- Transparente Komprimierung. BTRFS unterstützt das transparente Komprimieren von Dateien, um erhebliche Speicherplatzersparnisse ohne Benutzereingriff zu ermöglichen. CachyOS wird standardmäßig mit ZSTD-Komprimierung auf Stufe 3 ausgeliefert.
+- Transparente Komprimierung. BTRFS unterstützt das transparente Komprimieren von Dateien, um erhebliche Speicherplatzersparnisse ohne dein Eingreifen zu ermöglichen. CachyOS wird standardmäßig mit ZSTD-Komprimierung auf Stufe 3 ausgeliefert.
 - Snapshot-Funktionalität. BTRFS nutzt seine COW-Natur, um die Erstellung von Snapshots von Subvolumes zu ermöglichen, die sehr wenig tatsächlichen Speicherplatz beanspruchen.
 - Subvolume-Funktionalität, die eine größere Kontrolle über das Dateisystem ermöglicht.
 - Kann vergrößert oder verkleinert werden.
@@ -66,7 +66,7 @@ CachyOS bietet von Haus aus ein Subvolume-Layout, um eine einfache Snapshot-Funk
 
 ### Empfehlung
 
-BTRFS wird für Benutzer empfohlen, die Snapshot-/Backup-Funktionalität und transparente Komprimierung wünschen.
+BTRFS wird dir empfohlen, wenn du Snapshot-/Backup-Funktionalität und transparente Komprimierung wünschst.
 
 ## EXT4
 
@@ -89,14 +89,14 @@ Das Paket zur Verwaltung von ext4 ist `e2fsprogs`.
 
 ### Empfehlung
 
-EXT4 wird für Benutzer empfohlen, die das einfachste und am häufigsten verwendete Dateisystem wünschen.
+EXT4 wird dir empfohlen, wenn du das einfachste und am häufigsten verwendete Dateisystem wünschst.
 
 ## ZFS
 
 ZFS ist ein fortschrittliches Dateisystem, das ursprünglich 2005 von Sun Microsystems entwickelt wurde. ZFS hat viele Funktionen, ist aber unter der CDDL lizenziert, was bedeutet, dass es nicht in den Linux-Kernel aufgenommen werden kann und ein separates Modul installiert werden muss.
 
 :::caution
-Verwenden Sie keinen Echtzeit-Kernel zusammen mit ZFS, da er aufgrund von Lizenzproblemen nicht kompatibel ist.
+Verwende keinen Echtzeit-Kernel zusammen mit ZFS, da er aufgrund von Lizenzproblemen nicht kompatibel ist.
 :::
 
 ### Vorteile
@@ -121,7 +121,7 @@ Verwenden Sie keinen Echtzeit-Kernel zusammen mit ZFS, da er aufgrund von Lizenz
 
 ### Empfehlung
 
-ZFS sollte nur von fortgeschrittenen Benutzern verwendet werden, die seine fortschrittlichen Funktionen wie geteilten Speicher oder den ARC-Cache nutzen möchten.
+ZFS solltest du nur verwenden, wenn du ein fortgeschrittener Benutzer bist, der seine fortschrittlichen Funktionen wie geteilten Speicher oder den ARC-Cache nutzen möchte.
 
 ## F2FS
 
@@ -130,14 +130,14 @@ F2FS (Flash-Friendly File System) ist ein Flash-Dateisystem, das ursprünglich v
 ### Vorteile
 
 - Entwickelt mit Blick auf die Schonung von Flash-Speicher.
-- Transparente Komprimierung zur Reduzierung von Schreibvorgängen (die Speicherplatzersparnis ist für den Benutzer derzeit nicht nutzbar).
+- Transparente Komprimierung zur Reduzierung von Schreibvorgängen (die Speicherplatzersparnis ist für dich derzeit nicht nutzbar).
 - Schneller als andere Dateisysteme wie EXT4.
 - Besseres Wear-Leveling, was die Lebensdauer von NAND-Flash weiter verlängert.
 
 ### Nachteile
 
 - Kann nicht verkleinert werden.
-- Die Platzersparnis durch Komprimierung kann derzeit nicht vom Benutzer genutzt werden. Dies könnte in Zukunft hinzugefügt werden.
+- Die Platzersparnis durch Komprimierung kannst du derzeit nicht nutzen. Dies könnte in Zukunft hinzugefügt werden.
 - Relativ schwacher fsck (Dateisystem-Check).
 - Ein Downgrade auf einen Kernel, der älter ist als die Version, die das Dateisystem erstellt hat, kann zu Problemen führen.
 
@@ -147,7 +147,7 @@ Das Hauptprogramm für f2fs ist `f2fs-tools`.
 
 ### Empfehlung
 
-F2FS wird nur für Benutzer empfohlen, die die Lebensdauer ihres NAND-Flash-Speichers maximieren möchten.
+F2FS wird dir nur empfohlen, wenn du die Lebensdauer deines NAND-Flash-Speichers maximieren möchtest.
 
 ## BcacheFS
 
@@ -172,5 +172,5 @@ Bcachefs wird noch als experimentell betrachtet und kann Probleme aufweisen.
 
 ## Kurz gesagt
 
-Verwenden Sie das Standard-Dateisystem **BTRFS**, da es als stabil gilt und viele nützliche Funktionen bietet (Snapshots, Komprimierung usw.). Verwenden Sie **XFS** oder **EXT4** für ein einfaches
+Verwende das Standard-Dateisystem **BTRFS**, da es als stabil gilt und viele nützliche Funktionen bietet (Snapshots, Komprimierung usw.). Verwende **XFS** oder **EXT4** für ein einfaches
 und schnelles Dateisystem.
