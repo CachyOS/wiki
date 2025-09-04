@@ -4,28 +4,30 @@ title: Fehler melden
 
 # Beschreibe dein Problem
 
-- *Was funktioniert nicht?*
-- *Behebt das Downgraden von Paket X das Problem?*
-- *Nutze die Suchfunktion, um nach gleichen Problemen zu suchen*
-- *Hast du eigene Modifikationen vorgenommen?*
-  - Beispiel: `Hinzufügen eines zusätzlichen Flags in einer Modprobe-Datei`
+- Was funktioniert nicht?
+- Behebt ein Downgrade von Paket X das Problem?
+- Nutze die Suchfunktion für ähnliche Probleme
+- Hast du selbst Änderungen vorgenommen?
+  - Beispiel: `Ein zusätzliches Flag in einer Modprobe-Datei hinzufügen`
 
-# Stelle Protokolle bereit
+# Stelle Logs bereit
 
-CachyOS bietet ein großartiges Tool zum Sammeln von Protokollen vom System namens `cachyos-bugreport.sh`.
+CachyOS bietet ein großartiges Werkzeug zum Sammeln von Systemprotokollen namens `cachyos-bugreport.sh`.
 Dieses Tool sammelt Protokolle von:
+
 - dmesg
 - journalctl
-- inxi `(Zum Sammeln von Hardwareinformationen)`
+- inxi `(Um Hardwareinformationen zu sammeln)`
 
-Wenn die Protokolle gesammelt wurden, wird der Benutzer aufgefordert zu entscheiden, ob er sie auf unsere Paste-Webseite hochladen möchte.
+Sobald die Protokolle gesammelt sind, wirst du aufgefordert zu entscheiden, ob du sie auf unsere Paste-Webseite hochladen möchtest.
 
-**Führe den folgenden Befehl im Terminal aus und poste den Link mit den Fehlern in das Thema:**
+Führe den folgenden Befehl im Terminal aus und poste den Link mit den Fehlern in das Thema:
+
 ```sh
 sudo cachyos-bugreport.sh
 ```
 
-# Links zum Einreichen eines Berichts
+# Links zum Einreichen von Meldungen
 
 - Github: <https://github.com/CachyOS/distribution>
 - Forum: <https://discuss.cachyos.org/c/feedback/bugreports/10>

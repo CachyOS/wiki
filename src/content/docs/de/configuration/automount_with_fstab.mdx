@@ -1,0 +1,217 @@
+---
+title: Zusätzliche Laufwerke beim Systemstart automatisch über fstab einbinden
+description: Binde zusätzliche statische Laufwerke beim Systemstart ein, indem du die Datei /etc/fstab verwendest
+---
+
+Dieses Tutorial beschreibt die Grundlagen der Verwendung der fstab-Datei in `/etc/`, um statische Laufwerke beim Systemstart einzubinden. Es erklärt kurz, wie du die UUID einer Partition oder eines Laufwerks findest, was einige Optionen bewirken und wo du weiterlesen kannst, falls die bereitgestellten Informationen nicht ausreichen.
+
+## Voraussetzungen
+
+- Root- oder Sudo-Zugriff
+
+## Einträge zu /etc/fstab hinzufügen
+
+:::note[NTFS unter Linux]
+Das NTFS-Dateisystem kann unter Linux instabil sein, unabhängig davon, ob der ntfs3- oder ntfs-3g-Treiber verwendet wird. Die Nutzung erfolgt auf eigene Gefahr. Für bessere Stabilität und Leistung solltest du native Linux-Dateisysteme wie ext4, xfs oder btrfs in Betracht ziehen.
+:::
+
+### 1. Die UUIDs deiner Partitionen auflisten
+
+```sh title="Öffne ein Terminal und führe den folgenden Befehl aus"
+lsblk -f
+```
+
+```text title="Beispielausgabe"
+# NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+# zram0                                                                              [SWAP]
+# nvme0n1
+# ├─nvme0n1p1 vfat   FAT32       E04D-9F05
+# ├─nvme0n1p2
+# ├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
+# ├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
+# ├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
+# └─nvme0n1p6 ntfs
+```
+
+In unserem Beispiel wissen wir, dass wir eine Windows-Partition einbinden wollen, die ntfs ist. Wir wissen auch, dass etwa die Hälfte des Speicherplatzes verfügbar ist. Daher können wir feststellen, dass die Partition, die wir einbinden wollen, `nvme0n1p3` ist und ihre UUID `08A24E90A24E81E4` lautet, mit dem Dateisystem `ntfs` in diesem Beispiel.
+
+### 2. Deine Partition identifizieren
+
+Oft liefert `lsblk -f` an dieser Stelle alle Informationen, die du benötigst, um deine Festplatte über /etc/fstab einzubinden. Wenn du dir immer noch nicht sicher bist, welche die richtige Partition ist, kannst du den folgenden Befehl ausführen:
+
+```sh
+sudo fdisk -l
+```
+
+```text title="Beispielausgabe"
+# Device              Start        End    Sectors  Size Type
+# /dev/nvme0n1p1       2048     206847     204800  100M EFI System
+# /dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
+# /dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
+# /dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
+# /dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
+# /dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
+```
+
+In diesem Beispiel kennen wir unsere UUID bereits. `fdisk -l` kann es uns jedoch etwas deutlicher machen, indem es die genaue Größe der Partition (1,4T) sowie ihren Typ (Microsoft basic data) anzeigt.
+
+Das sollte uns überdeutlich machen, dass die gewünschte Partition `nvme0n1p3` mit der UUID `08A24E90A24E81E4` ist, wie zuvor beschrieben. Wir wussten es schon vorher, aber jetzt wissen wir es ganz sicher.
+
+Sobald du sicher bist, die richtige Partition gefunden zu haben, kopiere die UUID. Das Kopieren aus dem Terminal-Emulator erfolgt normalerweise mit `Strg+Shift+C`.
+
+### 3. Einen Eintrag zu /etc/fstab hinzufügen
+
+Nachdem wir die UUID unserer Partition erhalten haben, ist es an der Zeit, die fstab-Datei zu öffnen.
+
+Du kannst den Texteditor deiner Wahl verwenden. In diesem Beispiel werden wir nano benutzen. Um die fstab-Datei zu bearbeiten, muss sie als Root geöffnet werden:
+
+```sh
+sudo nano /etc/fstab
+```
+
+Navigiere mit den Pfeiltasten zum Ende der fstab-Datei und erstelle dann unseren neuen Eintrag in einer leeren neuen Zeile:
+
+```sh
+UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000 0 0
+```
+
+Die Aufschlüsselung dieses Eintrags ist wie folgt:
+
+- `UUID=08A24E90A24E81E4` ist das Dateisystem, das wir einbinden wollen, identifiziert durch seine UUID. Es gibt andere Methoden, um dein Dateisystem zu identifizieren, obwohl die UUID in der Regel die sicherste ist. Weitere Methoden sind [hier](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems) aufgeführt.
+
+- `/media/windows` ist der Einhängepunkt unseres Laufwerks. Der [Linux Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html) besagt, dass `/media/` der richtige Ort für das Einhängen von Wechseldatenträgern ist. `windows` bezeichnet das Verzeichnis, in das wir unser Laufwerk einbinden möchten. Jedes Laufwerk, das wir einbinden wollen, benötigt ein eigenes Verzeichnis.
+
+- `ntfs3` ist der zu verwendende Dateisystemtyp. In unserem Beispiel verwenden wir explizit den ntfs3-Kernel-Treiber. Andere Beispiele wären `ext4`, `xfs` oder ähnliche. Diese explizite Angabe des Dateisystemtyps kann durch `auto` ersetzt werden, damit der mount-Befehl seine beste Einschätzung trifft.
+
+- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000`: Dies sind die Einhängeoptionen:
+
+  - `defaults`: ein Standardsatz von Optionen, einschließlich `rw, suid, dev, exec, auto, nouser und async.`
+
+  - `nofail`: ermöglicht, dass der Bootvorgang auch dann fortgesetzt wird, wenn dieses Einhängen fehlschlägt.
+
+  - `uid=1000` und `gid=1000`: legt den Benutzer- und Gruppenbesitz der eingebundenen Dateien auf den Benutzer und die Gruppe mit der ID 1000 fest.
+
+  - `rw`: bindet das Dateisystem mit Lese- und Schreibzugriff ein.
+
+  - `user`: erlaubt einem Nicht-Root-Benutzer, das Dateisystem einzubinden.
+
+  - `exec`: erlaubt die Ausführung von Binärdateien auf dem eingebundenen Dateisystem.
+
+  - `umask=000`: setzt die Dateiberechtigungsmaske, um Lese-, Schreib- und Ausführungsberechtigungen für alle zu erlauben.
+
+  - `die erste 0` dump ist in modernen Systemen typischerweise veraltet. Dies auf 0 zu belassen, schadet nicht. Fühl dich frei, mehr darüber [hier](https://linux.die.net/man/8/dump) zu lesen.
+
+  - `die zweite 0` legt die Reihenfolge für Dateisystemprüfungen beim Systemstart fest. Für eine Root-Partition sollte dies 1 sein, es sei denn, dein Root-Dateisystem ist btrfs, welches ansonsten auf 0 gesetzt werden sollte. Alle anderen Dateisysteme in deiner fstab sollten entweder 0 (deaktiviert) oder 2 sein. Weitere Informationen [hier](https://man.archlinux.org/man/fsck.8).
+
+Für einen detaillierteren Blick auf jede Option, besuche diese beiden [fstab man page](https://man7.org/linux/man-pages/man5/fstab.5.html) und [mount man page](https://man7.org/linux/man-pages/man8/mount.8.html)
+
+#### Weitere Infos
+
+Nebenbei bemerkt sind alle Optionen nach der Angabe des Dateisystemtyps optional, wenn du sie nicht vom Standard abändern willst.
+
+Somit sind
+
+`UUID=<Partitions-UUID> /media/foo somefs`
+
+und
+
+`UUID=<Partitions-UUID> /media/foo somefs defaults 0 0`
+
+äquivalent. `somefs` ohne weitere Angaben ist implizit `somefs defaults 0 0`.
+
+### 4. Abschluss
+
+Wenn du das Laufwerk, für das du einen Eintrag erstellt hast, jetzt einbinden möchtest, musst du Folgendes ausführen:
+
+```sh
+sudo systemctl daemon-reload
+```
+
+und dann:
+
+```sh
+sudo mount -a
+```
+
+Dein Laufwerk sollte nun unter `/media/windows` erscheinen und wird dort bei jedem Neustart angezeigt.
+
+```sh
+ls /media/windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+# 'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
+ ```
+
+ Wenn du einen Link zu deinem neu eingebundenen Laufwerk in deinem Home-Verzeichnis erstellen möchtest, kannst du Folgendes ausführen:
+
+ ```sh
+ ln -s /media/windows ~/Windows
+ ```
+
+ Um zu zeigen, dass es funktioniert hat:
+
+ ```sh
+ ls ~/Windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+#'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
+ ```
+
+## tl;dr
+
+- Finde die **UUID** deiner Partition
+
+```sh
+lsblk -f
+```
+
+- Öffne `/etc/fstab`
+
+```sh
+sudo nano /etc/fstab
+```
+
+- Erstelle einen Eintrag am Ende der Datei
+
+```sh
+UUID=<Partitions-UUID> /media/foo somefs defaults 0 0
+```
+
+Ersetze `<Partitions-UUID>`, `foo` und `somefs` durch deine UUID, dein Verzeichnis und dein Dateisystem, z.B. ext4, und lege alle weiteren gewünschten Optionen nach defaults fest, wie z.B. `_netdev` für ein NAS oder `nofail` für jedes nicht-kritische Laufwerk.
+
+- Lade deinen Daemon neu
+
+```sh
+sudo systemctl daemon-reload
+```
+
+- Binde dein Laufwerk ein
+
+```sh
+sudo mount -a
+```
+
+Dieses Laufwerk ist jetzt eingebunden und wird von nun an auch bei jedem Systemstart eingebunden.
+
+## Zusätzliche Lektüre
+
+- [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS zu /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Handbuch für dump](<https://linux.die.net/man/8/dump>)
+- [Handbuch für fsck](https://man.archlinux.org/man/fsck.8)
+- [Manpage für fstab](https://man.archlinux.org/man/fstab.5.en)
+- [Arch Linux Wiki-Eintrag für fstab](https://wiki.archlinux.org/title/Fstab)

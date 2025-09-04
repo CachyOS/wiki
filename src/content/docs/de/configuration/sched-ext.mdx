@@ -3,269 +3,473 @@ title: sched-ext Tutorial
 description: Tutorial zur Verwendung des Frameworks und sonstige Informationen
 ---
 
-import { Steps } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Icon } from '@astrojs/starlight/components';
 
-Die erweiterbare Scheduler-Klasse, besser bekannt als `sched-ext`, ist eine Linux-Kernel-Funktion, die es ermöglicht, Kernel-Thread-Scheduler in
+Die Extensible Scheduler Class (besser bekannt als `sched-ext`) ist eine Funktion des Linux-Kernels, die es ermöglicht, Kernel-Thread-Scheduler in
 BPF (Berkeley Packet Filter) zu implementieren und dynamisch zu laden. Im Wesentlichen ermöglicht dies Endbenutzern, ihre Scheduler im Userspace zu ändern, ohne
-einen anderen Kernel erstellen zu müssen, nur um einen anderen Scheduler zu haben.
+einen neuen Kernel kompilieren zu müssen, nur um einen anderen Scheduler zu verwenden.
 
-## Methoden zum Starten und Verwalten von Schedulern
-
-- **Die Scheduler befinden sich im Paket `scx-scheds` und `scx-scheds-git`.**
+- *Die Scheduler sind in den Paketen `scx-scheds` und `scx-scheds-git` zu finden.*
   ```sh
   # Stabiler Zweig
   sudo pacman -S scx-scheds
 
-  # Bleeding-Edge-Zweig (Dieser Zweig enthält die neuesten Änderungen
+  # „Bleeding edge“-Zweig (Dieser Zweig enthält die neuesten Änderungen
   # und kann einen Scheduler enthalten, der noch nicht veröffentlicht wurde.)
   sudo pacman -S scx-scheds-git
   ```
 
-### Starten des Schedulers im Terminal
+## Wie man den Scheduler startet und verwaltet
 
-- *Um den Scheduler zu starten, öffnen Sie Ihr Terminal und geben Sie den folgenden Befehl ein:*
-  ```sh title='Beispiel für den Start von rusty'
+<Tabs>
+
+<TabItem label='Terminal'>
+
+- *Um den Scheduler zu starten, öffne dein Terminal und gib den folgenden Befehl ein:*
+  ```sh title='Beispiel zum Starten von rusty'
   sudo scx_rusty
   ```
 
-*Dadurch wird der rusty-Scheduler gestartet und der Standard-Scheduler getrennt.*
+*Dadurch wird der rusty-Scheduler gestartet und der Standard-Scheduler deaktiviert.*
 
-Um den Scheduler zu stoppen, drücken Sie `STRG + C`. Der Scheduler wird dann gestoppt und der Standard-Kernel-Scheduler übernimmt wieder.
+Um den Scheduler zu stoppen, drücke `STRG + C`. Der Scheduler wird dann angehalten und der Standard-Kernel-Scheduler übernimmt wieder die Kontrolle.
 
-### Systemd-Dienst
+</TabItem>
 
-:::note
-Dieser Dienst wird veraltet sein und durch den **[scx_loader](https://github.com/sched-ext/scx/tree/main/rust/scx_loader)** ersetzt.
+<TabItem label='scxctl'>
+
+:::note[In den Paketen `scx-scheds` und `scx-scheds-git` enthalten]
 :::
 
-Das scx-Paket enthält einen Systemd-Dienst, der die in der Datei `/etc/default/scx` angegebene Konfiguration verwendet.
+`scxctl` ist ein CLI-DBUS-Client zur Interaktion mit `scx_loader`.
 
-In dieser Konfigurationsdatei können Sie den Scheduler angeben, den der Dienst startet, und optional benutzerdefinierte Flags für den gewünschten Scheduler hinzufügen.
+- Merkmale:
+  - Aktuellen Scheduler und Modus abrufen
+  - Alle verfügbaren Scheduler auflisten
+  - Einen Scheduler in einem bestimmten Modus oder mit bestimmten Argumenten starten
+  - Zwischen Schedulern und Modi wechseln
+  - Den laufenden Scheduler stoppen
+  - Den laufenden Scheduler neu starten
 
-- **Wenn Sie den vom Dienst gestarteten Scheduler ändern möchten, ändern Sie einfach die Zeile `SCX_SCHEDULER=` in den Scheduler, den Sie standardmäßig starten möchten.**
+```sh
+$ scxctl --help
+Usage: scxctl <COMMAND>
 
-  - ```sh title='Beispiel'
-    SCX_SCHEDULER=scx_lavd
-    ```
+Commands:
+  get     Get the current scheduler and mode
+  list    List all supported schedulers
+  start   Start a scheduler in a mode or with arguments
+  switch  Switch schedulers or modes, optionally with arguments
+  stop    Stop the current scheduler
+  restart Restart the current scheduler with original configuration
+  help    Print this message or the help of the given subcommand(s)
 
-- **Hinzufügen von Flags**
-  - Entfernen Sie die Auskommentierung von `SCX_FLAGS` und fügen Sie die gewünschten Flags hinzu.
-    ```sh title='Beispiel'
-    SCX_FLAGS='--performance'
-    ```
-
-*Jetzt können Sie den Scheduler wie jeden anderen Systemd-Dienst starten/aktivieren/stoppen.*
-
-**Eine kurze Anleitung zur Verwaltung finden Sie unten.**
-
-```sh title='Aktivieren und Starten des Systemd-Dienstes'
-sudo systemctl enable --now scx
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
 ```
 
-```sh title='Ausführen des Schedulers einmalig über den Systemd-Dienst'
-sudo systemctl start scx
-```
+    <Tabs>
+        <TabItem label='Einen Scheduler starten'>
+          ```sh title='scx_flash im Gaming-Modus starten'
+          scxctl start --sched flash --mode gaming
+          ```
+        </TabItem>
+        <TabItem label='Einen Scheduler stoppen'>
+          ```sh title='Den aktuell laufenden Scheduler stoppen'
+          scxctl stop
+          ```
+        </TabItem>
+        <TabItem label='Scheduler wechseln'>
+          ```sh title='Zu scx_bpfland im Gaming-Modus wechseln'
+          scxctl switch --sched bpfland --mode gaming
+          ```
+        </TabItem>
+        <TabItem label='Starten & Wechseln mit benutzerdefinierten Argumenten'>
+          ```sh title='scx_rustland mit benutzerdefinierten Argumenten starten'
+          scxctl start --sched rustland --args="-m performance -w"
+          ```
+          ```sh title='Zu scx_lavd mit benutzerdefinierten Argumenten wechseln'
+          scxctl switch --sched lavd --args="--performance"
+          ```
+        </TabItem>
+    </Tabs>
 
-```sh title='Stoppen des SCX-Schedulers über den Systemd-Dienst'
-sudo systemctl stop scx
-```
+</TabItem>
 
-*Weitere Informationen zu diesem Dienst: [Sched-ext systemd service](<https://github.com/sched-ext/scx/blob/main/services/README.md>)*
+<TabItem label='scx_loader'>
 
-### [scx_loader](https://github.com/sched-ext/scx/tree/main/rust/scx_loader)
+*Wie der Name schon sagt, handelt es sich um ein Dienstprogramm, das als Lader und Verwalter für das sched-ext-Framework über die D-Bus-Schnittstelle fungiert.*
 
-*Wie der Name schon sagt, ist dies ein Hilfsprogramm, das als Loader und Manager für das sched-ext-Framework über die D-Bus-Schnittstelle fungiert.*
+*Obwohl es systemd nicht erfordert, kann es dennoch in Verbindung damit verwendet werden.* [Siehe die Übergangsanleitung als Referenz](/de/configuration/sched-ext#umstieg-von-scxservice-auf-scx_loader-eine-umfassende-anleitung).
 
-*Es benötigt zwar kein systemd, kann aber dennoch in Verbindung damit verwendet werden.* [Eine Referenz finden Sie im Übergangsleitfaden](/de/configuration/sched-ext#übergang-von-scxservice-zu-scx_loader-ein-umfassender-leitfaden))
-
-- **Hat die Möglichkeit, einen scx-Scheduler zu stoppen, zu starten, neu zu starten, Informationen darüber zu lesen und vieles mehr.**
-  - *Sie können Tools wie `dbus-send` oder `gdbus` verwenden, um mit ihm zu kommunizieren.*
-- **Dieser Leitfaden erklärt, wie man scx_loader mit dem dbus-send-Befehl verwendet.**
-  - ```sh title='Starten von scx_rusty mit seinen Standardargumenten'
+- Hat die Fähigkeit, einen scx-Scheduler zu stoppen, zu starten, neu zu starten, Informationen darüber zu lesen und mehr.
+  - *Du kannst Werkzeuge wie `dbus-send` oder `gdbus` verwenden, um damit zu kommunizieren.*
+- Diese Anleitung erklärt, wie man scx_loader mit dem Befehl dbus-send verwendet.
+  - ```sh title='scx_rusty mit seinen Standardargumenten starten'
     dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartScheduler string:scx_rusty uint32:0
     ```
-  - ```sh title='Starten eines Schedulers mit Argumenten'
+  - ```sh title='Einen Scheduler mit Argumenten starten'
     # Dieses Beispiel startet scx_bpfland mit den folgenden Flags: -k -c 0
     dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
     ```
-  - ```sh title='Stoppen des aktuell laufenden Schedulers'
+  - ```sh title='Den aktuell laufenden Scheduler stoppen'
     dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StopScheduler
     ```
-  - ```sh title='Wechseln zu einem anderen Scheduler im Modus 2'
+  - ```sh title='Zu einem anderen Scheduler im Modus 2 wechseln'
     dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchScheduler string:scx_lavd uint32:2
-    # Dies wechselt zu scx_lavd mit dem Scheduler-Modus 2, was bedeutet, dass LAVD im Energiesparmodus gestartet wird
+    # Dies wechselt zu scx_lavd im Scheduler-Modus 2, was bedeutet, dass LAVD im Energiesparmodus gestartet wird
     ```
-  - ```sh title='Wechseln zu einem anderen Scheduler mit Argumenten'
+  - ```sh title='Zu einem anderen Scheduler mit Argumenten wechseln'
     dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
     ```
-  - ```sh title='Abrufen des aktuell laufenden Schedulers'
+  - ```sh title='Den aktuell laufenden Scheduler abrufen'
     dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:CurrentScheduler
     ```
-  - ```sh title='Abrufen einer Liste der unterstützten Scheduler'
+  - ```sh title='Eine Liste der unterstützten Scheduler abrufen'
     dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:SupportedSchedulers
     ```
 :::tip
-Hier ist eine Erklärung, was jeder Modus in scx_loader bedeutet.
+Hier ist eine Erklärung, was jeder Modus in scx_loader bedeutet:
 
-- **Modus 0** = `Standard-Scheduler-Flags`
-- **Modus 1** = `Gaming`
-- **Modus 2** = `Energiesparen`
-- **Modus 3** = `Geringe Latenz`
-- **Modus 4** = `Server` *Derzeit nur für bpfland verfügbar*
+- Modus 0 = `Standard-Scheduler-Flags`
+- Modus 1 = `Gaming`
+- Modus 2 = `Energiesparen`
+- Modus 3 = `Niedrige Latenz`
+- Modus 4 = `Server`
 
-Beispiel: LAVD im Modus 1 entspricht `scx_lavd --performance`
+Beispiel: LAVD im Modus 1 ist das Äquivalent zu `scx_lavd --performance`
 
-*TLDR: Jeder Modus ist ein Satz verschiedener Flags, die die beabsichtigte Verwendung verbessern sollen.*
+*TLDR: Jeder Modus ist eine Sammlung verschiedener Flags, die dazu gedacht sind, den jeweiligen Anwendungsfall zu verbessern.*
 
-[Für einen detaillierteren Einblick, was diese Modi bei jedem Scheduler ändern](https://github.com/sched-ext/scx/blob/main/rust/scx_loader/src/config.rs#L175)
+[Für einen genaueren Einblick, was diese Modi bei jedem Scheduler ändern](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/src/config.rs#L174>)
 :::
 
-### CachyOS Kernel Manager
+</TabItem>
 
-**Auf die scx-Scheduler kann über den brandneuen [scx_loader](/de/features/kernel_manager#sched-ext-framework-verwaltung) zugegriffen und konfiguriert werden.**
+<TabItem label='CachyOS Kernel Manager'>
 
-## Einführung in die wichtigsten Scheduler
+Auf die scx-Scheduler kann über den [scx_loader](/de/features/kernel_manager#sched-ext-framework-verwaltung) zugegriffen und konfiguriert werden.
 
-Da es viele Scheduler zur Auswahl gibt, möchten wir eine kleine Einführung in die vorhandenen Scheduler geben.
+</TabItem>
+
+</Tabs>
+
+## Verfügbare Scheduler und Anwendungsfälle
+
+Da es viele Scheduler zur Auswahl gibt, möchten wir eine kleine Einführung zu den verfügbaren Schedulern geben.
 
 :::note
-Diese Scheduler werden ständig weiterentwickelt und getestet, daher sind einige ihrer Funktionen/Flags Änderungen vorbehalten.
+Diese Scheduler werden ständig weiterentwickelt und getestet. Erwarte also, dass sich einige ihrer Funktionen/Flags ändern können.
 :::
 
-Sie können jedes Problem oder Feedback an ihr unten referenziertes [GitHub](/de/configuration/sched-ext#github) melden.
+Fühl dich frei, Probleme oder Feedback in deren Scheduler-Repository zu melden.
+
+**Verwende scx_schedulername --help, um die verfügbaren Flags für jeden Scheduler anzuzeigen.**
+- Beispiel:
+  ```sh title='Beispiel zum Abrufen der Hilfe für scx_rusty'
+  scx_rusty --help
+  ```
 
 ### [scx_bpfland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_bpfland>)
 
 **Entwickelt von: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
 
+Produktionsreif? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
 Ein vruntime-basierter sched_ext-Scheduler, der interaktive Workloads priorisiert. Sehr flexibel und einfach anzupassen.
 
-Bpfland berücksichtigt bei der Entscheidung, welche Kerne verwendet werden sollen, ihr Cache-Layout und welche Kerne denselben L2/L3-Cache gemeinsam nutzen, was zu weniger Cache-Fehlern = mehr Leistung führt.
+Wenn Bpfland entscheidet, welche Kerne verwendet werden sollen, berücksichtigt es deren Cache-Layout und welche Kerne denselben L2/L3-Cache teilen, was zu weniger Cache-Misses und somit zu mehr Leistung führt.
 
-**Anwendungsfälle:**
+- Anwendungsfälle:
+  - Gaming
+  - Desktop-Nutzung
+  - Multimedia-/Audioproduktion
+  - Hohe Interaktivität unter intensiven Arbeitslasten
+  - Energiesparen
+  - Server
 
-- Gaming
-- Desktop-Nutzung
-- Multimedia-/Audioproduktion
-- Große Interaktivität unter intensiven Workloads
-- Energiesparen
-- Server-Workloads
+- **Eine Reihe von Flags für einige Anwendungsfälle von Andrea Righi:**
+
+**Niedrige Latenz**
+* **Kommandozeilen-Flags:** `-s 5000 -S 500 -l 5000 -m performance`
+* **Beschreibung:** Soll die Latenz auf Kosten des Durchsatzes verringern. Geeignet für Soft-Echtzeitanwendungen wie Audioverarbeitung und Multimedia.
+
+**Gaming**
+* **Kommandozeilen-Flags:** `-m performance`
+* **Beschreibung:** Optimiert die Leistungskonsistenz in Spielen auf Systemen mit Hybrid-Kernen. Priorisiert P-Kerne gegenüber E-Kernen bei Intel-CPUs und CCDs bei Ryzen-X3D-CPUs.
+
+**Energiesparen**
+* **Kommandozeilen-Flags:** `-m powersave`
+* **Beschreibung:** Priorisiert die Energieeffizienz. Bevorzugt weniger leistungsfähige Kerne (z. B. E-Kerne bei Intel).
+
+**Server**
+* **Kommandozeilen-Flags:** `-p`
+* **Beschreibung:** Priorisiert Aufgaben mit strikter Affinität. Diese Option kann den Durchsatz auf Kosten der Latenz erhöhen und eignet sich besser für Server-Workloads.
+
+### [scx_rustland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland>)
+
+**Entwickelt von: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+- Produktionsreif? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+
+  - Für leistungskritische Produktionsszenarien werden andere Scheduler wahrscheinlich eine bessere Leistung aufweisen, da das Auslagern aller Scheduling-Entscheidungen in den User-Space mit einem gewissen Aufwand verbunden ist (auch wenn dieser minimal ist).
+
+  - Ein vollständig im User-Space implementierter Scheduler birgt jedoch das Potenzial für eine nahtlose Integration mit anspruchsvollen Bibliotheken, Tracing-Tools, externen Diensten (z. B. KI) usw.
+
+  - Daher kann es Situationen geben, in denen die Vorteile den Overhead überwiegen und den Einsatz dieses Schedulers in einer Produktionsumgebung rechtfertigen.
+
+Teilt Ähnlichkeiten mit bpfland. Wurde mit der Absicht entwickelt, leicht lesbar und verständlich zu sein, wie er funktioniert, aufgrund seiner Implementierung im Userspace.
+
+Beachte, dass bei der Verwendung eines Userspace-Schedulers ein leichter Durchsatznachteil besteht. Obwohl Rustland die Möglichkeit der nahtlosen Integration mit anspruchsvollen Bibliotheken, Tracing-Tools, externen Diensten (z. B. KI) usw. bietet.
+
+- Anwendungsfälle:
+  - Workloads mit niedriger Latenz (Gaming, Videokonferenzen und Live-Streaming)
+  - Desktop-Nutzung
+
 
 ### [scx_flash](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_flash>)
 
 **Entwickelt von: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
 
-Ein Scheduler, der sich darauf konzentriert, Fairness zwischen Aufgaben und Leistungsvorhersagbarkeit zu gewährleisten. Dieser Scheduler wird als Ersatz für den "lowlatency"-Modus in scx_bpfland eingeführt.
+- Produktionsreif? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
 
-**Anwendungsfälle:**
+Ein Scheduler, der sich auf die Gewährleistung von Fairness zwischen Aufgaben und Vorhersagbarkeit der Leistung konzentriert.
 
-- Gaming
-- Latenzempfindliche Workloads wie Multimedia- oder Echtzeit-Audioverarbeitung
-- Bedarf an Reaktionsfähigkeit in überlasteten Situationen
-- Konsistenz in der Leistung
+- Anwendungsfälle:
+  - Gaming
+  - Latenzempfindliche Workloads wie Multimedia- oder Echtzeit-Audioverarbeitung
+  - Bedarf an Reaktionsfähigkeit in überlasteten Situationen
+  - Konsistenz in der Leistung
+  - Server
+
+- **Eine Reihe von Flags für einige der von Andrea Righi empfohlenen Anwendungsfälle:**
+
+**Niedrige Latenz**
+* **Kommandozeilen-Flags:** `-m performance -w -C 0`
+* **Beschreibung:** Soll die Latenz auf Kosten des Durchsatzes verringern. Geeignet für Soft-Echtzeitanwendungen wie Audioverarbeitung und Multimedia.
+
+**Gaming**
+* **Kommandozeilen-Flags:** `-m all`
+* **Beschreibung:** Optimiert für hohe Leistung in Spielen.
+
+**Energiesparen**
+* **Kommandozeilen-Flags:** `-m powersave -I 10000 -t 10000 -s 10000 -S 1000`
+* **Beschreibung:** Priorisiert die Energieeffizienz. Bevorzugt weniger leistungsfähige Kerne (z. B. E-Kerne bei Intel) und führt alle 10 ms einen erzwungenen Leerlaufzyklus ein, um die Energieeinsparung zu erhöhen.
+
+**Server**
+* **Kommandozeilen-Flags:** `-m all -s 20000 -S 1000 -I -1 -D -L`
+* **Beschreibung:** Abgestimmt für Server-Workloads. Tauscht Reaktionsfähigkeit gegen Durchsatz.
+
+### [scx_cosmos](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cosmos)
+
+**Entwickelt von: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+- Produktionsreif? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Leichter Scheduler, der für die Beibehaltung der Task-zu-CPU-Lokalität optimiert ist.
+
+Wenn das System nicht ausgelastet ist, priorisiert der Scheduler das Halten von Aufgaben auf derselben CPU unter Verwendung lokaler DSQs. Dies erhält nicht nur die Lokalität, sondern reduziert auch den Sperrkonflikt im Vergleich zu gemeinsam genutzten DSQs, was eine gute Skalierbarkeit über viele CPUs hinweg ermöglicht.
+
+- Anwendungsfälle:
+  - Allzweck-Scheduler: Der Scheduler sollte sich sowohl für Server- als auch für Desktop-Workloads anpassen.
+
+- **Eine Reihe von Flags für einige der von Andrea Righi empfohlenen Anwendungsfälle:**
+
+**Gaming**
+* **Kommandozeilen-Flags:** `-c 0 -p 0`
+* **Beschreibung:** Deaktiviert die CPU-Lastverfolgung und erzwingt immer ein deadline-basiertes Scheduling, um die Reaktionsfähigkeit zu verbessern.
+
+**Energiesparen**
+* **Kommandozeilen-Flags:** `-m powersave -d -p 5000`
+* **Beschreibung:** Priorisiert die Energieeffizienz. Bevorzugt weniger leistungsfähige Kerne (z. B. E-Kerne bei Intel) und deaktiviert verzögerte Wakeups, was den Durchsatz reduziert, aber die Energieeffizienz erhöht. Die CPU-Lastabfrage wird auf 5 ms erhöht.
+
+**Niedrige Latenz**
+* **Kommandozeilen-Flags:** `-m performance -c 0 -p 0 -w`
+* **Beschreibung:** Soll die Latenz auf Kosten des Durchsatzes verringern. Geeignet für Soft-Echtzeitanwendungen wie Audioverarbeitung und Multimedia. Erzwingt immer ein deadline-basiertes Scheduling und synchrone Wake-Up-Optimierungen, um die Leistungsvorhersagbarkeit zu verbessern.
+
+**Server**
+* **Kommandozeilen-Flags:** `-a -s 20000`
+* **Beschreibung:** Aktiviert die Adressraumaffinität, um die Lokalität und Leistung bei bestimmten cache-sensitiven Workloads zu verbessern. Die Abfrage wird auf 20 ms erhöht.
 
 ### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>)
 
 **Entwickelt von: Changwoo Min (multics69 [GitHub](<https://github.com/multics69>)).**
 
-**Kurze Einführung in LAVD von Changwoo:**
+- Produktionsreif? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
 
-***LAVD ist ein neuer Scheduling-Algorithmus, der sich noch in der Entwicklung befindet. Er ist
+Kurze Einführung in LAVD von Changwoo:
+
+*LAVD ist ein neuer Scheduling-Algorithmus, der sich noch in der Entwicklung befindet. Er ist
 motiviert durch Gaming-Workloads, die latenzkritisch und
-kommunikationsintensiv sind. Er zielt darauf ab, Latenzspitzen zu minimieren und gleichzeitig
-einen insgesamt guten Durchsatz und eine faire Nutzung der CPU-Zeit zwischen den Aufgaben aufrechtzuerhalten.***
+kommunikationsintensiv sind. Er zielt darauf ab, Latenzspitzen zu minimieren, während
+ein insgesamt guter Durchsatz und eine faire Nutzung der CPU-Zeit zwischen den Aufgaben aufrechterhalten werden.*
 
-**Anwendungsfälle:**
+- Anwendungsfälle:
+  - Gaming
+  - Audioproduktion
+  - Latenzempfindliche Workloads
+  - Desktop-Nutzung
+  - Hohe Interaktivität unter intensiven Arbeitslasten
+  - Energiesparen
 
-- Gaming
-- Audioproduktion
-- Latenzempfindliche Workloads
-- Desktop-Nutzung
-- Große Interaktivität unter intensiven Workloads
-- Energiesparen
+Eine der wichtigsten und beeindruckendsten Fähigkeiten von LAVD ist die **Kern-Kompaktierung**, was, ohne auf technische Details einzugehen, bedeutet: Wenn die CPU-Auslastung < 50 % ist, laufen die aktuell aktiven Kerne länger und mit einer höheren Frequenz. In der Zwischenzeit bleiben die inaktiven Kerne viel länger im C-State (Schlafmodus), was zu einem geringeren Gesamtstromverbrauch führt.
 
-Eine der wichtigsten und großartigsten Fähigkeiten von LAVD ist **Core Compaction**, was, ohne auf technische Details einzugehen, Folgendes bedeutet: Wenn die CPU-Auslastung < 50 % beträgt, laufen die aktuell aktiven Kerne länger und mit einer höheren Frequenz. In der Zwischenzeit bleiben die inaktiven Kerne für eine viel längere Zeit im C-Zustand (Schlaf), wodurch ein geringerer Gesamtstromverbrauch erzielt wird.
+- **Eine Reihe von Flags für einige der von Changwoo Min empfohlenen Anwendungsfälle:**
+
+**Gaming & Niedrige Latenz**
+* **Kommandozeilen-Flags:** `--performance`
+* **Beschreibung:** Maximiert die Leistung durch Nutzung aller verfügbaren Kerne, wobei physische Kerne priorisiert werden.
+
+**Energiesparen**
+* **Kommandozeilen-Flags:** `--powersave`
+* **Beschreibung:** Minimiert den Stromverbrauch bei angemessener Leistung. Priorisiert effiziente Kerne und Threads gegenüber physischen Kernen.
 
 ### [scx_rusty](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rusty>)
 
 **Entwickelt von: David Vernet (Byte-Lab [GitHub](<https://github.com/Byte-Lab>))**
 
-Rusty bietet eine breite Palette von Funktionen, die seine Fähigkeiten erweitern und mehr Flexibilität für verschiedene Anwendungsfälle bieten.
-Eine dieser Funktionen ist die Anpassbarkeit, mit der Sie Rusty an Ihre Vorlieben und spezifischen Anforderungen anpassen können.
+- Produktionsreif? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+  - Ja. Wenn er richtig abgestimmt ist.
 
-**Anwendungsfälle:**
+Rusty bietet eine breite Palette von Funktionen, die seine Fähigkeiten erweitern und eine größere Flexibilität für verschiedene Anwendungsfälle bieten.
+Eine dieser Funktionen ist die Abstimmbarkeit, mit der du Rusty an deine Vorlieben und spezifischen Anforderungen anpassen kannst.
 
-- Gaming
-- Latenzempfindliche Workloads
-- Desktop-Nutzung
-- Multimedia-/Audioproduktion
-- Latenzempfindliche Workloads
-- Große Interaktivität unter intensiven Workloads
-- Energiesparen
+- Anwendungsfälle:
+  - Gaming
+  - Latenzempfindliche Workloads
+  - Desktop-Nutzung
+  - Multimedia-/Audioproduktion
+  - Hohe Interaktivität unter intensiven Arbeitslasten
+  - Energiesparen
 
-Für einen detaillierteren Einblick, was für Rusty angepasst werden kann. Sehen Sie sich die Hilfeseite an
+### [scx_p2dq](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_p2dq>)
 
-```text
-scx_rusty --help
-```
+- Produktionsreif? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+  - Ja. Wenn er für deine spezifische Arbeitslast und Hardware richtig abgestimmt ist.
+
+**Entwickelt von: Daniel Hodges (hodgesds [GitHub](<https://github.com/hodgesds>))**
+
+Ein Allzweck-Scheduler, der sich auf „Pick-Two“-Lastverteilung zwischen
+LLCs konzentriert. Hält eine hohe Cache-Lokalität und Arbeitserhaltung bei, während
+er eine angemessene Latenz bietet.
+
+- Anwendungsfälle:
+  - Server *(Erfordert [server_mode](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/configuration.md#configuration-structure>) mit scx_loader)*
+  - Desktop-Umgebungen
+  - Gaming (mit etwas manueller Abstimmung)
+
+- **Eine Reihe von Flags für einige der von Daniel Hodges empfohlenen Anwendungsfälle:**
+
+**Gaming**
+* **Kommandozeilen-Flags:** `--task-slice true -f --sched-mode performance`
+* **Beschreibung:** Verbessert die Konsistenz der Gaming-Leistung und erhöht die Tendenz, Aufgaben auf leistungsstärkeren Kernen zu planen.
+
+**Niedrige Latenz**
+* **Kommandozeilen-Flags:** `-y -f --task-slice true`
+* **Beschreibung:** Verringert die Latenz, indem interaktive Aufgaben stärker an der ihnen zugewiesenen CPU haften bleiben und die Stabilität der Zeitscheiben erhöht wird.
+
+**Energiesparen**
+* **Kommandozeilen-Flags:** `--sched-mode efficiency`
+* **Beschreibung:** Verbessert die Energieeffizienz durch Priorisierung energieeffizienter Kerne.
+
+**Server**
+* **Kommandozeilen-Flags:** `--keep-running`
+* **Beschreibung:** Verbessert Server-Workloads, indem Aufgaben über ihre Zeitscheibe hinaus laufen können, wenn die CPU im Leerlauf ist.
+
+### [scx_tickless](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_tickless>)
+
+**Entwickelt von: Andrea Righi (arighi [Github](<https://github.com/arighi>))**
+
+- Produktionsreif? <Icon name="close" color="var(--sl-color-text-accent)" size="2rem" />
+  - Dieser Scheduler ist noch experimentell und wird nicht für den Produktionseinsatz empfohlen.
+
+:::note
+Um Ticks auf den "tickless" CPUs effektiv zu deaktivieren, muss der Kernel mit `nohz_full` gebootet werden. Beachte, dass `nohz_full` einen Syscall-Overhead mit sich bringt, was bei latenzempfindlichen Workloads zu Leistungseinbußen führen kann.
+:::
+
+scx_tickless ist ein serverorientierter Scheduler, der für Cloud-Computing, Virtualisierung und High-Performance-Computing-Workloads entwickelt wurde.
+
+Der Scheduler leitet alle Scheduling-Ereignisse über einen Pool von primären CPUs, die für die Verarbeitung dieser Ereignisse zuständig sind. Dies ermöglicht die Deaktivierung des Scheduler-Ticks auf anderen CPUs, wodurch das OS-Rauschen reduziert wird.
+
+- Anwendungsfälle:
+  - Cloud-Computing
+  - Virtualisierung
+  - High-Performance-Computing-Workloads
+  - Server
+
+- **Empfohlene Flags für einige Anwendungsfälle von Andrea Righi:**
+
+**Gaming**
+* **Kommandozeilen-Flags:** `-f 5000 -s 5000`
+* **Beschreibung:** Verbessert die Gaming-Leistung, indem die Häufigkeit, mit der der Scheduler CPU-Konflikte erkennt, erhöht wird und Kontextwechsel mit einer kürzeren Zeitscheibe ausgelöst werden.
+
+**Energiesparen**
+* **Kommandozeilen-Flags:** `-f 50 -p`
+* **Beschreibung:** Steigert die Energieeffizienz, indem Konfliktprüfungen reduziert werden und aggressiv versucht wird, Aufgaben auf derselben CPU zu halten.
+
+**Niedrige Latenz**
+* **Kommandozeilen-Flags:** `-f 5000 -s 1000`
+* **Beschreibung:** Ähnlich wie das Gaming-Profil, aber mit einer weiter reduzierten Zeitscheibe.
+
+**Server**
+* **Kommandozeilen-Flags:** `-f 100`
+* **Beschreibung:** Reduziert die Häufigkeit, mit der der Scheduler auf CPU-Konflikte prüft, um den Durchsatz auf Kosten der Reaktionsfähigkeit zu verbessern.
 
 ## Allgemeine Empfehlungen
 
 ### LAVD Autopilot & Autopower
 
-***Zitate von Changwoo Min:***
-- **Im Autopilot-Modus passt der Scheduler seinen Leistungsmodus `Powersave, Balanced oder Performance` basierend auf der Systemlast, insbesondere der CPU-Auslastung, an.**
+*Zitate von Changwoo Min:*
+- Im Autopilot-Modus passt der Scheduler seinen Energiemodus (`Powersave, Balanced oder Performance`) basierend auf der Systemlast an, insbesondere der CPU-Auslastung.
 
-- **Autopower: Entscheidet automatisch den Leistungsmodus des Schedulers basierend auf dem Energieprofil des Systems, auch bekannt als EPP (Energy Performance Preference).**
-
-:::note
-LAVD aktiviert jetzt standardmäßig den Autopiloten.
-:::
+- Autopower: Entscheidet automatisch über den Energiemodus des Schedulers basierend auf dem Energieprofil des Systems, auch bekannt als EPP (Energy Performance Preference).
 
 ```sh
-# Autopower kann durch das folgende Flag aktiviert werden:
+# Autopower kann mit dem folgenden Flag aktiviert werden:
 --autopower
 # z.B.:
 scx_lavd --autopower
 ```
 
-### Deaktivieren von ananicy-cpp
+### Deaktiviere ananicy-cpp
 
 :::caution
-Bei Verwendung eines der Scheduler aus dem sched-ext-Framework wird dringend empfohlen, ananicy-cpp zu deaktivieren und nicht zu verwenden, da es zu möglichen Konflikten kommt, da es die Prioritätslücke verstärkt, die der Scheduler bereits durch die Erhöhung interaktiver Aufgaben erstellt/behandelt, wodurch eine übermäßige Priorisierung anderer Aufgaben verursacht wird, wodurch die Wahrscheinlichkeit erhöht wird, dass das sched_ext-Watchdog-Timeout ausgelöst wird, wodurch der laufende Scheduler gestoppt wird, auch bekannt als Stall.
+Bei der Verwendung eines Schedulers aus dem sched-ext Framework wird dringend empfohlen, ananicy-cpp zu deaktivieren und nicht zu verwenden, da es zu Konflikten kommen kann. Es verstärkt die Prioritätslücke, die der Scheduler bereits durch die Bevorzugung interaktiver Aufgaben erzeugt/handhabt. Dies führt zu einer übermäßigen Priorisierung, wodurch andere Aufgaben benachteiligt werden und die Wahrscheinlichkeit steigt, dass der sched_ext-Watchdog-Timeout ausgelöst wird, was den laufenden Scheduler beendet, also einen Stillstand verursacht.
 :::
 
-**Um ananicy-cpp zu deaktivieren/stoppen, führen Sie den folgenden Befehl aus:**
+Um ananicy-cpp zu deaktivieren/stoppen, führe den folgenden Befehl aus:
 
 ```sh
 systemctl disable --now ananicy-cpp
 ```
 
-## Übergang von scx.service zu scx_loader: Ein umfassender Leitfaden
+## Umstieg von scx.service auf scx_loader: Eine umfassende Anleitung
 
 :::caution
-Versuchen Sie nicht, scx_loader.service zusammen mit scx.service auszuführen, da der Loader-Dienst zwar startet, aber nichts tut.
+Versuche nicht, den scx_loader.service gleichzeitig mit dem scx.service auszuführen, da der Loader-Service zwar startet, aber nichts tut.
 
-Dieser Konflikt entsteht, weil sich beide Dienste nicht kennen, insbesondere in Bezug darauf, welcher die Scheduler verwaltet.
+Dieser Konflikt entsteht, weil beide Dienste nichts voneinander wissen, insbesondere nicht, welcher von beiden die Scheduler verwaltet.
 :::
 
 :::tip
 Der CachyOS Kernel Manager enthält bereits eine [GUI zur Verwaltung des scx_loader.](/de/features/kernel_manager#sched-ext-framework-verwaltung)
 :::
 
-**Beginnen wir zunächst mit einem detaillierten Vergleich zwischen der Dateistruktur von scx.service und der Konfigurationsdateistruktur von scx_loader.**
+Beginnen wir mit einem direkten Vergleich der Dateistruktur von scx.service und der Konfigurationsdatei von scx_loader.
 
-*Wenn Sie zuvor LAVD mit dem alten scx.service wie in diesem Beispiel unten ausgeführt haben:*
+*Wenn du zuvor LAVD mit dem alten scx.service wie im folgenden Beispiel verwendet hast:*
 
 ```sh title='Dateistruktur von scx.service'
 # Liste der scx_scheduler: scx_bpfland scx_central scx_flash scx_lavd scx_layered scx_nest scx_qmap scx_rlfifo scx_rustland scx_rusty scx_simple scx_userland
 SCX_SCHEDULER=scx_lavd
 
-# Legen Sie benutzerdefinierte Flags für den Scheduler fest
+# Setze benutzerdefinierte Flags für den Scheduler
 SCX_FLAGS='--performance'
 ```
 
-**Dann sieht das Äquivalent in der Konfigurationsdatei von scx_loader wie folgt aus:**
+Dann sieht das Äquivalent in der Konfigurationsdatei von scx_loader so aus:
 
 ```sh title='Dateistruktur von scx_loader'
 default_sched = "scx_lavd"
@@ -275,98 +479,99 @@ default_mode = "Auto"
 auto_mode = ["--performance"]
 ```
 
-**[Weitere Informationen zum Konfigurieren der scx_loader-Datei](https://github.com/sched-ext/scx/blob/main/rust/scx_loader/configuration.md)**
+[Weitere Informationen zur Konfiguration der scx_loader-Datei](https://github.com/sched-ext/scx/blob/main/rust/scx_loader/configuration.md)
 
-  **Befolgen Sie die folgende Anleitung für einen einfachen Übergang vom `scx systemd service` zum neuen `scx_loader`-Dienstprogramm.**
+Folge der nachstehenden Anleitung für einen einfachen Übergang vom `scx systemd service` zum neuen `scx_loader`-Dienstprogramm.
   <Steps>
   1. ```sh title='Deaktivieren von scx.service zugunsten von scx_loader.service'
       systemctl disable --now scx.service && systemctl enable --now scx_loader.service
       ```
-  2. ```sh title='Erstellen der Konfigurationsdatei für den scx_loader und Hinzufügen der Standardstruktur'
-     # Der Micro-Editor erstellt eine neue Datei.
+  2. ```sh title='Erstellen der Konfigurationsdatei für scx_loader und Hinzufügen der Standardstruktur'
+     # Der Editor Micro wird eine neue Datei erstellen.
      sudo micro /etc/scx_loader.toml
-     # Fügen Sie die folgenden Zeilen hinzu:
+     # Füge die folgenden Zeilen hinzu:
 
-     default_sched = "scx_bpfland" # Bearbeiten Sie diese Zeile auf den Scheduler, den scx_loader beim Booten starten soll
+     default_sched = "scx_bpfland" # Ändere diese Zeile auf den Scheduler, den scx_loader beim Start laden soll
      default_mode = "Auto" # Mögliche Werte: "Auto", "Gaming", "LowLatency", "PowerSave".
 
-     # Drücken Sie STRG + S, um die Änderungen zu speichern, und STRG + Q, um Micro zu beenden.
+     # Drücke STRG + S zum Speichern und STRG + Q zum Verlassen von Micro.
      ```
-  3. ```sh title='Neustarten des scx_loader'
+  3. ```sh title='Neustart des scx_loader'
      systemctl restart scx_loader.service
      ```
-     - **Sie sind fertig, der scx_loader lädt und startet jetzt den gewünschten Scheduler.**
+     - Du bist fertig, der scx_loader lädt und startet nun den gewünschten Scheduler.
 
   </Steps>
 
-### Debuggen im scx_loader
+### Debugging im scx_loader
 
   - ```sh title='Überprüfen des Dienststatus'
     systemctl status scx_loader.service
     ```
-  - ```sh title='Anzeigen aller Dienstprotokolleinträge'
+  - ```sh title='Anzeigen aller Protokolleinträge des Dienstes'
     journalctl -u scx_loader.service
     ```
   - ```sh title='Anzeigen nur der Protokolle der aktuellen Sitzung.'
     journalctl -u scx_loader.service -b 0
     ```
-- **Erweiterte Protokollierung**
+- Erweiterte Protokollierung
 
-*Um ein detaillierteres Protokoll zu erhalten, befolge diese Schritte.*
-  1) ```sh title='Die Service-Datei bearbeiten'
+*Um ein detaillierteres Protokoll zu erhalten, folge diesen Schritten.*
+  - ```sh title='Bearbeiten der Service-Datei'
      sudo systemctl edit scx_loader.service
      ```
-  2) ```sh title='Die folgende Zeile unter dem Abschnitt [Service] hinzufügen'
+  - ```sh title='Füge die folgende Zeile unter dem Abschnitt [Service] hinzu'
      Environment=RUST_LOG=trace
      ```
-  3) ```sh title='Den Service neu starten'
+  - ```sh title='Starte den Dienst neu'
      sudo systemctl restart scx_loader.service
      ```
-- **Überprüfe die Protokolle erneut auf detailliertere Debugging-Informationen.**
+- Überprüfe die Protokolle erneut für detailliertere Debugging-Informationen.
 
 ## FAQ
 
-### Warum schneidet der X-Scheduler schlechter ab als der andere?
+### Warum ist Scheduler X schlechter als der andere?
 
-- **Es gibt viele Variablen zu berücksichtigen, wenn man sie vergleicht. Zum Beispiel, wie messen sie das Gewicht einer Aufgabe? Priorisieren sie interaktive Aufgaben gegenüber nicht-interaktiven Aufgaben?
-  Letztendlich hängt es von ihren Designentscheidungen ab.**
+- Beim Vergleich gibt es viele Variablen zu berücksichtigen. Zum Beispiel, wie sie die Gewichtung einer Aufgabe messen. Priorisieren sie interaktive Aufgaben gegenüber nicht-interaktiven?
+  Letztendlich hängt es von ihren Designentscheidungen ab.
 
-### Warum sagen alle immer, dass dieser X-Scheduler der beste für den X-Fall ist, aber er funktioniert bei mir nicht so gut?
+### Warum sagen alle, dass Scheduler X für Anwendungsfall Y am besten ist, aber bei mir nicht so gut funktioniert?
 
-- **Wie die vorherige Antwort, kann die Wahl der CPU und ihr Design, wie z. B. das Core-Layout, wie sie Cache über die Kerne teilen, und andere verwandte Faktoren dazu führen, dass der Scheduler weniger effizient arbeitet.**
-- **Deshalb ist die Wahlmöglichkeit einer der Höhepunkte des sched-ext-Frameworks. Scheue dich also nicht, einen auszuprobieren und zu sehen, welcher für deinen Anwendungsfall am besten funktioniert. `Beispiele: FPS-Stabilität, maximale Leistung, Reaktionsfähigkeit unter intensiven Arbeitslasten usw.`**
+- Wie bei der vorherigen Antwort können die Wahl der CPU und deren Design, wie z. B. das Core-Layout, die gemeinsame Cache-Nutzung über die Kerne und andere damit zusammenhängende Faktoren dazu führen, dass der Scheduler weniger effizient arbeitet.
+- Deshalb ist die Auswahlmöglichkeit eines der Highlights des sched-ext Frameworks. Scheue dich also nicht, einen auszuprobieren und zu sehen, welcher für deinen Anwendungsfall am besten geeignet ist. `Beispiele: FPS-Stabilität, maximale Leistung, Reaktionsfähigkeit bei intensiven Workloads usw.`
 
-### Die Anwendungsfälle dieser Scheduler sind sich recht ähnlich... warum ist das so?
+### Die Anwendungsfälle dieser Scheduler sind ziemlich ähnlich... warum ist das so?
 
-- **Hauptsächlich, weil es sich um Mehrzweck-Scheduler handelt, was bedeutet, dass sie eine Vielzahl von Arbeitslasten bewältigen können, auch wenn sie nicht in jedem Bereich herausragend sind.**
+Hauptsächlich, weil es sich um Mehrzweck-Scheduler handelt, was bedeutet, dass sie eine Vielzahl von Workloads bewältigen können, auch wenn sie nicht in jedem Bereich herausragen.
 
-- **Um herauszufinden, welcher Scheduler am besten zu dir passt, gibt es keinen besseren Rat, als ihn selbst auszuprobieren.**
+- Um herauszufinden, welcher Scheduler am besten zu dir passt, gibt es keinen besseren Rat, als ihn selbst auszuprobieren.
 
-### Mir fehlt ein Scheduler, den einige Benutzer im CachyOS Discord-Server erwähnen oder testen.
-**Stelle sicher, dass du die Bleeding-Edge-Version des scx-scheds-Pakets namens `scx-scheds-git` verwendest.**
+### Warum fehlt bei mir ein Scheduler, den einige Benutzer auf dem CachyOS Discord-Server erwähnen oder testen?
+Stell sicher, dass du die aktuellste Version des scx-scheds-Pakets namens `scx-scheds-git` verwendest.
 
-- **Einer der Gründe ist, dass dieser Scheduler sehr neu ist und derzeit von den Benutzern getestet wird, daher wurde er noch nicht zum `scx-scheds-git`-Paket hinzugefügt.**
+- Einer der Gründe könnte sein, dass dieser Scheduler sehr neu ist und derzeit von den Benutzern getestet wird und daher noch nicht zum `scx-scheds-git`-Paket hinzugefügt wurde.
 
 ### Warum ist der Scheduler plötzlich abgestürzt? Ist er instabil?
 
-- *Es könnte ein paar Gründe geben, warum das passiert ist:*
-  - **Einer der häufigsten Gründe ist, dass du ananicy-cpp zusammen mit dem Scheduler verwendet hast. Deshalb haben wir diese [Warnung](/de/configuration/sched-ext#deaktivieren-von-ananicy-cpp) hinzugefügt.**
-  - **Ein weiterer Grund könnte sein, dass die Arbeitslast, die du ausgeführt hast, die Grenzen und die Kapazität des Schedulers überschritten hat, was zu einem Stillstand geführt hat.**
-    - **Beispiel für eine unzumutbare Arbeitslast: `hackbench`**
-  - **Oder der offensichtlichere Grund: Du hast einen Fehler im Scheduler gefunden. Wenn ja, melde ihn bitte als Problem in ihrem [GitHub](https://github.com/sched-ext/scx/issues) oder teile es ihnen im CachyOS Discord-Kanal `sched-ext` mit.**
+- *Dafür könnte es mehrere Gründe geben:*
+  - Einer der häufigsten Gründe ist, dass du ananicy-cpp zusammen mit dem Scheduler verwendet hast. Deshalb haben wir diese [Warnung](/de/configuration/sched-ext#deaktiviere-ananicy-cpp) hinzugefügt.
+  - Ein weiterer Grund könnte sein, dass der von dir ausgeführte Workload die Grenzen und Kapazitäten des Schedulers überschritten hat, was zu einem Stillstand führte.
+    - Beispiel für einen unangemessenen Workload: `hackbench`
+  - Oder der offensichtlichste Grund: Du hast einen Fehler im Scheduler gefunden. Wenn ja, melde ihn bitte als Issue in deren [GitHub](https://github.com/sched-ext/scx/issues) oder informiere sie
+    im CachyOS Discord-Kanal `sched-ext` darüber.
 
-### Ich habe den scx_loader bereits in der Kernel Manager GUI verwendet. Muss ich trotzdem die Übergangsschritte befolgen?
+### Ich habe den scx_loader bereits in der Kernel Manager GUI verwendet. Muss ich die Umstellungsschritte trotzdem befolgen?
 
-- **In diesem speziellen Fall ist es nicht notwendig, da der Kernel Manager den Übergangsprozess bereits übernimmt.**
+- In diesem speziellen Fall ist es nicht notwendig, da der Kernel Manager den Umstellungsprozess bereits übernimmt.
   - *Es sei denn, du hast zuvor benutzerdefinierte Flags in `/etc/default/scx` hinzugefügt und möchtest diese weiterhin verwenden.*
 
-## Mehr erfahren
+## Erfahre mehr
 
-Wenn du mehr über das sched-ext-Framework erfahren möchtest, schau dir die folgenden Links an.
+Wenn du mehr über das sched-ext Framework erfahren möchtest, wirf einen Blick auf die folgenden Links.
 
-- [Sched-ext Schedulers Quellcode](<https://github.com/sched-ext/scx/tree/main/scheds/rust>)
-- [Sched-ext Offizielles Wiki](<https://github.com/sched-ext/scx/wiki>)
+- [Quellcode der Sched-ext Scheduler](<https://github.com/sched-ext/scx/tree/main/scheds/rust>)
+- [Offizielles Sched-ext Wiki](<https://github.com/sched-ext/scx/wiki>)
 - [Changwoo Min: Einführung in sched-ext & CPU Scheduling Teil 1](<https://blogs.igalia.com/changwoo/sched-ext-a-bpf-extensible-scheduler-class-part-1/>)
   - [Teil 2](<https://blogs.igalia.com/changwoo/sched-ext-scheduler-architecture-and-interfaces-part-2/>)
-- [Andrea Righi: Re-implementierung meines Linux Rust Schedulers in eBPF](<https://arighi.blogspot.com/2024/08/re-implementing-my-linux-rust-scheduler.html>)
-- [Andrea Righi: KI-generierte Linux-Kernel-Scheduler in Rust](<https://arighi.blogspot.com/2024/09/ai-generated-linux-kernel-schedulers-in.html>)
+- [Andrea Righi: Re-implementing my Linux Rust scheduler in eBPF](<https://arighi.blogspot.com/2024/08/re-implementing-my-linux-rust-scheduler.html>)
+- [Andrea Righi:  AI-generated Linux kernel schedulers in Rust](<https://arighi.blogspot.com/2024/09/ai-generated-linux-kernel-schedulers-in.html>)

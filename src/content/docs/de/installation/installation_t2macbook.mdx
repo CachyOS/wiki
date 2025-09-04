@@ -1,100 +1,138 @@
 ---
-title: T2 MacBook Installation
-description: So installieren Sie CachyOS auf einem T2 MacBook
+title: T2 MacBook
+description: Wie du CachyOS auf einem T2 MacBook installierst
 ---
 
-import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
-## Installation
+CachyOS bietet sofort einsatzbereite Unterstützung für T2 MacBooks, einschließlich der notwendigen Kernel-Patches in allen bereitgestellten Kerneln. Es gibt jedoch entscheidende Schritte, die für eine erfolgreiche Einrichtung erforderlich sind.
 
-### Allgemeine Informationen
+:::caution[Mögliche Risiken]
+Das vollständige Entfernen von macOS birgt Risiken, wie Datenverlust oder das Unbrauchbarmachen des Geräts. Es wird **dringend empfohlen**, eine macOS-Partition für Firmware-Updates und die Wiederherstellung beizubehalten. Weitere Einzelheiten findest du in der [T2 Linux Roadmap](https://wiki.t2linux.org/roadmap/#can-i-completely-remove-macos).
 
-CachyOS bietet standardmäßige Unterstützung für das T2 MacBook. Die erforderlichen Kernel-Patches sind in allen von CachyOS bereitgestellten Kerneln enthalten.
+Wenn du dich dennoch entscheidest, macOS zu entfernen, stell sicher, dass du ein vollständiges Backup hast und erstelle vorher einen [bootfähigen macOS-Installer](https://support.apple.com/de-de/101578).
+:::
 
-Eine **WiFi-Verbindung** ist standardmäßig **nicht verfügbar**, da es sich um eine proprietäre Firmware handelt, die CachyOS nicht weiterverbreiten darf.
-Für die Installation ist eine Internetverbindung erforderlich. Verwenden Sie entweder ein LAN-Netzwerk oder befolgen Sie [diesen Abschnitt](#wifi-firmware-für-die-installation-beziehen), um die WiFi-Firmware zu erhalten.
+## Vor der Installation
 
-### WiFi-Firmware für die Installation beziehen
+Das Erstellen eines bootfähigen macOS-Installers ist optional, wird aber empfohlen, wenn du Partitionen ändern oder macOS entfernen möchtest. Er kann für Firmware-Updates, zur Fehlerbehebung oder zur Systemwiederherstellung nützlich sein. Eine detaillierte Anleitung findest du in [Apples Leitfaden](https://support.apple.com/de-de/101578).
 
-<Steps>
+Führe die folgenden Schritte in macOS aus, **bevor** du den CachyOS-Installer bootest.
 
-1. Starten Sie zuerst macOS und führen Sie diesen Befehl aus:
-    ```sh
-    curl -sL https://wiki.t2linux.org/tools/firmware.sh | bash -s copy_to_efi
-    ```
+### Bootfähigen CachyOS-USB-Stick vorbereiten
 
-2. Starten Sie nun die CachyOS-ISO. Öffnen Sie dort Konsole und führen Sie diese Befehle aus:
-    ```sh
-    sudo mkdir -p /tmp/apple-wifi-efi
-    sudo mount /dev/nvme0n1p1 /tmp/apple-wifi-efi
-    bash /tmp/apple-wifi-efi/firmware.sh get_from_efi
-    sudo umount /tmp/apple-wifi-efi
-    ```
+Lade das [CachyOS ISO](/de/cachyos_basic/download) herunter und folge den Anweisungen unter [Erstellen eines bootfähigen CachyOS-USB-Laufwerks](/de/installation/installation_prepare#creating-a-bootable-cachyos-usb-drive), um das Installationsmedium zu erstellen.
 
-3. Richten Sie `iwd` als Backend für den NetworkManager ein. Sie können die folgenden Befehle in Konsole ausführen, um dies zu tun:
-    ```sh
-    cat <<EOF | sudo tee /etc/NetworkManager/conf.d/wifi_backend.conf
-    [device]
-    wifi.backend=iwd
-    EOF
-    sudo systemctl restart NetworkManager
-    ```
+### (Optional) WLAN-Firmware extrahieren
 
-</Steps>
+:::note
+WLAN **funktioniert nicht** standardmäßig während oder nach der Installation, da die erforderliche Firmware proprietär ist und von CachyOS nicht weitergegeben werden darf. Du benötigst eine Internetverbindung (z. B. Ethernet, USB-Tethering) für den Installationsprozess, es sei denn, du befolgst die folgenden Schritte, um die WLAN-Firmware vorzubereiten und während der Installation zu aktivieren.
+:::
 
-Jetzt können Sie sich mit einem WiFi-Netzwerk verbinden und mit der Installation fortfahren.
-
-### Mit der Installation fortfahren
-
-Befolgen Sie die Anweisungen unter [Installationsvorbereitung](/de/installation/installation_prepare#erstellen-eines-bootfähigen-cachyos-usb-laufwerks), um zu erfahren, wie Sie
-die ISO herunterladen und ein bootfähiges USB-Laufwerk erstellen.
-
-Sie müssen zusätzliche Schritte ausführen, um ein T2 MacBook für die Installation von Linux vorzubereiten, z. B. Ihre Festplatte mit macOS partitionieren und Secure Boot deaktivieren. Sie können die [t2linux Preinstall-Anleitung](https://wiki.t2linux.org/guides/preinstall/) für Anweisungen befolgen.
-
-Lesen Sie [Installation auf Root](/de/installation/installation_on_root), nachdem Sie ein bootfähiges USB-Laufwerk erstellt haben.
-CachyOS wendet die erforderlichen Boot-Parameter und Konfigurationen auf das T2 MacBook des Benutzers mit [CachyOS Hardware Detection](/de/features/chwd) an.
-
-### Installation der Firmware
-
-Die Firmware kann von einem anderen Mirror heruntergeladen und abgerufen werden, der nicht von CachyOS gehostet wird.
-
-Führen Sie die folgenden Befehle aus, nachdem Sie das installierte System gestartet haben:
-
-<Steps>
-
-1. Laden Sie das Firmware-Paket mit einem der folgenden Tools herunter:
-
-    <Tabs>
-
-    <TabItem label="mit curl">
-
-    ```sh
-    curl https://mirror.funami.tech/arch-mact2/os/x86_64/apple-bcm-firmware-14.0-1-any.pkg.tar.zst -o apple-bcm-firmware-14.0-1-any.pkg.tar.zst
-    ```
-
-    </TabItem>
-    <TabItem label="mit wget">
-
-    ```sh
-    wget https://mirror.funami.tech/arch-mact2/os/x86_64/apple-bcm-firmware-14.0-1-any.pkg.tar.zst
-    ```
-    > Wenn `wget` nicht verfügbar ist, installieren Sie es mit `sudo pacman -S wget`
-
-    </TabItem>
-    </Tabs>
-
-2. Installieren Sie das Firmware-Paket
-    ```sh
-    sudo pacman -U apple-bcm-firmware-14.0-1-any.pkg.tar.zst
-    ```
-
-</Steps>
-
-Modprobe danach die Firmware und laden Sie den WiFi-Treiber neu:
-```bash
-sudo modprobe -r brcmfmac_wcc
-sudo modprobe -r brcmfmac
-sudo modprobe brcmfmac
+Öffne, während du dich noch in macOS befindest, das Terminal und führe den folgenden Befehl aus. Dadurch werden die notwendigen WLAN-Firmware-Dateien auf deine EFI-Partition kopiert, sodass sie später während der CachyOS-Installation zugänglich sind.
+```sh
+curl -sL https://wiki.t2linux.org/tools/firmware.sh | bash -s copy_to_efi
 ```
 
-Weitere Möglichkeiten, die Firmware zu beziehen, finden Sie auf der [t2linux-Wiki-Seite](https://wiki.t2linux.org/guides/wifi-bluetooth/)
+### Deine Festplatte vorbereiten
+
+Wenn du ein Dual-Boot-System mit macOS (empfohlen) planst, musst du Speicherplatz für CachyOS schaffen. Verwende das Festplattendienstprogramm in macOS, um die Größe deiner vorhandenen macOS-Partition zu ändern:
+
+<Steps>
+
+1. Öffne das **Festplattendienstprogramm**.
+2. Wähle in der Seitenleiste des Festplattendienstprogramms das **Volume** aus, dessen Größe du ändern möchtest (normalerweise "Macintosh HD" oder ähnlich genannt).
+3. Klicke auf die Schaltfläche **"Partitionieren"** in der Symbolleiste.
+4. Klicke auf die Schaltfläche **"+" (Plus)** unter dem Tortendiagramm, das deine Festplattennutzung darstellt.
+5. **Wichtig:** Wenn du dazu aufgefordert wirst, wähle **"Partition hinzufügen"** und *nicht* "Volume hinzufügen". Du musst eine separate Partition für Linux erstellen.
+6. **Name:** Gib einen aussagekräftigen Namen für die neue Partition ein (z. B. "CachyOS" oder "Linux").
+7. **Format:** Wähle ein beliebiges verfügbares Format (wie APFS oder Mac OS Extended). Der CachyOS-Installer wird diese Partition später neu formatieren, daher ist die anfängliche Wahl unerheblich.
+8. **Größe:** Weise die gewünschte Menge an Speicherplatz für CachyOS zu. **Beachte, dass das Ändern der Partitionsgröße später schwierig oder unmöglich sein kann**, wähle also eine Größe, die deinen Bedürfnissen entspricht.
+10. Klicke auf **"Anwenden"**, um die neue Partition zu erstellen. Das Festplattendienstprogramm wird die Größe deiner macOS-Partition anpassen und den neuen leeren Speicherplatz erstellen.
+
+</Steps>
+
+
+### Secure Boot deaktivieren
+
+<Steps>
+
+1. Starte deinen Mac neu und halte `Befehl (⌘) + R` direkt nach dem Einschalten gedrückt, um in den Wiederherstellungsmodus zu gelangen.
+2. Gehe zu Dienstprogramme > Startsicherheitsdienstprogramm.
+3. Wähle unter **Sicherer Start** die Option "Keine Sicherheit" und unter **Erlaubte Startmedien** die Option "Starten von externen oder Wechselmedien erlauben".
+
+</Steps>
+
+Weitere Details findest du in [Apples Anleitung zum Startsicherheitsdienstprogramm](https://support.apple.com/de-de/102522).
+
+---
+
+Eine zusätzliche Übersicht zur Vorbereitung eines T2-Macs für Linux findest du im [t2linux Preinstall-Leitfaden](https://wiki.t2linux.org/guides/preinstall/).
+
+## Installationsprozess
+
+<Steps>
+
+1.  **Vom CachyOS-USB-Stick booten:**
+    *   Starte deinen Mac neu und halte die `Option (⌥)`-Taste direkt nach dem Einschalten gedrückt.
+    *   Wähle den CachyOS-USB-Stick aus (normalerweise als "EFI Boot" bezeichnet).
+2.  **(Optional) WLAN in der Live-Umgebung aktivieren:**
+    *   Wenn du während der Installation WLAN benötigst und kein Ethernet/Tethering hast, öffne das Terminal, sobald die CachyOS-Live-Umgebung geladen ist.
+    *   Führe diese Befehle aus, um die Firmware von der EFI-Partition (erstellt unter [WLAN-Firmware extrahieren](#optional-wlan-firmware-extrahieren)) zu kopieren und den NetworkManager zu konfigurieren:
+        ```sh
+        # Die EFI-Partition einhängen (normalerweise nvme0n1p1 auf T2-Macs)
+        sudo mkdir -p /tmp/apple-wifi-efi
+        sudo mount /dev/nvme0n1p1 /tmp/apple-wifi-efi
+
+        # Firmware von EFI in die Live-Umgebung kopieren
+        bash /tmp/apple-wifi-efi/firmware.sh get_from_efi
+        sudo umount /tmp/apple-wifi-efi
+
+        # NetworkManager für die Verwendung des iwd-Backends konfigurieren
+        cat <<EOF | sudo tee /etc/NetworkManager/conf.d/wifi_backend.conf
+        [device]
+        wifi.backend=iwd
+        EOF
+        sudo systemctl restart NetworkManager
+        ```
+    *   Du solltest dich nun über das Netzwerk-Applet in der Taskleiste mit WLAN-Netzwerken verbinden können.
+3.  **Den CachyOS-Installer ausführen:**
+    *   Starte den CachyOS-Installer vom Desktop oder aus dem Anwendungsmenü.
+    *   Folge dem Standard-Installationsverfahren und beziehe dich dabei auf die Anleitung [Installation auf Root](/de/installation/installation_on_root).
+    *   Wähle beim Partitionieren den zuvor erstellten freien Speicherplatz aus. Lass den Installer die Formatierung übernehmen.
+        :::caution[Vorsicht bei der Partitionierung]
+        Sei beim Partitionierungsschritt im Installer **sehr vorsichtig**. Stell sicher, dass du den richtigen freien Speicherplatz auswählst, den du vorbereitet hast, und **lösche oder formatiere nicht** versehentlich deine vorhandene macOS-Partition, insbesondere wenn du ein Dual-Boot-System beibehalten möchtest. Überprüfe deine Auswahl doppelt, bevor du fortfährst.
+        :::
+    *   Die CachyOS Hardware-Erkennung ([chwd](/de/features/chwd)) sollte während der Installation automatisch die notwendigen T2-spezifischen Boot-Parameter und Konfigurationen anwenden.
+
+</Steps>
+
+## Schritte nach der Installation
+
+Nachdem die Installation abgeschlossen ist und du in dein neues CachyOS-System neu gestartet hast, musst du möglicherweise einige zusätzliche Schritte durchführen, um sicherzustellen, dass alles reibungslos funktioniert.
+
+### WLAN-Firmware dauerhaft installieren
+
+Wenn du dem optionalen Schritt [WLAN in der Live-Umgebung aktivieren](#installationsprozess) gefolgt bist, um die Firmware im Live-ISO zu erhalten, kannst du diesen einfach erneut ausführen, um WLAN zu aktivieren. Andernfalls verbinde dich mit dem Internet (z. B. per Ethernet, USB-Tethering) und folge den nachstehenden Schritten:
+
+<Steps>
+1. Öffne ein Terminal und lade das Firmware-Paket vom Arch Linux T2-Spiegelserver herunter:
+   ```sh
+   curl https://mirror.funami.tech/arch-mact2/os/x86_64/apple-bcm-firmware-14.0-1-any.pkg.tar.zst -o apple-bcm-firmware-14.0-1-any.pkg.tar.zst
+   ```
+2. Installiere das heruntergeladene Paket:
+   ```sh
+   sudo pacman -U apple-bcm-firmware-14.0-1-any.pkg.tar.zst
+   ```
+3. Lade die WLAN-Kernelmodule neu:
+   ```bash
+   sudo modprobe -r brcmfmac_wcc
+   sudo modprobe -r brcmfmac
+   sudo modprobe brcmfmac
+   ```
+</Steps>
+
+WLAN sollte nun auch nach Neustarts zuverlässig funktionieren. Du kannst die heruntergeladene `.pkg.tar.zst`-Datei entfernen.
+
+### Weitere Konfiguration
+Informationen zur Konfiguration anderer Hardwarekomponenten wie Audio, Webcam, Touch Bar usw. findest du in den verschiedenen Anleitungen im [t2linux Wiki](https://wiki.t2linux.org/roadmap/#configuring-the-installation).

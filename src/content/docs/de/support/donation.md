@@ -3,24 +3,24 @@ title: Spenden
 description: Möglichkeiten, uns zu unterstützen
 ---
 
-Wenn du unsere Arbeit unterstützen möchtest, kannst du uns spenden und helfen, unsere Buildserver zu bezahlen.
+Wenn du unsere Arbeit unterstützen möchtest, kannst du uns spenden und dabei helfen, unsere Buildserver zu bezahlen.
 Jeder Spender erhält einen Spender-Rang in unserem Discord.
 
-Hier eine Liste der aktuellen Kosten pro Monat:
+Hier ist eine Liste der aktuellen monatlichen Kosten:
 
 - Buildserver 127 € (Hetzner 7950X3D)
 - Zweiter Buildserver 70 € (Hetzner 7700X)
 - Webserver/Mirror 17 €
 - Mailserver/Mirror 17 €
-- Forum Server (Netcup VPS) 7 Euro
+- Forum-Server (Netcup VPS) 7 Euro
 
 ### Patreon
 
-https://www.patreon.com/CachyOS
+<https://www.patreon.com/CachyOS>
 
 ### PayPal
 
-https://paypal.me/pttrr
+<https://paypal.me/pttrr>
 
 ### Ethereum
 

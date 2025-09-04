@@ -1,30 +1,29 @@
 ---
-title: CachyOS Hardware-Erkennung
-description: Hardware-Erkennung und -Konfiguration für CachyOS
+title: CachyOS-Hardwareerkennung
+description: Hardwareerkennung und -konfiguration für CachyOS
 ---
 
-[CachyOS Hardware-Erkennung](https://github.com/CachyOS/chwd/), besser bekannt als **`chwd`**, ermöglicht es uns, eine Vielzahl von Hardware zu betreiben, indem die notwendigen
-Pakete und Treiber für das laufende System installiert werden. Dies beinhaltet Systeme mit Grafikkarten von NVIDIA, T2 Macbooks und Handheld-Geräte wie Steam Deck und ROG Ally.
+[CachyOS Hardware Detection](https://github.com/CachyOS/chwd/) (besser bekannt als `chwd`) ermöglicht es uns, eine Vielzahl von Hardware zu unterstützen, indem es die notwendigen
+Pakete und Treiber für dein laufendes System installiert. Dies schließt Systeme mit NVIDIA-Grafikkarten, T2 Macbooks und Handheld-Geräte wie das Steam Deck und ROG Ally ein.
 
 ## Verwendung
 
-**`chwd`** wird typischerweise während der Installation ausgeführt, um die notwendigen Pakete für das System bereitzustellen. Es ist jedoch auch möglich,
-es nach der Installation zu verwenden.
+`chwd` wird typischerweise während der Installation ausgeführt, um die notwendigen Pakete für das System bereitzustellen. Du kannst es aber auch nach der Installation verwenden.
 
-### Auto-Konfiguration
+### Automatische Konfiguration
 
-**`chwd`** unterstützt die Installation und Konfiguration der notwendigen Treiber und Pakete, damit das System unter optimalen Bedingungen arbeiten kann.
+`chwd` unterstützt die Installation und Konfiguration der notwendigen Treiber und Pakete, damit dein System unter optimalen Bedingungen laufen kann.
 
 ```sh
-❯ sudo chwd -a
+sudo chwd -a
 ```
 
-### Installation eines Profils
+### Ein Profil installieren
 
-Eine Alternative zur obigen Methode ist die Installation jedes spezifischen Profils.
+Eine Alternative zur oben genannten Methode ist die Installation jedes spezifischen Profils.
 
 ```sh title='Alle verfügbaren Profile auflisten'
-❯ chwd --list-all
+chwd --list-all
 ╭─────────────────────────┬─────────╮
 │ Name                    ┆ NonFree │
 ╞═════════════════════════╪═════════╡
@@ -44,8 +43,8 @@ Eine Alternative zur obigen Methode ist die Installation jedes spezifischen Prof
 ╰─────────────────────────┴─────────╯
 ```
 
-```sh title='Installation eines chwd-Profils'
-❯ sudo chwd -i amd
+```sh title='Ein chwd-Profil installieren'
+sudo chwd -i amd
 > Installing amd ...
 
 > Successfully installed amd
@@ -53,10 +52,10 @@ Eine Alternative zur obigen Methode ist die Installation jedes spezifischen Prof
 
 ### Sonstiges
 
-Weitere Informationen zur Befehlssyntax und anderen Verwendungsmöglichkeiten finden Sie in der Hilfeausgabe von **`chwd`**.
+Schau dir die Hilfeausgabe von `chwd` für die Befehlssyntax und weitere Verwendungshinweise an.
 
 ```sh
-❯ chwd --help
+chwd --help
 Usage: chwd [OPTIONS]
 
 Options:

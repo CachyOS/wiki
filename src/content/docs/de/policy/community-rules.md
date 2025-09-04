@@ -1,17 +1,17 @@
 ---
-title: Offizielle CachyOS Community Regeln
+title: Offizielle CachyOS Community-Regeln
 description: Discord, Reddit, Twitter, Forum
 ---
 
-Verstöße gegen diese Regeln sind nicht erlaubt und führen zum Ausschluss des Kontos:
+Verstöße gegen diese Regeln sind nicht gestattet und führen zu einer Kontosperrung:
 
-1. Beleidigungen von Community-Teilnehmern sind verboten.
-2. Anstiftung zu ethnischem Hass ist verboten.
-3. Das Posten von pornografischem Material ist verboten.
-4. Diskussionen über politische Themen sind verboten, wenn sie außer Kontrolle geraten.
-5. Diskussionen über religiöse Themen sind verboten.
-6. Es ist verboten, andere Ressourcen ohne die Zustimmung der Administration zu bewerben.
-7. Es ist verboten, sich als eine andere Person auszugeben.
-8. Es ist verboten zu spammen (die gleiche Art von Information mehrmals hintereinander zu veröffentlichen).
-9. Es ist verboten, Konflikte zwischen Teilnehmern zu provozieren.
-10. Dies ist ein LGBTQ+ sicherer Ort, und daher ist es verboten, LGBTQ+ Personen zu provozieren und zu beleidigen.
+1. Du darfst Community-Mitglieder nicht beleidigen.
+2. Du darfst keinen ethnischen Hass schüren.
+3. Du darfst kein pornografisches Material posten.
+4. Du darfst nicht über politische Themen diskutieren, wenn es außer Kontrolle gerät.
+5. Du darfst nicht über religiöse Themen diskutieren.
+6. Du darfst ohne Zustimmung der Administration keine Werbung für andere Ressourcen machen.
+7. Du darfst dich nicht als eine andere Person ausgeben.
+8. Flooding (das mehrfache Posten der gleichen Information hintereinander) ist verboten.
+9. Du darfst keine Konflikte zwischen Mitgliedern provozieren.
+10. Dies ist ein sicherer Ort für LGBTQ+-Personen, daher darfst du LGBTQ+-Personen nicht provozieren oder beleidigen.
