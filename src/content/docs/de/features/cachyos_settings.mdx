@@ -1,0 +1,126 @@
+---
+title: CachyOS-Einstellungen
+---
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+
+Neben unseren optimierten Kernels und Repositories bieten wir auch Einstellungen an, die das Desktop-Erlebnis weiter verbessern, sowie einige
+Hilfsskripte für Quality-of-Life-Verbesserungen. All diese Konfigurationen und Skripte befinden sich im Paket `cachyos-settings`.
+
+## sysctl-Optimierungen
+
+Wir bieten eine Menge sysctl-Optimierungen an, die darauf abzielen, die allgemeine Desktop-Performance zu verbessern. Jeder sysctl-Eintrag ist in der Datei
+[99-cachyos-settings.conf](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/sysctl.d/99-cachyos-settings.conf) gut dokumentiert.
+
+Um Änderungen an einem dieser Werte vorzunehmen, kopieren Sie den ursprünglichen Eintrag und erstellen Sie eine neue Datei unter `/etc/sysctl.d/` mit dem geänderten Wert.
+
+### sysctl-Werte ändern
+
+<Steps>
+
+1. Werfen Sie einen Blick auf den ursprünglichen Wert aus `cachyos-settings`
+
+    ```sh
+    cat /usr/lib/sysctl.d/99-cachyos-settings.conf
+    # Only experimental!
+    # Let Realtime tasks run as long they need
+    # sched: RT throttling activated
+    kernel.sched_rt_runtime_us=-1
+    ```
+
+2. Erstellen Sie eine neue Datei in `/etc/sysctl.d`, um Änderungen an den sysctl-Einstellungen vorzunehmen
+
+    ```sh title="kernel.sched_rt_runtime_us= auf den Standardwert zurücksetzen"
+    sudo micro /etc/sysctl.d/99-kernel-sched-rt.conf # Wenn die Datei nicht existiert, erstellt dieser Befehl sie und lässt Sie sie bearbeiten
+    kernel.sched_rt_runtime_us=950000
+    ```
+
+</Steps>
+
+## udev-Regeln
+
+- [ZRAM-Regeln](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/30-zram.rules) – Setzt die ZRAM-Swappiness auf einen aggressiveren
+Wert, damit der Cache wahrscheinlicher nach ZRAM ausgelagert wird
+- [HPET-Berechtigungen](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/40-hpet-permissions.rules) – Erlaubt der Audio-Gruppe den Zugriff auf die Geräteknoten `rtc0`
+und `hpet`
+- [SATA-Energieverwaltung](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/50-sata.rules) – Setzt die Energieverwaltungsrichtlinie von SATA-Geräten auf `max_performance`
+- [I/O-Scheduler-Regeln](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/60-ioschedulers.rules) – Wählt den optimalen Scheduler für jeden Laufwerkstyp (HDD, SSD, NVMe) aus
+- [hdparm-Regeln](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/69-hdparm.rules) – Stellt SATA- und IDE-HDDs auf maximale Leistung ein
+- [NVIDIA RTD3](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/71-nvidia.rules) – Konfiguriert die dynamische Energieverwaltungsfunktionalität für die Turing-GPU-Generation. `RTD3 funktioniert bei Turing-GPUs mit den offenen Modulen nicht richtig`
+- [CPU-DMA-Latenz](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/99-cpu-dma-latency.rules) –
+Erlaubt der Audio-Gruppe den Zugriff auf den Geräteknoten `cpu_dma_latency`
+- [snd_hda_intel PM](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/20-audio-pm.rules) – Setzt den Energiesparmodus bei Netzbetrieb auf `0` und stellt den vorherigen Wert wieder her, wenn auf Akkubetrieb umgeschaltet wird
+
+## modprobe-Optionen
+
+- Erzwingt den AMDGPU-Treiber auf Southern Islands (GCN 1.0) und Sea Islands (GCN 2.0)
+- Aktiviert [verschiedene Optimierungen](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/modprobe.d/nvidia.conf) für NVIDIA
+- Setzt Watchdog-Module auf die Blacklist
+- Deaktiviert power_save für den **sna_hda_intel**-Audiotreiber
+
+## Hilfsskripte
+
+- `cachyos-bugreport.sh` – Sammelt verschiedene Logs von `inxi`, `dmesg` und `journalctl` zur Unterstützung bei der Fehlerbehebung
+- `game-performance` – Wrapper-Skript für **`powerprofilesctl`**, um bei Bedarf zum Leistungsprofil zu wechseln.
+Siehe [Umschalten des Leistungsprofils bei Bedarf](/de/configuration/gaming#power-profile-switching-on-demand)
+- `dlss-swapper` – Wrapper-Skript, um die neueste DLSS-Voreinstellung in Spielen zu erzwingen, die die Technologie unterstützen
+- `dlss-swapper-dll` – Wie `dlss-swapper`, erfordert aber die manuelle Aktualisierung der mit dem Spiel gelieferten `nvngx_dlss.dll`-Bibliothek; kann bei Spielen funktionieren, die Probleme mit der regulären Version des Skripts haben
+- `kerver` – QoL-Skript zur Anzeige von Informationen über den aktuellen Kernel
+- `paste-cachyos` – Skript zum Einfügen von Terminalausgaben oder Textdateien aus dem System
+
+    <Tabs>
+        <TabItem label="Textdateien hochladen">
+            ```sh
+            paste-cachyos /pfad/zur/datei
+            ```
+        </TabItem>
+        <TabItem label="Terminalausgabe hochladen">
+            ```sh
+            <Befehl> | paste-cachyos
+            ```
+        </TabItem>
+    </Tabs>
+- [pci-latency](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/pci-latency) – Reduziert den latency_timer-Wert für PCI-Soundkarten auf `80` und setzt alle anderen PCI-Geräte auf `20` und `0` zurück
+    ```sh title="pci-latency systemweit aktivieren"
+    sudo systemctl enable --now pci-latency.service
+    ```
+- `sbctl-batch-sign` – Hilfsskript zum einfachen Signieren von Kernel-Images und EFI-Binärdateien für Secure Boot und speichert sie in der Datenbank von sbctl
+- `topmem` – Zeigt RAM-, Swap- und KSM-Statistiken von 10 Prozessen in absteigender Reihenfolge an
+- `zink-run` – Erleichtert die Ausführung eines OpenGL-Programms über den Zink-Gallium-Treiber
+
+
+## Andere Konfigurationen
+
+### Optimierungen der Speichernutzung
+
+- THP-Shrinker-Konfiguration `max_ptes_none = 409`
+- Maximale Größe für das systemd-Journal auf `50MB` setzen
+- [ZRAM-Generator](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/systemd/zram-generator.conf) – Setzt ZRAM auf die gleiche Größe wie den RAM und verwendet ZSTD zur Komprimierung
+
+### Ananicy-cpp-Regeln
+
+- [ananicy-cpp](https://gitlab.com/ananicy-cpp/ananicy-cpp) mit [von der Community gepflegten Regelsätzen](https://github.com/CachyOS/ananicy-rules)
+
+### Netzwerk-Modifikationen
+
+- [systemd-resolved als Standard-DNS-Resolver](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/NetworkManager/conf.d/dns.conf) für NetworkManager
+
+### RTC
+
+- Erhöht die höchste angeforderte RTC-Interrupt-Frequenz auf `3072`
+
+### NTP QoL
+
+- Bevorzugter Server auf `Cloudflare` gesetzt
+- Fallback-Server: `Google` und `Arch Linux`
+
+### systemd-Dienste-Optimierungen
+
+- Timeout für das Starten eines Dienstes/einer Unit auf `15s` gesetzt
+- Timeout für das Stoppen eines Dienstes/einer Unit auf `10s` gesetzt
+- Soft-Limit für geöffnete Dateideskriptoren auf `2048` gesetzt
+- Hard-Limit für geöffnete Dateideskriptoren auf `2097152` gesetzt
+
+### X.Org
+
+- [Tippen zum Klicken (Tap to Click)](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/share/X11/xorg.conf.d/20-touchpad.conf) standardmäßig für alle X11-Sitzungen aktivieren

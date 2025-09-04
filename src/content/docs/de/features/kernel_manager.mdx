@@ -1,0 +1,203 @@
+---
+title: Linux-Kernel & Sched-ext-Framework mit dem CachyOS Kernel Manager verwalten
+description: Der CachyOS Kernel Manager ist ein leistungsstarkes Werkzeug zur Verwaltung von Kernels, das es Benutzern ermöglicht, benutzerdefinierte Kernel einfach zu installieren oder zu erstellen.
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+Einen Kernel aus einem Repository installieren
+---------------------------------------------
+
+Der CachyOS Kernel Manager erleichtert die Installation und Verwaltung von Kernels aus jedem Arch-Linux-Repository.
+
+Um einen Kernel zu installieren, starten Sie die Anwendung `CachyOS Kernel Manager` und wählen Sie den gewünschten Kernel aus, indem Sie das Kästchen `[]` in der Liste aller verfügbaren Optionen ankreuzen. Drücken Sie dann einfach auf `Execute`, um die Kernel-Installation zu starten.
+
+Um einen Kernel zu deinstallieren, entfernen Sie einfach das Häkchen im Kästchen `[]` neben dem installierten Kernel, den Sie entfernen möchten, und drücken Sie erneut auf `Execute`.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km1.png')} />
+
+:::note
+Die Schaltfläche `Execute` ist nicht verfügbar, wenn Sie einen bereits installierten Kernel auswählen.
+:::
+
+Einen benutzerdefinierten CachyOS-Kernel konfigurieren und erstellen
+---------------------------------------------------------------------
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km2.png')} />
+
+:::note
+Der CachyOS Kernel Manager wurde speziell entwickelt, um benutzerdefinierte Kernel für **CachyOS-Varianten** zu erstellen und unterstützt nicht das Erstellen oder Konfigurieren eines Standard-Arch-Linux-Kernels oder einer anderen Variante.
+:::
+
+*Um zu beginnen, öffnen Sie den Kernel Manager und klicken Sie auf die Schaltfläche `Configure`, um verschiedene Einstellungen anzupassen, wie z.B. den gewünschten Scheduler, die Tick-Rate und mehr. Sobald Sie Ihre gewünschten Änderungen vorgenommen haben, klicken Sie auf `Build kernel`, um mit dem Erstellen Ihres benutzerdefinierten CachyOS-Kernels zu beginnen.*
+
+**Erstellte Kernel-Pakete und der Cache werden in** `~/.cache/cachyos-km/` **gespeichert.**
+
+**Verfügbare Konfigurationsoptionen:**
+
+* `Custom package name`: Mit dieser Option können Sie Ihrem Kernel einen beliebigen Namen geben. Zum Beispiel: `linux-custom-cachy`
+* Scheduler (BORE, RC, RT, RT+BORE, EEVDF und BMQ)
+* CachyOS-Konfiguration aktivieren
+* Konfiguration über nconfig, menuconfig, xconfig oder gconfig anpassen
+* NUMA aktivieren/deaktivieren
+* Modprobed-db aktivieren/deaktivieren
+* KBUILD CFLAGS (-O3 oder -O2)
+* Performance-Governor als Standard
+* BBR3 aktivieren
+* Tick-Rate-Auswahl (100Hz, 250Hz, 300Hz, 500Hz, 600Hz, 750Hz, 1000Hz)
+* Tickless-Modus (idle, periodic, full)
+* Preemption (Full, Voluntary oder Server)
+* Transparent Hugepages (Always oder Madvise)
+* DAMON aktivieren/deaktivieren
+* Automatische CPU-Architekturerkennung aktivieren/deaktivieren
+* Kernel-Optimierung für spezifische CPU-Architekturen anwenden
+* LTO aktivieren (Full, Thin, No)
+* ZFS-Modul erstellen
+* NVIDIA Closed Module erstellen
+* NVIDIA Open Module erstellen
+* vmlinux mit Debug-Informationen/Symbolen einschließen
+* Konfigurationsvoreinstellung des Kernel Managers laden/speichern: `(Nur Voreinstellungen aus dem Manager selbst)`
+* Kernel-Patches-Verwaltung (Remote- und lokale Unterstützung)
+
+*Sobald der Kernel erfolgreich erstellt wurde, werden Sie nach Ihrem sudo-Passwort gefragt, um den Kernel zu installieren.*
+
+## Sched-ext Framework-Verwaltung
+
+Der Kernel Manager bietet eine grafische Benutzeroberfläche (GUI) zur Verwaltung und Steuerung von sched-ext-Schedulern. Greifen Sie auf die GUI zu, indem Sie im Hauptfenster auf die Schaltfläche `sched-ext scheduler config` klicken.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km3.png')} />
+
+Diese GUI ermöglicht Ihnen:
+
+- Zwischen verschiedenen sched-ext (scx) Schedulern zu wechseln.
+- Den Scheduler-Dienst zu aktivieren oder zu deaktivieren.
+- Den aktuell laufenden Scheduler zu überprüfen.
+- Scheduler-Flags und -Profile festzulegen.
+
+Um dies zu erreichen, verwendet der Kernel Manager den `scx_loader` mit einer in `/etc/scx_loader.toml` gespeicherten Konfiguration.
+
+Weitere Informationen zur Konfigurationsdatei `scx_loader` finden Sie in [dieser Dokumentation](https://github.com/sched-ext/scx/blob/main/rust/scx_loader/configuration.md).
+
+- Wie funktioniert der `scx_loader`?
+    - Sobald Sie den Scheduler und das Profil ausgewählt haben, startet der scx_loader den Scheduler mit dem ausgewählten Profil und speichert diese Konfiguration in der Datei `/etc/scx_loader.toml`, um die Persistenz über Neustarts hinweg zu gewährleisten. Ein Beispiel, wie die Datei bei der Auswahl von `scx_bpfland` mit dem `Gaming`-Profil aussehen wird:
+        ```toml
+        default_sched = "scx_bpfland"
+        default_mode = "Gaming"
+
+        [scheds.scx_bpfland]
+        auto_mode = []
+        gaming_mode = ["-m", "performance"]
+        lowlatency_mode = ["-k", "-s", "5000", "-l", "5000"]
+        powersave_mode = ["-m", "powersave"]
+        ```
+
+### Scheduler-Profile
+
+- Wofür sind die "Profile" da?
+  - Es handelt sich um Voreinstellungen für den Scheduler, die Flags basierend auf bewährten Kombinationen ändern, um die Effektivität für bestimmte Anwendungsfälle, wie z.B. "Gaming", zu verbessern.
+
+#### Bpfland
+
+**Low Latency**
+* **Kommandozeilen-Flags:** `-s 5000 -S 500 -l 5000 -m performance`
+* **Beschreibung:** Soll die Latenz auf Kosten des Durchsatzes verringern. Geeignet für Soft-Echtzeitanwendungen wie Audioverarbeitung und Multimedia.
+
+**Gaming**
+* **Kommandozeilen-Flags:** `-m performance`
+* **Beschreibung:** Optimiert die Leistungskonsistenz in Spielen auf Systemen mit Hybrid-Kernen. Priorisiert P-Kerne gegenüber E-Kernen bei Intel-CPUs und CCDs bei Ryzen X3D-CPUs.
+
+**Power Save**
+* **Kommandozeilen-Flags:** `-m powersave`
+* **Beschreibung:** Priorisiert die Energieeffizienz. Bevorzugt weniger leistungsfähige Kerne (z. B. E-Kerne bei Intel).
+
+**Server**
+* **Kommandozeilen-Flags:** `-p`
+* **Beschreibung:** Priorisiert Aufgaben mit strikter Affinität. Diese Option kann den Durchsatz auf Kosten der Latenz erhöhen und ist besser für Server-Workloads geeignet.
+
+#### Flash
+
+**Low Latency**
+* **Kommandozeilen-Flags:** `-m performance -w -C 0`
+* **Beschreibung:** Soll die Latenz auf Kosten des Durchsatzes verringern. Geeignet für Soft-Echtzeitanwendungen wie Audioverarbeitung und Multimedia.
+
+**Gaming**
+* **Kommandozeilen-Flags:** `-m all`
+* **Beschreibung:** Optimiert für hohe Leistung in Spielen.
+
+**Power Save**
+* **Kommandozeilen-Flags:** `-m powersave -I 10000 -t 10000 -s 10000 -S 1000`
+* **Beschreibung:** Priorisiert die Energieeffizienz. Bevorzugt weniger leistungsfähige Kerne (z.B. E-Kerne bei Intel) und führt alle 10ms einen erzwungenen Leerlaufzyklus ein, um die Energieeinsparung zu erhöhen.
+
+**Server**
+* **Kommandozeilen-Flags:** `-m all -s 20000 -S 1000 -I -1 -D -L`
+* **Beschreibung:** Abgestimmt auf Server-Workloads. Tauscht Reaktionsfähigkeit gegen Durchsatz.
+
+#### LAVD
+
+**Gaming & Low Latency**
+* **Kommandozeilen-Flags:** `--performance`
+* **Beschreibung:** Maximiert die Leistung durch die Nutzung aller verfügbaren Kerne, wobei physische Kerne priorisiert werden.
+
+**Power save**
+* **Kommandozeilen-Flags:** `--powersave`
+* **Beschreibung:** Minimiert den Stromverbrauch bei angemessener Leistung. Priorisiert effiziente Kerne und Threads gegenüber physischen Kernen.
+
+#### P2DQ
+
+**Gaming**
+* **Kommandozeilen-Flags:** `--task-slice true -f --sched-mode performance`
+* **Beschreibung:** Verbessert die Konsistenz der Gaming-Leistung und erhöht die Tendenz, Aufgaben auf leistungsstärkeren Kernen zu planen.
+
+**Low Latency**
+* **Kommandozeilen-Flags:** `-y -f --task-slice true`
+* **Beschreibung:** Verringert die Latenz, indem interaktive Aufgaben stärker an die ihnen zugewiesene CPU gebunden werden und die Stabilität der Zeitscheibe erhöht wird.
+
+**Power Save**
+* **Kommandozeilen-Flags:** `--sched-mode efficiency`
+* **Beschreibung:** Verbessert die Energieeffizienz durch die Priorisierung von energieeffizienten Kernen.
+
+**Server**
+* **Kommandozeilen-Flags:** `--keep-running`
+* **Beschreibung:** Verbessert Server-Workloads, indem Aufgaben über ihre Zeitscheibe hinaus laufen dürfen, wenn die CPU im Leerlauf ist.
+
+#### Tickless
+
+**Gaming**
+* **Kommandozeilen-Flags:** `-f 5000 -s 5000`
+* **Beschreibung:** Steigert die Gaming-Leistung, indem die Häufigkeit, mit der der Scheduler CPU-Konflikte erkennt und Kontextwechsel mit einer kürzeren Zeitscheibe auslöst, erhöht wird.
+
+**Power Save**
+* **Kommandozeilen-Flags:** `-f 50 -p`
+* **Beschreibung:** Verbessert die Energieeffizienz, indem die Konfliktprüfungen reduziert werden und aggressiv versucht wird, Aufgaben auf derselben CPU zu halten.
+
+**Low Latency**
+* **Kommandozeilen-Flags:** `-f 5000 -s 1000`
+* **Beschreibung:** Ähnlich dem Gaming-Profil, aber mit einer weiter reduzierten Zeitscheibe.
+
+**Server**
+* **Kommandozeilen-Flags:** `-f 100`
+* **Beschreibung:** Reduziert die Häufigkeit, mit der der Scheduler auf CPU-Konflikte prüft, um den Durchsatz auf Kosten der Reaktionsfähigkeit zu verbessern.
+
+#### Cosmos
+
+**Gaming**
+* **Kommandozeilen-Flags:** `-c 0 -p 0`
+* **Beschreibung:** Deaktiviert die CPU-Lastverfolgung und erzwingt immer eine deadline-basierte Planung, um die Reaktionsfähigkeit zu verbessern.
+
+**Power Save**
+* **Kommandozeilen-Flags:** `-m powersave -d -p 5000`
+* **Beschreibung:** Priorisiert die Energieeffizienz. Bevorzugt weniger leistungsfähige Kerne (z.B. E-Kerne bei Intel) und deaktiviert verzögerte Wakeups, was den Durchsatz reduziert, aber die Energieeffizienz erhöht. Die CPU-Lastabfrage wird auf 5ms erhöht.
+
+**Low Latency**
+* **Kommandozeilen-Flags:** `-m performance -c 0 -p 0 -w`
+* **Beschreibung:** Soll die Latenz auf Kosten des Durchsatzes verringern. Geeignet für Soft-Echtzeitanwendungen wie Audioverarbeitung und Multimedia. Erzwingt immer eine deadline-basierte Planung und synchrone Wakeup-Optimierungen, um die Vorhersagbarkeit der Leistung zu verbessern.
+
+**Server**
+* **Kommandozeilen-Flags:** `-a -s 20000`
+* **Beschreibung:** Aktiviert die Adressraum-Affinität, um die Lokalität und Leistung bei bestimmten Cache-sensitiven Workloads zu verbessern. Die Abfrage wird auf 20ms erhöht.
