@@ -1,0 +1,413 @@
+---
+title: Nach der Installation
+description: Konfigurationsschritte nach der Installation von CachyOS
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+## Das System aktualisieren
+
+<Tabs>
+
+<TabItem label="Mit Octopi (GUI)">
+
+Octopi ist ein grafischer Paketmanager für Arch-basierte Distributionen, der eine bequeme Möglichkeit zur Verwaltung von Paketen und Updates bietet.
+Um Ihr System mit Octopi zu aktualisieren, folgen Sie diesen Schritten:
+
+<Steps>
+
+1. Starten Sie **Octopi** aus dem Anwendungsmenü.
+2. Klicken Sie im Hauptfenster auf die Schaltfläche **Auf Updates prüfen** (oben links), und dann daneben auf **System-Upgrade**.
+3. Octopi prüft nun auf verfügbare Updates und fordert Sie auf, diese entweder in Octopi selbst oder in einem Terminal zu installieren.
+4. Um mit dem Update fortzufahren, klicken Sie auf die Schaltfläche **Anwenden**.
+5. Octopi wird die Updates herunterladen und installieren.
+6. Es wird empfohlen, den Computer nach einem großen Update neu zu starten **(insbesondere wenn der Kernel ein Update erhalten hat)**.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Mit Pacman">
+
+<Steps>
+
+1. Öffnen Sie einen Terminal-Emulator (oder drücken Sie `Strg + Alt + T` – `Mod + Enter` in einem WM, z. B. Qtile).
+2. Führen Sie den folgenden Befehl aus, um das System zu aktualisieren:
+
+   ```sh
+   sudo pacman -Syu
+   ```
+3. Es wird empfohlen, den Computer nach einem großen Update neu zu starten **(insbesondere wenn der Kernel ein Update erhalten hat)**.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Offline-System-Update">
+
+*CachyOS unterstützt Offline-System-Upgrades mit dem Skript [`pacman-offline`](https://github.com/eworm-de/pacman-offline). Dies ermöglicht es Ihrem System, Paketupdates herunterzuladen und beim nächsten Neustart anzuwenden. (Ja, wie bei Windows)*
+
+:::note
+Das `pacman-offline`-Tool integriert sich in die Offline-Update-Funktion von systemd. Es kümmert sich automatisch um Kernel-Updates und das Laden von Modulen.
+
+Die Datei `/etc/pacman.d/offline.conf` ist entscheidend für die Verwaltung, welche Pakete bei regulären und Offline-Updates aktualisiert werden. Stellen Sie sicher, dass sie für Ihren gewünschten Kernel korrekt konfiguriert ist, oder fügen Sie die gewünschten Pakete hinzu, damit diese nur während der Ausführung von pacman-offline aktualisiert und bei einem regulären Update ignoriert werden. Beispiel: `pacman -Syu`.
+
+**Wenn Sie den automatischen Update-Timer aktivieren, müssen Sie Ihr System nicht mehr manuell aktualisieren.**
+:::
+
+<Steps>
+
+1. **Installieren Sie das pacman-offline-Paket**
+
+   ```bash
+   sudo pacman -S pacman-offline
+   ```
+
+2. **Pacman anweisen, die separate Paket-Ignorierliste zu lesen.**
+
+   ```bash title='Fügen Sie die folgende Zeile zur Datei /etc/pacman.conf hinzu'
+   Include = /etc/pacman.d/offline.conf
+   ```
+   *Beispiel*
+   ```bash
+   # REPOSITORIES
+   #   - can be defined here or included from another file
+   #   - pacman will search repositories in the order defined here
+   #   - local/custom mirrors can be added here or in separate files
+   #   - repositories listed first will take precedence when packages
+   #     have identical names, regardless of version number
+   #   - URLs will have $repo replaced by the name of the current repo
+   #   - URLs will have $arch replaced by the name of the architecture
+   #
+   # Repository entries are of the format:
+   #       [repo-name]
+   #       Server = ServerName
+   #       Include = IncludePath
+   #
+   # The header [repo-name] is crucial - it must be present and
+   # uncommented to enable the repo.
+   #
+
+   Include = /etc/pacman.d/offline.conf
+   ```
+3. **Die CachyOS-Kernel hinzufügen, damit Pacman sie bei regulären Updates ignoriert**
+
+   Das `pacman-offline`-Tool verwendet diese Datei, um zu bestimmen, welche Pakete bei den traditionellen Pacman-Updates ignoriert werden sollen.
+
+   Beispiel: wenn Sie `sudo pacman -Syu` ausführen
+
+   *Ersetzen Sie den Inhalt der Datei `/etc/pacman.d/offline.conf` durch Folgendes:*
+
+   ```text
+   # Arch Linux kernels
+   IgnorePkg = linux linux-headers linux-docs
+   IgnorePkg = linux-lts linux-lts-headers linux-lts-docs
+   IgnorePkg = linux-zen linux-zen-headers linux-zen-docs
+   IgnorePkg = linux-hardened linux-hardened-headers linux-hardened-docs
+
+   # CachyOS kernels
+   IgnorePkg = linux-cachyos linux-cachyos-headers
+   IgnorePkg = linux-cachyos-bmq linux-cachyos-bmq-headers
+   IgnorePkg = linux-cachyos-bore linux-cachyos-bore-headers
+   IgnorePkg = linux-cachyos-deckify linux-cachyos-deckify-headers
+   IgnorePkg = linux-cachyos-eevdf linux-cachyos-eevdf-headers
+   IgnorePkg = linux-cachyos-gcc linux-cachyos-gcc-headers
+   IgnorePkg = linux-cachyos-hardened linux-cachyos-hardened-headers
+   IgnorePkg = linux-cachyos-lts linux-cachyos-lts-headers
+   IgnorePkg = linux-cachyos-rc linux-cachyos-rc-headers
+   IgnorePkg = linux-cachyos-rt-bore linux-cachyos-rt-bore-headers
+   IgnorePkg = linux-cachyos-server linux-cachyos-server-headers
+   IgnorePkg = linux-cachyos-lto linux-cachyos-lto-headers
+   IgnorePkg = linux-cachyos-bmq-lto linux-cachyos-bmq-lto-headers
+   IgnorePkg = linux-cachyos-bore-lto linux-cachyos-bore-lto-headers
+   IgnorePkg = linux-cachyos-deckify-lto linux-cachyos-deckify-lto-headers
+   IgnorePkg = linux-cachyos-eevdf-lto linux-cachyos-eevdf-lto-headers
+   IgnorePkg = linux-cachyos-gcc-lto linux-cachyos-gcc-lto-headers
+   IgnorePkg = linux-cachyos-hardened-lto linux-cachyos-hardened-lto-headers
+   IgnorePkg = linux-cachyos-lts-lto linux-cachyos-lts-lto-headers
+   IgnorePkg = linux-cachyos-rc-lto linux-cachyos-rc-lto-headers
+   IgnorePkg = linux-cachyos-rt-bore-lto linux-cachyos-rt-bore-lto-headers
+   IgnorePkg = linux-cachyos-server-lto linux-cachyos-server-lto-headers
+   ```
+
+   *Jetzt werden all diese Pakete bei den regulären Updates ignoriert, aber während der Offline-Vorbereitung überprüft.*
+
+3. **Starten Sie die Vorbereitung für das Offline-Update nur einmal**
+
+   ```bash title='Führen Sie den folgenden Befehl aus'
+   sudo systemctl start pacman-offline-prepare.service
+   ```
+   Dieser Befehl veranlasst pacman-offline, einmal ausgeführt zu werden und die Paketdatenbanken zu synchronisieren sowie Updates herunterzuladen, aber nicht zu installieren.
+
+</Steps>
+
+*Wenn Sie möchten, dass dieses Skript automatisiert wird, folgen Sie den nächsten Schritten:*
+
+<Steps>
+
+1. **Aktivieren Sie den Vorbereitungs-Timer**
+
+   Wenn der `pacman-offline-prepare.timer` aktiviert ist, kann systemd dieses Skript auslösen, um täglich nach einigen Minuten nach jedem Systemstart Updates herunterzuladen.
+
+   ```bash
+   sudo systemctl enable pacman-offline-prepare.timer
+   ```
+
+2. **Starten Sie Ihr System neu:**
+
+   Die Updates werden beim nächsten Systemneustart installiert.
+
+3. **(Optional) Automatische Systemneustarts:**
+
+    Aktivieren Sie den `pacman-offline-reboot.timer`, um Ihr System standardmäßig um **3 Uhr morgens** (Ihre Zeitzone) automatisch neu zu starten, wenn Updates anstehen. Beachten Sie, dass dies aufgrund der Einbeziehung von `RandomizedDelaySec`, das standardmäßig auf 2 Stunden eingestellt ist, nicht immer zur gleichen Zeit geschieht.
+
+    ```bash
+    sudo systemctl enable pacman-offline-reboot.timer
+    ```
+
+    :::tip
+    Sie können die Datei `pacman-offline-reboot.timer` bearbeiten, um entweder die Uhrzeit zu ändern, zu der Ihr System neu starten soll, wenn ein anstehendes Update vorhanden ist, oder um den zufälligen Zeitplan zu deaktivieren.
+    :::
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Cachy-Update">
+
+Fork von [Arch-Update](https://github.com/Antiz96/arch-update)
+
+Ein Update-Notifier & -Anwender für Arch Linux, der Sie bei wichtigen Aufgaben vor/nach dem Update unterstützt.
+Enthält ein dynamisches & klickbares Systray-Applet für eine einfache Integration mit jeder Desktop-Umgebung / jedem Fenstermanager.
+
+Aktivieren Sie Cachy-Update in CachyOS Hello > Apps/Tweaks > Cachy Update enabled
+
+- Funktionen:
+  - Automatische Prüfung und Auflistung verfügbarer Updates.
+  - Prüfung auf aktuelle Arch Linux News (und bietet an, sie anzuzeigen, falls vorhanden).
+  - Prüfung auf verwaiste Pakete (und bietet an, sie zu entfernen, falls vorhanden).
+  - Prüfung auf alte & deinstallierte Pakete im Cache (und bietet an, sie zu entfernen, falls vorhanden).
+  - Prüfung auf anstehende Kernel-Updates, die einen Neustart erfordern (und bietet an, dies zu tun, falls eines vorhanden ist).
+  - Prüfung auf Dienste, die nach einem Upgrade einen Neustart erfordern (und bietet an, dies zu tun, falls vorhanden).
+  - Unterstützung für `sudo`, `sudo-rs`, `doas` & `run0`.
+
+**Update-Prüfintervall:** `Einmal 15 Sekunden nach dem Booten und dann stündlich.`
+
+Danke an [Antiz](https://github.com/Antiz96) für die Wartung des Upstream-Projekts Arch-Update und für die Implementierung von Cachy-Update.
+
+</TabItem>
+
+</Tabs>
+
+## Firewall konfigurieren (ufw)
+:::note
+UFW ist nach der Installation standardmäßig aktiviert.
+:::
+Um ufw zu konfigurieren, folgen Sie diesen Schritten:
+
+<Tabs>
+
+<TabItem label="Aktivieren">
+
+```bash
+sudo ufw enable
+```
+
+</TabItem>
+
+<TabItem label="Deaktivieren">
+
+```bash
+sudo ufw disable
+```
+
+</TabItem>
+
+<TabItem label="Erlauben">
+
+Standardmäßig erlaubt ufw allen eingehenden und ausgehenden Verkehr. Sie können spezifische Regeln zur Firewall hinzufügen, um bestimmte Verbindungen zu blockieren oder zu erlauben.
+
+```bash
+# Zum Beispiel:
+sudo ufw allow ssh
+```
+
+</TabItem>
+
+<TabItem label="Verweigern">
+
+```bash
+# Um einen bestimmten Port zu verweigern, sehen Sie sich das folgende Beispiel an:
+sudo ufw deny 80
+```
+
+</TabItem>
+
+<TabItem label="Status">
+
+```bash
+sudo ufw status verbose
+```
+
+</TabItem>
+
+</Tabs>
+
+:::note
+Seien Sie vorsichtig beim Konfigurieren von Firewall-Regeln, da falsch konfigurierte Regeln Sie aus Ihrem eigenen System aussperren können.
+:::
+
+:::note
+Sie können es auch grafisch im Abschnitt "Firewall" in den KDE Plasma-Einstellungen konfigurieren.
+:::
+
+## WLAN-Regulierungsdomäne konfigurieren
+
+Das `wireless-regdb`-Paket enthält eine Datenbank mit WLAN-Regeln (erlaubte Frequenzen, Kanäle, Leistungsgrenzen) für verschiedene Länder. Das Einstellen der richtigen Region für Ihren Standort kann spezifische WLAN-Kanäle freischalten (wie Kanäle 12/13 oder 5GHz/6GHz-Bänder), die standardmäßig möglicherweise eingeschränkt sind, und so zur Verbesserung Ihrer WLAN-Leistung und Verbindungsqualität beitragen.
+
+**Konfiguration:**
+
+1. Bearbeiten Sie die Konfiguration:
+   Öffnen Sie `/etc/conf.d/wireless-regdom` mit Root-Rechten.
+   ```bash
+   sudo micro /etc/conf.d/wireless-regdom
+   ```
+2. Stellen Sie Ihr Land ein:
+   Entkommentieren Sie die Zeile mit Ihrem zweibuchstabigen [ISO-Ländercode](https://de.wikipedia.org/wiki/ISO-3166-1-Kodierliste) (z. B. `WIRELESS_REGDOM="DE"`). Stellen Sie sicher, dass nur ein Land entkommentiert ist.
+3. Neustart:
+   Ein Neustart ist in der Regel erforderlich, damit die Änderung wirksam wird.
+
+**Überprüfung:**
+
+Um die aktuell angewendete Regulierungsdomäne zu überprüfen, verwenden Sie diesen Befehl:
+
+```bash
+iw reg get
+global
+country 00: DFS-UNSET # Land 00 verwendet globale Standardeinstellungen
+	(755 - 928 @ 2), (N/A, 20), (N/A), PASSIVE-SCAN
+	(2402 - 2472 @ 40), (N/A, 20), (N/A)
+	(2457 - 2482 @ 20), (N/A, 20), (N/A), AUTO-BW, PASSIVE-SCAN
+	(2474 - 2494 @ 20), (N/A, 20), (N/A), NO-OFDM, PASSIVE-SCAN
+	(5170 - 5250 @ 80), (N/A, 20), (N/A), AUTO-BW, PASSIVE-SCAN
+	(5250 - 5330 @ 80), (N/A, 20), (0 ms), DFS, AUTO-BW, PASSIVE-SCAN
+	(5490 - 5730 @ 160), (N/A, 20), (0 ms), DFS, PASSIVE-SCAN
+	(5735 - 5835 @ 80), (N/A, 20), (N/A), PASSIVE-SCAN
+	(57240 - 63720 @ 2160), (N/A, 0), (N/A)
+```
+
+Suchen Sie nach der Zeile `country XX:`, wobei `XX` dem von Ihnen eingestellten Code entsprechen sollte. Wenn `country 00:` angezeigt wird, verwendet das System möglicherweise Standardbeschränkungen oder hat die Region noch nicht ermittelt.
+
+```bash
+iw reg get
+global
+country US: DFS-FCC # Land wird korrekt als US angezeigt
+	(902 - 904 @ 2), (N/A, 30), (N/A)
+	(904 - 920 @ 16), (N/A, 30), (N/A)
+	(920 - 928 @ 8), (N/A, 30), (N/A)
+	(2400 - 2472 @ 40), (N/A, 30), (N/A)
+	(5150 - 5250 @ 80), (N/A, 23), (N/A), AUTO-BW
+	(5250 - 5350 @ 80), (N/A, 24), (0 ms), DFS, AUTO-BW
+	(5470 - 5730 @ 160), (N/A, 24), (0 ms), DFS
+	(5730 - 5850 @ 80), (N/A, 30), (N/A), AUTO-BW
+	(5850 - 5895 @ 40), (N/A, 27), (N/A), NO-OUTDOOR, AUTO-BW, PASSIVE-SCAN
+	(5925 - 7125 @ 320), (N/A, 12), (N/A), NO-OUTDOOR, PASSIVE-SCAN
+	(57240 - 71000 @ 2160), (N/A, 40), (N/A)
+```
+
+## Globales Menü aktivieren
+Bei einigen Apps wie Visual Studio Code funktioniert das globale Menü möglicherweise nicht oder ist an die übergeordnete App anstatt an das Panel angehängt.
+
+```sh
+# Um die Unterstützung für das globale Menü zu aktivieren, führen Sie den Befehl aus und starten Sie die App neu.
+sudo pacman -S appmenu-gtk-module libdbusmenu-glib
+```
+
+## AppArmor-Unterstützung mit AppArmor.d-Profilen aktivieren (Optional)
+
+<Steps>
+
+1. Fügen Sie die folgenden Kernel-Parameter zu Ihrem Boot-Manager hinzu, siehe [Konfiguration des Boot-Managers](/de/configuration/boot_manager_configuration) als Referenz
+
+   ```text
+   lsm=landlock,lockdown,yama,integrity,apparmor,bpf
+   ```
+
+2. Installieren Sie die Pakete apparmor und apparmord **(Set von über +1500 Profilen)**
+   ```bash
+   sudo pacman -S apparmor apparmor.d-git
+   ```
+
+3. Aktivieren/Starten Sie den AppArmor-Dienst
+
+   ```bash
+   systemctl enable --now apparmor.service
+   ```
+
+4. Aktivieren Sie das Caching für AppArmor-Profile
+
+   ```shell
+   # /etc/apparmor/parser.conf
+   ## Fügen Sie die folgenden Zeilen hinzu:
+   write-cache
+   Optimize=compress-fast
+   ```
+   Speichern Sie die Datei und starten Sie neu.
+</Steps>
+
+## Die Standard-Shell ändern
+
+Derzeit verwendet CachyOS [fish](https://fishshell.com/) als Standard-Login-Shell des Benutzers. Sie können jedoch
+die Standard-Shell nach Belieben ändern.
+
+<Tabs>
+   <TabItem label='bash'>
+
+      Dies ist die Standard-Shell auf fast jeder Linux-Distribution. Sie wird auch immer noch als Login-Shell des Root-Benutzers verwendet. bash
+      verfügt über grundlegende Autovervollständigungsfunktionen und eine einfache Verlaufsverwaltung. Es unterscheidet sich von zsh und fish darin, dass es nicht
+      das ausgefallene Anpassungs- und Plugin-Ökosystem hat, das sowohl fish als auch zsh besitzen.
+
+
+      ```sh title='Ändern Ihrer Standard-Shell zu bash'
+      chsh -s /usr/bin/bash
+      ```
+
+   </TabItem>
+
+   <TabItem label='zsh'>
+
+      Wir stellen eine [zsh-Konfiguration](https://github.com/CachyOS/cachyos-zsh-config) mit häufig verwendeten Plugins und Konfigurationen zur Verfügung.
+      Sie zielt darauf ab, eine 1:1-Funktionalität mit unserer [fish-Konfiguration](https://github.com/CachyOS/cachyos-fish-config) zu haben.
+      Dies ist auch die Standard-Shell, die in MacOS verwendet wird.
+
+      ```sh title='Ändern der Standard-Shell zu zsh'
+      chsh -s /usr/bin/zsh
+      ```
+
+   </TabItem>
+</Tabs>
+
+## Aktualisieren/Verwenden von [tldr](https://github.com/tldr-pages/tldr)
+
+:::note
+CachyOS verwendet [tealdeer](https://github.com/tealdeer-rs/tealdeer), eine schnellere, auf Rust basierende Implementierung des ursprünglichen tldr
+:::
+
+Dieses Werkzeug ist äußerst nützlich für diejenigen, die nicht viel lesen oder Zeit mit dem Lesen einer Hilfe-/Manpage verschwenden möchten.
+
+<Steps>
+
+1. ```sh title="Öffnen Sie ein Terminal und führen Sie den folgenden Befehl aus"
+   tldr --update
+   ```
+2. Beispiel für die Verwendung von tldr:
+   ```sh
+   tldr java
+     Execute a `.jar` program:
+
+      java -jar filename.jar
+
+   # Wie Sie sehen, ist es wirklich nützlich, und im Laufe der Zeit werden neue Werkzeuge/Seiten hinzugefügt.
+   ```
+
+</Steps>

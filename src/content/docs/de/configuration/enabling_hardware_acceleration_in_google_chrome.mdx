@@ -1,0 +1,140 @@
+---
+title: Hardwarebeschleunigung für Chromium-basierte Browser
+description: Konfigurieren Sie die Hardwarebeschleunigung für Video-Dekodierung/-Enkodierung in Chromium-basierten Browsern unter CachyOS. Enthält die Einrichtung für AMD-GPUs und eine Vorlage für andere GPUs/Browser.
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+Diese Anleitung beschreibt die Aktivierung der Hardwarebeschleunigung in Chromium-basierten Browsern unter CachyOS. Dadurch werden Video- und Grafikaufgaben an Ihre GPU ausgelagert, was die Leistung verbessert.
+
+## Voraussetzungen
+
+* **Chromium-basierter Browser:** (z. B. Chrome, Brave, Ungoogled Chromium, Edge)
+* **GPU-Treiber/APIs:** Aktuelle Mesa- (AMD/Intel) oder NVIDIA-Treiber, mit konfiguriertem Vulkan/VA-API/VDPAU.
+* **amdgpu_top:** Installieren Sie `amdgpu_top` aus dem Repository über den Paketmanager, wenn Sie die Aktivität Ihrer AMD-GPU im Terminal überwachen möchten.
+
+## Beitrag leisten
+
+Diese Anleitung ist erweiterbar. Wenn Sie eine funktionierende Konfiguration für die Hardwarebeschleunigung für eine bestimmte GPU und einen Chromium-basierten Browser haben, können Sie einen neuen Abschnitt unter „GPU- & Browser-Konfigurationen“ hinzufügen. Fügen Sie Folgendes hinzu:
+
+* **Name des Browsers**
+* **GPU-Modell**
+* **Flags:** Der Inhalt von `~/.config/[browser]-flags.conf`.
+* **Dateipfad:** Der vollständige Pfad zur Flags-Datei.
+* **Anmerkungen (Optional):** Wichtige Treiber, Pakete oder spezielle Einrichtungshinweise.
+
+## Einrichtungsschritte
+
+<Steps>
+
+1. Flags-Datei identifizieren: Finden Sie den Pfad zur Flags-Datei Ihres Browsers unter „GPU- & Browser-Konfigurationen“.
+2. Flags-Datei bearbeiten: Öffnen/erstellen Sie die Datei mit `nano` (oder Ihrem bevorzugten Texteditor wie `micro`, `vim`).
+
+    ```bash
+    nano [PFAD_ZU_IHRER_BROWSER_FLAGS_DATEI]
+    # Beispiel: nano ~/.config/chrome-flags.conf
+    ```
+
+3. Flags hinzufügen: Fügen Sie die relevanten GPU-/Browser-Flags in die Datei ein.
+4. Speichern & Schließen.
+5. Browser neu starten: Schließen Sie alle Browser-Instanzen und starten Sie ihn neu.
+6. Überprüfen: Navigieren Sie zu `chrome://gpu` (oder `brave://gpu`, `edge://gpu`, usw.). Bestätigen Sie unter „Video Acceleration Information“ und „Graphics Feature Status“ den Status „Hardware accelerated“.
+
+</Steps>
+
+## So überprüfen Sie die Video-Hardwarebeschleunigung
+
+<Tabs>
+
+<TabItem label='AMD GPUs (amdgpu_top)'>
+
+<Steps>
+
+1. Öffnen Sie ein Terminal und führen Sie den folgenden Befehl aus:
+    ```bash
+    amdgpu_top
+    ```
+2. Starten Sie die Wiedergabe eines Videos in Ihrem Browser (z. B. auf YouTube).
+3. Beobachten Sie den Abschnitt `media` in `amdgpu_top`. Hier sollte eine gewisse Auslastung zu sehen sein, was anzeigt, dass die Media-Engine Ihrer GPU aktiv ist. Wenn der Wert während der Videowiedergabe bei 0 % bleibt, ist die Hardwarebeschleunigung für die Dekodierung möglicherweise nicht vollständig aktiviert.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='Browser-Entwicklertools'>
+
+<Steps>
+
+1. Öffnen Sie Ihren Chromium-basierten Browser.
+
+2. Starten Sie die Wiedergabe eines Videos (z. B. auf YouTube oder eine lokale Datei).
+
+3. Entwicklertools öffnen: Drücken Sie `F12` oder `Strg+Umschalt+I`.
+
+4. Navigieren Sie zum Tab **Media**. Wenn Sie ihn nicht sehen, klicken Sie auf die drei Punkte (`...`) oder `>>` (Weitere Tabs) in der Symbolleiste der Entwicklertools und wählen Sie dann `Media`.
+
+5. Klicken Sie im linken Bereich „Players“ auf den Eintrag, der Ihrem Video entspricht.
+
+6. Scrollen Sie im Hauptbereich nach unten zum Abschnitt **Video Decoder**.
+
+7. Suchen Sie nach dem Label `Hardware decoder`. Der Wert sollte `true` sein. Wenn dort `false` steht oder der Name eines Software-Decoders angezeigt wird (z. B. `FFmpegVideoDecoder`, `VpxVideoDecoder`, `Dav1dVideoDecoder`), ist die Hardwarebeschleunigung für dieses Video nicht aktiv.
+
+</Steps>
+
+</TabItem>
+
+</Tabs>
+
+## GPU- & Browser-Konfigurationen
+
+### AMD Radeon RX 6900 XT (Google Chrome)
+
+* **Browser:** Google Chrome
+
+* **GPU:** AMD Radeon RX 6900 XT
+
+* **Flags-Datei:** `~/.config/chrome-flags.conf`
+
+```bash
+--use-gl=angle
+--use-angle=vulkan
+--enable-features=Vulkan,VulkanFromANGLE,DefaultANGLEVulkan,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
+--ozone-platform-hint=x11
+```
+
+**Anmerkungen:** Nutzt Vulkan (über ANGLE) und VA-API. `--ozone-platform-hint=x11` kann selbst unter Wayland für bestimmte Beschleunigungspfade nützlich sein.
+
+---
+
+### Vorlage zum Beitragen
+
+### [Ihr Browser] - [Ihr GPU-Modell] (Beigetragen von [Ihr Name/Handle])
+
+* **Browser:** [z. B. Brave, Ungoogled Chromium, Microsoft Edge, Vivaldi, Opera, Chromium]
+
+* **GPU:** [z. B. NVIDIA GeForce RTX 3080, Intel Iris Xe]
+
+* **Pfad zur Flags-Datei:** (Entscheidend, variiert je nach Browser!)
+
+  * Gängige `.conf`-Pfade:
+
+    * Chromium: `~/.config/chromium-flags.conf`
+
+    * Brave Browser: `~/.config/brave-browser-flags.conf`
+
+    * Ungoogled Chromium: `~/.config/ungoogled-chromium-flags.conf`
+
+  * Änderung der `.desktop`-Datei: Bei einigen Browsern (Brave, Edge, Vivaldi, Opera) muss möglicherweise die `Exec=`-Zeile in ihrer `.desktop`-Datei bearbeitet werden (kopieren Sie diese zuerst von `/usr/share/applications/` nach `~/.local/share/applications/`).
+
+Inhalt der Flags (für `.conf`-Datei oder `Exec=`-Zeile):
+
+```bash
+# Fügen Sie Ihre Flags hier ein.
+# Bei .desktop-Dateien werden die Flags durch Leerzeichen getrennt nach der ausführbaren Datei angehängt.
+```
+
+**Anmerkungen (Optional):**
+
+* Erforderliche Treiber (z. B. `nvidia-dkms`, `intel-media-driver`).
+
+* Spezifische Einrichtungshinweise oder Anleitungen zur Änderung der `.desktop`-Datei.
