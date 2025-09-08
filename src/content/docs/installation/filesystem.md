@@ -140,6 +140,7 @@ F2FS (Flash-Friendly File System) is a flash file system originally created and 
 - Space savings from compression cannot currently be used by the user. This may be added in the future.
 - Relatively weak fsck (filesystem check).
 - Downgrading to a kernel older than the version that created the filesystem may cause issues.
+- Requires a workaround when used with GRUB on a MBR/BIOS system.
 
 ### Userspace utilities
 
@@ -147,7 +148,8 @@ The main utility for f2fs is `f2fs-tools`
 
 ### Recommendation
 
-F2FS is only recommended for users who want to maximize the life of their NAND flash.
+- F2FS is only recommended for users who want to maximize the life of their NAND flash.
+- Limine is the recommended bootloader for F2FS users on MBR/BIOS systems since it does not require a workaround like GRUB does.
 
 ## BcacheFS
 
