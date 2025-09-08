@@ -37,7 +37,7 @@ BTRFS is a modern copy-on-write(COW) filesystem created in 2007 and declared sta
 
 ### Pros
 
-- Transparent compression. BTRFS supports transparently compressing files to allow for significant space savings with no user intervention. CachyOS ships with ZSTD compression set to level 3 by default.
+- Transparent compression. BTRFS supports transparently compressing files to allow for significant space savings with no user intervention. **CachyOS ships with ZSTD compression set to level 3 by default.**
 - Snapshot functionality. BTRFS leverages its COW nature to allow for the creation of snapshots of subvolumes that take up very little actual space.
 - Subvolume functionality allowing for greater control over the filesystem.
 - Able to grow or shrink.
@@ -77,6 +77,7 @@ EXT4 (fourth extended filesystem) is the most commonly used Linux filesystem. EX
 - Very common, allowing easy access to plenty of resources.
 - Reliable. EXT4 has a proven track record of being very reliable.
 - Able to grow or shrink.
+  - Shrinking is only supported offline and requires the filesystem to be unmounted.
 
 ### Cons
 
@@ -140,7 +141,7 @@ F2FS (Flash-Friendly File System) is a flash file system originally created and 
 - Space savings from compression cannot currently be used by the user. This may be added in the future.
 - Relatively weak fsck (filesystem check).
 - Downgrading to a kernel older than the version that created the filesystem may cause issues.
-- Requires a workaround when used with GRUB on a MBR/BIOS system.
+- Requires a workaround when used with GRUB on MBR/BIOS system.
 
 ### Userspace utilities
 
@@ -148,7 +149,7 @@ The main utility for f2fs is `f2fs-tools`
 
 ### Recommendation
 
-- F2FS is only recommended for users who want to maximize the life of their NAND flash.
+- F2FS is recommended for users who want to maximize the lifespan of their NAND flash devices.
 - Limine is the recommended bootloader for F2FS users on MBR/BIOS systems since it does not require a workaround like GRUB does.
 
 ## BcacheFS
