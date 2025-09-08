@@ -35,59 +35,87 @@ Introducing our new package search page for CachyOS. You can now easily search f
 
 <ImageComponent imgsrc={import('~/assets/images/cachyos-package-dashboard.png')} />
 
-## Migrating from x86-64-v3 to Zen 4 repositories
+## Migrating from x86-64-v3 to x86-64-v4 or znver4
 
-If you are currently using the `x86-64-v3` repositories and you upgrade to a Zen 4 or Zen 5 CPU, you can migrate to our `znver4` repositories to take advantage of the additional optimizations available for your CPU architecture.
+If you’re currently using the x86-64-v3 repositories and your new CPU supports x86-64-v4 (or AMD Zen 4/5), you can migrate by following these steps:
+
+### Checking CPU Compatibility
+
+- Verifying `x86-64-v4` support:
+  ```sh title='Run the following command:'
+  /lib/ld-linux-x86-64.so.2 --help | grep supported
+  ```
+  - ✅ `x86-64-v4 (supported, searched)` → CPU supports v4
+  - ❌ `x86-64-v4` (no parentheses) → CPU does **NOT** support v4
+
+Example (CPU supports v4):
+  ```sh
+  $ /lib/ld-linux-x86-64.so.2 --help | grep supported
+    x86-64-v2 (supported, searched)
+    x86-64-v3 (supported, searched)
+    x86-64-v4 (supported, searched)
+  ```
+
+- For AMD Zen 4/5 CPUs, check if your CPU reports znver4 or znver5:
+  - Run the following command:
+    ```sh
+    gcc -march=native -Q --help=target 2>&1 | grep -Po "^\s+-march=\s+\K(\w+)\$"
+    ```
+    If the output is `znver4` or `znver5`, you can proceed with the migration.
+
+:::note
+Both x86-64-v4 and znver4 use the same mirrorlist `/etc/pacman.d/cachyos-v4-mirrorlist`.
+:::
+
+### Migration Steps
 
 <Steps>
+1. Edit `/etc/pacman.conf` and replace your `x86-64-v3` repositories with one of the following depending on your CPU support:
+    <Tabs>
+        <TabItem label="x86-64-v4">
+            ```ini title='/etc/pacman.conf'
+            [cachyos-v4]
+            Include = /etc/pacman.d/cachyos-v4-mirrorlist
 
-1. Make sure your CPU is based on Zen 4 or Zen 5. You can check this by running the following command:
+            [cachyos-core-v4]
+            Include = /etc/pacman.d/cachyos-v4-mirrorlist
+
+            [cachyos-extra-v4]
+            Include = /etc/pacman.d/cachyos-v4-mirrorlist
+            ```
+        </TabItem>
+
+        <TabItem label="znver4 (AMD Zen 4/5 only)">
+          ```ini title='/etc/pacman.conf'
+          [cachyos-znver4]
+          Include = /etc/pacman.d/cachyos-v4-mirrorlist
+
+          [cachyos-core-znver4]
+          Include = /etc/pacman.d/cachyos-v4-mirrorlist
+
+          [cachyos-extra-znver4]
+          Include = /etc/pacman.d/cachyos-v4-mirrorlist
+        ```
+        </TabItem>
+        Keep `[cachyos]`, `[core]`, `[extra]`, and `[multilib]` unchanged.
+        </Tabs>
+2. Clear the package cache and synchronize databases:
+
    ```sh
-   gcc -march=native -Q --help=target 2>&1 | grep -Po "^\s+-march=\s+\K(\w+)\$"
-   ```
-   If the output is `znver4` or `znver5`, you can proceed with the migration.
-2. Replace the `x86-64-v3` repositories in your `/etc/pacman.conf` with the `znver4` repositories. Your `/etc/pacman.conf` should look like this:
-    ```ini title='Example'
-   [cachyos-znver4]
-
-   Include = /etc/pacman.d/cachyos-v4-mirrorlist
-
-   [cachyos-core-znver4]
-
-   Include = /etc/pacman.d/cachyos-v4-mirrorlist
-
-   [cachyos-extra-znver4]
-
-   Include = /etc/pacman.d/cachyos-v4-mirrorlist
-
-   [cachyos]
-
-   Include = /etc/pacman.d/cachyos-mirrorlist
-
-   [core]
-
-   Include = /etc/pacman.d/mirrorlist
-
-   [extra]
-
-   Include = /etc/pacman.d/mirrorlist
-
-   [multilib]
-
-   Include = /etc/pacman.d/mirrorlist
-
-    ```
-3. Clear the package cache and synchronize the package databases:
-   ```sh
-   sudo pacman -Scc # Enter Y in both instances
+   sudo pacman -Scc   # Confirm with 'y' twice
    sudo pacman -Sy
    ```
-4. Reinstall all packages to switch to the `znver4` versions:
+
+3. Reinstall all packages to switch to the new architecture:
+
    ```sh
    pacman -Qqn | sudo pacman -S -
    ```
-5. Reboot your system to apply the changes.
+
+4. Reboot your system.
 </Steps>
+
+---
 
 ## Adding Our Repositories to an Existing Arch Linux Install
 
