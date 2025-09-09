@@ -1,0 +1,95 @@
+---
+title: GPU Migration Guide
+description: Instructions for migrating from NVIDIA to AMD (and vice versa) on CachyOS.
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Switching GPUs on CachyOS
+
+:::note[This guide applies if you are replacing your GPU (NVIDIA ↔ AMD) on an existing CachyOS installation.]
+:::
+
+### Prerequisites
+  - Your replacement GPU is properly installed and connected.
+  - Ensure your system is fully up to date
+    ```bash
+    sudo pacman -Syu
+    ```
+
+### Migration Steps
+
+<Tabs>
+    <TabItem label='From NVIDIA to AMD'>
+        While the AMD drivers are included in the Linux Kernel, you may need to clean up the old NVIDIA configuration and ensure that the necessary AMD packages are installed.
+        <Steps>
+            1. Remove all the NVIDIA packages.
+                ```bash
+                sudo chwd -r nvidia
+                ```
+            2. Clean the current chwd configuration.
+                ```bash
+                 sudo rm -f /etc/mkinitcpio.conf.d/chwd.conf
+                ```
+            3. Use chwd to automatically detect your GPU and install the correct AMD packages.
+                ```bash
+                sudo chwd -a
+                ```
+            4. After installing the new drivers, regenerate your initramfs and bootloader configuration.
+                > This ensures the correct drivers are loaded at boot.
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            5. Reboot to apply changes
+                ```bash
+                sudo reboot
+                ```
+            6. After rebooting, verify that the AMD drivers are active.
+                ```bash
+                vulkaninfo | grep "deviceName"
+                ```
+                or
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                If you see your AMD GPU listed, the drivers are working correctly.
+        </Steps>
+    </TabItem>
+    <TabItem label='From AMD to NVIDIA'>
+        <Steps>
+            1. Clean the remaining AMD packages.
+                ```bash
+                sudo chwd -r amd
+                ```
+            2. Clean the current chwd configuration.
+                ```bash
+                sudo rm -f /etc/mkinitcpio.conf.d/chwd.conf
+                ```
+            3. Use chwd to automatically detect your GPU and install the correct NVIDIA packages.
+                ```bash
+                sudo chwd -a
+                ```
+            4. After installing the new drivers, regenerate your initramfs and bootloader configuration.
+                > This ensures the correct drivers are loaded at boot.
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            5. Reboot to apply changes
+                ```bash
+                sudo reboot
+                ```
+            6. After rebooting, verify that the NVIDIA drivers are active.
+                ```bash
+                nvidia-smi
+                ```
+                or
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                If you see your NVIDIA GPU listed, the drivers are working correctly.
+        </Steps>
+    </TabItem>
+</Tabs>
