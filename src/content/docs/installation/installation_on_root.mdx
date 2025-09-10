@@ -237,10 +237,7 @@ In some cases issues might never occur, but for some users it can be a recurring
 One way to avoid this issue is to install each operating system on separate drives.
 :::
 
-:::note[systemd-boot and rEFInd should automatically detect Windows and add it to the boot menu.]
-:::
-
-### Prerequisites
+- Prerequisites
 
 - Disable Windows Fast Startup and Hibernation
   - Open Windows Powershell as Administrator and execute the following command:
@@ -263,68 +260,79 @@ One way to avoid this issue is to install each operating system on separate driv
 - Booteable USB with CachyOS
   - Refer to the [Creating a Bootable CachyOS USB Drive](/installation/installation_prepare#creating-a-bootable-cachyos-usb-drive) section.
 
-### Installing CachyOS
-
-<Steps>
-    1. Boot into the CachyOS ISO and click on **Launch Installer**.
-    2. Select your preferred Boot Manager. Check the [Boot Managers](/installation/boot_managers) section for more information.
-    3. Choose your Language, Timezone and Keyboard Layout.
-    4. Make sure your Windows drive is selected on the **Select storage device** field.
-    5. Select `Replace a partition` with `btrfs` as the filesystem.
-    6. Highlight your empty partition below **Select a partition to install on**
-        :::note[Usually it shows as a dark gray color and the size should match the one you created in Windows.]
-        :::
-    7. Choose your [Desktop Environment](/installation/desktop_environments) and select the packages you want to install.
-    8. Create a user and set a password for the root account.
-    9. Carefully review the installation summary on the Overview Page. If everything looks correct, click on **Install Now** to proceed with the installation. If you need to make any changes, go back and adjust the settings as necessary.
-    10. After the installation is complete, reboot the system.
-        :::note
-        If after rebooting, the system boots directly into Windows. Reboot again and enter the BIOS/UEFI settings. Look for the Boot Menu order and ensure that `CachyOS` or the boot manager you selected during installation is set as the first boot option.
-        :::
-</Steps>
-
-### Adding Windows entry to GRUB or Limine
-
 <Tabs>
+    <TabItem label='systemd-boot'>
+        **We need to copy the Windows EFI binaries to the Linux EFI partition so that the boot manager can recognize them.**
 
-<TabItem label='GRUB'>
+        <Steps>
+        1. Locate the **Windows EFI partition** with `lsblk`
 
-<Steps>
-    1. Open a terminal and enter the following command:
-        ```bash
-        sudo micro /etc/default/grub
-        ```
-    2. Find the line that says `GRUB_DISABLE_OS_PROBER=false` and remove the `#` at the beginning of the line to uncomment it.
-    3. Save the file by pressing `CTRL + S` and quit the editor by pressing `CTRL + Q`
-    4. Regenerate the GRUB configuration file by executing:
-        ```bash
-        sudo grub-mkconfig -o /boot/grub/grub.cfg
-        ```
-        If in the output you see a line similar to:
-        ```bash title='Example'
-        Found Windows Boot Manager on /dev/nvme0n1p1@/EFI/Microsoft/Boot/bootmgfw.efi
-        ```
-        Then Windows has been successfully added to the GRUB boot menu.
-    5. Reboot the system, and Windows should now appear in the GRUB boot
-</Steps>
+            ```sh title='Execute this command in the terminal'
+            lsblk -o NAME,FSTYPE,SIZE,MOUNTPOINT
+            ```
+            ```sh title='Example output'
+                        NAME        FSTYPE   SIZE MOUNTPOINT
+            zram0               15.3G [SWAP]
+            nvme0n1            476.9G
+            ├─nvme0n1p1 vfat     100M
+            ├─nvme0n1p2           16M
+            ├─nvme0n1p3 ntfs   234.4G
+            ├─nvme0n1p4 ntfs     830M
+            ├─nvme0n1p5 vfat       2G /boot
+            └─nvme0n1p6 btrfs  239.6G /var/tmp
+            ```
+            EFI partitions are almost always formatted as `FAT32/vfat`. Since `nvme0n1p1` does not have a Linux mount point, we can assume that this partition is the Windows EFI partition.
 
-</TabItem>
+        2. Temporarily mount the Windows EFI partition
 
-<TabItem label='Limine'>
+            ```sh
+            sudo mkdir /mnt/WinBoot
+            sudo mount /dev/nvme0n1p1 /mnt/WinBoot # Replace `nvme0n1p1` with the name of the Windows EFI partition.
+            ```
 
-Limine provides a script that can be used to add Windows to the boot menu.
+        3. Copy the EFI binaries from the **Windows EFI partition** to the **Linux EFI partition**:
 
-Open a terminal and execute the following command:
-```bash
-sudo limine-scan
-```
+            ```sh
+            sudo cp -r /mnt/WinBoot/EFI/* /boot/EFI
+            ```
 
-Reboot and Windows should now appear in the Limine boot menu.
+        4. Unmount the previously mounted partition, and Windows should appear in the boot menu on the next startup.
 
-</TabItem>
+            ```sh
+            sudo umount /mnt/WinBoot
+            sudo rm -r /mnt/WinBoot
+            ```
 
+        </Steps>
+    </TabItem>
+
+    <TabItem label='GRUB'>
+        **GRUB uses os-prober to automatically detect the Windows EFI partition and add it to the boot menu.**
+
+        <Steps>
+        1. Install and execute **os-prober**
+
+            ```sh
+            sudo pacman -S os-prober
+            sudo os-prober
+            ```
+
+        2. Enable **os-prober** in the GRUB configuration file
+
+            ```sh title='Press CTRL+S to save and CTRL+Q to exit from Micro'
+            sudo micro /etc/default/grub
+            # /etc/default/grub
+            # Probing for other operating systems is disabled for security reasons. Read
+            # documentation on GRUB_DISABLE_OS_PROBER, if still want to enable this
+            # functionality install os-prober and uncomment to detect and include other
+            # operating systems.
+            GRUB_DISABLE_OS_PROBER=false
+
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+
+            **Windows should now be added to the boot menu.**
+
+        </Steps>
+    </TabItem>
 </Tabs>
-
-### [Video Tutorial](https://www.youtube.com/watch?v=mVXONaHZvFU)
-
-Credits go to [Ksk Royal](https://www.youtube.com/@kskroyaltech) for creating this video tutorial and being the inspiration for this section.
