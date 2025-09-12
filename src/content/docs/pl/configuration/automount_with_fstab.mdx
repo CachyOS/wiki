@@ -1,0 +1,217 @@
+---
+title: Automatyczne montowanie dodatkowych dysków przy starcie systemu za pomocą fstab
+description: Montowanie dodatkowych statycznych dysków przy starcie systemu z wykorzystaniem pliku znajdującego się w /etc/fstab
+---
+
+Ten poradnik opisuje podstawy wykorzystania pliku fstab, znajdującego się w `/etc/`, do montowania statycznych dysków podczas uruchamiania systemu. Krótko wyjaśnia, jak znaleźć UUID partycji lub dysku, co oznaczają niektóre opcje oraz gdzie szukać dalszych informacji, jeśli podane okażą się niewystarczające.
+
+## Wymagania wstępne
+
+- Dostęp do konta root lub uprawnienia sudo
+
+## Dodawanie wpisów do /etc/fstab
+
+:::note[NTFS w systemie Linux]
+System plików NTFS może być niestabilny w systemie Linux, niezależnie od tego, czy używany jest sterownik ntfs3, czy ntfs-3g. Używaj go na własne ryzyko. Dla lepszej stabilności i wydajności rozważ użycie natywnych systemów plików Linuksa, takich jak ext4, xfs lub btrfs.
+:::
+
+### 1. Wyświetl listę UUID swoich partycji
+
+```sh title="Otwórz terminal i uruchom następujące polecenie"
+lsblk -f
+```
+
+```text title="Przykładowy wynik"
+# NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+# zram0                                                                              [SWAP]
+# nvme0n1
+# ├─nvme0n1p1 vfat   FAT32       E04D-9F05
+# ├─nvme0n1p2
+# ├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
+# ├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
+# ├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
+# └─nvme0n1p6 ntfs
+```
+
+W naszym przykładzie wiemy, że chcemy zamontować partycję Windows, która jest w formacie ntfs. Wiemy również, że około połowa jej miejsca jest dostępna. Dlatego możemy ustalić, że partycja, którą chcemy zamontować, to `nvme0n1p3`, a jej UUID to `08A24E90A24E81E4`, z systemem plików `ntfs` w tym przykładzie.
+
+### 2. Identyfikacja partycji
+
+Często polecenie `lsblk -f` dostarczy na tym etapie wszystkich informacji potrzebnych do zamontowania dysku za pomocą /etc/fstab. Jeśli nadal nie masz pewności, która partycja jest właściwa, możesz uruchomić następujące polecenie:
+
+```sh
+sudo fdisk -l
+```
+
+```text title="Przykładowy wynik"
+# Device              Start        End    Sectors  Size Type
+# /dev/nvme0n1p1       2048     206847     204800  100M EFI System
+# /dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
+# /dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
+# /dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
+# /dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
+# /dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
+```
+
+W tym przykładzie znamy już nasz UUID. Jednakże `fdisk -l` może nam to nieco bardziej wyjaśnić, pokazując dokładny rozmiar partycji (1,4T) oraz jej typ (Microsoft basic data).
+
+To powinno nam ostatecznie uświadomić, że partycja, której szukamy, to `nvme0n1p3` z UUID `08A24E90A24E81E4`, jak opisano wcześniej. Wiedzieliśmy to już, ale teraz mamy stuprocentową pewność.
+
+Gdy już jesteś pewien, że znalazłeś właściwą partycję, skopiuj jej UUID. Kopiowanie z emulatora terminala zazwyczaj odbywa się za pomocą `ctrl+shift+C`.
+
+### 3. Dodawanie wpisu do /etc/fstab
+
+Teraz, gdy uzyskaliśmy UUID naszej partycji, nadszedł czas, aby otworzyć plik fstab.
+
+Możesz użyć swojego ulubionego edytora tekstu. W tym przykładzie użyjemy nano. Aby edytować plik fstab, należy go otworzyć jako root:
+
+```sh
+sudo nano /etc/fstab
+```
+
+Używając klawiszy strzałek, przejdź na sam dół pliku fstab, a następnie utwórz nowy wpis w nowej, pustej linii:
+
+```sh
+UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000 0 0
+```
+
+Rozkład tego wpisu jest następujący:
+
+- `UUID=08A24E90A24E81E4` to system plików, który chcemy zamontować, zidentyfikowany przez jego UUID. Istnieją inne metody identyfikacji systemu plików, chociaż UUID jest zazwyczaj najbezpieczniejszy. Dodatkowe metody opisano [tutaj](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems).
+
+- `/media/windows` to punkt montowania naszego dysku. [Standard hierarchii systemu plików Linuksa (FHS)](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html) mówi, że `/media/` jest odpowiednią lokalizacją do montowania dysków wymiennych. `windows` wskazuje katalog, w którym chcemy zamontować nasz dysk. Każdy dysk, który chcemy zamontować, będzie potrzebował własnego katalogu.
+
+- `ntfs3` to typ systemu plików, który ma być użyty. W naszym przykładzie jawnie używamy sterownika jądra ntfs3. Inne przykłady to `ext4`, `xfs` lub podobne. Tę jawną deklarację typu systemu plików można zastąpić opcją `auto`, aby polecenie mount spróbowało samo go odgadnąć.
+
+- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000`: To są opcje montowania:
+
+  - `defaults`: standardowy zestaw opcji, w tym `rw, suid, dev, exec, auto, nouser i async.`
+
+  - `nofail`: pozwala kontynuować proces uruchamiania systemu, nawet jeśli montowanie tego dysku się nie powiedzie.
+
+  - `uid=1000` i `gid=1000`: ustawia właściciela i grupę zamontowanych plików na użytkownika i grupę o ID 1000.
+
+  - `rw`: montuje system plików w trybie do odczytu i zapisu.
+
+  - `user`: pozwala użytkownikowi niebędącemu rootem na montowanie systemu plików.
+
+  - `exec`: pozwala na wykonywanie plików binarnych na zamontowanym systemie plików.
+
+  - `umask=000`: ustawia maskę uprawnień plików, aby zezwolić wszystkim na uprawnienia do odczytu, zapisu i wykonywania.
+
+  - `pierwsze 0` (dump) jest zazwyczaj przestarzałe w nowoczesnych systemach. Pozostawienie tej wartości na 0 niczego nie zepsuje. Możesz przeczytać więcej na ten temat [tutaj](https://linux.die.net/man/8/dump).
+
+  - `drugie 0` ustawia kolejność sprawdzania systemu plików podczas uruchamiania. Dla partycji głównej (root) powinno to być 1, chyba że system plików to btrfs, wtedy wartość powinna wynosić 0. Wszystkie inne systemy plików w fstab powinny mieć wartość 0 (wyłączone) lub 2. Więcej informacji [tutaj](https://man.archlinux.org/man/fsck.8).
+
+Aby uzyskać bardziej szczegółowy opis każdej opcji, odwiedź te dwie strony: [strona man dla fstab](https://man7.org/linux/man-pages/man5/fstab.5.html) oraz [strona man dla mount](https://man7.org/linux/man-pages/man8/mount.8.html).
+
+#### Więcej informacji
+
+Na marginesie, wszystkie opcje po deklaracji typu systemu plików są opcjonalne, jeśli nie zmieniasz ich wartości domyślnych.
+
+Zatem
+
+`UUID=<UUID partycji> /media/foo jakisfs`
+
+i
+
+`UUID=<UUID partycji> /media/foo jakisfs defaults 0 0`
+
+są równoważne. `jakisfs` bez dodatkowych opcji domyślnie oznacza `jakisfs defaults 0 0`.
+
+### 4. Zakończenie
+
+Jeśli chcesz zamontować dysk, dla którego utworzyłeś wpis, już teraz, musisz uruchomić następujące polecenia:
+
+```sh
+sudo systemctl daemon-reload
+```
+
+a następnie:
+
+```sh
+sudo mount -a
+```
+
+Twój dysk powinien teraz pojawić się pod `/media/windows` i będzie tam widoczny po każdym ponownym uruchomieniu systemu.
+
+```sh
+ls /media/windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+# 'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
+ ```
+
+ Jeśli chcesz utworzyć link do nowo zamontowanego dysku w swoim katalogu domowym, możesz uruchomić następujące polecenie:
+
+ ```sh
+ ln -s /media/windows ~/Windows
+ ```
+
+ Aby sprawdzić, czy zadziałało:
+
+ ```sh
+ ls ~/Windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+#'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
+ ```
+
+## tl;dr
+
+- Znajdź **UUID** swojej partycji
+
+```sh
+lsblk -f
+```
+
+- Otwórz `/etc/fstab`
+
+```sh
+sudo nano /etc/fstab
+```
+
+- Utwórz wpis na dole pliku
+
+```sh
+UUID=<UUID partycji> /media/foo jakisfs defaults 0 0
+```
+
+Zastępując `<UUID partycji>`, `foo` i `jakisfs` swoim UUID, katalogiem i systemem plików, np. ext4, a także ustawiając wszelkie inne opcje, które chcesz dodać po `defaults`, takie jak `_netdev` dla NAS-a lub `nofail` dla każdego dysku, który nie jest krytyczny.
+
+- Przeładuj demona
+
+```sh
+sudo systemctl daemon-reload
+```
+
+- Zamontuj swój dysk
+
+```sh
+sudo mount -a
+```
+
+Dysk jest teraz zamontowany i będzie montowany przy każdym kolejnym uruchomieniu systemu.
+
+## Dodatkowa lektura
+
+- [Standard hierarchii systemu plików (FHS)](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS o /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Podręcznik dla dump](<https://linux.die.net/man/8/dump>)
+- [Podręcznik dla fsck](https://man.archlinux.org/man/fsck.8)
+- [Strona man dla fstab](https://man.archlinux.org/man/fstab.5.en)
+- [Wpis w Arch Linux Wiki dotyczący fstab](https://wiki.archlinux.org/title/Fstab)

@@ -1,0 +1,347 @@
+---
+title: Ogólne usprawnienia systemu
+description: Rzeczy, które możesz zrobić, aby ulepszyć system po instalacji
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+## Usprawnienia wydajności AMD
+
+### Sterownik AMD P-State
+---------------------------
+
+`amd-pstate` to sterownik skalowania wydajności procesorów AMD, który wprowadza w jądrze Linux nowy mechanizm kontroli częstotliwości CPU dla nowoczesnych serii APU i CPU od AMD. Nowy mechanizm opiera się na Collaborative Processor Performance Control (CPPC), co zapewnia bardziej precyzyjne zarządzanie częstotliwością niż przestarzałe sprzętowe stany P ACPI.
+
+Obecne platformy CPU/APU AMD używają sterownika ACPI P-states do zarządzania częstotliwością i taktowaniem CPU, przełączając się tylko między 3 stanami P. CPPC zastępuje mechanizmy ACPI P-states i pozwala na elastyczny, niskolatencyjny interfejs, za pomocą którego jądro Linux może bezpośrednio przekazywać wskazówki dotyczące wydajności do sprzętu.
+
+Poniżej znajdują się 3 tryby działania sterownika `amd-pstate` oraz wpisy linii poleceń jądra, aby ich użyć podczas rozruchu:
+
+- AMD P-State (tryb nieautonomiczny): `amd-pstate=passive`
+- AMD P-State Guided (tryb wspomagany autonomicznie): `amd-pstate=guided`
+- AMD P-State EPP (tryb autonomiczny): `amd-pstate=active`
+
+:::note
+Sterownik AMD P-State EPP jest używany domyślnie, gdy nie dokonano jawnej konfiguracji.
+:::
+
+Możesz również przełączać się między trybami działania w czasie rzeczywistym, aby przetestować opcje:
+
+- **Tryb autonomiczny**: platforma bierze pod uwagę tylko wartości ustawione dla minimalnej wydajności, maksymalnej wydajności oraz preferencji wydajności energetycznej.
+   ```sh
+   echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+- **Tryb wspomagany autonomicznie**: platforma ustawia poziom wydajności operacyjnej zgodnie z bieżącym obciążeniem i w granicach ustalonych przez system operacyjny za pomocą rejestrów minimalnej i maksymalnej wydajności.
+   ```sh
+   echo guided | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+- **Tryb nieautonomiczny**: platforma pobiera pożądany poziom wydajności bezpośrednio od systemu operacyjnego poprzez rejestr pożądanej wydajności.
+   ```sh
+   echo passive | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+Więcej informacji:
+
+*   [https://www.kernel.org/doc/html/v6.9/admin-guide/pm/amd-pstate.html](https://www.kernel.org/doc/html/v6.9/admin-guide/pm/amd-pstate.html)
+*   [https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/](https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/)
+*   [https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/](https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/)
+
+### Konfiguracja AMD P-State EPP
+
+
+Aby używać P-State EPP, dostępne są dwa zarządcy skalowania częstotliwości procesora: `powersave` i `performance`. Zaleca się używanie zarządcy powersave i ustawienie preferencji.
+
+*   Ustaw zarządcę powersave: `sudo cpupower frequency-set -g powersave`
+*   Ustaw zarządcę performance: `sudo cpupower frequency-set -g performance`
+
+Aby ustawić preferencję, uruchom następujące polecenie z pożądaną preferencją:
+
+```sh
+echo power | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
+```
+
+Dostępne preferencje: `performance`, `power`, `balance_power`, `balance_performance`
+
+Testy porównawcze dla każdej preferencji można znaleźć tutaj:
+[https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/](https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/)
+
+### Optymalizator AMD 3D V-Cache
+
+Firma AMD opublikowała łatkę optymalizującą planowanie pamięci podręcznej na procesorach z podwójnym CCD 3D, takich jak 7950X3D i 7900X3D.
+W BIOS-ie, w opcji CPPC, należy ustawić opcję "Driver". Umożliwi to nadpisanie używanego trybu za pomocą sysfs.
+
+Dostępne są dwa tryby:
+1. Frequency (Częstotliwość)
+2. Cache (Pamięć podręczna)
+
+Jeśli ustawiono `cache`, sterownik będzie próbował umieszczać zadania najpierw na CCD z większą pamięcią podręczną, co jest głównie korzystne w grach.
+Opcja `frequency` będzie próbowała umieszczać zadania na drugim CCD, który ma wyższą częstotliwość niż CCD z pamięcią podręczną 3D.
+
+Frequency (Domyślnie):
+```sh
+echo frequency | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
+```
+
+Cache:
+```sh
+echo cache | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
+```
+
+Po zmianie trybów, statystyki preferowanych rdzeni AMD powinny wskazywać inny ranking. Możesz go odczytać za pomocą:
+```sh
+grep -v /sys/devices/system/cpu/cpu*/cpufreq/amd_pstate_prefcore_ranking
+```
+
+### AMD P-State Core Performance Boost
+
+AMD Core Performance Boost, znane również jako AMD Turbo Core, to technologia dynamicznego skalowania częstotliwości opracowana przez AMD, która pozwala
+procesorowi na dynamiczne dostosowywanie i kontrolowanie częstotliwości pracy w niektórych wersjach swoich procesorów,
+co umożliwia zwiększenie wydajności w razie potrzeby, przy jednoczesnym zachowaniu niższych parametrów zasilania i termicznych podczas normalnej pracy.
+
+Od wersji `linux-cachyos` 6.9.6, jądro jest załatane wsparciem dla CPB w sterownikach p-state od AMD (obejmuje `passive`, `active` i `guided`).
+Użytkownicy mogą zmieniać stan boost dla każdego rdzenia CPU za pomocą pliku boost w sysfs `/sys/devices/system/cpu/cpuX/cpufreq/boost`
+(X odnosi się do numeru rdzenia, np. cpu0 to pierwszy rdzeń, cpu1 drugi itd.).
+
+```sh
+❯ echo 0 | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/boost # Wyłącza boost dla wszystkich rdzeni
+❯ lscpu -ae # To pokazuje, że AMD CPB jest wyłączone globalnie
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
+  0    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1212.8250
+  1    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1394.2180
+  2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 1204.4600
+
+❯ echo 1 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/boost # Włącza boost na cpu0
+❯ lscpu -ae
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
+  0    0      0    0 0:0:0:0          yes 4564.0000 400.0000 1393.2380
+  1    0      0    0 0:0:0:0          yes 3301.0000 400.0000  400.0000
+  2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 2157.8469
+```
+
+CachyOS dostarcza również wersję `power-profiles-daemon`, która zawiera commit dodający
+wsparcie dla AMD CPB. AMD CPB zostanie wyłączone, jeśli używany jest profil `powersave`, a włączone w profilach `balanced` lub `performance`.
+
+Więcej informacji:
+- https://lore.kernel.org/linux-pm/1a78eeaa-fadd-4734-aaeb-2fe11e96e198@amd.com/T/#m4a0c8917ea8fb033504055bd61512c80c85410c8
+- https://lore.kernel.org/linux-pm/20240624213400.67773-1-mario.limonciello@amd.com/
+
+## Poprawa wydajności
+
+### Wyłączanie Split Lock Mitigate
+
+W niektórych przypadkach, łagodzenie skutków podzielonych blokad (split lock mitigate) może spowolnić wydajność w niektórych aplikacjach i grach. Dostępna jest łatka, która pozwala wyłączyć tę funkcję za pomocą sysctl.
+
+*   Wyłącz split lock mitigate: `sudo sysctl kernel.split_lock_mitigate=0`
+*   Włącz split lock mitigate: `sudo sysctl kernel.split_lock_mitigate=1`
+
+Aby zmiana była trwała, dodaj następującą linię do `/etc/sysctl.d/99-splitlock.conf`:
+
+```text
+kernel.split_lock_mitigate=0
+```
+
+Więcej informacji na temat split lock:
+
+- https://www.phoronix.com/news/Linux-Splitlock-Hurts-Gaming
+- https://github.com/doitsujin/dxvk/issues/2938
+
+### [Planista I/O ADIOS](https://github.com/firelzrd/adios)
+
+Stworzony przez [firelzrd](https://github.com/firelzrd)
+
+:::note
+CachyOS zawiera stabilną gałąź ADIOS w jądrze.
+
+Obecna wersja stabilna: `3.1.4`
+:::
+
+Krótkie wprowadzenie z README:
+
+- *ADIOS (Adaptive Deadline I/O Scheduler) to planista I/O warstwy blokowej dla jądra Linux, zaprojektowany dla nowoczesnych urządzeń blokowych z wieloma kolejkami (blk-mq). Ma na celu zapewnienie niskich opóźnień dla operacji I/O poprzez połączenie zasad planowania terminowego (deadline scheduling) z mechanizmem adaptacyjnej kontroli opóźnień opartym na uczeniu się.*
+  - *Zainspirowany i oparty na koncepcjach z planistów I/O mq-deadline i Kyber. Jego główną cechą jest zdolność do przewidywania opóźnień ukończenia operacji I/O na podstawie wcześniejszych wyników i charakterystyki żądań (typ operacji, rozmiar) oraz wykorzystanie tej predykcji do dynamicznego dostosowywania terminów żądań i zachowania wsadowego.*
+
+W skrócie: ADIOS działa poprzez uczenie się profilu opóźnień Twojego urządzenia pamięci masowej i wykorzystanie tej wiedzy do dynamicznego ustawiania terminów dla żądań I/O. Priorytetyzuje żądania w czterech poziomach, od krytycznych operacji systemowych (Poziom 0) po zadania w tle (Poziom 3), aby zapewnić płynne działanie interfejsu użytkownika. Chociaż koncentruje się na responsywności, jego zachowanie można dostroić za pomocą ustawień sysfs, aby zrównoważyć opóźnienia i przepustowość.
+
+Aby zobaczyć demonstrację na żywo, możesz obejrzeć ten [film](https://www.youtube.com/watch?v=L9WDcEeHgy4)
+
+#### Jak włączyć ADIOS
+
+<Tabs>
+    <TabItem label='Tymczasowo (działa w czasie rzeczywistym)'>
+        Ta metoda ustawia planistę dla bieżącej sesji. Zmiana zostanie utracona po ponownym uruchomieniu.
+        ```sh
+        sync && echo adios | sudo tee /sys/block/<twój_dysk>/queue/scheduler
+            # Zastąp <twój_dysk> rzeczywistym identyfikatorem dysku (np. sda, sdb, nvme0n1)
+        ```
+    </TabItem>
+    <TabItem label='Trwale po ponownym uruchomieniu'>
+        <Steps>
+            1. Otwórz lub utwórz nowy plik reguł udev w swoim ulubionym edytorze tekstu (np. nano, micro, vim)
+                ```sh title='Przykład'
+                sudo nano /etc/udev/rules.d/60-ioschedulers.rules
+                ```
+            2. Dodaj następujące reguły do pliku. Te reguły automatycznie stosują określony planista I/O w zależności od typu dysku (HDD, SSD lub NVMe).
+                ```text
+                # HDD
+                ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", \
+                    ATTR{queue/scheduler}="bfq"
+
+                # SSD
+                ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="adios"
+
+                # NVMe SSD
+                ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="adios"
+                ```
+              3.  Zapisz plik i zamknij edytor.
+              4.  Przeładuj reguły `udev`, aby zastosować zmiany natychmiast, bez ponownego uruchamiania.
+                  ```sh
+                  sudo udevadm control --reload-rules
+                  sudo udevadm trigger
+                  ```
+        </Steps>
+    </TabItem>
+</Tabs>
+
+FAQ:
+
+- Jeśli poprawia responsywność, dlaczego nie jest włączony domyślnie?
+  - ADIOS jest wciąż w fazie aktywnego rozwoju i ciągłych testów. Chociaż oferuje znaczące korzyści dla responsywności pulpitu, nie jest jeszcze uważany za wystarczająco stabilny, aby być domyślnym dla wszystkich obciążeń i typów sprzętu. W niektórych skrajnych przypadkach błędy mogą prowadzić do problemów, takich jak zawieszenie systemu. Z tego powodu jest to opcjonalna funkcja dla użytkowników, którzy chcą przetestować i skorzystać z jego najnowszych ulepszeń.
+
+## Usprawnienia oszczędzania energii
+
+### Włącz RCU Lazy
+
+RCU Lazy pomaga zmniejszyć zużycie energii w systemach bezczynnych lub lekko obciążonych. Może to być przydatne w przypadku laptopów i urządzeń przenośnych.
+Poprawa wynosi od 5 do 10% pod względem oszczędności energii. Należy jednak pamiętać, że ta funkcja oszczędzania energii może wiązać się z niewielkim spadkiem wydajności w zależności od scenariusza.
+Jądro linux-cachyos-deckify będzie miało tę opcję włączoną domyślnie, ponieważ oszczędzanie energii jest kluczowe i niezbędne dla tych urządzeń.
+
+Aby włączyć RCU Lazy, dodaj następujący parametr do listy parametrów [linii poleceń](/pl/configuration/boot_manager_configuration/) jądra:
+```text
+rcutree.enable_rcu_lazy=1
+```
+
+## Rozwiązywanie problemów z kartami NVIDIA
+
+### Wyłączanie backendu Wayland w SDDM
+
+:::note
+Począwszy od cachyos-kde-settings 4.3, SDDM domyślnie używa KWin jako kompozytora Wayland.
+:::
+
+Chociaż jest to miły krok naprzód, może to wprowadzić pewne niedogodności, takie jak problemy z podkręcaniem za pomocą nvidia-settings lub powodować niekompatybilność ze starszymi procesorami graficznymi, które mają problemy z Waylandem.
+
+Aby cofnąć tę zmianę, usuń pakiet cachyos-kde-settings:
+```sh
+sudo pacman -R cachyos-kde-settings
+```
+
+### Oprogramowanie układowe NVIDIA GSP
+
+Oprogramowanie układowe NVIDIA GSP może **"w niektórych przypadkach"** prowadzić do obniżenia wydajności. Chociaż sterownik NVIDIA 555.58.02 w dużej mierze rozwiązał ten problem, na niektórych systemach może on nadal występować.
+Jeśli napotykasz zacięcia w KDE lub słabą wydajność w niektórych przypadkach, możesz wyłączyć oprogramowanie układowe GSP za pomocą następującego pliku konfiguracyjnego:
+`/etc/modprobe.d/nvidia-gsp.conf`
+
+```text
+options nvidia NVreg_EnableGpuFirmware=0
+```
+
+Po utworzeniu pliku wykonaj następujące polecenie:
+```sh
+sudo mkinitcpio -P
+```
+
+:::note
+[Otwarte moduły jądra](https://github.com/NVIDIA/open-gpu-kernel-modules) firmy NVIDIA bazują na oprogramowaniu układowym GSP. Z tego powodu GSP nie może być wyłączone, a ta opcja modprobe zostanie zignorowana podczas ich używania. Użyj `linux-cachyos-nvidia` lub `nvidia-dkms`.
+:::
+
+Zasadniczo zaleca się testowanie oprogramowania układowego GSP po każdej nowej instalacji sterownika NVIDIA, ponieważ często wprowadza ono korzystne funkcje. Ponadto, NVIDIA głównie zaczęła przeprowadzać testy QA przy użyciu oprogramowania układowego GSP.
+
+## Ulepszenia dźwięku i oprogramowania
+
+### Poprawa dźwięku głośników laptopa
+
+Głośniki laptopów często produkują płaski i mało imponujący dźwięk z powodu ich kompaktowych rozmiarów i ograniczonych możliwości sprzętowych. [EasyEffects](https://wiki.archlinux.org/title/PipeWire#EasyEffects) może znacznie poprawić jakość dźwięku wbudowanych głośników laptopa poprzez zastosowanie różnych efektów dźwiękowych i niestandardowych konfiguracji.
+
+Aby rozpocząć, musisz zainstalować EasyEffects i wymagane zależności:
+
+```bash
+# Zainstaluj EasyEffects
+sudo pacman -S easyeffects
+# Zainstaluj dodatkowe wtyczki dla większej liczby efektów
+sudo pacman -S lsp-plugins-lv2
+sudo pacman -S zam-plugins
+sudo pacman -S calf
+sudo pacman -S mda.lv2
+```
+
+#### Konfiguracja
+
+Postępuj zgodnie z poniższymi krokami, aby skonfigurować EasyEffects:
+
+1. Uruchom EasyEffects z menu aplikacji lub wpisując `easyeffects` w terminalu.
+2. Przejdź do zakładki **Wyjście**, aby zarządzać efektami stosowanymi do dźwięku głośników.
+3. Przejdź do zakładki **Efekty**, aby dodawać, modyfikować lub dostosowywać efekty dźwiękowe.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects.png')} />
+
+##### Używanie presetów społeczności
+
+Aby szybko i skutecznie skonfigurować dźwięk, zacznij od **presetów stworzonych przez społeczność**, dostosowanych do różnych scenariuszy audio:
+
+1. Pobierz presety z repozytorium [EasyEffects Community Presets](https://github.com/wwmm/easyeffects/wiki/Community-presets).
+2. W EasyEffects kliknij przycisk **Presety** i wybierz **"Importuj preset z lokalnej pamięci"**.
+3. Znajdź i wybierz pobrany plik presetu.
+4. Po zaimportowaniu, preset pojawi się na Twojej liście — kliknij **"Wczytaj"**, aby go zastosować do wyjścia audio.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects-presets.png')} />
+
+##### Tworzenie własnego profilu
+
+Aby uzyskać bardziej spersonalizowane wrażenia dźwiękowe, utwórz własny profil dostosowany do głośników Twojego laptopa:
+
+1. Kliknij przycisk **"+"** w menu Presety, aby utworzyć nowy preset (np. nazwij go **"Głośniki laptopa"**).
+2. Wybierz **"Wczytaj"**, aby aktywować nowy preset.
+3. Dodaj i skonfiguruj efekty w zakładce **Wyjście** > **Efekty**, eksperymentując z opcjami takimi jak korektory graficzne, wzmacniacze basów czy poszerzacze stereo.
+
+##### Używanie efektu Convolver (laptopy z Dolby Atmos)
+
+Efekt **Convolver** może radykalnie poprawić dźwięk poprzez zastosowanie odpowiedzi impulsowych, które symulują wysokiej jakości środowiska akustyczne. Wymaga to jednak precyzyjnej konfiguracji:
+
+1. Dodaj efekt **Convolver** do swojego łańcucha efektów w zakładce **Efekty**.
+2. Wczytaj plik odpowiedzi impulsowej (w formacie `.wav`) specyficzny dla Twojego modelu laptopa, jeśli jest dostępny. Możesz poszukać takich plików online w zasobach takich jak:
+   - https://wiki.archlinux.org/title/Lenovo_ThinkPad_T14_(AMD)_Gen_4#Speakers
+   - https://github.com/m4tx/thinkpad-p14s-g4-linux/#sound
+   - https://github.com/shuhaowu/linux-thinkpad-speaker-improvements/
+3. **Zapobiegaj przesterowaniu**: Efekt Convolver może znacznie zwiększyć głośność. Dodaj efekt **Limiter** po Convolverze w swoim łańcuchu efektów, aby kontrolować szczyty i unikać zniekształceń.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects-convolver.png')} />
+
+#### Wskazówki dla optymalnych wyników
+
+- **Eksperymentuj** z różnymi presetami, aby znaleźć najlepsze dopasowanie do Twojego modelu laptopa i osobistych preferencji dźwiękowych.
+- **Wprowadzaj stopniowe zmiany** w poszczególnych efektach, aby zapobiec zniekształceniom lub nienaturalnemu brzmieniu.
+- **Porównuj włączając/wyłączając**: Często przełączaj EasyEffects **włącz/wyłącz**, aby ocenić poprawę w stosunku do domyślnego dźwięku.
+- Szukaj **presetów specyficznych dla urządzenia lub odpowiedzi impulsowych Convolvera** dla popularnych modeli laptopów, takich jak **Framework Laptop 13** czy **ThinkPad T14**, aby osiągnąć dopasowane rezultaty.
+- **Automatyzuj uruchamianie**: Skonfiguruj EasyEffects, aby uruchamiał się automatycznie przy starcie systemu poprzez preferencje aplikacji, aby zapewnić, że Twój niestandardowy profil jest zawsze stosowany.
+- **Automatyczne wczytywanie presetów dla wielu urządzeń**: Użyj zakładki **PipeWire** > **Automatyczne wczytywanie presetów**, aby powiązać określone presety z różnymi urządzeniami wyjściowymi (np. Głośniki vs. Słuchawki) dla płynnego przełączania. <ImageComponent imgsrc={import('~/assets/images/easyeffects-autoloading.png')} />
+
+#### Alternatywa dla EasyEffects
+
+Jako alternatywę możesz wypróbować [JDSP4Linux](https://github.com/Audio4Linux/JDSP4Linux), który jest procesorem efektów dźwiękowych dla klientów PipeWire i PulseAudio.
+
+### OBS Studio
+
+W naszym repozytorium udostępniamy niestandardowy pakiet obs-studio-browser, który jest zalecany zamiast standardowego pakietu `obs-studio`. Zawiera on łatki naprawiające niektóre z typowych problemów, takie jak błędy cuda i problemy z wirtualną kamerą.
+
+```sh title='Otwórz terminal i uruchom następujące polecenie'
+sudo pacman -S obs-studio-browser
+# Jeśli wcześniej miałeś zainstalowany pakiet obs-studio, pacman zapyta Cię, czy
+# chcesz go zastąpić, jeśli tak, wpisz "T".
+```
