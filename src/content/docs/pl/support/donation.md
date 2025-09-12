@@ -1,12 +1,12 @@
 ---
-title: Wsparcie
-description: Jak możesz nas wesprzeć
+title: Dotacje
+description: Sposoby wsparcia nas
 ---
 
-Jeśli chcesz wesprzeć naszą pracę, możesz przekazać nam darowiznę i pomóc opłacić nasze serwery budujące.
-Każdy Darczyńca otrzymuje rangę Darczyńcy na naszym Discordzie.
+Jeśli chcesz wesprzeć naszą pracę, możesz przekazać nam darowiznę i pomóc w opłaceniu naszych serwerów budujących.
+Każdy darczyńca otrzymuje rangę Darczyńcy na naszym Discordzie.
 
-Oto lista obecnych miesięcznych kosztów:
+Oto lista obecnych kosztów miesięcznych:
 
 - Serwer budujący 127 € (Hetzner 7950X3D)
 - Drugi serwer budujący 70 € (Hetzner 7700X)
@@ -16,11 +16,11 @@ Oto lista obecnych miesięcznych kosztów:
 
 ### Patreon
 
-https://www.patreon.com/CachyOS
+<https://www.patreon.com/CachyOS>
 
 ### PayPal
 
-https://paypal.me/pttrr
+<https://paypal.me/pttrr>
 
 ### Ethereum
 

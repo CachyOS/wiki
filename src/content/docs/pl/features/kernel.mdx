@@ -1,0 +1,171 @@
+---
+title: Jądro CachyOS
+description: Funkcje i zmiany w jądrze CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+Jądro CachyOS to spersonalizowane jądro, które wykorzystuje ulepszenia, konfiguracje i łatki z upstreamu.
+
+## Funkcje
+
+### Optymalizacje wydajności
+
+- **Zaawansowana kompilacja**: Wysoce konfigurowalny PKGBUILD z obsługą kompilatorów GCC i Clang
+- **Optymalizacja w czasie konsolidacji (LTO)**: Domyślnie włączone Thin LTO dla lepszej wydajności
+- **Optymalizacja sterowana profilem**: Profilowanie AutoFDO + Propeller dla optymalnej generacji kodu ([Dowiedz się więcej](https://cachyos.org/blog/2411-kernel-autofdo/))
+- **Kernel Control Flow Integrity (kCFI)**: Dostępne przy użyciu LLVM dla zwiększonego bezpieczeństwa
+- **Opcje częstotliwości zegara**: Konfigurowalne między 300Hz, 500Hz, 600Hz, 750Hz i 1000Hz (domyślnie: 1000Hz)
+- **Optymalizacje architektury**: Obsługa specyficznych kompilacji dla x86-64-v3, x86-64-v4 i AMD Zen4
+- **Optymalizacje kompilatora**: Zaawansowane flagi GCC, w tym `-fivopts` i `-fmodulo-sched`
+
+### Ulepszenia procesora
+
+- **Wiele schedulerów**: Schedulery BORE, EEVDF i BMQ do optymalizacji różnych obciążeń
+- **Ulepszenia AMD P-State**: Wsparcie dla Preferred Core i najnowsze ulepszenia amd-pstate z linux-next
+- **Wsparcie czasu rzeczywistego**: Dostępne kompilacje jądra RT z integracją schedulera BORE
+- **CachyOS Sauce**: Niestandardowa konfiguracja `CONFIG_CACHY` z poprawkami dla schedulera i systemu
+- **Optymalizacje niskiego opóźnienia**: Łatki poprawiające responsywność i redukujące jitter
+
+### System plików i pamięć
+
+- **Wsparcie ZFS**: Wbudowane wsparcie dla systemu plików ZFS z prekompilowanymi modułami
+- **Integracja z NVIDIA**:
+  - Moduły własnościowych sterowników NVIDIA z łatkami
+  - Wsparcie dla otwartych sterowników NVIDIA
+  - Gotowe do użycia moduły w repozytorium
+- **Ulepszenia schedulera I/O**:
+  - Zwiększona wydajność BFQ i mq-deadline
+  - Obsługa alternatywnego schedulera I/O [ADIOS](https://github.com/firelzrd/adios)
+- **Zarządzanie pamięcią**:
+  - Łatka [le9uo](https://github.com/firelzrd/le9uo) zapobiegająca nadmiernemu stronicowaniu pod presją pamięci
+  - Poprawki zarządzania pamięcią z Zen-kernel (kompaktowanie, optymalizacja watermark)
+
+### Dodatkowe funkcje
+
+#### Wsparcie sprzętowe
+- **Sprzęt do gier**: Łatki dla Steam Deck (Audio, HW Quirks, HID) i wsparcie dla ROG Ally
+- **Sprzęt Apple**: Domyślnie dołączone wsparcie dla MacBooków T2
+- **Sprzęt ASUS**: Rozszerzone łatki kompatybilności dla sprzętu ASUS
+- **Grafika**: Włączone wsparcie HDR, nadpisanie min_powercap dla AMDGPU (`amdgpu_ignore_min_pcap`)
+
+#### Ulepszenia systemowe
+- **Multimedia**: Moduły v4l2loopback dołączone domyślnie
+- **Wirtualizacja**: Wsparcie dla ACS Override dla VFIO/GPU passthrough
+- **Integracja z upstreamem**: Wybrane łatki z Clear Linux i linux-next
+
+#### Różne
+
+Jądro CachyOS posiada również inne godne uwagi funkcje, które są subtelne, ale poprawiają doświadczenie użytkownika:
+
+- Zawiera wariant debug jądra, który dostarcza niepozbawiony symboli plik binarny jądra do celów debugowania. Ten pakiet jest potrzebny do profilowania jądra za pomocą AutoFDO.
+- [Binder](https://developer.android.com/reference/android/os/Binder), moduł potrzebny do [Waydroid](https://waydro.id/), jest domyślnie włączony w konfiguracji jądra
+i już [skonfigurowany](https://github.com/CachyOS/linux-cachyos/blob/master/linux-cachyos/config#L10784).
+
+## Warianty
+
+CachyOS oferuje szeroką gamę opcji jądra. Wszystkie dostarczane przez nas jądra są dostarczane z [bazowym zestawem łatek CachyOS](https://github.com/CachyOS/kernel-patches).
+Dla każdego z jąder istnieje [odpowiadający wariant `-lto`](#konwencja-nazewnictwa-pakietów), który
+jest kompilowany za pomocą [clang](https://clang.llvm.org/) zamiast [GCC](https://gcc.gnu.org/).
+
+- **linux-cachyos**
+  - Domyślne jądro. Jest to zalecane jądro, jeśli nie jesteś pewien, które wybrać.
+  - Taktowanie 1000Hz dla lepszej responsywności.
+  - Używa schedulera [BORE](https://github.com/firelzrd/bore-scheduler).
+  - Skompilowane z Clang i ThinLTO.
+  - Profilowane przy użyciu naszego własnego profilu [AutoFDO](https://cachyos.org/blog/2411-kernel-autofdo/) dla lepszej wydajności. [Skrypt](https://github.com/CachyOS/cachyos-benchmarker/blob/master/kernel-autofdo.sh) używany do profilowania jądra.
+- **linux-cachyos-bore**
+  - Używa schedulera [BORE](https://github.com/firelzrd/bore-scheduler).
+- **linux-cachyos-bmq**
+  - Używa schedulera BMQ z [Project C](https://gitlab.com/alfredchen/projectc/) autorstwa Alfreda Chena.
+    - `Nie obsługuje sched-ext.`
+- **linux-cachyos-deckify**
+  - Domyślne jądro dla urządzeń przenośnych. Używanie jakiegokolwiek innego jądra na urządzeniach przenośnych jest **niezalecane** i **niewspierane**.
+  - Używa schedulera [BORE](https://github.com/firelzrd/bore-scheduler).
+  - Specyficzne łatki dla urządzeń przenośnych, dodane do bazowego zestawu łatek, aby poprawić kompatybilność i ogólne doświadczenie na tych urządzeniach.
+- **linux-cachyos-eevdf**
+  - Modyfikuje domyślny scheduler jądra w celu poprawy responsywności.
+- **linux-cachyos-lts**
+  - Oparte na najnowszym jądrze Long Term Support.
+  - Używa schedulera [BORE](https://github.com/firelzrd/bore-scheduler).
+  - Minimalnie łatane w porównaniu do innych jąder, aby zapewnić maksymalną stabilność.
+- **linux-cachyos-hardened**
+  - Używa schedulera [BORE](https://github.com/firelzrd/bore-scheduler).
+  - Zawiera zestaw łatek [linux-hardened](https://github.com/anthraxx/linux-hardened).
+  - Konfiguracja jądra oparta na [konfiguracji linux-hardened](https://gitlab.archlinux.org/archlinux/packaging/packages/linux-hardened/-/blob/main/config).
+    - Zawiera bardzo agresywne zabezpieczenia, które znacznie ograniczają wydajność i komfort użytkowania.
+    - `Nie obsługuje sched-ext.`
+- **linux-cachyos-rc**
+  - Oparte na najnowszym jądrze mainline z [drzewa Linusa](https://github.com/torvalds/linux/).
+  - Używa schedulera [BORE](https://github.com/firelzrd/bore-scheduler).
+  - Główne jądro do wprowadzania nowych funkcji w naszym zestawie łatek.
+- **linux-cachyos-server**
+  - Dostosowane do obciążeń serwerowych w porównaniu do użytku na komputerach stacjonarnych.
+    - Taktowanie 300Hz.
+    - Brak wywłaszczania (preemption).
+    - Standardowy EEVDF.
+- **linux-cachyos-rt-bore**
+  - Wywłaszczanie czasu rzeczywistego (real-time preemption).
+  - Używa schedulera [BORE](https://github.com/firelzrd/bore-scheduler).
+
+:::note
+O ile nie określono inaczej, można bezpiecznie założyć, że wszystkie inne warianty jądra
+mają taką samą konfigurację jak jądro domyślne.
+:::
+
+Prosimy o otwieranie zgłoszeń w [GitHubie linux-cachyos](https://github.com/CachyOS/linux-cachyos) w celu zgłaszania sugestii i ulepszeń, które mogą zostać dodane do domyślnego jądra.
+
+### Konwencja nazewnictwa pakietów
+
+```sh
+linux-cachyos # Bazowy pakiet jądra domyślnego. Skompilowany z Clang i ThinLTO
+linux-cachyos-hardened # Bazowy pakiet jądra hardened. Skompilowany z GCC
+linux-cachyos-hardened-lto # Odpowiednik linux-cachyos-hardened skompilowany z clang
+linux-cachyos-hardened-{,lto-}headers
+linux-cachyos-hardened-{,lto-}nvidia
+linux-cachyos-hardened-{,lto-}nvidia-open
+linux-cachyos-hardened-{,lto-}zfs
+linux-cachyos-hardened-{,lto-}dbg
+```
+
+## Prekompilowane moduły jądra
+
+Aby sprostać potrzebom szerszej bazy użytkowników, CachyOS dostarcza niektóre dobrze znane i często używane moduły jądra wraz z jądrem. Oznacza to, że użytkownicy nie będą już
+musieli rekompilować tych modułów po każdej aktualizacji jądra lub przy każdej nowej instalacji jądra, ale będą mogli je po prostu zainstalować z repozytorium, ponieważ
+są już prekompilowane. To skutecznie czyni przestarzałymi wszelkie pakiety `-dkms`, które użytkownik mógł mieć, a które dostarczają ten sam moduł co wersja prekompilowana.
+
+### ZFS
+
+[ZFS](https://openzfs.org/wiki/Main_Page) jest jednym z wielu systemów plików obsługiwanych w CachyOS. Ze względu na licencję [CDDL](https://opensource.org/license/cddl-1-0), jest ona niekompatybilna z licencją jądra Linux i dlatego nie może być włączona do drzewa źródeł. Dostarczony moduł zawiera
+najnowsze funkcje i poprawki z upstreamu, aby zapewnić kompatybilność z najnowszym jądrem.
+
+### NVIDIA
+
+CachyOS dostarcza zarówno prekompilowane wersje zamkniętych, jak i [otwartych](https://github.com/NVIDIA/open-gpu-kernel-modules/) modułów jądra. Ze względu na rozwój
+modułu jądra NVIDIA poza głównym drzewem, co sprawia, że nie podąża on za cyklem wydawniczym jądra, standardowa konfiguracja może być czasami niekompatybilna z najnowszym
+jądrem. Jako obejście, CachyOS łata moduły za pomocą łatek stworzonych przez społeczność lub udostępnionych bezpośrednio przez firmę NVIDIA.
+
+## FAQ
+
+### Czy jądro czasu rzeczywistego (realtime) poprawia wydajność w grach?
+
+Nie, nie poprawia. Jądro czasu rzeczywistego sprawia, że znacznie więcej kodu jest wywłaszczalne w porównaniu do normalnego jądra z pełnym wywłaszczaniem. Oznacza to, że o wiele więcej zadań (w tym procesy gier)
+jest często wywłaszczanych i będzie przymusowo oddawać zasoby systemowe, co prowadzi do gorszej wydajności.
+
+### Dlaczego AutoFDO nie jest używane dla wszystkich innych wariantów jądra?
+
+Ponieważ jego budowa jest kosztowna, gdyż w zasadzie wymaga dwukrotnego zbudowania jądra, co skutkuje większym zużyciem czasu i zasobów na kompilację. Proces budowania jądra z AutoFDO obejmuje następujące kroki:
+
+1) Zbudowanie jądra z włączonymi opcjami AutoFDO i debugowania.
+2) Stworzenie profilu, co oznacza uruchamianie obciążeń w celu zebrania danych profilowania dla możliwych optymalizacji.
+3) Ponowne zbudowanie jądra z profilem AutoFDO.
+
+Dlatego na razie jest obecne tylko w wariancie [linux-cachyos](/pl/features/kernel#warianty).
+
+Więcej informacji o AutoFDO można znaleźć [tutaj.](https://cachyos.org/blog/2411-kernel-autofdo/)
+
+### Czy jądro czasu rzeczywistego poprawia wydajność w grach?
+
+Nie, nie poprawia. Jądro czasu rzeczywistego sprawia, że o wiele więcej kodu staje się wywłaszczalne (preemptible) w porównaniu do normalnego jądra z pełnym wywłaszczaniem. Oznacza to, że znacznie więcej zadań (w tym
+procesy gier) jest często wywłaszczanych i będzie zmuszonych oddawać zasoby systemowe, co prowadzi do gorszej wydajności.

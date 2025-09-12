@@ -1,71 +1,67 @@
 ---
 title: Dlaczego CachyOS?
-description: Dlaczego CachyOS może być dla Ciebie lepszym wyborem
+description: Dlaczego CachyOS może być dla Ciebie lepszy
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
 ---
 
-CachyOS oferuje dopracowane środowisko Arch Linux, wraz z przyjaznym dla użytkownika instalatorem, wstępnie skonfigurowanymi pulpitami oraz optymalizacjami wydajności, nie rezygnując przy tym z komfortu użytkowania i bezpieczeństwa systemu. Poniżej znajdują się niektóre z kluczowych funkcji, które CachyOS zapewnia, aby zagwarantować niesamowite wrażenia z użytkowania pulpitu.
+CachyOS to dystrybucja Arch Linux skoncentrowana na wydajności, zaprojektowana w celu zapewnienia stabilnego, wydajnego i przyjaznego dla użytkownika środowiska komputerowego. Oferuje pełną moc i elastyczność systemu typu rolling-release, wzbogaconą o zaawansowane optymalizacje i niestandardowy zestaw narzędzi, który upraszcza obsługę zarówno dla nowych, jak i doświadczonych użytkowników.
 
-## Zoptymalizowane pakiety i repozytoria
+## Wydajność i optymalizacja
 
-CachyOS oferuje zoptymalizowane pakiety dla różnych konfiguracji sprzętowych, w tym dla systemów x86-64-v3, x86-64-v4 i Zen4+, aby poprawić ogólną
-wydajność systemu. Dodatkowo CachyOS dostarcza popularne pakiety z [AUR](https://aur.archlinux.org/), o które prosili użytkownicy, w celu poprawy komfortu użytkowania (QoL).
+### Zoptymalizowane pakiety i repozytoria
 
-Aby lepiej zrozumieć różnorodność zoptymalizowanych pakietów CachyOS, zobacz [Zoptymalizowane Repozytoria](/pl/features/optimized_repos).
+CachyOS dostarcza duży wybór **[zoptymalizowanych pakietów](https://packages.cachyos.org/)**, specjalnie skompilowanych dla różnych nowoczesnych architektur procesorów. Obejmuje to wsparcie dla systemów `x86-64-v3`, `x86-64-v4` i `Zen4+`, zapewniając, że Twoje oprogramowanie jest zbudowane tak, aby w pełni wykorzystać możliwości Twojego sprzętu, co przekłada się na znaczny wzrost wydajności.
 
-## Niestandardowe jądro zoptymalizowane pod kątem wydajności i stabilności
+Aby uzyskać bardziej szczegółowe informacje na temat naszych zoptymalizowanych repozytoriów, zapoznaj się z naszym szczegółowym przewodnikiem na temat **[Zoptymalizowanych repozytoriów](/pl/features/optimized_repos)**.
 
-Oprócz podstawowego zestawu łatek jądra CachyOS, który dostraja różne parametry jądra w celu poprawy responsywności pulpitu, CachyOS włącza również obiecujące
-zestawy łatek, które nie zostały jeszcze włączone do głównej gałęzi rozwoju jądra lub nie znajdują się w jego stabilnej wersji. Łatki te przechodzą wewnętrzne testy przed udostępnieniem użytkownikom,
-aby upewnić się, że stabilność nie zostanie naruszona. Pełną listę łatek dostarczanych przez CachyOS można znaleźć w sekcji [Jądro](/pl/features/kernel).
+### Niestandardowe jądro dostrojone pod kątem wydajności i stabilności
 
-## Wsparcie dla niestandardowych harmonogramów CPU
+Oprócz podstawowego zestawu łatek jądra CachyOS, które dostrajają różne parametry w celu poprawy responsywności pulpitu, CachyOS wybiera zestawy łatek, które nie zostały jeszcze włączone do głównej gałęzi jądra lub nie są zawarte w stabilnej wersji.
 
-Planowanie zadań procesora (CPU scheduling) jest ważną częścią jądra, zapewniającą sprawiedliwy przydział czasu procesora dla wszystkich zadań. Jądro Linux implementuje różne klasy planowania,
-aby zapewnić odpowiednie szeregowanie każdego zadania. Klasa planowania sprawiedliwego (fair scheduling class), bardziej znana jako "domyślny planista", opiera się na
-algorytmie [EEVDF (Earliest Eligible Virtual Deadline First)](https://lwn.net/Articles/925371/).
+Dlatego te łatki przechodzą wewnętrzne testy przed udostępnieniem ich użytkownikom, aby zapewnić, że stabilność nie zostanie naruszona. Pełną listę łatek dostarczanych przez CachyOS można znaleźć w sekcji [Jądro](/pl/features/kernel).
 
-Domyślnie EEVDF jest dostrojony tak, aby sprawiedliwie dzielić dostępny czas procesora między wszystkie zadania i jest głównie ukierunkowany na obciążenia zorientowane na przepustowość. Jądro CachyOS
-[konfiguruje niektóre parametry EEVDF](https://github.com/CachyOS/linux/blob/6.12/cachy/kernel/sched/fair.c#L76-L79), aby priorytetyzować responsywność pulpitu ponad
-czystą przepustowość.
+### Wsparcie dla zaawansowanych algorytmów szeregowania procesora
 
-Jednak EEVDF z założenia nie został zaprojektowany z myślą o interaktywności pulpitu. Mając to na uwadze, CachyOS dostarcza jądra z łatką implementującą planistę
-[BORE (Burst-Oriented Response Enhancer)](https://github.com/firelzrd/bore-scheduler), który wprowadza dodatkową właściwość, aby przydzielać więcej czasu procesora zadaniom wymagającym wysokiej responsywności w porównaniu do tych, które tego nie wymagają, w oparciu o ich charakterystykę impulsową ('burstiness').
+CachyOS dostarcza jądra z najnowszymi optymalizacjami algorytmów szeregowania procesora, aby zapewnić płynny i interaktywny pulpit, nawet przy dużym obciążeniu.
 
-W wersji 6.12 jądro Linux umożliwia podłączanie planistów BPF "na gorąco" i zastępowanie klasy planowania sprawiedliwego innym planistą. Aby to ułatwić,
-CachyOS zapewnia pełne wsparcie dla [planistów sched-ext](https://github.com/sched-ext/scx).
+* **EEVDF (domyślny algorytm szeregowania jądra Linux):** Chociaż jest doskonały pod względem ogólnej przepustowości, jądro CachyOS zawiera niestandardowe **[parametry dostrajające EEVDF](https://github.com/CachyOS/linux/blob/6.15/cachy/kernel/sched/fair.c#L79-81)** w celu poprawy responsywności pulpitu.
 
-Więcej informacji na temat jąder oferowanych przez CachyOS oraz planistów sched-ext można znaleźć w sekcjach [Jądro](/pl/features/kernel) i [sched-ext](/pl/configuration/sched-ext/).
+* **[BORE](https://github.com/firelzrd/bore-scheduler) (Burst-Oriented Response Enhancer):** Dla użytkowników, którzy potrzebują maksymalnej interaktywności, nasze jądra obsługują algorytm szeregowania BORE, zestaw łatek, który ulepsza EEVDF, aby zapewnić płynniejsze działanie podczas intensywnych obciążeń.
 
-## Wykrywanie sprzętu
+Więcej informacji na temat jąder oferowanych przez CachyOS i frameworka sched-ext można znaleźć w dokumentacji **[Jądro](/pl/features/kernel)** i **[sched-ext](/pl/configuration/sched-ext)**.
 
-CachyOS dostarcza własne [narzędzie do wykrywania sprzętu](https://github.com/CachyOS/chwd), które poprawnie instaluje niezbędne pakiety i sterowniki dla każdego systemu, aby odciążyć
-użytkowników od konieczności konfiguracji po instalacji.
+## Narzędzia przyjazne użytkownikowi i personalizacja
 
-## Personalizowany proces instalacji
+### [Automatyczne wykrywanie sprzętu](/pl/features/chwd)
 
-Instalator CachyOS gwarantuje użytkownikom możliwość wyboru systemu, jakiego oczekują. Ta możliwość konfiguracji obejmuje między innymi:
+CachyOS zawiera niestandardowe narzędzie do wykrywania sprzętu, które automatycznie identyfikuje i instaluje niezbędne sterowniki i pakiety dla Twojego systemu. Eliminuje to potrzebę ręcznego wyszukiwania sterowników, oszczędzając Twój czas i wysiłek po instalacji.
+
+### Konfigurowalny proces instalacji
+
+Instalator CachyOS pozwala użytkownikom dostosować system poprzez wybór środowiska graficznego, pakietów, systemu plików, menedżera rozruchu, jądra i wielu innych, aby dopasować je do swoich potrzeb:
+
 - [Środowiska graficzne](/pl/installation/desktop_environments/)
 - [Menedżery rozruchu](/pl/installation/boot_managers/)
-- [Warianty jądra](/pl/features/kernel#warianty)
+- [Wersje jądra](/pl/features/kernel#warianty)
 - [Systemy plików](/pl/installation/filesystem)
-- Niestandardowe pakiety do zainstalowania podczas procesu instalacji
+- [Niestandardowe pakiety do dołączenia podczas instalacji](https://github.com/CachyOS/cachyos-calamares/blob/cachyos-limine-qt6/src/modules/netinstall/netinstall.yaml)
 
-## Aplikacje CachyOS
+### Niestandardowe aplikacje CachyOS
 
-Domyślnie CachyOS dostarcza własne aplikacje pomocnicze, takie jak CachyOS Hello i Instalator Pakietów CachyOS, aby uprościć i wzbogacić Twoje doświadczenie z Linuksem.
-Na przykład, CachyOS Hello oferuje opcje aktualizacji systemu, włączania usług i oceniania serwerów lustrzanych. Zawiera również gotowe poprawki i usprawnienia dla niektórych
-częstych problemów. Instalator Pakietów pomoże Ci w instalacji oprogramowania.
+CachyOS rozwija i utrzymuje własny zestaw aplikacji, aby uprościć zarządzanie systemem i poprawić Twoje wrażenia.
 
-Lista aplikacji rozwijanych i utrzymywanych przez CachyOS:
+Lista aplikacji, które CachyOS obecnie rozwija i utrzymuje:
 
-- **CachyOS Kernel Manager**: Łatwo instaluj jądra z repozytorium lub skonfiguruj własne jądro, dołączając własne łatki, a nawet zarządzaj frameworkiem sched-ext za pomocą [scx_loader](<https://github.com/sched-ext/scx/tree/main/rust/scx_loader>).
-- **CachyOS Hello**: Aplikacja do zarządzania usprawnieniami, stosowania poprawek, instalacji pakietów i uzyskiwania informacji o CachyOS.
-- **CachyOS Package Installer**: Graficzny interfejs ułatwiający instalację popularnych aplikacji.
-- **cachyos-rate-mirrors**: Automatycznie ocenia serwery lustrzane Arch i CachyOS w celu uzyskania optymalnych prędkości pobierania.
-- **systemd-boot-manager**: Automatycznie generuje nowe wpisy dla menedżera rozruchu systemd-boot i można go łatwo skonfigurować w `/etc/sdboot-manage.conf`.
+-   **[CachyOS Hello](https://github.com/CachyOS/CachyOS-Welcome):** Aplikacja powitalna do zarządzania poprawkami, stosowania napraw i instalowania pakietów.
+-   **[CachyOS Package Installer](https://github.com/CachyOS/packageinstaller):** Graficzny interfejs użytkownika (GUI) do łatwej instalacji aplikacji.
+-   **[CachyOS Kernel Manager](https://github.com/CachyOS/kernel-manager):** Łatwo instaluj jądra z repozytorium, konfiguruj własne i zarządzaj frameworkiem `sched-ext`.
+-   **[cachyos-rate-mirrors](https://github.com/CachyOS/rate-mirrors):** Automatycznie szereguje serwery lustrzane Arch i CachyOS w celu uzyskania optymalnych prędkości pobierania za pomocą `pacmana`.
+-   **[systemd-boot-manager](https://github.com/CachyOS/systemd-boot-manager):** Automatycznie generuje nowe wpisy rozruchowe dla `systemd-boot`, które można łatwo konfigurować za pomocą pliku `/etc/sdboot-manage.conf`.
 
-## Przyjazna i aktywna Społeczność
+## Przyjazna i aktywna społeczność
 
-Najważniejszym punktem jest stale rosnąca społeczność CachyOS. Bez społeczności CachyOS nigdy nie osiągnąłby obecnej pozycji.
-Członkowie społeczności pomagają sobie nawzajem oraz dzielą się poradami i wskazówkami, aby ulepszyć doświadczenia z Linuksem. Dołącz do nas na
-[Discordzie CachyOS](https://discord.com/invite/cachyos-862292009423470592) lub na [Forum CachyOS](https://discuss.cachyos.org/).
+Największą siłą CachyOS jest jego rosnąca społeczność. Członkowie społeczności pomagają sobie nawzajem, dzieląc się wskazówkami, zapewniając wsparcie i przyczyniając się do sukcesu projektu. Twoje opinie pomagają nam nieustannie ulepszać CachyOS.
+
+Dołącz do nas i stań się częścią społeczności na **[Discordzie CachyOS](https://discord.com/invite/cachyos-862292009423470592)** oraz na **[Forum CachyOS](https://discuss.cachyos.org/)**.

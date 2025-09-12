@@ -1,0 +1,207 @@
+---
+title: Oferowane menedżery rozruchu
+description: Opis i zalecenia dotyczące obecnie oferowanych menedżerów rozruchu
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+Aby zaoferować jak najlepsze wrażenia na szerokiej gamie urządzeń, CachyOS oferuje obecnie następujące menedżery rozruchu: **systemd-boot, rEFInd, GRUB oraz Limine**.
+
+Ten artykuł wiki opisuje zestaw funkcji każdego z menedżerów rozruchu i zawiera nasze rekomendacje, kiedy je wybrać.
+W celu konfiguracji, proszę zobaczyć [Konfiguracja menedżera rozruchu](/pl/configuration/boot_manager_configuration).
+
+:::caution
+**Ważna uwaga:** Niektóre płyty główne MSI posiadają oprogramowanie układowe UEFI, które nie jest w pełni zgodne ze specyfikacją UEFI. Może to prowadzić do problemów z kompatybilnością z niektórymi menedżerami rozruchu, w tym GRUB, rEFInd i Limine.
+
+Jeśli napotkasz takie problemy, rozważ użycie `systemd-boot`.
+:::
+
+---
+
+## Szybkie porównanie funkcji
+
+<style>{`
+  .bm-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .bm-table th, .bm-table td {
+    padding: 8px 10px;
+    vertical-align: top;
+  }
+  /* vertical separators between boot-manager columns */
+  .bm-table th:not(:first-child),
+  .bm-table td:not(:first-child) {
+    border-left: 2px solid var(--ifm-table-border-color, #e5e7eb);
+  }
+  /* bottom rule under header */
+  .bm-table thead th {
+    border-bottom: 2px solid var(--ifm-table-border-color, #e5e7eb);
+  }
+`}</style>
+
+<table className="bm-table">
+  <thead>
+    <tr>
+      <th>Funkcja</th>
+      <th><strong>systemd-boot</strong></th>
+      <th><strong>rEFInd</strong></th>
+      <th><strong>GRUB</strong></th>
+      <th><strong>Limine</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Wsparcie dla oprogramowania układowego</strong></td>
+      <td>Tylko UEFI (bez BIOS/MBR)</td>
+      <td>Tylko UEFI</td>
+      <td>UEFI i BIOS</td>
+      <td>UEFI i BIOS</td>
+    </tr>
+    <tr>
+      <td><strong>Wsparcie dla systemu plików <code>/boot</code></strong></td>
+      <td>Tylko FAT12/16/32</td>
+      <td>FAT natywnie; ext4/Btrfs przez sterowniki EFI (<code>efifs</code>)</td>
+      <td>Szerokie wsparcie dla systemów plików (ext*, Btrfs, XFS, etc.)</td>
+      <td>FAT12/16/32, ISO9660 dla <code>/boot</code></td>
+    </tr>
+    <tr>
+      <td><strong>Dual-boot z Windows</strong></td>
+      <td>Automatycznie wykrywa Windows Boot Manager na tym samym ESP</td>
+      <td>Automatycznie wykrywa loadery EFI i jądra</td>
+      <td>Wspierane przez <code>os-prober</code> lub ręczną konfigurację</td>
+      <td>Wspierane; wpisy Windows Boot Managera można dodać za pomocą <code>limine-scan</code></td>
+    </tr>
+    <tr>
+      <td><strong>Integracja z migawkami Btrfs</strong></td>
+      <td>Możliwa przy niestandardowej konfiguracji (nie jest dostarczana przez CachyOS)</td>
+      <td>Możliwa przy niestandardowej konfiguracji (nie jest dostarczana przez CachyOS)</td>
+      <td><strong>Wspierana w CachyOS przez</strong> <code>grub-btrfs-support</code></td>
+      <td><strong>Wspierana w CachyOS przez</strong> <code>limine-snapper-sync</code></td>
+    </tr>
+    <tr>
+      <td><strong>Pełne szyfrowanie dysku (FDE)</strong></td>
+      <td>Możliwe (zaszyfrowany root; <code>/boot</code> musi pozostać niezaszyfrowany)</td>
+      <td>Możliwe (zaszyfrowany root; <code>/boot</code> musi pozostać niezaszyfrowany)</td>
+      <td>Pełne wsparcie, w tym szyfrowany <code>/boot</code> przez <code>cryptodisk</code> (tylko LUKS1/PBKDF2; wsparcie dla LUKS2 ograniczone/wymaga obejść)</td>
+      <td>Możliwe (zaszyfrowany root; <code>/boot</code> musi pozostać niezaszyfrowany)</td>
+    </tr>
+    <tr>
+      <td><strong>Motywy / Interfejs użytkownika</strong></td>
+      <td>Minimalistyczny, bez motywów</td>
+      <td>Graficzny interfejs z możliwością zmiany motywów</td>
+      <td>Klasyczny interfejs z możliwością zmiany motywów</td>
+      <td>Menu z możliwością zmiany motywów (skórki)</td>
+    </tr>
+    <tr>
+      <td><strong>Łatwość konfiguracji w CachyOS</strong></td>
+      <td>Bardzo prosta (CachyOS domyślnie konfiguruje go automatycznie)</td>
+      <td>Łatwa konfiguracja z automatycznym wykrywaniem systemów operacyjnych i jąder</td>
+      <td>Uproszczona przez skrypty/hooki CachyOS (zawiera migawki Btrfs w menu)</td>
+      <td>Uproszczona przez narzędzia CachyOS (pomocnicy wpisów + integracja menu migawek)</td>
+    </tr>
+    <tr>
+      <td><strong>Dziwactwa UEFI na płytach MSI</strong></td>
+      <td>Działa niezawodnie</td>
+      <td>Może sprawiać problemy (wymaga obejść)</td>
+      <td>Może sprawiać problemy</td>
+      <td>Może sprawiać problemy</td>
+    </tr>
+    <tr>
+      <td><strong>Najlepszy przypadek użycia</strong></td>
+      <td>Szybkie/proste konfiguracje UEFI; rozwiązanie awaryjne dla dziwactw MSI</td>
+      <td>Multi-boot z dopracowanym interfejsem użytkownika</td>
+      <td>Niezbędny do zaszyfrowanego <strong>/boot</strong>, BIOS lub najszerszego wsparcia dla systemów plików</td>
+      <td>Nowoczesne konfiguracje wymagające rozruchu z migawek + BIOS i UEFI + chainloading</td>
+    </tr>
+  </tbody>
+</table>
+
+## Szczegóły menedżerów rozruchu
+
+### systemd-boot
+
+Będąc częścią rodziny systemd, systemd-boot został stworzony, aby być tak prostym, jak to tylko możliwe. Z tego powodu obsługuje on jedynie systemy oparte na UEFI. Ta prosta, ale wydajna konstrukcja zapewnia niezawodność i szybkość, ale kosztem zaawansowanych funkcji wspieranych przez inne menedżery rozruchu.
+
+#### Zalety
+- Bardzo prosta konfiguracja.
+- Wpisy rozruchowe są podzielone na wiele plików, co ułatwia zarządzanie nimi.
+- Zapewnia kompatybilność z niektórymi płytami MSI, które mają problemy z UEFI podczas korzystania z innych menedżerów rozruchu.
+- W CachyOS konfiguracja jest generowana automatycznie od razu po instalacji.
+
+#### Wady
+- Brak wsparcia dla BIOS/MBR.
+- Bardzo podstawowy: brak motywów i możliwości personalizacji.
+- Może odczytywać obrazy rozruchowe tylko z systemów plików wspieranych przez EFI (FAT12/16/32).
+- Nie potrafi znaleźć obrazów rozruchowych na partycjach innych niż własna partycja ESP.
+- Konfiguracja nie jest generowana automatycznie, chyba że zostanie to odpowiednio skonfigurowane.
+- Brak natywnego wsparcia dla przywracania migawek Btrfs ze względu na wymóg przechowywania obrazów jądra na partycji rozruchowej, a nie na partycji głównej.
+  - Rozruch z migawek jest możliwy tylko przy niestandardowych konfiguracjach (nie są one dostarczane przez CachyOS).
+
+---
+
+### rEFInd
+
+Jako fork rEFIt, rEFInd został stworzony głównie po to, by ułatwić użytkownikom MacOS korzystanie z multi-boot. Jednak rEFInd ewoluował, stając się niezależnym od sprzętu, co czyni go doskonałym wyborem do multi-boot na każdym systemie. Główną zaletą rEFInd jest jego zdolność do skanowania wszystkich urządzeń pamięci masowej podczas rozruchu i odpowiedniego wyświetlania wpisów dla każdego znalezionego systemu operacyjnego/jądra.
+
+#### Zalety
+- Automatycznie wykrywa wszystkie systemy operacyjne i jądra na urządzeniach pamięci masowej.
+- Wymaga niewielkiej lub żadnej ręcznej konfiguracji.
+- Graficzny interfejs użytkownika przypominający selektor rozruchu z MacOS.
+- Świetne wsparcie dla motywów, z opcjonalną obsługą ekranu dotykowego.
+- Może odczytywać obrazy rozruchowe z systemów plików EFI (FAT12/16/32), a także z EXT4 i BTRFS. Wsparcie dla dodatkowych systemów plików można włączyć, instalując sterowniki EFI z pakietu `efifs`.
+
+#### Wady
+- Brak wsparcia dla systemów BIOS.
+- Niekompatybilny z niektórymi płytami MSI (z powodu naruszeń specyfikacji UEFI).
+  - Można to naprawić za pomocą obejścia, ale wymaga to dodatkowych kroków.
+
+---
+
+### GRUB
+
+GRUB jest najstarszym z dostępnych menedżerów rozruchu. Posiada bardzo duży zestaw funkcji, działa na prawie każdej maszynie i pozostaje najczęściej używanym menedżerem rozruchu Linuksa.
+
+#### Zalety
+- Wspiera prawie wszystkie systemy plików Linuksa.
+- Szeroko stosowany — dokumentacja i pomoc społeczności są powszechnie dostępne.
+- Obsługuje szyfrowane partycje `/boot`.
+- Obsługuje rozruch z migawek Btrfs (poprzez `grub-btrfs-support` w CachyOS).
+- Obsługuje systemy BIOS i UEFI.
+- Dostępne wsparcie dla motywów, pomimo nieco przestarzałego interfejsu.
+
+#### Wady
+- Duży i złożony, z wieloma sterownikami systemów plików.
+- Zauważalnie wolniejszy niż systemd-boot, rEFInd i Limine.
+- Niekompatybilny z niektórymi płytami MSI (naruszenia specyfikacji UEFI).
+
+---
+
+### Limine
+
+Limine to nowoczesny, zaawansowany i przenośny wieloprotokołowy bootloader. Służy jako referencyjna implementacja protokołu rozruchowego Limine i obsługuje Linuksa oraz ładowanie łańcuchowe (chainloading) innych bootloaderów.
+
+#### Zalety
+- Obsługuje wiele protokołów rozruchowych, w tym Multiboot2 i protokół rozruchowy Linuksa.
+- Może uruchamiać systemy zarówno na UEFI, jak i BIOS.
+- Posiada możliwości personalizacji motywów podobne do GRUB-a.
+- Obsługuje migawki Btrfs za pomocą `limine-snapper-sync`, domyślnie włączone w CachyOS z Btrfs.
+
+#### Wady
+- Partycja `/boot` musi używać systemu plików FAT12/16/32 lub ISO9660. Inne systemy plików wymagają dodatkowej konfiguracji.
+- Nie dodaje automatycznie wpisu do UEFI NVRAM. Należy to zrobić ręcznie za pomocą `efibootmgr` lub automatycznie za pomocą `limine-entry-tool` (preinstalowanego w CachyOS).
+- Niekompatybilny z niektórymi płytami MSI (naruszenia specyfikacji UEFI).
+- Nie działa z UFS (Universal Flash Storage), używanym np. w niektórych Chromebookach.
+
+---
+
+## W skrócie (TL;DR)
+
+- Wybierz GRUB, jeśli potrzebujesz szyfrowanego `/boot`, kompatybilności z BIOS lub chcesz korzystać z migawek Btrfs ze stabilnym, dojrzałym menedżerem rozruchu.
+
+- Wybierz Limine, jeśli chcesz nowoczesnego bootloadera z integracją migawek Btrfs od razu po instalacji, a także wsparciem dla BIOS i UEFI oraz dual-boot z Windows (przez **limine-scan**).
+
+- Wybierz rEFInd, jeśli zależy Ci na dopracowanym interfejsie graficznym i automatycznym wykrywaniu systemów w trybie multi-boot na maszynach z UEFI.
+
+- Wybierz systemd-boot, jeśli preferujesz najprostszą konfigurację i nie potrzebujesz migawek ani zaawansowanych funkcji. Jest to również najbardziej niezawodne rozwiązanie awaryjne dla płyt głównych MSI z problemami z UEFI.

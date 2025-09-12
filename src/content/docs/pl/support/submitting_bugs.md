@@ -4,28 +4,30 @@ title: Zgłaszanie błędów
 
 # Opisz swój problem
 
-- *Co nie działa?*
-- *Czy przywrócenie poprzedniej wersji pakietu X rozwiązuje problem?*
-- *Użyj funkcji wyszukiwania, aby znaleźć podobne problemy*
-- *Czy wprowadziłeś/aś własne modyfikacje?*
+- Co nie działa?
+- Czy przywrócenie starszej wersji pakietu X rozwiązuje problem?
+- Użyj funkcji wyszukiwania, aby znaleźć podobne problemy
+- Czy wprowadziłeś/aś własne modyfikacje?
   - Przykład: `Dodanie dodatkowej flagi w pliku modprobe`
 
 # Dostarcz logi
 
 CachyOS udostępnia świetne narzędzie do zbierania logów systemowych o nazwie `cachyos-bugreport.sh`.
 Narzędzie to zbierze logi z:
+
 - dmesg
 - journalctl
-- inxi `(Do zebrania informacji o sprzęcie)`
+- inxi `(w celu zebrania informacji o sprzęcie)`
 
-Po zebraniu logów użytkownik zostanie zapytany, czy chce je przesłać na naszą stronę pastebin.
+Po zebraniu logów użytkownik zostanie poproszony o decyzję, czy chce je przesłać na naszą stronę do wklejania.
 
-**Uruchom poniższe polecenie w terminalu i wklej link z błędami w wątku:**
+Uruchom następujące polecenie w terminalu i wklej link z błędami do tematu:
+
 ```sh
 sudo cachyos-bugreport.sh
 ```
 
-# Linki do zgłaszania raportów
+# Linki do zgłaszania raportu
 
 - Github: <https://github.com/CachyOS/distribution>
 - Forum: <https://discuss.cachyos.org/c/feedback/bugreports/10>
