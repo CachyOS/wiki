@@ -1,0 +1,138 @@
+---
+title: MacBook z T2
+description: Jak zainstalować CachyOS na MacBooku z T2
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+CachyOS zapewnia gotowe wsparcie dla MacBooków z T2, w tym niezbędne łatki jądra we wszystkich dostarczanych kernelach. Jednakże, istnieją kluczowe kroki, które należy wykonać, aby zapewnić pomyślną instalację.
+
+:::caution[Potencjalne ryzyko]
+Całkowite usunięcie macOS niesie ze sobą ryzyko, takie jak utrata danych lub uniemożliwienie korzystania z urządzenia. Jest **zdecydowanie zalecane** zachowanie partycji z macOS w celu otrzymywania aktualizacji oprogramowania sprzętowego i odzyskiwania systemu. Szczegółowe informacje można znaleźć w [planie rozwoju T2 Linux](https://wiki.t2linux.org/roadmap/#can-i-completely-remove-macos).
+
+Jeśli mimo to zdecydujesz się usunąć macOS, upewnij się, że masz pełną kopię zapasową i wcześniej utwórz [bootowalny instalator macOS](https://support.apple.com/pl-pl/101578).
+:::
+
+## Przed instalacją
+
+Stworzenie bootowalnego instalatora macOS jest opcjonalne, ale zalecane, jeśli planujesz modyfikować partycje lub usunąć macOS. Może być przydatne do aktualizacji oprogramowania sprzętowego, rozwiązywania problemów lub przywracania systemu. Aby uzyskać szczegółowe instrukcje, zapoznaj się z [przewodnikiem Apple](https://support.apple.com/pl-pl/101578).
+
+Wykonaj poniższe kroki w systemie macOS **zanim** uruchomisz instalator CachyOS.
+
+### Przygotuj bootowalny pendrive z CachyOS
+
+Pobierz [obraz ISO CachyOS](/pl/cachyos_basic/download) i postępuj zgodnie z instrukcjami w [Tworzenie bootowalnego pendrive'a z CachyOS](/pl/installation/installation_prepare#creating-a-bootable-cachyos-usb-drive), aby utworzyć nośnik instalacyjny.
+
+### (Opcjonalnie) Wyodrębnij oprogramowanie sprzętowe Wi-Fi
+
+:::note
+Wi-Fi **nie będzie działać** od razu po instalacji ani w jej trakcie, ponieważ wymagane oprogramowanie sprzętowe jest własnościowe i nie może być redystrybuowane przez CachyOS. Będziesz potrzebować połączenia z internetem (np. przez Ethernet, tethering USB) do procesu instalacji, chyba że wykonasz poniższe kroki, aby wcześniej przygotować oprogramowanie sprzętowe Wi-Fi i włączyć je podczas instalacji.
+:::
+
+Będąc jeszcze w systemie macOS, otwórz Terminal i wykonaj następujące polecenie. Skopiuje ono niezbędne pliki oprogramowania sprzętowego Wi-Fi na twoją partycję EFI, dzięki czemu będą dostępne później podczas instalacji CachyOS.
+```sh
+curl -sL https://wiki.t2linux.org/tools/firmware.sh | bash -s copy_to_efi
+```
+
+### Przygotuj swój dysk
+
+Jeśli planujesz dual-boot z macOS (zalecane), musisz utworzyć miejsce dla CachyOS. Użyj aplikacji Narzędzie dyskowe w macOS, aby zmienić rozmiar istniejącej partycji macOS:
+
+<Steps>
+
+1.  Otwórz **Narzędzie dyskowe**.
+2.  Na pasku bocznym Narzędzia dyskowego wybierz **wolumin**, którego rozmiar chcesz zmienić (zwykle nazywa się "Macintosh HD" lub podobnie).
+3.  Kliknij przycisk **"Partycja"** na pasku narzędzi.
+4.  Kliknij przycisk **"+" (plus)** poniżej wykresu kołowego reprezentującego użycie dysku.
+5.  **Kluczowe**, gdy pojawi się monit, wybierz **"Dodaj partycję"**, a *nie* "Dodaj wolumin". Musisz utworzyć osobną partycję dla Linuksa.
+6.  **Nazwa:** Wpisz opisową nazwę dla nowej partycji (np. "CachyOS" lub "Linux").
+7.  **Format:** Wybierz dowolny dostępny format (np. APFS lub Mac OS Extended). Instalator CachyOS sformatuje tę partycję później, więc początkowy wybór nie ma znaczenia.
+8.  **Rozmiar:** Przydziel pożądaną ilość miejsca na dysku dla CachyOS. **Pamiętaj, że późniejsza zmiana rozmiaru partycji może być trudna lub niemożliwa**, więc wybierz rozmiar, który odpowiada twoim potrzebom.
+10. Kliknij **"Zastosuj"**, aby utworzyć nową partycję. Narzędzie dyskowe zmieni rozmiar partycji macOS i utworzy nową, pustą przestrzeń.
+
+</Steps>
+
+
+### Wyłącz bezpieczny rozruch (Secure Boot)
+
+<Steps>
+
+1. Uruchom ponownie Maca i przytrzymaj klawisze `Command (⌘) + R` natychmiast po włączeniu zasilania, aby wejść w tryb odzyskiwania.
+2. Przejdź do Narzędzia > Narzędzie bezpiecznego uruchamiania.
+3. Wybierz "Brak zabezpieczeń" w sekcji **Bezpieczny rozruch** oraz "Zezwalaj na rozruch z nośników zewnętrznych lub wymiennych" w sekcji **Dozwolone nośniki startowe**.
+
+</Steps>
+
+Więcej szczegółów znajdziesz w [przewodniku Apple dotyczącym Narzędzia bezpiecznego uruchamiania](https://support.apple.com/pl-pl/102522).
+
+---
+
+Aby uzyskać dodatkowy przegląd przygotowania Maca z T2 pod Linuksa, zapoznaj się z [przewodnikiem przedinstalacyjnym t2linux](https://wiki.t2linux.org/guides/preinstall/).
+
+## Proces instalacji
+
+<Steps>
+
+1.  **Uruchom z pendrive'a CachyOS:**
+    *   Uruchom ponownie Maca i przytrzymaj klawisz `Option (⌥)` natychmiast po włączeniu zasilania.
+    *   Wybierz pendrive z CachyOS (zwykle oznaczony jako "EFI Boot").
+2.  **(Opcjonalnie) Włącz Wi-Fi w środowisku Live:**
+    *   Jeśli potrzebujesz Wi-Fi podczas instalacji i nie masz połączenia przez Ethernet/tethering, otwórz terminal po załadowaniu środowiska Live CachyOS.
+    *   Uruchom te polecenia, aby skopiować oprogramowanie sprzętowe z partycji EFI (utworzonej w kroku [Wyodrębnij oprogramowanie sprzętowe Wi-Fi](#opcjonalnie-wyodrębnij-oprogramowanie-sprzętowe-wi-fi)) i skonfigurować NetworkManager:
+        ```sh
+        # Zamontuj partycję EFI (zwykle nvme0n1p1 na Macach T2)
+        sudo mkdir -p /tmp/apple-wifi-efi
+        sudo mount /dev/nvme0n1p1 /tmp/apple-wifi-efi
+
+        # Skopiuj oprogramowanie sprzętowe z EFI do środowiska live
+        bash /tmp/apple-wifi-efi/firmware.sh get_from_efi
+        sudo umount /tmp/apple-wifi-efi
+
+        # Skonfiguruj NetworkManager, aby używał backendu iwd
+        cat <<EOF | sudo tee /etc/NetworkManager/conf.d/wifi_backend.conf
+        [device]
+        wifi.backend=iwd
+        EOF
+        sudo systemctl restart NetworkManager
+        ```
+    *   Powinieneś teraz móc łączyć się z sieciami Wi-Fi za pomocą apletu sieciowego w zasobniku systemowym.
+3.  **Uruchom instalator CachyOS:**
+    *   Uruchom instalator CachyOS z pulpitu lub menu aplikacji.
+    *   Postępuj zgodnie ze standardową procedurą instalacji, odnosząc się do przewodnika [Instalacja na partycji głównej](/pl/installation/installation_on_root).
+    *   Podczas partycjonowania wybierz wolną przestrzeń utworzoną wcześniej. Pozwól instalatorowi zająć się formatowaniem.
+        :::caution[Uwaga dotycząca partycjonowania]
+        Bądź **bardzo ostrożny** podczas etapu partycjonowania w instalatorze. Upewnij się, że wybierasz właściwą, przygotowaną wolną przestrzeń i **nie** usuwasz ani nie formatujesz przypadkowo istniejącej partycji macOS, zwłaszcza jeśli zamierzasz korzystać z dual-boot. Sprawdź dwukrotnie swoje wybory przed kontynuowaniem.
+        :::
+    *   CachyOS Hardware Detection ([chwd](/pl/features/chwd)) powinien automatycznie zastosować niezbędne parametry startowe i konfiguracje specyficzne dla T2 podczas instalacji.
+
+</Steps>
+
+## Kroki po instalacji
+
+Po zakończeniu instalacji i ponownym uruchomieniu nowego systemu CachyOS, może być konieczne wykonanie kilku dodatkowych kroków, aby zapewnić płynne działanie wszystkiego.
+
+### Zainstaluj na stałe oprogramowanie sprzętowe Wi-Fi
+
+Jeśli wykonałeś opcjonalny krok [Włącz Wi-Fi w środowisku Live](#proces-instalacji), aby uzyskać oprogramowanie sprzętowe w obrazie live, możesz po prostu powtórzyć go, aby włączyć Wi-Fi. W przeciwnym razie połącz się z internetem (np. przez Ethernet, tethering USB) i wykonaj poniższe kroki:
+
+<Steps>
+1. Otwórz terminal i pobierz pakiet oprogramowania sprzętowego z repozytorium Arch Linux T2:
+   ```sh
+   curl https://mirror.funami.tech/arch-mact2/os/x86_64/apple-bcm-firmware-14.0-1-any.pkg.tar.zst -o apple-bcm-firmware-14.0-1-any.pkg.tar.zst
+   ```
+2. Zainstaluj pobrany pakiet:
+   ```sh
+   sudo pacman -U apple-bcm-firmware-14.0-1-any.pkg.tar.zst
+   ```
+3. Przeładuj moduły jądra Wi-Fi:
+   ```bash
+   sudo modprobe -r brcmfmac_wcc
+   sudo modprobe -r brcmfmac
+   sudo modprobe brcmfmac
+   ```
+</Steps>
+
+Wi-Fi powinno teraz działać niezawodnie po ponownym uruchomieniu. Możesz usunąć pobrany plik `.pkg.tar.zst`.
+
+### Dalsza konfiguracja
+Aby skonfigurować inne komponenty sprzętowe, takie jak audio, kamera internetowa, Touch Bar itp., zapoznaj się z różnymi przewodnikami na [wiki t2linux](https://wiki.t2linux.org/roadmap/#configuring-the-installation).
