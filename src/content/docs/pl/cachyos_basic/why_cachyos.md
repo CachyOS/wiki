@@ -34,7 +34,7 @@ Więcej informacji na temat jąder oferowanych przez CachyOS i frameworka sched-
 
 ## Narzędzia przyjazne użytkownikowi i personalizacja
 
-### [Automatyczne wykrywanie sprzętu](/features/chwd)
+### [Automatyczne wykrywanie sprzętu](/pl/features/chwd)
 
 CachyOS zawiera niestandardowe narzędzie do wykrywania sprzętu, które automatycznie identyfikuje i instaluje niezbędne sterowniki i pakiety dla Twojego systemu. Eliminuje to potrzebę ręcznego wyszukiwania sterowników, oszczędzając Twój czas i wysiłek po instalacji.
 
