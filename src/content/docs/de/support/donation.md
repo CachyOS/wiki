@@ -18,10 +18,6 @@ Hier ist eine Liste der aktuellen monatlichen Kosten:
 
 <https://www.patreon.com/CachyOS>
 
-### PayPal
-
-<https://paypal.me/pttrr>
-
 ### Ethereum
 
 0xc2dc77327F78A7B85Db3941Eb49e74F41E961649
