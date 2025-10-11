@@ -5,6 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 import starlightKbd from 'starlight-kbd';
 import lunaria from '@lunariajs/starlight';
 import lunariaConfig from './lunaria.config.json';
+import starlightFullViewMode from 'starlight-fullview-mode';
 
 const locales = {
   root: lunariaConfig.defaultLocale,
@@ -20,6 +21,7 @@ const locales = {
 
 const routeMiddleware = ['./src/middleware/ignore-fallback.ts'];
 const plugins = [
+  starlightFullViewMode(),
   starlightKbd({
     globalPicker: false,
     types: [{ id: 'linux', label: 'Linux', default: true }],
