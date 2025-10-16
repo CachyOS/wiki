@@ -285,7 +285,7 @@ export default defineConfig({
             },
             {
               label: 'CachyOS Hardware Detection (chwd)',
-              link: 'features/chwd',
+              autogenerate: { directory: 'features/chwd' },
               translations: {
                 cs: 'Detekce hardwaru CachyOS (chwd)',
                 de: 'CachyOS Hardware-Erkennung (chwd)',
