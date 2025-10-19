@@ -404,18 +404,6 @@ export default defineConfig({
               link: 'configuration/dual_gpu',
             },
             {
-              label: 'GPU Migration Guide',
-              translations: {
-                cs: 'Průvodce migrací GPU',
-                de: 'GPU-Migrationsanleitung',
-                es: 'Guía de migración de GPU',
-                pl: 'Przewodnik migracji GPU',
-                ru: 'Руководство по миграции GPU',
-                sk: 'Sprievodca migráciou GPU',
-              },
-              link: 'configuration/gpu_migration',
-            },
-            {
               label: 'Gaming',
               link: 'configuration/gaming',
               translations: {
