@@ -15,13 +15,13 @@ Las siguientes preguntas y respuestas se aplican a CachyOS y a distribuciones ba
 
 ## Instalación y Entorno Live
 
-### ¿Por qué solo KDE Plasma está disponible en la ISO live de CachyOS?
+### ¿Por qué la ISO en vivo de CachyOS solo incluye KDE Plasma?
 
 Hemos decidido enfocar nuestros esfuerzos de desarrollo y mantenimiento exclusivamente en el entorno de escritorio KDE Plasma. Esto nos permite ofrecer una experiencia de usuario más pulida, estable y consistente en nuestra ISO live.
 
 El entorno live está destinado principalmente a instalar CachyOS o a usar cachy-chroot para la recuperación del sistema. Para una forma segura de probar otros entornos de escritorio o gestores de ventanas, recomendamos encarecidamente probarlos en una máquina virtual (VM).
 
-### ¿Por qué el instalador tarda mucho en iniciarse después de hacer clic en "Lanzar Instalador"?
+### ¿Por qué el instalador tarda tanto en iniciarse después de hacer clic en "Lanzar instalador"?
 
 :::caution
 Asegúrate de tener una conexión a internet activa/funcionando, de lo contrario no pasará nada después de presionar este botón.
@@ -40,9 +40,87 @@ El instalador no está congelado. Está ejecutando un script necesario en segund
 
 Por eso puede tardar un poco en cargar el instalador.
 
-### ¿Por qué mi instalación se queda atascada en el 33%?
+### ¿Por qué mi instalación se queda atascada en 33%?
 
 Esto sucede cuando el instalador tiene dificultades para descargar paquetes. Suele ser una señal de una conexión a internet muy lenta o inestable. Por favor, revisa tu conexión de red e inténtalo de nuevo.
+
+## Recuperación del gestor de arranque (bootloader)
+
+:::note[En caso de eliminar una partición /boot, cree una nueva siguiendo el esquema de particiones correspondiente del paso 5.]
+:::
+
+### Pasos para recuperar el gestor de arranque (bootloader)
+
+<Steps>
+1. Arranque desde la ISO live de CachyOS.
+2. Abra una terminal y acceda a su sistema instalado mediante el comando `cachy-chroot`.
+
+    ```bash
+    sudo cachy-chroot
+    ```
+    Si su sistema utiliza BTRFS con nuestra configuración predeterminada, escriba `y` cuando aparezca la pregunta:
+    ```bash title='Example'
+     Do you want to use CachyOS BTRFS preset to auto mount root subvolume? y
+     Do you want to mount additional partitions? · yes
+     Enter the mount point for additional partition (e.g. /boot) type 'skip' to cancel:
+    # Escriba /boot para systemd-boot, Limine o rEFInd
+    # Escriba /boot/efi para GRUB
+    ```
+3. Siga las instrucciones a continuación para el gestor de arranque (bootloader) instalado y el tipo de sistema (UEFI o MBR/BIOS).
+    <Tabs>
+        <TabItem label='GRUB'>
+            Reinstale GRUB con el siguiente comando:
+        <Tabs>
+            <TabItem label='UEFI'>
+                ```bash
+                sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos
+                ```
+            </TabItem>
+            <TabItem label='MBR/BIOS'>
+                ```bash
+                sudo grub-install --target=i386-pc /dev/sdX # Reemplace sdX con su disco, p. ej. sda
+                ```
+            </TabItem>  
+      </Tabs>
+        </TabItem>
+        <TabItem label='systemd-boot (solo UEFI)'>
+            Reinstale systemd-boot con el siguiente comando:
+            ```bash
+            sudo bootctl install
+            ```
+        </TabItem>
+        <TabItem label='Limine'>
+            Reinstale Limine con el siguiente comando:
+            <Tabs>
+                <TabItem label='UEFI'>
+                    ```bash
+                    sudo limine-install
+                    ```
+                </TabItem>
+                <TabItem label='MBR/BIOS'>
+                    ```bash
+                    sudo limine bios-install /dev/sdX # Reemplace sdX con su disco, p. ej. sda
+                    ```
+                </TabItem>
+              </Tabs>
+        </TabItem>
+        <TabItem label='rEFInd (solo UEFI)'>
+            Reinstale rEFInd con el siguiente comando:
+            ```bash
+            sudo refind-install
+            ```
+        </TabItem>
+    </Tabs>
+4. Reinstale el kernel de CachyOS:
+```bash
+sudo pacman -Syu linux-cachyos linux-cachyos-headers
+```
+5. Salga de cachy-chroot:
+```bash
+exit
+```
+6. Reinicie el sistema.
+</Steps>
 
 ## Gestión de Paquetes y Actualizaciones
 
@@ -56,7 +134,17 @@ Aunque los mirrors suelen solucionarse solos después de un corto tiempo, si el 
 
 <Tabs>
 
-<TabItem label='Primera Solución: Evalúa tus Mirrors'>
+<TabItem label='Primera Solution: Resincroniza los Mirrors de Pacman'>
+
+Si las soluciones anteriores no resuelven el problema, puedes intentar resincronizar tus mirrors de pacman.
+
+```sh
+sudo pacman -Syu
+```
+
+</TabItem>
+
+<TabItem label='Segunda Solución: Evalúa tus Mirrors'>
 
 ```sh title='Evalúa tus mirrors'
 sudo cachyos-rate-mirrors
@@ -64,7 +152,7 @@ sudo cachyos-rate-mirrors
 
 </TabItem>
 
-<TabItem label='Segunda Solución: Restablece los Llaveros de Claves'>
+<TabItem label='Tercera Solución: Restablece los Llaveros de Claves'>
 
 Si evaluar tus mirrors no funciona, es probable que los llaveros de claves de tu sistema estén rotos.
 
@@ -72,6 +160,8 @@ Si evaluar tus mirrors no funciona, es probable que los llaveros de claves de tu
 - Haz clic en el botón Restablecer llaveros de claves.
 
 </TabItem>
+
+
 
 </Tabs>
 
@@ -112,14 +202,14 @@ is corrupted (invalid or corrupted package (PGP signature)).
 Este error típicamente indica un problema con los llaveros de claves de pacman de tu sistema, los cuales verifican la autenticidad de los paquetes. Los siguientes comandos restablecerán y volverán a poblar los llaveros de claves para resolver el problema.
 
 ```sh
-sudo rm -rf /etc/pacman.d/gnupg/ # Elimina forzadamente los llaveros de claves antiguos
-sudo pacman-key --init # Inicializa el llavero de claves
-sudo pacman-key --populate # Puebla el llavero de claves
+sudo rm -rf /etc/pacman.d/gnupg/ 
+sudo pacman-key --init 
+sudo pacman-key --populate 
 
-sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com # Importa manualmente la clave de CachyOS
-sudo pacman-key --lsign-key F3B607488DB35A47 # Firma manualmente la clave
+sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com 
+sudo pacman-key --lsign-key F3B607488DB35A47 
 
-sudo rm -R /var/lib/pacman/sync # Elimina las bases de datos sincronizadas para forzar una nueva descarga
+sudo rm -R /var/lib/pacman/sync 
 ```
 
 #### error: unable to lock database
