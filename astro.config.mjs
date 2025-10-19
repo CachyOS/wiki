@@ -300,7 +300,7 @@ export default defineConfig({
               translations: {
                 cs: 'Jádro CachyOS',
                 de: 'CachyOS-Kernel',
-                es: 'Núcleo CachyOS',
+                es: 'Kernel CachyOS',
                 pl: 'Jądro CachyOS',
                 ru: 'Ядро CachyOS',
                 sk: 'Jadro CachyOS',
