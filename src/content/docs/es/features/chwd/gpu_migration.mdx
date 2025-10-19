@@ -1,0 +1,89 @@
+---
+title: Cambio entre GPU NVIDIA y AMD
+description: Instrucciones para migrar de NVIDIA a AMD (y viceversa) en CachyOS.
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+::note[Esta guía aplica si va a reemplazar su GPU (NVIDIA ↔ AMD) en una instalación existente de CachyOS.]
+:::
+
+## Requisitos previos
+  - Su GPU de reemplazo está correctamente instalada y conectada.
+  - Asegúrate de que tu sistema esté completamente actualizado
+    ```bash
+    sudo pacman -Syu
+    ```
+
+### Pasos de la migración
+
+<Tabs>
+    <TabItem label='De NVIDIA a AMD'>
+        Aunque los controladores de AMD están incluidos en el kernel de Linux, es posible que debas limpiar la configuración anterior de NVIDIA y asegurarte de que los paquetes de AMD necesarios estén instalados.
+        <Steps>
+              1. Comprueba el perfil del controlador de NVIDIA instalado con:
+              ```bash
+              sudo chwd --list
+              ```
+              2. Elimina el perfil específico usando la opción `-r`:
+              ```bash
+              sudo chwd -r <profile-name>
+              ```
+              3. Usa chwd para detectar automáticamente tu GPU e instalar los paquetes de AMD correctos. ```bash
+              sudo chwd -a
+              ```
+              4. Después de instalar los nuevos controladores, actualice la configuración de initramfs y del gestor de arranque.
+              > CachyOS incluye un enlace de pacman que reconstruye automáticamente initramfs al añadir o eliminar controladores.
+              > Esto garantiza que se carguen los controladores correctos al arrancar.
+              - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+              - systemd-boot: `sudo sdboot-manage gen`
+              - Limine: `sudo limine-mkinitcpio`
+              5. Reinicie para aplicar los cambios.
+              ```bash
+              sudo reboot
+              ```
+              6. Después de reiniciar, verifique que los controladores AMD estén activos.
+              ```bash
+              vulkaninfo | grep "deviceName"
+              ```
+              o
+              ```bash
+              glxinfo | grep "OpenGL renderer"
+              ```
+              Si ve su GPU AMD en la lista, los controladores funcionan correctamente.  
+        </Steps>
+    </TabItem>
+  <TabItem label='De AMD a NVIDIA'>
+        <Steps>
+                1. Limpie los paquetes AMD restantes.
+                ```bash
+                sudo chwd -r amd
+                ```
+                2. Use chwd para detectar automáticamente su GPU e instalar los paquetes NVIDIA correctos.
+                ```bash
+                sudo chwd -a
+                ```
+                4. Después de instalar los nuevos controladores, actualice la configuración de initramfs y del gestor de arranque.
+                > CachyOS incluye un enlace de pacman que reconstruye automáticamente initramfs al agregar o eliminar controladores.
+                > Esto garantiza que se carguen los controladores correctos al arrancar. - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+                5. Reinicie para aplicar los cambios
+                ```bash
+                sudo reboot
+                ```
+                6. Después de reiniciar, verifique que los controladores de NVIDIA estén activos.
+                ```bash
+                nvidia-smi
+                ```
+                o
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                Si ve su GPU NVIDIA en la lista, los controladores funcionan correctamente.
+        </Steps>      
+    </TabItem>
+</Tabs>
