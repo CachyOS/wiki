@@ -170,14 +170,14 @@ export default defineConfig({
           },
           items: [
             {
-              label: 'Requirements & Preinstall Setup',
+              label: 'Requirements & USB Preparation',
               translations: {
-                cs: 'Požadavky CachyOS a předinstalační příprava',
-                de: 'Anforderungen und Vorinstallationsvorbereitung',
-                es: 'Requisitos y preparación previa a la instalación',
-                pl: 'Wymagania i przygotowanie do instalacji',
-                ru: 'Требования и подготовка к установке',
-                sk: 'Požiadavky CachyOS a inštalačné médium',
+                cs: 'Požadavky a příprava USB',
+                de: 'Anforderungen & USB-Vorbereitung',
+                es: 'Requisitos y preparación de USB',
+                pl: 'Wymagania i przygotowanie USB',
+                ru: 'Требования и подготовка USB',
+                sk: 'Požiadavky a príprava USB',
               },
               link: 'installation/installation_prepare',
             },
