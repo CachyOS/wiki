@@ -1,6 +1,9 @@
 ---
 title: CachyOS chroot Helper
 description: Helper tool to make it easier to chroot into systems
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -10,11 +13,12 @@ CachyOS or Arch-based install. It lists all the partitions discovered on the mac
 Last but not least, `cachy-chroot` also supports encrypted systems via LUKS. It will map each `fstab` entries to its designated `crypttab`
 entries and will gracefully close all LUKS volumes when exiting the chroot.
 
+## Prerequisites
+- Booted into CachyOS live ISO
+- Active internet connection (to install `cachy-chroot`)
+
 ## Usage
 
-:::note
-The process of chrooting **must** be done on a live ISO.
-:::
 :::tip
 Use your arrow keys to navigate the options and `ENTER` to select.
 :::
@@ -22,14 +26,16 @@ Use your arrow keys to navigate the options and `ENTER` to select.
 <Steps>
 1. Boot into a live ISO of CachyOS
 2. Open a terminal and enter the root user with `sudo su`
-3. Install `cachy-chroot` with `pacman -Sy cachy-chroot`
-4. Run `cachy-chroot`
-
-    *Example of running cachy-chroot with the Cachyos BTRFS preset:*
+3. Install `cachy-chroot` with the following command:
+    ```bash
+    pacman -Sy cachy-chroot
+    ```
+4. Run `cachy-chroot` by typing:
     ```bash
     cachy-chroot
     ```
-    ```bash title="cachy-chroot output"
+    `cachy-chroot` will scan and list all available partitions. Example output:
+    ```bash
     Info: Found 3 block devices
     Info: Found partition: Partition: /dev/nvme0n1p1: FS: vfat UUID: EDA6-ED98
     Info: Found partition: Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
@@ -45,15 +51,26 @@ Use your arrow keys to navigate the options and `ENTER` to select.
     Info: Unmounting partition at /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-858f-2e02be61b342-hwAeIm
     ? Do you want to use CachyOS BTRFS preset to auto mount root subvolume? (y/n) › # Enter yes if on CachyOS
     ```
-6. If using CachyOS with BTRFS, select `yes` to use the CachyOS BTRFS preset to auto mount the root subvolume.
-7. `cachy-chroot` will attempt to automatically mount all the partitions listed under `/etc/fstab` of the root device you mounted in the previous step, it will also automatically ignore devices which fail to mount, you may chose to mount any other partitions manually  that are not listed under fstab and if you require them for recovery or if your fstab contains incorrect entries.
-8. When finished, exit the chroot environment by passing `exit` to the prompt or pressing `CTRL+D` on the keyboard.
+6. **If using CachyOS with BTRFS**, enter `y` to use the CachyOS BTRFS preset. This will automatically mount the root subvolume and other important subvolumes such as `/home`, `/var`, `/tmp` and `/srv`. If you're using a custom BTRFS layout or non-CachyOS system, enter `n` to manually select subvolumes.
+7. `cachy-chroot` will attempt to automatically mount all the partitions and subvolumes listed under `/etc/fstab` of the root device. If any partitions fail to mount, you will be notified and given the option to mount them manually if needed
+8. **You are now in the chroot environment**. You can now run commands as if you were booted into the installed system. For example, you can update the system with:
+    ```bash title="Updating system in chroot"
+    pacman -Syu
+    ```
+    or perform other maintenance tasks as needed.
+9. When finished, exit the chroot environment by passing `exit` to the prompt or pressing `CTRL+D` on the keyboard.
     ```bash title="Exiting chroot"
     exit
     ```
+10. After exiting, `cachy-chroot` will automatically clean up mounted partitions and close any LUKS containers. You'll return to the live environment shell.
 </Steps>
 
-## Learn More
+### Troubleshooting
+
+- **No partitions found:** Ensure that the disk containing your installation is connected and recognized by the live system. You can check with `lsblk` or `fdisk -l`.
+- **Automount fails for some partitions:** You can try mounting them manually from within the chroot environment. `cachy-chroot` will ignore failures and continue.
+
+### Learn More
 
 - [Arch Wiki - chroot](https://wiki.archlinux.org/title/Chroot)
-- [Example shown in a video](https://github.com/user-attachments/assets/29360aaf-b775-4cfa-9051-465ad5360ae8)
+- [Video demonstration of cachy-chroot](https://github.com/user-attachments/assets/29360aaf-b775-4cfa-9051-465ad5360ae8)
