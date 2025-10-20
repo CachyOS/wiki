@@ -34,7 +34,7 @@ For more information about the kernels offered by CachyOS and the sched-ext fram
 
 ## User-Friendly Tools and Customization
 
-### [Automated Hardware Detection](/features/chwd)
+### [Automated Hardware Detection](/features/chwd/chwd/)
 
 CachyOS includes a custom hardware detection tool that automatically identifies and installs the necessary drivers and packages for your system. This eliminates the need for manual driver searching, saving you time and effort after installation.
 
