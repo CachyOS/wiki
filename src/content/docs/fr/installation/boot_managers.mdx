@@ -1,0 +1,201 @@
+---
+title: Gestionnaires d’amorçage proposés
+description: Description et recommandations concernant les gestionnaires d’amorçage actuellement proposés
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+Pour offrir la meilleure expérience possible sur une large gamme d’appareils, CachyOS propose actuellement les gestionnaires d’amorçage suivants : **systemd-boot, rEFInd, GRUB et Limine**.
+
+Cet article du wiki décrit les fonctionnalités de chaque gestionnaire d’amorçage et inclut nos recommandations sur le moment où les choisir.  
+Pour la configuration, consultez la section [Configuration du gestionnaire d’amorçage](/fr/configuration/boot_manager_configuration).
+
+:::caution
+**Remarque importante :** certaines cartes mères MSI disposent d’un firmware UEFI qui ne respecte pas entièrement la spécification UEFI. Cela peut entraîner des problèmes de compatibilité avec certains gestionnaires d’amorçage, notamment GRUB, rEFInd et Limine.
+
+Si vous rencontrez de tels problèmes, envisagez d’utiliser `systemd-boot`.
+:::
+
+---
+
+## Comparaison rapide des fonctionnalités
+
+<style>{`
+  .bm-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .bm-table th, .bm-table td {
+    padding: 8px 10px;
+    vertical-align: top;
+  }
+  .bm-table th:not(:first-child),
+  .bm-table td:not(:first-child) {
+    border-left: 2px solid var(--ifm-table-border-color, #e5e7eb);
+  }
+  .bm-table thead th {
+    border-bottom: 2px solid var(--ifm-table-border-color, #e5e7eb);
+  }
+`}</style>
+
+<table className="bm-table">
+  <thead>
+    <tr>
+      <th>Fonctionnalité</th>
+      <th><strong>systemd-boot</strong></th>
+      <th><strong>rEFInd</strong></th>
+      <th><strong>GRUB</strong></th>
+      <th><strong>Limine</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Prise en charge du firmware</strong></td>
+      <td>UEFI uniquement (pas de BIOS/MBR)</td>
+      <td>UEFI uniquement</td>
+      <td>UEFI &amp; BIOS</td>
+      <td>UEFI &amp; BIOS</td>
+    </tr>
+    <tr>
+      <td><strong>Prise en charge du système de fichiers <code>/boot</code></strong></td>
+      <td>Dépend du firmware (généralement FAT12/16/32) ; davantage avec des pilotes EFI</td>
+      <td>Firmware, ext2, ext3, ext4, btrfs, ISO-9660, HFS+ et NTFS ; davantage avec des pilotes EFI</td>
+      <td>Large prise en charge (ext*, Btrfs, XFS, etc.)</td>
+      <td>FAT12/16/32, ISO9660 pour <code>/boot</code></td>
+    </tr>
+    <tr>
+      <td><strong>Double amorçage Windows</strong></td>
+      <td>Détecte automatiquement Windows Boot Manager sur la même ESP</td>
+      <td>Détecte automatiquement les chargeurs EFI et noyaux</td>
+      <td>Pris en charge via <code>os-prober</code> ou configuration manuelle</td>
+      <td>Pris en charge ; les entrées Windows peuvent être ajoutées avec <code>limine-scan</code></td>
+    </tr>
+    <tr>
+      <td><strong>Intégration des instantanés Btrfs</strong></td>
+      <td>Possible avec une configuration personnalisée (non fournie par CachyOS)</td>
+      <td>Possible avec une configuration personnalisée (non fournie par CachyOS)</td>
+      <td><strong>Pris en charge sur CachyOS via</strong> <code>grub-btrfs-support</code></td>
+      <td><strong>Pris en charge sur CachyOS via</strong> <code>limine-snapper-sync</code></td>
+    </tr>
+    <tr>
+      <td><strong>Chiffrement complet du disque (FDE)</strong></td>
+      <td>Possible (racine chiffrée ; <code>/boot</code> doit rester non chiffré)</td>
+      <td>Possible (racine chiffrée ; <code>/boot</code> doit rester non chiffré)</td>
+      <td>Pris en charge, y compris <code>/boot</code> chiffré via <code>cryptodisk</code> (LUKS1/PBKDF2 uniquement ; support LUKS2 limité)</td>
+      <td>Possible (racine chiffrée ; <code>/boot</code> doit rester non chiffré)</td>
+    </tr>
+    <tr>
+      <td><strong>Thèmes / Interface</strong></td>
+      <td>Minimal, sans thème</td>
+      <td>Interface graphique avec thèmes</td>
+      <td>Interface classique personnalisable</td>
+      <td>Menu à thème (skins)</td>
+    </tr>
+    <tr>
+      <td><strong>Facilité d’installation sur CachyOS</strong></td>
+      <td>Très simple (CachyOS le configure automatiquement par défaut)</td>
+      <td>Configuration simple avec détection automatique des OS et noyaux</td>
+      <td>Simplifié par les scripts CachyOS (ajoute les instantanés Btrfs au menu)</td>
+      <td>Simplifié par les outils CachyOS (assistants + intégration des instantanés)</td>
+    </tr>
+    <tr>
+      <td><strong>Problèmes UEFI sur MSI</strong></td>
+      <td>Fonctionne de manière fiable</td>
+      <td>Peut poser problème (solutions de contournement requises)</td>
+      <td>Peut poser problème</td>
+      <td>Peut poser problème</td>
+    </tr>
+    <tr>
+      <td><strong>Cas d’usage recommandé</strong></td>
+      <td>Configurations UEFI simples et rapides ; solution de repli fiable pour les cartes MSI</td>
+      <td>Multi-amorçage avec interface graphique élégante</td>
+      <td>Nécessaire pour un <strong>/boot</strong> chiffré, le BIOS ou la compatibilité maximale</td>
+      <td>Configurations modernes souhaitant l’amorçage avec instantanés + BIOS &amp; UEFI + chainloading</td>
+    </tr>
+  </tbody>
+</table>
+
+## Détails des gestionnaires d’amorçage
+
+### systemd-boot
+
+Faisant partie de la famille systemd, systemd-boot a été conçu pour être aussi simple que possible. Il ne prend donc en charge que les systèmes UEFI. Ce design simple mais efficace garantit rapidité et fiabilité, au prix de fonctionnalités avancées disponibles chez d’autres gestionnaires.
+
+#### Avantages
+- Configuration très simple.  
+- Les entrées d’amorçage sont séparées dans plusieurs fichiers, faciles à gérer.  
+- Compatible avec certaines cartes MSI rencontrant des problèmes UEFI avec d’autres gestionnaires.  
+- Sur CachyOS, la configuration est générée automatiquement.
+
+#### Inconvénients
+- Pas de support BIOS/MBR.  
+- Interface minimale : aucun thème ni personnalisation.  
+- Si le système de fichiers d’amorçage dépasse FAT12/16/32, des partitions ESP et [XBOOTLDR](https://wiki.archlinux.org/title/Systemd-boot#Installation_using_XBOOTLDR) séparées + pilotes EFI doivent être ajoutés manuellement.  
+- Ne peut pas détecter les images d’amorçage sur d’autres partitions.  
+- La configuration n’est pas régénérée automatiquement sans réglage spécifique.  
+- Pas de support natif pour le démarrage d’instantanés Btrfs (les images du noyau doivent être stockées sur la partition /boot).  
+
+---
+
+### rEFInd
+
+Issu du projet rEFIt, rEFInd a d’abord été conçu pour simplifier le multi-amorçage sur MacOS. Il est désormais matériellement agnostique et constitue un excellent choix pour le multi-boot sur tout système. Son atout majeur est de scanner automatiquement tous les périphériques de stockage au démarrage pour afficher les entrées de chaque OS/noyau détecté.
+
+#### Avantages
+- Détection automatique des systèmes et noyaux.  
+- Très peu de configuration manuelle.  
+- Interface graphique inspirée du sélecteur MacOS.  
+- Support étendu des thèmes, avec option tactile.  
+- Lecture des images d’amorçage depuis FAT, EXT4, Btrfs, etc. (via `efifs` pour d’autres formats).
+
+#### Inconvénients
+- Pas de support BIOS.  
+- Incompatible avec certaines cartes MSI (violations UEFI).  
+  - Corrigible via un contournement, mais demande des étapes supplémentaires.
+
+---
+
+### GRUB
+
+GRUB est le plus ancien des gestionnaires disponibles. Très complet et compatible avec presque toutes les machines, il reste le gestionnaire Linux le plus répandu.
+
+#### Avantages
+- Supporte presque tous les systèmes de fichiers Linux.  
+- Documentation et aide communautaire très abondantes.  
+- Supporte le chiffrement de `/boot`.  
+- Compatible Btrfs snapshots (via `grub-btrfs-support` sur CachyOS).  
+- Fonctionne sur BIOS et UEFI.  
+- Prend en charge les thèmes.
+
+#### Inconvénients
+- Complexe et volumineux (nombreux pilotes FS).  
+- Plus lent que systemd-boot, rEFInd et Limine.  
+- Incompatible avec certaines cartes MSI (violations UEFI).
+
+---
+
+### Limine
+
+Limine est un chargeur d’amorçage moderne, avancé et portable, supportant Linux et le chainloading d’autres chargeurs. Il sert d’implémentation de référence du protocole Limine Boot.
+
+#### Avantages
+- Prend en charge plusieurs protocoles (Multiboot2, Linux, etc.).  
+- Compatible BIOS et UEFI.  
+- Interface personnalisable, similaire à GRUB.  
+- Intégration native des instantanés Btrfs via `limine-snapper-sync` (activé par défaut sur CachyOS avec Btrfs).
+
+#### Inconvénients
+- `/boot` doit utiliser FAT12/16/32 ou ISO9660 (autres FS nécessitent une configuration manuelle).  
+- N’ajoute pas automatiquement d’entrée à la NVRAM UEFI (nécessite `efibootmgr` ou `limine-entry-tool`).  
+- Incompatible avec certaines cartes MSI (violations UEFI).  
+- Ne fonctionne pas avec le stockage UFS (utilisé sur certains Chromebooks).
+
+---
+
+## En résumé
+
+- **Choisissez GRUB** si vous avez besoin d’un `/boot` chiffré, de compatibilité BIOS, ou du support stable des instantanés Btrfs.  
+- **Choisissez Limine** pour un chargeur moderne avec intégration native des instantanés et compatibilité BIOS/UEFI + double amorçage Windows.  
+- **Choisissez rEFInd** pour une interface graphique élégante et le multi-boot automatique sur UEFI.  
+- **Choisissez systemd-boot** pour la simplicité et la fiabilité, notamment sur les cartes MSI présentant des problèmes UEFI.
