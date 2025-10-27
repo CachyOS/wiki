@@ -1,0 +1,375 @@
+---
+title: FAQ & Guide de dépannage CachyOS
+description: Questions fréquemment posées et conseils
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::note
+Les questions et réponses suivantes s’appliquent à CachyOS et aux distributions basées sur Arch. `Ce document n’a pas vocation à remplacer les informations présentes sur le Wiki Arch Linux.`
+:::
+
+## Installation & Environnement Live
+
+### Pourquoi l’ISO live de CachyOS inclut-elle uniquement KDE Plasma ?
+
+Nous avons choisi de concentrer nos efforts de développement et de maintenance exclusivement sur l’environnement de bureau KDE Plasma. Cela nous permet d’offrir une expérience utilisateur plus soignée, stable et cohérente sur notre ISO live.
+
+L’environnement live est principalement destiné à installer CachyOS ou à utiliser cachy-chroot pour la récupération du système. Pour tester en toute sécurité d’autres environnements de bureau ou gestionnaires de fenêtres, nous recommandons vivement de les essayer dans une machine virtuelle (VM).
+
+### Pourquoi l’installateur met-il si longtemps à démarrer après avoir cliqué sur "Lancer l'Installer" ?
+
+:::caution
+Assurez-vous de disposer d’une connexion Internet active ; sinon, rien ne se passera après avoir cliqué sur ce bouton.
+:::
+
+L’installateur n’est pas figé. Il exécute un script en arrière-plan nécessaire à la préparation de votre système avant l’installation. Ce processus garantit que les trousseaux de clés (keyrings) et l’horloge système sont à jour, ce qui aide à éviter les problèmes courants d’installation.
+
+[Voir le script sur GitHub](https://github.com/CachyOS/CachyOS-Live-ISO/blob/master/archiso/airootfs/usr/local/bin/calamares-online.sh) pour mieux comprendre ce qu'il fait.
+<Steps>
+  1. Supprime les anciens fichiers de trousseaux de clés.
+  2. Installe et met à jour les paquets de trousseaux Arch Linux et CachyOS les plus récents.
+  3. Initialise et peuple le trousseau de clés de pacman.
+  4. Active la synchronisation horaire réseau.
+  5. Vérifie le type de démarrage de votre système (UEFI ou BIOS/MBR) afin de proposer le chargeur d’amorçage approprié.
+</Steps>
+
+C’est pourquoi le démarrage de l’installateur peut prendre un certain temps.
+
+### Pourquoi mon installation reste-t-elle bloquée à 33 % ?
+
+Cela se produit lorsque l’installateur a du mal à télécharger des paquets. Cela indique généralement une connexion Internet très lente ou instable. Vérifiez votre connexion réseau, puis réessayez.
+
+## Récupération du chargeur d’amorçage (bootloader)
+
+:::note[En cas de suppression de la partition /boot, recréez-en une nouvelle en suivant le [schéma de partition](/fr/installation/installation_on_root#uefigpt) correspondant à l'étape 5.]
+:::
+
+### Étapes pour restaurer votre chargeur d’amorçage (bootloader)
+
+:::tip
+Si vous ne savez pas comment utiliser `cachy-chroot`, veuillez d’abord consulter la documentation sur [CachyOS chroot Helper](/fr/features/cachy_chroot).
+:::
+
+<Steps>
+    1. Démarrez sur l’ISO live de CachyOS.
+    2. Ouvrez un terminal et entrez dans votre système installé en utilisant la commande `cachy-chroot`.
+
+        ```bash
+        sudo cachy-chroot
+        ```
+        Si votre système utilise BTRFS avec notre configuration prédéfinie, répondez 'y' à l’invite :
+         ```bash title='Exemple'
+         Do you want to use CachyOS BTRFS preset to auto mount root subvolume? y
+         Do you want to mount additional partitions? · yes
+         Enter the mount point for additional partition (e.g. /boot) type 'skip' to cancel:
+         # Tapez /boot for systemd-boot, Limine or rEFInd
+         # Tapez /boot/efi for GRUB
+         ```
+    3. Suivez ensuite les instructions ci-dessous selon le chargeur d’amorçage installé et le type de système (UEFI ou BIOS/MBR).
+        <Tabs>
+            <TabItem label='GRUB'>
+                Réinstallez GRUB avec la commande suivante :
+                <Tabs>
+                    <TabItem label='UEFI'>
+                        ```bash
+                        sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos
+                        ```
+                    </TabItem>
+                    <TabItem label='MBR/BIOS'>
+                        ```bash
+                        sudo grub-install --target=i386-pc /dev/sdX # Remplacez sdX par votre disque e.g. sda
+                        ```
+                    </TabItem>
+                </Tabs>
+            </TabItem>
+            <TabItem label='systemd-boot (seulement UEFI)'>
+                Réinstallez systemd-boot avec la commande suivante :
+                ```bash
+                sudo bootctl install
+                ```
+            </TabItem>
+            <TabItem label='Limine'>
+                Réinstallez Limine avec la commande suivante :
+                <Tabs>
+                    <TabItem label='UEFI'>
+                        ```bash
+                        sudo limine-install
+                        ```
+                    </TabItem>
+                    <TabItem label='MBR/BIOS'>
+                        ```bash
+                        sudo limine bios-install /dev/sdX # Remplacez sdX par votre disque e.g. sda
+                        ```
+                    </TabItem>
+                </Tabs>
+            </TabItem>
+            <TabItem label='rEFInd (UEFI only)'>
+                Réinstallez rEFInd avec la commande suivante :
+                ```bash
+                sudo refind-install
+                ```
+            </TabItem>
+        </Tabs>
+    4. Réinstallez le noyau CachyOS :
+        ```bash
+        sudo pacman -Syu linux-cachyos linux-cachyos-headers
+        ```
+    5. Quittez cachy-chroot :
+        ```bash
+        exit
+        ```
+    6. Redémarrez votre système.
+</Steps>
+
+## Gestion des paquets et mises à jour
+
+### Dépannage de Pacman
+
+#### error: signature is invalid
+
+Cette erreur indique un problème avec la signature cryptographique d’un paquet. Elle est généralement causée par un miroir obsolète ou un trousseau de clés endommagé sur votre système.
+
+Les miroirs se corrigent souvent d’eux-mêmes après un certain temps, mais si le problème persiste, essayez l’une des deux solutions suivantes :
+
+<Tabs>
+
+<TabItem label='Première Solution: Resynchroniser les miroirs Pacman'>
+
+```sh
+sudo pacman -Syu
+```
+
+</TabItem>
+
+<TabItem label='Seconde Solution: Evaluer vos miroirs'>
+
+```sh title='évaluer vos miroirs'
+sudo cachyos-rate-mirrors
+```
+
+</TabItem>
+
+<TabItem label='Troisième Solution: Régénérer le trousseau de clés'>
+
+Si l’évaluation des miroirs ne fonctionne pas, il est probable que les trousseaux de clés de votre système soient endommagés.
+
+- Ouvez CachyOS Hello et naviguez dans **Apps/Tweaks**.
+- Cliquez sur le bouton "Reset Keyring"
+
+</TabItem>
+
+</Tabs>
+
+#### error: 404 Not Found
+
+Cette erreur signifie que le paquet que vous tentez d’installer n’est pas disponible sur votre miroir actuel. Cela se produit généralement lorsque la base de données locale des paquets n’est pas synchronisée avec les dépôts distants.
+
+**Solution:**
+
+Exécutez la commande suivante pour actualiser la base de données et effectuer une mise à jour complète :
+
+```sh
+sudo pacman -Syu
+# Puis réessayez d’installer le paquet souhaité.
+```
+
+#### error: could not remove
+
+Cette erreur apparaît lorsque le cache de pacman contient des fichiers que le système ne peut pas gérer automatiquement. Elle est courante et se corrige facilement.
+
+- Solution 1: Utilisez CachyOS Hello.
+  - Ouvrez CachyOS Hello et allez dans **Apps/Tweaks**, puis cliquez sur le bouton **Clear package cache**.
+
+- Solution 2: Supprimez le cache manuellement.
+  - Exécutez la commande suivante pour supprimer tous les paquets orphelins du cache.
+  ```sh
+  sudo rm -r /var/cache/pacman/pkg/*
+  ```
+
+#### error: File is corrupted (invalid or corrupted package (PGP signature))
+
+```sh
+# Exemple:
+:: File /var/cache/pacman/pkg/python-charset-normalizer-3.4.0-1-any.pkg.tar.zst
+is corrupted (invalid or corrupted package (PGP signature)).
+```
+
+Cette erreur indique généralement un problème avec les trousseaux de clés pacman qui servent à vérifier l’authenticité des paquets. Les commandes suivantes réinitialiseront et repeupleront les trousseaux pour résoudre le problème :
+
+```sh
+sudo rm -rf /etc/pacman.d/gnupg/
+sudo pacman-key --init
+sudo pacman-key --populate
+
+sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
+sudo pacman-key --lsign-key F3B607488DB35A47
+
+sudo rm -R /var/lib/pacman/sync
+```
+
+#### error: unable to lock database
+
+Cette erreur se produit lorsqu’un autre processus pacman est déjà en cours d’exécution. Si le précédent processus s’est arrêté brutalement, le fichier de verrouillage db.lck peut ne pas avoir été supprimé.
+
+- Solution 1: Utilisez CachyOS Hello
+  - Utilisez la fonction **Remove db lock** dans l'onglet **Apps/Tweaks**.
+
+- Solution 2: Supprimer le fichier de verrouillage manuellement
+  - Si vous préférez ne pas utiliser CachyOS Hello, vous pouvez utiliser la commande suivante pour supprimer le fichier de verrouillage :
+
+```sh
+sudo rm /var/lib/pacman/db.lck
+```
+
+#### error: failed retrieving file ... Connection timed out
+
+Vous pouvez voir des erreurs telles :
+
+```text
+# Example errors:
+error: failed retrieving file '...' from ... : Connection timed out
+error: failed retrieving file '...' from ... : Couldn't resolve host name
+error: failed retrieving file '...' from ... : The requested URL returned error: 526
+```
+
+Ces erreurs indiquent généralement un problème avec vos miroirs actuels (lents, hors ligne ou inaccessibles).
+
+- Solution: La meilleure solution est de mettre à jour la liste des miroirs : 
+
+```sh
+sudo cachyos-rate-mirrors
+# Après cela, vous pouvez mettre à jour votre système avec :
+sudo pacman -Syu
+```
+
+:::tip
+La commande `cachyos-rate-mirrors` teste les miroirs disponibles selon leur vitesse et leur état de synchronisation, puis met à jour le fichier `/etc/pacman.d/cachyos-mirrorlist` avec les meilleurs résultats.
+
+Il est conseillé de la relancer régulièrement si vous constatez des lenteurs lors des mises à jour.
+:::
+
+#### warning: local is newer than...
+
+Cet avertissement signifie qu’un paquet installé est plus récent que celui disponible dans les dépôts officiels. Cela peut provenir d’un miroir obsolète ou d’un paquet rétrogradé.
+
+- Solution: la commande `pacman -Syuu` exécute une mise à jour globale du système, et autorise les rétrogradations, ce qui va corriger l'avertissement en synchronisant votre version locale avec celle des dépôts.
+
+```sh title='Pour supprimer ces avertissements, utilisez la commande :'
+sudo pacman -Syuu
+```
+
+#### error: failed to commit transaction (conflicting files)
+
+Cette erreur indique que pacman tente d’installer un paquet dont certains fichiers existent déjà sur le système. C'est une mesure de sécurité intégrée qui protège l'intégrité du système.
+
+- Solution: upprimez manuellement les fichiers conflictuels. Consultez le [Wiki Arch](https://wiki.archlinux.org/title/Pacman#%22Failed_to_commit_transaction_(conflicting_files)%22_error) pour plus d'informations.
+
+```sh title='Exemple'
+error: failed to commit transaction (conflicting files)
+nvidia-utils: /usr/lib/environment.d/10-gsk.conf exists in filesystem
+Errors occurred, no packages were upgraded.
+ -> error installing repo packages
+```
+
+Pour corriger cet exemple spécifique, vous supprimeriez le fichier en erreur et relanceriez votre commande de mise à jour : 
+
+```sh
+sudo rm /usr/lib/environment.d/10-gsk.conf
+```
+
+#### ERROR: module not found: 'nvidia', 'nvidia_modeset', ...
+
+```sh title='Exemple'
+==> ERROR: module not found: 'nvidia'
+==> ERROR: module not found: 'nvidia_modeset'
+==> ERROR: module not found: 'nvidia_uvm'
+==> ERROR: module not found: 'nvidia_drm'
+```
+
+**Cela peut se produire si :**
+
+1) Le chargement anticipé de modules (Early Module Loading) est activé et les modules NVIDIA manquent.
+
+2) D’autres noyaux installés sur votre système n’ont pas les modules NVIDIA correspondants.
+
+```sh title='Installez le paquet suivant pour corriger cette erreur'
+sudo pacman -S nvidia
+```
+
+### Problèmes logiciels spécifiques
+
+#### Discord demande une mise à jour non disponible dans les dépôts.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/discord-update.png')} />
+
+Cela se produit car Discord dispose de son propre système de mise à jour, souvent plus rapide que celui des dépôts officiels. Pour corriger ce problème, suivez le [guide du Wiki Arch](<https://wiki.archlinux.org/title/Discord#Discord_asks_for_an_update_not_yet_available_in_the_repository>).
+
+### Questions générales
+
+#### À quelle fréquence les paquets -git sont-ils mis à jour ?
+
+Généralement une fois par semaine, le lundi, sauf exceptions.
+
+#### Pourquoi y a-t-il deux paquets Wine identiques dans certains dépôts ?
+
+- `cachyos-v3/v4/wine` = Wine avec le patchset NTSync
+- `cachyos-extra-v3/v4/znver4/wine` = Wine « vanilla » **recompilé par CachyOS**
+
+Dès que le patchset NTSync sera fusionné dans Wine, le paquet `cachyos-v3/v4/wine` sera supprimé. Le paquet `cachyos-extra-v3/v4/znver4/wine` restera disponible.
+
+#### Comment désactiver l’animation de démarrage (Plymouth) ?
+
+:::note[Cela peut résoudre un écran noir sur certains systèmes, par ex. avec d’anciennes cartes NVIDIA.]
+:::
+
+Pour désactiver l’animation de démarrage, modifiez la [configuration de votre chargeur d’amorçage](/configuration/boot_manager_configuration) et ajoutez les paramètres suivants :
+
+```sh
+plymouth.enable=0 disablehooks=plymouth
+```
+
+:::note[systemd-boot, GRUB et Limine nécessitent de régénérer les images initramfs]
+systemd-boot: `sudo sdboot-manage gen`
+
+GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+
+Limine: `sudo limine-mkinitcpio`
+:::
+
+## Sécurité et bonnes pratiques
+
+### Bonnes pratiques pour l’AUR
+
+L’AUR offre un vaste choix, mais la sécurité reste primordiale. Voici un guide concis pour une utilisation sûre de l’AUR sur CachyOS :
+
+* **1. Comprenez le PKGBUILD :** C'est le script de compilation. Apprenez sa structure, sers variables (`source`, `pkgname`), et fonctions (`build()`, `package()`).
+* **2. Vérifiez les liens sources :** Assurez-vous que les URLs `source` pointent vers les sites ou dépôts officiels. Evitez les liens personnels ou suspects.
+* **3. RAnalysez les étapes d’installation :** Inspectez la localisation des fichiers installé (fonction `package()`) et si des commandes unusuelles ou touchant des parties sensibles du système sont présentes. Vérifiez les scripts `.install` également.
+* **4. Renseignez-vous sur le mainteneur :** Vérifiez son historique sur le AUR pour des soucis de sécurité ou activités suspectes.
+* **5. Vérifiez les sommes de contrôle et les signatures PGP :** Absolument crucial! Confirmez que toutes les signatures (SHA256, BLAKE2b, etc.) correspondent à l'upstream. Utilisez les signatures PGP (`validpgpkeys`) pour autentification quand disponibles.
+* **6. Soyez prudent avec les paquets `-bin` :** Ceux-ci incluent des binaires pré-compilés, ce qui signifie que vous ne pouvez inspecter le code source. Soyez extra-prudent à leur origine et intégrité.
+* **7. Lisez les commentaires de la communauté :** Lisez les commentaires sur la page du AUR concernant des avertissements, problèmes, ou conseils d'autres utilisateurs.
+* **8. Ne contournez jamais les vérifications d’intégrité :** Utiliser `--skipinteg` ou similaire annule toute vérification de sécurité. Ne le faites pas.
+* **9. Maîtrisez votre assistant AUR (yay, paru, etc.) :** Comprenez bien comment il fonctionne. Assurez-vous qu'il affiche bien le PKGBUILD et ses diffs, ou compilez manuellement avec `makepkg`.
+* **10. Évaluez la nécessité réelle du paquet :** Avant installation, demandez-vous si vous avez vraiment besoin de ce paquet AUR, ou si une alternative existe sur un dépôt officiel.
+* **11. Maintenez votre système à jour :** Lancez régulièrement la commande `sudo pacman -Syu` pour vous assurer que tous vos composants système, incluant `pacman` et `makepkg`, disposent des derniers patchs de sécurité.
+
+Restez vigilant pour assurer la sécurité de votre système Arch Linux !
+
+### Choisir un gestionnaire de paquets graphique
+
+es gestionnaires graphiques peuvent être pratiques, mais certains posent des problèmes graves sur les systèmes à publication continue comme CachyOS :
+
+-   **Pamac :** est connu pour corrompre les trousseaux de clés système. Cela peut mener  à des erreurs de signature PGP qui vous empêchent de mettre à jour votre système.
+
+-   **Discover (KDE) & GNOME Software Center :** Ces App-Stores utilisent le backend PackageKit. Ils sont généralement OK pour gérer les paquets Flatpak, mais risqués pour les **paquets système** is risky. Les managers basés sur PackageKit peuvent également être instables voire crasher, ce qui pourrait laisser votre système dans un état irrécupérable.
+
+Pour une stabilité maximale, nous **recommandons fortement** de gérer vos paquets via la ligne de commande grâce à `pacman`
+
+Si vous préférez une interface graphique, une GUI comme **[Octopi](</fr/configuration/post_install_setup/#updating-the-system>)** ou le **CachyOS Package Installer** sont considérés comme des alternatives correctes, car elles sont des surcouches plus directes pour les fonctionnalités de pacman.
