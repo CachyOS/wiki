@@ -256,7 +256,7 @@ export default defineConfig({
                     cs: 'Handheld verze',
                     de: 'Handheld Edition',
                     es: 'Edición para dispositivos portátiles',
-                    fr: 'Edition handheld',
+                    fr: 'Edition Handheld',
                     pl: 'Wersja handheld',
                     ru: 'Ручная версия',
                     sk: 'Handheld verzia',
