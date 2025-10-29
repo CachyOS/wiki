@@ -538,32 +538,6 @@ export default defineConfig({
               link: 'support/donation',
             },
             {
-              label: 'Submitting Bugs',
-              translations: {
-                cs: 'Nahlášení chyb',
-                de: 'Fehlerberichte einreichen',
-                es: 'Envío de errores',
-                fr: 'Soumettre un bug',
-                pl: 'Zgłaszanie błędów',
-                ru: 'Отправка сообщений об ошибках',
-                sk: 'Odoslanie chýb',
-              },
-              link: 'support/submitting_bugs',
-            },
-            {
-              label: 'Submitting Package Requests',
-              translations: {
-                cs: 'Žádosti o balíčky',
-                de: 'Paketanforderungen einreichen',
-                es: 'Envío de solicitudes de paquetes',
-                fr: 'Soumettre une requête de paquets',
-                pl: 'Zgłaszanie próśb o pakiety',
-                ru: 'Запросы на добавление пакетов',
-                sk: 'Odoslanie požiadaviek na balíčky',
-              },
-              link: 'support/submitting_package_requests',
-            },
-            {
               label: 'Social',
               translations: {
                 cs: 'Sociální sítě',
