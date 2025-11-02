@@ -1,0 +1,173 @@
+---
+title: Noyau CachyOS
+description: Fonctionnalités et changements du noyau CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+Le **noyau CachyOS** est un noyau Linux personnalisé qui intègre diverses optimisations, configurations et correctifs provenant de l’amont.
+
+## Fonctionnalités
+
+### Optimisations de performance
+
+- **Compilation avancée** : PKGBUILD hautement personnalisable avec prise en charge des compilateurs **GCC** et **Clang**  
+- **Optimisation à l’édition de liens (LTO)** : LTO léger (*Thin LTO*) activé par défaut pour de meilleures performances  
+- **Optimisation guidée par profil (PGO)** : Profilage **AutoFDO + Propeller** pour une génération de code optimale ([En savoir plus](https://cachyos.org/blog/2411-kernel-autofdo/))  
+- **Intégrité du flux de contrôle du noyau (kCFI)** : Disponible lors de l’utilisation de LLVM pour une sécurité renforcée  
+- **Fréquence d’horloge configurable** : 300 Hz, 500 Hz, 600 Hz, 750 Hz et 1000 Hz (par défaut : 1000 Hz)  
+- **Optimisations architecturales** : Prise en charge des architectures **x86-64-v3**, **x86-64-v4**, et des versions spécifiques à **AMD Zen4**  
+- **Optimisations du compilateur** : Options GCC avancées incluant `-fivopts` et `-fmodulo-sched`  
+
+### Améliorations CPU
+
+- **Multiples ordonnanceurs** : **BORE**, **EEVDF**, et **BMQ** pour s’adapter à différents types de charge  
+- **Améliorations AMD P-State** : Support des cœurs préférés et dernières mises à jour d’`amd-pstate` issues de *linux-next*  
+- **Support temps réel** : Versions RT du noyau avec intégration de l’ordonnanceur **BORE**  
+- **CachyOS Sauce** : Configuration personnalisée `CONFIG_CACHY` intégrant divers réglages du système et de l’ordonnanceur  
+- **Optimisations de latence faible** : Correctifs pour améliorer la réactivité et réduire la gigue  
+
+### Système de fichiers & mémoire
+
+- **Support ZFS** : Intégré par défaut avec modules précompilés  
+- **Intégration NVIDIA** :
+  - Prise en charge des modules propriétaires NVIDIA avec correctifs  
+  - Support du pilote NVIDIA open source  
+  - Modules prêts à l’emploi dans le dépôt CachyOS  
+- **Améliorations du planificateur d’E/S** :
+  - Meilleures performances pour **BFQ** et **mq-deadline**  
+  - Support alternatif pour [ADIOS](https://github.com/firelzrd/adios)  
+- **Gestion de la mémoire** :
+  - Correctif [le9uo](https://github.com/firelzrd/le9uo) pour éviter le *page thrashing* sous forte pression mémoire  
+  - Optimisations de la mémoire issues du noyau Zen (compaction, seuils, etc.)
+
+### Fonctionnalités supplémentaires
+
+#### Support matériel
+- **Matériel de jeu** : Patches pour **Steam Deck** (audio, HID, compatibilité matérielle) et support du **ROG Ally**  
+- **Matériel Apple** : Support des MacBook avec puce **T2** inclus par défaut  
+- **Matériel ASUS** : Compatibilité étendue via des correctifs dédiés  
+- **Graphiques** : Support **HDR** activé et remplacement de la limite d’énergie minimale AMDGPU (`amdgpu_ignore_min_pcap`)
+
+#### Améliorations système
+- **Multimédia** : Modules **v4l2loopback** inclus par défaut  
+- **Virtualisation** : Support de **l’ACS Override** pour **VFIO / GPU passthrough**  
+- **Intégration amont** : Correctifs sélectionnés de **Clear Linux** et **linux-next**
+
+#### Divers
+
+Le noyau CachyOS comprend également plusieurs améliorations subtiles qui enrichissent l’expérience utilisateur :
+
+- Fournit une version de **débogage** du noyau, non dépouillée, nécessaire pour le profilage **AutoFDO**.  
+- Le module [Binder](https://developer.android.com/reference/android/os/Binder), requis pour [Waydroid](https://waydro.id/), est activé par défaut et déjà [préconfiguré](https://github.com/CachyOS/linux-cachyos/blob/master/linux-cachyos/config#L10784).
+
+## Variantes
+
+CachyOS propose une large gamme de noyaux. Tous sont livrés avec le [jeu de correctifs de base CachyOS](https://github.com/CachyOS/kernel-patches).  
+Chaque noyau possède une variante **-lto** correspondante, compilée avec [Clang](https://clang.llvm.org/) au lieu de [GCC](https://gcc.gnu.org/).
+
+- **linux-cachyos**  
+  - Noyau par défaut, recommandé si vous ne savez pas lequel choisir.  
+  - Fréquence d’horloge : 1000 Hz pour une meilleure réactivité.  
+  - Compilé avec **Clang** et **ThinLTO**.  
+  - Profilé à l’aide du profil **AutoFDO** développé par CachyOS ([script](https://github.com/CachyOS/cachyos-benchmarker/blob/master/kernel-autofdo.sh)).  
+
+- **linux-cachyos-bore**  
+  - Utilise l’ordonnanceur [**BORE**](https://github.com/firelzrd/bore-scheduler).  
+
+- **linux-cachyos-bmq**  
+  - Utilise l’ordonnanceur **BMQ** de [Project C](https://gitlab.com/alfredchen/projectc/) (Alfred Chen).  
+    - `Ne prend pas en charge sched-ext.`  
+
+- **linux-cachyos-deckify**  
+  - Noyau par défaut pour consoles portables (Steam Deck, ROG Ally).  
+  - Il est **fortement déconseillé** d’utiliser d’autres noyaux sur ces appareils.  
+  - Intègre des correctifs spécifiques aux appareils portables.  
+
+- **linux-cachyos-eevdf**  
+  - Ajuste l’ordonnanceur EEVDF pour plus de réactivité.  
+
+- **linux-cachyos-lts**  
+  - Basé sur la dernière version **LTS** du noyau Linux.  
+  - Utilise l’ordonnanceur **BORE**.  
+  - Minimalement patché pour une stabilité maximale.  
+
+- **linux-cachyos-hardened**  
+  - Utilise l’ordonnanceur **BORE**.  
+  - Inclut le patchset [linux-hardened](https://github.com/anthraxx/linux-hardened).  
+  - Configuration basée sur [celle d’Arch Linux](https://gitlab.archlinux.org/archlinux/packaging/packages/linux-hardened/-/blob/main/config).  
+    - Renforcement agressif, au détriment des performances et du confort d’utilisation.  
+    - `Ne prend pas en charge sched-ext.`  
+
+- **linux-cachyos-rc**  
+  - Basé sur le dernier noyau principal de [Linus Torvalds](https://github.com/torvalds/linux/).  
+  - Intègre les nouveautés du patchset CachyOS.  
+
+- **linux-cachyos-server**  
+  - Optimisé pour les charges serveur plutôt que pour le bureau.  
+    - Horloge : 300 Hz  
+    - Pas de préemption  
+    - Ordonnanceur : EEVDF standard  
+
+- **linux-cachyos-rt-bore**  
+  - Noyau temps réel (*Real-Time Preemption*).  
+  - Utilise l’ordonnanceur **BORE**.  
+
+:::note
+Sauf indication contraire, toutes les variantes de noyau partagent la même configuration que le noyau par défaut.
+:::
+
+Si vous souhaitez proposer des suggestions ou améliorations, ouvrez un ticket sur le dépôt [linux-cachyos GitHub](https://github.com/CachyOS/linux-cachyos).
+
+### Convention de nommage des paquets
+
+```sh
+linux-cachyos # Noyau de base par défaut. Compilé avec Clang et ThinLTO
+linux-cachyos-hardened # Noyau renforcé, compilé avec GCC
+linux-cachyos-hardened-lto # Variante Clang du noyau renforcé
+linux-cachyos-hardened-{,lto-}headers
+linux-cachyos-hardened-{,lto-}nvidia
+linux-cachyos-hardened-{,lto-}nvidia-open
+linux-cachyos-hardened-{,lto-}zfs
+linux-cachyos-hardened-{,lto-}dbg
+```
+
+## Modules précompilés
+
+Afin de simplifier l’expérience utilisateur, CachyOS fournit plusieurs modules du noyau déjà **précompilés**.  
+Ainsi, vous n’avez plus besoin de les recompiler après chaque mise à jour ou installation du noyau.  
+Cela remplace efficacement les paquets `-dkms` fournissant les mêmes modules.
+
+### ZFS
+
+[ZFS](https://openzfs.org/wiki/Main_Page) est un système de fichiers pris en charge par CachyOS.  
+En raison de sa licence [CDDL](https://opensource.org/license/cddl-1-0) incompatible avec celle du noyau Linux, il ne peut pas être intégré directement.  
+Le module fourni inclut les dernières fonctionnalités et correctifs pour assurer une compatibilité totale.
+
+### NVIDIA
+
+CachyOS inclut les versions **précompilées** des modules **propriétaires** et **open source** de NVIDIA.  
+Comme ces modules sont développés hors de l’arborescence principale du noyau, leur calendrier de publication ne suit pas celui de Linux.  
+CachyOS applique donc des **correctifs communautaires** ou ceux **fournis directement par NVIDIA** pour garantir la compatibilité.
+
+## FAQ
+
+### Pourquoi AutoFDO n’est-il pas utilisé pour toutes les variantes du noyau ?
+
+Parce qu’il est coûteux en ressources : la compilation doit être effectuée **deux fois**, ce qui prend plus de temps et de puissance.  
+Le processus se déroule ainsi :
+
+1. Compilation initiale du noyau avec AutoFDO et options de débogage activées.  
+2. Exécution de charges de travail pour collecter les données de profilage.  
+3. Recompilation du noyau avec le profil AutoFDO généré.  
+
+C’est pourquoi AutoFDO n’est disponible que sur la variante [**linux-cachyos**](/features/kernel#variants) pour l’instant.  
+
+Pour plus d’informations, consultez [cet article](https://cachyos.org/blog/2411-kernel-autofdo/).
+
+### Le noyau temps réel améliore-t-il les performances en jeu ?
+
+Non.  
+Le noyau temps réel rend une plus grande partie du code **préemptible**, ce qui provoque des interruptions plus fréquentes des tâches, y compris celles liées au jeu.  
+Cela réduit donc les performances globales et la stabilité pour le jeu.
