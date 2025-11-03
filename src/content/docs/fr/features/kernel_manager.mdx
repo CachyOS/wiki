@@ -1,0 +1,206 @@
+---
+title: Gestion des noyaux Linux et du framework Sched-ext avec le Gestionnaire de Noyaux CachyOS  
+description: Le Gestionnaire de Noyaux CachyOS est un outil puissant permettant de gérer les noyaux, facilitant l’installation ou la compilation de noyaux personnalisés en toute simplicité.  
+tableOfContents:  
+  minHeadingLevel: 1  
+  maxHeadingLevel: 4  
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+## Installation d’un noyau depuis un dépôt
+
+Le Gestionnaire de Noyaux CachyOS facilite l’installation et la gestion des noyaux à partir de n’importe quel dépôt Arch Linux.
+
+Pour installer un noyau : lancez l’application `CachyOS Kernel Manager` et cochez la case `[]` correspondant au noyau souhaité dans la liste des options disponibles, puis appuyez sur `Exécuter` pour lancer l’installation.
+
+Pour désinstaller un noyau, décochez simplement la case `[]` à côté du noyau installé que vous souhaitez supprimer, puis appuyez à nouveau sur `Exécuter`.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km1.png')} />
+
+:::note
+Le bouton `Exécuter` devient indisponible lorsque vous sélectionnez un noyau déjà installé.
+:::
+
+## Configuration et compilation d’un noyau CachyOS personnalisé
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km2.png')} />
+
+:::note
+Le Gestionnaire de Noyaux CachyOS est conçu spécifiquement pour compiler des noyaux **CachyOS** et ne prend pas en charge la compilation ou la configuration d’un noyau Arch Linux standard ou d’autres variantes.
+:::
+
+*Pour commencer : ouvrez le Gestionnaire de Noyaux et cliquez sur le bouton `Configurer` pour ajuster divers paramètres tels que l’ordonnanceur souhaité, la fréquence des ticks, etc. Une fois vos modifications effectuées, cliquez sur `Construire le noyau` pour lancer la compilation de votre noyau CachyOS personnalisé.*
+
+**Les paquets et le cache du noyau compilé sont stockés dans** `~/.cache/cachyos-km/`
+
+### **Options de configuration disponibles :**
+
+* `Nom de paquet personnalisé` : vous pouvez nommer votre noyau comme vous le souhaitez. Exemple : `linux-custom-cachy`
+* Ordonnanceur (BORE, RC, RT, RT+BORE, EEVDF et BMQ)
+* Activer la configuration CachyOS
+* Modifier la configuration via nconfig, menuconfig, xconfig ou gconfig
+* Activer/Désactiver NUMA
+* Activer/Désactiver Modprobed-db
+* Indicateurs KBUILD CFLAGS (-O3 ou -O2)
+* Gouverneur de performances par défaut
+* Activer BBR3
+* Sélection de la fréquence des ticks (100Hz, 250Hz, 300Hz, 500Hz, 600Hz, 750Hz, 1000Hz)
+* Mode sans tick (idle, périodique, complet)
+* Préemption (complète, volontaire ou serveur)
+* Pages transparentes énormes (Toujours ou Madvise)
+* Activer/Désactiver DAMON
+* Activer/Désactiver la détection automatique de l’architecture CPU
+* Appliquer des optimisations du noyau pour des architectures CPU spécifiques
+* Activer LTO (Complet, Fin, Aucun)
+* Compiler le module ZFS
+* Compiler le module NVIDIA propriétaire
+* Compiler le module NVIDIA open-source
+* Inclure `vmlinux` avec les symboles/données de débogage
+* Charger/Sauvegarder une configuration prédéfinie du gestionnaire `(uniquement depuis le gestionnaire lui-même)`
+* Gestion des correctifs du noyau (prise en charge locale et distante)
+
+*Une fois la compilation terminée, vous serez invité à entrer votre mot de passe sudo pour installer le noyau.*
+
+## Gestion du framework Sched-ext
+
+Le Gestionnaire de Noyaux offre une interface graphique (GUI) pour gérer et contrôler les ordonnanceurs sched-ext.  
+Accédez à cette interface en cliquant sur le bouton `Configuration de l’ordonnanceur sched-ext` dans la fenêtre principale.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km3.png')} />
+
+Cette interface permet de :
+
+- Basculer entre différents ordonnanceurs sched-ext (scx)
+- Activer ou désactiver le service d’ordonnanceur
+- Vérifier l’ordonnanceur actuellement en cours d’exécution
+- Définir des indicateurs et profils d’ordonnanceur
+
+Pour ce faire, le gestionnaire utilise `scx_loader` avec une configuration stockée dans `/etc/scx_loader.toml`.
+
+Pour plus d’informations sur le fichier de configuration `scx_loader`, consultez [cette documentation](https://github.com/sched-ext/scx/blob/main/tools/scx_loader/configuration.md).
+
+### Exemple de configuration `scx_loader` :
+```toml
+default_sched = "scx_bpfland"
+default_mode = "Gaming"
+
+[scheds.scx_bpfland]
+auto_mode = []
+gaming_mode = ["-m", "performance"]
+lowlatency_mode = ["-k", "-s", "5000", "-l", "5000"]
+powersave_mode = ["-m", "powersave"]
+```
+
+---
+
+### Profils d’ordonnanceur
+
+Les **profils** sont des préréglages qui ajustent les indicateurs pour améliorer l’efficacité selon des cas d’usage spécifiques (par exemple : *Gaming*).
+
+#### **Bpfland**
+
+**Basse latence**  
+*Commandes :* `-s 5000 -S 500 -l 5000 -m performance`  
+*Description :* Réduit la latence au détriment du débit. Idéal pour les applications temps réel souples (audio, multimédia).
+
+**Gaming**  
+*Commandes :* `-m performance`  
+*Description :* Optimise la constance des performances en jeu. Priorise les P-cores sur Intel et les CCDs sur Ryzen X3D.
+
+**Économie d’énergie**  
+*Commandes :* `-m powersave`  
+*Description :* Favorise l’efficacité énergétique en privilégiant les cœurs les moins performants.
+
+**Serveur**  
+*Commandes :* `-p`  
+*Description :* Priorise les tâches à affinité stricte. Augmente le débit au détriment de la latence.
+
+#### **Flash**
+
+**Basse latence**  
+*Commandes :* `-m performance -w -C 0`  
+*Description :* Réduit la latence au détriment du débit. Idéal pour l’audio et le multimédia.
+
+**Gaming**  
+*Commandes :* `-m all`  
+*Description :* Optimise les performances dans les jeux.
+
+**Économie d’énergie**  
+*Commandes :* `-m powersave -I 10000 -t 10000 -s 10000 -S 1000`  
+*Description :* Favorise l’efficacité énergétique en ajoutant des cycles d’inactivité forcés toutes les 10 ms.
+
+**Serveur**  
+*Commandes :* `-m all -s 20000 -S 1000 -I -1 -D -L`  
+*Description :* Optimisé pour les charges serveur, augmente le débit au détriment de la réactivité.
+
+#### **LAVD**
+
+**Jeux & Basse latence**  
+*Commandes :* `--performance`  
+*Description :* Utilise tous les cœurs disponibles pour maximiser les performances.
+
+**Économie d’énergie**  
+*Commandes :* `--powersave`  
+*Description :* Réduit la consommation tout en conservant de bonnes performances.
+
+#### **P2DQ**
+
+**Gaming**  
+*Commandes :* `--task-slice true -f --sched-mode performance`  
+*Description :* Améliore la constance des performances de jeu et privilégie les cœurs rapides.
+
+**Basse latence**  
+*Commandes :* `-y -f --task-slice true`  
+*Description :* Réduit la latence et stabilise la durée des tranches CPU.
+
+**Économie d’énergie**  
+*Commandes :* `--sched-mode efficiency`  
+*Description :* Optimise la consommation énergétique.
+
+**Serveur**  
+*Commandes :* `--keep-running`  
+*Description :* Permet aux tâches de continuer sur un CPU inactif pour améliorer le débit.
+
+#### **Tickless**
+
+**Gaming**  
+*Commandes :* `-f 5000 -s 5000`  
+*Description :* Améliore les performances de jeu en réduisant le temps de bascule des tâches.
+
+**Économie d’énergie**  
+*Commandes :* `-f 50 -p`  
+*Description :* Réduit les vérifications de contention CPU pour économiser l’énergie.
+
+**Basse latence**  
+*Commandes :* `-f 5000 -s 1000`  
+*Description :* Similaire au profil jeu, avec une tranche encore plus courte.
+
+**Serveur**  
+*Commandes :* `-f 100`  
+*Description :* Réduit les vérifications de contention pour privilégier le débit.
+
+#### **Cosmos**
+
+**Auto**  
+*Commandes :* `-d`  
+*Description :* Désactive les réveils différés pour réduire la consommation énergétique.
+
+**Gaming**  
+*Commandes :* `-c 0 -p 0`  
+*Description :* Force un ordonnancement basé sur les délais pour améliorer la réactivité.
+
+**Économie d’énergie**  
+*Commandes :* `-m powersave -d -p 5000`  
+*Description :* Priorise l’efficacité énergétique au détriment du débit.
+
+**Basse latence**  
+*Commandes :* `-m performance -c 0 -p 0 -w`  
+*Description :* Réduit la latence et améliore la prévisibilité des performances.
+
+**Serveur**  
+*Commandes :* `-a -s 20000`  
+*Description :* Améliore la localité et le débit dans les charges sensibles au cache.
