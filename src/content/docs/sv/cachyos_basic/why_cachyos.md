@@ -25,7 +25,7 @@ Som standard så är EEVDF justerad så att den delar upp den tillgängliga CPU-
 
 Men, EEVDF designades inte för skrivbordsinteraktivitet. Med det i åtanke så kommer CachyOS-kernels patchade med [BORE (Burst-Oriented Response Enhancer)](https://github.com/firelzrd/bore-scheduler) schedulern som utökar EEVDF för att förbättra interaktiviteten under hög arbetsbelastning.
 
-Med 6.12 så intreducerade Linux-kerneln möjligheten att hotplugga BPF schedulers och att ersätta EEVDF med en annan scheduler.
+Med 6.12 så introducerade Linux-kerneln möjligheten att hotplugga BPF schedulers och att ersätta EEVDF med en annan scheduler.
 
 Frö mer information om kernels som CachyOS erbjuder och sched-ext schedulers, se [Kernel](/features/kernel) och [sched-ext](/configuration/sched-ext).
 
