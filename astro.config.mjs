@@ -1,3 +1,4 @@
+import { starlightKatex } from 'starlight-katex';
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
@@ -24,6 +25,7 @@ const plugins = [
     globalPicker: false,
     types: [{ id: 'linux', label: 'Linux', default: true }],
   }),
+  starlightKatex(),
 ];
 if (import.meta.env.PROD) {
   routeMiddleware.push('./src/middleware/outdated.ts');
