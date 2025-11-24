@@ -1,0 +1,64 @@
+---
+title: QEMU and VMM Setup
+description: Necessary steps to get both programs working on CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import { Steps } from '@astrojs/starlight/components';
+
+## Installation
+To get **VMM** (Virtual Machine Manager) and **QEMU** installed and running on 
+**CachyOS**, the process is thus:
+
+```sh
+# This will install the needed packages (note the "Windows 11" note below):
+sudo pacman -S qemu-full virt-manager swtpm
+# This will add the user to the "libvirt" group so they can use it:
+sudo usermod -aG libvirt $USER
+# LXC backend (optional, for linux containers, enabling both backends does not conflict):
+systemctl enable --now libvirtd.service
+# QEMU backend (for VMs):
+systemctl enable --now libvirtd.socket
+# This will bring Internet up in a VM whenever one starts:
+sudo virsh net-autostart default
+```
+
+:::note[Windows 11]
+If you are installing **Windows 11** in a virtual machine, you'll either need to pass through your compatible TPM module, later in the configuration step, or install `swtpm` if you don't have one.
+:::
+
+## The basics of creating a VM
+:::note[User Session]
+Before proceeding you may want to briefly defer to [QEMU User Session](qemu_user_session).
+:::
+
+<Steps>
+
+1. First, launch **VMM**, the first thing that will greet you are these things connecting: <ImageComponent imgsrc={import('~/assets/images/vmmstart.png')} />
+2. Next, click on `Edit -> Preferences -> ✅ Enable XML editing` and close out of that sub-menu.
+3. Now you can create a new virtual machine, either by clicking **the screen with a star and play icon** or `File -> New Virtual Machine`.
+4. You will be greeted with the vm creator, next to `Connection:` you will see a dropdown menu, click it and select the appropriate one then proceed `Forward`. <ImageComponent imgsrc={import('~/assets/images/vmmcreatestep1.png')} />
+5. You will be asked to locate the `.iso` image of an OS you downloaded, click on `Browse...` and locate it, you may also want to add or make a dedicated directory for storing .iso files, you can do so by clicking on the `+ (Add Pool)` button. If you want to reuse the `User Session` path for this, that one lives in `~/.config/libvirt/`. <ImageComponent imgsrc={import('~/assets/images/vmmcreatestep2browse.png')} />
+**If your OS doesn't get autodetected**, simply untick the autodetection and choose the closest match manually, `example: CachyOS = Arch Linux`.
+
+6. Step 3 is straightforward, simply give your VM however much RAM and CPU cores you like, this isn't set in stone and is easily changeable.
+7. In step 4, you can choose to create a virtual storage space (this creates a **.qcow2** file), or a path for the VM to use.
+8. In step 5, tick on `Customize configuration before install -> Finish`.
+9. You will now land here: <ImageComponent imgsrc={import('~/assets/images/vmmprevminstall.png')} />
+There are a few things you should confirm here if installing a Linux VM, in `Overview` confirm that the chipset is **Q35** and that the firmware is **UEFI**. Unless you're installing something truly ancient or doing something silly, you never want any other variation here. If you're making a `Windows 11` VM, head over to `Add Hardware -> TPM` then select either Emulated or Passthrough (see the note at the top) and `Finish` to close the sub-menu.
+
+10. Now click on `Begin Installation`.
+11. If in a **Linux** VM (or another OS that uses OpenGL and/or ships libvulkan), head over to [EGL Headless](egl_headless) and/or [Virtio-Venus](virtio-venus) respectively.
+
+</Steps>
+
+### Final note
+If in a `Windows 11` VM, to improve performance, you can:
+- install **Virtio-Win** drivers from RedHat in the guest
+- if you have an Intel iGPU, you can instead look into **GVT-g** and **MDEV**
+- if you have an Intel iGPU and a dGPU, you can instead look into **GVT-d**
+- if you have an iGPU and a dGPU or 2+ dGPU's and want to pass a dGPU instead, 
+you can look into **VFIO**

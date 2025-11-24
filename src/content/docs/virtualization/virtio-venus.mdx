@@ -1,0 +1,61 @@
+---
+title: Virtio-Venus
+description: 3D acceleration through Vulkan
+---
+
+## Usecases:
+- **Near-Native 3D acceleration**
+
+In operating systems that make use of `libvulkan`, such as **Linux**, **BSD**'s and **Android**, you 
+can achieve near-native performance by translating calls from the VM to vulkan then directly to 
+your GPU and back, without having to pass it to a VM.
+
+Unfortunately, **Virtio-Venus** is not in **VMM**, and thus will require you to use **qemu-cli**.
+You will need to note the name you gave to your VM and where it is.
+
+## Using Virtio-Venus in qemu-cli:
+Once you install whichever VM is eligible, you can open up the terminal and create a qemu-cli prompt 
+for your virtual machine, here's an example of my CachyOS VM:
+
+```sh
+qemu-system-x86_64                                                                             \
+    -enable-kvm                                                                                \
+    -M q35                                                                                     \
+    -smp 6                                                                                     \
+    -m 12G                                                                                     \
+    -cpu host                                                                                  \
+    -net nic,model=virtio                                                                      \
+    -net user,hostfwd=tcp::2222-:22                                                            \
+    -device virtio-sound-pci,audiodev=my_audiodev -audiodev pipewire,id=my_audiodev            \
+    -device virtio-vga-gl,hostmem=4G,blob=true,venus=true                                      \
+    -vga none                                                                                  \
+    -display gtk,gl=on,show-cursor=on                                                          \
+    -usb -device usb-tablet                                                                    \
+    -object memory-backend-memfd,id=mem1,size=12G                                              \
+    -machine memory-backend=mem1                                                               \
+    -drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd   \
+    -drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd              \
+    -drive file=.local/share/libvirt/images/archlinux.qcow2
+```
+
+## To explain:
+
+- `-smp 6` means 6 cpu cores
+- `-m 12G` means 12GB of RAM
+- `-net user,hostfwd=tcp::2222-:22` means that port 22 is being forwarded from the host to the vm as port 2222, 
+thus if you wanted an ssh connection to the vm from some device, you'd do:
+
+```sh
+ssh -p 2222 vmusername@vmipaddress
+```
+
+- `-device virtio-vga-gl,hostmem=4G,blob=true,venus=true` this is the venus driver, unfortunately not yet in 
+virt-manager, once it is, this entire section apart from user mode will be superseded.
+- `-hostmem=4G` means I'm letting the vm have up to 4GB of my VRAM from my GPU.
+- `-object memory-backend-memfd,id=mem1,size=12G` in this section, the size is the RAM you gave it, thus 12GB in my case.
+- `-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd` this is the firmware 
+file for the vm, this is just the path to it.
+- `-drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd` this is the nvram of the vm, without 
+this or with this set to read-only, the vm won't run.
+- `-drive file=.local/share/libvirt/images/archlinux.qcow2` this is the path to the .qcow2 file (the storage of the vm).\
+(You can see my audio device isn't `ich9` in this case but `pipewire`, this is irrelevant.)
