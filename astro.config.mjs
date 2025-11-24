@@ -514,6 +514,37 @@ export default defineConfig({
           ],
         },
         {
+          label: 'Virtualization',
+          translations: {
+          },
+          items: [
+            {
+              label: 'QEMU and VMM Setup',
+              translations: {
+              },
+              link: 'virtualization/qemu_and_vmm_setup',
+            },
+            {
+              label: 'QEMU User Session',
+              translations: {
+              },
+              link: 'virtualization/qemu_user_session',
+            },
+            {
+              label: 'EGL Headless',
+              translations: {
+              },
+              link: 'virtualization/egl_headless',
+            },
+            {
+              label: 'Virtio-Venus',
+              translations: {
+              },
+              link: 'virtualization/virtio-venus',
+            },
+          ],
+        },
+        {
           label: 'Support',
           translations: {
             cs: 'Podpora',
