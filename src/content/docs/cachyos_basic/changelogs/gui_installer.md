@@ -4,6 +4,43 @@ description: Changelogs of Calamares and the GUI Live ISO
 sidebar:
   order: 1
 ---
+25.11
+---- 
+
+**Features:**
+
+* **ISO/Installer:** Added Orca and espeak-ng for better accessibility
+* **initcpiocfg:** Enabled systemd hook on supported configurations
+* **Netinstall:** Hyprland dotfiles have been removed
+* **pacstrap:** Install `bcachefs-dkms` if `bcachefs` is selected as the filesystem
+* **Calamares:** Added support for plasma-login-manager and cosmic-greeter
+* **Cosmic:** Switched from SDDM to cosmic-greeter
+* **Fonts:** Improved fonts for Asian users
+* **chwd:**
+  * Installs `intel-media-sdk` and `vpl-gpu-rt` on supported GPUs
+  * Enabled Nouveau NvBoost for Fermi GPUs
+  * Dropped support for 390xx legacy NVIDIA driver
+  * Added support for Xbox ROG Ally/X
+* **cachyos-hello:**
+  * Removed internal package installer; opens CachyOS package installer instead
+  * Added CLI interface for the GUI functionality
+  * Various ISO version check fixes
+* **cachyos-settings:** zram-generator: Removed compression for incompressible pages
+* **Proton-CachyOS:**
+  * Added `dxvk-gplasync` as alternative DXVK. This can be enabled via `PROTON_DXVK_GPLASYNC=1`
+  * Added `DISABLE_LAYER_MESA_ANTI_LAG` when using `PROTON_FSR4_UPGRADE`
+  * Brought in multiple **Wayland fixes** (fullscreen offset, dead keys, DPI behavior, video output tweaks) and `winewayland.drv` improvements
+  * Introduced and tuned **per-game shader cache** behavior and larger shader caches (especially for NVIDIA)
+  * Added FSR3 and XeSS upscaler upgrades
+
+**Fixes:**
+
+* **Limine:**
+  * Fixed installation of Limine without entry registering on broken UEFI
+  * Uses systemd variant of `btrfs-overlayfs` hook
+* **Calamares:** Removed `attr2` as an option on XFS mount settings
+* **chwd:** Disabled T2 chip's USB Ethernet interface
+
 25.08
 ----
 
