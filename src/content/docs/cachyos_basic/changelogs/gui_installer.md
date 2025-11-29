@@ -5,7 +5,7 @@ sidebar:
   order: 1
 ---
 25.11
----- 
+----
 
 **Features:**
 
@@ -65,7 +65,7 @@ sidebar:
 
 **Fixes:**
 
-* **Limine:** 
+* **Limine:**
     - Fixed `limine bios-install /dev/sdaX` error when selecting the **/boot** mount point as the boot location on MBR systems.
     - Fixed uninitialized value of the `bootLoader` path, which caused installation failures on MBR systems when the bootloader location wasn’t explicitly selected.
     - Added a warning about using the **bios-grub** flag on the boot partition, which can cause a “Stage 3 file not found” error.
@@ -265,7 +265,7 @@ sidebar:
 
 **Bug Fixes:**
 
-- refind: partitioning: changed from 3 way partiton layout to 2 way
+- refind: partitioning: changed from 3-way partition layout to 2-way
 - netinstall: added kdeplasma-addons to the Plasma installation
 - calamares: Fixed an issue, while partitioning with a swap partition
 
@@ -476,7 +476,7 @@ sidebar:
 
 - Plymouth: Use plymouth to provide a themed boot animation
 - ISO: Switch back to X11 due to issues when setting the keyboard layout in calamares
-- rEFInd: New partitioning layout (seperate /boot and /boot/efi)
+- rEFInd: New partitioning layout (separate /boot and /boot/efi)
 - netinstall: KDE: Install xwaylandvideobridge by default
 - netinstall: Use lightdm instead of ly for various Desktop Environments, due to a bug in ly
 - systemd-boot: Use @saved for systemd-boot to allow it to remember the previously selected boot entry
@@ -489,7 +489,7 @@ sidebar:
 - Autologin: Fixed the autologin option when used together with sddm
 - xz: Provide a patched xz package
 - libarchive: Mitigate commit from malicious xz actor
-- cachyos-settings: udev-rule: don't set watermark_scale_factor to 125, since it siginificantly increases RAM usage
+- cachyos-settings: udev-rule: don't set watermark_scale_factor to 125, since it significantly increases RAM usage
 - calamares: pacman-keyring: Use simpler method to integrate the keyring into the installation
 
 24.03.1
@@ -506,7 +506,7 @@ sidebar:
 
 - NVIDIA: patched nvidia module to take the ownership of nvidia.drm.modeset earlier to avoid issues on nvidia graphics
 - Refind: Don't install the lts kernel to avoid issues
-- shellprocess: Remove the liveusers directory completly
+- shellprocess: Remove the liveusers directory completely
 
 24.03
 ----
@@ -641,14 +641,14 @@ sidebar:
 **Bug-fixes:**
 
 - netinstall: minimal fixes due package changes
-- Slides: Slide 6 got updated to reflect the lastest chang
+- Slides: Slide 6 got updated to reflect the latest changes
 
 23.04
 -----
 
 **Features:**
 
-- Introduce the Qtile desktop enviroment
+- Introduce the Qtile desktop environment
 - Reworked mhwd: Rust rewrite; Simplified profiles for GPUs and network cards; Removed bunch of ancient code
 - Package updates: linux-cachyos 6.2.12, cachy-browser 112.0.1, mesa 23.0.3, zfs-utils 2.1.11
 
@@ -667,7 +667,7 @@ sidebar:
 
 - Calamares got fixed with the lightdm displaymanager due faulty calamares upstream commits
 - Offline installation keyring issue got fixed
-- Refind: Use linux-cachyos-lts as defaullt. Current 6.2 seems not to work well together with refind
+- Refind: Use linux-cachyos-lts as default. Current 6.2 seems not to work well together with refind
 
 23.03
 -----
@@ -718,8 +718,8 @@ sidebar:
 **Features:**
 
 - Calamares Slides got reworked and updated
-- UKUI Desktop Enviroment got added to the Netinstallation
-- Cinnamon Desktop Enviroment got added to the Netinstallation
+- UKUI Desktop Environment got added to the Netinstallation
+- Cinnamon Desktop Environment got added to the Netinstallation
 - Cmdline: zswap is now disabled as default because CachyOS provides zram as default
 - Calamares updated to the latest commit
 - LLVM 15 is now shipped as default
@@ -745,7 +745,7 @@ sidebar:
 - Calamares updated to the latest commit
 - The mirrors are now ranked with "cachyos-rate-mirros", which ranks our mirrors and the arch ones
 - Packages Update: 6.1.1 Kernel, mesa 22.3.1, plasma 5.26.4,...
-- The Kofuku Desktop Enviroment got removed
+- The Kofuku Desktop Environment got removed
 - extra ISO with llvm 15 included to provide support for newer AMD Cards
 
 **Bug-fixes:**
@@ -773,7 +773,7 @@ sidebar:
 **Bug-fixes:**
 
 - qemu-quest-agent.service got removed from the ISO
-- copytoram got completly disabled, it breaks the offline installation
+- copytoram got completely disabled, it breaks the offline installation
 - mkinitcpio.conf got updated
 - And more ISO fixes
 
@@ -845,7 +845,7 @@ sidebar:
 Following known bugs has been fixed:
 
 - Install failed when a generic CPU was used
-- KDE did automatically mount zfs paritions which resulted that the auto login into the ISO did not worked anymore
+- KDE did automatically mount zfs partitions which resulted that the auto login into the ISO did not worked anymore
 
 **Improvements:**
 
@@ -873,7 +873,7 @@ Following options you can select for a kernel compile:
 - Enable or disable Speculative page fault
 - Enable or disable LRNG (Linux Random Number Generator)
 - Apply Kernel automatic Optimization (Does automatically detect your CPU March)
-- Apply Kernel Optimization slecting (You will see a list of different CPU-Marches and can select with a number yours)
+- Apply Kernel Optimization selecting (You will see a list of different CPU-Marches and can select with a number yours)
 - Disable debug (it lowers the size of the kernel)
 - Enable or disable nf cone
 - Enable LTO (Full, Thin, No)
