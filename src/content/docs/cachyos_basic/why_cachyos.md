@@ -42,11 +42,11 @@ CachyOS includes a custom hardware detection tool that automatically identifies 
 
 The CachyOS installer lets users customize their system by choosing the desktop environment, packages, filesystem, boot manager, kernel, and more to fit their needs:
 
-- [Desktop Environments](/installation/desktop_environments/)
-- [Boot Managers](/installation/boot_managers/)
-- [Kernel Flavors](/features/kernel#variants)
-- [Filesystems](/installation/filesystem)
-- [Custom Packages to include during installation](https://github.com/CachyOS/cachyos-calamares/blob/cachyos-limine-qt6/src/modules/netinstall/netinstall.yaml)
+* [Desktop Environments](/installation/desktop_environments/)
+* [Boot Managers](/installation/boot_managers/)
+* [Kernel Flavors](/features/kernel#variants)
+* [Filesystems](/installation/filesystem)
+* [Custom Packages to include during installation](https://github.com/CachyOS/cachyos-calamares/blob/cachyos-limine-qt6/src/modules/netinstall/netinstall.yaml)
 
 ### CachyOS Custom Applications
 
@@ -54,14 +54,14 @@ CachyOS develops and maintains its own suite of applications to simplify system 
 
 List of applications that CachyOS currently develops and maintains:
 
--   **[CachyOS Hello](https://github.com/CachyOS/CachyOS-Welcome):** A welcome application for controlling tweaks, applying fixes, and installing packages.
--   **[CachyOS Package Installer](https://github.com/CachyOS/packageinstaller):** A graphical user interface (GUI) for easy installation of applications.
--   **[CachyOS Kernel Manager](https://github.com/CachyOS/kernel-manager):** Easily install kernels from the repository, configure your own, and manage the `sched-ext` framework.
--   **[cachyos-rate-mirrors](https://github.com/CachyOS/rate-mirrors):** Automatically ranks Arch and CachyOS mirrors for optimal download speeds with `pacman`.
--   **[systemd-boot-manager](https://github.com/CachyOS/systemd-boot-manager):** Automatically generates new boot entries for `systemd-boot`, which can be easily configured via `/etc/sdboot-manage.conf`.
+* **[CachyOS Hello](https://github.com/CachyOS/CachyOS-Welcome):** A welcome application for controlling tweaks, applying fixes, and installing packages.
+* **[CachyOS Package Installer](https://github.com/CachyOS/packageinstaller):** A graphical user interface (GUI) for easy installation of applications.
+* **[CachyOS Kernel Manager](https://github.com/CachyOS/kernel-manager):** Easily install kernels from the repository, configure your own, and manage the `sched-ext` framework.
+* **[cachyos-rate-mirrors](https://github.com/CachyOS/rate-mirrors):** Automatically ranks Arch and CachyOS mirrors for optimal download speeds with `pacman`.
+* **[systemd-boot-manager](https://github.com/CachyOS/systemd-boot-manager):** Automatically generates new boot entries for `systemd-boot`, which can be easily configured via `/etc/sdboot-manage.conf`.
 
 ## A Friendly and Active Community
 
 The greatest strength of CachyOS is its expanding community. Community members help one another by sharing tips, providing support, and contributing to the project's success. Your feedback helps us to continuously improve the CachyOS experience.
 
-Join us and become a part of the community on the **[CachyOS Discord](https://discord.com/invite/cachyos-862292009423470592)** and the **[CachyOS Forum](https://discuss.cachyos.org/)**.
+Join us and become a part of the community on the **[CachyOS Discord](https://discord.gg/cachyos-862292009423470592)** and the **[CachyOS Forum](https://discuss.cachyos.org/)**.

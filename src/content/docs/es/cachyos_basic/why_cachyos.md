@@ -42,11 +42,11 @@ CachyOS incluye una herramienta personalizada de detección de hardware que iden
 
 El instalador de CachyOS permite a los usuarios personalizar su sistema eligiendo el entorno de escritorio, paquetes, sistema de archivos, gestor de arranque, kernel y más para adaptarse a sus necesidades:
 
-- [Entornos de escritorio](/es/installation/desktop_environments/)
-- [Gestores de arranque](/es/installation/boot_managers/)
-- [Variantes del kernel](/es/features/kernel#variantes)
-- [Sistemas de archivos](/es/installation/filesystem)
-- [Paquetes personalizados para incluir durante la instalación](https://github.com/CachyOS/cachyos-calamares/blob/cachyos-limine-qt6/src/modules/netinstall/netinstall.yaml)
+* [Entornos de escritorio](/es/installation/desktop_environments/)
+* [Gestores de arranque](/es/installation/boot_managers/)
+* [Variantes del kernel](/es/features/kernel#variantes)
+* [Sistemas de archivos](/es/installation/filesystem)
+* [Paquetes personalizados para incluir durante la instalación](https://github.com/CachyOS/cachyos-calamares/blob/cachyos-limine-qt6/src/modules/netinstall/netinstall.yaml)
 
 ### Aplicaciones personalizadas de CachyOS
 
@@ -54,14 +54,14 @@ CachyOS desarrolla y mantiene su propio conjunto de aplicaciones para simplifica
 
 Lista de aplicaciones que CachyOS desarrolla y mantiene actualmente:
 
--   **[CachyOS Hello](https://github.com/CachyOS/CachyOS-Welcome):** Una aplicación de bienvenida para controlar ajustes, aplicar correcciones e instalar paquetes.
--   **[CachyOS Package Installer](https://github.com/CachyOS/packageinstaller):** Una interfaz gráfica de usuario (GUI) para la fácil instalación de aplicaciones.
--   **[CachyOS Kernel Manager](https://github.com/CachyOS/kernel-manager):** Instala fácilmente kernels desde el repositorio, configura el tuyo propio y gestiona el framework `sched-ext`.
--   **[cachyos-rate-mirrors](https://github.com/CachyOS/rate-mirrors):** Clasifica automáticamente los espejos de Arch y CachyOS para obtener velocidades de descarga óptimas con `pacman`.
--   **[systemd-boot-manager](https://github.com/CachyOS/systemd-boot-manager):** Genera automáticamente nuevas entradas de arranque para `systemd-boot`, que pueden configurarse fácilmente a través de `/etc/sdboot-manage.conf`.
+* **[CachyOS Hello](https://github.com/CachyOS/CachyOS-Welcome):** Una aplicación de bienvenida para controlar ajustes, aplicar correcciones e instalar paquetes.
+* **[CachyOS Package Installer](https://github.com/CachyOS/packageinstaller):** Una interfaz gráfica de usuario (GUI) para la fácil instalación de aplicaciones.
+* **[CachyOS Kernel Manager](https://github.com/CachyOS/kernel-manager):** Instala fácilmente kernels desde el repositorio, configura el tuyo propio y gestiona el framework `sched-ext`.
+* **[cachyos-rate-mirrors](https://github.com/CachyOS/rate-mirrors):** Clasifica automáticamente los espejos de Arch y CachyOS para obtener velocidades de descarga óptimas con `pacman`.
+* **[systemd-boot-manager](https://github.com/CachyOS/systemd-boot-manager):** Genera automáticamente nuevas entradas de arranque para `systemd-boot`, que pueden configurarse fácilmente a través de `/etc/sdboot-manage.conf`.
 
 ## Una comunidad amigable y activa
 
 La mayor fortaleza de CachyOS es su comunidad en expansión. Los miembros de la comunidad se ayudan mutuamente compartiendo consejos, brindando apoyo y contribuyendo al éxito del proyecto. Tus comentarios nos ayudan a mejorar continuamente la experiencia de CachyOS.
 
-Únete a nosotros y forma parte de la comunidad en el **[Discord de CachyOS](https://discord.com/invite/cachyos-862292009423470592)** y en el **[Foro de CachyOS](https://discuss.cachyos.org/)**.
+Únete a nosotros y forma parte de la comunidad en el **[Discord de CachyOS](https://discord.gg/cachyos-862292009423470592)** y en el **[Foro de CachyOS](https://discuss.cachyos.org/)**.

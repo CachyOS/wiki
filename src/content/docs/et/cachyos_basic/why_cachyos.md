@@ -36,6 +36,7 @@ CachyOS sisaldab omaenda riistvara tuvastamise tööriista, mis automaatselt tuv
 ## Kohandatav paigaldusprotsess
 
 CachyOS-i paigaldaja laseb kasutajatel oma süsteemi kohandada, valides vastavalt oma vajadustele töölauakeskkonna, paketid, failisüsteemi, alglaaduri, tuuma ja palju muud:
+
 - [**Töölauakeskkonnad**](/et/installation/desktop_environments/)
 - [**Alglaadurid**](/et/installation/boot_managers/)
 - [**Tuuma variandid**](/et/features/kernel#variants)
@@ -58,4 +59,4 @@ Nimekiri rakendustest, mida CachyOS hetkel arendab ja haldab:
 
 CachyOS-i suurim tugevus on selle laienev kogukond. Ilma nende toetuseta poleks CachyOS saavutanud oma praegust edu. Kogukonna liikmed aitavad üksteist, jagades näpunäiteid ja nippe Linuxi kasutuskogemuse parandamiseks.
 
-Liitu meiega [**CachyOS-i Discordis**](https://discord.com/invite/cachyos-862292009423470592) ja [**CachyOS-i foorumis**](https://discuss.cachyos.org/).
+Liitu meiega [**CachyOS-i Discordis**](https://discord.gg/cachyos-862292009423470592) ja [**CachyOS-i foorumis**](https://discuss.cachyos.org/).

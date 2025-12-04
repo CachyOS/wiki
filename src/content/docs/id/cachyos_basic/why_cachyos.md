@@ -37,6 +37,7 @@ CachyOS menyertakan alat deteksi perangkat kerasnya sendiri, yang secara otomati
 ## Proses Instalasi yang Dapat Disesuaikan
 
 Pemasang CachyOS memungkinkan pengguna untuk menyesuaikan sistem mereka dengan memilih lingkungan desktop, paket, sistem berkas, manajer boot, kernel, dan lainnya agar sesuai dengan kebutuhan mereka:
+
 - [**Lingkungan Desktop**](/id/installation/desktop_environments/)
 - [**Manajer Boot**](/id/installation/boot_managers/)
 - [**Varian Kernel**](/id/features/kernel#variants)
@@ -59,4 +60,4 @@ Daftar aplikasi yang saat ini dikembangkan dan dikelola oleh CachyOS:
 
 Kekuatan terbesar CachyOS adalah komunitasnya yang terus berkembang. Tanpa dukungan mereka, CachyOS tidak akan mencapai kesuksesannya saat ini. Anggota komunitas saling membantu dengan berbagi kiat dan trik untuk meningkatkan pengalaman Linux.
 
-Bergabunglah dengan kami di [**Discord CachyOS**](https://discord.com/invite/cachyos-862292009423470592) dan [**Forum CachyOS**](https://discuss.cachyos.org/).
+Bergabunglah dengan kami di [**Discord CachyOS**](https://discord.gg/cachyos-862292009423470592) dan [**Forum CachyOS**](https://discuss.cachyos.org/).
