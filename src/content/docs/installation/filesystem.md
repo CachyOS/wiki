@@ -173,6 +173,11 @@ Bcachefs is still considered as experimental and may have issues.
 - Experimental
 - Setup can be complicated
 
+### Required tools
+
+`bcachefs-dkms` provides out-of-tree kernel module support.
+`bcachefs-tools` for the userspace utilities.
+
 ## TL:DR
 
 Use the default filesystem **BTRFS** as it is considered stable and has a lot of neat features (snapshots, compression, etc). Use **XFS** or **EXT4** for a simple
