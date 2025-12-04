@@ -64,4 +64,4 @@ Liste der Anwendungen, die CachyOS derzeit entwickelt und pflegt:
 
 Die größte Stärke von CachyOS ist seine wachsende Community. Community-Mitglieder helfen sich gegenseitig, indem sie Tipps austauschen, Unterstützung bieten und zum Erfolg des Projekts beitragen. Dein Feedback hilft uns, das CachyOS-Erlebnis kontinuierlich zu verbessern.
 
-Schließ dich uns an und werde Teil der Community auf dem **[CachyOS Discord](https://discord.com/invite/cachyos-862292009423470592)** und im **[CachyOS Forum](https://discuss.cachyos.org/)**.
+Schließ dich uns an und werde Teil der Community auf dem **[CachyOS Discord](https://discord.gg/cachyos-862292009423470592)** und im **[CachyOS Forum](https://discuss.cachyos.org/)**.

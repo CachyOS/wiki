@@ -55,4 +55,4 @@ Zoznam aplikácií, ktoré CachyOS vyvíja a udržiava:
 
 ## Priateľská a aktívna komunita
 
-Najdôležitejším bodom je neustále rastúca komunita CachyOS. Bez komunity by CachyOS nikdy nedosiahol to, kde je teraz. Komunita si navzájom pomáha a zdieľa tipy a triky pre lepší zážitok s Linuxom. Pridajte sa k nám na [CachyOS Discord](https://discord.com/invite/cachyos-862292009423470592) alebo na [CachyOS Forum](https://discuss.cachyos.org/).
+Najdôležitejším bodom je neustále rastúca komunita CachyOS. Bez komunity by CachyOS nikdy nedosiahol to, kde je teraz. Komunita si navzájom pomáha a zdieľa tipy a triky pre lepší zážitok s Linuxom. Pridajte sa k nám na [CachyOS Discord](https://discord.gg/cachyos-862292009423470592) alebo na [CachyOS Forum](https://discuss.cachyos.org/).

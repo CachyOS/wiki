@@ -58,4 +58,4 @@ Seznam aplikací, které CachyOS v současné době vyvíjí a udržuje:
 
 Největší silou CachyOS je jeho rozrůstající se komunita. Bez její podpory by CachyOS nedosáhl svého současného úspěchu. Členové komunity si navzájem pomáhají sdílením tipů a triků pro vylepšení zážitku s Linuxem.
 
-Připojte se k nám na [**CachyOS Discordu**](https://discord.com/invite/cachyos-862292009423470592) a na [**CachyOS Fóru**](https://discuss.cachyos.org/).
+Připojte se k nám na [**CachyOS Discordu**](https://discord.gg/cachyos-862292009423470592) a na [**CachyOS Fóru**](https://discuss.cachyos.org/).
