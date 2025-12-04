@@ -64,4 +64,4 @@ Lista aplikacji, które CachyOS obecnie rozwija i utrzymuje:
 
 Największą siłą CachyOS jest jego rosnąca społeczność. Członkowie społeczności pomagają sobie nawzajem, dzieląc się wskazówkami, zapewniając wsparcie i przyczyniając się do sukcesu projektu. Twoje opinie pomagają nam nieustannie ulepszać CachyOS.
 
-Dołącz do nas i stań się częścią społeczności na **[Discordzie CachyOS](https://discord.com/invite/cachyos-862292009423470592)** oraz na **[Forum CachyOS](https://discuss.cachyos.org/)**.
+Dołącz do nas i stań się częścią społeczności na **[Discordzie CachyOS](https://discord.gg/cachyos-862292009423470592)** oraz na **[Forum CachyOS](https://discuss.cachyos.org/)**.

@@ -58,4 +58,4 @@ Nimekiri rakendustest, mida CachyOS hetkel arendab ja haldab:
 
 CachyOS-i suurim tugevus on selle laienev kogukond. Ilma nende toetuseta poleks CachyOS saavutanud oma praegust edu. Kogukonna liikmed aitavad üksteist, jagades näpunäiteid ja nippe Linuxi kasutuskogemuse parandamiseks.
 
-Liitu meiega [**CachyOS-i Discordis**](https://discord.com/invite/cachyos-862292009423470592) ja [**CachyOS-i foorumis**](https://discuss.cachyos.org/).
+Liitu meiega [**CachyOS-i Discordis**](https://discord.gg/cachyos-862292009423470592) ja [**CachyOS-i foorumis**](https://discuss.cachyos.org/).

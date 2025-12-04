@@ -64,4 +64,4 @@ Lista de aplicaciones que CachyOS desarrolla y mantiene actualmente:
 
 La mayor fortaleza de CachyOS es su comunidad en expansión. Los miembros de la comunidad se ayudan mutuamente compartiendo consejos, brindando apoyo y contribuyendo al éxito del proyecto. Tus comentarios nos ayudan a mejorar continuamente la experiencia de CachyOS.
 
-Únete a nosotros y forma parte de la comunidad en el **[Discord de CachyOS](https://discord.com/invite/cachyos-862292009423470592)** y en el **[Foro de CachyOS](https://discuss.cachyos.org/)**.
+Únete a nosotros y forma parte de la comunidad en el **[Discord de CachyOS](https://discord.gg/cachyos-862292009423470592)** y en el **[Foro de CachyOS](https://discuss.cachyos.org/)**.

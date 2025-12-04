@@ -59,4 +59,4 @@ Daftar aplikasi yang saat ini dikembangkan dan dikelola oleh CachyOS:
 
 Kekuatan terbesar CachyOS adalah komunitasnya yang terus berkembang. Tanpa dukungan mereka, CachyOS tidak akan mencapai kesuksesannya saat ini. Anggota komunitas saling membantu dengan berbagi kiat dan trik untuk meningkatkan pengalaman Linux.
 
-Bergabunglah dengan kami di [**Discord CachyOS**](https://discord.com/invite/cachyos-862292009423470592) dan [**Forum CachyOS**](https://discuss.cachyos.org/).
+Bergabunglah dengan kami di [**Discord CachyOS**](https://discord.gg/cachyos-862292009423470592) dan [**Forum CachyOS**](https://discuss.cachyos.org/).

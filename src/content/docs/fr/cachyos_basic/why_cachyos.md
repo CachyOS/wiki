@@ -64,4 +64,4 @@ Liste des applications actuellement développées et maintenues par CachyOS :
 
 La plus grande force de CachyOS réside dans sa communauté grandissante. Les membres s’entraident en partageant des astuces, en offrant du support et en contribuant au succès du projet. Vos retours nous aident à améliorer continuellement l’expérience CachyOS.
 
-Rejoignez-nous et devenez membre de la communauté sur le **[Discord CachyOS](https://discord.com/invite/cachyos-862292009423470592)** et le **[Forum CachyOS](https://discuss.cachyos.org/)**.
+Rejoignez-nous et devenez membre de la communauté sur le **[Discord CachyOS](https://discord.gg/cachyos-862292009423470592)** et le **[Forum CachyOS](https://discuss.cachyos.org/)**.
