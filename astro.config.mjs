@@ -48,7 +48,7 @@ export default defineConfig({
       locales,
       plugins,
       routeMiddleware,
-      favicon: '/src/assets/logo.png',
+      favicon: '/favicon.png',
       lastUpdated: true,
       customCss: ['./src/tailwind.css'],
       title: 'CachyOS',
