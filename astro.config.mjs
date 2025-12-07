@@ -48,11 +48,12 @@ export default defineConfig({
       locales,
       plugins,
       routeMiddleware,
+      favicon: '/src/assets/logo.png',
       lastUpdated: true,
       customCss: ['./src/tailwind.css'],
       title: 'CachyOS',
       logo: {
-        src: '/src/assets/logo.svg',
+        src: '/src/assets/logo.png',
       },
       editLink: {
         baseUrl: 'https://github.com/cachyos/wiki/edit/next/',
@@ -500,7 +501,7 @@ export default defineConfig({
                 cs: 'Povolení hardwarové akcelerace v Google Chrome',
                 de: 'Hardware-Beschleunigung in Google Chrome aktivieren',
                 es: 'Habilitar la aceleración por hardware en Google Chrome',
-                fr: 'Activer l\'accélération matérielle sur Google Chrome',
+                fr: "Activer l'accélération matérielle sur Google Chrome",
                 pl: 'Włączanie akceleracji sprzętowej w Google Chrome',
                 ru: 'Включение аппаратного ускорения в Google Chrome',
                 sk: 'Povolenie hardvérovej akcelerácie v Google Chrome',
@@ -515,31 +516,26 @@ export default defineConfig({
         },
         {
           label: 'Virtualization',
-          translations: {
-          },
+          translations: {},
           items: [
             {
               label: 'QEMU and VMM Setup',
-              translations: {
-              },
+              translations: {},
               link: 'virtualization/qemu_and_vmm_setup',
             },
             {
               label: 'QEMU User Session',
-              translations: {
-              },
+              translations: {},
               link: 'virtualization/qemu_user_session',
             },
             {
               label: 'EGL Headless',
-              translations: {
-              },
+              translations: {},
               link: 'virtualization/egl_headless',
             },
             {
               label: 'Virtio-Venus',
-              translations: {
-              },
+              translations: {},
               link: 'virtualization/virtio-venus',
             },
           ],
