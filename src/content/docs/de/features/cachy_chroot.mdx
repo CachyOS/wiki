@@ -1,0 +1,140 @@
+---
+title: CachyOS chroot-Helfer
+description: Ein Hilfsprogramm, das es einfacher macht, per Chroot auf Systeme zuzugreifen
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import {Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+[cachy-chroot](https://github.com/CachyOS/cachy-chroot) ist ein simples Hilfsprogramm, das den Chroot-Prozess in eine bestehende
+CachyOS- oder Arch-basierte Installation vereinfachen soll. Es listet alle auf dem Rechner gefundenen Partitionen auf und unterstützt auch die Auflistung von BTRFS-Subvolumes.
+Zu guter Letzt unterstützt `cachy-chroot` auch verschlüsselte Systeme via LUKS. Es ordnet jeden `fstab`-Eintrag den zugehörigen `crypttab`-Einträgen zu
+und schließt alle LUKS-Volumes beim Verlassen des Chroots sauber.
+
+:::caution[cachy-chroot ist dafür gedacht, aus einer Live-Umgebung von CachyOS ausgeführt zu werden.]
+:::
+
+:::note
+cachy-chroot unterstützt so ziemlich jedes Dateisystem, das vom Linux-Kernel unterstützt wird, außer ZFS.
+:::
+
+## Benutzung
+
+:::tip
+Benutze deine Pfeiltasten, um durch die Optionen zu navigieren, und `ENTER` zum Auswählen.
+
+Das Symbol **❯** zeigt die aktuell ausgewählte Option an.
+
+**?** deutet auf eine Eingabeaufforderung für den Benutzer hin.
+:::
+
+<Steps>
+1. Boote in eine Live-ISO von CachyOS.
+2. Öffne ein Terminal und werde mit `sudo su` zum Root-Benutzer.
+3. Stell sicher, dass du das neueste `cachy-chroot` installiert hast, indem du Folgendes ausführst:
+    ```bash
+    pacman -Sy cachy-chroot
+    ```
+4. Führe `cachy-chroot` aus, indem du Folgendes eingibst:
+    ```bash
+    cachy-chroot
+    ```
+    `cachy-chroot` wird alle verfügbaren Partitionen scannen und auflisten.
+    <Tabs>
+        <TabItem label='Beispielausgabe bei einer CachyOS BTRFS-Installation'>
+            ```bash
+            Info: Found 3 block devices
+            Info: Found partition: Partition: /dev/nvme0n1p1: FS: vfat UUID: EDA6-ED98
+            Info: Found partition: Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+            Info: Found partition: Partition: /dev/nvme0n1p4: FS: btrfs UUID: 66e84339-8c77-4131-afce-50ec2cf67a80
+            ? Select the block device for the root partition (use arrow keys):  ›
+            Partition: /dev/nvme0n1p1: FS: vfat UUID: EDA6-ED98
+            ❯ Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+            ```
+        </TabItem>
+        <TabItem label='Beispielausgabe mit EXT4'>
+            ```bash
+            Info: Found 8 block devices
+            Info: Found partition: Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+            Info: Found partition: Partition: /dev/sda2: FS: vfat UUID: CA0D-2D5A
+            Info: Found partition: Partition: /dev/sdb1: FS: ntfs UUID: A4763F77763F48F6
+            Info: Found partition: Partition: /dev/sdc1: FS: ntfs UUID: C4CA216BCA215B46
+            Info: Found partition: Partition: /dev/sdc2: FS: ntfs UUID: 060C28590C284651
+            Info: Found partition: Partition: /dev/sdc3: FS: ntfs UUID: 3A3CF8B13CF86971
+            Info: Found partition: Partition: /dev/sdd1: FS: exfat UUID: 4FDC-0AAB
+            Info: Found partition: Partition: /dev/sdd2: FS: vfat UUID: 3105-B091
+            ? Select the block device for the root partition (use arrow keys):  ›
+            ❯ Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+              Partition: /dev/sda2: FS: vfat UUID: CA0D-2D5A
+              Partition: /dev/sdb1: FS: ntfs UUID: A4763F77763F48F6
+              Partition: /dev/sdc1: FS: ntfs UUID: C4CA216BCA215B46
+              Partition: /dev/sdc2: FS: ntfs UUID: 060C28590C284651
+              Partition: /dev/sdc3: FS: ntfs UUID: 3A3CF8B13CF86971
+              Partition: /dev/sdd1: FS: exfat UUID: 4FDC-0AAB
+              Partition: /dev/sdd2: FS: vfat UUID: 3105-B091
+            ```
+            In diesem Beispiel ist die Root-Partition `/dev/sda1` mit dem Dateisystem `ext4`. Die anderen Partitionen sind für den Chroot nicht relevant.
+        </TabItem>
+    </Tabs>
+5. Wähle die Partition aus, die das Root-Dateisystem enthält:
+    <Tabs>
+        <TabItem label='Beispiel mit CachyOS BTRFS'>
+            ```bash title="Root-Partition auswählen"
+            ✔ Select the block device for the root partition (use arrow keys):  · Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+            Info: Selected BTRFS partition, mounting and listing subvolumes...
+            Info: Mounting partition /dev/nvme0n1p2 at /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-858f-2e02be61b342-hwAeIm with options: []
+            Info: Unmounting partition at /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-858f-2e02be61b342-hwAeIm
+            ? Do you want to use CachyOS BTRFS preset to auto mount root subvolume? (y/n) › # Gib ja ein, wenn du CachyOS nutzt
+            ```
+            **Wenn du CachyOS mit BTRFS verwendest**, gib `y` ein, um die CachyOS-BTRFS-Voreinstellung zu nutzen. Dadurch wird das Root-Subvolume und andere wichtige Subvolumes wie `/home`, `/var`, `/tmp` und `/srv` automatisch gemountet. Wenn du ein benutzerdefiniertes BTRFS-Layout oder ein Nicht-CachyOS-System verwendest, gib `n` ein, um die Subvolumes manuell auszuwählen.
+        </TabItem>
+        <TabItem label='Beispiel mit EXT4'>
+            ```bash title="Root-Partition auswählen"
+            ✔ Select the block device for the root partition (use arrow keys):  · Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+            Info: Mounting partition /dev/sda1 at /tmp/cachyos-chroot-root-mount-b7fef200-fbb8-4783-9fad-46c5e8b7ca0e-LtsXXC with options: []
+            Info: Mounting additional partitions based on /etc/fstab...
+            Info: Found 3 entries in /etc/fstab
+            Warning: Partition UUID=b7fef200-fbb8-4783-9fad-46c5e8b7ca0e already mounted, skipping...
+            Info: Mounting partition /dev/sda2 at /tmp/cachyos-chroot-root-mount-b7fef200-fbb8-4783-9fad-46c5e8b7ca0e-LtsXXC/boot with options: []
+            Info: Finished mounting additional partitions
+            ✔ Do you want to mount additional partitions? · no
+            Info: Chrooting into the configured root partition...
+            Info: To exit the chroot, type 'exit' or press Ctrl+D
+            ```
+        </TabItem>
+    </Tabs>
+6. `cachy-chroot` versucht, alle in der `/etc/fstab` des Root-Geräts aufgeführten Partitionen und Subvolumes automatisch zu mounten. Sollte das Mounten einer Partition fehlschlagen, wirst du benachrichtigt und hast die Möglichkeit, sie bei Bedarf manuell zu mounten. Du kannst `no` wählen, um das Mounten zusätzlicher Partitionen zu überspringen.
+7. **Du befindest dich jetzt in der Chroot-Umgebung**.
+    ```bash
+    [root@CachyOS /]#
+    ```
+    Du kannst jetzt Befehle ausführen, als wärst du direkt in das installierte System gebootet. Zum Beispiel kannst du das System aktualisieren mit:
+    ```bash title="System im Chroot aktualisieren"
+    pacman -Syu
+    ```
+    oder bei Bedarf andere Wartungsaufgaben durchführen.
+8. Wenn du fertig bist, verlasse die Chroot-Umgebung, indem du `exit` in die Eingabeaufforderung eingibst oder `STRG+D` auf der Tastatur drückst.
+    ```bash title="Chroot verlassen"
+    exit
+    ```
+9. Nach dem Verlassen räumt `cachy-chroot` automatisch die gemounteten Partitionen auf und schließt alle LUKS-Container. Du kehrst zur Shell der Live-Umgebung zurück.
+</Steps>
+
+### Fehlerbehebung
+
+- **Keine Partitionen gefunden:** Stell sicher, dass die Festplatte mit deiner Installation angeschlossen ist und vom Live-System erkannt wird. Das kannst du mit `lsblk` oder `fdisk -l` überprüfen.
+- **Automount für einige Partitionen schlägt fehl:** Du kannst versuchen, sie manuell innerhalb der Chroot-Umgebung zu mounten. `cachy-chroot` ignoriert Fehler und macht weiter.
+
+### FAQ
+
+- **F: Wozu dient das Mounten zusätzlicher Partitionen?**
+  - A: Es gibt mehrere Anwendungsfälle für das manuelle Mounten zusätzlicher Partitionen, darunter:
+    - **Kaputte oder fehlende fstab-Datei:** Du kannst notwendige Partitionen (wie `/boot` oder `/home`) manuell mounten, um Reparaturen oder Datenwiederherstellung durchzuführen.
+    - **Aktualisierte Partitions-UUIDs:** Wenn dein System nicht bootet, weil du die UUID einer Partition geändert hast, kannst du `cachy-chroot` verwenden, um die Partitionen zu mounten und dann die fstab entsprechend zu aktualisieren.
+
+### Mehr erfahren
+
+- [Arch Wiki - chroot](https://wiki.archlinux.org/title/Chroot)
+- [Videodemonstration von cachy-chroot](https://github.com/user-attachments/assets/29360aaf-b775-4cfa-9051-465ad5360ae8)
