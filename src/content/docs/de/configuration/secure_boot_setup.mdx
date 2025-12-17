@@ -7,8 +7,8 @@ import ImageComponent from '~/components/image-component.astro';
 
 # sbctl
 
-[sbctl](https://github.com/Foxboron/sbctl) ist ein benutzerfreundlicher Schlüsselmanager für Secure Boot, der in der Lage ist, Secure Boot einzurichten,
-Schlüsselverwaltungsfunktionen bietet und Dateien verfolgt, die in der Boot-Kette signiert werden müssen.
+[sbctl](https://github.com/Foxboron/sbctl) ist ein benutzerfreundlicher Schlüsselmanager für Secure Boot, mit dem du Secure Boot einrichten,
+Schlüssel verwalten und den Überblick über Dateien behalten kannst, die in der Boot-Kette signiert werden müssen.
 
 ## sbctl installieren
 
@@ -16,24 +16,24 @@ Schlüsselverwaltungsfunktionen bietet und Dateien verfolgt, die in der Boot-Ket
 sudo pacman -S sbctl
 ```
 
-## Vorbereitung
+## Vor der Einrichtung
 
-### GRUB Bootmanager
+### GRUB Boot Manager
 
-Wenn du GRUB verwendest, führe den folgenden Befehl aus, um die Secure-Boot-Unterstützung in GRUB mithilfe von CA-Schlüsseln zu aktivieren.
+Wenn du GRUB verwendest, führe den folgenden Befehl aus, um die Secure-Boot-Unterstützung für GRUB mit CA-Schlüsseln zu aktivieren.
 
 ```bash
 sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
 ```
 
 :::note
-Das Laden unnötiger Module in deinem Bootmanager kann ein Sicherheitsrisiko darstellen.
-Führe diesen Befehl nur aus, wenn du Secure Boot tatsächlich benötigst.
+Das Laden unnötiger Module in deinem Boot-Manager kann ein Sicherheitsrisiko darstellen.
+Führe diesen Befehl nur aus, wenn du Secure Boot wirklich brauchst.
 :::
 
-### Setup-Modus im UEFI aktivieren
-Zuerst müssen wir in die Firmware-Einstellungen gehen und den Secure-Boot-Modus auf „Setup Mode“ (Einrichtungsmodus) stellen. Du kannst von einem
-bereits laufenden System mit dem folgenden Befehl in die Firmware-Einstellungen neu starten.
+### In den Setup-Modus im UEFI wechseln
+Zuerst müssen wir in die Firmware-Einstellungen gehen und den Secure-Boot-Modus auf „Setup-Modus“ stellen. Du kannst von einem
+laufenden System mit dem folgenden Befehl in die Firmware-Einstellungen neustarten.
 
 ```bash
 systemctl reboot --firmware-setup
@@ -45,72 +45,77 @@ systemctl reboot --firmware-setup
 So sieht das BIOS auf einem Lenovo Ideapad 5 Pro aus. Setze es in den Setup-Modus zurück oder stelle die Werksschlüssel wieder her und starte das
 System neu.
 
+Manche MSI-Motherboards haben jedoch keinen Setup-Modus. Um den gleichen Effekt zu erzielen, folge den beiden Schritten aus dem Bild unten:
+<br />
+<ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
+
 ## sbctl einrichten
 
 ```bash
 sudo sbctl status # Wenn der Setup-Modus aktiviert ist, können wir mit dem nächsten Schritt fortfahren
-Installed:      ✘ sbctl ist nicht installiert
+Installed:      ✘ sbctl is not installed
 Setup Mode:     ✘ Enabled
 Secure Boot     ✘ Disabled
 
-sudo sbctl create-keys # Erstelle deine benutzerdefinierten Secure-Boot-Schlüssel
+sudo sbctl create-keys # Erstelle deine eigenen Secure-Boot-Schlüssel
 Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
 Creating secure boot keys...✔
 Secure boot keys created!
 
-sudo sbctl enroll-keys --microsoft # Registriere deine Schlüssel bei den Schlüsseln von Microsoft
+sudo sbctl enroll-keys --microsoft # Registriere deine Schlüssel zusammen mit den Schlüsseln von Microsoft
 Enrolling keys to EFI variables...✔
 Enrolled keys to the EFI variables!
 
 sudo sbctl status
-# sbctl sollte jetzt installiert sein, wir können mit dem Signieren der Kernel-Images und des Bootmanagers fortfahren
-Installed:      ✔ sbctl ist installiert
+# sbctl sollte jetzt installiert sein, wir können mit dem Signieren der Kernel-Images und des Boot-Managers fortfahren
+Installed:      ✔ sbctl is installed
 Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
 Setup Mode:     ✔ Disabled
 Secure Boot     ✘ Disabled
 Vendor Keys:    microsoft
 ```
 
-## Kernel-Image und Bootmanager signieren
+## Kernel-Image und Boot-Manager signieren
 
-CachyOS stellt [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign) zur Verfügung,
-ein Skript, das die Liste der zu signierenden Dateien von `sudo sbctl verify` übernimmt und sie alle signiert.
+CachyOS stellt [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign) bereit,
+ein Skript, das die Liste der zu signierenden Dateien von `sudo sbctl verify` entgegennimmt und sie alle signiert.
+Limine-Benutzer sollten zu [Limine](#Limine) springen.
 
 ```bash
 sudo sbctl verify
 Verifying file database and EFI images in /boot...
-✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux ist nicht signiert
-✘ /boot/EFI/BOOT/BOOTX64.EFI ist nicht signiert
-✘ /boot/EFI/systemd/systemd-bootx64.efi ist nicht signiert
-✘ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux ist nicht signiert
-✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux ist nicht signiert
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is not signed
+✘ /boot/EFI/BOOT/BOOTX64.EFI is not signed
+✘ /boot/EFI/systemd/systemd-bootx64.efi is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is not signed
 
 sudo sbctl-batch-sign
 
 sudo sbctl verify
 Verifying file database and EFI images in /boot...
-✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux ist signiert
-✔ /boot/EFI/BOOT/BOOTX64.EFI ist signiert
-✔ /boot/EFI/systemd/systemd-bootx64.efi ist signiert
-✔ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux ist signiert
-✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux ist signiert
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is signed
+✔ /boot/EFI/BOOT/BOOTX64.EFI is signed
+✔ /boot/EFI/systemd/systemd-bootx64.efi is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
 ```
 
 :::caution
-Auf Systemen mit einer separaten `/boot`- und `/boot/efi`-Partitionsaufteilung sucht `sbctl` möglicherweise nur in `/boot/efi` nach EFI-Binärdateien.
-Dies führt dazu, dass Kernel-Images, die sich in `/boot` befinden, nicht erkannt werden. `sbctl-batch-sign` umgeht dies, indem es **immer**
+Auf Systemen mit getrennten Partitionen für `/boot` und `/boot/efi` sucht `sbctl` möglicherweise nur in `/boot/efi` nach EFI-Binärdateien.
+Das führt dazu, dass Kernel-Images, die sich in `/boot` befinden, nicht erkannt werden. `sbctl-batch-sign` umgeht dies, indem es **immer**
 `/boot` nach `vmlinuz-*`-Dateien durchsucht.
 :::
 
-Jetzt, da alle Dateien signiert sind, können wir zurück in die UEFI-Einstellungen neustarten und Secure Boot aktivieren.
+Nachdem nun alle Dateien signiert sind, können wir zurück in die UEFI-Einstellungen neustarten und Secure Boot aktivieren.
 Beachte, dass dies ein einmaliger Vorgang ist, da das Signieren von Dateien mit dem `-s`-Flag diese Dateien in der Datenbank von `sbctl` speichert.
-`sbctl` wird mit einem [pacman hook](https://wiki.archlinux.org/title/Pacman_hook) geliefert, was bedeutet, dass es automatisch
-alle neuen Dateien bei einem Kernel- oder Bootmanager-Update signiert.
+`sbctl` wird mit einem [Pacman-Hook](https://wiki.archlinux.org/title/Pacman_hook) ausgeliefert, was bedeutet, dass es automatisch
+alle neuen Dateien bei einem Kernel- oder Boot-Manager-Update signiert.
 
 ### systemd-boot
 
-CachyOS verwendet `systemd-boot-update.service`, das von systemd bereitgestellt wird, um den Bootmanager beim Neustart zu aktualisieren. Das bedeutet, dass der `sbctl`
-Pacman-Hook die aktualisierten EFI-Binärdateien **nicht** signieren wird. Als Workaround können wir den Bootmanager direkt signieren.
+CachyOS verwendet den `systemd-boot-update.service`, der von systemd bereitgestellt wird, um den Boot-Manager beim Neustart zu aktualisieren. Das bedeutet, dass der `sbctl`-
+Pacman-Hook die aktualisierten EFI-Binärdateien **nicht** signieren wird. Als Workaround können wir den Boot-Manager direkt signieren.
 
 ```sh
 sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
@@ -118,33 +123,30 @@ sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/
 
 ### Limine
 
-Limine ist ein spezieller Bootmanager, der es ermöglicht, den Hash von Kernel-
-Images und anderen Dateien, die Limine während des Bootvorgangs verwendet, zu überprüfen. Wenn dies aktiviert ist, wird jede
-Art von manueller Konfiguration durch den Benutzer, z.B. das Signieren des Images über
+Limine ist ein spezieller Boot-Manager, der es ermöglicht, den Hash von Kernel-
+Images und anderen Dateien, die Limine beim Booten verwendet, zu überprüfen. Wenn dies aktiviert ist, wird jede
+manuelle Konfiguration durch den Benutzer, z. B. das Signieren des Images über
 `sbctl-batch-sign`, den Hash der entsprechenden Dateien ändern und
 die Prüfsummenverifizierung von Limine fehlschlagen lassen.
 
 Das Signieren dieser Dateien ist bei Limine jedoch nicht notwendig, da es einen speziellen
-Boot-Prozess hat, der EFI-Chainloading und Signaturprüfungen umgeht. Die einzigen EFI-
-Binärdateien, die signiert werden müssen, sind Limine selbst und die Backup-EFI-Binärdatei,
-die auf allen UEFI-Systemen zu finden ist.
+Boot-Prozess hat, der das EFI-Chainloading und die Signaturprüfungen umgeht. Die einzigen EFI-
+Binärdateien, die signiert werden müssen, ist Limine selbst.
 
 ```sh
-# Die spezielle EFI-Binärdatei signieren
-sudo sbctl sign -s /boot/EFI/BOOT/BOOTX64.EFI
-
-# limine-enroll-config verwenden, um die EFI-Binärdatei von Limine zu signieren
+# Verwende limine-enroll-config, um die EFI-Binärdatei von Limine zu signieren
 # Dies verwendet sbctl im Hintergrund
 sudo limine-enroll-config
+sudo limine-update
 ```
 
 ## Überprüfen, ob Secure Boot aktiviert ist
 
-Um zu überprüfen, ob Secure Boot tatsächlich aktiviert ist, kannst du einen der folgenden Befehle ausführen.
+Um zu überprüfen, ob Secure Boot tatsächlich aktiviert ist, kannst du einen der folgenden Befehle ausführen
 
 ```bash
 sudo sbctl status
-Installed:      ✓ sbctl ist installiert
+Installed:      ✓ sbctl is installed
 Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
 Setup Mode:     ✓ Disabled
 Secure Boot:    ✓ Enabled
@@ -160,11 +162,11 @@ System:
   Boot into FW: supported
 ```
 
-## Links und Danksagungen
+## Links und Danksagung
 
 - [Das Arch Wiki](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
-legte den Grundstein für diese Anleitung. Die meisten Inhalte hier wurden von dort übernommen.
-- [sbctl](https://github.com/Foxboron/sbctl) - Diese einfache Anleitung zur Aktivierung der Secure-Boot-Unterstützung wäre nicht möglich gewesen,
-ohne die großartige Arbeit, die in die Entwicklung dieser Software geflossen ist.
+hat die Grundlage für diese Anleitung gelegt. Das meiste hier wurde von dort übernommen.
+- [sbctl](https://github.com/Foxboron/sbctl) - Diese einfache Anleitung zur Aktivierung der Secure-Boot-Unterstützung wäre nicht möglich gewesen ohne
+die großartige Arbeit, die in die Entwicklung dieser Software geflossen ist.
 - [Improving the Secure Boot Experience by Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) - Blogbeitrag von Morten
 "Foxboron" Linderud darüber, wie kompliziert die Secure-Boot-Erfahrung vor `sbctl` war.

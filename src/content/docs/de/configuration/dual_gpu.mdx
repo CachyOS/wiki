@@ -4,108 +4,106 @@ title: Anleitung zur Einrichtung von zwei GPUs
 
 import ImageComponent from '~/components/image-component.astro';
 
-## Was sind Hybrid-Grafikkarten?
+## Was ist Hybrid-Grafik?
 
-Hybrid-Grafikkarten sind eine Hardware-Konfiguration, bei der zwei Grafikkarten
-miteinander arbeiten können. Diesen Ansatz findet man hauptsächlich in
-Laptops, bei denen du eine integrierte Grafik (iGPU) der CPU und eine dedizierte
-Grafik (dGPU) hast.
+Hybrid-Grafik ist eine Hardware-Konfiguration, bei der du zwei Grafikkarten
+hast, die zusammenarbeiten können. Diesen Ansatz findest du hauptsächlich in
+Laptops, wo du die integrierte Grafik (iGPU) deines CPUs und eine dedizierte
+Grafikkarte (dGPU) hast.
 
-Der Hauptvorteil besteht darin, dass die integrierte Grafik (idealerweise, aber nicht zwingend) nur für
-wenig anspruchsvolle Aufgaben wie das Surfen im Internet, das Anschauen von Videos usw.
-verwendet werden sollte. Die dedizierte Grafikkarte hingegen wird für hochleistungsintensive
-Aufgaben wie Gaming, Videobearbeitung, 3D-Modellierung und so weiter eingesetzt.
+Der Hauptvorteil ist, dass die integrierte Grafik nur für anspruchslose Aufgaben
+wie das Surfen im Internet, das Ansehen von Videos usw. verwendet werden sollte (aber nicht zwingend muss).
+Andererseits wird die dedizierte Grafik für leistungsintensive
+Aufgaben wie Gaming, Videobearbeitung, 3D-Modellierung und so weiter genutzt.
 
-Wenn sich also zwei GPUs „große“ und „kleine“ Aufgaben teilen, müssen wir unsere dGPU nicht
-verwenden, wenn gerade nur „kleine“ Aufgaben laufen. Sie kann dann
-einfach deaktiviert werden (als ob sie schläft), wodurch der Stromverbrauch
-erheblich reduziert wird. Sobald unsere dGPU wieder benötigt wird (wenn wir eine
-Anwendung starten, die sie nutzt), wacht sie auf und beginnt zu arbeiten.
+Wenn sich also zwei GPUs "große" und "kleine" Aufgaben teilen, müssen wir unsere dGPU nicht verwenden,
+wenn wir im Moment nur "kleine" Aufgaben ausführen. Sie kann dann
+einfach deaktiviert werden (als ob sie schläft), wodurch der Stromverbrauch erheblich gesenkt wird.
+Wenn unsere dGPU dann wieder gebraucht wird (weil wir eine Anwendung starten, die sie nutzt),
+wacht sie auf und fängt an zu arbeiten.
 
 ## Was ist PRIME Offload?
 
-PRIME ist eine vereinheitlichende Technologie für die Arbeit mit verschiedenen
-Hybrid-Grafik-Setups unter Linux, wie NVIDIA Optimus/AMD Dynamic Switchable Graphics. PRIME
-Offload ist eine Implementierung der Idee, die Ausführung des Renderings von
-einer GPU auf eine andere unter Linux zu verlagern.
+PRIME ist eine vereinheitlichende Technologie, um mit verschiedenen Arten von Hybrid-
+Grafik in Linux zu arbeiten, wie z.B. NVIDIA Optimus/AMD Dynamic Switchable Graphics. PRIME
+Offload ist die Umsetzung der Idee, das Rendern von
+einer GPU auf eine andere in Linux zu verlagern.
 
-Die PRIME-Unterstützung im geschlossenen NVIDIA-Treiber begann erst mit dem Treiber 435.17.
-Wenn du also einen veralteten Treiberzweig wie 390xx oder sogar 340xx verwendest,
-wird PRIME Offload bei dir nicht funktionieren. Wir raten dir auch
-dringend davon ab, veraltete Methoden zur Handhabung von Hybrid-Grafikkarten zu verwenden,
-wie z. B. nvidia-xrun oder Bumblebee. Sie sind veraltet und werden nicht mehr unterstützt (Bumblebee
-wurde seit über 8 Jahren nicht mehr aktualisiert), basieren ausschließlich auf Hacks und haben eine geringe
+Die PRIME-Unterstützung im proprietären NVIDIA-Treiber begann erst mit dem 435.17-Treiber.
+Wenn du also einen veralteten 390xx- oder sogar 340xx-Treiberzweig verwendest,
+wird PRIME Offload bei dir nicht funktionieren. Beachte bitte auch, dass wir
+dringend davon abraten, veraltete Methoden zur Handhabung von Hybrid-Grafik zu verwenden,
+wie z.B. nvidia-xrun oder Bumblebee. Sie sind veraltet und werden nicht mehr unterstützt (Bumblebee
+wurde seit über 8 Jahren nicht mehr aktualisiert), basieren ausschließlich auf Hacks und haben eine schlechte
 Leistung. Gleichzeitig unterstützt der Nouveau-Treiber PRIME Offload, was
 eine Alternative für ältere dGPUs sein kann.
 
 In CachyOS **musst du nichts konfigurieren, damit PRIME Offload funktioniert**.
-Mit dem Paket nvidia-utils und cachyos-settings hast du bereits alles,
-was du zur Nutzung von PRIME Offload benötigst.
+Mit dem nvidia-utils-Paket und cachyos-settings hast du bereits alles,
+was du brauchst, um PRIME Offload zu nutzen.
 
-Bitte vermeide auch die Verwendung von Tools wie optimus-manager. Sie mögen dir zwar recht praktisch
-erscheinen, aber glaub uns, sie können eine Menge Probleme verursachen und du brauchst
-sie wirklich nicht, wenn deine dGPU PRIME Offload und dynamisches Power-Management unterstützt.
+Bitte vermeide auch die Verwendung von Tools wie optimus-manager. Sie mögen dir zwar recht praktisch erscheinen,
+aber glaub uns, sie können eine Menge Probleme verursachen, und du brauchst sie wirklich nicht,
+wenn deine dGPU PRIME Offload und dynamisches Powermanagement unterstützt.
 
-### Wie man PRIME Offload verwendet
+### Wie man PRIME Offload benutzt
 
-Um PRIME mitzuteilen, dass du die dedizierte anstelle der integrierten Grafikkarte
-verwenden möchtest, musst du vor dem Ausführen des Programms eine Reihe von
-Umgebungsvariablen angeben:
+Um PRIME mitzuteilen, dass du die dedizierte Grafik anstelle der integrierten
+Grafik verwenden möchtest, musst du vor dem Ausführen des Programms eine Reihe von Umgebungsvariablen angeben:
 
 ```bash
 __NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia <programm>
 ```
 
-Dieser Satz von Variablen sieht sehr umständlich aus und ist leicht zu vergessen.
-Deshalb kannst du das Paket ``nvidia-prime`` (``sudo pacman -S nvidia-prime``) installieren,
-das ein Skript-Alias für all diese Variablen enthält. Das Starten einer Anwendung
+Diese Reihe von Variablen sieht sehr umständlich aus und man vergisst sie leicht, also kannst du
+das Paket `nvidia-prime` (`sudo pacman -S nvidia-prime`) installieren, das
+ein Skript-Alias für all diese Variablen enthält. Eine Anwendung damit zu starten
 sieht dann so aus:
 
 ```bash
 prime-run <programm>
 ```
 
-Wobei ``<programm>`` der Name des Befehls ist, der deine Anwendung startet.
+Wobei `<programm>` der Name des Befehls ist, der deine Anwendung startet.
 
 :::note
-Einige DX12-Spiele haben selbst mit `prime-run` Probleme, die dGPU auszuwählen.
-Um dies zu umgehen, füge die Umgebungsvariable `VK_DRIVER_FILES=/usr/share/vulkan/icd.d/nvidia_icd.json`
+Manche DX12-Spiele haben selbst mit `prime-run` Probleme, die dGPU auszuwählen.
+Um das zu umgehen, füge die Umgebungsvariable `VK_DRIVER_FILES=/usr/share/vulkan/icd.d/nvidia_icd.json`
 vor dem `prime-run`-Wrapper-Skript hinzu.
 :::
 
-Bei Konfigurationen, bei denen beide Grafikkarten von offenen Mesa-Treibern
-verwaltet werden (z. B. AMD+AMD, AMD+Intel oder sogar Intel+NVIDIA, wobei die
-dedizierte NVIDIA-Grafikkarte vom Open-Source-Nouveau-Treiber verwaltet wird),
-muss nichts konfiguriert werden. Um die dedizierte Grafikkarte zu verwenden,
-muss nur die Umgebungsvariable ``DRI_PRIME=1`` vor dem Start von Anwendungen
-oder Spielen angegeben werden, ähnlich wie bei all den zuvor für NVIDIA
-beschriebenen Variablen, oder man verwendet die unten besprochenen fertigen
-grafischen Methoden.
+Bei Konfigurationen, bei denen beide Grafikkarten von den offenen Mesa-Treibern
+verwaltet werden (z.B. AMD+AMD, AMD+Intel oder sogar Intel+NVIDIA, wo die dedizierte NVIDIA-Grafik
+vom quelloffenen Nouveau-Treiber verwaltet wird), muss nichts konfiguriert werden.
+Um die dedizierte Grafik zu verwenden, musst du nur die Umgebungsvariable `DRI_PRIME=1`
+vor dem Start von Anwendungen oder Spielen angeben, ähnlich wie all
+die zuvor für NVIDIA beschriebenen Variablen, oder du nutzt die weiter unten besprochenen
+vorgefertigten grafischen Methoden.
 
 ## Grafische Methode
 
-Du findest es vielleicht unpraktisch, alle benötigten Anwendungen über das Terminal mit ``prime-run`` zu starten.
+Du findest es vielleicht unpraktisch, alle benötigten Anwendungen über das Terminal mit `prime-run` zu starten.
 Glücklicherweise bieten einige Anwendungen und Desktop-Umgebungen Werkzeuge, um zu steuern, welche GPU für bestimmte Anwendungen verwendet wird.
 
 ### Lutris
 
-Um Spiele so zu konfigurieren, dass sie in Lutris mit der dedizierten Grafikkarte laufen, musst du
-zu den Einstellungen gehen (drei Streifen in der unteren rechten Ecke des Fensters und
-die Schaltfläche "Preferences"). Geh als Nächstes zu *"Global Options"* -> *"Display"*. Hier kannst du die GPU auswählen, auf der das Spiel laufen soll.
+Um Spiele so zu konfigurieren, dass sie mit der dedizierten Grafik in Lutris laufen, musst du zu den
+Einstellungen gehen (drei Streifen unten rechts im Fenster und der
+Button "Preferences"). Gehe als Nächstes zu *"Global Options"* -> *"Display"*. Hier kannst du die GPU auswählen, auf der das Spiel laufen soll.
 
 <br />
 <ImageComponent imgsrc={import('~/assets/images/lutris-prime.png')} />
 
 ### Steam
 
-Steam hat keine spezielle Einstellung, um ein Spiel zur Verwendung der dedizierten Grafikkarte zu zwingen. Du kannst jedoch auf die Eigenschaften des Spiels zugreifen, indem du vor dem Start auf das Zahnradsymbol klickst. Im Feld "Startoptionen" kannst du den Befehl prime-run oder Umgebungsvariablen hinzufügen.
+Steam hat keine spezielle Einstellung, um ein Spiel zur Verwendung der dedizierten Grafik zu zwingen. Du kannst jedoch auf die Eigenschaften des Spiels zugreifen, indem du vor dem Start auf das Zahnrad-Symbol klickst. Im Feld "Startoptionen" kannst du den Befehl prime-run oder Umgebungsvariablen hinzufügen.
 Beispiel:
 
 ```bash
 prime-run %command%
 ```
 
-Achte darauf, ``%command%`` nach ``prime-run`` hinzuzufügen. Denk daran, dass Spieloptionen nach dem Platzhalter stehen,
+Achte darauf, `%command%` nach `prime-run` hinzuzufügen. Denk dran, dass Spieloptionen nach dem Platzhalter kommen,
 während Systemumgebungsvariablen oder Befehle davor stehen sollten.
 
 <br />
@@ -113,11 +111,10 @@ während Systemumgebungsvariablen oder Befehle davor stehen sollten.
 
 ### KDE Plasma
 
-Plasma bietet eine sehr praktische Möglichkeit, den Start von Anwendungen mit der
-dedizierten Grafikkarte einzurichten. Diese Methode funktioniert jedoch nur, wenn das
-Paket switcheroo-control und der entsprechende Dienst auf deinem System installiert sind.
+Plasma hat eine sehr praktische Möglichkeit, den Start von Anwendungen mit der dedizierten
+Grafikkarte einzurichten. Diese Methode funktioniert jedoch nur, wenn das Paket switcheroo-control und der dazugehörige Dienst auf deinem System installiert sind.
 
-Bei einer Neuinstallation von CachyOS sollten dieses Paket und der Dienst bereits
+Bei einer frischen Installation von CachyOS sollten dieses Paket und der Dienst bereits
 standardmäßig über chwd aktiviert sein.
 
 ```bash
@@ -125,47 +122,44 @@ sudo pacman -S switcheroo-control
 sudo systemctl enable --now switcheroo-control
 ```
 
-Nachdem du beide Befehle ausgeführt hast, klicke mit der rechten Maustaste auf den gewünschten
-Anwendungseintrag auf deinem Desktop oder im Anwendungsmenü und geh dann zu
-*"Eigenschaften"* -> *"Anwendung"* -> *"Erweiterte Optionen"*.
+Nachdem du beide Befehle ausgeführt hast, klicke mit der rechten Maustaste auf den Desktop-Eintrag auf deinem Desktop oder im
+Anwendungsmenü, den du möchtest, und gehe dann zu *"Eigenschaften"* -> *"Anwendung"* -> *"Erweiterte Optionen"*.
 
-Dort sollte das Kontrollkästchen *"Mit dedizierter Grafikkarte ausführen"* aktiviert sein.
+Du solltest das Kontrollkästchen *"Mit dedizierter Grafikkarte ausführen"* aktiviert haben.
 
 <br />
 <ImageComponent imgsrc={import('~/assets/images/plasma-prime.jpg')} />
 
 :::note
-Die Verwendung von switcheroo-control ermöglicht es, dass diese Kontrollkästchen
-bei allen PRIME-Konfigurationen funktionieren, die nicht einmal eine NVIDIA dGPU haben,
-wie z. B. AMD-APU+AMD-Dediziert.
+Die Verwendung von switcheroo-control ermöglicht es diesen Kontrollkästchen, auf allen PRIME-
+Konfigurationen zu funktionieren, die nicht einmal eine NVIDIA dGPU haben, wie z.B. AMD-APU+AMD-Dediziert.
 :::
 
 ### GNOME
 
-Unter GNOME solltest du ebenfalls switcheroo-control wie oben gezeigt installieren,
-mit der rechten Maustaste auf das Anwendungssymbol klicken und *"Mit dedizierter Grafikkarte ausführen"*
-auswählen. Beachte jedoch, dass GNOME diese Wahl nicht für später speichert. Wenn du
-die Anwendung das nächste Mal über das Symbol startest, wird sie mit der integrierten statt
-der dedizierten Grafikkarte ausgeführt.
+Unter GNOME solltest du ebenfalls switcheroo-control wie oben gezeigt installieren und
+mit der rechten Maustaste auf das Anwendungssymbol klicken und *"Mit dedizierter Grafikkarte ausführen"* auswählen.
+Beachte aber, dass GNOME sich diese Auswahl nicht für später merkt, und beim nächsten Mal, wenn du
+die Anwendung über das Symbol startest, wird sie mit der integrierten Grafik anstelle der dedizierten laufen.
 
 ### Cinnamon
 
-Ähnlich wie Plasma ermöglicht auch Cinnamon die Auswahl der GPU für bestimmte Anwendungen. Klicke mit der rechten Maustaste auf den Desktop-Eintrag der Anwendung, geh zu Eigenschaften und aktiviere die entsprechende Option.
+Ähnlich wie Plasma ermöglicht auch Cinnamon die Auswahl der GPU für bestimmte Anwendungen. Klicke mit der rechten Maustaste auf den Desktop-Eintrag der Anwendung, gehe zu Eigenschaften und aktiviere die entsprechende Option.
 
 <br />
 <ImageComponent imgsrc={import('~/assets/images/cinnamon-prime.png')} />
 
-Wenn diese Option nicht verfügbar ist, stell sicher, dass du ``switcheroo-control`` installiert
-und dessen Dienst aktiviert hast, da alle Desktop-Umgebungen für diese
+Falls sie nicht verfügbar ist, stelle sicher, dass du `switcheroo-control` installiert und
+dessen Dienst aktiviert hast, da alle Desktop-Umgebungen für diese
 Funktionalität darauf angewiesen sind.
 
 ## Fehlerbehebung
 
-### "Mein externer Monitor ist bei PRIME sehr langsam"
+### "Mein externer Monitor ist bei PRIME sehr laggy"
 
-Dies ist ein bekanntes Problem des NVIDIA-Treibers. Du solltest den neuesten NVIDIA-Treiber
-installiert haben und Wayland mit einem Compositor verwenden, der expliziten Sync unterstützt.
+Das ist ein bekanntes Problem des NVIDIA-Treibers. Du solltest den neuesten NVIDIA-
+Treiber installiert haben und Wayland mit einem Compositor verwenden, der expliziten Sync unterstützt.
 Für GNOME wurde dies in Version 46.2 behoben. Für Plasma 6 wird es wahrscheinlich
-mit 6.1 behoben, obwohl einige Benutzer bereits unter 6.0 eine normale Leistung melden.
-Andere Umgebungen/Fenstermanager haben dieses Problem immer noch, daher musst du
-auf die neueste Version von GNOME oder Plasma wechseln, um es zu beheben.
+mit 6.1 behoben, obwohl einige Benutzer bereits bei 6.0 von normaler Leistung berichten.
+Andere Umgebungen/Fenstermanager haben dieses Problem immer noch, also musst du auf die
+neueste Version von GNOME oder Plasma wechseln, um es zu beheben.
