@@ -15,6 +15,7 @@ XFS ist ein Journaling-Dateisystem, das von Silicon Graphics, Inc. erstellt und 
 
 ### Vorteile
 
+- Bei der Entwicklung von XFS standen von Anfang an Geschwindigkeit und extreme Skalierbarkeit im Vordergrund.
 - Schnell, XFS wurde ursprünglich auf Geschwindigkeit und extreme Skalierbarkeit ausgelegt.
 - Zuverlässig, XFS nutzt verschiedene Technologien, um Datenkorruption zu verhindern.
 - Widerstandsfähig gegen Fragmentierung aufgrund seiner Extent-basierten Natur und der verzögerten Zuweisungsstrategie.
@@ -74,6 +75,7 @@ EXT4 (fourth extended filesystem) ist das am häufigsten verwendete Linux-Dateis
 
 ### Vorteile
 
+- Kann in manchen Szenarien genauso schnell oder sogar schneller als XFS sein.
 - Sehr verbreitet, was einen einfachen Zugang zu vielen Ressourcen ermöglicht.
 - Zuverlässig. EXT4 hat eine nachgewiesene Erfolgsbilanz in puncto Zuverlässigkeit.
 - Kann vergrößert oder verkleinert werden.
@@ -81,7 +83,6 @@ EXT4 (fourth extended filesystem) ist das am häufigsten verwendete Linux-Dateis
 
 ### Nachteile
 
-- Baut auf einer alten Codebasis auf.
 - Es fehlen viele der erweiterten Funktionen, die andere Dateisysteme bieten.
 
 ### Userspace-Dienstprogramme
@@ -132,7 +133,6 @@ F2FS (Flash-Friendly File System) ist ein Flash-Dateisystem, das ursprünglich v
 
 - Wurde mit Blick auf die Flash-Freundlichkeit entwickelt.
 - Transparente Komprimierung wird verwendet, um Schreibvorgänge auf die Festplatte zu reduzieren (Platzersparnis ist für den Nutzer derzeit nicht nutzbar).
-- Schneller als andere Dateisysteme wie EXT4.
 - Besseres Wear-Leveling, was die Lebensdauer von NAND-Flash weiter verlängert.
 
 ### Nachteile
