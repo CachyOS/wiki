@@ -15,7 +15,7 @@ XFS is a journaling filesystem created and developed by Silicon Graphics, Inc. I
 
 ### Pros
 
-- Fast, XFS was originally designed with speed and extreme scalability in mind.
+- XFS was originally designed with speed and extreme scalability in mind.
 - Reliable, XFS makes use of several technologies to prevent data corruption.
 - Resistant to fragmentation due to its extent-based nature and delayed allocation strategy.
 
@@ -74,6 +74,7 @@ EXT4 (fourth extended filesystem) is the most commonly used Linux filesystem. EX
 
 ### Pros
 
+- Can be as fast or faster than XFS in some scenarios.
 - Very common, allowing easy access to plenty of resources.
 - Reliable. EXT4 has a proven track record of being very reliable.
 - Able to grow or shrink.
@@ -81,7 +82,6 @@ EXT4 (fourth extended filesystem) is the most commonly used Linux filesystem. EX
 
 ### Cons
 
-- Built on an old code base.
 - Lacks many of the advanced features other filesystems offer.
 
 ### Userspace utilities
@@ -132,7 +132,6 @@ F2FS (Flash-Friendly File System) is a flash file system originally created and 
 
 - Designed with flash friendliness in mind.
 - Transparent compression used to reduce disk writes (space savings not currently usable by the user).
-- Faster than other filesystems like EXT4.
 - Better wear leveling, which further prolongs the life of NAND flash.
 
 ### Cons
