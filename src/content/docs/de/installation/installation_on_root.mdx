@@ -12,11 +12,17 @@ import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## Voraussetzungen
 
+:::note[Wenn nur GRUB und Liminie als Bootmanager angeboten werden nach Installationsstart, dann ist das System in Legacy/BIOS-mode gestartet.]
+:::
+
+:::danger[Die Installation mehrere Desktop-Umgebungen ist während der Installationsvorgangs nicht zulässig.]
+:::
+
 :::caution[Secure Boot, CSM und Legacy-USB-Unterstützung müssen in den BIOS/UEFI-Einstellungen deaktiviert sein, wenn im UEFI-Modus installiert wird.]
 Informationen zur Einrichtung von Secure Boot nach der Installation findest du im Abschnitt [Secure Boot](/de/configuration/secure_boot_setup).
 :::
 
-:::caution[Vermeide die Option „Parallel installieren“ in Calamares, da dies zu Komplikationen führen kann und nicht empfohlen wird.]
+:::caution[Vermeide die Option „Parallel installieren“ und "Partition ersetzen" in Calamares, da dies zu Komplikationen führen kann und nicht empfohlen wird.]
 :::
 
 :::tip
@@ -25,7 +31,6 @@ Es wird dringend empfohlen, die ISO nach einem fehlgeschlagenen Installationsver
 Andernfalls können während des Installationsprozesses fortlaufend Fehler auftreten.
 
 Dies geschieht, weil der Installer bei einer fehlgeschlagenen Installation die Partitionen nicht ordnungsgemäß aushängt.
-
 :::
 
 ## Installationsmethoden
@@ -187,6 +192,10 @@ Die Partitionstabelle variiert für jeden Bootmanager. Bitte befolge die korrekt
 
 <TabItem label='Limine'>
 
+:::note
+In Umgebungen mit begrenztem Speicherplatz, wie z. B. virtuellen Maschinen, kann die Größe der /boot-Partition auf 2048 MiB reduziert werden.
+:::
+
 <Steps>
 
 1. Boote von der ISO und klicke auf die Schaltfläche **Installer starten**
@@ -198,7 +207,7 @@ Die Partitionstabelle variiert für jeden Bootmanager. Bitte befolge die korrekt
 4. Wähle **Manuelle Partitionierung**
 
 5. Erstelle eine neue Partition mit den folgenden Angaben:
-    - ##### Größe: Mindestens **1000MiB**
+    - ##### Größe: Mindestens **2048MiB**
     - ##### Dateisystem: **FAT32**
     - ##### Einhängepunkt: **/boot**
     - ##### Flags: **boot**
@@ -225,14 +234,45 @@ Die Partitionstabelle variiert für jeden Bootmanager. Bitte befolge die korrekt
 
 </Tabs>
 
-## Dual Boot
+## Dual Boot Windows und CachyOS
 
 :::note[Diese Anleitung geht davon aus, dass Windows bereits auf dem System installiert ist und du dich entschieden hast, CachyOS parallel dazu zu installieren. ]
 :::
 
 :::caution
-Stelle sicher, dass der Windows-Schnellstart deaktiviert ist.
+Das Dual-Booting von Windows und Linux ist nicht zu 100% zuverlässig. Windows-Updates können den Bootloader beschädigen, indem sie die EFI-Partition überschreiben.
+In einigen Fällen treten möglicherweise nie Probleme auf, für manche Benutzer kann dies jedoch ein wiederkehrendes Problem sein.
+
+Eine Möglichkeit, dieses Problem zu vermeiden, besteht darin, jedes Betriebssystem auf einem separaten Laufwerk zu installieren.
 :::
+
+:::Achtung
+Je nach der empfohlenen Mindestgröße des Ziel-Bootmanagers muss die Größe der EFI-Partition möglicherweise angepasst werden. Siehe **[Manuelles Partitionieren](/installation/installation_on_root#manual-partitioning)**. FAT-Dateisysteme können nicht an Ort und Stelle in der Größe geändert werden. Um die FAT-EFI-Partition in der Größe zu ändern, muss das vorhandene EFI-Dateisystem gesichert werden, die vorhandene Partition kann dann mit einem Tool wie `gparted` in der Größe geändert werden und die neue Partition neu formatieren und anschließend die vorherige Dateisystemstruktur zurück in die EFI-Partition kopieren.
+:::
+
+### Voraussetzungen
+
+- Deaktivieren Sie den schnellen Start und den Ruhezustand von Windows.
+  - Öffnen Sie Windows Powershell als Administrator und führen Sie den folgenden Befehl aus:
+      ```ps
+      powercfg /H off
+      ```
+Starten Sie das System neu, um sicherzustellen, dass die Änderungen wirksam werden.
+- Windows BitLocker muss deaktiviert sein.
+  - So überprüfen Sie, ob BitLocker aktiviert ist:
+    ```ps title='Öffnen Sie eine Eingabeaufforderung als Administrator und führen Sie den folgenden Befehl aus'
+    manage-bde -status
+    ```
+  Wenn als Verschlüsselungsmethode „Keine“ angezeigt wird, ist BitLocker deaktiviert.
+- Secure Boot muss deaktiviert sein.
+- Eine leere Partition mit mindestens 30 GB
+  - Anleitung zum Verkleinern einer Windows-Partition:
+    - Drücken Sie „Win + R“, geben Sie „diskmgmt.msc“ ein und drücken Sie die Eingabetaste, um die Datenträgerverwaltung zu öffnen.
+    - Suchen Sie Ihre Windows-Hauptpartition (normalerweise C:) und klicken Sie mit der rechten Maustaste darauf.
+    - Klicken Sie auf 'Volume verkleinern...' und geben Sie mindestens **30720 MB** (30 GB) an. Klicken Sie anschließend auf „Verkleinern“.
+- Eine EFI-Partition mit mindestens 2GB
+- Bootfähiger USB-Stick mit CachyOS
+  - Weitere Informationen finden Sie im Abschnitt [Erstellen eines bootfähigen CachyOS-USB-Sticks](/installation/installation_prepare#creating-a-bootable-cachyos-usb-drive).
 
 <Tabs>
     <TabItem label='systemd-boot'>
@@ -255,7 +295,7 @@ Stelle sicher, dass der Windows-Schnellstart deaktiviert ist.
             ├─nvme0n1p5 vfat       2G /boot
             └─nvme0n1p6 btrfs  239.6G /var/tmp
             ```
-            EFI-Partitionen sind fast immer als `FAT32/vfat` formatiert. Da `nvme0n1p1` keinen Linux-Einhängepunkt hat, können wir davon ausgehen, dass diese Partition die Windows-EFI-Partition ist.
+            EFI-Partitionen sind fast immer als `FAT32/vfat` formatiert. Da `nvme0n1p1` keinen Linux-Einhängepunkt hat, können wir davon ausgehen, dass diese Partition die Windows-EFI-Partition ist. Hinweis: Die EFI-Partition sollte eine Größe von 2 GB haben, andernfalls schlägt die Installation fehl. 
 
         2. Hänge die Windows-EFI-Partition vorübergehend ein
 
