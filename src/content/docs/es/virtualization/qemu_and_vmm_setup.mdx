@@ -1,0 +1,64 @@
+---
+title: Configuración de QEMU y VMM
+description: Pasos necesarios para hacer funcionar ambos programas en CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import { Steps } from '@astrojs/starlight/components';
+
+## Instalación
+Para instalar y poner en marcha **VMM** (Virtual Machine Manager) y **QEMU** en
+**CachyOS**, el proceso es el siguiente:
+
+```sh
+# Esto instalará los paquetes necesarios (ver la nota sobre "Windows 11" más abajo):
+sudo pacman -S qemu-full virt-manager swtpm
+# Esto añadirá el usuario al grupo "libvirt" para que pueda usarlo:
+sudo usermod -aG libvirt $USER
+# Backend LXC (opcional, para contenedores linux, habilitar ambos backends no entra en conflicto):
+systemctl enable --now libvirtd.service
+# Backend QEMU (para VMs):
+systemctl enable --now libvirtd.socket
+# Esto habilitará Internet en una VM cada vez que una se inicie:
+sudo virsh net-autostart default
+```
+
+:::note[Windows 11]
+Si vas a instalar **Windows 11** en una máquina virtual, necesitarás pasar tu módulo TPM compatible, más adelante en el paso de configuración, o instalar `swtpm` si no tienes uno.
+:::
+
+## Lo básico para crear una VM
+:::note[Sesión de Usuario]
+Antes de continuar, es posible que quieras consultar brevemente [Sesión de Usuario de QEMU](/es/virtualization/qemu_user_session).
+:::
+
+<Steps>
+
+1. Primero, inicia **VMM**, lo primero que te recibirá son estas cosas conectándose: <ImageComponent imgsrc={import('~/assets/images/vmmstart.png')} />
+2. A continuación, haz clic en `Editar -> Preferencias -> ✅ Habilitar edición XML` y cierra ese submenú.
+3. Ahora puedes crear una nueva máquina virtual, ya sea haciendo clic en **la pantalla con una estrella y un icono de reproducción** o en `Archivo -> Nueva máquina virtual`.
+4. Serás recibido por el creador de VM, junto a `Conexión:` verás un menú desplegable, haz clic en él, selecciona el apropiado y luego procede con `Adelante`. <ImageComponent imgsrc={import('~/assets/images/vmmcreatestep1.png')} />
+5. Se te pedirá que localices la imagen `.iso` de un SO que hayas descargado, haz clic en `Explorar...` y localízala. También puedes añadir o crear un directorio dedicado para almacenar archivos .iso, puedes hacerlo haciendo clic en el botón `+ (Añadir Pool)`. Si quieres reutilizar la ruta de la `Sesión de Usuario` para esto, esa se encuentra en `~/.config/libvirt/`. <ImageComponent imgsrc={import('~/assets/images/vmmcreatestep2browse.png')} />
+**Si tu SO no se autodetecta**, simplemente desmarca la autodetección y elige manualmente la coincidencia más cercana, `ejemplo: CachyOS = Arch Linux`.
+
+6. El paso 3 es sencillo, simplemente asígnale a tu VM la cantidad de RAM y núcleos de CPU que desees; esto no es definitivo y se puede cambiar fácilmente.
+7. En el paso 4, puedes elegir crear un espacio de almacenamiento virtual (esto crea un archivo **.qcow2**) o una ruta para que la VM la use.
+8. En el paso 5, marca `Personalizar la configuración antes de instalar -> Finalizar`.
+9. Ahora llegarás aquí: <ImageComponent imgsrc={import('~/assets/images/vmmprevminstall.png')} />
+Hay algunas cosas que deberías confirmar aquí si instalas una VM de Linux. En `Resumen`, confirma que el chipset es **Q35** y que el firmware es **UEFI**. A menos que estés instalando algo realmente antiguo o haciendo algo raro, nunca querrás ninguna otra variación aquí. Si estás creando una VM de `Windows 11`, dirígete a `Añadir hardware -> TPM`, luego selecciona Emulado o Passthrough (ver la nota al principio) y `Finalizar` para cerrar el submenú.
+
+10. Ahora haz clic en `Comenzar instalación`.
+11. Si estás en una VM de **Linux** (u otro SO que use OpenGL y/o incluya libvulkan), dirígete a [EGL Headless](/es/virtualization/egl_headless) y/o [Virtio-Venus](/es/virtualization/virtio-venus) respectivamente.
+
+</Steps>
+
+### Nota final
+Si estás en una VM de `Windows 11`, para mejorar el rendimiento, puedes:
+- instalar los controladores **Virtio-Win** de RedHat en el sistema invitado
+- si tienes una iGPU de Intel, puedes investigar sobre **GVT-g** y **MDEV**
+- si tienes una iGPU de Intel y una dGPU, puedes investigar sobre **GVT-d**
+- si tienes una iGPU y una dGPU o más de 2 dGPUs y quieres pasar una dGPU en su lugar,
+puedes investigar sobre **VFIO**

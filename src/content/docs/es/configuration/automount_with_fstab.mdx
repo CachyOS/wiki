@@ -1,6 +1,6 @@
 ---
-title: Automontar unidades adicionales mediante fstab durante el arranque
-description: Montar unidades estáticas adicionales durante el arranque utilizando el archivo que se encuentra en /etc/fstab
+title: Montar Unidades Adicionales Automáticamente al Arrancar con fstab
+description: Montar unidades estáticas adicionales al arrancar utilizando el archivo que se encuentra en /etc/fstab
 ---
 
 Este tutorial describe los conceptos básicos de cómo utilizar el archivo fstab ubicado en /etc/ para montar unidades estáticas durante el arranque. Explica brevemente cómo encontrar el UUID de una partición o unidad, qué hacen algunas opciones y lecturas adicionales en caso de que la información proporcionada sea insuficiente.
@@ -9,15 +9,15 @@ Este tutorial describe los conceptos básicos de cómo utilizar el archivo fstab
 
 - Acceso root o sudo
 
-## Añadir entradas a /etc/fstab
+## Añadir Entradas a /etc/fstab
 
 :::note[NTFS en Linux]
-El sistema de archivos NTFS puede ser inestable en Linux, ya sea usando el controlador ntfs3 o ntfs-3g. Úsalo bajo tu propio riesgo. Para una mejor estabilidad y rendimiento, considera sistemas de archivos nativos de Linux como ext4, xfs o btrfs.
+El sistema de archivos NTFS puede ser inestable en Linux, ya sea usando el controlador ntfs3 o ntfs-3g. Úselo bajo su propio riesgo. Para una mejor estabilidad y rendimiento, considere sistemas de archivos nativos de Linux como ext4, xfs o btrfs.
 :::
 
-### 1. Lista los UUID de tus particiones
+### 1. Listar los UUID de sus particiones
 
-```sh title="Abre una terminal y ejecuta el siguiente comando"
+```sh title="Abra una terminal y ejecute el siguiente comando"
 lsblk -f
 ```
 
@@ -35,9 +35,9 @@ lsblk -f
 
 En nuestro ejemplo, sabemos que queremos montar una partición de Windows, que es ntfs. También sabemos que aproximadamente la mitad de su espacio está disponible. Por lo tanto, podemos determinar que la partición que queremos montar es `nvme0n1p3` y su UUID es `08A24E90A24E81E4`, con un sistema de archivos `ntfs` en este ejemplo.
 
-### 2. Identificando tu partición
+### 2. Identificar su partición
 
-A menudo, `lsblk -f` proporcionará toda la información que necesitas para montar tu disco a través de /etc/fstab en este punto. Si todavía no estás seguro de cuál es la partición correcta, puedes ejecutar el siguiente comando:
+A menudo, `lsblk -f` le proporcionará toda la información que necesita para montar su disco a través de /etc/fstab en este punto. Si aún no está seguro de cuál es la partición correcta, puede ejecutar el siguiente comando:
 
 ```sh
 sudo fdisk -l
@@ -53,23 +53,23 @@ sudo fdisk -l
 # /dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
 ```
 
-En este ejemplo ya conocemos nuestro UUID. Sin embargo, `fdisk -l` puede aclarárnoslo un poco más mostrando el tamaño exacto de la partición (1.4T) así como su tipo (Microsoft basic data).
+Ya conocemos nuestro UUID en este ejemplo. Sin embargo, `fdisk -l` puede aclararnos un poco más las cosas al mostrar el tamaño exacto de la partición (1.4T) así como su tipo (Microsoft basic data).
 
-Eso debería dejarnos meridianamente claro que la partición que queremos es `nvme0n1p3` con un UUID de `08A24E90A24E81E4` como se describió anteriormente. Ya lo sabíamos, pero ahora lo sabemos con certeza.
+Eso debería dejarnos meridianamente claro que la partición que queremos es `nvme0n1p3` con un UUID de `08A24E90A24E81E4` como se describió anteriormente. Ya lo sabíamos antes, pero ahora lo sabemos con certeza.
 
-Una vez que estés seguro de que has encontrado la partición correcta, copia el UUID. Copiar desde el emulador de terminal se hace normalmente con `ctrl+shift+C`.
+Una vez que esté seguro de haber encontrado la partición correcta, copie el UUID. Copiar desde el emulador de terminal se hace normalmente con `ctrl+shift+C`.
 
-### 3. Añadir una entrada a /etc/fstab
+### 3. Añadir una Entrada a /etc/fstab
 
 Ahora que hemos obtenido el UUID de nuestra partición, es hora de abrir el archivo fstab.
 
-Siéntete libre de usar tu editor de texto preferido. En este ejemplo, usaremos nano. Para editar el archivo fstab, debe abrirse como root:
+Siéntase libre de usar su editor de texto preferido. En este ejemplo, usaremos nano. Para editar el archivo fstab, debe abrirse como root:
 
 ```sh
 sudo nano /etc/fstab
 ```
 
-Usando las teclas de flecha, navega hasta el final del archivo fstab y luego crea nuestra nueva entrada en una línea nueva vacía:
+Usando las teclas de flecha, navegue hasta el final del archivo fstab, luego cree nuestra nueva entrada en una nueva línea vacía:
 
 ```sh
 UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000 0 0
@@ -77,51 +77,51 @@ UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail,uid=1000,gid=1000,rw,
 
 El desglose de esta entrada es el siguiente:
 
-- `UUID=08A24E90A24E81E4` es el sistema de archivos que queremos montar, identificado por su UUID. Hay otros métodos para identificar tu sistema de archivos, aunque el UUID tiende a ser el más seguro. Métodos adicionales listados [aquí](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems).
+- `UUID=08A24E90A24E81E4` es el sistema de archivos que queremos montar, identificado por su UUID. Hay otros métodos para identificar su sistema de archivos, aunque el UUID tiende a ser el más seguro. Métodos adicionales listados [aquí](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems).
 
 - `/media/windows` es el punto de montaje de nuestra unidad. El [Estándar de Jerarquía del Sistema de Archivos de Linux](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html) (Linux Filesystem Hierarchy Standard) dice que `/media/` es la ubicación adecuada para montar unidades extraíbles. `windows` indica el directorio en el que deseamos montar nuestra unidad. Cada unidad que queramos montar necesitará su propio directorio.
 
-- `ntfs3` es el tipo de sistema de archivos a utilizar. En nuestro ejemplo, estamos usando explícitamente el controlador del kernel ntfs3. Otros ejemplos serían `ext4`, `xfs` o similares. Esta declaración explícita del tipo de sistema de archivos puede ser reemplazada por `auto` para permitir que el comando de montaje haga su mejor suposición.
+- `ntfs3` es el tipo de sistema de archivos a utilizar. En nuestro ejemplo estamos usando explícitamente el controlador del kernel ntfs3. Otros ejemplos serían `ext4`, `xfs` o similares. Esta declaración explícita del tipo de sistema de archivos puede ser reemplazada por `auto` para permitir que el comando mount haga su mejor suposición.
 
-- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000`: Estas son opciones de montaje:
+- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000`: Estas son las opciones de montaje:
 
   - `defaults`: un conjunto estándar de opciones que incluye `rw, suid, dev, exec, auto, nouser, y async.`
 
   - `nofail`: permite que el proceso de arranque continúe incluso si este montaje falla.
 
-  - `uid=1000` y `gid=1000`: establece la propiedad de usuario y grupo de los archivos montados al usuario y grupo con ID 1000.
+  - `uid=1000` y `gid=1000`: establece la propiedad del usuario y del grupo de los archivos montados al usuario y grupo con ID 1000.
 
   - `rw`: monta el sistema de archivos como lectura-escritura.
 
-  - `user`: permite que un usuario no root monte el sistema de archivos.
+  - `user`: permite que un usuario no-root monte el sistema de archivos.
 
   - `exec`: permite la ejecución de binarios en el sistema de archivos montado.
 
   - `umask=000`: establece la máscara de permisos de archivo para permitir permisos de lectura, escritura y ejecución para todos.
 
-  - `el primer 0` (dump) está generalmente obsoleto en los sistemas modernos. Dejarlo en 0 no hará ningún daño. Puedes leer más sobre ello [aquí](https://linux.die.net/man/8/dump).
+  - `el primer 0` (dump) está típicamente obsoleto en los sistemas modernos. Dejarlo en 0 no causará ningún problema. Puede leer más al respecto [aquí](https://linux.die.net/man/8/dump).
 
-  - `el segundo 0` establece el orden para las comprobaciones del sistema de archivos en el momento del arranque. Para una partición raíz, esto debería ser 1, a menos que tu sistema de archivos raíz sea btrfs, que en ese caso debería establecerse en 0. Todos los demás sistemas de archivos en tu fstab deberían ser 0 (deshabilitado) o 2. Más información [aquí](https://man.archlinux.org/man/fsck.8).
+  - `el segundo 0` establece el orden para las comprobaciones del sistema de archivos en el momento del arranque. Para una partición raíz, esto debería ser 1, a menos que su sistema de archivos raíz sea btrfs, que en ese caso debería establecerse en 0. Todos los demás sistemas de archivos en su fstab deberían ser 0 (deshabilitado) o 2. Más información [aquí](https://man.archlinux.org/man/fsck.8).
 
-Para un análisis más profundo de cada opción, visita estas dos páginas del manual: [página man de fstab](https://man7.org/linux/man-pages/man5/fstab.5.html) y [página man de mount](https://man7.org/linux/man-pages/man8/mount.8.html).
+Para una visión más detallada de cada opción, visite estas dos páginas del manual: [página man de fstab](https://man7.org/linux/man-pages/man5/fstab.5.html) y [página man de mount](https://man7.org/linux/man-pages/man8/mount.8.html).
 
 #### Más información
 
-Como nota al margen, todas las opciones después de la declaración del tipo de sistema de archivos son opcionales si no las cambias del valor predeterminado.
+Como apunte, todas las opciones después de la declaración del tipo de sistema de archivos son opcionales si no las cambia de las predeterminadas.
 
 Por lo tanto
 
-`UUID=<UUID de la partición> /media/foo algun_sf`
+`UUID=<UUID de la partición> /media/foo algunfs`
 
 y
 
-`UUID=<UUID de la partición> /media/foo algun_sf defaults 0 0`
+`UUID=<UUID de la partición> /media/foo algunfs defaults 0 0`
 
-son equivalentes. `algun_sf` seguido de nada es implícitamente `algun_sf defaults 0 0`.
+son equivalentes. `algunfs` seguido de nada es implícitamente `algunfs defaults 0 0`.
 
 ### 4. Finalizando
 
-Si deseas montar ahora la unidad para la que creaste una entrada, necesitas ejecutar lo siguiente:
+Si desea montar ahora la unidad para la que creó una entrada, necesita ejecutar lo siguiente:
 
 ```sh
 sudo systemctl daemon-reload
@@ -133,7 +133,7 @@ y luego:
 sudo mount -a
 ```
 
-Tu unidad debería aparecer ahora en `/media/windows` y aparecerá ahí cada vez que reinicies.
+Su unidad debería aparecer ahora en `/media/windows` y aparecerá allí cada vez que reinicie.
 
 ```sh
 ls /media/windows
@@ -149,7 +149,7 @@ ls /media/windows
 # Intel                    'Ship of Harkinian'
  ```
 
- Si deseas crear un enlace a tu unidad recién montada en tu directorio personal, puedes ejecutar lo siguiente:
+ Si desea crear un enlace a su unidad recién montada en su directorio personal, puede ejecutar lo siguiente:
 
  ```sh
  ln -s /media/windows ~/Windows
@@ -173,45 +173,45 @@ ls /media/windows
 
 ## tl;dr
 
-- Encuentra el **UUID** de tu partición
+- Encuentre el **UUID** de su partición
 
 ```sh
 lsblk -f
 ```
 
-- Abre `/etc/fstab`
+- Abra `/etc/fstab`
 
 ```sh
 sudo nano /etc/fstab
 ```
 
-- Crea una entrada al final del archivo
+- Cree una entrada al final del archivo
 
 ```sh
-UUID=<UUID de la partición> /media/foo algun_sf defaults 0 0
+UUID=<UUID de la partición> /media/foo algunfs defaults 0 0
 ```
 
-Reemplazando `<UUID de la partición>`, `foo`, y `algun_sf` con tu UUID, directorio y sistema de archivos (p. ej., ext4), así como estableciendo cualquier otra opción que desees después de defaults, como `_netdev` para un NAS, o `nofail` para cualquier unidad no crítica.
+Reemplazando `<UUID de la partición>`, `foo`, y `algunfs` con su UUID, directorio y sistema de archivos. p. ej., ext4, así como estableciendo cualquier otra opción que desee después de defaults, como `_netdev` para un NAS, o `nofail` para cualquier unidad no crítica.
 
-- Recarga tu daemon
+- Recargue su daemon
 
 ```sh
 sudo systemctl daemon-reload
 ```
 
-- Monta tu unidad
+- Monte su unidad
 
 ```sh
 sudo mount -a
 ```
 
-Esta unidad ya está montada, y a partir de ahora también se montará en cada arranque.
+Esta unidad está ahora montada, y de ahora en adelante también se montará en cada arranque.
 
 ## Lecturas adicionales
 
-- [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
-- [FHS en /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Estándar de Jerarquía del Sistema de Archivos (Filesystem Hierarchy Standard)](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS sobre /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
 - [Manual para dump](<https://linux.die.net/man/8/dump>)
 - [Manual para fsck](https://man.archlinux.org/man/fsck.8)
-- [Página del manual para fstab](https://man.archlinux.org/man/fstab.5.en)
+- [Página man para fstab](https://man.archlinux.org/man/fstab.5.en)
 - [Entrada de la Wiki de Arch Linux para fstab](https://wiki.archlinux.org/title/Fstab)

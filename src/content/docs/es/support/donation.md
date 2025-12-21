@@ -4,15 +4,15 @@ description: Formas de apoyarnos
 ---
 
 Si quieres apoyar nuestro trabajo, puedes donarnos y ayudar a pagar nuestros servidores de compilación.
-Cada donante obtiene un rango de Donante en nuestro Discord.
+Cada donante obtiene un Rango de Donante en nuestro Discord.
 
-Aquí hay una lista de los costos mensuales actuales:
+Aquí hay una lista de los costos actuales por mes:
 
 - Servidor de compilación 127 € (Hetzner 7950X3D)
 - Segundo servidor de compilación 70€ (Hetzner 7700X)
-- Servidor web/espejo 17 €
-- Servidor de correo/espejo 17 €
-- Servidor del foro (VPS Netcup) 7 Euros
+- Servidor web/mirror 17 €
+- Servidor de correo/mirror 17 €
+- Servidor del foro (Netcup VPS) 7 euros
 
 ### Patreon
 
