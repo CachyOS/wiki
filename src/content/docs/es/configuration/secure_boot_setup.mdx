@@ -1,5 +1,5 @@
 ---
-title: Configuración de Secure Boot
+title: Configuración del Arranque Seguro
 description: Configura el arranque seguro con sbctl después de instalar CachyOS
 ---
 
@@ -16,9 +16,9 @@ ofrecer capacidades de gestión de claves y hacer un seguimiento de los archivos
 sudo pacman -S sbctl
 ```
 
-## Preconfiguración
+## Pre-configuración
 
-### Gestor de arranque GRUB
+### Gestor de Arranque GRUB
 
 Si estás usando GRUB, ejecuta el siguiente comando para habilitar el soporte de arranque seguro en GRUB usando las claves CA.
 
@@ -31,8 +31,8 @@ Cargar módulos innecesarios en tu gestor de arranque tiene el potencial de pres
 Solo ejecuta este comando si realmente necesitas el arranque seguro.
 :::
 
-### Entrar en Modo de Configuración en UEFI
-Primero, necesitamos ir a la configuración del firmware y establecer el modo de arranque seguro en "Modo de Configuración" (Setup Mode). Puedes reiniciar desde un
+### Entrando en Modo de Configuración en UEFI
+Primero, necesitamos ir a la configuración del firmware y poner el modo de arranque seguro en "Setup Mode" (Modo de Configuración). Puedes reiniciar desde un
 sistema ya en funcionamiento a la configuración del firmware con el siguiente comando.
 
 ```bash
@@ -42,8 +42,12 @@ systemctl reboot --firmware-setup
 <br />
 <ImageComponent imgsrc={import('~/assets/images/ideapad-bios-secure-boot.jpg')} />
 
-Así es como se ve el BIOS en un Lenovo Ideapad 5 Pro. Restablece al modo de configuración o restaura las claves de fábrica y reinicia de nuevo
-en el sistema.
+Así es como se ve la BIOS en un Lenovo Ideapad 5 Pro. Restablece al modo de configuración o restaura las claves de fábrica y reinicia de vuelta
+al sistema.
+
+Sin embargo, algunas placas base MSI no tienen un modo de configuración. Para lograr el mismo efecto, sigue los dos pasos de la imagen a continuación:
+<br />
+<ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
 
 ## Configurando sbctl
 
@@ -53,12 +57,12 @@ Installed:      ✘ sbctl is not installed
 Setup Mode:     ✘ Enabled
 Secure Boot     ✘ Disabled
 
-sudo sbctl create-keys # Crea tus claves personalizadas de arranque seguro
+sudo sbctl create-keys # Crea tus claves de arranque seguro personalizadas
 Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
 Creating secure boot keys...✔
 Secure boot keys created!
 
-sudo sbctl enroll-keys --microsoft # Registra tus claves con las claves de Microsoft
+sudo sbctl enroll-keys --microsoft # Inscribe tus claves con las claves de Microsoft
 Enrolling keys to EFI variables...✔
 Enrolled keys to the EFI variables!
 
@@ -75,6 +79,7 @@ Vendor Keys:    microsoft
 
 CachyOS proporciona [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign),
 un script que toma la lista de archivos que necesitan ser firmados de `sudo sbctl verify` y los firma todos.
+Los usuarios de Limine deben saltar a [Limine](#Limine).
 
 ```bash
 sudo sbctl verify
@@ -97,20 +102,20 @@ Verifying file database and EFI images in /boot...
 ```
 
 :::caution
-En sistemas con una distribución de particiones `/boot` y `/boot/efi` separadas, `sbctl` puede que solo escanee en busca de binarios EFI en `/boot/efi`.
+En sistemas con un diseño de particiones `/boot` y `/boot/efi` separadas, `sbctl` puede que solo busque binarios EFI en `/boot/efi`.
 Esto causa que las imágenes del kernel que están en `/boot` no sean detectadas. `sbctl-batch-sign` soluciona esto escaneando **siempre**
 `/boot` en busca de archivos `vmlinuz-*`.
 :::
 
 Ahora que todos los archivos están firmados, podemos reiniciar de nuevo en la configuración de UEFI y habilitar el arranque seguro.
 Ten en cuenta que este es un proceso de una sola vez, ya que firmar archivos con la bandera `-s` guardará esos archivos en la base de datos de `sbctl`.
-`sbctl` viene con un [hook de pacman](https://wiki.archlinux.org/title/Pacman_hook) lo que significa que firmará automáticamente
-todos los archivos nuevos tras una actualización del kernel o del gestor de arranque.
+`sbctl` viene con un [hook de pacman](https://wiki.archlinux.org/title/Pacman_hook) lo que significa que automáticamente
+firmará todos los archivos nuevos tras una actualización del kernel o del gestor de arranque.
 
 ### systemd-boot
 
-CachyOS utiliza `systemd-boot-update.service` proporcionado por systemd para actualizar el gestor de arranque al reiniciar. Esto significa que el
-hook de pacman de `sbctl` **no** firmará los binarios EFI actualizados. Como solución, podemos firmar el gestor de arranque directamente.
+CachyOS usa `systemd-boot-update.service` proporcionado por systemd para actualizar el gestor de arranque al reiniciar. Esto significa que el hook
+de pacman de `sbctl` **no** firmará los binarios EFI actualizados. Como solución, podemos firmar el gestor de arranque directamente
 
 ```sh
 sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
@@ -118,29 +123,26 @@ sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/
 
 ### Limine
 
-Limine es un gestor de arranque especial que permite comprobar el hash de las imágenes
-del kernel y otros archivos que Limine utiliza durante el arranque. Si esto está habilitado, cualquier
+Limine es un gestor de arranque especial que permite comprobar el hash de las imágenes del
+kernel y otros archivos que Limine usa durante el arranque. Si esto está habilitado, cualquier
 tipo de configuración manual hecha por el usuario, por ejemplo, firmar la imagen a través de
 `sbctl-batch-sign`, modificará el hash de los archivos correspondientes y
-hará que la verificación de la suma de comprobación de Limine falle.
+hará que la verificación de suma de comprobación de Limine falle.
 
-Sin embargo, firmar estos archivos no es necesario en Limine porque tiene un proceso
-de arranque especial que evita la carga en cadena de EFI (chainloading) y las comprobaciones de firma. Los únicos
-binarios EFI que necesitan ser firmados son Limine mismo y el binario EFI de respaldo
-que se encuentra en todos los sistemas UEFI.
+Sin embargo, firmar estos archivos no es necesario en Limine porque tiene un proceso de
+arranque especial que evita el encadenamiento de EFI (chainloading) y las comprobaciones de firma. Los únicos binarios EFI
+que necesitan ser firmados son Limine mismo.
 
 ```sh
-# Firma el binario EFI especial
-sudo sbctl sign -s /boot/EFI/BOOT/BOOTX64.EFI
-
 # Usa limine-enroll-config para firmar el binario EFI de Limine
 # Esto usa sbctl internamente
 sudo limine-enroll-config
+sudo limine-update
 ```
 
 ## Verificar que el Arranque Seguro está Habilitado
 
-Para comprobar que el arranque seguro está efectivamente habilitado, puedes ejecutar uno de los siguientes comandos
+Para comprobar que el arranque seguro está efectivamente habilitado. Puedes ejecutar uno de los siguientes comandos
 
 ```bash
 sudo sbctl status
@@ -162,9 +164,9 @@ System:
 
 ## Enlaces y Créditos
 
-- [La Arch Wiki](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
+- [La Wiki de Arch](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
 sentó las bases para esta guía. La mayor parte del material aquí fue tomado de allí.
 - [sbctl](https://github.com/Foxboron/sbctl) - Esta guía fácil para habilitar el soporte de arranque seguro no habría sido posible si no fuera
-por el increíble trabajo realizado para crear este software.
-- [Improving the Secure Boot Experience by Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) - Artículo de blog de Morten
+por el increíble trabajo realizado para crear esta pieza de software.
+- [Improving the Secure Boot Experience por Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) - Artículo de blog de Morten
 "Foxboron" Linderud sobre cómo la experiencia del arranque seguro era complicada antes de `sbctl`.
