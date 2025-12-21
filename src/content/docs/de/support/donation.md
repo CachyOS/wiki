@@ -1,10 +1,10 @@
 ---
 title: Spenden
-description: Möglichkeiten, uns zu unterstützen
+description: Wie du uns unterstützen kannst
 ---
 
-Wenn du unsere Arbeit unterstützen möchtest, kannst du uns spenden und dabei helfen, unsere Buildserver zu bezahlen.
-Jeder Spender erhält einen Spender-Rang in unserem Discord.
+Wenn du unsere Arbeit unterstützen möchtest, kannst du uns gerne eine Spende zukommen lassen und dabei helfen, unsere Buildserver zu bezahlen.
+Jeder Spender erhält einen Spender-Rang auf unserem Discord.
 
 Hier ist eine Liste der aktuellen monatlichen Kosten:
 

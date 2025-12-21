@@ -1,0 +1,93 @@
+---
+title: Zwischen NVIDIA- und AMD-Grafikkarten wechseln
+description: Anleitung zum Wechsel von NVIDIA zu AMD (und umgekehrt) unter CachyOS.
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::note[Diese Anleitung gilt, wenn du deine Grafikkarte (NVIDIA ↔ AMD) in einer bestehenden CachyOS-Installation austauschst.]
+:::
+
+## Voraussetzungen
+  - Deine neue Grafikkarte ist richtig eingebaut und angeschlossen.
+  - Stell sicher, dass dein System komplett auf dem neuesten Stand ist.
+    ```bash
+    sudo pacman -Syu
+    ```
+
+### Schritte zum Wechseln
+
+<Tabs>
+    <TabItem label='Von NVIDIA zu AMD'>
+        Die AMD-Treiber sind zwar im Linux-Kernel enthalten, aber du musst wahrscheinlich die alte NVIDIA-Konfiguration aufräumen und sicherstellen, dass die nötigen AMD-Pakete installiert sind.
+        <Steps>
+            1. Prüfe, welches NVIDIA-Treiberprofil gerade installiert ist:
+                ```bash
+                sudo chwd --list-installed
+                ```
+            2. Entferne das spezifische Profil mit dem `-r` Flag:
+                ```bash
+                sudo chwd -r <profil-name>
+                ```
+            3. Fahr dein System herunter und bau deine AMD-Grafikkarte ein.
+            4. Nach dem Hochfahren, benutze `chwd`, um deine Grafikkarte automatisch zu erkennen und die richtigen AMD-Pakete zu installieren.
+                ```bash
+                sudo chwd -a
+                ```
+            5. Nachdem die neuen Treiber installiert sind, aktualisiere deine initramfs und die Konfiguration deines Bootloaders.
+                > CachyOS hat einen Pacman-Hook, der das initramfs automatisch neu baut, wenn Treiber hinzugefügt oder entfernt werden.
+                > Das sorgt dafür, dass beim Booten die richtigen Treiber geladen werden.
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            6. Starte neu, damit die Änderungen übernommen werden.
+                ```bash
+                sudo reboot
+                ```
+            7. Prüfe nach dem Neustart, ob die AMD-Treiber aktiv sind.
+                ```bash
+                vulkaninfo | grep "deviceName"
+                ```
+                oder
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                Wenn deine AMD-Grafikkarte angezeigt wird, funktionieren die Treiber richtig.
+        </Steps>
+    </TabItem>
+    <TabItem label='Von AMD zu NVIDIA'>
+        <Steps>
+            1. Räum die übrigen AMD-Pakete auf.
+                ```bash
+                sudo chwd -r amd
+                ```
+            2. Fahr dein System herunter und bau deine NVIDIA-Grafikkarte ein.
+            3. Nach dem Hochfahren, benutze `chwd`, um deine Grafikkarte automatisch zu erkennen und die richtigen NVIDIA-Pakete zu installieren.
+                ```bash
+                sudo chwd -a
+                ```
+            4. Nachdem die neuen Treiber installiert sind, aktualisiere deine initramfs und die Konfiguration deines Bootloaders.
+                > CachyOS hat einen Pacman-Hook, der das initramfs automatisch neu baut, wenn Treiber hinzugefügt oder entfernt werden.
+                > Das sorgt dafür, dass beim Booten die richtigen Treiber geladen werden.
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            5. Starte neu, damit die Änderungen übernommen werden.
+                ```bash
+                sudo reboot
+                ```
+            6. Prüfe nach dem Neustart, ob die NVIDIA-Treiber aktiv sind.
+                ```bash
+                nvidia-smi
+                ```
+                oder
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                Wenn deine NVIDIA-Grafikkarte angezeigt wird, funktionieren die Treiber richtig.
+        </Steps>
+    </TabItem>
+</Tabs>
