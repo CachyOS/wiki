@@ -1,0 +1,61 @@
+---
+title: Virtio-Venus
+description: 3D-ускорение через Vulkan
+---
+
+## Варианты использования:
+- **3D-ускорение, близкое к нативному**
+
+В операционных системах, использующих `libvulkan`, таких как **Linux**, **BSD** и **Android**, вы
+можете достичь производительности, близкой к нативной, преобразуя вызовы из виртуальной машины в Vulkan, а затем напрямую
+на ваш GPU и обратно, без необходимости передавать их через виртуальную машину.
+
+К сожалению, **Virtio-Venus** отсутствует в **VMM**, и поэтому вам потребуется использовать **qemu-cli**.
+Вам нужно будет запомнить имя, которое вы дали своей виртуальной машине, и её расположение.
+
+## Использование Virtio-Venus в qemu-cli:
+После установки любой подходящей виртуальной машины вы можете открыть терминал и создать команду qemu-cli
+для вашей виртуальной машины. Вот пример для моей ВМ с CachyOS:
+
+```sh
+qemu-system-x86_64                                                                             \
+    -enable-kvm                                                                                \
+    -M q35                                                                                     \
+    -smp 6                                                                                     \
+    -m 12G                                                                                     \
+    -cpu host                                                                                  \
+    -net nic,model=virtio                                                                      \
+    -net user,hostfwd=tcp::2222-:22                                                            \
+    -device virtio-sound-pci,audiodev=my_audiodev -audiodev pipewire,id=my_audiodev            \
+    -device virtio-vga-gl,hostmem=4G,blob=true,venus=true                                      \
+    -vga none                                                                                  \
+    -display gtk,gl=on,show-cursor=on                                                          \
+    -usb -device usb-tablet                                                                    \
+    -object memory-backend-memfd,id=mem1,size=12G                                              \
+    -machine memory-backend=mem1                                                               \
+    -drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd   \
+    -drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd              \
+    -drive file=.local/share/libvirt/images/archlinux.qcow2
+```
+
+## Пояснения:
+
+- `-smp 6` означает 6 ядер ЦП
+- `-m 12G` означает 12 ГБ ОЗУ
+- `-net user,hostfwd=tcp::2222-:22` означает, что порт 22 с хоста пробрасывается в ВМ как порт 2222,
+таким образом, если вы хотите подключиться к ВМ по ssh с какого-либо устройства, вы должны выполнить:
+
+```sh
+ssh -p 2222 имя_пользователя_вм@ip_адрес_вм
+```
+
+- `-device virtio-vga-gl,hostmem=4G,blob=true,venus=true` — это драйвер Venus, который, к сожалению, пока не включен в
+virt-manager. Как только это произойдет, весь этот раздел, за исключением пользовательского режима, устареет.
+- `-hostmem=4G` означает, что я позволяю ВМ использовать до 4 ГБ моей видеопамяти (VRAM) с моей видеокарты.
+- `-object memory-backend-memfd,id=mem1,size=12G` в этом разделе `size` — это объем ОЗУ, который вы выделили, то есть 12 ГБ в моем случае.
+- `-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd` — это файл прошивки
+для ВМ, здесь просто указан путь к нему.
+- `-drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd` — это nvram ВМ. Без этого файла
+или если он будет установлен в режим только для чтения, ВМ не запустится.
+- `-drive file=.local/share/libvirt/images/archlinux.qcow2` — это путь к файлу .qcow2 (хранилище ВМ).\
+(Вы можете заметить, что мое аудиоустройство в данном случае не `ich9`, а `pipewire`, но это не имеет значения.)
