@@ -1,0 +1,140 @@
+---
+title: Помощник chroot от CachyOS
+description: Вспомогательный инструмент для упрощения входа в системы через chroot
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import {Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+[cachy-chroot](https://github.com/CachyOS/cachy-chroot) — это простая вспомогательная программа для облегчения процесса входа через chroot в существующую
+установку CachyOS или дистрибутива на основе Arch. Она выводит список всех обнаруженных на машине разделов, а также поддерживает отображение подтомов BTRFS.
+И последнее, но не менее важное: `cachy-chroot` также поддерживает зашифрованные системы через LUKS. Она сопоставит каждую запись `fstab` с соответствующей записью `crypttab`
+и корректно закроет все тома LUKS при выходе из chroot.
+
+:::caution[cachy-chroot предназначен для запуска из live-окружения CachyOS.]
+:::
+
+:::note
+cachy-chroot поддерживает монтирование практически любой файловой системы, поддерживаемой ядром Linux, за исключением ZFS.
+:::
+
+## Использование
+
+:::tip
+Используйте клавиши со стрелками для навигации по опциям и `ENTER` для выбора.
+
+Символ **❯** указывает на текущую выбранную опцию.
+
+**?** указывает на запрос ввода от пользователя.
+:::
+
+<Steps>
+1. Загрузитесь с live ISO CachyOS.
+2. Откройте терминал и войдите в систему как root-пользователь с помощью `sudo su`.
+3. Убедитесь, что у вас установлена последняя версия `cachy-chroot`, выполнив команду:
+    ```bash
+    pacman -Sy cachy-chroot
+    ```
+4. Запустите `cachy-chroot`, набрав:
+    ```bash
+    cachy-chroot
+    ```
+    `cachy-chroot` просканирует и выведет список всех доступных разделов.
+    <Tabs>
+        <TabItem label='Пример вывода с установкой CachyOS на BTRFS'>
+            ```bash
+            Info: Found 3 block devices
+            Info: Found partition: Partition: /dev/nvme0n1p1: FS: vfat UUID: EDA6-ED98
+            Info: Found partition: Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+            Info: Found partition: Partition: /dev/nvme0n1p4: FS: btrfs UUID: 66e84339-8c77-4131-afce-50ec2cf67a80
+            ? Select the block device for the root partition (use arrow keys):  ›
+            Partition: /dev/nvme0n1p1: FS: vfat UUID: EDA6-ED98
+            ❯ Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+            ```
+        </TabItem>
+        <TabItem label='Пример вывода с EXT4'>
+            ```bash
+            Info: Found 8 block devices
+            Info: Found partition: Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+            Info: Found partition: Partition: /dev/sda2: FS: vfat UUID: CA0D-2D5A
+            Info: Found partition: Partition: /dev/sdb1: FS: ntfs UUID: A4763F77763F48F6
+            Info: Found partition: Partition: /dev/sdc1: FS: ntfs UUID: C4CA216BCA215B46
+            Info: Found partition: Partition: /dev/sdc2: FS: ntfs UUID: 060C28590C284651
+            Info: Found partition: Partition: /dev/sdc3: FS: ntfs UUID: 3A3CF8B13CF86971
+            Info: Found partition: Partition: /dev/sdd1: FS: exfat UUID: 4FDC-0AAB
+            Info: Found partition: Partition: /dev/sdd2: FS: vfat UUID: 3105-B091
+            ? Select the block device for the root partition (use arrow keys):  ›
+            ❯ Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+              Partition: /dev/sda2: FS: vfat UUID: CA0D-2D5A
+              Partition: /dev/sdb1: FS: ntfs UUID: A4763F77763F48F6
+              Partition: /dev/sdc1: FS: ntfs UUID: C4CA216BCA215B46
+              Partition: /dev/sdc2: FS: ntfs UUID: 060C28590C284651
+              Partition: /dev/sdc3: FS: ntfs UUID: 3A3CF8B13CF86971
+              Partition: /dev/sdd1: FS: exfat UUID: 4FDC-0AAB
+              Partition: /dev/sdd2: FS: vfat UUID: 3105-B091
+            ```
+            В этом примере корневой раздел — `/dev/sda1` с файловой системой `ext4`. Остальные разделы не имеют значения для chroot.
+        </TabItem>
+    </Tabs>
+5. Выберите раздел, который содержит корневую файловую систему:
+    <Tabs>
+        <TabItem label='Пример с CachyOS BTRFS'>
+            ```bash title="Выбор корневого раздела"
+            ✔ Select the block device for the root partition (use arrow keys):  · Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+            Info: Selected BTRFS partition, mounting and listing subvolumes...
+            Info: Mounting partition /dev/nvme0n1p2 at /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-858f-2e02be61b342-hwAeIm with options: []
+            Info: Unmounting partition at /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-858f-2e02be61b342-hwAeIm
+            ? Do you want to use CachyOS BTRFS preset to auto mount root subvolume? (y/n) › # Введите yes, если у вас CachyOS
+            ```
+            **Если вы используете CachyOS с BTRFS**, введите `y`, чтобы использовать предустановку CachyOS BTRFS. Это автоматически смонтирует корневой подтом и другие важные подтома, такие как `/home`, `/var`, `/tmp` и `/srv`. Если вы используете пользовательскую разметку BTRFS или систему, отличную от CachyOS, введите `n` для ручного выбора подтомов.
+        </TabItem>
+        <TabItem label='Пример с EXT4'>
+            ```bash title="Выбор корневого раздела"
+            ✔ Select the block device for the root partition (use arrow keys):  · Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+            Info: Mounting partition /dev/sda1 at /tmp/cachyos-chroot-root-mount-b7fef200-fbb8-4783-9fad-46c5e8b7ca0e-LtsXXC with options: []
+            Info: Mounting additional partitions based on /etc/fstab...
+            Info: Found 3 entries in /etc/fstab
+            Warning: Partition UUID=b7fef200-fbb8-4783-9fad-46c5e8b7ca0e already mounted, skipping...
+            Info: Mounting partition /dev/sda2 at /tmp/cachyos-chroot-root-mount-b7fef200-fbb8-4783-9fad-46c5e8b7ca0e-LtsXXC/boot with options: []
+            Info: Finished mounting additional partitions
+            ✔ Do you want to mount additional partitions? · no
+            Info: Chrooting into the configured root partition...
+            Info: To exit the chroot, type 'exit' or press Ctrl+D
+            ```
+        </TabItem>
+    </Tabs>
+6. `cachy-chroot` попытается автоматически смонтировать все разделы и подтома, перечисленные в `/etc/fstab` корневого устройства. Если какие-либо разделы не смогут смонтироваться, вы получите уведомление и возможность смонтировать их вручную при необходимости. Вы можете выбрать `no`, чтобы пропустить монтирование дополнительных разделов.
+7. **Теперь вы находитесь в chroot-окружении**.
+    ```bash
+    [root@CachyOS /]#
+    ```
+    Теперь вы можете выполнять команды так, как если бы вы загрузились в установленную систему. Например, вы можете обновить систему с помощью:
+    ```bash title="Обновление системы в chroot"
+    pacman -Syu
+    ```
+    или выполнять другие задачи по обслуживанию по мере необходимости.
+8. Когда закончите, выйдите из chroot-окружения, введя `exit` в командной строке или нажав `CTRL+D` на клавиатуре.
+    ```bash title="Выход из chroot"
+    exit
+    ```
+9. После выхода `cachy-chroot` автоматически очистит смонтированные разделы и закроет все LUKS-контейнеры. Вы вернетесь в оболочку live-окружения.
+</Steps>
+
+### Устранение неполадок
+
+- **Разделы не найдены:** Убедитесь, что диск с вашей установкой подключен и распознается live-системой. Вы можете проверить это с помощью `lsblk` или `fdisk -l`.
+- **Автоматическое монтирование некоторых разделов не удалось:** Вы можете попробовать смонтировать их вручную из chroot-окружения. `cachy-chroot` проигнорирует сбои и продолжит работу.
+
+### FAQ
+
+- **В: Зачем монтировать дополнительные разделы?**
+  - О: Существует несколько сценариев использования ручного монтирования дополнительных разделов, в том числе:
+    - **Поврежденный или отсутствующий файл fstab:** Вы можете вручную смонтировать необходимые разделы (например, `/boot` или `/home`) для выполнения ремонта или восстановления данных.
+    - **Обновленные UUID разделов:** Если ваша система не загружается из-за того, что вы изменили UUID раздела, вы можете использовать `cachy-chroot` для монтирования разделов и последующего обновления fstab.
+
+### Узнать больше
+
+- [Arch Wiki - chroot](https://wiki.archlinux.org/title/Chroot) (на английском)
+- [Видеодемонстрация cachy-chroot](https://github.com/user-attachments/assets/29360aaf-b775-4cfa-9051-465ad5360ae8)

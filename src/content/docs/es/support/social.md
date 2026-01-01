@@ -7,7 +7,7 @@ Las siguientes redes sociales son mantenidas por el equipo de CachyOS.
 
 Puedes seguir los enlaces para chatear y pedir ayuda.
 
-¡Siéntete libre de unirte!
+¡No dudes en unirte!
 
 - [Discord](<https://discord.gg/cachyos-862292009423470592>)
 - [Reddit](<https://www.reddit.com/r/cachyos>)
