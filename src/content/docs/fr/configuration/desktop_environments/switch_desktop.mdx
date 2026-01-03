@@ -1,0 +1,117 @@
+---
+title: Installer un autre DE/WM avec les paramètres de CachyOS
+description: Guide pour installer un autre DE/WM sur une installation existante de CachyOS en utilisant les paramètres fournis
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+## Points à considérer avant d'installer un autre environnement de bureau
+
+- Avoir plusieurs DEs/WMs installés peut entraîner des conflits, notamment avec les gestionnaires de paramètres, les applications par défaut et les configurations d'apparence telles que les thèmes et les icônes dans les applications GTK ou QT.
+- Les deux pires coupables en matière de conflits sont GNOME et KDE Plasma, car ils utilisent deux boîtes à outils complètement différentes (respectivement GTK et QT) et ont de nombreux services d'arrière-plan en cours d'exécution qui possono interférer avec d'autres DEs/WMs.
+  - Ce fait ne signifie pas que vous ne pouvez pas les avoir installés ensemble, mais soyez simplement conscient que vous pourriez rencontrer quelques problèmes.
+- Surcharge de paquets : les DEs grand public tels que GNOME et KDE Plasma peuvent être accompagnés de centaines de paquets dont vous pourriez ne pas avoir besoin ou ne pas vouloir.
+- Vous pouvez mélanger de nombreux gestionnaires de fenêtres avec différents DEs sans trop de problèmes. Par exemple, vous pouvez avoir KDE Plasma et Hyprland installés ensemble et choisir lequel utiliser à la connexion.
+- Les DEs/WMs proposés par CachyOS contiennent leur propre paquet `-settings`. Par exemple : `cachyos-i3wm-settings`
+  - Qu'est-ce que cela signifie ? Si vous souhaitez installer un autre DE/WM et voulez avoir la même apparence ou le même ensemble de modifications que nous fournissons, vous devez installer le paquet `-settings` correspondant.
+  - Ces paquets placent les fichiers de configuration dans `/etc/skel/`, qui sert de modèle pour les nouveaux comptes utilisateurs.
+  - Important : Pour les utilisateurs existants, ces paramètres **ne sont PAS appliqués automatiquement** pour éviter d'écraser vos configurations personnelles.
+
+## Comment installer un autre DE/WM avec les paramètres de CachyOS
+
+:::note
+Vous avez deux choix lors de l'installation d'un autre DE ou WM :
+1. **Conserver vos fichiers de configuration actuels** et ajuster ou copier manuellement les fichiers depuis `/etc/skel` si nécessaire.
+  - Par exemple : si vous ne voulez que les fichiers de configuration d'i3wm mais souhaitez conserver votre thème GTK actuel, vous pouvez simplement copier les fichiers liés à i3wm depuis `/etc/skel/.config/i3` vers votre répertoire personnel.
+2. **Écraser vos fichiers de configuration actuels** avec les nouveaux de `/etc/skel/`
+  - Cela vous offre l'expérience CachyOS complète, mais remplacera vos paramètres actuels.
+:::
+
+:::tip
+Profitez de l'Arch Wiki pour le DE ou WM respectif pour des informations plus approfondies.
+:::
+
+<Steps>
+1. Créez une sauvegarde de vos fichiers de configuration actuels dans votre répertoire personnel :
+    ```bash
+    mkdir -p ~/config-backup
+    cp -r ~/.config ~/config-backup/
+    cp -r ~/.local ~/config-backup/
+    ```
+2. Désinstallez le paquet `-settings` actuel si vous en avez un d'installé. Par exemple, si vous utilisez KDE, exécutez :
+    ```bash
+    sudo pacman -R cachyos-kde-settings
+    ```
+    :::note
+    La suppression de ce paquet ne supprime aucune de vos configurations DE/WM actuelles. Elle supprime uniquement les fichiers stockés dans `/etc/skel`
+    :::
+3. Installez le nouveau DE/WM ainsi que son paquet `-settings` correspondant. Par exemple, pour installer i3wm :
+    ```bash
+    sudo pacman -Syu i3wm cachyos-i3wm-settings
+    ```
+    :::tip
+    Vous pouvez consulter la liste des DEs/WMs disponibles et leurs paquets `-settings` correspondants dans le [dépôt GitHub des PKGBUILDs de CachyOS](https://github.com/CachyOS/CachyOS-PKGBUILDS)
+    :::
+    Ou en utilisant votre gestionnaire de fichiers de prédilection.
+4. Copiez les nouveaux fichiers de configuration de `/etc/skel` vers votre répertoire personnel :
+    - Par exemple : Le paquet `cachyos-i3wm-settings` contient la configuration pour Kvantum, dunst, GTK, i3, polybar, QT5 et rofi.
+    - Voici comment faire avec un gestionnaire de fichiers :
+        <Steps>
+        1. Ouvrez votre gestionnaire de fichiers (Dolphin, Nautilus, Thunar, etc.)
+        2. Activez l'affichage des fichiers cachés :
+            - **La plupart des gestionnaires de fichiers** : `Ctrl+H` ou via un menu : `Affichage` → `Afficher les fichiers cachés`
+        3. Naviguez vers `/etc/skel` dans le gestionnaire de fichiers.
+        4. Sélectionnez tous les fichiers et dossiers (`Ctrl+A`)
+        5. Copiez-les (`Ctrl+C`)
+        6. Naviguez vers votre répertoire personnel
+        7. Collez les fichiers (`Ctrl+V`)
+        8. Lorsque vous êtes invité à écraser, choisissez :
+            - **"Fusionner"** ou **"Appliquer à tous"** pour les dossiers
+            - **"Remplacer"** pour les fichiers individuels que vous souhaitez mettre à jour
+            :::caution
+            Soyez prudent lors du remplacement de fichiers. Cela écrasera vos configurations actuelles !
+            :::
+        </Steps>
+        - Ou utilisez simplement un terminal si vous êtes à l'aise avec.
+</Steps>
+
+Après avoir installé le nouveau DE/WM et copié les fichiers de configuration, déconnectez-vous de votre session actuelle. Sur l'écran de connexion, sélectionnez le DE/WM nouvellement installé dans les options de session avant de vous reconnecter.
+
+### FAQ
+
+#### Comment revenir à ma configuration DE/WM précédente ?
+
+- Restaurez à partir de la sauvegarde que vous avez créée :
+  ```bash
+  cp -r ~/config-backup/.config/* ~/.config/
+  cp -r ~/config-backup/.local/* ~/.local/
+  ```
+  Ou en utilisant un gestionnaire de fichiers.
+
+#### Qu'en est-il des nouvelles mises à jour du paquet `-settings` ?
+
+- Lorsqu'un paquet `-settings` est mis à jour, les nouveaux fichiers sont placés dans `/etc/skel/`, mais votre configuration utilisateur dans `/home/` reste inchangée. Pour appliquer les mises à jour, vous devrez à nouveau copier manuellement les fichiers mis à jour depuis `/etc/skel/`.
+
+Vous devrez garder un œil sur le dépôt GitHub du DE/WM respectif pour tout changement.
+
+Voici une liste de tous les dépôts des différents DEs et WMs maintenus par CachyOS :
+- [KDE Plasma](https://github.com/CachyOS/cachyos-kde-settings)
+- [Niri](https://github.com/CachyOS/cachyos-niri-settings)
+- [i3](https://github.com/CachyOS/cachyos-i3wm-settings)
+- [Qtile](https://github.com/CachyOS/cachyos-qtile-settings)
+- [Wayfire](https://github.com/CachyOS/cachyos-wayfire-settings)
+
+Tous les autres DE et WM que nous proposons lors de l'installation de CachyOS n'ont pas leur propre paquet `-settings` pour le moment, ce qui signifie qu'ils sont simplement les versions de base.
+
+#### Puis-je garder plusieurs paquets de paramètres DE/WM installés ?
+
+- Oui et non. Vous pouvez avoir plusieurs DEs/WMs installés, mais il est recommandé de n'avoir qu'un seul paquet `-settings` installé à la fois pour éviter les conflits dans `/etc/skel/`. Sinon, pacman pourrait se plaindre de conflits de fichiers en essayant d'installer un autre paquet `-settings`.
+
+#### Que sont les "Paramètres CachyOS" ?
+
+Les "Paramètres CachyOS" sont des paquets de configuration pratiques pour divers environnements de bureau et gestionnaires de fenêtres. Ils fournissent des paramètres préconfigurés, des thèmes et des ajustements en fonction du DE/WM que vous choisissez.
+
+Lorsque vous installez l'un de ces paquets, il installera également automatiquement des dépendances supplémentaires qui ne font pas partie du DE/WM de base, telles que des thèmes, des icônes, des fonds d'écran et des applications additionnelles. Par exemple, dans `cachyos-i3wm-settings`, nous installons `rofi`, `dunst`, `picom`, `lxappearance` et plus encore.
