@@ -1,93 +1,83 @@
 ---
-title: Politique d’utilisation du dépôt CachyOS
+title: Politique d'utilisation du dépôt
 ---
 
-# Politique d’utilisation du dépôt CachyOS
+Politique d'utilisation du dépôt CachyOS
 
 ## 1. Introduction
 
-Le dépôt CachyOS est conçu pour fournir des paquets optimisés et de haute qualité aux utilisateurs des distributions **CachyOS** et **ArchLinux**.  
-Cette politique définit les termes et conditions d’utilisation du dépôt CachyOS.
+Le dépôt CachyOS est conçu pour fournir des paquets optimisés et de haute qualité aux utilisateurs des distributions CachyOS et ArchLinux. Cette politique décrit les termes et conditions d'utilisation du dépôt CachyOS.
 
-## 2. Clause de non-responsabilité
+## 2. Exclusion de garantie
 
-Sauf si la loi applicable l’exige ou si un accord écrit en dispose autrement, l’équipe CachyOS fournit le dépôt **« TEL QUEL »**, **SANS GARANTIE OU CONDITION D’AUCUNE SORTE**, explicite ou implicite, y compris, sans s’y limiter,  
-toute garantie ou condition de **TITRE, D’ABSENCE DE CONTREFAÇON, DE QUALITÉ MARCHANDE ou D’ADÉQUATION À UN USAGE PARTICULIER**.  
-Vous, en tant qu’utilisateurs du dépôt, êtes seuls responsables de déterminer la pertinence de son utilisation et assumez  
-tous les risques associés à l’exercice de ces permissions.
+Sauf si requis par la loi applicable ou convenu par écrit, l'équipe de CachyOS fournit le dépôt sur une base **« EN L'ÉTAT », SANS GARANTIES NI CONDITIONS D'AUCUNE SORTE**, expresses ou implicites, y compris, sans s'y limiter,
+toute garantie ou condition de **TITRE, DE NON-CONTREFAÇON, DE QUALITÉ MARCHANDE ou D'ADÉQUATION À UN USAGE PARTICULIER**. En tant qu'utilisateurs du dépôt, vous êtes seuls responsables de déterminer la pertinence de l'utilisation du dépôt et assumez
+tous les risques associés à l'exercice de vos permissions.
 
 ## 3. Limitation de responsabilité
 
-En aucun cas et selon aucune théorie juridique, que ce soit en responsabilité délictuelle (y compris la négligence), contractuelle ou autre — sauf si la loi applicable l’exige (comme dans le cas d’actes délibérés ou de négligence grave) ou si un accord écrit en dispose autrement —,  
-l’équipe CachyOS ne pourra être tenue responsable envers les utilisateurs du dépôt pour tout dommage, y compris tout dommage direct, indirect, spécial, accessoire ou consécutif résultant de cette politique ou de l’utilisation, ou de l’impossibilité d’utiliser le dépôt  
-(y compris, mais sans s’y limiter, les pertes de clientèle, les interruptions de travail, les défaillances ou dysfonctionnements informatiques, ou tout autre dommage ou perte commerciale), même si l’équipe CachyOS a été informée de la possibilité de tels dommages.
+En aucun cas et sous aucune théorie juridique, que ce soit en matière délictuelle (y compris la négligence), contractuelle ou autre, sauf si requis par la loi applicable (tels que les actes délibérés et de négligence grave) ou convenu par écrit, l'équipe de CachyOS
+ne sera responsable envers les utilisateurs du dépôt pour des dommages, y compris tout dommage direct, indirect, spécial, accessoire ou consécutif de quelque nature que ce soit résultant de cette politique ou de l'utilisation ou de l'incapacité à utiliser le dépôt
+(y compris, mais sans s'y limiter, les dommages pour perte de clientèle, arrêt de travail, panne ou dysfonctionnement d'ordinateur, ou tout autre dommage ou perte commerciale), même si l'équipe de CachyOS a été informée de la possibilité de tels dommages.
 
 ## 4. Utilisateurs pris en charge
 
-Le dépôt CachyOS (et ses miroirs) fournit un support exclusivement aux utilisateurs suivants :
+Le dépôt CachyOS (et ses miroirs) offre un support exclusivement aux utilisateurs suivants :
 
-- Utilisateurs de **CachyOS**  
-- Utilisateurs de **ArchLinux**
+- Utilisateurs de CachyOS
+- Utilisateurs d'ArchLinux
 
 ## 5. Utilisateurs non pris en charge
 
-Les utilisateurs d’autres distributions **NE SONT PAS PRIS EN CHARGE** et il est **FORTEMENT DÉCONSEILLÉ** d’utiliser le dépôt CachyOS (et ses miroirs).  
-Cela inclut, sans s’y limiter :
+L'utilisation du dépôt CachyOS (et de ses miroirs) par les utilisateurs d'autres distributions n'est **PAS PRISE EN CHARGE** et est **FORTEMENT DÉCONSEILLÉE**. Cela inclut, sans s'y limiter :
 
-- Manjaro  
-- EndeavourOS  
-- ArcoLinux  
-- Parabola  
-- Tout autre utilisateur d’une distribution Linux non explicitement mentionnée dans la section « Utilisateurs pris en charge ».
+- Manjaro
+- EndeavourOS
+- ArcoLinux
+- Parabola
+- Les utilisateurs de toute autre distribution Linux non explicitement mentionnée dans la section « Utilisateurs pris en charge ».
 
-## 6. Redistribution du dépôt
+## 5. Redistribution du dépôt
 
-Cette politique définit la « redistribution » comme le fait d’inclure le dépôt CachyOS (et ses miroirs) ou les paquets obtenus depuis celui-ci  
-dans une image de système d’exploitation distribuée ou dans des sysroots.  
-La redistribution inclut également les comportements des **distributions Linux** qui permettent aux utilisateurs d’activer le dépôt CachyOS via leurs outils,  
-ou de fournir des documents officiels ou distribués guidant les utilisateurs à activer le dépôt CachyOS (et ses miroirs).  
-Les utilisateurs finaux et les miroirs tiers **ne sont pas concernés** par cette politique de redistribution.
+Cette politique définit la « redistribution » comme les comportements d'inclusion du dépôt CachyOS (et de ses miroirs) ou des paquets obtenus depuis le dépôt CachyOS dans le cadre de l'image distribuée du système d'exploitation ou des sysroots.
+La redistribution inclut également les comportements des **distributions Linux** visant à fournir les utilitaires permettant d'activer le dépôt CachyOS au choix de l'utilisateur, ou à fournir tout document distribué ou officiel qui guide les utilisateurs à activer le dépôt CachyOS
+(et ses miroirs) par leurs propres moyens. Les utilisateurs finaux et les miroirs tiers ne sont pas soumis à la politique de redistribution.
 
-La redistribution du dépôt CachyOS est **exclusivement autorisée** à l’équipe CachyOS.
+La redistribution du dépôt CachyOS est exclusivement autorisée à l'équipe CachyOS uniquement.
 
-## 7. Redistribution interdite
+## 6. Redistribution interdite
 
-La redistribution du dépôt CachyOS (et de ses miroirs) dans toute distribution Linux non autorisée, y compris d’autres distributions basées sur Arch, est **STRICTEMENT INTERDITE**.  
-Cela inclut, sans s’y limiter :
+La redistribution du dépôt CachyOS (et de ses miroirs) dans toute distribution Linux non autorisée, y compris d'autres distributions basées sur Arch, est **STRICTEMENT INTERDITE**. Cela inclut, sans s'y limiter :
 
-- Manjaro  
-- EndeavourOS  
-- ArcoLinux  
-- Parabola  
+- Manjaro
+- EndeavourOS
+- ArcoLinux
+- Parabola
 - Toute autre distribution Linux non explicitement mentionnée dans la section « Redistribution du dépôt ».
 
-## 8. Miroirs
+## 7. Miroir
 
-Il est permis de créer des miroirs du dépôt via **rsync** et **syncthing**.  
-Les miroirs tiers sont autorisés à héberger le dépôt et à le rendre accessible via un serveur web, à condition de garantir que les données du dépôt restent inchangées.
+Il est autorisé de créer un miroir du dépôt via rsync et syncthing. Les miroirs tiers sont autorisés à mettre en miroir le dépôt et à fournir un serveur web pour celui-ci, tant qu'ils s'assurent que les données du dépôt restent inchangées.
 
-## 9. Conformité et surveillance
+## 8. Conformité et surveillance
 
-Nous nous réservons le droit de surveiller l’utilisation de notre dépôt afin de garantir le respect de cette politique.  
-Toute utilisation non autorisée peut entraîner la révocation de l’accès.
+Nous nous réservons le droit de surveiller l'utilisation de notre dépôt pour assurer la conformité avec cette politique. Toute utilisation non autorisée peut entraîner la révocation de l'accès.
 
-## 10. Signalement des violations
+## 9. Signaler les violations
 
-Si vous suspectez une violation de cette politique, veuillez la signaler à :  
-**[admin@cachyos.org](mailto:admin@cachyos.org)**
+Si vous soupçonnez une violation de cette politique, veuillez nous le signaler à [admin@cachyos.org].
 
-## 11. Modifications de la politique
+## 10. Modifications de la politique
 
-CachyOS se réserve le droit de modifier cette politique à tout moment.  
-Les changements seront communiqués via nos canaux officiels.
+CachyOS se réserve le droit de modifier cette politique à tout moment. Les changements seront communiqués via nos canaux officiels.
 
-## 12. Informations de contact
+## 11. Coordonnées
 
 Pour toute question ou préoccupation concernant cette politique, veuillez nous contacter à :
 
-- Email : **<admin@cachyos.org>**  
-- Site web : **<https://cachyos.org>**
+- E-mail : <admin@cachyos.org>
+- Site web : <https://cachyos.org>
 
-## 13. Acceptation
+## 12. Reconnaissance
 
 En utilisant le dépôt CachyOS (et ses miroirs), vous reconnaissez avoir lu, compris et accepté de vous conformer à cette politique.
