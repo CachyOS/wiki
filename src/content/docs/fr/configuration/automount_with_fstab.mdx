@@ -1,0 +1,217 @@
+---
+title: Montage automatique de lecteurs supplémentaires au démarrage via fstab
+description: Montez des lecteurs statiques supplémentaires au démarrage en utilisant le fichier situé dans /etc/fstab
+---
+
+Ce tutoriel décrit les bases de l'utilisation du fichier fstab situé dans /etc/ afin de monter des lecteurs statiques au démarrage. Il explique brièvement comment trouver l'UUID d'une partition ou d'un lecteur, ce que font certaines options, et propose des lectures complémentaires si les informations fournies s'avèrent insuffisantes.
+
+## Prérequis
+
+- Accès root ou sudo
+
+## Ajout d'entrées dans /etc/fstab
+
+:::note[NTFS sous Linux]
+Le système de fichiers NTFS peut être instable sous Linux, que ce soit avec le pilote ntfs3 ou ntfs-3g. Utilisez-le à vos propres risques. Pour une meilleure stabilité et de meilleures performances, envisagez des systèmes de fichiers natifs de Linux comme ext4, xfs ou btrfs.
+:::
+
+### 1. Lister les UUID de vos partitions
+
+```sh title="Ouvrez un terminal et exécutez la commande suivante"
+lsblk -f
+```
+
+```text title="Exemple de sortie"
+# NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+# zram0                                                                              [SWAP]
+# nvme0n1
+# ├─nvme0n1p1 vfat   FAT32       E04D-9F05
+# ├─nvme0n1p2
+# ├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
+# ├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
+# ├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
+# └─nvme0n1p6 ntfs
+```
+
+Dans notre exemple, nous savons que nous voulons monter une partition Windows, qui est en ntfs. Nous savons aussi qu'environ la moitié de son espace est disponible. Par conséquent, nous pouvons déterminer que la partition que nous voulons monter est `nvme0n1p3` et que son UUID est `08A24E90A24E81E4`, avec un système de fichiers `ntfs` dans cet exemple.
+
+### 2. Identifier votre partition
+
+Souvent, `lsblk -f` vous fournira toutes les informations nécessaires pour monter votre disque via /etc/fstab à ce stade. Si vous n'êtes toujours pas sûr de la partition correcte, vous pouvez exécuter la commande suivante :
+
+```sh
+sudo fdisk -l
+```
+
+```text title="Exemple de sortie"
+# Device              Start        End    Sectors  Size Type
+# /dev/nvme0n1p1       2048     206847     204800  100M EFI System
+# /dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
+# /dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
+# /dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
+# /dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
+# /dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
+```
+
+Nous connaissons déjà notre UUID dans cet exemple. Cependant, `fdisk -l` peut rendre les choses un peu plus claires en nous montrant la taille exacte de la partition (1.4T) ainsi que son type (Microsoft basic data).
+
+Cela devrait nous indiquer sans le moindre doute que la partition que nous voulons est `nvme0n1p3` avec un UUID de `08A24E90A24E81E4` comme décrit précédemment. Nous le savions déjà, mais maintenant nous en sommes absolument certains.
+
+Une fois que vous êtes sûr d'avoir trouvé la bonne partition, copiez l'UUID. La copie depuis l'émulateur de terminal se fait généralement avec `ctrl+shift+C`.
+
+### 3. Ajouter une entrée dans /etc/fstab
+
+Maintenant que nous avons obtenu l'UUID de notre partition, il est temps d'ouvrir le fichier fstab.
+
+N'hésitez pas à utiliser votre éditeur de texte préféré. Dans cet exemple, nous utiliserons nano. Pour éditer le fichier fstab, il faut l'ouvrir en tant que root :
+
+```sh
+sudo nano /etc/fstab
+```
+
+À l'aide des touches fléchées, naviguez jusqu'en bas du fichier fstab, puis créez notre nouvelle entrée sur une nouvelle ligne vide :
+
+```sh
+UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000 0 0
+```
+
+Le détail de cette entrée est le suivant :
+
+- `UUID=08A24E90A24E81E4` est le système de fichiers que nous voulons monter, identifié par son UUID. Il existe d'autres méthodes pour identifier votre système de fichiers, bien que l'UUID tende à être la plus sûre. D'autres méthodes sont listées [ici](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems).
+
+- `/media/windows` est le point de montage de notre lecteur. La norme de la hiérarchie des systèmes de fichiers Linux ([Linux Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)) stipule que `/media/` est l'emplacement approprié pour monter les lecteurs amovibles. `windows` indique le répertoire dans lequel nous souhaitons monter notre lecteur. Chaque lecteur que nous voulons monter aura besoin de son propre répertoire.
+
+- `ntfs3` est le type de système de fichiers à utiliser. Nous utilisons explicitement le pilote de noyau ntfs3 dans notre exemple. D'autres exemples seraient `ext4`, `xfs` ou similaire. Cette déclaration explicite du type de système de fichiers peut être remplacée par `auto` pour permettre à la commande mount de faire sa meilleure estimation.
+
+- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000` : Ce sont les options de montage :
+
+  - `defaults` : un ensemble d'options standard incluant `rw, suid, dev, exec, auto, nouser, et async`.
+
+  - `nofail` : permet au processus de démarrage de continuer même si ce montage échoue.
+
+  - `uid=1000` et `gid=1000` : définit l'utilisateur et le groupe propriétaires des fichiers montés à l'utilisateur et au groupe avec l'ID 1000.
+
+  - `rw` : monte le système de fichiers en lecture-écriture.
+
+  - `user` : permet à un utilisateur non-root de monter le système de fichiers.
+
+  - `exec` : permet l'exécution de binaires sur le système de fichiers monté.
+
+  - `umask=000` : définit le masque de permission des fichiers pour autoriser les permissions de lecture, d'écriture et d'exécution pour tout le monde.
+
+  - `le premier 0` (dump) est généralement obsolète dans les systèmes modernes. Laisser cette valeur à 0 ne posera aucun problème. N'hésitez pas à en lire plus à ce sujet [ici](https://linux.die.net/man/8/dump).
+
+  - `le second 0` définit l'ordre des vérifications du système de fichiers au démarrage. Pour une partition racine, cela devrait être 1, sauf si votre système de fichiers racine est btrfs, qui devrait alors être réglé sur 0. Tous les other systèmes de fichiers dans votre fstab devraient être soit 0 (désactivé) soit 2. Plus d'informations [ici](https://man.archlinux.org/man/fsck.8).
+
+Pour un aperçu plus détaillé de chaque option, consultez ces deux pages de manuel : [page de manuel de fstab](https://man7.org/linux/man-pages/man5/fstab.5.html) et [page de manuel de mount](https://man7.org/linux/man-pages/man8/mount.8.html).
+
+#### Plus d'infos
+
+Par ailleurs, toutes les options après la déclaration du type de système de fichiers sont facultatives si vous ne les modifiez pas par rapport aux valeurs par défaut.
+
+Ainsi
+
+`UUID=<UUID de la partition> /media/foo somefs`
+
+et
+
+`UUID=<UUID de la partition> /media/foo somefs defaults 0 0`
+
+sont équivalents. `somefs` suivi de rien est implicitement `somefs defaults 0 0`.
+
+### 4. Finalisation
+
+Si vous souhaitez monter le lecteur pour lequel vous venez de créer une entrée, vous devez exécuter ce qui suit :
+
+```sh
+sudo systemctl daemon-reload
+```
+
+puis :
+
+```sh
+sudo mount -a
+```
+
+Votre lecteur devrait maintenant apparaître sous `/media/windows` et y apparaîtra à chaque redémarrage.
+
+```sh
+ls /media/windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+# 'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
+ ```
+
+ Si vous souhaitez créer un lien vers votre lecteur nouvellement monté dans votre répertoire personnel, vous pouvez exécuter la commande suivante :
+
+ ```sh
+ ln -s /media/windows ~/Windows
+ ```
+
+ Pour montrer que cela a fonctionné :
+
+ ```sh
+ ls ~/Windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+#'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
+ ```
+
+## tl;dr (résumé)
+
+- Trouvez l'**UUID** de votre partition
+
+```sh
+lsblk -f
+```
+
+- Ouvrez `/etc/fstab`
+
+```sh
+sudo nano /etc/fstab
+```
+
+- Créez une entrée à la fin du fichier
+
+```sh
+UUID=<UUID de la partition> /media/foo somefs defaults 0 0
+```
+
+En remplaçant `<UUID de la partition>`, `foo`, et `somefs` par votre UUID, votre répertoire et votre système de fichiers (ex: ext4), et en ajoutant toute autre option que vous pourriez vouloir après defaults, comme `_netdev` pour un NAS, ou `nofail` pour tout lecteur non critique.
+
+- Rechargez votre daemon
+
+```sh
+sudo systemctl daemon-reload
+```
+
+- Montez votre lecteur
+
+```sh
+sudo mount -a
+```
+
+Ce lecteur est maintenant monté, et le sera désormais également au démarrage.
+
+## Lectures complémentaires
+
+- [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS on /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Manuel pour dump](<https://linux.die.net/man/8/dump>)
+- [Manuel pour fsck](https://man.archlinux.org/man/fsck.8)
+- [Page de manuel pour fstab](https://man.archlinux.org/man/fstab.5.en)
+- [Entrée du Wiki Arch Linux pour fstab](https://wiki.archlinux.org/title/Fstab)

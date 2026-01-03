@@ -1,0 +1,172 @@
+---
+title: Configuration du Secure Boot
+description: Configurer le secure boot avec sbctl après avoir installé CachyOS
+---
+ 
+import ImageComponent from '~/components/image-component.astro';
+
+# sbctl
+
+[sbctl](https://github.com/Foxboron/sbctl) est un gestionnaire de clés Secure Boot convivial, capable de configurer le Secure Boot,
+offrant des fonctionnalités de gestion des clés et assurant le suivi des fichiers qui doivent être signés dans la chaîne de démarrage.
+
+## Installation de sbctl
+
+```bash
+sudo pacman -S sbctl
+```
+
+## Pré-configuration
+
+### Gestionnaire de démarrage GRUB
+
+Si vous utilisez GRUB, exécutez la commande suivante pour activer la prise en charge du Secure Boot sur GRUB en utilisant les clés CA.
+
+```bash
+sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
+```
+
+:::note
+Charger des modules inutiles dans votre gestionnaire de démarrage peut présenter un risque de sécurité.
+N'exécutez cette commande que si vous avez réellement besoin du Secure Boot.
+:::
+
+### Accéder au mode de configuration (Setup Mode) dans l'UEFI
+Tout d'abord, nous devons aller dans les paramètres du firmware et régler le mode Secure Boot sur "Setup Mode". Vous pouvez redémarrer
+depuis un système déjà en cours d'exécution vers les paramètres du firmware avec la commande suivante.
+
+```bash
+systemctl reboot --firmware-setup
+```
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/ideapad-bios-secure-boot.jpg')} />
+
+Voici à quoi ressemble le BIOS sur un Lenovo Ideapad 5 Pro. Réinitialisez en mode configuration ou restaurez les clés d'usine et redémarrez
+dans le système.
+
+Cependant, certaines cartes mères MSI n'ont pas de mode de configuration. Pour obtenir le même effet, suivez les deux étapes de l'image ci-dessous :
+<br />
+<ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
+
+## Configuration de sbctl
+
+```bash
+sudo sbctl status # Si le mode de configuration est activé, nous pouvons passer à l'étape suivante
+Installed:      ✘ sbctl is not installed
+Setup Mode:     ✘ Enabled
+Secure Boot     ✘ Disabled
+
+sudo sbctl create-keys # Créez vos clés Secure Boot personnalisées
+Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Creating secure boot keys...✔
+Secure boot keys created!
+
+sudo sbctl enroll-keys --microsoft # Enregistrez vos clés avec les clés de Microsoft
+Enrolling keys to EFI variables...✔
+Enrolled keys to the EFI variables!
+
+sudo sbctl status
+# sbctl devrait maintenant être installé, nous pouvons passer à la signature des images du noyau et du gestionnaire de démarrage
+Installed:      ✔ sbctl is installed
+Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Setup Mode:     ✔ Disabled
+Secure Boot     ✘ Disabled
+Vendor Keys:    microsoft
+```
+
+## Signature de l'image du noyau et du gestionnaire de démarrage
+
+CachyOS fournit [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign),
+un script qui prend la liste des fichiers à signer à partir de `sudo sbctl verify` et les signe tous.
+Les utilisateurs de Limine devraient passer directement à la section [Limine](#limine).
+
+```bash
+sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is not signed
+✘ /boot/EFI/BOOT/BOOTX64.EFI is not signed
+✘ /boot/EFI/systemd/systemd-bootx64.efi is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is not signed
+
+sudo sbctl-batch-sign
+
+sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is signed
+✔ /boot/EFI/BOOT/BOOTX64.EFI is signed
+✔ /boot/EFI/systemd/systemd-bootx64.efi is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
+```
+
+:::caution
+Sur les systèmes avec des partitions `/boot` et `/boot/efi` séparées, `sbctl` peut ne scanner que les binaires EFI dans `/boot/efi`.
+Cela empêche la détection des images de noyau se trouvant dans `/boot`. `sbctl-batch-sign` contourne ce problème en scannant **toujours**
+`/boot` à la recherche de fichiers `vmlinuz-*`.
+:::
+
+Maintenant que tous les fichiers sont signés, nous pouvons redémarrer dans les paramètres de l'UEFI et activer le Secure Boot.
+Notez qu'il s'agit d'un processus unique, car la signature des fichiers avec l'option `-s` enregistrera ces fichiers dans la base de données de `sbctl`.
+`sbctl` est livré avec un [hook pacman](https://wiki.archlinux.org/title/Pacman_hook) ce qui signifie qu'il signera automatiquement
+tous les nouveaux fichiers lors d'une mise à jour du noyau ou du gestionnaire de démarrage.
+
+### systemd-boot
+
+CachyOS utilise `systemd-boot-update.service` fourni par systemd pour mettre à jour le gestionnaire de démarrage au redémarrage. Cela signifie que le hook pacman
+de `sbctl` ne signera **pas** les binaires EFI mis à jour. Pour contourner ce problème, nous pouvons signer le gestionnaire de démarrage directement.
+
+```sh
+sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+```
+
+### Limine
+
+Limine est un gestionnaire de démarrage spécial qui permet de vérifier le hachage des images du noyau
+et d'autres fichiers que Limine utilise au démarrage. Si cette option est activée, toute
+sorte de configuration manuelle effectuée par l'utilisateur, par ex. la signature de l'image via
+`sbctl-batch-sign`, modifiera le hachage des fichiers correspondants et
+fera échouer la vérification de la somme de contrôle de Limine.
+
+Cependant, la signature de ces fichiers n'est pas nécessaire avec Limine car il dispose d'un
+processus de démarrage spécial qui contourne le chaînage EFI et les vérifications de signature. Les seuls binaires
+EFI qui doivent être signés sont ceux de Limine lui-même.
+
+```sh
+# Utilisez limine-enroll-config pour signer le binaire EFI de Limine
+# Ceci utilise sbctl en arrière-plan
+sudo limine-enroll-config
+sudo limine-update
+```
+
+## Vérifier que le Secure Boot est activé
+
+Pour vérifier que le Secure Boot est bien activé, vous pouvez exécuter l'une des commandes suivantes :
+
+```bash
+sudo sbctl status
+Installed:      ✓ sbctl is installed
+Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Setup Mode:     ✓ Disabled
+Secure Boot:    ✓ Enabled
+Vendor Keys:    microsoft
+
+bootctl
+System:
+      Firmware: UEFI 2.80 (INSYDE Corp. 28724.16435)
+ Firmware Arch: x64
+   Secure Boot: enabled (user)
+  TPM2 Support: yes
+  Measured UKI: no
+  Boot into FW: supported
+```
+
+## Liens et crédits
+
+- [Le Wiki Arch](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
+a servi de base à ce guide. La plupart des informations ici en ont été tirées.
+- [sbctl](https://github.com/Foxboron/sbctl) - Ce guide facile pour activer le support du Secure Boot n'aurait pas été possible sans
+le travail incroyable accompli pour créer ce logiciel.
+- [Improving the Secure Boot Experience by Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) - Article de blog par Morten
+"Foxboron" Linderud sur la complexité de l'expérience Secure Boot avant `sbctl`.

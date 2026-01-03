@@ -1,0 +1,253 @@
+---
+title: Accélération Matérielle des Navigateurs Basés sur Chromium
+description: Configurez l'accélération matérielle pour le décodage/encodage vidéo dans les navigateurs basés sur Chromium sur CachyOS. Inclut la configuration pour GPU AMD et un modèle pour d'autres GPU/navigateurs.
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+Ce guide explique comment activer l'accélération matérielle dans les navigateurs basés sur Chromium sur CachyOS. Cela délègue les tâches vidéo/graphiques à votre GPU, améliorant ainsi les performances.
+
+## Prérequis
+
+**Requis :**
+* **Navigateur basé sur Chromium :** (ex: Chrome, Brave, Ungoogled Chromium, Edge)
+* **Pilotes/API GPU :** Pilotes Mesa (AMD/Intel) ou NVIDIA à jour, avec Vulkan/VA-API/VDPAU configurés.
+
+**Optionnel :**
+
+* **amdgpu_top :** Installez `amdgpu_top` depuis le dépôt via le gestionnaire de paquets si vous souhaitez surveiller l'activité du GPU AMD depuis le terminal.
+* **nvtop :** (GPU Intel uniquement) Installez `nvtop` (Lunar Lake) et `intel-gpu-tools` (Pré-Lunar Lake) via le gestionnaire de paquets octopi si vous souhaitez surveiller l'activité du GPU Intel depuis le terminal.
+
+
+## Contribution
+
+Ce guide est extensible. Si vous avez une configuration d'accélération matérielle fonctionnelle pour un GPU et un navigateur basé sur Chromium spécifiques, contribuez en ajoutant une nouvelle section sous "Configurations GPU & Navigateur". Incluez :
+
+* **Nom du navigateur**
+* **Modèle du GPU**
+* **Flags :** Contenu de `~/.config/[navigateur]-flags.conf`.
+* **Chemin du fichier :** Chemin complet vers le fichier de flags.
+* **Notes (Optionnel) :** Pilotes, paquets ou spécificités de configuration clés.
+
+## Étapes de configuration
+
+<Steps>
+
+1.  Identifier le fichier de flags : Localisez le chemin du fichier de flags de votre navigateur dans "Configurations GPU & Navigateur".
+2.  Modifier le fichier de flags : Ouvrez/créez le fichier en utilisant `nano` (ou votre éditeur de texte préféré comme `micro`, `vim`).
+
+    ```bash
+    nano [CHEMIN_VERS_VOTRE_FICHIER_DE_FLAGS_NAVIGATEUR]
+    # Exemple : nano ~/.config/chrome-flags.conf
+    ```
+
+3.  Ajouter les flags : Collez les flags pertinents pour votre GPU/navigateur dans le fichier.
+4.  Enregistrer & Fermer.
+5.  Redémarrer le navigateur : Fermez toutes les instances du navigateur et relancez-le.
+6.  Vérifier : Naviguez vers `chrome://gpu` (ou `brave://gpu`, `edge://gpu`, etc.). Confirmez le statut "Hardware accelerated" (Accéléré matériellement) sous "Video Acceleration Information" et "Graphics Feature Status".
+
+</Steps>
+
+## Comment vérifier l'accélération matérielle vidéo
+
+<Tabs>
+
+<TabItem label='GPU AMD (amdgpu_top)'>
+
+<Steps>
+
+1.  Ouvrez un terminal et exécutez la commande :
+    ```bash
+    amdgpu_top
+    ```
+2.  Commencez à lire une vidéo dans votre navigateur (par ex., sur YouTube).
+3.  Observez la section `media` dans `amdgpu_top`. Vous devriez y voir une certaine utilisation, indiquant que le moteur multimédia de votre GPU est actif. S'il reste à 0% pendant la lecture vidéo, l'accélération matérielle n'est peut-être pas pleinement engagée pour le décodage.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='GPU Intel (nvtop)'>
+
+<Steps>
+
+1.  Ouvrez un terminal et exécutez la commande :
+    ```bash
+    sudo nvtop
+    ```
+2.  Commencez à lire une vidéo dans votre navigateur (par ex., sur YouTube).
+3.  Observez le pourcentage `ENC/DEC` dans `nvtop`, le pourcentage devrait augmenter si le décodage vidéo fonctionne matériellement.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='GPU Intel (intel_gpu_tools)'>
+
+<Steps>
+
+1.  Ouvrez un terminal et exécutez la commande :
+
+    ```bash
+    sudo intel_gpu_top
+    ```
+
+    Note : Certains GPU Intel plus récents, comme ceux de Lunar Lake, n'exposent plus les compteurs de performance du GPU avec `intel_gpu_top`, utilisez `nvtop` pour ces systèmes.
+
+2.  Commencez à lire une vidéo dans votre navigateur (par ex., sur YouTube).
+3.  Observez le pourcentage de `Video` et `VideoEnhance` dans intel_gpu_top, le pourcentage devrait augmenter si le décodage vidéo fonctionne matériellement.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Outils de développement du navigateur">
+
+<Steps>
+
+1.  Ouvrez votre navigateur basé sur Chromium.
+
+2.  Commencez à lire une vidéo (par ex., sur YouTube ou un fichier local).
+
+3.  Ouvrez les Outils de développement : Appuyez sur `F12` ou `Ctrl+Maj+I`.
+
+4.  Naviguez jusqu'à l'onglet **Media**. Si vous ne le voyez pas, cliquez sur les trois points (`...`) ou `>>` (Plus d'onglets) dans la barre d'outils des Outils de développement, puis sélectionnez `Media`.
+
+5.  Dans la section "Lecteurs" ("Players") à gauche, cliquez sur l'entrée correspondant à votre vidéo.
+
+6.  Dans le panneau principal, faites défiler jusqu'à la section **Décodeur vidéo** ("Video Decoder").
+
+7.  Recherchez l'étiquette `Décodeur matériel` ("Hardware decoder"). Sa valeur devrait être `true`. Si elle est `false` ou affiche un nom de décodeur logiciel (par ex., `FFmpegVideoDecoder`, `VpxVideoDecoder`, `Dav1dVideoDecoder`), l'accélération matérielle n'est pas active pour cette vidéo.
+
+</Steps>
+
+</TabItem>
+
+</Tabs>
+
+## Configurations GPU & Navigateur
+
+### AMD Radeon RX 6900 XT (Google Chrome)
+
+*   **Navigateur :** Google Chrome
+
+*   **GPU :** AMD Radeon RX 6900 XT
+
+*   **Fichier de flags :** `~/.config/chrome-flags.conf`
+
+```bash
+--use-gl=angle
+--use-angle=vulkan
+--enable-features=Vulkan,VulkanFromANGLE,DefaultANGLEVulkan,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
+--ozone-platform-hint=x11
+```
+
+**Notes :** Utilise Vulkan (via ANGLE) et VA-API. `--ozone-platform-hint=x11` peut être utile même sur Wayland pour certains chemins d'accélération.
+
+### Nvidia RTX 4090 (Vivaldi)
+
+*   **Navigateur :** Vivaldi
+
+*   **GPU :** Nvidia RTX 4090
+
+*   **Fichier de flags :** `~/.config/vivaldi-stable.conf`
+
+```bash
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL
+```
+
+*   **Fichier de flags :** `/usr/share/applications/vivaldi-stable.desktop`
+
+```bash
+# Conservez toutes les autres lignes inchangées
+# Vous ne devez modifier que cette entrée Exec= dans la section '[Desktop Entry]'
+Exec=/usr/bin/vivaldi-stable --enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL %U
+```
+
+**Notes :**
+
+Vous ne devriez avoir besoin d'appliquer qu'une seule de ces modifications de fichier de conf, mais le faire sur les deux ne devrait pas causer de problèmes.
+
+Alternativement, vous pouvez faire ce qui suit pour KDE :
+1.  Supprimez tous les raccourcis Vivaldi du gestionnaire de tâches / de la barre des tâches.
+2.  Recherchez `Vivaldi` dans la liste du Lanceur d'applications.
+3.  Faites un clic droit sur l'entrée dans le Lanceur d'applications et sélectionnez `Modifier l'application...`
+4.  Dans la section `Arguments de la ligne de commande`, ajoutez les arguments suivants avant le dernier argument `%U` :
+```
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL
+```
+5. Lancez Vivaldi et épinglez le processus à votre gestionnaire de tâches / barre des tâches.
+
+### AMD Radeon RX 550 (UnGoogled Chromium)
+
+*   **Navigateur :** UnGoogled Chromium
+
+*   **GPU :** AMD Radeon RX 550
+
+*   **Fichier de flags :** `~/.config/chromium-flags.conf`
+
+```bash
+--enable-wayland-ime
+--ozone-platform=wayland
+--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,WaylandSessionManagement,WaylandTextInputV3,WaylandUiScale,WaylandWindowDecorations
+```
+
+**Notes :**
+
+Si vous utilisez X11, utilisez ceci :
+```bash
+--ozone-platform=x11
+--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder
+```
+
+### Nvidia RTX 5070 TI (Brave)
+
+*   **Navigateur :** Brave
+
+*   **GPU :** Nvidia RTX 5070 TI
+
+*   **Fichier de flags :** `~/.config/brave-flags.conf`
+
+```bash
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks
+```
+
+**Notes :**
+- Le décodage **et** l'encodage vidéo sont affichés comme `Accéléré matériellement` (`Hardware accelerated`) sur `brave://gpu`.
+- Parfois, l'inspection de l'onglet `media` sur une vidéo YouTube montrera l'accélération matérielle, parfois non.
+
+
+---
+
+### Modèle pour contribuer
+
+### [Votre Navigateur] - [Votre Modèle de GPU] (Contribué par [Votre Nom/Pseudo])
+
+*   **Navigateur :** [ex: Brave, Ungoogled Chromium, Microsoft Edge, Vivaldi, Opera, Chromium]
+
+*   **GPU :** [ex: NVIDIA GeForce RTX 3080, Intel Iris Xe]
+
+*   **Chemin du fichier de flags :** (Crucial, varie selon le navigateur !)
+
+    *   Chemins `.conf` courants :
+
+        *   Chromium : `~/.config/chromium-flags.conf`
+
+        *   Brave Browser : `~/.config/brave-flags.conf`
+
+        *   Ungoogled Chromium : `~/.config/ungoogled-chromium-flags.conf`
+
+    *   Modification du fichier `.desktop` : Certains navigateurs (Brave, Edge, Vivaldi, Opera) peuvent nécessiter de modifier la ligne `Exec=` dans leur fichier `.desktop` (copiez-le d'abord de `/usr/share/applications/` vers `~/.local/share/applications/`).
+
+Contenu des flags (pour fichier `.conf` ou ligne `Exec=`) :
+
+```bash
+# Collez vos flags ici.
+# Pour les fichiers .desktop, les flags sont séparés par des espaces après l'exécutable.
+```
+
+**Notes (Optionnel) :**
+
+*   Pilotes requis (ex: `nvidia-dkms`, `intel-media-driver`).
+
+*   Considérations de configuration spécifiques ou instructions de modification du fichier `.desktop`.
