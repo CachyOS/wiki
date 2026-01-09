@@ -100,7 +100,7 @@ Kernel CachyOS má také některé další pozoruhodné vlastnosti, které jsou 
 
 - Zahrnuje debug variantu kernelu, která poskytuje ne-stripnutý binární soubor kernelu pro účely ladění. Tento balíček je potřebný pro profilování kernelu pomocí AutoFDO.
 - [Binder](https://developer.android.com/reference/android/os/Binder), modul potřebný pro [Waydroid](https://waydro.id/), je ve výchozím nastavení povolen v konfiguraci kernelu
-a již [nastaven](https://github.com/CachyOS/linux-cachyos/blob/master/linux-cachyos/config#L10559).
+a již [nastaven](https://github.com/CachyOS/linux-cachyos/blob/2f380e2b35c4ad9acda98296f638f93af3742533/linux-cachyos/config#L11037).
 
 ## Konvence pojmenování balíčků
 

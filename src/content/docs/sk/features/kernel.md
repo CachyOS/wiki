@@ -93,7 +93,7 @@ Jadro CachyOS má aj niektoré ďalšie pozoruhodné funkcie, ktoré sú nenápa
 
 - Obsahuje debug variantu jadra, ktorá poskytuje neodstránený binárny súbor jadra na účely ladenia. Tento balík je potrebný na profilovanie jadra pomocou AutoFDO.
 - [Binder](https://developer.android.com/reference/android/os/Binder), modul potrebný pre [Waydroid](https://waydro.id/), je predvolene povolený v konfigurácii jadra
-a už [nastavený](https://github.com/CachyOS/linux-cachyos/blob/master/linux-cachyos/config#L10559).
+a už [nastavený](https://github.com/CachyOS/linux-cachyos/blob/2f380e2b35c4ad9acda98296f638f93af3742533/linux-cachyos/config#L11037).
 
 ## Konvencia Pomenovania Balíkov
 
