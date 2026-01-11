@@ -18,4 +18,4 @@ Violating these rules is not allowed and account ban will follow:
 
 Violating these rules will result in timeouts, escalating to an account ban for repeated offenses:
 
-1. The use of languages other than English for communication is prohibited.
+1. The use of languages other than English for communication is prohibited unless the convo is a "small-talk" or dedicated language channel exist.
