@@ -15,3 +15,7 @@ Violating these rules is not allowed and account ban will follow:
 8. It is forbidden to flood (publish the same type of information several times in a row).
 9. It is forbidden to provoke conflicts between participants.
 10. This is a LGBTQ+ safe place, and so it is forbidden to provoke and insult LGBTQ+ people.
+
+Violating these rules will result in timeouts, escalating to an account ban for repeated offenses:
+
+1. The use of languages other than English for communication is prohibited.
