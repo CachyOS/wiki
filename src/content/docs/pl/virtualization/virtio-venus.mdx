@@ -1,0 +1,61 @@
+---
+title: Virtio-Venus
+description: Akceleracja 3D przez Vulkan
+---
+
+## Przypadki użycia:
+- **Akceleracja 3D zbliżona do natywnej**
+
+W systemach operacyjnych, które używają `libvulkan`, takich jak **Linux**, **BSD** i **Android**, można
+osiągnąć wydajność zbliżoną do natywnej poprzez tłumaczenie wywołań z maszyny wirtualnej do Vulkana, a następnie bezpośrednio
+do procesora graficznego i z powrotem, bez konieczności przekazywania ich do maszyny wirtualnej.
+
+Niestety, **Virtio-Venus** nie jest dostępne w **VMM**, dlatego będzie wymagało użycia **qemu-cli**.
+Musisz zanotować nazwę, którą nadałeś swojej maszynie wirtualnej i gdzie się ona znajduje.
+
+## Używanie Virtio-Venus w qemu-cli:
+Po zainstalowaniu dowolnej kwalifikującej się maszyny wirtualnej możesz otworzyć terminal i utworzyć polecenie qemu-cli
+dla swojej maszyny wirtualnej. Oto przykład mojej maszyny wirtualnej CachyOS:
+
+```sh
+qemu-system-x86_64                                                                             \
+    -enable-kvm                                                                                \
+    -M q35                                                                                     \
+    -smp 6                                                                                     \
+    -m 12G                                                                                     \
+    -cpu host                                                                                  \
+    -net nic,model=virtio                                                                      \
+    -net user,hostfwd=tcp::2222-:22                                                            \
+    -device virtio-sound-pci,audiodev=my_audiodev -audiodev pipewire,id=my_audiodev            \
+    -device virtio-vga-gl,hostmem=4G,blob=true,venus=true                                      \
+    -vga none                                                                                  \
+    -display gtk,gl=on,show-cursor=on                                                          \
+    -usb -device usb-tablet                                                                    \
+    -object memory-backend-memfd,id=mem1,size=12G                                              \
+    -machine memory-backend=mem1                                                               \
+    -drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd   \
+    -drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd              \
+    -drive file=.local/share/libvirt/images/archlinux.qcow2
+```
+
+## Wyjaśnienie:
+
+- `-smp 6` oznacza 6 rdzeni procesora
+- `-m 12G` oznacza 12 GB pamięci RAM
+- `-net user,hostfwd=tcp::2222-:22` oznacza, że port 22 jest przekierowywany z hosta do maszyny wirtualnej jako port 2222,
+więc jeśli chciałbyś nawiązać połączenie SSH z maszyną wirtualną z innego urządzenia, zrobiłbyś to tak:
+
+```sh
+ssh -p 2222 nazwa_uzytkownika_vm@adres_ip_vm
+```
+
+- `-device virtio-vga-gl,hostmem=4G,blob=true,venus=true` to jest sterownik Venus, niestety jeszcze nieobecny w
+virt-managerze. Gdy się tam pojawi, cała ta sekcja, oprócz trybu użytkownika, stanie się zbędna.
+- `-hostmem=4G` oznacza, że pozwalam maszynie wirtualnej na użycie do 4 GB mojego VRAM z karty graficznej.
+- `-object memory-backend-memfd,id=mem1,size=12G` w tej sekcji rozmiar to ilość pamięci RAM, którą przydzieliłeś, czyli w moim przypadku 12 GB.
+- `-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd` to jest plik firmware
+dla maszyny wirtualnej, a to po prostu ścieżka do niego.
+- `-drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd` to jest nvram maszyny wirtualnej, bez
+tego lub z ustawieniem tego na tylko do odczytu, maszyna wirtualna się nie uruchomi.
+- `-drive file=.local/share/libvirt/images/archlinux.qcow2` to jest ścieżka do pliku .qcow2 (pamięci masowej maszyny wirtualnej).\
+(Możesz zauważyć, że moje urządzenie audio w tym przypadku to nie `ich9`, ale `pipewire`, co jest nieistotne).
