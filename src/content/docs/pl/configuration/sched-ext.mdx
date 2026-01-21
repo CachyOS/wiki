@@ -1,13 +1,17 @@
 ---
 title: Samouczek sched-ext
-description: Samouczek dotyczący korzystania z frameworka i różne informacje
+description: Samouczek dotyczący sposobu korzystania z frameworka i różnych informacji
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 5
 ---
 
 import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 import { Icon } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
 
 Extensible Scheduler Class (lepiej znany jako `sched-ext`) to funkcja jądra Linuksa, która umożliwia implementację harmonogramów wątków jądra w
-BPF (Berkeley Packet Filter) i ich dynamiczne ładowanie. Zasadniczo pozwala to użytkownikom końcowym na zmianę harmonogramów w przestrzeni użytkownika bez
+BPF (Berkeley Package Filter) i ich dynamiczne ładowanie. Zasadniczo pozwala to użytkownikom końcowym na zmianę swoich harmonogramów w przestrzeni użytkownika bez
 konieczności budowania nowego jądra tylko po to, by mieć inny harmonogram.
 
 :::tip[Skontaktuj się z deweloperami na ich [serwerze Discord](https://discord.gg/b2J8DrWa7t)]
@@ -15,26 +19,37 @@ konieczności budowania nowego jądra tylko po to, by mieć inny harmonogram.
 
 - *Harmonogramy można znaleźć w pakietach `scx-scheds` i `scx-scheds-git`.*
   ```sh
-  # Gałąź stabilna
-  sudo pacman -S scx-scheds
+  # Stabilna gałąź + narzędzia scx_loader i scxctl.
+  sudo pacman -S scx-scheds scx-tools
 
-  # Gałąź bleeding edge (Ta gałąź zawiera najnowsze zmiany
-  # i może zawierać harmonogram, który nie został jeszcze wydany.)
-  sudo pacman -S scx-scheds-git
+  # Gałąź „Bleeding edge” (ta gałąź zawiera najnowsze zmiany z gałęzi master.) + narzędzia scx_loader i scxctl.
+  sudo pacman -S scx-scheds-git scx-tools-git
   ```
 
-## Jak uruchomić i zarządzać harmonogramem
+  :::note
+  Pakiet `scx-scheds-git` może nie zawierać wszystkich eksperymentalnych harmonogramów, ponieważ niektóre są rozwijane w oddzielnych gałęziach funkcyjnych, które nie zostały jeszcze połączone z gałęzią master.
+  :::
+
+## Jak uruchamiać harmonogram i zarządzać nim
+
+:::note
+Zarówno `scxctl`, jak i `scx_loader` wymagają uprawnień administracyjnych do uruchamiania/zatrzymywania/przełączania harmonogramów.
+
+Dlatego będziesz musiał uruchamiać je za pomocą `sudo` lub przy użyciu agenta polkit, który udziela niezbędnych uprawnień.
+
+Bez `sudo`, scxctl/scx_loader poprosi o uwierzytelnienie za pośrednictwem agenta polkit.
+:::
 
 <Tabs>
 
 <TabItem label='Terminal'>
 
-- *Aby uruchomić harmonogram, otwórz terminal i wprowadź następujące polecenie:*
+- *Aby uruchomić harmonogram, otwórz terminal i wpisz następujące polecenie:*
   ```sh title='Przykład uruchomienia rusty'
   sudo scx_rusty
   ```
 
-*Spowoduje to uruchomienie harmonogramu rusty i odłączenie domyślnego harmonogramu.*
+*To polecenie uruchomi harmonogram rusty i odłączy domyślny harmonogram.*
 
 Aby zatrzymać harmonogram, naciśnij `CTRL + C`, a harmonogram zostanie zatrzymany, a domyślny harmonogram jądra ponownie przejmie kontrolę.
 
@@ -42,55 +57,46 @@ Aby zatrzymać harmonogram, naciśnij `CTRL + C`, a harmonogram zostanie zatrzym
 
 <TabItem label='scxctl'>
 
-:::note[Zawarte w pakietach `scx-scheds` i `scx-scheds-git`]
+:::note[Zawarte w pakietach `scx-tools` i `scx-tools-git`]
 :::
 
-`scxctl` to klient DBUS wiersza poleceń do interakcji z `scx_loader`.
+:::caution[Wymaga działającego agenta polkit do prawidłowego działania.]
+Sprawdź następującą **[stronę Arch Wiki w celach informacyjnych.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+`scxctl` to klient CLI DBUS do interakcji z `scx_loader`.
 
 - Funkcje:
-  - Pobierz aktualny harmonogram i tryb
+  - Uzyskaj informacje o bieżącym harmonogramie i trybie
   - Wyświetl listę wszystkich dostępnych harmonogramów
   - Uruchom harmonogram w danym trybie lub z podanymi argumentami
-  - Przełączaj między harmonogramami i trybami
+  - Przełączaj się między harmonogramami i trybami
   - Zatrzymaj działający harmonogram
-  - Uruchom ponownie działający harmonogram
+  - Zrestartuj działający harmonogram
 
-```sh
-$ scxctl --help
-Usage: scxctl <COMMAND>
-
-Commands:
-  get     Pobierz aktualny harmonogram i tryb
-  list    Wyświetl listę wszystkich obsługiwanych harmonogramów
-  start   Uruchom harmonogram w trybie lub z argumentami
-  switch  Przełącz harmonogramy lub tryby, opcjonalnie z argumentami
-  stop    Zatrzymaj obecny harmonogram
-  restart Uruchom ponownie obecny harmonogram z oryginalną konfiguracją
-  help    Wydrukuj tę wiadomość lub pomoc dla danego podpolecenia(podpoleceń)
-
-Options:
-  -h, --help     Wydrukuj pomoc
-  -V, --version  Wydrukuj wersję
-```
-
-    <Tabs>
-        <TabItem label='Uruchamianie harmonogramu'>
+<Tabs>
+    <TabItem label='Uruchamianie harmonogramu'>
           ```sh title='Uruchamianie scx_flash w trybie Gaming'
           scxctl start --sched flash --mode gaming
           ```
-        </TabItem>
-        <TabItem label='Zatrzymywanie harmonogramu'>
+    </TabItem>
+    <TabItem label='Zatrzymywanie harmonogramu'>
           ```sh title='Zatrzymywanie aktualnie działającego harmonogramu'
           scxctl stop
           ```
-        </TabItem>
-        <TabItem label='Przełączanie harmonogramów'>
+    </TabItem>
+    <TabItem label='Przywracanie domyślnego harmonogramu'>
+          ```sh title='Przywraca domyślny harmonogram ustawiony w pliku konfiguracyjnym scx_loader'
+          scxctl restore
+          ```
+    </TabItem>
+    <TabItem label='Przełączanie harmonogramów'>
           ```sh title='Przełączanie na scx_bpfland w trybie Gaming'
           scxctl switch --sched bpfland --mode gaming
           ```
-        </TabItem>
-        <TabItem label='Uruchamianie i przełączanie z niestandardowymi argumentami'>
-          :::note[Dodaj przecinek `,` między każdym argumentem]
+    </TabItem>
+    <TabItem label='Uruchamianie i przełączanie z niestandardowymi argumentami'>
+          :::note[Dodaj przecinek między każdym argumentem]
           Przykład: `--args="-c,75,-m,0-15"` = Argument, Wartość
           :::
           ```sh title='Uruchamianie scx_cosmos z niestandardowymi argumentami'
@@ -99,21 +105,44 @@ Options:
           ```sh title='Przełączanie na scx_flash z niestandardowymi argumentami'
           scxctl switch --sched flash --args="-s,20000"
           ```
-        </TabItem>
-    </Tabs>
+    </TabItem>
+</Tabs>
+
+```sh
+$ scxctl --help
+Usage: scxctl <COMMAND>
+
+Commands:
+  get      Get the info on the running scheduler
+  list     List all supported schedulers
+  start    Start a scheduler in a mode or with arguments
+  switch   Switch schedulers or modes, optionally with arguments
+  stop     Stop the current scheduler
+  restart  Restart the current scheduler with original configuration
+  restore  Restore the default scheduler from configuration
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
+```
 
 </TabItem>
 
-<TabItem label='scx_loader'>
+<TabItem label='scx_loader (DBus)'>
 
-*Jak sama nazwa wskazuje, jest to narzędzie, które działa jako ładowarka i menedżer dla frameworka sched-ext przy użyciu interfejsu D-Bus.*
+:::caution[Wymaga działającego agenta polkit do prawidłowego działania.]
+Sprawdź następującą **[stronę Arch Wiki w celach informacyjnych.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
 
-*Chociaż nie wymaga systemd, może być używany w połączeniu z nim.* [Sprawdź przewodnik po migracji jako odniesienie](/pl/configuration/sched-ext#przejście-z-scxservice-na-scx_loader-kompleksowy-przewodnik).
+*Jak sama nazwa wskazuje, jest to narzędzie, które funkcjonuje jako ładowarka i menedżer dla frameworka sched-ext przy użyciu interfejsu D-Bus.*
 
-- Ma możliwość zatrzymywania, uruchamiania, ponownego uruchamiania, odczytywania informacji o harmonogramie scx i wiele więcej.
+*Chociaż nie wymaga systemd, nadal może być używany w połączeniu z nim.* [Sprawdź przewodnik po przejściu w celach informacyjnych](/configuration/sched-ext#transitioning-from-scxservice-to-scx_loader-a-comprehensive-guide).
+
+- Ma możliwość zatrzymywania, uruchamiania, ponownego uruchamiania, odczytywania informacji o harmonogramie scx i nie tylko.
   - *Możesz używać narzędzi takich jak `dbus-send` lub `gdbus` do komunikacji z nim.*
 - Ten przewodnik wyjaśnia, jak używać scx_loader z poleceniem dbus-send.
-  - ```sh title='Uruchamianie scx_rusty z domyślnymi argumentami'
+  - ```sh title='Uruchamianie scx_rusty z jego domyślnymi argumentami'
     dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartScheduler string:scx_rusty uint32:0
     ```
   - ```sh title='Uruchamianie harmonogramu z argumentami'
@@ -123,14 +152,18 @@ Options:
   - ```sh title='Zatrzymywanie aktualnie działającego harmonogramu'
     dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StopScheduler
     ```
-  - ```sh title='Przełączanie na inny harmonogram w trybie 2'
+  - ```sh title='Przełącz na domyślny harmonogram'
+    # scx_loader przełączy się na domyślny harmonogram ustawiony w pliku konfiguracyjnym scx_loader
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.RestoreDefault
+    ```
+  - ```sh title='Przełączanie na inny harmonogram w Trybie 2'
     dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchScheduler string:scx_lavd uint32:2
-    # To przełącza na scx_lavd z trybem harmonogramu 2, co oznacza, że uruchamia LAVD w trybie oszczędzania energii
+    # To przełącza na scx_lavd w trybie harmonogramu 2, co oznacza uruchomienie LAVD w trybie oszczędzania energii
     ```
   - ```sh title='Przełączanie na inny harmonogram z argumentami'
     dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
     ```
-  - ```sh title='Pobieranie aktualnie działającego harmonogramu'
+  - ```sh title='Pobieranie informacji o aktualnie działającym harmonogramie'
     dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:CurrentScheduler
     ```
   - ```sh title='Pobieranie listy obsługiwanych harmonogramów'
@@ -145,38 +178,65 @@ Oto wyjaśnienie, co oznacza każdy tryb w scx_loader:
 - Tryb 3 = `Niskie opóźnienia`
 - Tryb 4 = `Serwer`
 
-Przykład: LAVD działający w trybie 1 jest odpowiednikiem `scx_lavd --performance`
+Przykład: LAVD działający w Trybie 1 jest równoznaczny z `scx_lavd --performance`
 
-*TLDR: Każdy tryb to zestaw różnych flag mających na celu poprawę zamierzonego zastosowania.*
+*TLDR: Każdy tryb to zestaw różnych flag, mających na celu poprawę działania w zamierzonym przypadku użycia.*
 
-[Aby uzyskać bardziej szczegółowy wgląd w to, co te tryby zmieniają w każdym harmonogramie](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/src/config.rs#L174>)
+[Aby uzyskać bardziej szczegółowy wgląd w to, co te Tryby zmieniają w każdym harmonogramie](<https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/src/config.rs#L193>)
 :::
 
 </TabItem>
 
 <TabItem label='Menedżer jądra CachyOS'>
 
-Do harmonogramów scx można uzyskać dostęp i skonfigurować je za pomocą [scx_loader](/pl/features/kernel_manager#zarządzanie-frameworkiem-sched-ext).
+:::caution[Wymaga działającego agenta polkit do prawidłowego działania.]
+Sprawdź następującą **[stronę Arch Wiki w celach informacyjnych.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+Możesz uzyskać do nich dostęp i je skonfigurować za pomocą przycisku `sched-ext scheduler config`.
+
+</TabItem>
+
+<TabItem label='Menedżer SCX'>
+
+:::caution[Wymaga działającego agenta polkit do prawidłowego działania.]
+Sprawdź następującą **[stronę Arch Wiki w celach informacyjnych.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+Menedżer SCX to samodzielne narzędzie GUI pochodzące z Menedżera jądra CachyOS. Pozwala użytkownikom zarządzać frameworkiem sched-ext i jego harmonogramami za pośrednictwem `scx_loader`.
+
+Funkcje:
+- Sprawdź, który harmonogram jest aktualnie aktywny
+- Wybierz harmonogram lub profil: (Auto, Gaming, Oszczędzanie energii, Niskie opóźnienia lub Serwer)
+- Ustaw dodatkowe flagi
+- Wyłącz bieżący harmonogram
+
+<details>
+<summary>Zrzut ekranu</summary>
+
+<ImageComponent imgsrc={import('~/assets/images/scx-manager-main.png')} />
+
+</details>
 
 </TabItem>
 
 </Tabs>
 
-## Dostępne harmonogramy i przypadki użycia
+## Przewodnik po schedulerach: Profile i przypadki użycia
 
-Ponieważ do wyboru jest wiele harmonogramów, chcemy przedstawić krótkie wprowadzenie do dostępnych harmonogramów.
+Ponieważ do wyboru jest wiele schedulerów, chcemy przedstawić krótkie wprowadzenie do dostępnych opcji.
 
 :::note
-Te harmonogramy są w ciągłym rozwoju i testowaniu, więc można spodziewać się, że niektóre z ich funkcji/flag mogą ulec zmianie.
+Te schedulery są w ciągłym rozwoju i testowaniu, więc spodziewaj się, że niektóre z ich funkcji/flag mogą ulec zmianie.
 :::
 
-Zachęcamy do zgłaszania wszelkich problemów lub opinii do repozytorium danego harmonogramu.
+Zachęcamy do zgłaszania wszelkich problemów lub opinii w repozytorium danego schedulera.
 
-**Użyj scx_schedulername --help, aby zobaczyć dostępne flagi dla każdego harmonogramu.**
-- Przykład:
-  ```sh title='Przykład uzyskiwania pomocy dla scx_rusty'
-  scx_rusty --help
-  ```
+Użyj `scx_nazwaschedulera --help`, aby zobaczyć dostępne flagi i krótki opis ich działania.
+
+```sh title='Przykład uzyskiwania pomocy dla scx_rusty'
+scx_rusty --help
+```
 
 ### [scx_bpfland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_bpfland>)
 
@@ -184,90 +244,116 @@ Zachęcamy do zgłaszania wszelkich problemów lub opinii do repozytorium danego
 
 Gotowy do użytku produkcyjnego? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
 
-Planista sched_ext oparty na vruntime, który priorytetyzuje interaktywne obciążenia. Bardzo elastyczny i łatwy do adaptacji.
+Scheduler sched_ext oparty na vruntime, który priorytetyzuje obciążenia interaktywne. Bardzo elastyczny i łatwy w adaptacji.
 
-Bpfland, podejmując decyzje o tym, których rdzeni użyć, bierze pod uwagę ich układ pamięci podręcznej oraz to, które rdzenie dzielą tę samą pamięć podręczną L2/L3, co prowadzi do mniejszej liczby chybionych odwołań do pamięci podręcznej = większej wydajności.
+Bpfland, podejmując decyzje o tym, których rdzeni użyć, bierze pod uwagę ich układ pamięci podręcznej oraz to, które rdzenie dzielą tę samą pamięć podręczną L2/L3, co prowadzi do mniejszej liczby chybionych trafień w pamięci podręcznej = większej wydajności.
 
-- Zastosowania:
-  - Gry
-  - Użytek na komputerze stacjonarnym
-  - Produkcja multimediów/dźwięku
-  - Świetna interaktywność przy intensywnych obciążeniach
+- Przypadki użycia:
+  - Gaming
+  - Użytek na komputerach stacjonarnych
+  - Produkcja multimediów/audio
+  - Doskonała interaktywność pod intensywnym obciążeniem
   - Oszczędzanie energii
   - Serwer
 
-- **Zestaw flag dla niektórych zastosowań autorstwa Andrei Righi:**
+#### Tryby schedulera
 
-**Niskie opóźnienia**
-* **Flagi wiersza poleceń:** `-s 5000 -S 500 -l 5000 -m performance`
-* **Opis:** Ma na celu obniżenie opóźnień kosztem przepustowości. Odpowiedni dla aplikacji miękkiego czasu rzeczywistego, takich jak przetwarzanie dźwięku i multimedia.
+##### Niskie opóźnienia (Low Latency)
 
-**Gry**
-* **Flagi wiersza poleceń:** `-m performance`
-* **Opis:** Optymalizuje spójność wydajności w grach na systemach z rdzeniami hybrydowymi. Priorytetyzuje rdzenie P nad rdzeniami E na procesorach Intel oraz CCD na procesorach Ryzen X3D.
+* **Flagi wiersza poleceń:** `-m performance -w`
+* **Opis:** Ma na celu obniżenie opóźnień kosztem przepustowości. Odpowiedni dla aplikacji miękkiego czasu rzeczywistego, takich jak przetwarzanie audio i multimedia.
 
-**Oszczędzanie energii**
-* **Flagi wiersza poleceń:** `-m powersave`
-* **Opis:** Priorytetyzuje efektywność energetyczną. Preferuje mniej wydajne rdzenie (np. rdzenie E w procesorach Intel).
+##### Oszczędzanie energii (Power Save)
 
-**Serwer**
-* **Flagi wiersza poleceń:** `-p`
-* **Opis:** Priorytetyzuje zadania ze ścisłym powinowactwem. Ta opcja może zwiększyć przepustowość kosztem opóźnień i jest bardziej odpowiednia dla obciążeń serwerowych.
+* **Flagi wiersza poleceń:** `-s 20000 -m powersave -I 100 -t 100`
+* **Opis:** Priorytetyzuje wydajność energetyczną. Preferuje mniej wydajne rdzenie (np. rdzenie E w procesorach Intela).
 
+##### Serwer (Server)
+
+* **Flagi wiersza poleceń:** `-s 20000 -S`
+* **Opis:** Priorytetyzuje zadania ze ścisłą koligacją. Ta opcja może zwiększyć przepustowość kosztem opóźnień i jest bardziej odpowiednia dla obciążeń serwerowych.
+
+### [scx_beerland](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_beerland)
+
+**Deweloper: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Gotowy do użytku produkcyjnego? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+scx_beerland to scheduler zaprojektowany w celu priorytetyzacji lokalności i skalowalności.
+
+Priorytetyzuje utrzymywanie zadań na tym samym procesorze w celu zachowania lokalności pamięci podręcznej, jednocześnie zapewniając dobrą skalowalność na wielu procesorach poprzez użycie lokalnych DSQ (kolejek uruchomieniowych per-CPU), gdy system nie jest przeciążony.
+
+- Przypadki użycia:
+  - Obciążenia intensywnie korzystające z pamięci podręcznej
+  - Systemy z dużą liczbą procesorów
+  - Gaming: Wiadomo, że działa zaskakująco dobrze w niektórych grach, chociaż Twoje doświadczenia mogą być różne
+  - Serwer: Dobry dla ogólnych obciążeń serwerowych ze względu na optymalizację skalowalności i lokalności.
+  - Może być również używany na komputerach stacjonarnych.
+
+#### Tryby schedulera
+
+Brak na chwilę obecną.
 
 ### [scx_rustland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland>)
 
 **Deweloper: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
 
-- Gotowy do użytku produkcyjnego? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+Gotowy do użytku produkcyjnego? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
 
-  - W przypadku scenariuszy produkcyjnych o krytycznym znaczeniu dla wydajności, inne planisty prawdopodobnie wykażą lepszą wydajność, ponieważ przeniesienie wszystkich decyzji dotyczących harmonogramowania do przestrzeni użytkownika wiąże się z pewnym kosztem (nawet jeśli jest on minimalny).
+W scenariuszach produkcyjnych o krytycznym znaczeniu dla wydajności inne schedulery prawdopodobnie wykażą lepszą wydajność, ponieważ przeniesienie wszystkich decyzji dotyczących szeregowania do przestrzeni użytkownika wiąże się z pewnym kosztem (nawet jeśli jest on minimalny).
 
-  - Jednakże planista w całości zaimplementowany w przestrzeni użytkownika ma potencjał do bezproblemowej integracji z zaawansowanymi bibliotekami, narzędziami do śledzenia, usługami zewnętrznymi (np. AI) itp.
+Jednakże, scheduler w całości zaimplementowany w przestrzeni użytkownika ma potencjał do bezproblemowej integracji z zaawansowanymi bibliotekami, narzędziami do śledzenia, usługami zewnętrznymi (np. AI) itp.
 
-  - W związku z tym mogą istnieć sytuacje, w których korzyści przeważają nad narzutem, uzasadniając użycie tego planisty w środowisku produkcyjnym.
+Dlatego mogą istnieć sytuacje, w których korzyści przewyższają narzut, uzasadniając użycie tego schedulera w środowisku produkcyjnym.
 
-Współdzieli podobieństwa z bpfland, stworzony z zamiarem bycia łatwym do odczytania i zrozumienia jego działania dzięki implementacji w przestrzeni użytkownika.
+Dzieli podobieństwa z bpfland, stworzony z myślą o łatwości czytania i zrozumienia jego działania dzięki implementacji w przestrzeni użytkownika.
 
-Należy pamiętać, że istnieje niewielka wada przepustowości przy użyciu planisty przestrzeni użytkownika. Chociaż rustland ma możliwość bezproblemowej integracji z zaawansowanymi bibliotekami, narzędziami do śledzenia, usługami zewnętrznymi (np. AI) itp.
+Pamiętaj, że używanie schedulera w przestrzeni użytkownika wiąże się z niewielką wadą w postaci mniejszej przepustowości.
 
-- Zastosowania:
-  - Obciążenia o niskich opóźnieniach (gry, wideokonferencje i transmisje na żywo)
-  - Użytek na komputerze stacjonarnym
-
+- Przypadki użycia:
+  - Obciążenia o niskich opóźnieniach (gaming, wideokonferencje i transmisje na żywo)
+  - Użytek na komputerach stacjonarnych
 
 ### [scx_flash](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_flash>)
 
 **Deweloper: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
 
-- Gotowy do użytku produkcyjnego? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+Gotowy do użytku produkcyjnego? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
 
-Planista, który skupia się na zapewnieniu sprawiedliwości między zadaniami i przewidywalności wydajności.
+Scheduler, który skupia się na zapewnieniu sprawiedliwości między zadaniami i przewidywalności wydajności.
 
-- Zastosowania:
-  - Gry
-  - Obciążenia wrażliwe na opóźnienia, takie jak multimedia lub przetwarzanie dźwięku w czasie rzeczywistym
-  - Potrzeba responsywności w sytuacjach nadmiernego obciążenia
+Działa na zasadzie [earliest deadline first (EDF)](https://www.geeksforgeeks.org/operating-systems/earliest-deadline-first-edf-cpu-scheduling-algorithm/), gdzie każdemu zadaniu przypisana jest waga „opóźnienia”. Waga ta jest dynamicznie dostosowywana w zależności od tego, jak często zadanie zwalnia procesor przed wykorzystaniem pełnego przydziału czasu.
+
+Zadania, które wcześnie zwalniają procesor, otrzymują wyższą wagę opóźnienia, co priorytetyzuje je nad zadaniami, które w pełni zużywają swój przydział czasu.
+
+- Przypadki użycia:
+  - Gaming
+  - Obciążenia wrażliwe na opóźnienia, takie jak multimedia czy przetwarzanie audio w czasie rzeczywistym
+  - Potrzeba responsywności w sytuacjach dużego obciążenia
   - Spójność wydajności
   - Serwer
 
-- **Zestaw flag dla niektórych zastosowań zalecanych przez Andreę Righi:**
+#### Tryby schedulera
 
-**Niskie opóźnienia**
+##### Niskie opóźnienia (Low Latency)
+
 * **Flagi wiersza poleceń:** `-m performance -w -C 0`
-* **Opis:** Ma na celu obniżenie opóźnień kosztem przepustowości. Odpowiedni dla aplikacji miękkiego czasu rzeczywistego, takich jak przetwarzanie dźwięku i multimedia.
+* **Opis:** Ma na celu obniżenie opóźnień kosztem przepustowości. Odpowiedni dla aplikacji miękkiego czasu rzeczywistego, takich jak przetwarzanie audio i multimedia.
 
-**Gry**
+##### Gaming
+
 * **Flagi wiersza poleceń:** `-m all`
 * **Opis:** Optymalizuje pod kątem wysokiej wydajności w grach.
 
-**Oszczędzanie energii**
-* **Flagi wiersza poleceń:** `-m powersave -I 10000 -t 10000 -s 10000 -S 1000`
-* **Opis:** Priorytetyzuje efektywność energetyczną. Preferuje mniej wydajne rdzenie (np. rdzenie E w procesorach Intel) i wprowadza wymuszony cykl bezczynności co 10 ms w celu zwiększenia oszczędności energii.
+##### Oszczędzanie energii (Power Save)
 
-**Serwer**
+* **Flagi wiersza poleceń:** `-m powersave -I 10000 -t 10000 -s 10000 -S 1000`
+* **Opis:** Priorytetyzuje wydajność energetyczną. Preferuje mniej wydajne rdzenie (np. rdzenie E w procesorach Intela) i wprowadza wymuszony cykl bezczynności co 10 ms w celu zwiększenia oszczędności energii.
+
+##### Serwer (Server)
+
 * **Flagi wiersza poleceń:** `-m all -s 20000 -S 1000 -I -1 -D -L`
-* **Opis:** Dostosowany do obciążeń serwerowych. Zamienia responsywność na przepustowość.
+* **Opis:** Dostrojony do obciążeń serwerowych. Wymienia responsywność na przepustowość.
 
 ### [scx_cosmos](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cosmos)
 
@@ -275,30 +361,39 @@ Planista, który skupia się na zapewnieniu sprawiedliwości między zadaniami i
 
 - Gotowy do użytku produkcyjnego? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
 
-Lekki planista zoptymalizowany pod kątem zachowania lokalności zadanie-do-CPU.
+Lekki scheduler zoptymalizowany pod kątem zachowania lokalności zadanie-do-CPU.
 
-Gdy system nie jest nasycony, planista priorytetyzuje utrzymywanie zadań na tym samym procesorze przy użyciu lokalnych kolejek DSQ. To nie tylko utrzymuje lokalność, ale także zmniejsza rywalizację o blokady w porównaniu ze współdzielonymi kolejkami DSQ, umożliwiając dobrą skalowalność na wielu procesorach.
+Gdy system nie jest przeciążony, scheduler priorytetyzuje utrzymywanie zadań na tym samym procesorze przy użyciu lokalnych DSQ. To nie tylko utrzymuje lokalność, ale także zmniejsza rywalizację o blokady w porównaniu do współdzielonych DSQ, umożliwiając dobrą skalowalność na wielu procesorach.
 
-- Zastosowania:
-  - Planista ogólnego przeznaczenia: planista powinien dostosowywać się zarówno do obciążeń serwerowych, jak i stacjonarnych.
+- Przypadki użycia:
+  - Scheduler ogólnego przeznaczenia: scheduler powinien dostosowywać się zarówno do obciążeń serwerowych, jak i stacjonarnych.
 
-- **Zestaw flag dla niektórych zastosowań zalecanych przez Andreę Righi:**
+#### Tryby schedulera
 
-**Gry**
+##### Auto
+
+* **Flagi wiersza poleceń:** `-d`
+* **Opis:** Wyłącza odroczone wybudzanie. Zmniejsza przepustowość i wydajność dla niektórych obciążeń, jednocześnie zmniejszając zużycie energii.
+
+##### Gaming
+
 * **Flagi wiersza poleceń:** `-c 0 -p 0`
-* **Opis:** Wyłącza śledzenie obciążenia procesora i zawsze wymusza harmonogramowanie oparte na terminach końcowych w celu poprawy responsywności.
+* **Opis:** Wyłącza śledzenie obciążenia procesora i zawsze wymusza szeregowanie oparte na terminach w celu poprawy responsywności.
 
-**Oszczędzanie energii**
+##### Oszczędzanie energii (Power Save)
+
 * **Flagi wiersza poleceń:** `-m powersave -d -p 5000`
-* **Opis:** Priorytetyzuje efektywność energetyczną. Preferuje mniej wydajne rdzenie (np. rdzenie E w procesorach Intel) i wyłącza odroczone wybudzenia, zmniejszając przepustowość przy jednoczesnym zwiększeniu efektywności energetycznej. Odpytywanie o obciążenie procesora zwiększone do 5 ms.
+* **Opis:** Priorytetyzuje wydajność energetyczną. Preferuje mniej wydajne rdzenie (np. rdzenie E w procesorach Intela) i wyłącza odroczone wybudzanie, zmniejszając przepustowość przy jednoczesnym zwiększeniu wydajności energetycznej. Odpytywanie o obciążenie procesora zwiększone do 5 ms.
 
-**Niskie opóźnienia**
+##### Niskie opóźnienia (Low Latency)
+
 * **Flagi wiersza poleceń:** `-m performance -c 0 -p 0 -w`
-* **Opis:** Ma na celu obniżenie opóźnień kosztem przepustowości. Odpowiedni dla aplikacji miękkiego czasu rzeczywistego, takich jak przetwarzanie dźwięku i multimedia. Zawsze wymusza harmonogramowanie oparte na terminach końcowych i synchroniczne optymalizacje wybudzania w celu poprawy przewidywalności wydajności.
+* **Opis:** Ma na celu obniżenie opóźnień kosztem przepustowości. Odpowiedni dla aplikacji miękkiego czasu rzeczywistego, takich jak przetwarzanie audio i multimedia. Zawsze wymusza szeregowanie oparte na terminach i synchroniczne optymalizacje wybudzania w celu poprawy przewidywalności wydajności.
 
-**Serwer**
-* **Flagi wiersza poleceń:** `-a -s 20000`
-* **Opis:** Włącza powinowactwo przestrzeni adresowej w celu poprawy lokalności i wydajności w niektórych obciążeniach wrażliwych na pamięć podręczną. Odpytywanie zwiększone do 20 ms.
+##### Serwer (Server)
+
+* **Flagi wiersza poleceń:** `-s 20000`
+* **Opis:** Włącza koligację przestrzeni adresowej w celu poprawy lokalności i wydajności w niektórych obciążeniach wrażliwych na pamięć podręczną. Odpytywanie zwiększone do 20 ms.
 
 ### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>)
 
@@ -308,28 +403,30 @@ Gdy system nie jest nasycony, planista priorytetyzuje utrzymywanie zadań na tym
 
 Krótkie wprowadzenie do LAVD od Changwoo:
 
-*LAVD to nowy algorytm planowania, który jest wciąż w fazie rozwoju. Jest
-zmotywowany obciążeniami związanymi z grami, które są krytyczne pod względem opóźnień i
-intensywne komunikacyjnie. Ma na celu minimalizację skoków opóźnień przy zachowaniu
-ogólnie dobrej przepustowości i sprawiedliwego wykorzystania czasu procesora przez zadania.*
+*LAVD to nowy algorytm szeregowania, który jest wciąż w fazie rozwoju. Jest
+zmotywowany obciążeniami gamingowymi, które są krytyczne pod względem opóźnień i
+intensywne komunikacyjnie. Jego celem jest minimalizacja skoków opóźnień przy jednoczesnym
+utrzymaniu ogólnie dobrej przepustowości i sprawiedliwego wykorzystania czasu procesora przez zadania.*
 
-- Zastosowania:
-  - Gry
+- Przypadki użycia:
+  - Gaming
   - Produkcja audio
   - Obciążenia wrażliwe na opóźnienia
-  - Użytek na komputerze stacjonarnym
-  - Świetna interaktywność przy intensywnych obciążeniach
+  - Użytek na komputerach stacjonarnych
+  - Doskonała interaktywność pod intensywnym obciążeniem
   - Oszczędzanie energii
 
-Jedną z głównych i niesamowitych możliwości LAVD jest **kompaktowanie rdzeni**, które, nie wchodząc w szczegóły techniczne: gdy użycie procesora < 50%, aktualnie aktywne rdzenie będą działać dłużej i z wyższą częstotliwością. Tymczasem bezczynne rdzenie pozostaną w stanie C (uśpienia) przez znacznie dłuższy czas, co pozwoli na mniejsze ogólne zużycie energii.
+Jedną z głównych i niesamowitych możliwości, jakie oferuje LAVD, jest **kompakcja rdzeni**, która, nie wchodząc w szczegóły techniczne: Gdy użycie procesora < 50%, aktualnie aktywne rdzenie będą działać dłużej i z wyższą częstotliwością. Tymczasem bezczynne rdzenie pozostaną w stanie C (uśpienia) przez znacznie dłuższy czas, co prowadzi do mniejszego ogólnego zużycia energii.
 
-- **Zestaw flag dla niektórych zastosowań zalecanych przez Changwoo Mina:**
+##### Tryby schedulera
 
-**Gry i niskie opóźnienia**
+##### Gaming i niskie opóźnienia (Gaming & Low Latency)
+
 * **Flagi wiersza poleceń:** `--performance`
 * **Opis:** Maksymalizuje wydajność, używając wszystkich dostępnych rdzeni, priorytetyzując rdzenie fizyczne.
 
-**Oszczędzanie energii**
+##### Oszczędzanie energii (Power Save)
+
 * **Flagi wiersza poleceń:** `--powersave`
 * **Opis:** Minimalizuje zużycie energii przy zachowaniu rozsądnej wydajności. Priorytetyzuje wydajne rdzenie i wątki nad rdzeniami fizycznymi.
 
@@ -338,100 +435,107 @@ Jedną z głównych i niesamowitych możliwości LAVD jest **kompaktowanie rdzen
 **Deweloper: David Vernet (Byte-Lab [GitHub](<https://github.com/Byte-Lab>))**
 
 - Gotowy do użytku produkcyjnego? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
-  - Tak. Jeśli jest prawidłowo dostrojony.
+  - Tak. Jeśli jest poprawnie dostrojony,
 
-Rusty oferuje szeroką gamę funkcji, które rozszerzają jego możliwości, zapewniając większą elastyczność w różnych zastosowaniach.
+Rusty oferuje szeroki zakres funkcji, które zwiększają jego możliwości, zapewniając większą elastyczność w różnych przypadkach użycia.
 Jedną z tych funkcji jest możliwość dostrajania, co pozwala dostosować Rusty do własnych preferencji i specyficznych wymagań.
 
-- Zastosowania:
-  - Gry
+- Przypadki użycia:
+  - Gaming
   - Obciążenia wrażliwe na opóźnienia
-  - Użytek na komputerze stacjonarnym
-  - Produkcja multimediów/dźwięku
-  - Świetna interaktywność przy intensywnych obciążeniach
+  - Użytek na komputerach stacjonarnych
+  - Produkcja multimediów/audio
+  - Doskonała interaktywność pod intensywnym obciążeniem
   - Oszczędzanie energii
 
 ### [scx_p2dq](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_p2dq>)
 
 - Gotowy do użytku produkcyjnego? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
-  - Tak. Jeśli jest prawidłowo dostrojony do Twojego konkretnego obciążenia i sprzętu.
+  - Tak. Jeśli jest dostrojony do konkretnego obciążenia i sprzętu.
 
 **Deweloper: Daniel Hodges (hodgesds [GitHub](<https://github.com/hodgesds>))**
 
-Planista ogólnego przeznaczenia, który koncentruje się na balansowaniu obciążenia "wybierz dwa" pomiędzy
-pamięciami podręcznymi LLC. Utrzymuje wysoką lokalność pamięci podręcznej i konserwację pracy, zapewniając jednocześnie
+Scheduler ogólnego przeznaczenia, który skupia się na balansowaniu obciążenia typu „wybierz dwa” (pick two) między
+pamięciami podręcznymi ostatniego poziomu (LLC). Utrzymuje wysoką lokalność pamięci podręcznej i oszczędność pracy, zapewniając jednocześnie
 rozsądne opóźnienia.
 
-- Zastosowania:
-  - Serwer *(Wymaga [server_mode](<https://github.com/sched-ext/scx/blob/main/tools/scx_loader/configuration.md#configuration-structure>) z scx_loader)*
+- Przypadki użycia:
+  - Serwer
   - Środowiska stacjonarne
-  - Gry (z pewnym ręcznym dostrajaniem)
+  - Gaming (z pewnym ręcznym dostrajaniem)
 
-- **Zestaw flag dla niektórych zastosowań zalecanych przez Daniela Hodgesa:**
+#### Tryby schedulera
 
-**Gry**
+##### Gaming
+
 * **Flagi wiersza poleceń:** `--task-slice true -f --sched-mode performance`
-* **Opis:** Poprawia spójność wydajności w grach i zwiększa tendencję do planowania na rdzeniach o wyższej wydajności.
+* **Opis:** Poprawia spójność wydajności w grach i zwiększa tendencję do szeregowania na rdzeniach o wyższej wydajności.
 
-**Niskie opóźnienia**
+##### Niskie opóźnienia (Low Latency)
+
 * **Flagi wiersza poleceń:** `-y -f --task-slice true`
-* **Opis:** Obniża opóźnienia, sprawiając, że interaktywne zadania mocniej trzymają się procesora, do którego zostały przypisane, i zwiększając stabilność kwantów czasu.
+* **Opis:** Obniża opóźnienia, sprawiając, że zadania interaktywne bardziej trzymają się procesora, do którego zostały przypisane, i zwiększając stabilność przydziału czasu.
 
-**Oszczędzanie energii**
+##### Oszczędzanie energii (Power Save)
+
 * **Flagi wiersza poleceń:** `--sched-mode efficiency`
-* **Opis:** Zwiększa efektywność energetyczną poprzez priorytetyzację energooszczędnych rdzeni.
+* **Opis:** Zwiększa wydajność energetyczną, priorytetyzując rdzenie o niskim poborze mocy.
 
-**Serwer**
+##### Serwer (Server)
+
 * **Flagi wiersza poleceń:** `--keep-running`
-* **Opis:** Poprawia obciążenia serwerowe, pozwalając zadaniom działać dłużej niż ich kwant czasu, jeśli procesor jest bezczynny.
+* **Opis:** Poprawia wydajność obciążeń serwerowych, pozwalając zadaniom działać dłużej niż ich przydział czasu, jeśli procesor jest bezczynny.
 
 ### [scx_tickless](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_tickless>)
 
 **Deweloper: Andrea Righi (arighi [Github](<https://github.com/arighi>))**
 
 - Gotowy do użytku produkcyjnego? <Icon name="close" color="var(--sl-color-text-accent)" size="2rem" />
-  - Ten planista jest wciąż eksperymentalny i nie jest zalecany do użytku produkcyjnego.
+  - Ten scheduler jest wciąż eksperymentalny i nie jest zalecany do użytku produkcyjnego.
 
 :::note
-Aby skutecznie wyłączyć tyknięcia zegara na "beztyknięciowych" procesorach, jądro musi być uruchomione z `nohz_full`. Należy pamiętać, że `nohz_full` wprowadza narzut na wywołania systemowe, co może pogorszyć wydajność obciążeń wrażliwych na opóźnienia.
+Aby skutecznie wyłączyć tyknięcia na procesorach „tickless”, jądro musi być uruchomione z parametrem `nohz_full`. Pamiętaj, że `nohz_full` wprowadza narzut na wywołania systemowe, co może pogorszyć wydajność obciążeń wrażliwych na opóźnienia.
 :::
 
-scx_tickless to planista zorientowany na serwery, przeznaczony do chmury obliczeniowej, wirtualizacji i obliczeń o wysokiej wydajności.
+scx_tickless to scheduler zorientowany na serwery, zaprojektowany z myślą o chmurze obliczeniowej, wirtualizacji i obciążeniach obliczeniowych wysokiej wydajności.
 
-Planista działa poprzez kierowanie wszystkich zdarzeń planowania przez pulę głównych procesorów przypisanych do obsługi tych zdarzeń. Pozwala to wyłączyć tyknięcie zegara planisty na innych procesorach, zmniejszając szum systemu operacyjnego.
+Scheduler działa poprzez kierowanie wszystkich zdarzeń szeregowania przez pulę głównych procesorów przypisanych do obsługi tych zdarzeń. Pozwala to na wyłączenie tyknięcia schedulera na innych procesorach, zmniejszając szum systemu operacyjnego.
 
-- Zastosowania:
+- Przypadki użycia:
   - Chmura obliczeniowa
   - Wirtualizacja
-  - Obciążenia obliczeniowe o wysokiej wydajności
+  - Obciążenia obliczeniowe wysokiej wydajności
   - Serwer
 
-- **Zestaw flag dla niektórych zastosowań zalecanych przez Andreę Righi:**
+#### Tryby schedulera
 
-**Gry**
+##### Gaming
+
 * **Flagi wiersza poleceń:** `-f 5000 -s 5000`
-* **Opis:** Zwiększa wydajność w grach poprzez zwiększenie częstotliwości wykrywania przez planistę rywalizacji o CPU i wyzwalanie przełączeń kontekstu z krótszym kwantem czasu.
+* **Opis:** Zwiększa wydajność w grach poprzez zwiększenie częstotliwości wykrywania przez scheduler rywalizacji o procesor i wywoływania przełączeń kontekstu z krótszym przydziałem czasu.
 
-**Oszczędzanie energii**
-* **Flagi wiersza poleceń:** `-f 50 -p`
-* **Opis:** Zwiększa efektywność energetyczną poprzez obniżenie częstotliwości sprawdzania rywalizacji i agresywne próby utrzymania zadań na tym samym procesorze.
+##### Oszczędzanie energii (Power Save)
 
-**Niskie opóźnienia**
+* **Flagi wiersza poleceń:** `-f 50`
+* **Opis:** Zwiększa wydajność energetyczną poprzez obniżenie częstotliwości sprawdzania rywalizacji.
+
+##### Niskie opóźnienia (Low Latency)
 * **Flagi wiersza poleceń:** `-f 5000 -s 1000`
-* **Opis:** Podobny do profilu dla gier, ale z dodatkowo zmniejszonym kwantem czasu.
+* **Opis:** Podobny do profilu gamingowego, ale z jeszcze bardziej zmniejszonym przydziałem czasu.
 
-**Serwer**
+##### Serwer (Server)
+
 * **Flagi wiersza poleceń:** `-f 100`
-* **Opis:** Zmniejsza częstotliwość, z jaką planista sprawdza rywalizację o CPU, aby poprawić przepustowość kosztem responsywności.
+* **Opis:** Zmniejszona częstotliwość sprawdzania rywalizacji o procesor przez scheduler w celu poprawy przepustowości kosztem responsywności.
 
-## Ogólne zalecenia
+## Konfiguracja i testowanie wydajności
 
-### LAVD Autopilot i Autopower
+### Autopilot i Autopower LAVD
 
 *Cytaty z Changwoo Mina:*
-- W trybie autopilota planista dostosowuje swój tryb zasilania (`Powersave, Balanced, lub Performance`) w oparciu o obciążenie systemu, a konkretnie o wykorzystanie procesora.
+- W trybie autopilota, scheduler dostosowuje swój tryb zasilania (`Powersave`, `Balanced` lub `Performance`) w oparciu o obciążenie systemu, a konkretnie o wykorzystanie procesora.
 
-- Autopower: Automatycznie decyduje o trybie zasilania planisty na podstawie profilu energetycznego systemu, czyli EPP (Energy Performance Preference).
+- Autopower: Automatycznie decyduje o trybie zasilania schedulera w oparciu o profil energetyczny systemu, czyli EPP (Energy Performance Preference).
 
 ```sh
 # Autopower można aktywować za pomocą następującej flagi:
@@ -440,10 +544,10 @@ Planista działa poprzez kierowanie wszystkich zdarzeń planowania przez pulę g
 scx_lavd --autopower
 ```
 
-### Wyłącz ananicy-cpp
+### ananicy-cpp i sched-ext
 
-:::caution
-Podczas korzystania z któregokolwiek z planistów z frameworka sched-ext, zdecydowanie zaleca się wyłączenie i unikanie używania ananicy-cpp z powodu możliwych konfliktów, ponieważ wzmacnia on różnicę priorytetów, którą planista już tworzy/obsługuje, podbijając priorytety interaktywnych zadań. Powoduje to nadmierną priorytetyzację, głodzenie innych zadań i zwiększa szansę na osiągnięcie limitu czasu watchdog sched_ext, co powoduje zatrzymanie działającego planisty, czyli zawieszenie.
+:::note[Aktualizacja dotycząca ananicy-cpp i sched-ext]
+Po dalszym rozwoju schedulerów, ananicy-cpp zazwyczaj może być używany równolegle z nimi. Jeśli jednak wystąpią jakiekolwiek zacięcia lub niestabilność, rozważ jego wyłączenie jako krok w celu rozwiązania problemu.
 :::
 
 Aby wyłączyć/zatrzymać ananicy-cpp, uruchom następujące polecenie:
@@ -452,16 +556,280 @@ Aby wyłączyć/zatrzymać ananicy-cpp, uruchom następujące polecenie:
 systemctl disable --now ananicy-cpp
 ```
 
+### Porównywanie i testowanie wydajności schedulerów za pomocą cachyos-benchmarker
+
+Narzędzie [cachyos-benchmarker](https://github.com/CachyOS/cachyos-benchmarker) zapewnia łatwy sposób na ocenę i porównanie wydajności różnych schedulerów procesora.
+
+Uruchamia ono kompleksowy zestaw testów porównawczych w celu pomiaru wydajności procesora, pamięci i ogólnej wydajności systemu w różnych warunkach obciążenia.
+
+Zawarte są następujące testy:
+
+| Test | Mierzy | Narzędzie |
+| --- | --- | --- |
+| **stress-ng cpu-cache-mem** | Wydajność procesora, pamięci podręcznej i pamięci | `stress-ng` |
+| **Kompilacja FFmpeg** | Wydajność budowania równoległego | `make` |
+| **Kodowanie x265** | Przepustowość kodowania wideo | `x265` |
+| **Haszowanie argon2** | Wielowątkowe haszowanie haseł | `argon2` |
+| **perf sched msg** | Wydajność przełączania kontekstu i IPC | `perf` |
+| **perf memcpy** | Przepustowość pamięci `memcpy()` | `perf` |
+| **Obliczanie liczb pierwszych** | Arytmetyka liczb całkowitych i równoległość | `primesieve` |
+| **NAMD** | Dynamika molekularna (obciążenie naukowe) | `namd3` |
+| **Renderowanie w Blenderze** | Renderowanie 3D tylko przy użyciu procesora | `blender` |
+| **Kompresja xz** | Przepustowość kompresji | `xz` |
+| **Budowanie defconfig jądra** | Wydajność kompilacji jądra | `make` |
+| **y-cruncher** | Precyzja matematyczna i obciążenie pamięci | `y-cruncher` |
+
+`cachyos-benchmarker` może być używany do kilku celów, w tym:
+
+- **Testowanie stabilności schedulera**
+  Uruchom pełny zestaw testów porównawczych, aby wykryć zacięcia, awarie lub regresje wprowadzone przez zmiany w schedulerze.
+  Jeśli używasz `scx_loader`, możesz zebrać logi w przypadku zacięcia lub awarii za pomocą:
+  ```bash
+  journalctl --unit scx_loader.service --boot 0 > crash.log
+  ```
+  Spowoduje to utworzenie pliku o nazwie `crash.log` w bieżącym katalogu.
+- **Porównywanie wydajności schedulerów**
+  - Ocena różnic w wydajności między schedulerami, np. `BPFLAND vs LAVD`
+- **Mierzenie efektu aktualizacji jądra lub schedulera**
+  - Porównanie przebiegów przed i po zastosowaniu łatek lub zmian wersji w celu sprawdzenia regresji lub poprawy wydajności.
+- **Testowanie modyfikacji konfiguracji**
+  - Ocena wpływu zmian, takich jak ustawienia zarządcy procesora, przełączanie SMT lub zmodyfikowane flagi schedulera.
+
+#### Wymagania
+- 4 GB RAM lub więcej
+- Co najmniej 8 GB wolnego miejsca na dysku
+- Czas i cierpliwość - **pełny test może trwać ponad godzinę na wolniejszych systemach**
+
+#### Instalacja
+
+Aby zainstalować `cachyos-benchmarker`, uruchom następujące polecenie:
+```bash
+sudo pacman -S cachyos-benchmarker
+```
+
+#### Uruchamianie testu
+
+<Steps>
+    1. Uruchom `cachyos-benchmarker:`
+        ```bash
+        cachyos-benchmarker ~/cachyos-benchmarker/
+        # Możesz zastąpić ~/cachyos-benchmarker/ dowolnym katalogiem, w którym chcesz zapisać logi.
+        ```
+    2. Poczekaj, aż zakończą się kroki przygotowawcze.
+    3. Postępuj zgodnie z instrukcjami:
+        - `Do you want to drop page cache now? Root privileges needed! (y/N) y` (Czy chcesz teraz wyczyścić page cache? Wymagane uprawnienia roota! (t/N) t)
+        - `Please enter a name for this run, or leave empty for default:` (Wprowadź nazwę dla tego przebiegu lub pozostaw puste dla domyślnej:)
+    4. Poczekaj na zakończenie testów.
+    5. Po zakończeniu, nastąpią następujące czynności:
+        - Utworzenie pliku dziennika o nazwie podobnej do `benchie_<nazwa>_<DATA>.log`, który zawiera szczegółowe informacje o przebiegu testu.
+          - Przykład: `benchie_p2dq_2025-09-29-2115.log`
+          - Skrypt `benchmark_scraper.py` zostanie automatycznie wykonany, aby wygenerować raport podsumowujący w formacie HTML.
+          - Co robi skrypt?:
+            - Odczytuje wszystkie pliki `benchie_*.log` w określonym katalogu.
+            - Wyodrębnia nazwy testów, czasy i wyniki.
+            - Sortuje lub agreguje je.
+            - Wyświetla czyste podsumowanie wyników w terminalu i tworzy plik HTML, który można otworzyć w przeglądarce.
+                <details>
+                <summary>Przykład wyniku w terminalu:</summary>
+                ```text
+                stress-ng cpu-cache-mem: 15.26
+                y-cruncher pi 1b: 31.23
+                perf sched msg fork thread: 8.892
+                perf memcpy: 13.53
+                namd 92K atoms: 53.54
+                calculating prime numbers: 11.126
+                argon2 hashing: 6.62
+                ffmpeg compilation: 53.38
+                xz compression: 61.13
+                kernel defconfig: 130.73
+                blender render: 96.29
+                x265 encoding: 24.99
+
+                Total time (s): 506.72
+                Total score: 70.71
+
+                Name: p2dq
+                Date: 2025-09-29-2115
+
+                System:    Kernel: 6.17.0-1.1-cachyos-p2dq arch: x86_64 bits: 64
+                           Desktop: KDE Plasma v: 6.4.5 Distro: CachyOS
+                Memory:    System RAM: total: 32 GiB available: 30.61 GiB used: 7.54 GiB (24.6%)
+                           Device-1: Channel-A DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                           Device-2: Channel-B DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                           Device-3: Channel-C DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                           Device-4: Channel-D DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                CPU:       Info: 8-core model: AMD Ryzen 7 8845HS w/ Radeon 780M Graphics bits: 64 type: MT MCP cache: L2: 8 MiB
+                           Speed (MHz): avg: 3366 min/max: 419/5138 cores: 1: 3366 2: 3366 3: 3366 4: 3366 5: 3366 6: 3366 7: 3366 8: 3366 9: 3366 10: 3366 11: 3366 12: 3366 13: 3366 14: 3366 15: 3366 16: 3366
+
+                SCX Scheduler: p2dq_1.0.21_gf90c2aa1_dirty_x86_64_unknown_linux_gnu
+
+                SCX Version: p2dq_1.0.21_gf90c2aa1_dirty_x86_64_unknown_linux_gnu
+
+                 Version         : 0.5.1-1
+                ```
+                </details>
+                <details>
+                <summary>Przykład HTML wyniku testu porównującego dwie różne gałęzie tego samego schedulera:</summary>
+                <ImageComponent imgsrc={import('~/assets/images/cachyos-benchmarker-example.png')} />
+                </details>
+    6. Aby porównać dwa lub więcej przebiegów, umieść pliki `.log` w tym samym katalogu przed uruchomieniem `benchmark_scraper.py`. Narzędzie automatycznie je wykryje i porówna w raporcie HTML.
+</Steps>
+
+### Testowanie opóźnień schedulera za pomocą schbench
+
+schbench to benchmark schedulera zaprojektowany do pomiaru opóźnień schedulera w symulowanym obciążeniu w stylu serwerowym. Tworzy on konfigurowalną liczbę wątków „roboczych” i „wiadomości”, gdzie wiadomości wielokrotnie budzą wątki robocze. Mierząc rozkład opóźnień od wybudzenia do wykonania tych wątków roboczych, dostarcza on kluczowych informacji o zdolności jądra do obsługi wybudzeń wątków, równoważenia obciążenia i rywalizacji o CPU, zwłaszcza pod obciążeniem.
+
+#### Zastosowania
+
+Możesz użyć `schbench` do:
+
+- **Oceny opóźnień schedulera:** Określenia, jak szybko wątki są planowane po wybudzeniu.
+- **Porównywania wydajności wybudzania między schedulerami:** Wykrywania poprawy lub regresji w przełączaniu kontekstu i opóźnieniach wybudzania.
+- **Testowania wpływu łatek na jądro lub scheduler:** Oceny, czy dostrajanie lub aktualizacje wpływają na sprawiedliwość i responsywność planowania.
+
+#### Instalacja
+
+`schbench` jest dostępny w repozytoriach CachyOS:
+```bash
+sudo pacman -S schbench
+```
+
+#### Uruchamianie testu
+
+Prosty sposób na uruchomienie `schbench` w celu ogólnego testu opóźnień to:
+```bash
+schbench -m 2 -t 8 -r 60
+```
+
+Ten przykład uruchamia:
+- 2 wątki wiadomości (`-m 2`)
+- 8 wątków roboczych na każdy wątek wiadomości (`-t 8`)
+- na łączny czas 60 sekund (`-r 60`)
+
+Możesz dostosować te wartości w zależności od liczby rdzeni procesora i pożądanego poziomu obciążenia.
+
+Oto tabela wyjaśniająca niektóre z kluczowych opcji:
+
+| Opcja | Opis |
+| --- | --- |
+| `-C, --calibrate` | Uruchom kalibrację i podaj wyniki pomiaru czasu (bez testu). |
+| `-L, --no-locking` | Wyłącz spinlocki podczas pracy CPU (domyślnie: blokowanie włączone). |
+| `-m, --message-threads <n>` | Liczba wątków wiadomości (domyślnie: 1). |
+| `-t, --threads <n>` | Wątki robocze na wątek wiadomości (domyślnie: liczba procesorów). |
+| `-r, --runtime <sec>` | Czas trwania testu (domyślnie: 30). |
+| `-F, --cache_footprint <KB>` | Rozmiar śladu pamięci podręcznej (domyślnie: 256). |
+| `-n, --operations <count>` | Liczba operacji "czasu namysłu" do wykonania (domyślnie: 5). |
+| `-A, --auto-rps` | Automatycznie zwiększaj RPS, aż do osiągnięcia docelowego wykorzystania CPU. |
+| `-R, --rps <count>` | Tryb żądań na sekundę. |
+| `-p, --pipe <bytes>` | Symuluj test transferu przez potok. |
+| `-w, --warmuptime <sec>` | Czas rozgrzewki przed zbieraniem statystyk (domyślnie: 0). |
+| `-i, --intervaltime <sec>` | Interwał wyświetlania opóźnień (domyślnie: 10). |
+| `-z, --zerotime <sec>` | Interwał zerowania statystyk opóźnień (domyślnie: nigdy). |
+
+#### Zrozumienie wyników
+
+Po każdym przebiegu `schbench` wyświetla percentyle opóźnień, takie jak:
+
+<details>
+    <summary>Przykład wyniku</summary>
+    ```bash
+    Wakeup Latencies percentiles (usec) runtime 10 (s) (2406 total samples)
+	  50.0th: 60         (648 samples)
+	  90.0th: 2034       (968 samples)
+	* 99.0th: 4104       (211 samples)
+	  99.9th: 10128      (22 samples)
+	  min=1, max=10308
+    Request Latencies percentiles (usec) runtime 10 (s) (2394 total samples)
+	  50.0th: 49216      (726 samples)
+	  90.0th: 69760      (954 samples)
+	* 99.0th: 166656     (212 samples)
+	  99.9th: 273920     (21 samples)
+	  min=11770, max=334247
+    RPS percentiles (requests) runtime 10 (s) (11 total samples)
+	  20.0th: 234        (3 samples)
+	* 50.0th: 238        (3 samples)
+	  90.0th: 241        (4 samples)
+	  min=230, max=248
+    current rps: 230.99
+    Wakeup Latencies percentiles (usec) runtime 10 (s) (2406 total samples)
+	  50.0th: 60         (648 samples)
+	  90.0th: 2034       (968 samples)
+	* 99.0th: 4104       (211 samples)
+	  99.9th: 10128      (22 samples)
+	  min=1, max=10308
+    Request Latencies percentiles (usec) runtime 10 (s) (2406 total samples)
+	  50.0th: 49216      (729 samples)
+	  90.0th: 69760      (956 samples)
+	* 99.0th: 165632     (212 samples)
+	  99.9th: 273920     (22 samples)
+	  min=11770, max=334247
+    RPS percentiles (requests) runtime 10 (s) (11 total samples)
+	  20.0th: 234        (3 samples)
+	* 50.0th: 238        (3 samples)
+	  90.0th: 241        (4 samples)
+	  min=230, max=248
+    average rps: 240.60
+    ```
+</details>
+
+##### Jak interpretować wyniki
+
+- **Opóźnienia wybudzania (Wakeup Latencies):**
+  - Mierzy, jak szybko wątki budzą się po otrzymaniu sygnału.
+    - Niższe wartości tutaj (szczególnie **99. percentyl**) oznaczają, że scheduler jest bardziej responsywny.
+- **Opóźnienia żądań (Request Latencies):**
+  - Reprezentuje czas potrzebny na ukończenie żądań między wątkami.
+    - Niższe opóźnienie wskazuje na lepszą komunikację międzywątkową i wydajność planowania.
+- **RPS (Żądania na sekundę):**
+  - Pokazuje utrzymaną przepustowość:
+    - Wyższa **średnia RPS** wskazuje, że scheduler może obsłużyć więcej pracy na sekundę w danej konfiguracji.
+
+Podsumowując:
+- **Dobry scheduler** będzie wykazywał **niskie opóźnienia wybudzania i żądań** ze **stabilnym RPS**.
+- **Mniej wydajny scheduler** może wykazywać **wysokie skoki opóźnień** lub **niestabilne wartości RPS** w czasie.
+
+:::note
+Wyniki te mogą się różnić w zależności od procesora, liczby rdzeni, obciążenia systemu oraz tego, czy scheduler jest w stanie efektywnie obsługiwać architekturę Twojego procesora.
+:::
+
+### Zalecenia dotyczące testowania wydajności gier
+
+Jeśli chcesz testować wydajność gier w celu porównania, jak działają różne schedulery, oto kilka wskazówek, aby uzyskać jak najdokładniejsze wyniki:
+
+- **Używaj wbudowanych benchmarków:** Wiele nowoczesnych gier posiada wbudowane narzędzia do testowania wydajności. Są one zaprojektowane tak, aby zapewniać spójne wyniki, uruchamiając za każdym razem tę samą sekwencję zdarzeń.
+  - Sprawdź tę [stronę internetową](https://www.pcgamingwiki.com/wiki/List_of_games_with_built-in_benchmarks) w poszukiwaniu listy gier, które zawierają wbudowane benchmarki.
+- **Spójne ustawienia:** Upewnij się, że ustawienia gry (rozdzielczość, jakość grafiki itp.) są takie same dla każdego testu.
+- **Zamknij aplikacje działające w tle:** Inne aplikacje działające w tle mogą wpływać na wydajność. Zamknij niepotrzebne programy, aby zminimalizować ich wpływ.
+- Jeśli nie używasz wbudowanego benchmarku, staraj się wykonywać te same czynności w grze podczas każdego testu. Może to obejmować podążanie tą samą ścieżką, angażowanie się w podobne scenariusze walki lub wykonywanie tych samych zadań.
+  - Nawet celowanie w inne miejsce może prowadzić do różnych wyników wydajności.
+- **Wiele przebiegów:** Wykonaj wiele przebiegów testu i weź średnią, aby uwzględnić zmienność.
+- **Używaj narzędzi do monitorowania wydajności:** Narzędzia takie jak MangoHud czy GOverlay mogą dostarczać metryki wydajności w czasie rzeczywistym, takie jak FPS, czasy klatek oraz użycie CPU/GPU.
+- **Wykorzystaj skróty klawiaturowe lub makra:**
+  - Jednym z przykładów jest utworzenie skrótu klawiszowego, za pomocą którego można przełączać się między różnymi schedulerami lub zmieniać ich tryby w locie podczas gry.
+    - Można to zrobić za pomocą narzędzia takiego jak [scxctl](/pl/configuration/sched-ext#jak-uruchamiać-harmonogram-i-zarządzać-nim) lub tworząc niestandardowe skrypty, które zmieniają aktywny scheduler i jego tryb.
+
+#### Przesyłanie i udostępnianie swoich testów
+
+Ta [strona internetowa](https://flightlesssomething.ambrosia.one/benchmarks) zawiera listę testów wykonanych przez społeczność przy użyciu różnych schedulerów lub testujących różne ustawienia.
+
+Aby przesłać własne testy, musisz połączyć swoje konto Discord ze stroną, a następnie możesz przesłać własne benchmarki.
+
+Następnie kliknij przycisk `New benchmark` i wypełnij wymagane informacje.
+
+- Możesz przesłać wiele wyników dla tej samej gry, używając różnych schedulerów lub ustawień.
+- Akceptuje logi zarówno z MangoHud, jak i Afterburner.
+- Umożliwia wyszukiwanie po tytule lub opisie.
+
 ## Przejście z scx.service na scx_loader: Kompleksowy przewodnik
 
 :::caution
-Nie próbuj uruchamiać usługi scx_loader.service razem z scx.service, w przeciwnym razie usługa loadera uruchomi się, ale nic nie zrobi.
+Nie próbuj uruchamiać scx_loader.service jednocześnie z scx.service, w przeciwnym razie usługa loader uruchomi się, ale nic nie zrobi.
 
-Ten konflikt wynika z faktu, że obie usługi nie wiedzą o sobie nawzajem, zwłaszcza w kwestii tego, która zarządza planistami.
+Ten konflikt wynika z faktu, że obie usługi nie wiedzą o swoim istnieniu, zwłaszcza w kwestii tego, która z nich zarządza harmonogramami (schedulerami).
 :::
 
 :::tip
-Menedżer jądra CachyOS zawiera już [GUI do zarządzania scx_loaderem](/pl/features/kernel_manager#zarządzanie-frameworkiem-sched-ext).
+Menedżer jądra CachyOS zawiera już [interfejs graficzny do zarządzania scx_loader.](/pl/features/kernel_manager#zarządzanie-frameworkiem-sched-ext)
 :::
 
 Zacznijmy od szczegółowego porównania struktury pliku scx.service ze strukturą pliku konfiguracyjnego scx_loader.
@@ -469,10 +837,10 @@ Zacznijmy od szczegółowego porównania struktury pliku scx.service ze struktur
 *Jeśli wcześniej używałeś LAVD ze starym scx.service, jak w poniższym przykładzie:*
 
 ```sh title='Struktura pliku scx.service'
-# Lista planistów scx: scx_bpfland scx_central scx_flash scx_lavd scx_layered scx_nest scx_qmap scx_rlfifo scx_rustland scx_rusty scx_simple scx_userland
+# Lista harmonogramów scx: scx_bpfland scx_central scx_flash scx_lavd scx_layered scx_nest scx_qmap scx_rlfifo scx_rustland scx_rusty scx_simple scx_userland
 SCX_SCHEDULER=scx_lavd
 
-# Ustaw niestandardowe flagi dla planisty
+# Ustaw niestandardowe flagi dla harmonogramu
 SCX_FLAGS='--performance'
 ```
 
@@ -486,7 +854,7 @@ default_mode = "Auto"
 auto_mode = ["--performance"]
 ```
 
-[Więcej informacji o tym, jak skonfigurować plik scx_loader](https://github.com/sched-ext/scx/blob/main/rust/scx_loader/configuration.md)
+[Więcej informacji na temat konfiguracji pliku scx_loader](https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/configuration.md#scx_loader-configuration-file)
 
   Postępuj zgodnie z poniższym przewodnikiem, aby łatwo przejść z `usługi systemd scx` na nowe narzędzie `scx_loader`.
   <Steps>
@@ -498,73 +866,80 @@ auto_mode = ["--performance"]
      sudo micro /etc/scx_loader.toml
      # Dodaj następujące linie:
 
-     default_sched = "scx_bpfland" # Edytuj tę linię, aby wybrać planistę, który scx_loader ma uruchomić przy starcie systemu
+     default_sched = "scx_bpfland" # Zmień tę linię na harmonogram, który scx_loader ma uruchamiać przy starcie systemu
      default_mode = "Auto" # Możliwe wartości: "Auto", "Gaming", "LowLatency", "PowerSave".
 
      # Naciśnij CTRL + S, aby zapisać zmiany i CTRL + Q, aby wyjść z Micro.
      ```
-  3. ```sh title='Restartowanie scx_loader'
+  3. ```sh title='Ponowne uruchamianie scx_loader'
      systemctl restart scx_loader.service
      ```
-     - Gotowe, scx_loader załaduje i uruchomi teraz pożądany planista.
+     - Gotowe, scx_loader załaduje i uruchomi teraz wybrany harmonogram.
 
   </Steps>
 
 ### Debugowanie w scx_loader
 
+<Tabs>
+<TabItem label='Proste logowanie'>
+
   - ```sh title='Sprawdzanie statusu usługi'
     systemctl status scx_loader.service
     ```
-  - ```sh title='Wyświetlanie wszystkich wpisów w dzienniku usługi'
+  - ```sh title='Wyświetlanie wszystkich wpisów dziennika usługi'
     journalctl -u scx_loader.service
     ```
-  - ```sh title='Wyświetlanie tylko logów z bieżącej sesji.'
+  - ```sh title='Wyświetlanie logów tylko z bieżącej sesji.'
     journalctl -u scx_loader.service -b 0
     ```
-- Zaawansowane logowanie
+</TabItem>
+<TabItem label='Rozszerzone logowanie'>
 
-*Aby uzyskać bardziej szczegółowy log, postępuj zgodnie z poniższymi krokami.*
+*Aby uzyskać bardziej szczegółowy log, wykonaj następujące kroki.*
   - ```sh title='Edytuj plik usługi'
      sudo systemctl edit scx_loader.service
      ```
-  - ```sh title='Dodaj następującą linię pod sekcją [Service]'
+  - ```sh title='Dodaj następującą linię w sekcji [Service]'
      Environment=RUST_LOG=trace
      ```
-  - ```sh title='Zrestartuj usługę'
+  - ```sh title='Uruchom ponownie usługę'
      sudo systemctl restart scx_loader.service
      ```
-- Sprawdź ponownie logi, aby uzyskać bardziej szczegółowe informacje do debugowania.
+  - Sprawdź ponownie logi, aby uzyskać bardziej szczegółowe informacje do debugowania.
+</TabItem>
+
+</Tabs>
 
 ## FAQ
 
-### Dlaczego planista X działa gorzej niż inny?
+### Dlaczego harmonogram X działa gorzej niż inny?
 
-- Jest wiele zmiennych do rozważenia podczas ich porównywania. Na przykład, jak mierzą wagę zadania? Czy priorytetyzują zadania interaktywne nad nieinteraktywnymi?
+- Jest wiele zmiennych, które należy wziąć pod uwagę podczas ich porównywania. Na przykład, jak mierzą wagę zadania? Czy priorytetyzują zadania interaktywne nad nieinteraktywnymi?
   Ostatecznie zależy to od ich założeń projektowych.
 
-### Dlaczego wszyscy mówią, że planista X jest najlepszy w przypadku Y, ale u mnie nie działa tak dobrze?
+### Dlaczego wszyscy mówią, że harmonogram X jest najlepszy w przypadku Y, ale u mnie nie działa tak dobrze?
 
-- Podobnie jak w poprzedniej odpowiedzi, wybór procesora i jego konstrukcja, taka jak układ rdzeni, sposób współdzielenia pamięci podręcznej między rdzeniami i inne powiązane czynniki, mogą prowadzić do mniej wydajnego działania planisty.
-- Dlatego posiadanie wyboru jest jedną z głównych zalet frameworka sched-ext, więc nie bój się spróbować jednego z nich i zobaczyć, który najlepiej sprawdzi się w Twoim przypadku. `Przykłady: stabilność klatek na sekundę, maksymalna wydajność, responsywność w warunkach intensywnego obciążenia itp.`
+- Podobnie jak w poprzedniej odpowiedzi, wybór procesora i jego konstrukcja, taka jak układ rdzeni, sposób współdzielenia pamięci podręcznej między rdzeniami i inne powiązane czynniki, mogą prowadzić do mniej wydajnej pracy harmonogramu.
+- Dlatego posiadanie wyboru jest jedną z głównych zalet frameworka sched-ext, więc nie bój się próbować i sprawdzać, co działa najlepiej w Twoim przypadku. `Przykłady: stabilność FPS, maksymalna wydajność, responsywność pod intensywnym obciążeniem itp.`
 
-### Zastosowania tych planistów są dość podobne... dlaczego tak jest?
+### Zastosowania tych harmonogramów są dość podobne... dlaczego tak jest?
 
-Głównie dlatego, że są to planisty wielozadaniowe, co oznacza, że mogą obsługiwać różnorodne obciążenia, nawet jeśli nie celują w każdej dziedzinie.
+Głównie dlatego, że są to harmonogramy wielozadaniowe, co oznacza, że mogą obsługiwać różnorodne obciążenia, nawet jeśli nie celują w każdym obszarze.
 
-- Aby określić, który planista najlepiej Ci odpowiada, nie ma lepszej rady niż wypróbowanie go samemu.
+- Aby ustalić, który harmonogram jest dla Ciebie najlepszy, nie ma lepszej rady niż wypróbowanie go samemu.
 
-### Dlaczego brakuje mi planisty, o którym niektórzy użytkownicy wspominają lub testują na serwerze Discord CachyOS?
-Upewnij się, że używasz najnowszej wersji pakietu scx-scheds o nazwie `scx-scheds-git`
+### Dlaczego brakuje mi harmonogramu, o którym niektórzy użytkownicy wspominają lub który testują na serwerze Discord CachyOS?
+Upewnij się, że używasz najnowszej, rozwojowej wersji pakietu scx-scheds o nazwie `scx-scheds-git`
 
-- Jednym z powodów może być to, że ten planista jest bardzo nowy i jest obecnie testowany przez użytkowników, dlatego nie został jeszcze dodany do pakietu `scx-scheds-git`.
+- Jednym z powodów może być to, że ten harmonogram jest bardzo nowy i jest obecnie testowany przez użytkowników, dlatego nie został jeszcze dodany do pakietu `scx-scheds-git`.
 
-### Dlaczego planista nagle się zawiesił? Czy jest niestabilny?
+### Dlaczego harmonogram nagle się zawiesił? Czy jest niestabilny?
 
 - *Może być kilka powodów, dlaczego tak się stało:*
-  - Jednym z najczęstszych powodów jest to, że używałeś ananicy-cpp razem z planistą. Dlatego dodaliśmy to [ostrzeżenie](/pl/configuration/sched-ext#wyłącz-ananicy-cpp)
-  - Innym powodem może być to, że obciążenie, które uruchamiałeś, przekroczyło limity i możliwości planisty, powodując jego zatrzymanie.
+  - Jednym z najczęstszych powodów jest używanie ananicy-cpp jednocześnie z harmonogramem. Dlatego dodaliśmy to [ostrzeżenie](/pl/configuration/sched-ext#ananicy-cpp-i-sched-ext)
+  - Innym powodem może być to, że obciążenie, które uruchamiałeś, przekroczyło limity i możliwości harmonogramu, powodując jego zatrzymanie.
     - Przykład nierozsądnego obciążenia: `hackbench`
-  - Lub bardziej oczywisty powód, znalazłeś błąd w planiście. Jeśli tak, zgłoś go jako problem na ich [GitHubie](https://github.com/sched-ext/scx/issues) lub poinformuj ich
+  - Lub bardziej oczywisty powód: znalazłeś błąd w harmonogramie. Jeśli tak, zgłoś go jako problem w ich [GitHubie](https://github.com/sched-ext/scx/issues) lub poinformuj ich
     o tym na kanale Discord CachyOS `sched-ext`
 
 ### Używałem wcześniej scx_loader w GUI Menedżera Jądra. Czy nadal muszę postępować zgodnie z krokami przejścia?
@@ -574,11 +949,17 @@ Upewnij się, że używasz najnowszej wersji pakietu scx-scheds o nazwie `scx-sc
 
 ## Dowiedz się więcej
 
-Jeśli chcesz dowiedzieć się więcej o frameworku sched-ext, zapoznaj się z poniższymi linkami.
+:::note[Podziękowania]
+Niektóre z poniższych linków zostały pierwotnie zaczerpnięte z [repozytorium GitHub sched-ext](https://github.com/sched-ext/scx?tab=readme-ov-file#sched_ext-schedulers-and-tools).
+Pełne uznanie należy się opiekunom i współtwórcom sched-ext za zebranie i udostępnienie tych doskonałych zasobów.
+:::
 
-- [Kod źródłowy planistów Sched-ext](<https://github.com/sched-ext/scx/tree/main/scheds/rust>)
-- [Oficjalne Wiki Sched-ext](<https://github.com/sched-ext/scx/wiki>)
-- [Changwoo Min: Wprowadzenie do sched-ext i planowania CPU, część 1](<https://blogs.igalia.com/changwoo/sched-ext-a-bpf-extensible-scheduler-class-part-1/>)
-  - [Część 2](<https://blogs.igalia.com/changwoo/sched-ext-scheduler-architecture-and-interfaces-part-2/>)
-- [Andrea Righi: Ponowna implementacja mojego planisty Linuksa w Rust w eBPF](<https://arighi.blogspot.com/2024/08/re-implementing-my-linux-rust-scheduler.html>)
-- [Andrea Righi:  Planisty jądra Linuksa generowane przez AI w Rust](<https://arighi.blogspot.com/2024/09/ai-generated-linux-kernel-schedulers-in.html>)
+- [Playlista YT o Sched_ext](https://youtube.com/playlist?list=PLLLT4NxU7U1TnhgFH6k57iKjRu6CXJ3yB&si=DETiqpfwMoj8Anvl)
+- [LWN: Rozszerzalna klasa harmonogramu (Luty, 2023)](https://lwn.net/Articles/922405/)
+- [Blog arighi: Zaimplementuj własny harmonogram CPU jądra w Ubuntu za pomocą sched_ext (Lipiec, 2023)](https://arighi.blogspot.com/2023/07/implement-your-own-cpu-scheduler-in.html)
+- [Wykład Davida Verneta: Kernel Recipes 2023 - sched_ext: wtyczkowe planowanie w jądrze Linux (Wrzesień, 2023)](https://youtu.be/8kAcnNVSAdI?si=F5Q-dkSS_sG9BTXA)
+- [Blog Changwoo: sched_ext: rozszerzalna klasa harmonogramu za pomocą BPF (Część 1) (Grudzień, 2023)](https://blogs.igalia.com/changwoo/sched-ext-a-bpf-extensible-scheduler-class-part-1/)
+- [Blog arighi: Pierwsze kroki z rozwojem sched_ext (Kwiecień, 2024)](https://arighi.blogspot.com/2024/04/getting-started-with-sched-ext.html)
+- [Blog Changwoo: sched_ext: architektura i interfejsy harmonogramu (Część 2) (Czerwiec, 2024)](https://blogs.igalia.com/changwoo/sched-ext-scheduler-architecture-and-interfaces-part-2/)
+- [Kanał YT arighi: Demo harmonogramu Linux scx_bpfland: świadomość topologii (Sierpień, 2024)](https://youtu.be/R-FEZOveG-I)
+- [Wykład Davida Verneta: Kernel Recipes 2024 - Planowanie z supermocami: Używanie sched_ext do uzyskania dużych zysków wydajności (Wrzesień, 2024)](https://youtu.be/Cy7-oqdcUCs?si=bjKu3uidOdIzzAWv)
