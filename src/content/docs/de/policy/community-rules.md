@@ -15,3 +15,7 @@ Ein Verstoß gegen diese Regeln ist nicht erlaubt und hat einen Bann zur Folge:
 8. Flooding (mehrmals hintereinander die gleiche Art von Information zu posten) ist verboten.
 9. Es ist verboten, Konflikte zwischen Mitgliedern zu provozieren.
 10. Dies ist ein sicherer Ort für LGBTQ+-Personen, daher ist es verboten, LGBTQ+-Personen zu provozieren oder zu beleidigen.
+
+Ein Verstoß gegen diese Regeln führt zu Timeouts, die bei wiederholten Verstößen zu einer Sperrung des Kontos eskalieren:
+
+1. Die Verwendung anderer Sprachen als Englisch zur Kommunikation ist verboten, es sei denn, es handelt sich um ein "Smalltalk"-Gespräch oder es existiert ein dedizierter Sprachkanal.
