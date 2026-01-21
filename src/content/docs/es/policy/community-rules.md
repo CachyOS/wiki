@@ -15,3 +15,7 @@ No está permitido violar estas reglas y conllevará la expulsión de la cuenta:
 8. Se prohíbe hacer "flood" (publicar el mismo tipo de información varias veces seguidas).
 9. Se prohíbe provocar conflictos entre los participantes.
 10. Este es un espacio seguro para la comunidad LGBTQ+, por lo que se prohíbe provocar e insultar a las personas LGBTQ+.
+
+Incumplir estas reglas resultará en suspensiones temporales, que escalarán a una expulsión de la cuenta por ofensas reiteradas:
+
+1. Se prohíbe el uso de idiomas distintos al inglés para la comunicación, a menos que la conversación sea de tipo "charla informal" o existan canales dedicados para otros idiomas.

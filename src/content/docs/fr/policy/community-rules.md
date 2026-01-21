@@ -15,3 +15,7 @@ La violation de ces règles est interdite et entraînera le bannissement du comp
 8. Il est interdit de faire du flood (publier plusieurs fois de suite le même type d'information).
 9. Il est interdit de provoquer des conflits entre les membres.
 10. Cet espace est un lieu sûr pour les personnes LGBTQ+, il est donc interdit de provoquer ou d'insulter les personnes LGBTQ+.
+
+La violation de ces règles entraînera des exclusions temporaires, pouvant aller jusqu'à un bannissement du compte en cas d'infractions répétées :
+
+1. L'utilisation de langues autres que l'anglais pour communiquer est interdite, sauf si la conversation est de type "small-talk" ou si un salon linguistique dédié existe.
