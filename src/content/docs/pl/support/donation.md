@@ -1,18 +1,18 @@
 ---
-title: Dotacje
-description: Sposoby wsparcia nas
+title: Darowizna
+description: Sposoby na wsparcie nas
 ---
 
-Jeśli chcesz wesprzeć naszą pracę, możesz przekazać nam darowiznę i pomóc w opłaceniu naszych serwerów budujących.
+Jeśli chcesz wesprzeć naszą pracę, możesz przekazać nam darowiznę i pomóc opłacić nasze serwery kompilacyjne.
 Każdy darczyńca otrzymuje rangę Darczyńcy na naszym Discordzie.
 
 Oto lista obecnych kosztów miesięcznych:
 
-- Serwer budujący 127 € (Hetzner 7950X3D)
-- Drugi serwer budujący 70 € (Hetzner 7700X)
+- Serwer kompilacyjny 127 € (Hetzner 7950X3D)
+- Drugi serwer kompilacyjny 70 € (Hetzner 7700X)
 - Serwer WWW/mirror 17 €
 - Serwer pocztowy/mirror 17 €
-- Serwer forum (Netcup VPS) 7 Euro
+- Serwer forum (Netcup VPS) 7 euro
 
 ### Patreon
 
