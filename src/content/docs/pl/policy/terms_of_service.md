@@ -1,137 +1,137 @@
 ---
-title: Warunki Świadczenia Usług
+title: Warunki korzystania z usług
 ---
 
-## 1. Zakres Warunków Świadczenia Usług
+## 1. Zakres Warunków korzystania z usług
 
 ### 1.1. Definicje
 
-Niniejsze Warunki Świadczenia Usług regulują korzystanie z platformy CachyOS i powiązanych z nią usług, w tym forów, wiki, narzędzia do zgłaszania błędów oraz innych narzędzi do współpracy („Usługi”).
-CachyOS („my”, „nas”, „nasz”) prowadzi platformę dostępną pod adresem cachyos.org i powiązanymi subdomenami. Użytkownicy („ty”, „twój”) muszą zaakceptować niniejsze warunki, aby korzystać z Usług.
+Niniejsze Warunki korzystania z usług regulują korzystanie z platformy CachyOS i powiązanych usług, w tym forów, wiki, narzędzia do zgłaszania błędów oraz innych narzędzi do współpracy („Usługi”).
+CachyOS („my”, „nas”, „nasz”) obsługuje platformę dostępną pod adresem cachyos.org i w powiązanych subdomenach. Użytkownicy („ty”, „twój”) muszą zaakceptować niniejsze warunki, aby korzystać z Usług.
 
 ### 1.2. Korzystanie z Usług
 
 Z Usług mogą korzystać wyłącznie osoby fizyczne pełnoletnie i posiadające pełną zdolność do czynności prawnych. Osoby niepełnoletnie mogą korzystać z Usług za zgodą rodziców lub opiekunów prawnych.
 
-### 1.3. Dostęp do Warunków Świadczenia Usług
+### 1.3. Dostęp do Warunków korzystania z usług
 
-Najnowsza wersja Warunków Świadczenia Usług jest dostępna w każdej chwili na naszej stronie internetowej: <https://wiki.cachyos.org/pl/policy/terms_of_service>.
+Najnowsza wersja Warunków korzystania z usług jest dostępna w każdej chwili na naszej stronie internetowej: <https://wiki.cachyos.org/pl/policy/terms_of_service>.
 
-## 2. Rejestracja, Zawarcie Umowy i Przedmiot Umowy
+## 2. Rejestracja, zawarcie umowy i jej przedmiot
 
 ### 2.1. Wymagania
 
-Aby korzystać z naszych Usług Interaktywnych (np. forów, wkładu w pakiety), musisz zarejestrować się za pomocą naszego formularza online, podać dokładne dane kontaktowe i zgodzić się na niniejsze Warunki Świadczenia Usług.
+Aby korzystać z naszych Usług Interaktywnych (np. forów, współtworzenia pakietów), musisz zarejestrować się za pomocą naszego formularza online, podać dokładne dane kontaktowe i zgodzić się na niniejsze Warunki korzystania z usług.
 Aktywacja konta oznacza zawarcie umowy. Nie ma roszczenia o aktywację ani uczestnictwo.
 
-### 2.2. Zmiana Platformy
+### 2.2. Zmiana platformy
 
-Zastrzegamy sobie prawo do zmiany lub rozszerzenia Usług i struktury platformy. Zmiany, które w istotny sposób wpływają na cel niniejszych Warunków Świadczenia Usług, zostaną zakomunikowane użytkownikom.
+Zastrzegamy sobie prawo do zmiany lub rozszerzenia Usług oraz struktury platformy. Zmiany, które w znaczący sposób wpływają na cel niniejszych Warunków korzystania z usług, będą komunikowane użytkownikom.
 
-## 3. Obowiązki Użytkownika Usług Interaktywnych
+## 3. Obowiązki użytkownika Usług Interaktywnych
 
-### 3.1. Kompletność Informacji
+### 3.1. Kompletność informacji
 
-Musisz podać kompletne i dokładne dane kontaktowe oraz aktualizować je w razie potrzeby.
+Musisz podać pełne i dokładne dane kontaktowe oraz aktualizować je w razie potrzeby.
 
-### 3.2. Użytkowanie Konta
+### 3.2. Korzystanie z konta
 
-Twoje konto jest osobiste i musi być chronione przed nieautoryzowanym użyciem. Jesteś odpowiedzialny za wszelkie niewłaściwe użycie swojego konta.
+Twoje konto jest osobiste i musi być chronione przed nieautoryzowanym użyciem. Jesteś odpowiedzialny za wszelkie nadużycia swojego konta.
 
-### 3.3. Zachowanie
+### 3.3. Postępowanie
 
 Użytkownicy muszą wchodzić w interakcje z szacunkiem i zgodnie z prawem, przestrzegając naszych Ogólnych Wytycznych i Kodeksu Postępowania.
 
-### 3.4. Treść i Zachowanie
+### 3.4. Treść i postępowanie
 
-Jesteś odpowiedzialny za wszelkie treści, które udostępniasz, zapewniając, że nie naruszają one niniejszych warunków ani obowiązujących przepisów prawa.
+Jesteś odpowiedzialny za wszelkie treści, które udostępniasz, upewniając się, że nie naruszają one niniejszych warunków ani obowiązujących przepisów prawa.
 
 ### 3.5. Naruszenia
 
-Nie wolno publikować treści obraźliwych, fałszywych, złośliwych ani naruszających jakiekolwiek przepisy prawa, w tym prawa autorskie i prawa do znaków towarowych.
+Nie wolno publikować treści obraźliwych, fałszywych, złośliwych ani naruszających jakiekolwiek przepisy prawa, w tym prawa autorskie i prawa dotyczące znaków towarowych.
 
-### 3.6. Trwałe Wpisy
+### 3.6. Stałe wpisy
 
-Wpisy mogą być indeksowane przez wyszukiwarki internetowe i pozostawać dostępne na całym świecie. Nie możesz domagać się usunięcia ani korekty takich wpisów.
+Wpisy mogą być indeksowane przez wyszukiwarki i pozostawać dostępne na całym świecie. Nie możesz domagać się usunięcia lub poprawienia takich wpisów.
 
-### 3.7. Uznaniowość w kwestii Treści
+### 3.7. Swoboda decydowania o treści
 
-Zastrzegamy sobie prawo do odrzucenia, usunięcia, modyfikacji lub usunięcia dowolnej treści według własnego uznania oraz do nakładania sankcji za naruszenia niniejszych warunków.
+Zastrzegamy sobie prawo do odrzucania, usuwania, modyfikowania lub usuwania dowolnych treści według własnego uznania oraz do nakładania sankcji za naruszenia niniejszych warunków.
 
-## 4. Odpowiedzialność Użytkowników; Zwolnienie z Odpowiedzialności
+## 4. Odpowiedzialność użytkowników; Zabezpieczenie roszczeń
 
-Zgadzasz się zwolnić nas z odpowiedzialności za wszelkie koszty poniesione w wyniku roszczeń osób trzecich z powodu naruszenia przez Ciebie niniejszych Warunków Świadczenia Usług.
+Zgadzasz się zabezpieczyć nas przed wszelkimi kosztami poniesionymi w wyniku roszczeń osób trzecich z powodu naruszenia przez Ciebie niniejszych Warunków korzystania z usług.
 
-## 5. Przeniesienie Praw Użytkowania
+## 5. Przeniesienie praw do użytkowania
 
-### 5.1. Prawa Autorskie
+### 5.1. Prawa autorskie
 
 Publikując treści, udzielasz nam praw niezbędnych do świadczenia naszych Usług. Musisz upewnić się, że posiadasz prawa do wszelkich treści, które przesyłasz.
 
-### 5.2. Licencje na Wkład
+### 5.2. Licencje na wkład
 
-Wkłady w oprogramowanie muszą być licencjonowane na licencji projektu lub na licencji GNU General Public License w wersji 3.
+Wkład w oprogramowanie musi być licencjonowany na licencji projektu lub na Powszechnej Licencji Publicznej GNU w wersji 3.
 
-### 5.3. Kontynuacja Praw
+### 5.3. Kontynuacja praw
 
-Prawa użytkowania pozostają w mocy nawet po zamknięciu konta.
+Prawa do użytkowania pozostają w mocy nawet po zamknięciu konta.
 
-## 6. Dostępność Platformy
+## 6. Dostępność platformy
 
-Staramy się utrzymać dostępność platformy, ale nie możemy zagwarantować 100% czasu działania.
+Dokładamy wszelkich starań, aby platforma była dostępna, ale nie możemy zagwarantować 100% czasu działania.
 
 ## 7. Odpowiedzialność CachyOS
 
-### 7.1. Ograniczenie Odpowiedzialności
+### 7.1. Ograniczenie odpowiedzialności
 
-Nie ponosimy odpowiedzialności za treści użytkowników ani za szkody wynikające z ich wykorzystania. Użytkownicy muszą podejmować środki ostrożności przeciwko szkodliwym treściom.
+Nie ponosimy odpowiedzialności za treści użytkowników ani za jakiekolwiek szkody wynikające z ich wykorzystania. Użytkownicy muszą podejmować środki ostrożności przeciwko szkodliwym treściom.
 
-### 7.2. Przegląd Treści
+### 7.2. Przegląd treści
 
-Nie sprawdzamy wszystkich treści publikowanych przez użytkowników i nie ponosimy za nie odpowiedzialności. Nielegalne treści zostaną usunięte po ich wykryciu.
+Nie przeglądamy wszystkich treści publikowanych przez użytkowników i nie ponosimy za nie odpowiedzialności. Nielegalne treści zostaną usunięte po ich wykryciu.
 
-### 7.3. Ograniczenie Roszczeń Odszkodowawczych
+### 7.3. Ograniczenie roszczeń odszkodowawczych
 
 Wyłączamy odpowiedzialność za szkody, z wyjątkiem przypadków rażącego niedbalstwa, umyślnego działania lub naruszenia istotnych zobowiązań umownych.
 
-### 7.4. Dalsze Ograniczenie Odpowiedzialności
+### 7.4. Dalsze ograniczenie odpowiedzialności
 
 Nie ponosimy odpowiedzialności za treść zewnętrznych stron, do których prowadzą linki.
 
-## 8. Zmiana Warunków Świadczenia Usług
+## 8. Zmiana Warunków korzystania z usług
 
 ### 8.1. Zmiany
 
-Możemy w razie potrzeby zmieniać niniejsze Warunki Świadczenia Usług. Użytkownicy zostaną powiadomieni o zmianach pocztą elektroniczną. Brak sprzeciwu wobec zmian w ciągu dwóch tygodni oznacza ich akceptację.
+Możemy w razie potrzeby zmieniać niniejsze Warunki korzystania z usług. Użytkownicy zostaną powiadomieni o zmianach pocztą elektroniczną. Brak sprzeciwu wobec zmian w ciągu dwóch tygodni oznacza ich akceptację.
 
-### 8.2. Sprzeciw wobec Zmian
+### 8.2. Sprzeciw wobec zmian
 
-Jeśli wyrazisz sprzeciw wobec zmian, umowa będzie kontynuowana na poprzednich warunkach, ale możemy wypowiedzieć umowę w najbliższym możliwym terminie.
+Jeśli sprzeciwisz się zmianom, umowa będzie kontynuowana na poprzednich warunkach, ale możemy wypowiedzieć umowę w najbliższym możliwym terminie.
 
-## 9. Okres Obowiązywania i Rozwiązanie Umowy
+## 9. Okres obowiązywania i rozwiązanie umowy
 
-### 9.1. Okres Obowiązywania Warunków Świadczenia Usług
+### 9.1. Okres obowiązywania Warunków korzystania z usług
 
-Niniejsze Warunki Świadczenia Usług zostają zawarte na czas nieokreślony.
+Niniejsze Warunki korzystania z usług są zawierane na czas nieokreślony.
 
-### 9.2. Rozwiązanie Umowy
+### 9.2. Rozwiązanie umowy
 
-Każda ze stron może wypowiedzieć niniejsze Warunki Świadczenia Usług bez podania przyczyny w dowolnym momencie.
+Każda ze stron może rozwiązać niniejsze Warunki korzystania z usług bez podania przyczyny w dowolnym momencie.
 
-### 9.3. Usunięcie Konta
+### 9.3. Usunięcie konta
 
 Publiczne oświadczenia i wpisy mogą pozostać widoczne nawet po usunięciu konta.
 
-## 10. Postanowienia Różne
+## 10. Postanowienia różne
 
-### 10.1. Prawo Właściwe
+### 10.1. Prawo właściwe
 
-Niniejsze Warunki Świadczenia Usług podlegają wyłącznie prawu właściwej jurysdykcji, z wyłączeniem Konwencji Narodów Zjednoczonych o umowach międzynarodowej sprzedaży towarów (CISG).
+Niniejsze Warunki korzystania z usług podlegają wyłącznie prawu właściwej jurysdykcji, z wyłączeniem Konwencji Narodów Zjednoczonych o umowach międzynarodowej sprzedaży towarów (CISG).
 
-### 10.2. Klauzula Salwatoryjna
+### 10.2. Klauzula salwatoryjna
 
-Jeżeli którekolwiek postanowienie niniejszych Warunków Świadczenia Usług zostanie uznane za nieważne, pozostałe postanowienia pozostają w mocy.
+Jeśli którekolwiek z postanowień niniejszych Warunków korzystania z usług okaże się nieważne, pozostałe postanowienia pozostają w mocy.
 
 ### 10.3. Spory
 
-Platforma internetowego rozstrzygania sporów Komisji Europejskiej jest dostępna pod adresem <https://ec.europa.eu/consumers/odr>. Nie jesteśmy zobowiązani do uczestniczenia w postępowaniach rozstrzygających spory przed konsumenckim sądem polubownym.
+Platforma internetowego rozstrzygania sporów Komisji Europejskiej jest dostępna pod adresem <https://ec.europa.eu/consumers/odr>. Nie jesteśmy zobowiązani do udziału w postępowaniach rozstrzygania sporów przed konsumenckim sądem polubownym.

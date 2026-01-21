@@ -1,14 +1,14 @@
 ---
 title: Konfiguracja Secure Boot
-description: Skonfiguruj bezpieczny rozruch za pomocą sbctl po zainstalowaniu CachyOS
+description: Skonfiguruj bezpieczny rozruch za pomocą sbctl po instalacji CachyOS
 ---
 
 import ImageComponent from '~/components/image-component.astro';
 
 # sbctl
 
-[sbctl](https://github.com/Foxboron/sbctl) to przyjazny dla użytkownika menedżer kluczy bezpiecznego rozruchu, zdolny do konfiguracji bezpiecznego rozruchu,
-oferujący możliwości zarządzania kluczami i śledzenia plików, które muszą być podpisane w łańcuchu rozruchowym.
+[sbctl](https://github.com/Foxboron/sbctl) to przyjazny dla użytkownika menedżer kluczy bezpiecznego rozruchu, który umożliwia konfigurację bezpiecznego rozruchu,
+oferuje możliwości zarządzania kluczami i śledzi pliki, które muszą być podpisane w łańcuchu rozruchowym.
 
 ## Instalacja sbctl
 
@@ -16,7 +16,7 @@ oferujący możliwości zarządzania kluczami i śledzenia plików, które musz�
 sudo pacman -S sbctl
 ```
 
-## Wstępna konfiguracja
+## Konfiguracja wstępna
 
 ### Menedżer rozruchu GRUB
 
@@ -27,13 +27,13 @@ sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=
 ```
 
 :::note
-Ładowanie niepotrzebnych modułów w menedżerze rozruchu może stanowić zagrożenie bezpieczeństwa.
-Uruchom to polecenie tylko wtedy, gdy faktycznie potrzebujesz bezpiecznego rozruchu.
+Ładowanie niepotrzebnych modułów w menedżerze rozruchu może stanowić ryzyko bezpieczeństwa.
+Uruchom to polecenie tylko wtedy, gdy naprawdę potrzebujesz bezpiecznego rozruchu.
 :::
 
-### Wprowadzanie trybu konfiguracji w UEFI
-Najpierw musimy przejść do ustawień oprogramowania układowego (firmware) i ustawić tryb bezpiecznego rozruchu na „Tryb Konfiguracji” (Setup Mode). Możesz zrestartować system
-do ustawień oprogramowania układowego za pomocą następującego polecenia.
+### Wejście w tryb konfiguracji (Setup Mode) w UEFI
+Najpierw musimy przejść do ustawień oprogramowania układowego (firmware) i ustawić tryb bezpiecznego rozruchu na „Setup Mode”. Możesz ponownie uruchomić system
+z już działającego systemu do ustawień oprogramowania układowego za pomocą następującego polecenia.
 
 ```bash
 systemctl reboot --firmware-setup
@@ -42,7 +42,12 @@ systemctl reboot --firmware-setup
 <br />
 <ImageComponent imgsrc={import('~/assets/images/ideapad-bios-secure-boot.jpg')} />
 
-Tak wygląda BIOS na Lenovo Ideapad 5 Pro. Zresetuj do trybu konfiguracji lub przywróć klucze fabryczne i uruchom ponownie system.
+Tak wygląda BIOS na Lenovo Ideapad 5 Pro. Zresetuj do trybu konfiguracji lub przywróć klucze fabryczne i uruchom ponownie
+system.
+
+Jednak niektóre płyty główne MSI nie mają trybu konfiguracji. Aby osiągnąć ten sam efekt, wykonaj dwa kroki z poniższego obrazka:
+<br />
+<ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
 
 ## Konfiguracja sbctl
 
@@ -57,12 +62,12 @@ Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
 Creating secure boot keys...✔
 Secure boot keys created!
 
-sudo sbctl enroll-keys --microsoft # Zarejestruj swoje klucze z kluczami Microsoftu
+sudo sbctl enroll-keys --microsoft # Zarejestruj swoje klucze wraz z kluczami Microsoftu
 Enrolling keys to EFI variables...✔
 Enrolled keys to the EFI variables!
 
 sudo sbctl status
-# sbctl powinien być teraz zainstalowany, możemy przejść do podpisywania obrazów jądra i menedżera rozruchu
+# sbctl powinien być już zainstalowany, możemy przejść do podpisywania obrazów jądra i menedżera rozruchu
 Installed:      ✔ sbctl is installed
 Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
 Setup Mode:     ✔ Disabled
@@ -74,7 +79,7 @@ Vendor Keys:    microsoft
 
 CachyOS dostarcza [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign),
 skrypt, który pobiera listę plików do podpisania z `sudo sbctl verify` i podpisuje je wszystkie.
-Użytkownicy Limine powinni przejść do sekcji [Limine](#Limine).
+Użytkownicy Limine powinni przejść do [Limine](#Limine).
 
 ```bash
 sudo sbctl verify
@@ -99,18 +104,18 @@ Verifying file database and EFI images in /boot...
 :::caution
 W systemach z oddzielnymi partycjami `/boot` i `/boot/efi`, `sbctl` może skanować pliki binarne EFI tylko w `/boot/efi`.
 Powoduje to, że obrazy jądra znajdujące się w `/boot` nie są wykrywane. `sbctl-batch-sign` omija ten problem, **zawsze** skanując
-katalog `/boot` w poszukiwaniu plików `vmlinuz-*`.
+`/boot` w poszukiwaniu plików `vmlinuz-*`.
 :::
 
-Teraz, gdy wszystkie pliki są podpisane, możemy ponownie uruchomić komputer do ustawień UEFI i włączyć bezpieczny rozruch.
-Należy pamiętać, że jest to proces jednorazowy, ponieważ podpisanie plików z flagą `-s` zapisze je w bazie danych `sbctl`.
+Teraz, gdy wszystkie pliki są podpisane, możemy ponownie uruchomić komputer, przejść do ustawień UEFI i włączyć bezpieczny rozruch.
+Należy pamiętać, że jest to proces jednorazowy, ponieważ podpisanie plików za pomocą flagi `-s` zapisze te pliki w bazie danych `sbctl`.
 `sbctl` jest dostarczany z [hakiem pacmana](https://wiki.archlinux.org/title/Pacman_hook), co oznacza, że automatycznie
 podpisze wszystkie nowe pliki po aktualizacji jądra lub menedżera rozruchu.
 
 ### systemd-boot
 
-CachyOS używa `systemd-boot-update.service` dostarczonego przez systemd do aktualizacji menedżera rozruchu przy ponownym uruchomieniu. Oznacza to, że hak
-pacmana `sbctl` **nie** podpisze zaktualizowanych plików binarnych EFI. Jako obejście możemy podpisać menedżer rozruchu bezpośrednio.
+CachyOS używa `systemd-boot-update.service` dostarczanego przez systemd do aktualizacji menedżera rozruchu przy ponownym uruchomieniu. Oznacza to, że hak pacmana
+`sbctl` **nie** podpisze zaktualizowanych plików binarnych EFI. Jako obejście tego problemu możemy podpisać menedżer rozruchu bezpośrednio.
 
 ```sh
 sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
@@ -118,23 +123,24 @@ sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/
 
 ### Limine
 
-Limine to specjalny menedżer rozruchu, który pozwala na sprawdzanie sum kontrolnych obrazów jądra
-i innych plików, których Limine używa podczas rozruchu. Jeśli ta opcja jest włączona, jakakolwiek
+Limine to specjalny menedżer rozruchu, który pozwala na sprawdzanie skrótów (hashy) obrazów jądra
+i innych plików, których Limine używa podczas rozruchu. Jeśli jest to włączone, jakakolwiek
 ręczna konfiguracja wykonana przez użytkownika, np. podpisanie obrazu za pomocą
-`sbctl-batch-sign`, zmodyfikuje sumę kontrolną odpowiednich plików i
-spowoduje niepowodzenie weryfikacji sumy kontrolnej przez Limine.
+`sbctl-batch-sign`, zmodyfikuje skrót odpowiednich plików i
+spowoduje niepowodzenie weryfikacji sum kontrolnych przez Limine.
 
-Jednakże, podpisywanie tych plików nie jest konieczne w przypadku Limine, ponieważ ma on specjalny
-proces rozruchowy, który omija ładowanie łańcuchowe EFI i sprawdzanie podpisów. Jedyne pliki binarne EFI,
-które muszą być podpisane, to sam Limine.
+Jednak podpisywanie tych plików nie jest konieczne w przypadku Limine, ponieważ ma on specjalny
+proces rozruchowy, który omija ładowanie łańcuchowe EFI (chainloading) i sprawdzanie podpisów. Jedyne pliki
+binarne EFI, które muszą być podpisane, to sam Limine.
 
 ```sh
-# Użyj limine-enroll-config do podpisania pliku binarnego EFI Limine
-# To polecenie używa sbctl pod spodem
+# Użyj limine-enroll-config, aby podpisać plik binarny EFI Limine
+# To używa sbctl pod spodem
 sudo limine-enroll-config
+sudo limine-update
 ```
 
-## Sprawdź, czy Secure Boot jest włączony
+## Sprawdź, czy bezpieczny rozruch jest włączony
 
 Aby sprawdzić, czy bezpieczny rozruch jest rzeczywiście włączony, możesz uruchomić jedno z następujących poleceń
 
@@ -158,9 +164,9 @@ System:
 
 ## Linki i podziękowania
 
-- [Arch Wiki](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
-położyło podwaliny pod ten przewodnik. Większość materiału została zaczerpnięta stamtąd.
+- [The Arch Wiki](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
+położyło podwaliny pod ten przewodnik. Większość materiałów została zaczerpnięta stamtąd.
 - [sbctl](https://github.com/Foxboron/sbctl) - Ten prosty przewodnik po włączaniu obsługi bezpiecznego rozruchu nie byłby możliwy, gdyby nie
 niesamowita praca włożona w stworzenie tego oprogramowania.
 - [Improving the Secure Boot Experience by Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) - Wpis na blogu Mortena
-"Foxborona" Linderuda o tym, jak skomplikowane było doświadczenie z bezpiecznym rozruchem przed `sbctl`.
+"Foxboron" Linderuda o tym, jak skomplikowane było doświadczenie z bezpiecznym rozruchem przed `sbctl`.

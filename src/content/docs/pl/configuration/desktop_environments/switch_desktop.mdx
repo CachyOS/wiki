@@ -1,0 +1,117 @@
+---
+title: Instalacja innego DE/WM przy użyciu ustawień CachyOS
+description: Przewodnik po instalacji innego DE/WM w istniejącej instalacji CachyOS z wykorzystaniem dostarczonych ustawień
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+## Rzeczy do rozważenia przed instalacją innego środowiska graficznego
+
+- Posiadanie wielu zainstalowanych DE/WM może prowadzić do konfliktów, zwłaszcza z menedżerami ustawień, domyślnymi aplikacjami oraz konfiguracjami wyglądu, takimi jak motywy i ikony w aplikacjach GTK lub QT.
+- Dwoma najgorszymi winowajcami, jeśli chodzi o konflikty, są GNOME i KDE Plasma, ponieważ używają dwóch zupełnie różnych zestawów narzędzi (odpowiednio GTK i QT) i mają wiele działających w tle usług, które mogą zakłócać działanie innych DE/WM.
+  - Ten fakt nie oznacza, że nie można ich mieć zainstalowanych razem, po prostu miej świadomość, że możesz napotkać pewne problemy.
+- Rozrost pakietów: Popularne środowiska graficzne, takie jak GNOME i KDE Plasma, mogą zawierać setki pakietów, których możesz nie potrzebować lub nie chcieć.
+- Możesz bez większych problemów mieszać wiele menedżerów okien z różnymi środowiskami graficznymi. Na przykład, możesz mieć zainstalowane razem KDE Plasma i Hyprland i wybierać, którego z nich użyć podczas logowania.
+- Oferowane przez CachyOS DE/WM zawierają własny, odpowiedni pakiet `-settings`. Na przykład: `cachyos-i3wm-settings`
+  - Co to oznacza? Jeśli chcesz zainstalować inne DE/WM i mieć ten sam wygląd lub zestaw zmian, które zapewniamy, powinieneś zainstalować odpowiedni pakiet `-settings`.
+  - Pakiety te umieszczają pliki konfiguracyjne w `/etc/skel/`, który służy jako szablon dla nowych kont użytkowników.
+  - Ważne: Dla istniejących użytkowników te ustawienia **NIE są stosowane automatycznie**, aby zapobiec nadpisaniu Twoich osobistych konfiguracji.
+
+## Jak zainstalować inne DE/WM z ustawieniami CachyOS
+
+:::note
+Masz dwa wyjścia podczas instalacji innego DE lub WM:
+1. **Zachowaj swoje obecne pliki konfiguracyjne** i w razie potrzeby ręcznie dostosuj lub skopiuj pliki z `/etc/skel`.
+  - Na przykład: jeśli chcesz tylko pliki konfiguracyjne i3wm, ale chcesz zachować swój obecny motyw GTK, możesz po prostu skopiować pliki związane z i3wm z `/etc/skel/.config/i3` do swojego katalogu domowego.
+2. **Nadpisz swoje obecne pliki konfiguracyjne** nowymi z `/etc/skel/`
+  - To daje Ci pełne doświadczenie CachyOS, ale zastąpi Twoje obecne ustawienia.
+:::
+
+:::tip
+Skorzystaj z Arch Wiki dla danego DE lub WM, aby uzyskać bardziej szczegółowe informacje.
+:::
+
+<Steps>
+1. Utwórz kopię zapasową swoich obecnych plików konfiguracycyjnych w katalogu domowym:
+    ```bash
+    mkdir -p ~/config-backup
+    cp -r ~/.config ~/config-backup/
+    cp -r ~/.local ~/config-backup/
+    ```
+2. Odinstaluj obecny pakiet `-settings`, jeśli masz go zainstalowany. Na przykład, jeśli używasz KDE, uruchom:
+    ```bash
+    sudo pacman -R cachyos-kde-settings
+    ```
+    :::note
+    Usunięcie tego pakietu nie usuwa żadnej z Twoich obecnych konfiguracji DE/WM. Usuwa jedynie pliki przechowywane w `/etc/skel`
+    :::
+3. Zainstaluj nowe DE/WM wraz z odpowiadającym mu pakietem `-settings`. Na przykład, aby zainstalować i3wm:
+    ```bash
+    sudo pacman -Syu i3-wm cachyos-i3wm-settings
+    ```
+    :::tip
+    Możesz sprawdzić listę dostępnych DE/WM i odpowiadających im pakietów `-settings` w [repozytorium GitHub CachyOS PKGBUILDs](https://github.com/CachyOS/CachyOS-PKGBUILDS)
+    :::
+    Lub używając wybranego menedżera plików.
+4. Skopiuj nowe pliki konfiguracyjne z `/etc/skel` do swojego katalogu domowego:
+    - Na przykład: pakiet `cachyos-i3wm-settings` zawiera konfigurację dla Kvantum, dunst, GTK, i3, polybar, QT5 i rofi.
+    - Oto jak to zrobić za pomocą menedżera plików:
+        <Steps>
+        1. Otwórz menedżera plików (Dolphin, Nautilus, Thunar, etc.)
+        2. Włącz wyświetlanie ukrytych plików:
+            - **Większość menedżerów plików**: `Ctrl+H` lub poprzez menu: `Widok` → `Pokaż ukryte pliki`
+        3. Przejdź do `/etc/skel` w menedżerze plików.
+        4. Zaznacz wszystkie pliki i foldery (`Ctrl+A`)
+        5. Skopiuj je (`Ctrl+C`)
+        6. Przejdź do swojego katalogu domowego
+        7. Wklej pliki (`Ctrl+V`)
+        8. Gdy zostaniesz zapytany o nadpisanie, wybierz:
+            - **"Scal"** lub **"Zastosuj do wszystkich"** dla folderów
+            - **"Zastąp"** dla pojedynczych plików, które chcesz zaktualizować
+            :::caution
+            Bądź ostrożny podczas zastępowania plików. Spowoduje to nadpisanie Twoich obecnych konfiguracji!
+            :::
+        </Steps>
+        - Lub po prostu użyj terminala, jeśli jesteś z nim obeznany.
+</Steps>
+
+Po zainstalowaniu nowego DE/WM i skopiowaniu plików konfiguracyjnych, wyloguj się z bieżącej sesji. Na ekranie logowania, przed ponownym zalogowaniem, wybierz nowo zainstalowane DE/WM z opcji sesji.
+
+### FAQ
+
+#### Jak przywrócić moją poprzednią konfigurację DE/WM?
+
+- Przywróć z utworzonej kopii zapasowej:
+  ```bash
+  cp -r ~/config-backup/.config/* ~/.config/
+  cp -r ~/config-backup/.local/* ~/.local/
+  ```
+  Lub używając menedżera plików.
+
+#### Co z nowymi aktualizacjami pakietu `-settings`?
+
+- Gdy pakiet `-settings` jest aktualizowany, nowe pliki są umieszczane w `/etc/skel/`, ale Twoja konfiguracja użytkownika w `/home/` pozostaje niezmieniona. Aby zastosować aktualizacje, będziesz musiał ręcznie skopiować zaktualizowane pliki z `/etc/skel/` ponownie.
+
+Będziesz musiał śledzić repozytorium GitHub danego DE/WM w poszukiwaniu zmian.
+
+Oto lista wszystkich repozytoriów różnych DE i WM utrzymywanych przez CachyOS:
+- [KDE Plasma](https://github.com/CachyOS/cachyos-kde-settings)
+- [Niri](https://github.com/CachyOS/cachyos-niri-settings)
+- [i3](https://github.com/CachyOS/cachyos-i3wm-settings)
+- [Qtile](https://github.com/CachyOS/cachyos-qtile-settings)
+- [Wayfire](https://github.com/CachyOS/cachyos-wayfire-settings)
+
+Wszystkie inne DE i WM, które oferujemy podczas instalacji CachyOS, nie mają na razie własnego pakietu `-settings`, co oznacza, że są to po prostu wersje waniliowe.
+
+#### Czy mogę mieć zainstalowanych wiele pakietów ustawień DE/WM?
+
+- I tak, i nie. Możesz mieć zainstalowanych wiele DE/WM, ale zaleca się, aby mieć zainstalowany tylko jeden pakiet `-settings` na raz, aby uniknąć konfliktów w `/etc/skel/`. W przeciwnym razie pacman może zgłaszać konflikty plików podczas próby instalacji innego pakietu `-settings`.
+
+#### Czym są "Ustawienia CachyOS"?
+
+"Ustawienia CachyOS" to wygodne pakiety konfiguracyjne dla różnych środowisk graficznych i menedżerów okien. Dostarczają one wstępnie skonfigurowane ustawienia, motywy i ulepszenia w zależności od wybranego DE/WM.
+
+Kiedy instalujesz jeden z tych pakietów, automatycznie zainstaluje on również dodatkowe zależności, które nie są częścią waniliowego DE/WM, takie jak motywy, ikony, tapety i dodatkowe aplikacje. Na przykład w `cachyos-i3wm-settings` instalujemy `rofi`, `dunst`, `picom`, `lxappearance` i inne.

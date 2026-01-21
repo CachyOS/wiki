@@ -338,6 +338,7 @@ export default defineConfig({
                 de: 'Kernel-Manager',
                 es: 'Gestor de núcleos',
                 fr: 'Gestion de Noyaux',
+                pl: 'Menedżer jądra',
                 ru: 'Менеджер ядер',
                 sk: 'Správca jadra',
               },

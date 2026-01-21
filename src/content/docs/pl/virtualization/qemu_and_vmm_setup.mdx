@@ -1,0 +1,63 @@
+---
+title: Konfiguracja QEMU i VMM
+description: Niezbędne kroki, aby oba programy działały na CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import { Steps } from '@astrojs/starlight/components';
+
+## Instalacja
+Aby zainstalować i uruchomić **VMM** (Virtual Machine Manager) oraz **QEMU** na 
+**CachyOS**, proces wygląda następująco:
+
+```sh
+# To zainstaluje potrzebne pakiety (zwróć uwagę na notatkę o "Windows 11" poniżej):
+sudo pacman -S qemu-full virt-manager swtpm
+# To doda użytkownika do grupy "libvirt", aby mógł z niej korzystać:
+sudo usermod -aG libvirt $USER
+# Backend LXC (opcjonalny, dla kontenerów linuxowych, włączenie obu backendów nie powoduje konfliktu):
+systemctl enable --now libvirtd.service
+# Backend QEMU (dla maszyn wirtualnych):
+systemctl enable --now libvirtd.socket
+# To uruchomi Internet w maszynie wirtualnej, gdy tylko się ona uruchomi:
+sudo virsh net-autostart default
+```
+
+:::note[Windows 11]
+Jeśli instalujesz **Windows 11** w maszynie wirtualnej, będziesz musiał albo przekazać swój kompatybilny moduł TPM w późniejszym kroku konfiguracji, albo zainstalować `swtpm`, jeśli go nie posiadasz.
+:::
+
+## Podstawy tworzenia maszyny wirtualnej
+:::note[Sesja użytkownika]
+Przed kontynuowaniem warto na chwilę zapoznać się z [sesją użytkownika QEMU](/pl/virtualization/qemu_user_session).
+:::
+
+<Steps>
+
+1. Najpierw uruchom **VMM**. Pierwsze, co cię przywita, to te łączące się elementy: <ImageComponent imgsrc={import('~/assets/images/vmmstart.png')} />
+2. Następnie kliknij `Edit -> Preferences -> ✅ Enable XML editing` i zamknij to podmenu.
+3. Teraz możesz utworzyć nową maszynę wirtualną, klikając **ekran z gwiazdką i ikoną odtwarzania** lub `File -> New Virtual Machine`.
+4. Zostaniesz przywitany przez kreatora maszyn wirtualnych. Obok `Connection:` zobaczysz rozwijane menu, kliknij je, wybierz odpowiednią opcję, a następnie przejdź `Forward`. <ImageComponent imgsrc={import('~/assets/images/vmmcreatestep1.png')} />
+5. Zostaniesz poproszony o zlokalizowanie pobranego obrazu `.iso` systemu operacyjnego. Kliknij `Browse...` i znajdź go. Możesz również dodać lub utworzyć dedykowany katalog do przechowywania plików .iso, klikając przycisk `+ (Add Pool)`. Jeśli chcesz ponownie użyć ścieżki `User Session` w tym celu, znajduje się ona w `~/.config/libvirt/`. <ImageComponent imgsrc={import('~/assets/images/vmmcreatestep2browse.png')} />
+**Jeśli twój system operacyjny nie zostanie wykryty automatycznie**, po prostu odznacz automatyczne wykrywanie i wybierz ręcznie najbliższy odpowiednik, `przykład: CachyOS = Arch Linux`.
+
+6. Krok 3 jest prosty. Po prostu przydziel maszynie wirtualnej tyle pamięci RAM i rdzeni procesora, ile chcesz. Nie jest to ustalone na stałe i można to łatwo zmienić.
+7. W kroku 4 możesz wybrać utworzenie wirtualnej przestrzeni dyskowej (tworzy to plik **.qcow2**) lub ścieżki, której ma używać maszyna wirtualna.
+8. W kroku 5 zaznacz `Customize configuration before install -> Finish`.
+9. Trafisz teraz tutaj: <ImageComponent imgsrc={import('~/assets/images/vmmprevminstall.png')} />
+Jest kilka rzeczy, które powinieneś tutaj sprawdzić, jeśli instalujesz maszynę wirtualną z Linuksem. W `Overview` upewnij się, że chipset to **Q35**, a oprogramowanie układowe to **UEFI**. O ile nie instalujesz czegoś naprawdę starego lub nie robisz czegoś nietypowego, nigdy nie chcesz innej konfiguracji. Jeśli tworzysz maszynę wirtualną z `Windows 11`, przejdź do `Add Hardware -> TPM`, a następnie wybierz Emulated lub Passthrough (zobacz notatkę na górze) i `Finish`, aby zamknąć podmenu.
+
+10. Teraz kliknij `Begin Installation`.
+11. Jeśli jesteś w maszynie wirtualnej z **Linuksem** (lub innym systemem operacyjnym, który używa OpenGL i/lub dostarcza libvulkan), przejdź odpowiednio do [EGL Headless](/pl/virtualization/egl_headless) i/lub [Virtio-Venus](/pl/virtualization/virtio-venus).
+
+</Steps>
+
+### Ostatnia uwaga
+Jeśli jesteś w maszynie wirtualnej z `Windows 11`, aby poprawić wydajność, możesz:
+- zainstalować sterowniki **Virtio-Win** od RedHat w systemie gościa
+- jeśli masz zintegrowaną kartę graficzną Intela, możesz zamiast tego zainteresować się **GVT-g** i **MDEV**
+- jeśli masz zintegrowaną kartę graficzną Intela i dedykowaną kartę graficzną, możesz zamiast tego zainteresować się **GVT-d**
+- jeśli masz zintegrowaną kartę graficzną i dedykowaną kartę graficzną lub co najmniej dwie dedykowane karty graficzne i chcesz zamiast tego przekazać dedykowaną kartę, możesz zainteresować się **VFIO**
