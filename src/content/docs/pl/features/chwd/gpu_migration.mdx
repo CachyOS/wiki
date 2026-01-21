@@ -1,0 +1,93 @@
+---
+title: Przełączanie między kartami graficznymi NVIDIA i AMD
+description: Instrukcje dotyczące migracji z NVIDIA na AMD (i odwrotnie) w systemie CachyOS.
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::note[Ten poradnik ma zastosowanie, jeśli wymieniasz swoją kartę graficzną (NVIDIA ↔ AMD) na istniejącej instalacji CachyOS.]
+:::
+
+## Wymagania wstępne
+  - Twoja nowa karta graficzna jest prawidłowo zainstalowana i podłączona.
+  - Upewnij się, że system jest w pełni zaktualizowany
+    ```bash
+    sudo pacman -Syu
+    ```
+
+### Kroki migracji
+
+<Tabs>
+    <TabItem label='Z NVIDIA na AMD'>
+        Chociaż sterowniki AMD są zawarte w jądrze Linuksa, może być konieczne wyczyszczenie starej konfiguracji NVIDIA i upewnienie się, że niezbędne pakiety AMD są zainstalowane.
+        <Steps>
+            1. Sprawdź, który profil sterownika NVIDIA jest aktualnie zainstalowany:
+                ```bash
+                sudo chwd --list-installed
+                ```
+            2. Usuń określony profil, używając flagi `-r`:
+                ```bash
+                sudo chwd -r <nazwa-profilu>
+                ```
+            3. Wyłącz system i przejdź do instalacji karty graficznej AMD.
+            4. Po uruchomieniu systemu użyj chwd, aby automatycznie wykryć kartę graficzną i zainstalować odpowiednie pakiety AMD.
+                ```bash
+                sudo chwd -a
+                ```
+            5. Po zainstalowaniu nowych sterowników zaktualizuj initramfs i konfigurację bootloadera.
+                > CachyOS zawiera hook pacmana, który automatycznie przebudowuje initramfs, gdy sterowniki są dodawane lub usuwane.
+                > Zapewnia to załadowanie poprawnych sterowników podczas rozruchu.
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            6. Uruchom ponownie system, aby zastosować zmiany.
+                ```bash
+                sudo reboot
+                ```
+            7. Po ponownym uruchomieniu zweryfikuj, czy sterowniki AMD są aktywne.
+                ```bash
+                vulkaninfo | grep "deviceName"
+                ```
+                lub
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                Jeśli zobaczysz na liście swoją kartę graficzną AMD, oznacza to, że sterowniki działają poprawnie.
+        </Steps>
+    </TabItem>
+    <TabItem label='Z AMD na NVIDIA'>
+        <Steps>
+            1. Wyczyść pozostałe pakiety AMD.
+                ```bash
+                sudo chwd -r amd
+                ```
+            2. Wyłącz system i przejdź do instalacji karty graficznej NVIDIA.
+            3. Po uruchomieniu systemu użyj chwd, aby automatycznie wykryć kartę graficzną i zainstalować odpowiednie pakiety NVIDIA.
+                ```bash
+                sudo chwd -a
+                ```
+            4. Po zainstalowaniu nowych sterowników zaktualizuj initramfs i konfigurację bootloadera.
+                > CachyOS zawiera hook pacmana, który automatycznie przebudowuje initramfs, gdy sterowniki są dodawane lub usuwane.
+                > Zapewnia to załadowanie poprawnych sterowników podczas rozruchu.
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            5. Uruchom ponownie system, aby zastosować zmiany.
+                ```bash
+                sudo reboot
+                ```
+            6. Po ponownym uruchomieniu zweryfikuj, czy sterowniki NVIDIA są aktywne.
+                ```bash
+                nvidia-smi
+                ```
+                lub
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                Jeśli zobaczysz na liście swoją kartę graficzną NVIDIA, oznacza to, że sterowniki działają poprawnie.
+        </Steps>
+    </TabItem>
+</Tabs>

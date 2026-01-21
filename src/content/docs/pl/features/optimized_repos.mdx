@@ -9,11 +9,11 @@ tableOfContents:
 import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 import ImageComponent from '~/components/image-component.astro';
 
-Aby dostarczyć zoptymalizowaną pod kątem wydajności dystrybucję, CachyOS rekompiluje pakiety Arch Linux specjalnie dla architektur `x86-64-v3`, `x86-64-v4` i `Zen4+`.
+Aby dostarczyć dystrybucję zoptymalizowaną pod kątem wydajności, CachyOS rekompiluje pakiety Arch Linux specjalnie dla architektur `x86-64-v3`, `x86-64-v4` i `Zen4+`.
 
-- **x86-64-v3:** 5%-20% wzrost wydajności w porównaniu do x86-64.
-- **x86-64-v4:** Zapewnia znaczny wzrost wydajności dzięki obsłudze AVX512, w zależności od obciążenia.
-- **Zen 4/5:** Oprócz zestawu instrukcji x86-64-v4, dodane są następujące instrukcje:
+- **x86-64-v3:** 5-20% wzrostu wydajności w porównaniu z x86-64.
+- **x86-64-v4:** Zapewnia znaczący wzrost wydajności dzięki wsparciu AVX512, w zależności od obciążenia.
+- **Zen 4/5:** Oprócz zestawu instrukcji x86-64-v4 dodane są następujące instrukcje:
 
 ```text
 abm, adx, aes, avx512bf16, avx512bitalg, avx512ifma, avx512vbmi, avx512vbmi2, avx512vnni,
@@ -26,7 +26,7 @@ Aby dowiedzieć się więcej o tych architekturach, [sprawdź ten artykuł na Wi
 ## Spersonalizowane Pakiety
 
 Nasze repozytorium [CachyOS-PKGBUILDs](https://github.com/CachyOS/CachyOS-PKGBUILDS) zawiera pakiety, które otrzymują bieżące aktualizacje, łatki i backportowane poprawki.
-Aby zwiększyć wydajność, selektywnie implementujemy optymalizacje PGO, LTO i BOLT w zależności od potrzeb.
+Aby zwiększyć wydajność, selektywnie wdrażamy optymalizacje PGO, LTO i BOLT w zależności od potrzeb.
 Utrzymujemy również kilka pakietów `-git`, np. mesa-git.
 
 ### [Wyszukiwarka Pakietów CachyOS](<https://packages.cachyos.org/>)
@@ -37,30 +37,30 @@ Przedstawiamy naszą nową stronę wyszukiwania pakietów dla CachyOS. Możesz t
 
 ## Migracja z x86-64-v3 do x86-64-v4 lub znver4
 
-Jeśli obecnie używasz repozytoriów x86-64-v3, a twój nowy procesor obsługuje x86-64-v4 (lub AMD Zen 4/5), możesz przeprowadzić migrację, postępując zgodnie z poniższymi krokami:
+Jeśli obecnie używasz repozytoriów x86-64-v3, a twój nowy procesor obsługuje x86-64-v4 (lub AMD Zen 4/5), możesz dokonać migracji, wykonując poniższe kroki:
 
-### Sprawdzanie Kompatybilności Procesora
+### Sprawdzanie Zgodności Procesora
 
 :::caution
-Procesory Intela 12. generacji (Alder Lake) i nowsze mogą zgłaszać obsługę `x86-64-v4`, ale w praktyce **nie mogą uruchamiać instrukcji AVX-512**.
+Procesory Intel 12. generacji (Alder Lake) i nowsze mogą zgłaszać wsparcie dla `x86-64-v4`, ale w praktyce **nie mogą uruchamiać instrukcji AVX-512**.
 
 Dlaczego?
-- **Konflikt architektury hybrydowej**: Duże rdzenie "P-cores" obsługują AVX-512, ale małe rdzenie "E-cores" nie. Uruchomienie AVX-512, gdy aktywne są rdzenie E-cores, spowodowałoby niestabilność.
+- **Konflikt architektury hybrydowej**: Duże „rdzenie P” obsługują AVX-512, ale małe „rdzenie E” nie. Uruchomienie AVX-512, gdy rdzenie E są aktywne, spowodowałoby niestabilność.
 - **Obejście Intela**: Aby uniknąć tej niezgodności, Intel wyłączył AVX-512 na dwa sposoby:
   - **Aktualizacje mikrokodu/BIOS** (wczesne chipy Alder Lake): AVX-512 można było ponownie włączyć, unikając lub cofając aktualizacje mikrokodu.
-  - **Bezpieczniki sprzętowe** (późniejsze chipy z 2022+): AVX-512 jest trwale wyłączone fabrycznie, co uniemożliwia jego ponowne włączenie.
+  - **Spalanie sprzętowe** (późniejsze chipy 2022+): AVX-512 jest trwale wyłączone fabrycznie, co uniemożliwia jego ponowne włączenie.
 
 Ponieważ `x86-64-v4` wymaga AVX-512, te procesory powinny być traktowane jako **wyłącznie x86-64-v3**.
 :::
 
-- Weryfikacja obsługi `x86-64-v4`:
-  ```sh title='Uruchom następującą komendę:'
+- Weryfikacja wsparcia `x86-64-v4`:
+  ```sh title='Uruchom następujące polecenie:'
   /lib/ld-linux-x86-64.so.2 --help | grep supported
   ```
-  - ✅ `x86-64-v4 (supported, searched)` → CPU obsługuje v4
-  - ❌ `x86-64-v4` (bez nawiasów) → CPU **NIE** obsługuje v4
+  - ✅ `x86-64-v4 (supported, searched)` → Procesor obsługuje v4
+  - ❌ Brak linii `x86-64-v4` → Procesor nie obsługuje v4
 
-Przykład (CPU obsługuje v4):
+Przykład (procesor obsługuje v4):
   ```sh
   $ /lib/ld-linux-x86-64.so.2 --help | grep supported
     x86-64-v2 (supported, searched)
@@ -69,20 +69,24 @@ Przykład (CPU obsługuje v4):
   ```
 
 - Dla procesorów AMD Zen 4/5, sprawdź, czy twój procesor zgłasza znver4 lub znver5:
-  - Uruchom następującą komendę:
+  - Uruchom następujące polecenie:
     ```sh
     gcc -march=native -Q --help=target 2>&1 | grep -Po "^\s+-march=\s+\K(\w+)\$"
     ```
-    Jeśli wynikiem jest `znver4` lub `znver5`, możesz kontynuować migrację.
+    Jeśli wynik to `znver4` lub `znver5`, możesz kontynuować migrację.
 
 :::note
 Zarówno x86-64-v4, jak i znver4 używają tej samej listy serwerów lustrzanych `/etc/pacman.d/cachyos-v4-mirrorlist`.
 :::
 
+:::note[Jeśli musisz wrócić do repozytorium lub cofnąć zmianę, ten przewodnik będzie dla Ciebie przydatny.]
+Przykład: Z znver4 do v4.
+:::
+
 ### Kroki Migracji
 
 <Steps>
-1. Edytuj `/etc/pacman.conf` i zastąp swoje repozytoria `x86-64-v3` jednym z poniższych, w zależności od obsługi przez twój procesor:
+1. Edytuj `/etc/pacman.conf` i zastąp swoje repozytoria `x86-64-v3` jednym z poniższych, w zależności od wsparcia twojego procesora:
     <Tabs>
         <TabItem label="x86-64-v4">
             ```ini title='/etc/pacman.conf'
@@ -114,7 +118,7 @@ Zarówno x86-64-v4, jak i znver4 używają tej samej listy serwerów lustrzanych
 2. Wyczyść pamięć podręczną pakietów i zsynchronizuj bazy danych:
 
    ```sh
-   sudo pacman -Scc   # Potwierdź dwa razy 'y'
+   sudo pacman -Scc   # Potwierdź dwa razy 't'
    sudo pacman -Sy
    ```
 
@@ -132,11 +136,11 @@ Zarówno x86-64-v4, jak i znver4 używają tej samej listy serwerów lustrzanych
 ## Dodawanie Naszych Repozytoriów do Istniejącej Instalacji Arch Linux
 
 :::caution
-Instalacja Pacmana CachyOS zainstaluje sforkowanego pacmana z funkcjami dodanymi przez CachyOS, takimi jak "INSTALLED_FROM" i automatyczne sprawdzanie architektury. Pacman 6.1 dodał funkcję walidacji, co może prowadzić do ostrzeżeń podczas używania pacmana z Arch Linux. Współpracujemy z Arch Linux, aby ponownie zapewnić właściwą kompatybilność. Jeśli chcesz tego uniknąć, nie dodawaj repozytorium "cachyos", które zawiera spersonalizowanego pacmana. Wszystkie inne repozytoria, takie jak cachyos-v3, cachyos-v4, cachyos-extra/core-v3/4 są bezpieczne do dodania.
+Zainstalowanie pacmana CachyOS zainstaluje sforkowanego pacmana z funkcjami dodanymi z CachyOS, takimi jak „INSTALLED_FROM” i automatyczne sprawdzanie architektury. Pacman 6.1 dodał funkcję walidacji funkcji, co może prowadzić do ostrzeżeń podczas korzystania z pacmana Arch Linux. Współpracujemy z Arch Linux, aby ponownie zapewnić odpowiednią kompatybilność. Jeśli chcesz tego uniknąć, nie dodawaj repozytorium „cachyos”, które zawiera zmodyfikowanego pacmana. Wszystkie inne repozytoria, takie jak cachyos-v3, cachyos-v4, cachyos-extra/core-v3/4, są bezpieczne do dodania.
 :::
 
 :::tip
-Przed rozważeniem dodania naszych repozytoriów, zapoznaj się z **[listą kompatybilności procesorów](/pl/installation/installation_prepare#wsparcie-dla-poziomu-mikroarchitektury-x86_64)**
+Zanim rozważysz dodanie naszych repozytoriów, zapoznaj się z **[listą kompatybilności procesorów](/pl/installation/installation_prepare#wsparcie-dla-poziomu-mikroarchitektury-x86_64)**
 :::
 
 <Tabs>
@@ -152,7 +156,7 @@ sudo ./cachyos-repo.sh
 ```
 
 :::tip[Jak działa skrypt]
-Ten skrypt wykrywa zestawy instrukcji, które twój procesor jest w stanie obsłużyć i instaluje tę wersję naszych repozytoriów, która jest dla niego najbardziej zoptymalizowana. Tworzy również kopię zapasową twojego starego `pacman.conf` na potrzeby usunięcia repozytorium za pomocą skryptu.
+Ten skrypt wykrywa zestawy instrukcji obsługiwane przez Twój procesor i instaluje wersję naszych repozytoriów, która jest dla niego najbardziej zoptymalizowana. Tworzy również kopię zapasową starego `pacman.conf` na potrzeby usunięcia repozytorium za pomocą skryptu.
 :::
 
 </TabItem>
@@ -161,10 +165,10 @@ Ten skrypt wykrywa zestawy instrukcji, które twój procesor jest w stanie obsł
 
 <Steps>
 
-1. Zainstaluj pęk kluczy CachyOS:
+1. Zainstaluj klucze CachyOS:
 
    ```sh
-   # Zaimportuj klucz repozytorium
+   # Importuj klucz repozytorium
    sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
    # Podpisz klucz repozytorium
    sudo pacman-key --lsign-key F3B607488DB35A47
@@ -226,13 +230,13 @@ Ten skrypt wykrywa zestawy instrukcji, które twój procesor jest w stanie obsł
    Include = /etc/pacman.d/cachyos-mirrorlist
    ```
       :::tip
-   Aby dokonać przejścia z repozytoriów `v4` na `znver4`
+   Aby przejść z repozytoriów `v4` do `znver4`
 
    Dodaj odpowiednie wpisy z poprzedniego kroku i wykonaj następujące polecenia:
     ```sh
-    sudo pacman -Scc # Wpisz Y w obu przypadkach
+    sudo pacman -Scc # Wprowadź T w obu przypadkach
     sudo pacman -Sy
-    pacman -Qqn | sudo pacman -S - # Aby zastąpić wszystkie pakiety v4 pakietami znver4
+    pacman -Qqn | sudo pacman -S --needed - # Aby zastąpić wszystkie pakiety v4 pakietami znver4
     # Uruchom ponownie system
     ```
    :::
@@ -280,7 +284,7 @@ sudo ./cachyos-repo.sh --remove
    ```sh
    sudo mv /etc/pacman.conf.bak /etc/pacman.conf
    ```
-4. Przełącz się z powrotem na domyślne pakiety Arch Linux za pomocą następujących poleceń:
+4. Wróć do domyślnych pakietów Arch Linux za pomocą następujących poleceń:
    ```sh
    pacman -Qqn | sudo pacman -S -
    sudo pacman -Syu
@@ -292,22 +296,22 @@ sudo ./cachyos-repo.sh --remove
 
 ## Testy i benchmarki
 
-Michael z Phoronix już kilkakrotnie przeprowadzał testy CachyOS, które w większości pokazują wiodącą pozycję na wykresach benchmarków i w średniej geometrycznej wszystkich wyników testów.
-Od pierwszego benchmarku wykonanego w 2022 roku, CachyOS ewoluował i dojrzał znacznie bardziej pod względem użyteczności i wydajności.
+Michael z Phoronix testował już CachyOS kilka razy, co pokazuje, że system przewodzi w większości wykresów benchmarków oraz w średniej geometrycznej wszystkich wyników testów.
+Od pierwszego benchmarku wykonanego w 2022 roku, CachyOS znacznie ewoluował i dojrzał pod względem użyteczności i wydajności.
 
 Jeśli chcesz dowiedzieć się więcej o wzroście wydajności dzięki naszym repozytoriom, sprawdź poniższe linki.
 
-* **14/03/2021:** W dyskusji RFC na temat wpływu x86-64-v3, rozpoczętej przez **Mateusza Jończyka** z Arch Linux, przedstawiono kilka wstępnych wyników.
-  * [RFC: Użyj architektury x86_64-v2](https://lists.archlinux.org/pipermail/arch-general/2021-March/048739.html)
+* **14.03.2021:** W dyskusji RFC na temat wpływu x86-64-v3, rozpoczętej przez **Mateusza Jończyka** z Arch Linux, przedstawiono kilka wstępnych wyników.
+  * [RFC: Use x86_64-v2 architecture](https://lists.archlinux.org/pipermail/arch-general/2021-March/048739.html)
 
-* **09/12/2022:** Pierwszy benchmark wykonany przez Michaela.
-  * [Wydajność Arch Linux napędzanego przez CachyOS](https://www.phoronix.com/review/cachyos-linux-perf)
+* **09.12.2022:** Pierwszy benchmark wykonany przez Michaela.
+  * [The Performance Of Arch Linux Powered CachyOS](https://www.phoronix.com/review/cachyos-linux-perf)
 
-* **29/02/2024:** Phoronix przeprowadził kolejny benchmark demonstrujący różnicę między pakietami x86-64-v4, x86-64-v3 i x86-64 (ogólnymi). Patrząc na przykłady takie jak PHP czy GCC, gdzie dostosowujemy nasze PKGBUILDy, widać zauważalną poprawę wydajności.
-  * [Benchmarki CachyOS na Arch Linux dla repozytoriów x86-64-v3 i x86-64-v4](https://www.phoronix.com/review/cachyos-x86-64-v3-v4)
+* **29.02.2024:** Phoronix przeprowadził kolejny benchmark, pokazujący różnicę między pakietami x86-64-v4, x86-64-v3 i x86-64 (ogólnymi). Patrząc na przykłady takie jak PHP czy GCC, gdzie dostosowujemy nasze PKGBUILD-y, widać zauważalną poprawę wydajności.
+  * [Arch Linux CachyOS Benchmarks Of x86-64-v3 & x86-64-v4 Repositories](https://www.phoronix.com/review/cachyos-x86-64-v3-v4)
 
-* **20/08/2024:** Michael opublikował nowy benchmark dla AMD Ryzen 9950x, który obejmuje CachyOS i kilka innych dystrybucji Linuksa.
-  * [Intel wciąż pokazuje AMD znaczenie optymalizacji oprogramowania: 16% więcej wydajności Ryzen 9 9950X](https://www.phoronix.com/review/linux-os-amd-ryzen9-9950x)
+* **20.08.2024:** Michael opublikował nowy benchmark dla AMD Ryzen 9950x, który obejmuje CachyOS i kilka innych dystrybucji Linuksa.
+  * [Intel Continues To Show AMD The Importance Of Software Optimizations: 16% More Ryzen 9 9950X Performance](https://www.phoronix.com/review/linux-os-amd-ryzen9-9950x)
    :::note
-   Liquid-DSP i RocksDB zostały skompilowane przy użyciu Phoronix Benchmark Suite, ignorując flagi kompilacji określone w /etc/makepkg.conf, co spowodowało nieoczekiwane wyniki wydajności dla CachyOS.
+   Liquid-DSP i RocksDB zostały skompilowane przy użyciu Phoronix Benchmark Suite, ignorując flagi kompilacji określone w /etc/makepkg.conf, co skutkowało nieoczekiwanymi wynikami wydajności dla CachyOS.
    :::
