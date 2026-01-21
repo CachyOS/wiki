@@ -1,21 +1,21 @@
 ---
 title: Systemy plików
-description: Opis i zalecenia dla dostępnych systemów plików. (ext4, f2fs, btrfs, xfs, zfs, bcachefs)
+description: Opis i zalecenia dotyczące dostępnych systemów plików. (ext4, f2fs, btrfs, xfs, zfs, bcachefs)
 ---
 
-CachyOS oferuje 5 różnych systemów plików, aby pozwolić użytkownikowi wybrać to, co najlepiej odpowiada jego potrzebom. Poniżej omówione zostaną zalety, wady i zalecenia dla każdego systemu plików. Każdy system plików jest dostarczany z preinstalowanymi w CachyOS wymaganymi pakietami/narzędziami.
+CachyOS oferuje 5 różnych systemów plików, aby pozwolić użytkownikowi wybrać ten, który najlepiej odpowiada jego potrzebom. Poniżej omówiono zalety, wady i zalecenia dla każdego z nich. Każdy system plików jest dostarczany z preinstalowanymi w CachyOS wymaganymi narzędziami.
 
 :::note
-BTRFS jest domyślnym i zalecanym systemem plików dla CachyOS. Wybierz go, jeśli nie masz pewności.
+BTRFS jest domyślnym i zalecanym systemem plików dla CachyOS. Wybierz go, jeśli nie jesteś pewien.
 :::
 
 ## XFS
 
-XFS to system plików z księgowaniem, stworzony i rozwijany przez Silicon Graphics, Inc. Powstał w 1993 roku, został przeniesiony do Linuksa w 2001 roku i jest obecnie szeroko wspierany przez większość dystrybucji Linuksa.
+XFS to kronikujący system plików stworzony i rozwijany przez Silicon Graphics, Inc. Został stworzony w 1993 roku, przeniesiony na Linuksa w 2001 roku i jest obecnie szeroko wspierany przez większość dystrybucji Linuksa.
 
 ### Zalety
 
-- Szybki, XFS został pierwotnie zaprojektowany z myślą o szybkości i ekstremalnej skalowalności.
+- XFS został pierwotnie zaprojektowany z myślą o szybkości i ekstremalnej skalowalności.
 - Niezawodny, XFS wykorzystuje kilka technologii zapobiegających uszkodzeniu danych.
 - Odporny na fragmentację dzięki swojej naturze opartej na ekstensjach i strategii opóźnionej alokacji.
 
@@ -33,56 +33,56 @@ XFS jest zalecanym systemem plików dla użytkowników, którzy nie potrzebują 
 
 ## BTRFS
 
-BTRFS to nowoczesny system plików typu copy-on-write (COW), stworzony w 2007 roku i uznany za stabilny w jądrze Linuksa w 2013 roku. Jest szeroko wspierany i znany głównie ze swojego zaawansowanego zestawu funkcji.
+BTRFS to nowoczesny system plików typu copy-on-write (COW), stworzony w 2007 roku i uznany za stabilny w jądrze Linuksa w 2013 roku. Jest szeroko wspierany i znany głównie z zaawansowanego zestawu funkcji.
 
 ### Zalety
 
-- Przezroczysta kompresja. BTRFS wspiera przezroczystą kompresję plików, co pozwala na znaczną oszczędność miejsca bez interwencji użytkownika. **CachyOS domyślnie dostarczany jest z kompresją ZSTD ustawioną na poziom 3.**
-- Funkcjonalność migawek. BTRFS wykorzystuje swoją naturę COW, aby umożliwić tworzenie migawek podwoluminów, które zajmują bardzo mało rzeczywistej przestrzeni.
-- Funkcjonalność podwoluminów pozwalająca na większą kontrolę nad systemem plików.
+- Przezroczysta kompresja. BTRFS wspiera przezroczystą kompresję plików, co pozwala na znaczne oszczędności miejsca bez interwencji użytkownika. **CachyOS domyślnie używa kompresji ZSTD na poziomie 3.**
+- Funkcjonalność migawek (snapshots). BTRFS wykorzystuje swoją naturę COW, aby umożliwić tworzenie migawek podwolumenów, które zajmują bardzo mało rzeczywistej przestrzeni.
+- Funkcjonalność podwolumenów pozwalająca na większą kontrolę nad systemem plików.
 - Możliwość powiększania i zmniejszania.
 - Bardzo szybki rozwój.
 
 ### Wady
 
-- Czasami wymaga defragmentacji lub balansowania.
-- Gorzej radzi sobie na dyskach talerzowych z powodu wspomnianej fragmentacji.
+- Czasami wymaga defragmentacji lub równoważenia (balancing).
+- Gorsza wydajność na dyskach talerzowych z powodu wspomnianej fragmentacji.
 
 ### Narzędzie przestrzeni użytkownika
 
-Pakiet z narzędziem przestrzeni użytkownika dla Btrfs to `btrfs-progs`.
+Pakiet narzędzi przestrzeni użytkownika dla Btrfs to `btrfs-progs`.
 
-### Układ podwoluminów
+### Układ podwolumenów
 
-CachyOS zapewnia gotowy układ podwoluminów, aby umożliwić łatwe tworzenie migawek.
+CachyOS domyślnie zapewnia układ podwolumenów, aby umożliwić łatwe korzystanie z migawek.
 
-- Podwolumin @ = /
-- Podwolumin @home = /home
-- Podwolumin @root = /root
-- Podwolumin @srv = /srv
-- Podwolumin @cache = /var/cache
-- Podwolumin @tmp = /var/tmp
-- Podwolumin @log = /var/log
+- Subvol @ = /
+- Subvol @home = /home
+- Subvol @root = /root
+- Subvol @srv = /srv
+- Subvol @cache = /var/cache
+- Subvol @tmp = /var/tmp
+- Subvol @log = /var/log
 
 ### Zalecenie
 
-BTRFS jest zalecany dla użytkowników, którzy chcą korzystać z funkcjonalności migawek/kopii zapasowych oraz przezroczystej kompresji.
+BTRFS jest zalecany dla użytkowników, którzy chcą korzystać z funkcji migawek/kopii zapasowych i przezroczystej kompresji.
 
 ## EXT4
 
-EXT4 (fourth extended filesystem) to najczęściej używany system plików w Linuksie. EXT4 został uznany za stabilny w jądrze Linuksa w 2008 roku.
+EXT4 (czwarty rozszerzony system plików) to najczęściej używany system plików w Linuksie. EXT4 został uznany za stabilny w jądrze Linuksa w 2008 roku.
 
 ### Zalety
 
+- W niektórych scenariuszach może być tak samo szybki lub szybszy niż XFS.
 - Bardzo powszechny, co zapewnia łatwy dostęp do wielu zasobów.
-- Niezawodny. EXT4 ma udokumentowaną historię wysokiej niezawodności.
+- Niezawodny. EXT4 ma udokumentowaną historię bycia bardzo niezawodnym.
 - Możliwość powiększania i zmniejszania.
-  - Zmniejszanie jest wspierane tylko w trybie offline i wymaga odmontowania systemu plików.
+  - Zmniejszanie jest obsługiwane tylko w trybie offline i wymaga odmontowania systemu plików.
 
 ### Wady
 
-- Zbudowany na starej bazie kodu.
-- Brak wielu zaawansowanych funkcji oferowanych przez inne systemy plików.
+- Brakuje mu wielu zaawansowanych funkcji oferowanych przez inne systemy plików.
 
 ### Narzędzia przestrzeni użytkownika
 
@@ -94,26 +94,26 @@ EXT4 jest zalecany dla użytkowników, którzy chcą najprostszego i najczęści
 
 ## ZFS
 
-ZFS to zaawansowany system plików pierwotnie opracowany przez Sun Microsystems w 2005 roku. ZFS ma wiele funkcji, ale jest licencjonowany na licencji CDDL, co oznacza, że nie może być włączony do jądra Linuksa i wymaga zainstalowania osobnego modułu.
+ZFS to zaawansowany system plików pierwotnie opracowany przez Sun Microsystems w 2005 roku. ZFS ma wiele funkcji, ale jest licencjonowany na licencji CDDL, co oznacza, że nie może być dołączony do jądra Linuksa i wymaga zainstalowania osobnego modułu.
 
 :::caution
-Nie używaj jądra czasu rzeczywistego (Real-time) razem z ZFS, nie jest ono kompatybilne z powodu problemów licencyjnych.
+Nie używaj jądra typu Real-time razem z ZFS, nie jest ono kompatybilne z powodu problemów licencyjnych.
 :::
 
 ### Zalety
 
-- Pamięć masowa w pulach (zpool)
+- Pule pamięci masowej (zpool)
 - Migawki wykorzystujące COW
 - Kompresja
 - Wsparcie dla Raid-Z
-- Pamięć podręczna ARC pozwala na niezwykle szybkie czasy odczytu często używanych plików.
+- Pamięć podręczna ARC pozwala na niezwykle szybkie czasy odczytu dla często używanych plików.
 
 ### Wady
 
-- Bardzo skomplikowany w użyciu i zrozumieniu ze względu na funkcje takie jak zpool i ARC.
+- Bardzo skomplikowany w użyciu i zrozumieniu z powodu funkcji takich jak zpool i ARC.
 - ARC wymaga dużej ilości pamięci RAM, aby być efektywnym.
-- Nie jest zawarty w jądrze Linuksa, dlatego zależy od modułu jądra innej firmy (OpenZFS).
-- Niekompatybilny z wywłaszczaniem w czasie rzeczywistym (Real-time preemption).
+- Nie jest zawarty w jądrze Linuksa, przez co zależy od modułu jądra innej firmy (OpenZFS).
+- Niezgodny z wywłaszczaniem w czasie rzeczywistym (Real-time preemption).
 
 ### Wymagane narzędzia
 
@@ -122,47 +122,46 @@ Nie używaj jądra czasu rzeczywistego (Real-time) razem z ZFS, nie jest ono kom
 
 ### Zalecenie
 
-ZFS powinien być używany tylko przez zaawansowanych użytkowników, którzy chcą korzystać z jego zaawansowanych funkcji, takich jak pamięć masowa w pulach czy pamięć podręczna ARC.
+ZFS powinien być używany tylko przez zaawansowanych użytkowników, którzy chcą korzystać z jego zaawansowanych funkcji, takich jak pule pamięci masowej czy pamięć podręczna ARC.
 
 ## F2FS
 
-F2FS (Flash-Friendly File System) to system plików flash, pierwotnie stworzony i rozwijany przez Samsunga dla jądra Linuksa. F2FS został stworzony specjalnie z myślą o pamięci flash NAND używanej w nowoczesnych nośnikach danych.
+F2FS (Flash-Friendly File System) to system plików typu flash pierwotnie stworzony i rozwijany przez firmę Samsung dla jądra Linuksa. F2FS został stworzony specjalnie z myślą o pamięciach flash NAND używanych w nowoczesnych nośnikach danych.
 
 ### Zalety
 
 - Zaprojektowany z myślą o przyjazności dla pamięci flash.
-- Przezroczysta kompresja używana do zmniejszenia liczby zapisów na dysku (oszczędność miejsca obecnie nieużyteczna dla użytkownika).
-- Szybszy niż inne systemy plików, takie jak EXT4.
+- Przezroczysta kompresja używana do redukcji zapisów na dysku (oszczędności miejsca obecnie nieużyteczne dla użytkownika).
 - Lepsze równoważenie zużycia (wear leveling), co dodatkowo przedłuża żywotność pamięci flash NAND.
 
 ### Wady
 
 - Nie można go zmniejszyć.
-- Oszczędność miejsca dzięki kompresji nie może być obecnie wykorzystana przez użytkownika. Może to zostać dodane w przyszłości.
+- Oszczędności miejsca wynikające z kompresji nie mogą być obecnie wykorzystane przez użytkownika. Może to zostać dodane w przyszłości.
 - Stosunkowo słaby fsck (sprawdzanie systemu plików).
-- Obniżenie wersji jądra do starszej niż ta, na której utworzono system plików, może powodować problemy.
-- Wymaga obejścia problemu przy używaniu z GRUB na systemach MBR/BIOS.
+- Powrót do wersji jądra starszej niż ta, na której utworzono system plików, może powodować problemy.
+- Wymaga obejścia problemu przy użyciu z GRUB na systemach MBR/BIOS.
 
 ### Narzędzia przestrzeni użytkownika
 
-Główne narzędzie dla f2fs to `f2fs-tools`.
+Głównym narzędziem dla f2fs jest `f2fs-tools`.
 
 ### Zalecenie
 
-- F2FS jest zalecany dla użytkowników, którzy chcą zmaksymalizować żywotność swoich urządzeń z pamięcią flash NAND.
-- Limine jest zalecanym bootloaderem dla użytkowników F2FS na systemach MBR/BIOS, ponieważ nie wymaga obejścia problemu, tak jak GRUB.
+- F2FS jest zalecany dla użytkowników, którzy chcą maksymalnie wydłużyć żywotność swoich urządzeń z pamięcią flash NAND.
+- Limine jest zalecanym bootloaderem dla użytkowników F2FS na systemach MBR/BIOS, ponieważ nie wymaga on obejścia problemu, tak jak GRUB.
 
 ## BcacheFS
 
-Bcachefs to zaawansowany, nowy system plików dla Linuksa, z naciskiem na niezawodność i solidność oraz kompletny zestaw funkcji, jakich można oczekiwać od nowoczesnego systemu plików.
+Bcachefs to zaawansowany nowy system plików dla Linuksa, z naciskiem na niezawodność i solidność oraz kompletny zestaw funkcji, jakich można oczekiwać od nowoczesnego systemu plików.
 
 :::caution[UWAGA]
-Bcachefs jest nadal uważany za eksperymentalny i może sprawiać problemy.
+Bcachefs jest wciąż uważany za eksperymentalny i może sprawiać problemy.
 :::
 
 ### Zalety
 
-- Kopiowanie przy zapisie (CoW) - jak w BTRFS czy ZFS
+- Copy on write (CoW) - jak BTRFS lub ZFS
 - Kompresja
 - Buforowanie, rozmieszczanie danych
 - Replikacja
@@ -172,6 +171,11 @@ Bcachefs jest nadal uważany za eksperymentalny i może sprawiać problemy.
 
 - Eksperymentalny
 - Konfiguracja może być skomplikowana
+
+### Wymagane narzędzia
+
+`bcachefs-dkms` zapewnia wsparcie dla modułu jądra spoza drzewa.
+`bcachefs-tools` dla narzędzi przestrzeni użytkownika.
 
 ## TL:DR
 
