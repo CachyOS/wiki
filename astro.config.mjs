@@ -53,7 +53,7 @@ export default defineConfig({
       customCss: ['./src/tailwind.css'],
       title: 'CachyOS',
       logo: {
-        src: '/src/assets/logo.png',
+        src: '/src/assets/logo.svg',
       },
       editLink: {
         baseUrl: 'https://github.com/cachyos/wiki/edit/next/',
