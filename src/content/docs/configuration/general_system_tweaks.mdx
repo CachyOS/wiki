@@ -197,7 +197,7 @@ FAQ:
 
 - If it improves responsiveness, why isn't it enabled by default?
   - ADIOS is still under active development and continuous testing. While it offers significant benefits for desktop responsiveness, it is not yet considered stable enough to be the default for all workloads and hardware types. In some edge cases, bugs could lead to issues like system lockups. For this reason, it is an optional feature for users who wish to test and benefit from its latest improvements.
-  
+
 ### NVIDIA Smooth Motion (RTX 40xx & 50xx Series)
 
 :::note[Game Compatibility.]
@@ -372,3 +372,91 @@ sudo pacman -S obs-studio-browser
 # If you previously had the obs-studio installed then pacman is going to ask you if
 # you want to replace it, if so enter "Y".
 ```
+
+## Swap Configuration
+
+### Switching from ZRam to Zswap
+
+By default, CachyOS uses ZRam for swap management. However, if you prefer to use Zswap instead, you can easily switch by following these steps:
+
+:::note
+This guide assumes you have the default CachyOS setup with ZRam enabled and no swap partition or file was created during installation.
+:::
+
+<Steps>
+    1. Disable ZRam by adding a kernel parameter. [Edit your bootloader configuration](/configuration/boot_manager_configuration) and add the following line:
+        ```text
+        systemd.zram=0
+        ```
+    2. Enable Zswap by adding the following kernel parameter:
+        ```text
+        zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=30
+        ```
+    3. Create a swap file for Zswap.
+        <details>
+            <summary>If you're using Btrfs:</summary>
+                <Steps>
+                    1. Create a Btrfs subvolume for the swap file:
+                        ```bash
+                        sudo btrfs subvolume create /swap
+                        ```
+                    2. Create a swap file with your desired size (e.g., 8GB) by changing the `--size` parameter:
+                        ```bash "--size"
+                        sudo btrfs filesystem mkswapfile --size 4g --uuid clear /swap/swapfile
+                        ```
+                    3. Activate the swap file:
+                        ```bash
+                        sudo swapon /swap/swapfile
+                        ```
+                    4. Add the swap file to `/etc/fstab` to make it persistent across reboots:
+                        ```bash
+                        sudo echo "/swap/swapfile none swap defaults 0 0" >> /etc/fstab
+                        ```
+                </Steps>
+        </details>
+        <details>
+            <summary>If you're not using Btrfs:</summary>
+            <Steps>
+                1. Create a swap file with your desired size (e.g., 8GB) by changing the `count=` parameter:
+                    ```bash "count=8"
+                    sudo dd if=/dev/zero of=/swapfile bs=1G count=8
+                    ```
+                2. Set the correct permissions for the swap file:
+                    ```bash
+                    sudo chmod 0600 /swapfile
+                    ```
+                3. Format the swap file:
+                    ```bash
+                    sudo mkswap /swapfile
+                    ```
+                4. Add the swap file to `/etc/fstab` to make it persistent across reboots:
+                    ```bash
+                    sudo echo "/swapfile none swap defaults 0 0" >> /etc/fstab
+                    ```
+                5. Activate the swap file:
+                    ```
+                    sudo swapon /swapfile
+                    ```
+            </Steps>
+        </details>
+    4. Rebuild your initramfs to apply the changes. The command varies depending on your bootloader:
+        <details>
+            <summary>systemd-boot</summary>
+            ```bash
+            sudo sdboot-manage gen
+            ```
+        </details>
+        <details>
+            <summary>GRUB</summary>
+            ```bash
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+        </details>
+        <details>
+            <summary>Limine</summary>
+            ```bash
+            sudo limine-mkinitcpio
+            ```
+        </details>
+    5. Reboot your system to apply all changes.
+</Steps>
