@@ -1,0 +1,478 @@
+---
+title: Migawki Btrfs
+description: Zarządzanie migawkami Btrfs w CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 5
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+import MultipleImageComponent from '~/components/multiple-images-component.astro';
+
+## Wprowadzenie
+
+:::caution
+Nie traktuj migawek Btrfs jako zamiennika regularnych kopii zapasowych. Zawsze upewnij się, że posiadasz odpowiednie kopie zapasowe swoich ważnych danych.
+:::
+
+### Czym jest migawka Btrfs?
+
+Zacznijmy od podstaw:
+
+Migawki Btrfs wywodzą się z funkcji podwolumenu. Możesz zapytać, czym jest podwolumen? Pomyśl o podwolumenie jak o oddzielnym systemie plików wewnątrz systemu plików Btrfs. Pozwala to na segmentację danych na różne części. Dlatego na przykład w CachyOS mamy różne podwolumeny dla:
+
+- Głównego systemu plików: (`/`)
+- Katalogu głównego administratora: (`/root`)
+- Katalogu domowego: (`/home`)
+- Katalogów var: (`/var/cache`, `/var/tmp`, `/var/log`)
+- Katalogu srv: (`/srv`)
+
+Dzięki posiadaniu różnych podwolumenów dla tych katalogów możemy zarządzać nimi niezależnie, stosować różne ustawienia i, co najważniejsze, tworzyć dla nich migawki.
+
+W tym miejscu rodzi się migawka. Migawka jest zasadniczo kopią podwolumenu tylko do odczytu lub do odczytu i zapisu (**domyślnie**) w określonym punkcie w czasie. Oznacza to, że możesz uchwycić stan swojego systemu plików, w tym wszystkich plików i katalogów, w danym momencie.
+
+Dlatego migawki stają się odniesieniem w czasie, co oznacza, że gdy plik docelowy odbiega od danych migawki, migawka zachowa oryginalny plik, a plik docelowy utworzy nowy plik ze zmianami, podczas gdy migawka pozostanie na zawsze taka sama. Z tego powodu niektórzy użytkownicy nazywają migawkę „danymi zamrożonymi w czasie”.
+
+Wyobraź sobie zrobienie zdjęcia swojemu systemowi plików w określonym momencie, do którego zawsze możesz wrócić, kiedy tylko zajdzie taka potrzeba.
+
+Jedną z kluczowych zalet migawek jest to, że są bardzo oszczędne pod względem miejsca, ponieważ są tylko odniesieniem do oryginalnych danych, dopóki nie zostaną wprowadzone zmiany.
+
+Jednak to właśnie w tym miejscu migawka różni się od tradycyjnej kopii zapasowej. Powiedzmy, że twój dysk uległ awarii. Gdybyś miał tradycyjną kopię zapasową, mógłbyś przywrócić swoje dane z tej kopii. Jednakże, gdybyś miał tylko migawki na uszkodzonym dysku, straciłbyś do nich dostęp, ponieważ są one przechowywane na tym samym dysku.
+
+### Przypadki odzyskiwania, w których migawki są przydatne i nieprzydatne
+
+Są przydatne do odzyskiwania po:
+
+- Awarii lub uszkodzeniu po aktualizacji systemu.
+- Błędnych konfiguracjach, które uniemożliwiają uruchomienie systemu.
+- Przypadkowym usunięciu lub modyfikacji plików.
+
+Nie są przydatne do odzyskiwania po:
+
+- Problemach z programem rozruchowym (bootloaderem).
+- Awariach sprzętowych (np. uszkodzonych dyskach twardych).
+
+## Zarządzanie migawkami (GUI i CLI)
+
+:::tip
+Ponieważ CachyOS domyślnie zawiera `snap-pac`, Snapper automatycznie utworzy migawki przed i po każdej instalacji, aktualizacji lub usunięciu pakietu za pomocą `pacman`. Oznacza to, że nie musisz ręcznie tworzyć migawek dla tych operacji, ponieważ Snapper robi to za Ciebie.
+:::
+
+:::note
+Jeśli używasz bootloadera GRUB, upewnij się, że masz zainstalowany `grub-btrfs-support`, aby mieć wszystkie niezbędne skrypty i hooki do automatycznego wykrywania migawek BTRFS i dodawania ich do menu GRUB.
+```bash
+sudo pacman -Syu grub-btrfs-support
+```
+:::
+
+Kilka rzeczy do rozważenia przed rozpoczęciem zarządzania migawkami. **Dotyczy to zarówno metod CLI, jak i GUI.**
+
+- Zaleca się przechowywanie maksymalnie 10 migawek. Powyżej tej liczby migawki stają się zbyt stare i mniej użyteczne. W najgorszym przypadku przywrócenie starej migawki może wprowadzić problemy z kompatybilnością z nowszymi wersjami oprogramowania.
+- Migawki idealnie nadają się do celów odzyskiwania systemu. Można ich jednak używać do cofania zmian w plikach bez przywracania całej migawki.
+- Dodaj znaczący opis podczas tworzenia migawek. Pomoże ci to później zidentyfikować przeznaczenie każdej z nich.
+
+### Btrfs Assistant (GUI)
+
+Przed kontynuowaniem upewnij się, że masz zainstalowany `btrfsmaintenance`, aby móc korzystać z funkcji automatycznego zarządzania migawkami.
+
+Dla tych, którzy wolą zarządzać Btrfs, migawkami i innymi elementami za pomocą interfejsu graficznego, [Btrfs Assistant](https://gitlab.com/btrfs-assistant/btrfs-assistant) jest świetnym projektem dla początkujących.
+
+#### Konfiguracja automatycznego czyszczenia migawek
+
+Skonfigurujemy automatyczne czyszczenie migawek za pomocą Btrfs Assistant. Pomoże to efektywnie zarządzać migawkami bez ręcznej interwencji.
+
+Postępuj zgodnie z poniższymi krokami:
+
+<Steps>
+
+    1. Uruchom Btrfs Assistant, otwierając terminal i wpisując:
+        ```bash
+        btrfs-assistant-launcher
+        ```
+
+        Alternatywnie:
+
+        ```bash
+        sudo -E btrfs-assistant
+        ```
+
+  2. Przejdź do zakładki Ustawienia Snappera:
+
+      <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperSettingsTab.png')} />
+      Zmodyfikuj ustawienia **Przechowywania migawek** w następujący sposób:
+      - Upewnij się, że wybrana jest konfiguracja `root`
+      - Wprowadź wartość `0` dla Godzinowych, Dziennych, Tygodniowych, Miesięcznych i Rocznych.
+      - Odznacz `Włącz migawki osi czasu`.
+      - Wprowadź wartość `10` w polu `Liczba`.
+      - Zaznacz ✅ przy `Włączone czyszczenie Snapper`.
+      - Kliknij przycisk `Zapisz` w prawym górnym rogu i `Zastosuj zmiany systemd` w prawym dolnym rogu.
+      **Timer `snapper-cleanup.timer` zostanie teraz włączony, aby automatycznie czyścić stare migawki na podstawie Twojej konfiguracji.**
+      :::caution
+      Sprawdź, czy wprowadzone właśnie zmiany zostały poprawnie zastosowane, sprawdzając konfigurację Snappera:
+      ```bash
+      sudo nano /etc/snapper/configs/root
+      ```
+      Oczekiwany fragment wyjścia:
+      ```text
+      # limit for number cleanup
+      NUMBER_MIN_AGE="3600"
+      NUMBER_LIMIT="10"
+      NUMBER_LIMIT_IMPORTANT="10"
+      ```
+      Jeśli `NUMBER_LIMIT` i `NUMBER_LIMIT_IMPORTANT` nie zawierają wartości `10`, zaktualizuj je odpowiednio.
+      Zapisz plik i wyjdź, naciskając `CTRL + O`, `Enter` i `CTRL + X`.
+      :::
+</Steps>
+
+#### Usuwanie migawek za pomocą Btrfs Assistant
+
+<Steps>
+    1. Otwórz Btrfs Assistant:
+        ```bash
+        btrfs-assistant-launcher
+        ```
+
+        Alternatywnie:
+
+        ```bash
+        sudo -E btrfs-assistant
+        ```
+    2. Przejdź do zakładki Snapper:
+        <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperTab.png')} />
+    3. Wybierz migawkę(i), którą chcesz usunąć z listy.
+        :::tip
+        - Przytrzymaj `CTRL`, aby zaznaczyć wiele migawek.
+        - Przytrzymaj `SHIFT`, aby zaznaczyć zakres migawek.
+        :::
+    4. Kliknij przycisk `Usuń` znajdujący się na górze okna.
+    5. Zregeneruj wpisy bootloadera, aby odzwierciedlić zmiany:
+        <details>
+            <summary>systemd-boot</summary>
+            ```bash
+            sudo sdboot-manage gen
+            ```
+        </details>
+        <details>
+            <summary>GRUB</summary>
+            ```bash
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+        </details>
+        <details>
+            <summary>Limine</summary>
+            ```bash
+            sudo limine-mkinitcpio
+            ```
+        </details>
+</Steps>
+
+Sprawdź ich [Oficjalne Wiki](https://gitlab.com/btrfs-assistant/wiki), aby uzyskać bardziej szczegółowe informacje o tym, co można zrobić.
+
+### Snapper (CLI)
+
+Teraz, gdy omówiliśmy, czym jest migawka Btrfs i jakie ma zastosowania, porozmawiajmy o tym, jak nimi zarządzać za pomocą narzędzia o nazwie [Snapper](http://snapper.io/), stworzonego przez [Arvina Schnella](https://github.com/aschnell) z [openSUSE](https://www.opensuse.org/).
+
+<details>
+<summary>CachyOS domyślnie używa następującej konfiguracji Snappera:</summary>
+
+```text
+# subvolume to snapshot
+SUBVOLUME="/"
+
+# filesystem type
+FSTYPE="btrfs"
+
+# btrfs qgroup for space aware cleanup algorithms
+QGROUP=""
+
+# fraction or absolute size of the filesystems space the snapshots may use
+SPACE_LIMIT="0.5"
+
+# fraction or absolute size of the filesystems space that should be free
+FREE_LIMIT="0.2"
+
+# users and groups allowed to work with config
+ALLOW_USERS=""
+ALLOW_GROUPS=""
+
+# sync users and groups from ALLOW_USERS and ALLOW_GROUPS to .snapshots
+# directory
+SYNC_ACL="no"
+
+# start comparing pre- and post-snapshot in background after creating
+# post-snapshot
+BACKGROUND_COMPARISON="yes"
+
+# run daily number cleanup
+NUMBER_CLEANUP="yes"
+
+# limit for number cleanup
+NUMBER_MIN_AGE="1800"
+NUMBER_LIMIT="50"
+NUMBER_LIMIT_IMPORTANT="15"
+
+# create hourly snapshots
+TIMELINE_CREATE="no"
+
+# cleanup hourly snapshots after some time
+TIMELINE_CLEANUP="yes"
+
+# limits for timeline cleanup
+TIMELINE_MIN_AGE="1800"
+TIMELINE_LIMIT_HOURLY="5"
+TIMELINE_LIMIT_DAILY="7"
+TIMELINE_LIMIT_WEEKLY="0"
+TIMELINE_LIMIT_MONTHLY="0"
+TIMELINE_LIMIT_YEARLY="0"
+
+# cleanup empty pre-post-pairs
+EMPTY_PRE_POST_CLEANUP="yes"
+
+# limits for empty pre-post-pair cleanup
+EMPTY_PRE_POST_MIN_AGE="1800"
+```
+
+</details>
+
+:::caution
+Domyślna konfiguracja Snappera w CachyOS obejmuje tylko podwolumin root (`/`). Jeśli masz inne podwoluminy, którymi chcesz zarządzać za pomocą Snappera, będziesz musiał utworzyć dla nich osobne konfiguracje.
+
+Ta konfiguracja wymaga przeglądu w celu zwiększenia jej skuteczności.
+:::
+
+Oto lista najczęstszych poleceń Snappera.
+
+:::note
+`< >` oznacza symbol zastępczy, który należy zastąpić odpowiednią wartością.
+:::
+
+<details>
+    <summary>Pobierz bieżącą konfigurację:</summary>
+    ```bash
+    sudo snapper get-config
+    ```
+    <details>
+        <summary>Przykład wyjścia:</summary>
+        ```bash
+        ❯ snapper list-configs
+        Config │ Subvolume
+        ───────┼──────────
+        root   │ /
+        ```
+    </details>
+</details>
+
+<details>
+    <summary>Wyświetl dostępne migawki + szczegóły:</summary>
+    ```bash
+    sudo snapper list
+    ```
+    <details>
+        <summary>Przykład wyjścia:</summary>
+        ```bash
+          # │ Type   │ Pre # │ Date                     │ User │ Cleanup │ Description                                                              │ Userdata
+        ────┼────────┼───────┼──────────────────────────┼──────┼─────────┼──────────────────────────────────────────────────────────────────────────┼─────────
+        0   │ single │       │                          │ root │         │ current                                                                  │
+        715 │ pre    │       │ Thu 22 Jan 2026 16:14:07 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        716 │ post   │   715 │ Thu 22 Jan 2026 16:14:25 │ root │ number  │ docker-buildx lilv sof-firmware zed                                      │
+        717 │ pre    │       │ Sat 24 Jan 2026 11:19:48 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        718 │ post   │   717 │ Sat 24 Jan 2026 11:20:19 │ root │ number  │ bpf cachyos-hello cachyos-wallpapers cpupower jdk-openjdk ldb less libev │
+        719 │ pre    │       │ Sat 24 Jan 2026 11:20:31 │ root │ number  │ pacman -U --config /etc/pacman.conf -- /home/mario/.cache/yay/visual-s   │
+        720 │ post   │   719 │ Sat 24 Jan 2026 11:20:36 │ root │ number  │ visual-studio-code-bin                                                   │
+        721 │ pre    │       │ Sat 24 Jan 2026 20:46:40 │ root │ number  │ pacman -Syu plasma-login-manager                                         │
+        722 │ post   │   721 │ Sat 24 Jan 2026 20:46:48 │ root │ number  │ cmake fastfetch harfbuzz harfbuzz-icu jdk21-openjdk lib32-harfbuzz lib32 │
+        723 │ pre    │       │ Sat 24 Jan 2026 20:46:53 │ root │ number  │ pacman -R sddm-kcm cachyos-themes-sddm sddm                              │
+        724 │ post   │   723 │ Sat 24 Jan 2026 20:46:56 │ root │ number  │ cachyos-themes-sddm sddm sddm-kcm                                        │
+        725 │ pre    │       │ Sun 25 Jan 2026 08:05:05 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        726 │ post   │   725 │ Sun 25 Jan 2026 08:05:11 │ root │ number  │ plasma-login-manager                                                     │
+        727 │ pre    │       │ Sun 25 Jan 2026 15:55:28 │ root │ number  │ pacman -S --config /etc/pacman.conf -- cachyos-extra-znver4/caligula     │
+        728 │ post   │   727 │ Sun 25 Jan 2026 15:55:30 │ root │ number  │ caligula                                                                 │
+      ```
+      - Oto podsumowanie kolumn:
+        - `#`: Wskazuje numer migawki, który jest używany w innych poleceniach.
+        - `Type`: Wskazuje, czy migawka jest pojedyncza, czy stanowi część pary przed/po.
+            - `single`: Te migawki nie mają specjalnego związku z innymi migawkami.
+            - `pre`: Te migawki są przeznaczone do wykonania przed jakąkolwiek zmianą w systemie (np. edycją pliku lub instalacją pakietu).
+            - `post`: Jak sama nazwa wskazuje, te migawki odnoszą się do migawek wykonanych po dokonaniu zmiany w systemie. Są one powiązane z odpowiadającą im migawką `pre`.
+        - `Pre #`: W przypadku migawek `post`, ta kolumna wskazuje numer odpowiadającej im migawki `pre`.
+        - `Date`: Data i godzina utworzenia migawki.
+        - `User`: Użytkownik, który utworzył migawkę.
+        - `Cleanup`: Wskazuje algorytm czyszczenia zastosowany do migawki.
+            - W Snapperze dostępnych jest kilka algorytmów czyszczenia, takich jak `number`, `timeline` i `empty-pre-post`. W tym przykładzie użyto algorytmu `number`, co oznacza, że starsze migawki będą usuwane na podstawie predefiniowanego limitu.
+            - `timeline`: Migawki są czyszczone na podstawie ich wieku i częstotliwości.
+            - `empty-pre-post`: Usuwa pary migawek przed/po z pustymi różnicami.
+        - `Description`: Krótki opis migawki, często wskazujący powód jej utworzenia.
+        - `Userdata`: Dodatkowe dane zdefiniowane przez użytkownika powiązane z migawką.
+        Aby uzyskać więcej szczegółów na temat kolumn wyjściowych
+    </details>
+</details>
+
+<details>
+    <summary>Utwórz nową migawkę:</summary>
+    ```bash
+    sudo snapper create --type single --description "Mój opis migawki"
+    ```
+</details>
+
+<details>
+    <summary>Zmodyfikuj migawkę:</summary>
+    ```bash
+    sudo snapper modify <opcja> <numer_migawki>
+    ```
+    <details>
+        <summary>Dostępne opcje:</summary>
+        ```bash
+        Options for 'modify' command:
+            --description, -d <description>  Description for snapshot.
+            --cleanup-algorithm, -c <algo>   Cleanup algorithm for snapshot.
+            --userdata, -u <userdata>        Userdata for snapshot.
+            --read-only                      Set snapshot read-only.
+            --read-write                     Set snapshot read-write.
+            --default                        Set snapshot as default snapshot.
+        ```
+        <details>
+            <summary>Przykład: Modyfikacja opisu migawki 729:</summary>
+            ```bash
+            sudo snapper modify 729 --description 'Mój nowy opis migawki'
+            ```
+        </details>
+    </details>
+</details>
+
+<details>
+<summary>Usuwanie migawek:</summary>
+:::note
+Migawka 0 nie może zostać usunięta, ponieważ reprezentuje bieżący stan systemu plików.
+:::
+    <details>
+    <summary>Usuń pojedynczą migawkę:</summary>
+    ```bash
+    sudo snapper delete <numer_migawki>
+    ```
+    </details>
+    <details>
+    <summary>Usuń zakres migawek:</summary>
+    ```bash
+    sudo snapper delete 718-721
+    ```
+    Migawki 718, 719, 720 i 721 zostaną usunięte.
+    </details>
+</details>
+
+#### Dokumentacja Snappera
+
+[Oficjalna strona man dla poleceń Snappera:](http://snapper.io/manpages/snapper.html#global_options)
+
+[Przewodnik po pliku konfiguracyjnym Snappera:](http://snapper.io/manpages/snapper-configs.html)
+
+[Przewodnik z Arch Wiki:](https://wiki.archlinux.org/title/Snapper)
+
+### Zalecenia i porady dotyczące Limine
+
+#### Dostosuj ustawienia wyświetlania migawek w bootloaderze Limine
+
+- Ogranicz liczbę migawek wyświetlanych w menu bootloadera Limine, aby uniknąć bałaganu:
+
+<Steps>
+    1. Utwórz kopię zapasową pliku konfiguracyjnego limine-snapper-sync:
+        ```bash
+        sudo cp /etc/limine-snapper-sync.conf /etc/limine-snapper-sync.conf.orig
+        ```
+    2. Edytuj plik konfiguracyjny limine-snapper-sync:
+        ```bash
+        sudo nano /etc/limine-snapper-sync.conf
+        ```
+        Oczekiwany fragment wyjścia:
+        ```bash
+        ### Max Snapshot Entries
+        ### Sets the limit for how many snapshot entries show up in the boot menu.
+        ### This depends on the size of your FAT32 boot partition and how many different kernel and module versions you want to keep.
+        ### A larger FAT32 boot partition allows more snapshot entries.
+        MAX_SNAPSHOT_ENTRIES=10
+        ```
+        Opcjonalnie dostosuj format nazwy migawki:
+        ```bash
+        ### Snapshot Name Format
+        ### Choose a format for how snapshot entries look in the Limine bootloader:
+        ### 0. ID=111 2023-12-20 10:59:59 (default)
+        ### 1. 111│2023-12-20 10:59:59
+        ### 2. 111 │ 2023-12-20 10:59:59
+        ### 3. 2023-12-20 10:59:59│111
+        ### 4. 2023-12-20 10:59:59 │ 111
+        ### 5. 2023-12-20 10:59:59
+        ### 6. 111
+        ### 7. 111│snapshot description
+        ### 8. 2023-12-20 10:59:59│snapshot description
+        ### 9. │snapshot description
+        SNAPSHOT_FORMAT_CHOICE=8
+        ```
+        `8` to dobry wybór, ponieważ pokazuje datę i godzinę wraz z opisem migawki.
+    3. Zapisz plik i wyjdź, naciskając `CTRL+O`, `Enter`, `CTRL+X`
+</Steps>
+
+### Przywracanie z migawki
+
+:::caution
+Jeśli migawka, z której chcesz przywrócić, zawierała aktualizację jądra, nie będziesz w stanie cofnąć zmian.
+:::
+
+<details>
+    <summary>Limine</summary>
+    <Steps>
+        1. Z menu bootloadera Limine przejdź do menu Migawki:
+            <ImageComponent imgsrc={import('~/assets/images/limine-snapshotMenu-1.jpg')} />
+        2. Wybierz migawkę i jądro, z których chcesz przywrócić:
+            <MultipleImageComponent
+                images={[
+                import('~/assets/images/limine-snapshotMenu-2.jpg'),
+                import('~/assets/images/limine-snapshotMenu-1.jpg')]}
+            />
+        3. Twój system jest teraz w `trybie tylko do odczytu`. Powinno pojawić się powiadomienie informujące, że wykryto migawkę, z prośbą o przywrócenie z niej:
+            <ImageComponent imgsrc={import('~/assets/images/kde-snapshot-popup.png')} />
+        4. Kliknij `Przywróć teraz`. Otworzy się okno terminala z monitem i poprosi o kilka potwierdzeń:
+            ```bash title="Przykładowy monit o przywrócenie"
+            Snapshot ID    : 2
+            Date           : 2026-01-26 11:19:14
+            Description    : nc-git
+            Restore method : replace
+
+            Confirm restore of snapshot 2 using the "replace" method?
+            Type [y]es to restore, [l]ist to display all snapshots, or [c]ancel to abort.
+
+            Your input: yes
+
+            Enter a description for the "backup" of the subvolume: @
+
+            Your input: @
+            ```
+          5. Wpisz `yes` i opcjonalnie dodaj opis dla migawki zapasowej.
+          6. Rozpocznie się proces przywracania. Po zakończeniu wpisz `yes` ponownie w nowym monicie, aby ponownie uruchomić system:
+              ```bash
+              The restore is complete. Please reboot now:
+              Type [y]es to reboot, [n]o or [c]ancel to abort rebooting.
+
+              Your input: yes
+              ```
+    </Steps>
+</details>
+
+<details>
+    <summary>GRUB</summary>
+    <Steps>
+        1. Z menu bootloadera GRUB uruchom system z wybranej migawki i jądra, które chcesz przywrócić.
+        2. Po uruchomieniu systemu otwórz Btrfs Assistant:
+            ```bash
+            btrfs-assistant-launcher
+            ```
+
+            Alternatywnie:
+
+            ```bash
+            sudo -E btrfs-assistant
+            ```
+        3. Przejdź do zakładki Snapper → zakładka „Przeglądaj/Przywróć” i wybierz migawkę, z której uruchomiłeś system:
+            <ImageComponent imgsrc={import('~/assets/images/btrfs-assistant-example.png')} />
+        4. Kliknij przycisk `Przywróć` i ponownie uruchom system, aby zastosować zmiany.
+    </Steps>
+</details>

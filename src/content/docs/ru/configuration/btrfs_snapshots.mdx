@@ -1,0 +1,478 @@
+---
+title: Снимки Btrfs
+description: Управление снимками Btrfs в CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 5
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+import MultipleImageComponent from '~/components/multiple-images-component.astro';
+
+## Введение
+
+:::caution
+Не рассматривайте снимки Btrfs как замену регулярному резервному копированию. Всегда убеждайтесь, что у вас есть полноценные резервные копии важных данных.
+:::
+
+### Что такое снимок Btrfs?
+
+Давайте начнём с основ:
+
+Снимки Btrfs являются частью функционала подтомов. Вы можете спросить, что такое подтом? Представьте подтом как отдельную файловую систему внутри файловой системы Btrfs. Это позволяет вам разделять данные на разные части. Именно поэтому, например, в CachyOS у нас есть разные подтома для:
+
+- Корневой файловой системы: (`/`)
+- Домашнего каталога суперпользователя: (`/root`)
+- Домашнего каталога пользователя: (`/home`)
+- Каталогов Var: (`/var/cache`, `/var/tmp`, `/var/log`)
+- Каталога Srv: (`/srv`)
+
+Имея разные подтома для этих каталогов, мы можем управлять ими независимо, применять разные настройки и, что самое важное, создавать для них снимки.
+
+Именно здесь и рождается снимок. Снимок — это, по сути, копия подтома (по **умолчанию** для чтения и записи или только для чтения) в определённый момент времени. Это означает, что вы можете зафиксировать состояние вашей файловой системы, включая все файлы и каталоги, на данный момент.
+
+Таким образом, снимки становятся точкой отсчёта во времени. Это значит, что когда целевой файл изменяется по сравнению с данными в снимке, снимок сохраняет исходный файл, а целевой объект создаёт новый файл с изменениями, при этом снимок остаётся неизменным навсегда. Поэтому некоторые пользователи называют снимок «данными, застывшими во времени».
+
+Представьте, что вы делаете фотографию вашей файловой системы в определённый момент, и вы всегда можете вернуться к этой фотографии, когда вам это понадобится.
+
+Одним из ключевых преимуществ снимков является их высокая эффективность в плане использования дискового пространства, поскольку это всего лишь ссылка на исходные данные до тех пор, пока не будут внесены изменения.
+
+Но именно здесь снимок отличается от традиционной резервной копии. Допустим, ваш диск вышел из строя. Если бы у вас была традиционная резервная копия, вы могли бы восстановить свои данные из неё. Однако, если у вас были только снимки на вышедшем из строя диске, вы потеряли бы к ним доступ, так как они хранятся на том же диске.
+
+### Случаи, когда снимки полезны и бесполезны для восстановления
+
+Они полезны для восстановления после:
+
+- Сбоев или повреждений после обновлений системы.
+- Неправильных конфигураций, которые мешают системе загрузиться.
+- Случайного удаления или изменения файлов.
+
+Они бесполезны для восстановления после:
+
+- Проблем с загрузчиком.
+- Аппаратных сбоев (например, выхода из строя жёстких дисков).
+
+## Управление снимками (GUI и CLI)
+
+:::tip
+Поскольку в CachyOS по умолчанию включен `snap-pac`, Snapper будет автоматически создавать снимки до и после любой установки, обновления или удаления пакетов с помощью `pacman`. Это означает, что вам не нужно вручную создавать снимки для этих операций, так как Snapper делает это за вас.
+:::
+
+:::note
+Если вы используете загрузчик GRUB, убедитесь, что у вас установлен `grub-btrfs-support`, чтобы иметь все необходимые скрипты и хуки для автоматического обнаружения снимков BTRFS и добавления их в меню GRUB.
+```bash
+sudo pacman -Syu grub-btrfs-support
+```
+:::
+
+Несколько моментов, которые следует учесть перед управлением снимками. **Применимо как к CLI, так и к GUI методам.**
+
+- Рекомендуется хранить не более 10 снимков. После этого снимки становятся слишком старыми и менее полезными. В худшем случае, восстановление из старого снимка может привести к проблемам совместимости с новыми версиями программного обеспечения.
+- В идеале снимки предназначены для восстановления. Хотя вы можете использовать их для отмены изменений в файлах без восстановления всего снимка.
+- Добавляйте осмысленное описание при создании снимков. Это поможет вам позже определить назначение каждого снимка.
+
+### Btrfs Assistant (GUI)
+
+Прежде чем продолжить, убедитесь, что у вас установлен `btrfsmaintenance`, чтобы воспользоваться функциями автоматического управления снимками.
+
+Для тех, кто предпочитает управлять Btrfs, снимками и многим другим через графический интерфейс, [Btrfs Assistant](https://gitlab.com/btrfs-assistant/btrfs-assistant) — это замечательный проект для новичков.
+
+#### Настройка автоматической очистки снимков
+
+Мы настроим автоматическую очистку снимков с помощью Btrfs Assistant. Это поможет эффективно управлять вашими снимками без ручного вмешательства.
+
+Выполните следующие шаги:
+
+<Steps>
+
+    1. Запустите Btrfs Assistant, открыв терминал и выполнив:
+        ```bash
+        btrfs-assistant-launcher
+        ```
+
+        Как вариант:
+
+        ```bash
+        sudo -E btrfs-assistant
+        ```
+
+  2. Перейдите на вкладку Snapper Settings (Настройки Snapper):
+
+      <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperSettingsTab.png')} />
+      Измените настройки **Snapshot Retention** (Хранение снимков) следующим образом:
+      - Убедитесь, что выбрана конфигурация `root`
+      - Введите значение `0` для Hourly (Ежечасно), Daily (Ежедневно), Weekly (Еженедельно), Monthly (Ежемесячно) и Yearly (Ежегодно).
+      - Снимите флажок `Enable timeline snapshots` (Включить снимки по расписанию).
+      - Введите значение `10` в поле `Number` (Количество).
+      - Поставьте ✅ напротив `Snapper cleanup enabled` (Очистка Snapper включена).
+      - Нажмите кнопку `Save` (Сохранить) в правом верхнем углу и `Apply systemd changes` (Применить изменения systemd) в правом нижнем.
+      **Теперь `snapper-cleanup.timer` будет включен для автоматической очистки старых снимков в соответствии с вашей конфигурацией.**
+      :::caution
+      Убедитесь, что внесенные вами изменения были применены правильно, проверив конфигурацию Snapper:
+      ```bash
+      sudo nano /etc/snapper/configs/root
+      ```
+      Ожидаемый фрагмент вывода:
+      ```text
+      # limit for number cleanup
+      NUMBER_MIN_AGE="3600"
+      NUMBER_LIMIT="10"
+      NUMBER_LIMIT_IMPORTANT="10"
+      ```
+      Если `NUMBER_LIMIT` и `NUMBER_LIMIT_IMPORTANT` не содержат значения `10`, обновите их соответствующим образом.
+      Сохраните файл и выйдите, нажав `CTRL + O`, `Enter` и `CTRL + X`.
+      :::
+</Steps>
+
+#### Удаление снимков с помощью Btrfs Assistant
+
+<Steps>
+    1. Откройте Btrfs Assistant:
+        ```bash
+        btrfs-assistant-launcher
+        ```
+
+        Как вариант:
+
+        ```bash
+        sudo -E btrfs-assistant
+        ```
+    2. Перейдите на вкладку Snapper:
+        <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperTab.png')} />
+    3. Выберите снимок(ки), который(е) вы хотите удалить из списка.
+        :::tip
+        - Удерживайте `CTRL` для выбора нескольких снимков.
+        - Удерживайте `SHIFT` для выбора диапазона снимков.
+        :::
+    4. Нажмите кнопку `Delete` (Удалить), расположенную в верхней части окна.
+    5. Перегенерируйте записи вашего загрузчика, чтобы отразить изменения:
+        <details>
+            <summary>systemd-boot</summary>
+            ```bash
+            sudo sdboot-manage gen
+            ```
+        </details>
+        <details>
+            <summary>GRUB</summary>
+            ```bash
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+        </details>
+        <details>
+            <summary>Limine</summary>
+            ```bash
+            sudo limine-mkinitcpio
+            ```
+        </details>
+</Steps>
+
+Ознакомьтесь с их [Официальной Wiki](https://gitlab.com/btrfs-assistant/wiki) для более подробного изучения того, что можно сделать.
+
+### Snapper (CLI)
+
+Теперь, когда мы рассмотрели, что такое снимок Btrfs и его варианты использования, давайте поговорим о том, как управлять ими с помощью инструмента под названием [Snapper](http://snapper.io/), созданного [Arvin Schnell](https://github.com/aschnell) из [openSUSE](https://www.opensuse.org/).
+
+<details>
+<summary>CachyOS по умолчанию использует следующую конфигурацию Snapper:</summary>
+
+```text
+# subvolume to snapshot
+SUBVOLUME="/"
+
+# filesystem type
+FSTYPE="btrfs"
+
+# btrfs qgroup for space aware cleanup algorithms
+QGROUP=""
+
+# fraction or absolute size of the filesystems space the snapshots may use
+SPACE_LIMIT="0.5"
+
+# fraction or absolute size of the filesystems space that should be free
+FREE_LIMIT="0.2"
+
+# users and groups allowed to work with config
+ALLOW_USERS=""
+ALLOW_GROUPS=""
+
+# sync users and groups from ALLOW_USERS and ALLOW_GROUPS to .snapshots
+# directory
+SYNC_ACL="no"
+
+# start comparing pre- and post-snapshot in background after creating
+# post-snapshot
+BACKGROUND_COMPARISON="yes"
+
+# run daily number cleanup
+NUMBER_CLEANUP="yes"
+
+# limit for number cleanup
+NUMBER_MIN_AGE="1800"
+NUMBER_LIMIT="50"
+NUMBER_LIMIT_IMPORTANT="15"
+
+# create hourly snapshots
+TIMELINE_CREATE="no"
+
+# cleanup hourly snapshots after some time
+TIMELINE_CLEANUP="yes"
+
+# limits for timeline cleanup
+TIMELINE_MIN_AGE="1800"
+TIMELINE_LIMIT_HOURLY="5"
+TIMELINE_LIMIT_DAILY="7"
+TIMELINE_LIMIT_WEEKLY="0"
+TIMELINE_LIMIT_MONTHLY="0"
+TIMELINE_LIMIT_YEARLY="0"
+
+# cleanup empty pre-post-pairs
+EMPTY_PRE_POST_CLEANUP="yes"
+
+# limits for empty pre-post-pair cleanup
+EMPTY_PRE_POST_MIN_AGE="1800"
+```
+
+</details>
+
+:::caution
+Стандартная конфигурация Snapper в CachyOS охватывает только корневой подтом (`/`). Если у вас есть другие подтома, которыми вы хотите управлять с помощью Snapper, вам потребуется создать для каждого из них отдельные конфигурации.
+
+Эта конфигурация требует пересмотра для повышения ее эффективности.
+:::
+
+Вот список наиболее распространенных команд Snapper.
+
+:::note
+`< >` указывает на заполнитель, который вы должны заменить соответствующим значением.
+:::
+
+<details>
+    <summary>Получить текущую конфигурацию:</summary>
+    ```bash
+    sudo snapper get-config
+    ```
+    <details>
+        <summary>Пример вывода:</summary>
+        ```bash
+        ❯ snapper list-configs
+        Config │ Subvolume
+        ───────┼──────────
+        root   │ /
+        ```
+    </details>
+</details>
+
+<details>
+    <summary>Список доступных снимков + детали:</summary>
+    ```bash
+    sudo snapper list
+    ```
+    <details>
+        <summary>Пример вывода:</summary>
+        ```bash
+          # │ Type   │ Pre # │ Date                     │ User │ Cleanup │ Description                                                              │ Userdata
+        ────┼────────┼───────┼──────────────────────────┼──────┼─────────┼──────────────────────────────────────────────────────────────────────────┼─────────
+        0   │ single │       │                          │ root │         │ current                                                                  │
+        715 │ pre    │       │ Thu 22 Jan 2026 16:14:07 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        716 │ post   │   715 │ Thu 22 Jan 2026 16:14:25 │ root │ number  │ docker-buildx lilv sof-firmware zed                                      │
+        717 │ pre    │       │ Sat 24 Jan 2026 11:19:48 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        718 │ post   │   717 │ Sat 24 Jan 2026 11:20:19 │ root │ number  │ bpf cachyos-hello cachyos-wallpapers cpupower jdk-openjdk ldb less libev │
+        719 │ pre    │       │ Sat 24 Jan 2026 11:20:31 │ root │ number  │ pacman -U --config /etc/pacman.conf -- /home/mario/.cache/yay/visual-s   │
+        720 │ post   │   719 │ Sat 24 Jan 2026 11:20:36 │ root │ number  │ visual-studio-code-bin                                                   │
+        721 │ pre    │       │ Sat 24 Jan 2026 20:46:40 │ root │ number  │ pacman -Syu plasma-login-manager                                         │
+        722 │ post   │   721 │ Sat 24 Jan 2026 20:46:48 │ root │ number  │ cmake fastfetch harfbuzz harfbuzz-icu jdk21-openjdk lib32-harfbuzz lib32 │
+        723 │ pre    │       │ Sat 24 Jan 2026 20:46:53 │ root │ number  │ pacman -R sddm-kcm cachyos-themes-sddm sddm                              │
+        724 │ post   │   723 │ Sat 24 Jan 2026 20:46:56 │ root │ number  │ cachyos-themes-sddm sddm sddm-kcm                                        │
+        725 │ pre    │       │ Sun 25 Jan 2026 08:05:05 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        726 │ post   │   725 │ Sun 25 Jan 2026 08:05:11 │ root │ number  │ plasma-login-manager                                                     │
+        727 │ pre    │       │ Sun 25 Jan 2026 15:55:28 │ root │ number  │ pacman -S --config /etc/pacman.conf -- cachyos-extra-znver4/caligula     │
+        728 │ post   │   727 │ Sun 25 Jan 2026 15:55:30 │ root │ number  │ caligula                                                                 │
+      ```
+      - Вот краткое описание столбцов:
+        - `#`: Указывает номер снимка, который используется в других командах.
+        - `Type`: Указывает, является ли снимок одиночным или частью пары pre/post.
+            - `single`: Эти снимки не имеют особого отношения к другим снимкам.
+            - `pre`: Эти снимки предназначены для создания до какого-либо системного изменения (например, редактирования файла или установки пакета).
+            - `post`: Как следует из названия, эти снимки относятся к снимкам, сделанным после системного изменения. Они связаны с соответствующим `pre` снимком.
+        - `Pre #`: Для `post` снимков этот столбец указывает номер соответствующего `pre` снимка.
+        - `Date`: Дата и время создания снимка.
+        - `User`: Пользователь, создавший снимок.
+        - `Cleanup`: Указывает алгоритм очистки, примененный к снимку.
+            - В Snapper доступно несколько алгоритмов очистки, таких как `number`, `timeline` и `empty-pre-post`. В этом примере используется алгоритм `number`, что означает, что старые снимки будут удаляться на основе предопределенного лимита.
+            - `timeline`: Снимки очищаются в зависимости от их возраста и частоты.
+            - `empty-pre-post`: Удаляет пары снимков pre/post с пустыми различиями.
+        - `Description`: Краткое описание снимка, часто указывающее на причину его создания.
+        - `Userdata`: Дополнительные пользовательские данные, связанные со снимком.
+        Для более подробной информации о столбцах вывода
+    </details>
+</details>
+
+<details>
+    <summary>Создать новый снимок:</summary>
+    ```bash
+    sudo snapper create --type single --description "Мое описание снимка"
+    ```
+</details>
+
+<details>
+    <summary>Изменить снимок:</summary>
+    ```bash
+    sudo snapper modify <опция> <номер_снимка>
+    ```
+    <details>
+        <summary>Доступные опции:</summary>
+        ```bash
+        Options for 'modify' command:
+            --description, -d <description>  Description for snapshot.
+            --cleanup-algorithm, -c <algo>   Cleanup algorithm for snapshot.
+            --userdata, -u <userdata>        Userdata for snapshot.
+            --read-only                      Set snapshot read-only.
+            --read-write                     Set snapshot read-write.
+            --default                        Set snapshot as default snapshot.
+        ```
+        <details>
+            <summary>Пример: Изменение описания снимка 729:</summary>
+            ```bash
+            sudo snapper modify 729 --description 'Мое новое описание снимка'
+            ```
+        </details>
+    </details>
+</details>
+
+<details>
+<summary>Удаление снимков:</summary>
+:::note
+Снимок 0 не может быть удален, так как он представляет текущее состояние файловой системы.
+:::
+    <details>
+    <summary>Удалить один снимок:</summary>
+    ```bash
+    sudo snapper delete <номер_снимка>
+    ```
+    </details>
+    <details>
+    <summary>Удалить диапазон снимков:</summary>
+    ```bash
+    sudo snapper delete 718-721
+    ```
+    Снимки 718, 719, 720 и 721 будут удалены.
+    </details>
+</details>
+
+#### Документация Snapper
+
+[Официальная man-страница команд Snapper:](http://snapper.io/manpages/snapper.html#global_options)
+
+[Руководство по конфигурационному файлу Snapper:](http://snapper.io/manpages/snapper-configs.html)
+
+[Руководство Arch Wiki:](https://wiki.archlinux.org/title/Snapper)
+
+### Рекомендации и советы по Limine
+
+#### Настройка отображения снимков в загрузчике Limine
+
+- Ограничьте количество снимков, отображаемых в меню загрузчика Limine, чтобы избежать беспорядка:
+
+<Steps>
+    1. Создайте резервную копию файла конфигурации limine-snapper-sync:
+        ```bash
+        sudo cp /etc/limine-snapper-sync.conf /etc/limine-snapper-sync.conf.orig
+        ```
+    2. Отредактируйте файл конфигурации limine-snapper-sync:
+        ```bash
+        sudo nano /etc/limine-snapper-sync.conf
+        ```
+        Ожидаемый фрагмент вывода:
+        ```bash
+        ### Max Snapshot Entries
+        ### Sets the limit for how many snapshot entries show up in the boot menu.
+        ### This depends on the size of your FAT32 boot partition and how many different kernel and module versions you want to keep.
+        ### A larger FAT32 boot partition allows more snapshot entries.
+        MAX_SNAPSHOT_ENTRIES=10
+        ```
+        При желании можно настроить формат имени снимка:
+        ```bash
+        ### Snapshot Name Format
+        ### Choose a format for how snapshot entries look in the Limine bootloader:
+        ### 0. ID=111 2023-12-20 10:59:59 (default)
+        ### 1. 111│2023-12-20 10:59:59
+        ### 2. 111 │ 2023-12-20 10:59:59
+        ### 3. 2023-12-20 10:59:59│111
+        ### 4. 2023-12-20 10:59:59 │ 111
+        ### 5. 2023-12-20 10:59:59
+        ### 6. 111
+        ### 7. 111│snapshot description
+        ### 8. 2023-12-20 10:59:59│snapshot description
+        ### 9. │snapshot description
+        SNAPSHOT_FORMAT_CHOICE=8
+        ```
+        `8` — хороший выбор, так как он показывает дату и время вместе с описанием снимка.
+    3. Сохраните файл и выйдите, нажав `CTRL+O`, `Enter`, `CTRL+X`.
+</Steps>
+
+### Восстановление из снимка
+
+:::caution
+Если снимок, из которого вы хотите восстановиться, включал обновление ядра, вы не сможете выполнить откат.
+:::
+
+<details>
+    <summary>Limine</summary>
+    <Steps>
+        1. В меню загрузчика Limine перейдите в меню Snapshots (Снимки):
+            <ImageComponent imgsrc={import('~/assets/images/limine-snapshotMenu-1.jpg')} />
+        2. Выберите снимок и ядро, из которых вы хотите восстановиться:
+            <MultipleImageComponent
+                images={[
+                import('~/assets/images/limine-snapshotMenu-2.jpg'),
+                import('~/assets/images/limine-snapshotMenu-1.jpg')]}
+            />
+        3. Ваша система теперь находится в режиме `read-only mode` (только для чтения). Должно появиться всплывающее уведомление, указывающее на обнаружение снимка и предлагающее восстановиться из него:
+            <ImageComponent imgsrc={import('~/assets/images/kde-snapshot-popup.png')} />
+        4. Нажмите `Restore now` (Восстановить сейчас). Откроется окно терминала с запросом и попросит несколько подтверждений:
+            ```bash title="Пример запроса на восстановление"
+            Snapshot ID    : 2
+            Date           : 2026-01-26 11:19:14
+            Description    : nc-git
+            Restore method : replace
+
+            Confirm restore of snapshot 2 using the "replace" method?
+            Type [y]es to restore, [l]ist to display all snapshots, or [c]ancel to abort.
+
+            Your input: yes
+
+            Enter a description for the "backup" of the subvolume: @
+
+            Your input: @
+            ```
+          5. Введите `yes` и, при желании, добавьте описание для резервного снимка.
+          6. Начнется процесс восстановления. По завершении снова введите `yes` в новом запросе, чтобы перезагрузить систему:
+              ```bash
+              The restore is complete. Please reboot now:
+              Type [y]es to reboot, [n]o or [c]ancel to abort rebooting.
+
+              Your input: yes
+              ```
+    </Steps>
+</details>
+
+<details>
+    <summary>GRUB</summary>
+    <Steps>
+        1. В меню загрузчика GRUB загрузитесь в желаемый снимок и ядро, из которых вы хотите восстановиться.
+        2. После загрузки откройте Btrfs Assistant:
+            ```bash
+            btrfs-assistant-launcher
+            ```
+
+            Как вариант:
+
+            ```bash
+            sudo -E btrfs-assistant
+            ```
+        3. Перейдите на вкладку Snapper → вкладку “Browse/Restore” (Обзор/Восстановление) и выберите снимок, из которого вы загрузились:
+            <ImageComponent imgsrc={import('~/assets/images/btrfs-assistant-example.png')} />
+        4. Нажмите кнопку `Restore` (Восстановить) и перезагрузите систему, чтобы применить изменения.
+    </Steps>
+</details>

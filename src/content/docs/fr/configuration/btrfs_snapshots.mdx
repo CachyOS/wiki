@@ -1,0 +1,478 @@
+---
+title: Instantanés Btrfs
+description: Gérer les instantanés Btrfs dans CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 5
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+import MultipleImageComponent from '~/components/multiple-images-component.astro';
+
+## Introduction
+
+:::caution
+Ne considérez pas les instantanés Btrfs comme un substitut aux sauvegardes régulières. Assurez-vous de toujours avoir des sauvegardes appropriées de vos données importantes.
+:::
+
+### Qu'est-ce qu'un instantané Btrfs ?
+
+Commençons par les bases :
+
+Les instantanés Btrfs découlent de la fonctionnalité de sous-volume. Qu'est-ce qu'un sous-volume, pourriez-vous demander ? Pensez à un sous-volume comme un système de fichiers distinct au sein du système de fichiers Btrfs. Cela vous permet de segmenter vos données en différentes parties. C'est pourquoi, par exemple, dans CachyOS, nous avons différents sous-volumes pour :
+
+- Le système de fichiers racine : (`/`)
+- Le répertoire racine : (`/root`)
+- Le répertoire personnel : (`/home`)
+- Les répertoires Var : (`/var/cache`, `/var/tmp`, `/var/log`)
+- Le répertoire Srv : (`/srv`)
+
+En ayant des sous-volumes différents pour ces répertoires, nous pouvons les gérer indépendamment, appliquer des paramètres différents et, surtout, créer des instantanés pour eux.
+
+C'est là qu'un instantané naît. Un instantané est essentiellement une copie en lecture seule ou en lecture-écriture (**par défaut**) d'un sous-volume à un moment précis. Cela signifie que vous pouvez capturer l'état de votre système de fichiers, y compris tous les fichiers et répertoires, à cet instant.
+
+Les instantanés deviennent donc une référence à un moment donné, ce qui signifie que lorsque le fichier cible diverge des données de l'instantané, l'instantané conservera le fichier original et la cible créera un nouveau fichier avec les modifications, tandis que l'instantané restera le même pour toujours. C'est pourquoi certains utilisateurs appellent un instantané des "données figées dans le temps".
+
+Imaginez prendre une photographie de votre système de fichiers à un moment précis, et pouvoir toujours revenir à cette photographie chaque fois que vous en avez besoin.
+
+L'un des principaux avantages des instantanés est qu'ils sont très efficaces en termes d'espace, car il ne s'agit que d'une référence aux données originales jusqu'à ce que des modifications soient apportées.
+
+Mais c'est là qu'un instantané se distingue d'une sauvegarde traditionnelle. Disons que votre disque tombe en panne. Si vous aviez une sauvegarde traditionnelle, vous pourriez restaurer vos données à partir de cette sauvegarde. Cependant, si vous n'aviez que des instantanés sur le disque défaillant, vous perdriez l'accès à ces instantanés puisqu'ils sont stockés sur le même disque.
+
+### Cas de récupération où les instantanés sont utiles et inutiles
+
+Ils sont utiles pour la récupération suite à :
+
+- Des problèmes ou des corruptions après des mises à jour du système.
+- Des erreurs de configuration qui empêchent le système de démarrer.
+- Des suppressions ou modifications accidentelles de fichiers.
+
+Ils ne sont pas utiles pour la récupération suite à :
+
+- Des problèmes de chargeur d'amorçage (bootloader).
+- Des pannes matérielles (par exemple, des disques durs défaillants).
+
+## Gestion des instantanés (GUI & CLI)
+
+:::tip
+Parce que CachyOS inclut `snap-pac` par défaut, Snapper créera automatiquement des instantanés avant et après toute installation, mise à jour ou suppression de paquets avec `pacman`. Cela signifie que vous n'avez pas à créer manuellement des instantanés pour ces opérations, car Snapper s'en charge pour vous.
+:::
+
+:::note
+Si vous utilisez le chargeur de démarrage GRUB, assurez-vous d'avoir `grub-btrfs-support` pour disposer de tous les scripts et hooks nécessaires pour détecter automatiquement les instantanés BTRFS et les ajouter au menu GRUB.
+```bash
+sudo pacman -Syu grub-btrfs-support
+```
+:::
+
+Quelques points à considérer avant de gérer les instantanés. **S'applique aux méthodes CLI et GUI.**
+
+- Il est recommandé de conserver un maximum de 10 instantanés. Au-delà, les instantanés deviennent trop anciens et moins utiles. Dans le pire des cas, revenir à un ancien instantané peut introduire des problèmes de compatibilité avec des versions logicielles plus récentes.
+- Les instantanés sont idéalement destinés à des fins de récupération. Cependant, vous pouvez les utiliser pour annuler des modifications de fichiers sans restaurer l'instantané entier.
+- Ajoutez une description significative lors de la création d'instantanés. Cela vous aidera à identifier l'objectif de chaque instantané plus tard.
+
+### Btrfs Assistant (GUI)
+
+Avant de continuer, assurez-vous d'avoir installé `btrfsmaintenance` pour profiter des fonctionnalités de gestion automatique des instantanés.
+
+Pour ceux qui préfèrent gérer Btrfs, les instantanés et plus encore via une interface graphique. [Btrfs Assistant](https://gitlab.com/btrfs-assistant/btrfs-assistant) est un projet génial pour les débutants.
+
+#### Configuration du nettoyage automatique des instantanés
+
+Nous allons configurer le nettoyage automatique des instantanés à l'aide de Btrfs Assistant. Cela aidera à gérer vos instantanés efficacement sans intervention manuelle.
+
+Suivez ces étapes :
+
+<Steps>
+
+    1. Lancez Btrfs Assistant en ouvrant un terminal et en exécutant :
+        ```bash
+        btrfs-assistant-launcher
+        ```
+
+        Alternativement :
+
+        ```bash
+        sudo -E btrfs-assistant
+        ```
+
+  2. Naviguez vers l'onglet Paramètres Snapper (Snapper Settings) :
+
+      <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperSettingsTab.png')} />
+      Modifiez les paramètres de **Rétention des instantanés** (Snapshot Retention) comme suit :
+      - Assurez-vous que la configuration `root` est sélectionnée.
+      - Entrez la valeur `0` pour Horaire (Hourly), Quotidien (Daily), Hebdomadaire (Weekly), Mensuel (Monthly) et Annuel (Yearly).
+      - Décochez `Activer les instantanés chronologiques` (Enable timeline snapshots).
+      - Entrez la valeur `10` dans `Nombre` (Number).
+      - Cochez ✅ `Nettoyage Snapper activé` (Snapper cleanup enabled).
+      - Cliquez sur le bouton `Enregistrer` (Save) en haut à droite et sur `Appliquer les changements systemd` (Apply systemd changes) en bas à droite.
+      **snapper-cleanup.timer sera maintenant activé pour nettoyer automatiquement les anciens instantanés en fonction de votre configuration.**
+      :::caution
+      Vérifiez que les ajustements que vous venez de faire ont été appliqués correctement en consultant la configuration de Snapper :
+      ```bash
+      sudo nano /etc/snapper/configs/root
+      ```
+      Extrait de la sortie attendue :
+      ```text
+      # limit for number cleanup
+      NUMBER_MIN_AGE="3600"
+      NUMBER_LIMIT="10"
+      NUMBER_LIMIT_IMPORTANT="10"
+      ```
+      Si `NUMBER_LIMIT` et `NUMBER_LIMIT_IMPORTANT` ne contiennent pas la valeur `10`, mettez-les à jour en conséquence.
+      Enregistrez le fichier et quittez en appuyant sur `CTRL + O`, `Entrée` et `CTRL + X`.
+      :::
+</Steps>
+
+#### Suppression d'instantanés avec Btrfs Assistant
+
+<Steps>
+    1. Ouvrez Btrfs Assistant :
+        ```bash
+        btrfs-assistant-launcher
+        ```
+
+        Alternativement :
+
+        ```bash
+        sudo -E btrfs-assistant
+        ```
+    2. Allez dans l'onglet Paramètres Snapper (Snapper Settings) :
+        <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperTab.png')} />
+    3. Sélectionnez le ou les instantanés que vous souhaitez supprimer de la liste.
+        :::tip
+        - Maintenez `CTRL` pour sélectionner plusieurs instantanés.
+        - Maintenez `SHIFT` pour sélectionner une plage d'instantanés.
+        :::
+    4. Cliquez sur le bouton `Supprimer` (Delete) situé en haut de la fenêtre.
+    5. Régénérez les entrées de votre chargeur de démarrage pour refléter les changements :
+        <details>
+            <summary>systemd-boot</summary>
+            ```bash
+            sudo sdboot-manage gen
+            ```
+        </details>
+        <details>
+            <summary>GRUB</summary>
+            ```bash
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+        </details>
+        <details>
+            <summary>Limine</summary>
+            ```bash
+            sudo limine-mkinitcpio
+            ```
+        </details>
+</Steps>
+
+Consultez leur [Wiki Officiel](https://gitlab.com/btrfs-assistant/wiki) pour un aperçu plus approfondi de ce qui peut être fait.
+
+### Snapper (CLI)
+
+Maintenant que nous avons expliqué ce qu'est un instantané Btrfs et ses cas d'utilisation, parlons de la manière de les gérer avec un outil appelé [Snapper](http://snapper.io/) créé par [Arvin Schnell](https://github.com/aschnell) de [openSUSE](https://www.opensuse.org/).
+
+<details>
+<summary>CachyOS utilise la configuration Snapper suivante par défaut :</summary>
+
+```text
+# subvolume to snapshot
+SUBVOLUME="/"
+
+# filesystem type
+FSTYPE="btrfs"
+
+# btrfs qgroup for space aware cleanup algorithms
+QGROUP=""
+
+# fraction or absolute size of the filesystems space the snapshots may use
+SPACE_LIMIT="0.5"
+
+# fraction or absolute size of the filesystems space that should be free
+FREE_LIMIT="0.2"
+
+# users and groups allowed to work with config
+ALLOW_USERS=""
+ALLOW_GROUPS=""
+
+# sync users and groups from ALLOW_USERS and ALLOW_GROUPS to .snapshots
+# directory
+SYNC_ACL="no"
+
+# start comparing pre- and post-snapshot in background after creating
+# post-snapshot
+BACKGROUND_COMPARISON="yes"
+
+# run daily number cleanup
+NUMBER_CLEANUP="yes"
+
+# limit for number cleanup
+NUMBER_MIN_AGE="1800"
+NUMBER_LIMIT="50"
+NUMBER_LIMIT_IMPORTANT="15"
+
+# create hourly snapshots
+TIMELINE_CREATE="no"
+
+# cleanup hourly snapshots after some time
+TIMELINE_CLEANUP="yes"
+
+# limits for timeline cleanup
+TIMELINE_MIN_AGE="1800"
+TIMELINE_LIMIT_HOURLY="5"
+TIMELINE_LIMIT_DAILY="7"
+TIMELINE_LIMIT_WEEKLY="0"
+TIMELINE_LIMIT_MONTHLY="0"
+TIMELINE_LIMIT_YEARLY="0"
+
+# cleanup empty pre-post-pairs
+EMPTY_PRE_POST_CLEANUP="yes"
+
+# limits for empty pre-post-pair cleanup
+EMPTY_PRE_POST_MIN_AGE="1800"
+```
+
+</details>
+
+:::caution
+La configuration par défaut de Snapper dans CachyOS ne couvre que le sous-volume racine (`/`). Si vous avez d'autres sous-volumes que vous souhaitez gérer avec Snapper, vous devrez créer des configurations distinctes pour chacun d'eux.
+
+Cette configuration nécessite une révision pour augmenter son efficacité.
+:::
+
+Voici une liste des commandes Snapper les plus courantes.
+
+:::note
+`< >` indique un paramètre que vous devez remplacer par la valeur appropriée.
+:::
+
+<details>
+    <summary>Obtenir la configuration actuelle :</summary>
+    ```bash
+    sudo snapper get-config
+    ```
+    <details>
+        <summary>Exemple de sortie :</summary>
+        ```bash
+        ❯ snapper list-configs
+        Config │ Subvolume
+        ───────┼──────────
+        root   │ /
+        ```
+    </details>
+</details>
+
+<details>
+    <summary>Lister les instantanés disponibles + détails :</summary>
+    ```bash
+    sudo snapper list
+    ```
+    <details>
+        <summary>Exemple de sortie :</summary>
+        ```bash
+          # │ Type   │ Pre # │ Date                     │ User │ Cleanup │ Description                                                              │ Userdata
+        ────┼────────┼───────┼──────────────────────────┼──────┼─────────┼──────────────────────────────────────────────────────────────────────────┼─────────
+        0   │ single │       │                          │ root │         │ current                                                                  │
+        715 │ pre    │       │ Thu 22 Jan 2026 16:14:07 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        716 │ post   │   715 │ Thu 22 Jan 2026 16:14:25 │ root │ number  │ docker-buildx lilv sof-firmware zed                                      │
+        717 │ pre    │       │ Sat 24 Jan 2026 11:19:48 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        718 │ post   │   717 │ Sat 24 Jan 2026 11:20:19 │ root │ number  │ bpf cachyos-hello cachyos-wallpapers cpupower jdk-openjdk ldb less libev │
+        719 │ pre    │       │ Sat 24 Jan 2026 11:20:31 │ root │ number  │ pacman -U --config /etc/pacman.conf -- /home/mario/.cache/yay/visual-s   │
+        720 │ post   │   719 │ Sat 24 Jan 2026 11:20:36 │ root │ number  │ visual-studio-code-bin                                                   │
+        721 │ pre    │       │ Sat 24 Jan 2026 20:46:40 │ root │ number  │ pacman -Syu plasma-login-manager                                         │
+        722 │ post   │   721 │ Sat 24 Jan 2026 20:46:48 │ root │ number  │ cmake fastfetch harfbuzz harfbuzz-icu jdk21-openjdk lib32-harfbuzz lib32 │
+        723 │ pre    │       │ Sat 24 Jan 2026 20:46:53 │ root │ number  │ pacman -R sddm-kcm cachyos-themes-sddm sddm                              │
+        724 │ post   │   723 │ Sat 24 Jan 2026 20:46:56 │ root │ number  │ cachyos-themes-sddm sddm sddm-kcm                                        │
+        725 │ pre    │       │ Sun 25 Jan 2026 08:05:05 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        726 │ post   │   725 │ Sun 25 Jan 2026 08:05:11 │ root │ number  │ plasma-login-manager                                                     │
+        727 │ pre    │       │ Sun 25 Jan 2026 15:55:28 │ root │ number  │ pacman -S --config /etc/pacman.conf -- cachyos-extra-znver4/caligula     │
+        728 │ post   │   727 │ Sun 25 Jan 2026 15:55:30 │ root │ number  │ caligula                                                                 │
+      ```
+      - Voici un résumé des colonnes :
+        - `#` : Indique le numéro de l'instantané qui est utilisé dans d'autres commandes.
+        - `Type` : Indique si l'instantané est unique ou s'il fait partie d'une paire pré/post.
+            - `single` : Ces instantanés n'ont aucune relation particulière avec d'autres instantanés.
+            - `pre` : Ces instantanés sont destinés à être pris avant toute modification du système (comme l'édition d'un fichier ou l'installation d'un paquet).
+            - `post` : Comme son nom l'indique, ces instantanés font référence à des instantanés pris après qu'un changement système a eu lieu. Ils sont liés à leur instantané `pre` correspondant.
+        - `Pre #` : Pour les instantanés `post`, cette colonne indique le numéro de l'instantané `pre` correspondant.
+        - `Date` : La date et l'heure de création de l'instantané.
+        - `User` : L'utilisateur qui a créé l'instantané.
+        - `Cleanup` : Indique l'algorithme de nettoyage appliqué à l'instantané.
+            - Il existe plusieurs algorithmes de nettoyage disponibles dans Snapper, tels que `number`, `timeline` et empty-pre-post. Dans cet exemple, l'algorithme `number` est utilisé, ce qui signifie que les instantanés plus anciens seront supprimés en fonction d'une limite prédéfinie.
+            - timeline : Les instantanés sont nettoyés en fonction de leur âge et de leur fréquence.
+            - empty-pre-post : Supprime les paires d'instantanés pré/post avec des différences vides.
+        - `Description` : Une brève description de l'instantané, indiquant souvent la raison de sa création.
+        - `Userdata` : Données supplémentaires définies par l'utilisateur associées à l'instantané.
+        Pour plus de détails sur les colonnes de sortie
+    </details>
+</details>
+
+<details>
+    <summary>Créer un nouvel instantané :</summary>
+    ```bash
+    sudo snapper create --type single --description "Description de mon instantané"
+    ```
+</details>
+
+<details>
+    <summary>Modifier un instantané :</summary>
+    ```bash
+    sudo snapper modify <option> <numéro_instantané>
+    ```
+    <details>
+        <summary>Options disponibles :</summary>
+        ```bash
+        Options pour la commande 'modify' :
+            --description, -d <description>  Description pour l'instantané.
+            --cleanup-algorithm, -c <algo>   Algorithme de nettoyage pour l'instantané.
+            --userdata, -u <userdata>        Données utilisateur pour l'instantané.
+            --read-only                      Rendre l'instantané en lecture seule.
+            --read-write                     Rendre l'instantané en lecture-écriture.
+            --default                        Définir l'instantané comme instantané par défaut.
+        ```
+        <details>
+            <summary>Exemple : Modification de la description de l'instantané 729 :</summary>
+            ```bash
+            sudo snapper modify 729 --description 'Ma nouvelle description d'instantané'
+            ```
+        </details>
+    </details>
+</details>
+
+<details>
+<summary>Suppression d'instantanés :</summary>
+:::note
+L'instantané 0 ne peut pas être supprimé car il représente l'état actuel du système de fichiers.
+:::
+    <details>
+    <summary>Supprimer un seul instantané :</summary>
+    ```bash
+    sudo snapper delete <numéro_instantané>
+    ```
+    </details>
+    <details>
+    <summary>Supprimer une plage d'instantanés :</summary>
+    ```bash
+    sudo snapper delete 718-721
+    ```
+    Les instantanés 718, 719, 720 et 721 seront supprimés.
+    </details>
+</details>
+
+#### Documentation de Snapper
+
+[Page man officielle de la commande Snapper :](http://snapper.io/manpages/snapper.html#global_options)
+
+[Guide du fichier de configuration Snapper :](http://snapper.io/manpages/snapper-configs.html)
+
+[Guide du Wiki Arch :](https://wiki.archlinux.org/title/Snapper)
+
+### Recommandations & Astuces Limine
+
+#### Ajuster les paramètres d'affichage des instantanés du chargeur de démarrage Limine
+
+- Limitez le nombre d'instantanés affichés dans le menu du chargeur de démarrage Limine pour éviter l'encombrement :
+
+<Steps>
+    1. Créez une sauvegarde du fichier de configuration limine-snapper-sync :
+        ```bash
+        sudo cp /etc/limine-snapper-sync.conf /etc/limine-snapper-sync.conf.orig
+        ```
+    2. Modifiez le fichier de configuration limine-snapper-sync :
+        ```bash
+        sudo nano /etc/limine-snapper-sync.conf
+        ```
+        Extrait de la sortie attendue :
+        ```bash
+        ### Max Snapshot Entries
+        ### Sets the limit for how many snapshot entries show up in the boot menu.
+        ### This depends on the size of your FAT32 boot partition and how many different kernel and module versions you want to keep.
+        ### A larger FAT32 boot partition allows more snapshot entries.
+        MAX_SNAPSHOT_ENTRIES=10
+        ```
+        Optionnellement, ajustez le format du nom de l'instantané :
+        ```bash
+        ### Snapshot Name Format
+        ### Choose a format for how snapshot entries look in the Limine bootloader:
+        ### 0. ID=111 2023-12-20 10:59:59 (default)
+        ### 1. 111│2023-12-20 10:59:59
+        ### 2. 111 │ 2023-12-20 10:59:59
+        ### 3. 2023-12-20 10:59:59│111
+        ### 4. 2023-12-20 10:59:59 │ 111
+        ### 5. 2023-12-20 10:59:59
+        ### 6. 111
+        ### 7. 111│snapshot description
+        ### 8. 2023-12-20 10:59:59│snapshot description
+        ### 9. │snapshot description
+        SNAPSHOT_FORMAT_CHOICE=8
+        ```
+        `8` est un bon choix car il affiche la date et l'heure avec la description de l'instantané.
+    3. Enregistrez le fichier et quittez en appuyant sur `CTRL+O` `Entrée` `CTRL+X`
+</Steps>
+
+### Restauration à partir d'un instantané
+
+:::caution
+Si l'instantané à partir duquel vous souhaitez restaurer impliquait une mise à jour du noyau, vous ne pourrez pas effectuer de retour en arrière.
+:::
+
+<details>
+    <summary>Limine</summary>
+    <Steps>
+        1. Depuis le menu du chargeur de démarrage Limine, naviguez vers le menu des instantanés (Snapshots) :
+            <ImageComponent imgsrc={import('~/assets/images/limine-snapshotMenu-1.jpg')} />
+        2. Sélectionnez l'instantané et le noyau à partir desquels vous souhaitez restaurer :
+            <MultipleImageComponent
+                images={[
+                import('~/assets/images/limine-snapshotMenu-2.jpg'),
+                import('~/assets/images/limine-snapshotMenu-1.jpg')]}
+            />
+        3. Votre système est maintenant en `mode lecture seule`. Une notification pop-up devrait apparaître, indiquant qu'un instantané a été détecté et demandant de le restaurer :
+            <ImageComponent imgsrc={import('~/assets/images/kde-snapshot-popup.png')} />
+        4. Cliquez sur `Restaurer maintenant` (Restore now). Une fenêtre de terminal s'ouvrira avec une invite et demandera quelques confirmations :
+            ```bash title="Exemple d'invite de restauration"
+            Snapshot ID    : 2
+            Date           : 2026-01-26 11:19:14
+            Description    : nc-git
+            Restore method : replace
+
+            Confirm restore of snapshot 2 using the "replace" method?
+            Type [y]es to restore, [l]ist to display all snapshots, or [c]ancel to abort.
+
+            Your input: yes
+
+            Enter a description for the "backup" of the subvolume: @
+
+            Your input: @
+            ```
+          5. Tapez `yes` et ajoutez éventuellement une description pour l'instantané de sauvegarde.
+          6. Le processus de restauration commencera. Une fois terminé, tapez `yes` à nouveau dans la nouvelle invite pour redémarrer votre système :
+              ```bash
+              The restore is complete. Please reboot now:
+              Type [y]es to reboot, [n]o or [c]ancel to abort rebooting.
+
+              Your input: yes
+              ```
+    </Steps>
+</details>
+
+<details>
+    <summary>GRUB</summary>
+    <Steps>
+        1. Depuis le menu du chargeur de démarrage GRUB. Démarrez sur l'instantané et le noyau souhaités à partir desquels vous voulez restaurer.
+        2. Une fois démarré. Ouvrez Btrfs Assistant :
+            ```bash
+            btrfs-assistant-launcher
+            ```
+
+            Alternativement :
+
+            ```bash
+            sudo -E btrfs-assistant
+            ```
+        3. Allez dans l'onglet Snapper → onglet “Parcourir/Restaurer” (Browse/Restore) et sélectionnez l'instantané à partir duquel vous avez démarré :
+            <ImageComponent imgsrc={import('~/assets/images/btrfs-assistant-example.png')} />
+        4. Cliquez sur le bouton `Restaurer` (Restore) et redémarrez votre système pour appliquer les changements.
+    </Steps>
+</details>
