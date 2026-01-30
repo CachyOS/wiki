@@ -29,6 +29,7 @@ CachyOS dostarcza jądra z najnowszymi optymalizacjami harmonogramu procesora, a
 * **EEVDF (domyślny harmonogram jądra Linux):** Chociaż jest doskonały pod względem ogólnej przepustowości, jądro CachyOS zawiera niestandardowe **[parametry dostrajające EEVDF](https://github.com/CachyOS/linux/blob/6.15/cachy/kernel/sched/fair.c#L79-81)** w celu poprawy responsywności pulpitu.
 
 * **[BORE](https://github.com/firelzrd/bore-scheduler) (Burst-Oriented Response Enhancer):** Dla użytkowników, którzy potrzebują maksymalnej interaktywności, nasze jądra obsługują harmonogram BORE, zestaw poprawek, który ulepsza EEVDF, aby zapewnić bardziej płynne działanie podczas intensywnych obciążeń.
+  * Dostępne w wariancie jądra `linux-cachyos-bore`.
 
 Więcej informacji na temat jąder oferowanych przez CachyOS oraz frameworku sched-ext można znaleźć w dokumentacji **[Jądro](/pl/features/kernel)** i **[sched-ext](/pl/configuration/sched-ext)**.
 

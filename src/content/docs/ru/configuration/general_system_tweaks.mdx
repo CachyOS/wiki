@@ -368,3 +368,91 @@ sudo pacman -S obs-studio-browser
 # Если у вас ранее был установлен obs-studio, pacman спросит, хотите ли вы
 # его заменить, если да, введите «Y».
 ```
+
+## Настройка подкачки
+
+### Переключение с ZRam на Zswap
+
+По умолчанию CachyOS использует ZRam для управления подкачкой. Однако, если вы предпочитаете использовать Zswap, вы можете легко переключиться, следуя этим шагам:
+
+:::note
+Это руководство предполагает, что у вас стандартная установка CachyOS с включённым ZRam и без раздела или файла подкачки, созданных во время установки.
+:::
+
+<Steps>
+    1. Отключите ZRam, добавив параметр ядра. [Отредактируйте конфигурацию вашего загрузчика](/ru/configuration/boot_manager_configuration) и добавьте следующую строку:
+        ```text
+        systemd.zram=0
+        ```
+    2. Включите Zswap, добавив следующий параметр ядра:
+        ```text
+        zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=30
+        ```
+    3. Создайте файл подкачки для Zswap.
+        <details>
+            <summary>Если вы используете Btrfs:</summary>
+                <Steps>
+                    1. Создайте субтом Btrfs для файла подкачки:
+                        ```bash
+                        sudo btrfs subvolume create /swap
+                        ```
+                    2. Создайте файл подкачки желаемого размера (например, 8 ГБ), изменив параметр `--size`:
+                        ```bash "--size"
+                        sudo btrfs filesystem mkswapfile --size 4g --uuid clear /swap/swapfile
+                        ```
+                    3. Активируйте файл подкачки:
+                        ```bash
+                        sudo swapon /swap/swapfile
+                        ```
+                    4. Добавьте файл подкачки в `/etc/fstab`, чтобы он сохранялся после перезагрузок:
+                        ```bash
+                        sudo echo "/swap/swapfile none swap defaults 0 0" >> /etc/fstab
+                        ```
+                </Steps>
+        </details>
+        <details>
+            <summary>Если вы не используете Btrfs:</summary>
+            <Steps>
+                1. Создайте файл подкачки желаемого размера (например, 8 ГБ), изменив параметр `count=`:
+                    ```bash "count=8"
+                    sudo dd if=/dev/zero of=/swapfile bs=1G count=8
+                    ```
+                2. Установите правильные права доступа для файла подкачки:
+                    ```bash
+                    sudo chmod 0600 /swapfile
+                    ```
+                3. Отформатируйте файл подкачки:
+                    ```bash
+                    sudo mkswap /swapfile
+                    ```
+                4. Добавьте файл подкачки в `/etc/fstab`, чтобы он сохранялся после перезагрузок:
+                    ```bash
+                    sudo echo "/swapfile none swap defaults 0 0" >> /etc/fstab
+                    ```
+                5. Активируйте файл подкачки:
+                    ```
+                    sudo swapon /swapfile
+                    ```
+            </Steps>
+        </details>
+    4. Пересоберите ваш initramfs, чтобы применить изменения. Команда зависит от вашего загрузчика:
+        <details>
+            <summary>systemd-boot</summary>
+            ```bash
+            sudo sdboot-manage gen
+            ```
+        </details>
+        <details>
+            <summary>GRUB</summary>
+            ```bash
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+        </details>
+        <details>
+            <summary>Limine</summary>
+            ```bash
+            sudo limine-mkinitcpio
+            ```
+        </details>
+    5. Перезагрузите систему, чтобы применить все изменения.
+</Steps>

@@ -29,6 +29,7 @@ CachyOS liefert Kernel mit den neuesten CPU-Scheduler-Optimierungen aus, um selb
 * **EEVDF (Der Standard-Scheduler des Linux-Kernels):** Obwohl er für den allgemeinen Durchsatz hervorragend ist, enthält der CachyOS-Kernel benutzerdefinierte **[EEVDF-Anpassungen](https://github.com/CachyOS/linux/blob/6.15/cachy/kernel/sched/fair.c#L79-81)**, um die Reaktionsfähigkeit des Desktops zu verbessern.
 
 * **[BORE](https://github.com/firelzrd/bore-scheduler) (Burst-Oriented Response Enhancer):** Für Nutzer, die maximale Interaktivität benötigen, unterstützen unsere Kernel den BORE-Scheduler, ein Patch-Set, das EEVDF erweitert, um bei intensiven Arbeitslasten ein flüssigeres Erlebnis zu liefern.
+  * Verfügbar in der Kernel-Variante `linux-cachyos-bore`.
 
 Für mehr Informationen über die von CachyOS angebotenen Kernel und das sched-ext Framework, siehe die Dokumentation zu **[Kernel](/de/features/kernel)** und **[sched-ext](/de/configuration/sched-ext)**.
 

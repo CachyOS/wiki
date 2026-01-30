@@ -372,3 +372,91 @@ sudo pacman -S obs-studio-browser
 # Si tenías instalado previamente obs-studio, pacman te preguntará si
 # quieres reemplazarlo, en ese caso, introduce "Y".
 ```
+
+## Configuración de la memoria de intercambio (Swap)
+
+### Cambiar de ZRam a Zswap
+
+Por defecto, CachyOS utiliza ZRam para la gestión de la memoria de intercambio. Sin embargo, si prefieres usar Zswap en su lugar, puedes cambiarlo fácilmente siguiendo estos pasos:
+
+:::note
+Esta guía asume que tienes la configuración por defecto de CachyOS con ZRam activado y que no se creó ninguna partición o archivo de intercambio durante la instalación.
+:::
+
+<Steps>
+    1. Desactiva ZRam añadiendo un parámetro del kernel. [Edita la configuración de tu gestor de arranque](/es/configuration/boot_manager_configuration) y añade la siguiente línea:
+        ```text
+        systemd.zram=0
+        ```
+    2. Activa Zswap añadiendo el siguiente parámetro del kernel:
+        ```text
+        zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=30
+        ```
+    3. Crea un archivo de intercambio para Zswap.
+        <details>
+            <summary>Si estás usando Btrfs:</summary>
+                <Steps>
+                    1. Crea un subvolumen Btrfs para el archivo de intercambio:
+                        ```bash
+                        sudo btrfs subvolume create /swap
+                        ```
+                    2. Crea un archivo de intercambio con el tamaño que desees (p. ej., 8GB) cambiando el parámetro `--size`:
+                        ```bash "--size"
+                        sudo btrfs filesystem mkswapfile --size 4g --uuid clear /swap/swapfile
+                        ```
+                    3. Activa el archivo de intercambio:
+                        ```bash
+                        sudo swapon /swap/swapfile
+                        ```
+                    4. Añade el archivo de intercambio a `/etc/fstab` para que sea persistente tras los reinicios:
+                        ```bash
+                        sudo echo "/swap/swapfile none swap defaults 0 0" >> /etc/fstab
+                        ```
+                </Steps>
+        </details>
+        <details>
+            <summary>Si no estás usando Btrfs:</summary>
+            <Steps>
+                1. Crea un archivo de intercambio con el tamaño que desees (p. ej., 8GB) cambiando el parámetro `count=`:
+                    ```bash "count=8"
+                    sudo dd if=/dev/zero of=/swapfile bs=1G count=8
+                    ```
+                2. Establece los permisos correctos para el archivo de intercambio:
+                    ```bash
+                    sudo chmod 0600 /swapfile
+                    ```
+                3. Formatea el archivo de intercambio:
+                    ```bash
+                    sudo mkswap /swapfile
+                    ```
+                4. Añade el archivo de intercambio a `/etc/fstab` para que sea persistente tras los reinicios:
+                    ```bash
+                    sudo echo "/swapfile none swap defaults 0 0" >> /etc/fstab
+                    ```
+                5. Activa el archivo de intercambio:
+                    ```
+                    sudo swapon /swapfile
+                    ```
+            </Steps>
+        </details>
+    4. Reconstruye tu initramfs para aplicar los cambios. El comando varía dependiendo de tu gestor de arranque:
+        <details>
+            <summary>systemd-boot</summary>
+            ```bash
+            sudo sdboot-manage gen
+            ```
+        </details>
+        <details>
+            <summary>GRUB</summary>
+            ```bash
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+        </details>
+        <details>
+            <summary>Limine</summary>
+            ```bash
+            sudo limine-mkinitcpio
+            ```
+        </details>
+    5. Reinicia tu sistema para aplicar todos los cambios.
+</Steps>

@@ -29,6 +29,7 @@ CachyOS fournit des noyaux avec les dernières optimisations d'ordonnanceur de p
 * **EEVDF (L'ordonnanceur par défaut du noyau Linux) :** Bien qu'excellent pour le débit général, le noyau CachyOS inclut des **[réglages EEVDF personnalisés](https://github.com/CachyOS/linux/blob/6.15/cachy/kernel/sched/fair.c#L79-81)** pour améliorer la réactivité du bureau.
 
 * **[BORE](https://github.com/firelzrd/bore-scheduler) (Burst-Oriented Response Enhancer) :** Pour les utilisateurs qui ont besoin d'une interactivité maximale, nos noyaux prennent en charge l'ordonnanceur BORE, un ensemble de patchs qui améliore EEVDF pour offrir une expérience plus fluide lors de charges de travail intensives.
+  * Disponible sur la variante de noyau `linux-cachyos-bore`.
 
 Pour plus d'informations sur les noyaux proposés par CachyOS et le framework sched-ext, consultez la documentation sur le **[Noyau](/fr/features/kernel)** et **[sched-ext](/fr/configuration/sched-ext)**.
 
