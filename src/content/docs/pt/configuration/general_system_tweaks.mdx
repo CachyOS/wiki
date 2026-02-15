@@ -1,0 +1,471 @@
+---
+title: Ajustes Gerais do Sistema
+description: Coisas que pode ajustar após a instalação
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import { Tabs, TabItem, Steps, LinkButton } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+## Ajustes de Desempenho AMD
+
+### Driver AMD P-State
+---------------------------
+
+O `amd-pstate` é o driver de escalonamento de desempenho de CPUs AMD que introduz um novo mecanismo de controlo de frequência de CPU em séries modernas de APUs e CPUs AMD no kernel Linux. O novo mecanismo baseia-se no Collaborative Processor Performance Control (CPPC), que oferece uma gestão de frequência mais precisa do que os P-States de hardware ACPI legados.
+
+As plataformas atuais de CPU/APU da AMD utilizam o driver ACPI P-states para gerir a frequência e os clocks do CPU, alternando apenas entre 3 P-states. O CPPC substitui os controlos ACPI P-states e permite uma interface flexível e de baixa latência para que o kernel Linux comunique diretamente as indicações de desempenho ao hardware.
+
+Abaixo estão os 3 modos de operação do driver `amd-pstate` e as entradas de linha de comandos do kernel (cmdline) para os utilizar no arranque:
+
+- AMD P-State (Modo Não Autónomo): `amd-pstate=passive`
+- AMD P-State Guided (Modo Autónomo Guiado): `amd-pstate=guided`
+- AMD P-State EPP (Modo Autónomo): `amd-pstate=active`
+
+:::note [Nota]
+O driver AMD P-State EPP é utilizado por defeito quando não é feita nenhuma configuração explícita.
+:::
+
+Também pode alternar entre os modos de operação em tempo de execução para testar as opções:
+
+- **Modo autónomo**: a plataforma considera apenas os valores definidos para Desempenho Mínimo, Desempenho Máximo e Preferência de Desempenho Energético (EPP).
+   ```sh
+   echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+- **Modo autónomo guiado**: a plataforma define o nível de desempenho operacional de acordo com a carga de trabalho atual e dentro dos limites definidos pelo SO através dos registos de desempenho mínimo e máximo.
+   ```sh
+   echo guided | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+- **Modo não autónomo**: a plataforma obtém o nível de desempenho pretendido diretamente do SO através do Registo de Desempenho Desejado (Desired Performance Register).
+   ```sh
+   echo passive | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+Para informações mais detalhadas:
+
+<LinkButton href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html">Documentação do AMD P-State</LinkButton>
+<LinkButton href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html#amd-pstate-driver-operation-modes">Modos de Operação do Driver AMD P-State</LinkButton>
+<LinkButton href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html#user-space-interface-in-sysfs-per-policy-control">Interface de Espaço de Utilizador do AMD P-State</LinkButton>
+
+### Configurar o AMD P-State EPP
+
+Para utilizar o P-State EPP, estão disponíveis dois "governors" de escalonamento de frequência de CPU: `powersave` (poupança de energia) e `performance` (desempenho). Recomenda-se a utilização do "governor" powersave e a definição de uma preferência.
+
+* Definir o "governor" powersave: `sudo cpupower frequency-set -g powersave`
+* Definir o "governor" performance: `sudo cpupower frequency-set -g performance`
+
+Para definir uma preferência, execute o seguinte comando com a preferência desejada:
+
+```sh
+echo power | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
+```
+
+Preferências disponíveis: `performance`, `power`, `balance_power`, `balance_performance`
+
+<LinkButton href="https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/">Benchmark oficial para cada preferência</LinkButton>
+
+### Otimizador de AMD 3D V-Cache
+
+A AMD publicou um patch para otimizar o agendamento de cache em CPUs 3D de Dual CCD, como o 7950X3D e o 7900X3D.
+É necessário definir a opção CPPC na BIOS para a opção "Driver". Isto permitirá substituir o modo utilizado através do sysfs.
+
+Existem dois modos:
+
+1. Frequency (Frequência)
+2. Cache
+
+Se o modo `cache` for definido, o driver tentará colocar as tarefas primeiro no CCD com a cache maior; isto é vantajoso principalmente em jogos.
+A opção `frequency` tentará colocar as tarefas no segundo CCD, que possui uma frequência mais elevada do que o CCD com 3D Cache.
+
+Frequência (Predefinição):
+```sh
+echo frequency | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
+```
+
+Cache:
+```sh
+echo cache | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
+```
+
+Após alterar os modos, as estatísticas de núcleos preferenciais da AMD (preferred core stats) deverão apresentar uma classificação diferente. Pode consultá-las com:
+```sh
+grep -v /sys/devices/system/cpu/cpu*/cpufreq/amd_pstate_prefcore_ranking
+```
+
+### AMD P-State Core Performance Boost
+
+O AMD Core Performance Boost (também conhecido como AMD Turbo Core) é uma tecnologia de escalonamento dinâmico de frequência da AMD que permite ao processador ajustar e controlar dinamicamente a frequência de operação em certas versões dos seus processadores. Isto permite um aumento de desempenho quando necessário, mantendo parâmetros térmicos e de energia mais baixos durante a operação normal.
+
+Para gerir o AMD CPB no CachyOS, pode utilizar os seguintes comandos:
+
+```sh
+❯ echo 0 | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/boost # Disable boost for all cores
+❯ lscpu -ae # This shows that AMD CPB is disabled globally
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
+  0    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1212.8250
+  1    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1394.2180
+  2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 1204.4600
+
+❯ echo 1 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/boost # Enables boost on cpu0
+❯ lscpu -ae
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
+  0    0      0    0 0:0:0:0          yes 4564.0000 400.0000 1393.2380
+  1    0      0    0 0:0:0:0          yes 3301.0000 400.0000  400.0000
+  2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 2157.8469
+```
+
+O CachyOS também fornece uma versão do `power-profiles-daemon` que inclui o backport de um commit para ativar o suporte ao AMD CPB. O AMD CPB será desativado se o perfil `powersave` estiver a ser utilizado, e será ativado nos perfis `balanced` ou `performance`.
+
+Para mais informações, consulte:
+- https://lore.kernel.org/linux-pm/1a78eeaa-fadd-4734-aaeb-2fe11e96e198@amd.com/T/#m4a0c8917ea8fb033504055bd61512c80c85410c8
+- https://lore.kernel.org/linux-pm/20240624213400.67773-1-mario.limonciello@amd.com/
+
+## Melhorias de Desempenho
+
+### [Agendador de I/O ADIOS](https://github.com/firelzrd/adios)
+
+Criado por [firelzrd](https://github.com/firelzrd)
+
+:::note [Nota]
+O CachyOS inclui a ramificação estável do ADIOS no kernel.
+
+Versão atual no **linux-cachyos**: `3.1.9`
+
+Versão atual no **linux-cachyos-rc**: `3.1.9`
+:::
+
+Breve introdução do README:
+
+- *O ADIOS (Adaptive Deadline I/O Scheduler) é um agendador de I/O de camada de bloco para o kernel Linux, concebido para dispositivos de bloco multi-fila modernos (blk-mq). O seu objetivo é fornecer baixa latência para operações de I/O, combinando princípios de agendamento por prazo (deadline) com um mecanismo de controlo de latência adaptativo baseado em aprendizagem.*
+  - *Inspirado e construído sobre conceitos dos agendadores mq-deadline e Kyber. A sua característica principal é a capacidade de prever a latência de conclusão de I/O com base no desempenho passado e nas características do pedido (tipo de operação, tamanho) e utilizar essa previsão para ajustar dinamicamente os prazos dos pedidos e o comportamento de processamento em lote (batching).*
+
+Resumo: O ADIOS funciona aprendendo o perfil de latência do seu dispositivo de armazenamento e utilizando esse conhecimento para definir dinamicamente prazos para os pedidos de I/O. Ele prioriza os pedidos em quatro níveis (tiers), desde operações críticas do sistema (Tier 0) até tarefas de segundo plano (Tier 3), para garantir uma experiência de utilizador fluida. Embora se foque na capacidade de resposta, o seu comportamento pode ser afinado através de definições sysfs para equilibrar latência e rendimento (throughput).
+
+Para uma demonstração ao vivo, pode ver este [vídeo](https://www.youtube.com/watch?v=L9WDcEeHgy4).
+
+#### Como ativar o ADIOS
+
+<Tabs>
+    <TabItem label='Temporariamente (efeito em tempo de execução)'>
+        Este método define o agendador para a sessão atual. A alteração será perdida ao reiniciar.
+        ```sh
+        sync && echo adios | sudo tee /sys/block/<yourdrive>/queue/scheduler
+            # Substitua <yourdrive> pelo identificador real do disco (ex: sda, sdb, nvme0n1)
+        ```
+    </TabItem>
+    <TabItem label='Persistente após reiniciar'>
+        <Steps>
+            1. Abra ou crie um novo ficheiro de regras udev no seu editor de texto preferido (ex: nano, micro, vim)
+                ```sh title='Exemplo'
+                sudo nano /etc/udev/rules.d/60-ioschedulers.rules
+                ```
+            2. Adicione as seguintes regras ao ficheiro. Estas regras aplicam automaticamente um agendador de I/O específico com base no tipo de disco (HDD, SSD ou NVMe).
+                ```text
+                # HDD
+                ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", \
+                    ATTR{queue/scheduler}="bfq"
+
+                # SSD
+                ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="adios"
+
+                # NVMe SSD
+                ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="adios"
+                ```
+            3. Guarde o ficheiro e feche o editor.
+            4. Recarregue as regras do `udev` para aplicar as alterações imediatamente sem necessidade de reiniciar.
+                  ```sh
+                  sudo udevadm control --reload-rules
+                  sudo udevadm trigger
+                  ```
+        </Steps>
+    </TabItem>
+</Tabs>
+
+FAQ:
+
+- Se melhora a capacidade de resposta, por que não está ativado por defeito?
+  - O ADIOS ainda está sob desenvolvimento ativo e testes contínuos. Embora ofereça benefícios significativos para a fluidez do desktop, ainda não é considerado suficientemente estável para ser o padrão em todas as cargas de trabalho e tipos de hardware. Em alguns casos raros, bugs podem levar a problemas como bloqueios do sistema. Por este motivo, é uma funcionalidade opcional para utilizadores que desejam testar e beneficiar das suas melhorias mais recentes.
+
+### NVIDIA Smooth Motion (Séries RTX 40xx & 50xx)
+
+:::note[Compatibilidade de Jogos.]
+Jogos que correm em DX11, DX12 e Vulkan.
+
+Tanto o DXVK como o VKD3D funcionam corretamente.
+
+**Apenas aplicações de 64 bits são suportadas. O Smooth Motion não funcionará com aplicações de 32 bits (ex: jogos antigos de DX11).**
+
+:::
+
+Citação direta da documentação da NVIDIA:
+
+*O NVIDIA Smooth Motion é um novo modelo de IA baseado no controlador que proporciona uma jogabilidade mais suave ao inferir uma frame adicional entre duas frames renderizadas. Para jogos sem DLSS Frame Generation, o NVIDIA Smooth Motion é uma nova opção para melhorar a sua experiência em GPUs GeForce RTX Série 40 e mais recentes.*
+
+- Como ativar o NVIDIA Smooth Motion para um jogo:
+  - Adicione a seguinte variável de ambiente:
+    ```text
+    NVPRESENT_ENABLE_SMOOTH_MOTION=1
+    ```
+
+FAQ:
+
+- Por que usar o Smooth Motion em vez do DLSS Frame Generation?
+  - Quando um jogo não tem suporte para DLSS Frame Generation, o Smooth Motion serve como uma alternativa graças ao seu modelo de IA baseado no controlador.
+- Existe alguma desvantagem em usar o Smooth Motion?
+  - Sim, ativar o Smooth Motion pode introduzir um ligeiro atraso de entrada (input lag) devido ao processo adicional de inferência de frames.
+  - Propenso a causar problemas com sobreposições (overlays) de terceiros. Para evitar isto, inclua a seguinte variável de ambiente:
+    ```text
+    NVPRESENT_QUEUE_FAMILY=1
+    ```
+:::note [Nota]
+    Poderá ser observado um impacto no desempenho ao utilizar esta variável.
+    :::
+- Porque é que o MangoHud não está a reportar o aumento da taxa de frames?
+  - Atualmente, o MangoHud não contabiliza as frames adicionais geradas pelo Smooth Motion, o que resulta numa taxa de frames reportada enganadora.
+    - A utilização do contador de FPS integrado no monitor fornecerá a taxa de frames correta.
+- Como é a qualidade de imagem em comparação com o DLSS Frame Generation?
+  - A qualidade de imagem não é tão boa e pode introduzir artefactos, especialmente em cenas de movimento rápido.
+- É compatível com ferramentas externas de limitação de frames (frame capping)? Exemplo: MangoHud.
+  - Não. O limitador interno do jogo (in-game cap) deverá funcionar corretamente.
+- O Smooth Motion pode ser combinado com o DLSS Frame Generation?
+  - Não. Apenas um método de geração de frames pode estar ativo de cada vez.
+
+## Ajustes de Poupança de Energia
+
+### Ativar RCU Lazy
+
+O RCU Lazy ajuda a reduzir o consumo de energia em sistemas em repouso (idle) ou com carga leve. Isto pode ser útil para computadores portáteis e dispositivos portáteis (handhelds).
+A melhoria situa-se entre 5-10% em termos de poupança de energia. No entanto, é importante notar que esta funcionalidade de poupança de energia pode vir acompanhada de uma ligeira redução no desempenho, dependendo do cenário.
+O kernel `linux-cachyos-deckify` terá esta opção ativada por defeito, uma vez que a poupança de energia é fundamental e necessária para estes dispositivos.
+
+Para ativar o RCU Lazy, adicione o seguinte parâmetro à sua lista de parâmetros da [linha de comandos do kernel (cmdline)](/configuration/boot_manager_configuration/):
+```text
+rcutree.enable_rcu_lazy=1
+```
+
+## Resolução de Problemas NVIDIA
+
+### Desativar o Backend Wayland do SDDM
+
+:::note
+A partir do cachyos-kde-settings 4.3, o SDDM utiliza o KWin como o seu compositor Wayland por defeito.
+:::
+
+Embora este seja um passo em frente positivo, pode introduzir alguns inconvenientes, como quebrar o suporte para overclocking através do nvidia-settings ou causar incompatibilidade com GPUs mais antigos que tenham dificuldades sob Wayland.
+
+Para reverter esta alteração, remova o pacote cachyos-kde-settings:
+```sh
+sudo pacman -R cachyos-kde-settings
+```
+
+### Firmware NVIDIA GSP
+
+O Firmware NVIDIA GSP pode, **"em alguns casos"**, levar a uma diminuição do desempenho. Embora o controlador NVIDIA 555.58.02 tenha resolvido em grande parte este problema, ele pode persistir em certos sistemas.
+Se estiver a enfrentar pequenos soluços (hiccups) no KDE ou mau desempenho em alguns casos, pode desativar o Firmware GSP com o seguinte ficheiro de configuração:
+`/etc/modprobe.d/nvidia-gsp.conf`
+
+```text
+options nvidia NVreg_EnableGpuFirmware=0
+```
+
+Após criar o ficheiro, execute o seguinte comando:
+```sh
+sudo mkinitcpio -P
+```
+
+:::note
+Os [módulos de kernel abertos](https://github.com/NVIDIA/open-gpu-kernel-modules) da NVIDIA baseiam-se no firmware GSP. Devido a isto, o GSP não pode ser desativado e esta opção de modprobe será ignorada ao utilizá-los. Utilize o `linux-cachyos-nvidia` ou o `nvidia-dkms`.
+:::
+
+Geralmente, recomenda-se testar o firmware GSP após cada nova instalação do controlador NVIDIA, pois este introduz frequentemente funcionalidades benéficas. Além disso, a NVIDIA passou a realizar os seus testes de QA utilizando prioritariamente o firmware GSP.
+
+## Melhorias de Áudio e Software
+
+### Melhorar o Som das Colunas do Portátil
+
+As colunas dos computadores portáteis produzem frequentemente um som fino e pouco impressionante devido ao seu tamanho compacto e capacidades de hardware limitadas. O [EasyEffects](https://wiki.archlinux.org/title/PipeWire#EasyEffects) pode melhorar significativamente a qualidade do som das colunas integradas do seu portátil, aplicando vários efeitos de áudio e configurações personalizadas.
+
+Para começar, é necessário instalar o EasyEffects e as dependências necessárias:
+
+```bash
+# Instalar EasyEffects
+sudo pacman -S easyeffects
+# Instalar plugins adicionais para mais efeitos
+sudo pacman -S lsp-plugins-lv2
+sudo pacman -S zam-plugins
+sudo pacman -S calf
+sudo pacman -S mda.lv2
+```
+
+#### Configuração
+
+Siga estes passos para configurar o EasyEffects:
+
+1. Inicie o EasyEffects a partir do menu de aplicações ou escrevendo `easyeffects` no terminal.
+2. Navegue até ao separador **Output** (Saída) para gerir os efeitos aplicados ao áudio das colunas.
+3. Alterne para o separador **Effects** (Efeitos) para adicionar, modificar ou ajustar os efeitos de áudio.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects.png')} />
+
+##### Utilizar Presets da Comunidade
+
+Para uma configuração rápida e eficaz, comece com **presets criados pela comunidade** adaptados a vários cenários de áudio:
+
+1. Descarregue presets do repositório [EasyEffects Community Presets](https://github.com/wwmm/easyeffects/wiki/Community-presets).
+2. No EasyEffects, clique no botão **Presets** e escolha **"Import preset from local storage"** (Importar preset do armazenamento local).
+3. Localize e selecione o ficheiro do preset descarregado.
+4. Uma vez importado, o preset aparecerá na sua lista — clique em **"Load"** (Carregar) para o aplicar à sua saída de áudio.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects-presets.png')} />
+
+##### Criar um Perfil Personalizado
+
+Para uma experiência de áudio mais personalizada, crie um perfil à medida das colunas do seu portátil:
+
+1. Clique no botão **"+"** no menu de Presets para criar um novo preset (ex: dê-lhe o nome de **"Laptop Speakers"**).
+2. Selecione **"Load"** para ativar o novo preset.
+3. Adicione e configure efeitos no separador **Output** > **Effects**, experimentando opções como equalizadores, realçadores de graves (bass enhancers) ou alargadores de estéreo (stereo wideners).
+
+##### Utilizar o Efeito Convolver (Portáteis com Dolby Atmos)
+
+O **efeito Convolver** pode melhorar dramaticamente o som ao aplicar respostas de impulso que simulam ambientes de áudio de alta qualidade. No entanto, requer uma configuração precisa:
+
+1. Adicione o efeito **Convolver** à sua cadeia de efeitos no separador **Effects**.
+2. Carregue um ficheiro de resposta de impulso (em formato `.wav`) específico para o seu modelo de portátil, se disponível. Pode procurar por estes ficheiros online em recursos como:
+   - https://wiki.archlinux.org/title/Lenovo_ThinkPad_T14_(AMD)_Gen_4#Speakers
+   - https://github.com/m4tx/thinkpad-p14s-g4-linux/#sound
+   - https://github.com/shuhaowu/linux-thinkpad-speaker-improvements/
+3. **Evitar o "clipping"**: O efeito Convolver pode aumentar significativamente o volume. Adicione um efeito **Limiter** (Limitador) após o Convolver na sua cadeia de efeitos para controlar os picos e evitar a distorção.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects-convolver.png')} />
+
+#### Dicas para Resultados Ideais
+
+- **Experimente** diferentes presets para identificar a melhor correspondência para o seu modelo específico de portátil e preferências pessoais de som.
+- **Faça ajustes incrementais** nos efeitos individuais para evitar distorção ou uma saída de som artificial.
+- **Compare com o interruptor**: Ative e desative frequentemente o EasyEffects para avaliar as melhorias em relação ao áudio predefinido.
+- Procure por **presets específicos para o dispositivo ou respostas de impulso Convolver** para modelos de portáteis populares como o **Framework Laptop 13** ou **ThinkPad T14** para obter resultados personalizados.
+- **Automatize o arranque**: Configure o EasyEffects para iniciar automaticamente ao ligar o sistema através das preferências da aplicação, garantindo que o seu perfil personalizado é sempre aplicado.
+- **Carregamento automático de presets para múltiplos dispositivos**: Utilize o separador **PipeWire** > **Presets Autoloading** para associar presets específicos a diferentes dispositivos de saída (ex: Colunas vs. Auscultadores) para uma comutação automática. <ImageComponent imgsrc={import('~/assets/images/easyeffects-autoloading.png')} />
+
+#### Alternativa ao EasyEffects
+
+Como alternativa, pode tentar utilizar o [JDSP4Linux](https://github.com/Audio4Linux/JDSP4Linux), que é um processador de efeitos de áudio para clientes PipeWire e PulseAudio.
+
+### OBS Studio
+
+Disponibilizamos no nosso repositório um pacote `obs-studio-browser` personalizado que é recomendado em vez do pacote `obs-studio` padrão. Este contém correções (patches) para resolver alguns dos problemas comuns, como erros de CUDA e problemas com a câmara virtual.
+
+```sh title='Open a terminal and run the following command'
+sudo pacman -S obs-studio-browser
+# Se já tinha o obs-studio instalado anteriormente, o pacman irá perguntar-lhe se
+# deseja substituí-lo; se for o caso, introduza "Y" (Sim).
+```
+
+## Configuração de Swap
+
+### Mudar de ZRam para Zswap
+
+Por defeito, o CachyOS utiliza ZRam para a gestão de swap. No entanto, se preferir utilizar Zswap, pode mudar facilmente seguindo estes passos:
+
+:::note
+Este guia assume que tem a configuração padrão do CachyOS com ZRam ativado e que não foi criada nenhuma partição ou ficheiro de swap durante a instalação.
+:::
+
+<Steps>
+    1. Desative o ZRam adicionando um parâmetro ao kernel. [Edite a configuração do seu gestor de arranque](/configuration/boot_manager_configuration) e adicione a seguinte linha:
+        ```text
+        systemd.zram=0
+        ```
+    2. Ative o Zswap adicionando o seguinte parâmetro ao kernel:
+        ```text
+        zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=30
+        ```
+    3. Crie um ficheiro de sobreposição (override) vazio para desativar a [regra udev do CachyOS](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/30-zram.rules) que desativa o Zswap:
+        ```bash
+        sudo touch /etc/udev/rules.d/30-zram.rules
+        ```
+    4. Crie um ficheiro de swap para o Zswap.
+        <details>
+            <summary>Se estiver a utilizar Btrfs:</summary>
+                <Steps>
+                    1. Crie um subvolume Btrfs para o ficheiro de swap:
+                        ```bash
+                        sudo btrfs subvolume create /swap
+                        ```
+                    2. Create a swap file with your desired size (e.g., 8GB) by changing the `--size` parameter:
+                        ```bash "--size"
+                        sudo btrfs filesystem mkswapfile --size 4g --uuid clear /swap/swapfile
+                        ```
+                    3. Ative o ficheiro de swap:
+                        ```bash
+                        sudo swapon /swap/swapfile
+                        ```
+                    4. Adicione o ficheiro de swap ao `/etc/fstab` para torná-lo persistente entre reinicializações:
+                        ```bash
+                        sudo echo "/swap/swapfile none swap defaults 0 0" >> /etc/fstab
+                        ```
+                </Steps>
+        </details>
+        <details>
+            <summary>Se não estiver a utilizar Btrfs:</summary>
+            <Steps>
+                1. Crie um ficheiro de swap com o tamanho desejado (ex: 8GB) alterando o parâmetro `count=`:
+                    ```bash "count=8"
+                    sudo dd if=/dev/zero of=/swapfile bs=1G count=8
+                    ```
+                2. Defina as permissões corretas para o ficheiro de swap:
+                    ```bash
+                    sudo chmod 0600 /swapfile
+                    ```
+                3. Formate o ficheiro de swap:
+                    ```bash
+                    sudo mkswap /swapfile
+                    ```
+                4. Adicione o ficheiro de swap ao `/etc/fstab` para torná-lo persistente entre reinicializações:
+                    ```bash
+                    sudo echo "/swapfile none swap defaults 0 0" >> /etc/fstab
+                    ```
+                5. Ative o ficheiro de swap:
+                    ```
+                    sudo swapon /swapfile
+                    ```
+            </Steps>
+        </details>
+    5. Adicione o módulo de compressão lz4 ao ficheiro de configuração `mkinitcpio.conf`:
+        1. Abra o ficheiro com um editor de texto:
+            ```bash
+            sudo nano /etc/mkinitcpio.conf
+            ```
+        2. Encontre a linha `MODULES` e adicione `lz4`. Deverá ficar com um aspeto semelhante a este:
+            ```text
+            MODULES=(... lz4)
+            ```
+        3. Guarde o ficheiro premindo `Ctrl + O` e `Enter` para confirmar, depois saia do editor com `Ctrl + X`.
+    6. Reconstrua o seu initramfs para aplicar as alterações. O comando varia dependendo do seu gestor de arranque:
+        <details>
+            <summary>systemd-boot</summary>
+            ```bash
+            sudo sdboot-manage gen
+            ```
+        </details>
+        <details>
+            <summary>GRUB</summary>
+            ```bash
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+        </details>
+        <details>
+            <summary>Limine</summary>
+            ```bash
+            sudo limine-mkinitcpio
+            ```
+        </details>
+    7. Reinicie o sistema para aplicar todas as alterações.
+</Steps>

@@ -1,0 +1,936 @@
+---
+title: Tutorial sched-ext
+description: Tutorial sobre como usar a framework e informações diversas
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 5
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Icon } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+A Extensible Scheduler Class (mais conhecida como `sched-ext`) é uma funcionalidade do kernel Linux que permite a implementação de escalonadores de threads do kernel em BPF (Berkeley Package Filter) e o seu carregamento dinâmico. Essencialmente, isto permite que os utilizadores finais alterem os seus escalonadores em userspace sem a necessidade de compilar outro kernel apenas para ter um escalonador diferente.
+
+:::tip[Entre em contacto com os desenvolvedores no seu [servidor de Discord](https://discord.gg/b2J8DrWa7t)]
+:::
+
+- *Os escalonadores podem ser encontrados nos pacotes `scx-scheds` e `scx-scheds-git`.*
+  ```sh
+  # Ramo estável + ferramentas scx_loader e scxctl.
+  sudo pacman -S scx-scheds scx-tools
+
+  # Ramo de desenvolvimento (Este ramo inclui as alterações mais recentes do ramo master) + ferramentas scx_loader e scxctl.
+  sudo pacman -S scx-scheds-git scx-tools-git
+  ```
+
+  :::note
+  O pacote `scx-scheds-git` pode não incluir todos os escalonadores experimentais, uma vez que alguns são desenvolvidos em ramos de funcionalidades separados que ainda não foram integrados no ramo master.
+  :::
+
+## Como Iniciar e Gerir o Escalonador
+
+:::note
+Tanto o `scxctl` como o `scx_loader` requerem privilégios administrativos para iniciar/parar/alternar escalonadores.
+
+Portanto, precisará de os executar com `sudo` ou utilizar um agente polkit que conceda as permissões necessárias.
+
+Sem `sudo`, o scxctl/scx_loader solicitará autenticação através de um agente polkit.
+:::
+
+<Tabs>
+
+<TabItem label='Terminal'>
+
+- *Para iniciar o escalonador, abra o seu terminal e introduza o seguinte comando:*
+  ```sh title='Exemplo de como iniciar o rusty'
+  sudo scx_rusty
+  ```
+
+*Isto irá iniciar o escalonador rusty e desativar o escalonador predefinido.*
+
+Para parar o escalonador. Prima `CTRL + C` e o escalonador será então interrompido e o escalonador predefinido do kernel assumirá o controlo novamente.
+
+</TabItem>
+
+<TabItem label='scxctl'>
+
+:::note[Incluído nos pacotes `scx-tools` e `scx-tools-git`]
+:::
+
+:::caution[Requer um agente polkit funcional para funcionar corretamente.]
+Consulte a seguinte **[página da Arch Wiki para referência.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+O `scxctl` é um cliente CLI DBUS para interagir com o `scx_loader`.
+
+- Funcionalidades:
+  - Obter o escalonador e o modo atuais
+  - Listar todos os escalonadores disponíveis
+  - Iniciar um escalonador num determinado modo, ou com determinados argumentos
+  - Alternar entre escalonadores e modos
+  - Parar o escalonador em execução
+  - Reiniciar o escalonador em execução
+
+<Tabs>
+    <TabItem label='Iniciar um escalonador'>
+          ```sh title='Iniciar o scx_flash em modo Gaming'
+          scxctl start --sched flash --mode gaming
+          ```
+    </TabItem>
+    <TabItem label='Parar um escalonador'>
+          ```sh title='Parar o escalonador atualmente em execução'
+          scxctl stop
+          ```
+    </TabItem>
+    <TabItem label='Restaurar o escalonador predefinido'>
+          ```sh title='Restaura o escalonador predefinido definido no ficheiro de configuração do scx_loader'
+          scxctl restore
+          ```
+    </TabItem>
+    <TabItem label='Alternar entre escalonadores'>
+          ```sh title='Alternar para o scx_bpfland em modo Gaming'
+          scxctl switch --sched bpfland --mode gaming
+          ```
+    </TabItem>
+    <TabItem label='Iniciar e Alternar com argumentos personalizados'>
+          :::note[Adicione uma vírgula entre cada argumento]
+          Exemplo: `--args="-c,75,-m,0-15"` = Argumento, Valor
+          :::
+          ```sh title='Iniciar o scx_cosmos com argumentos personalizados'
+          scxctl start --sched cosmos --args="-c,75,-m,0-15"
+          ```
+          ```sh title='Alternar para o scx_flash com argumentos personalizados'
+          scxctl switch --sched flash --args="-s,20000"
+          ```
+    </TabItem>
+</Tabs>
+
+```sh
+$ scxctl --help
+Uso: scxctl <COMANDO>
+
+Comandos:
+  get      Obter informações sobre o escalonador em execução
+  list     Listar todos os escalonadores suportados
+  start    Iniciar um escalonador num modo ou com argumentos
+  switch   Alternar entre escalonadores ou modos, opcionalmente com argumentos
+  stop     Parar o escalonador atual
+  restart  Reiniciar o escalonador atual com a configuração original
+  restore  Restaurar o escalonador predefinido a partir da configuração
+  help     Imprimir esta mensagem ou a ajuda do(s) subcomando(s) indicado(s)
+
+Opções:
+  -h, --help     Imprimir a ajuda
+  -V, --version  Imprimir a versão
+```
+
+</TabItem>
+
+<TabItem label='scx_loader (DBus)'>
+
+:::caution[Requer um agente polkit funcional para funcionar corretamente.]
+Consulte a seguinte **[página da Arch Wiki para referência.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+*Como o nome indica, é um utilitário que funciona como um carregador e gestor para a framework sched-ext utilizando a interface D-Bus.*
+
+*Embora não requeira o systemd, este pode ainda assim ser utilizado em conjunto com ele.* [Consulte o guia de transição para referência](/configuration/sched-ext#transitioning-from-scxservice-to-scx_loader-a-comprehensive-guide).
+
+- Tem a capacidade de parar, iniciar, reiniciar, ler informações sobre um escalonador scx e muito mais.
+  - *Pode utilizar ferramentas como o `dbus-send` ou o `gdbus` para comunicar com ele.*
+- Este guia explica como utilizar o scx_loader com o comando dbus-send.
+  - ```sh title='Iniciar o scx_rusty com os seus argumentos predefinidos'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartScheduler string:scx_rusty uint32:0
+    ```
+  - ```sh title='Iniciar um escalonador com argumentos'
+    # Este exemplo inicia o scx_bpfland com as seguintes flags: -k -c 0
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title='Parar o escalonador atualmente em execução'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StopScheduler
+    ```
+  - ```sh title='Alternar para o escalonador predefinido'
+    # O scx_loader irá alternar para o escalonador predefinido definido no ficheiro de configuração do scx_loader
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.RestoreDefault
+    ```
+  - ```sh title='Alternar para outro escalonador no Modo 2'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchScheduler string:scx_lavd uint32:2
+    # Isto alterna para o scx_lavd com o modo de escalonador 2, o que significa que inicia o LAVD em modo de poupança de energia (powersaving)
+    ```
+  - ```sh title='Alternar para outro escalonador com argumentos'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title='Obter o escalonador atualmente em execução'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:CurrentScheduler
+    ```
+  - ```sh title='Obter uma lista dos escalonadores suportados'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:SupportedSchedulers
+    ```
+:::tip
+Aqui está uma explicação do que cada modo significa no scx_loader:
+
+- Modo 0 = `Flags predefinidas do escalonador`
+- Modo 1 = `Gaming (Jogos)`
+- Modo 2 = `Power Saving (Poupança de Energia)`
+- Modo 3 = `Low Latency (Baixa Latência)`
+- Modo 4 = `Server (Servidor)`
+
+Exemplo: O LAVD a correr no Modo 1 é o equivalente a `scx_lavd --performance`
+
+*TLDR: Cada modo é um conjunto de flags diferentes destinadas a melhorar o caso de uso pretendido.*
+
+[Para uma análise mais aprofundada sobre o que estes Modos alteram em cada escalonador](<https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/src/config.rs#L193>)
+:::
+
+</TabItem>
+
+<TabItem label='CachyOS Kernel Manager'>
+
+:::caution[Requer um agente polkit funcional para funcionar corretamente.]
+Consulte a seguinte **[página da Arch Wiki para referência.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+Pode aceder e configurá-los através do botão `sched-ext scheduler config`.
+
+</TabItem>
+
+<TabItem label='SCX Manager'>
+
+:::caution[Requer um agente polkit funcional para funcionar corretamente.]
+Consulte a seguinte **[página da Arch Wiki para referência.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+O SCX Manager é uma ferramenta GUI (interface gráfica) independente derivada do CachyOS Kernel Manager. Permite aos utilizadores gerir a framework sched-ext e os seus escalonadores através do `scx_loader`.
+
+Funcionalidades:
+- Verificar qual o escalonador atualmente ativo
+- Selecionar um escalonador ou perfil: (Auto, Gaming, Poupança de energia, Baixa Latência ou Servidor)
+- Definir flags adicionais
+- Desativar o escalonador atual
+
+<details>
+<summary>Captura de ecrã</summary>
+
+<ImageComponent imgsrc={import('~/assets/images/scx-manager-main.png')} />
+
+</details>
+
+</TabItem>
+
+</Tabs>
+
+## Guia do Escalonador: Perfis e Casos de Uso
+
+Como existem muitos escalonadores por onde escolher, queremos dar uma pequena introdução sobre os escalonadores disponíveis.
+
+:::note[Nota]
+Estes escalonadores estão em constante desenvolvimento enquanto são testados, por isso conte com a possibilidade de algumas das suas funcionalidades/flags estarem sujeitas a alterações.
+:::
+
+Sinta-se à vontade para reportar qualquer problema ou feedback no repositório do respetivo escalonador.
+
+Utilize `scx_nome_do_escalonador --help` para ver as flags disponíveis e uma breve descrição do que fazem.
+
+```sh title='Example of getting help for scx_rusty'
+scx_rusty --help
+```
+
+### [scx_bpfland](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_bpfland)
+
+**Desenvolvido por: Andrea Righi (arighi [GitHub](https://github.com/arighi))**
+
+Pronto para Produção? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Um escalonador sched_ext baseado em `vruntime` que prioriza cargas de trabalho interativas. Altamente flexível e fácil de adaptar.
+
+Ao decidir quais núcleos usar, o **Bpfland** leva em consideração o layout da cache e quais núcleos partilham a mesma cache L2/L3, resultando em menos falhas de cache (*cache misses*) e, consequentemente, mais desempenho.
+
+- **Casos de uso:**
+  - Gaming
+  - Uso de desktop
+  - Produção multimédia/áudio
+  - Excelente interatividade sob cargas de trabalho intensivas
+  - Poupança de energia
+  - Servidor
+
+#### Modos do Escalonador
+
+##### Baixa Latência (Low Latency)
+* **Flags de Linha de Comando:** `-m performance -w`
+* **Descrição:** Destinado a reduzir a latência à custa do rendimento (*throughput*). Adequado para aplicações de tempo real suave (*soft real-time*), como processamento de áudio e multimédia.
+
+##### Poupança de Energia (Power Save)
+* **Flags de Linha de Comando:** `-s 20000 -m powersave -I 100 -t 100`
+* **Descrição:** Prioriza a eficiência energética. Favorece núcleos menos potentes (ex: E-cores em Intel).
+
+##### Servidor (Server)
+* **Flags de Linha de Comando:** `-s 20000 -S`
+* **Descrição:** Prioriza tarefas com afinidade estrita. Esta opção pode aumentar o rendimento à custa da latência, sendo mais adequada para cargas de trabalho de servidor.
+
+---
+
+### [scx_beerland](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_beerland)
+
+**Desenvolvido por: Andrea Righi (arighi [GitHub](https://github.com/arighi))**
+
+Pronto para Produção? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+O scx_beerland é um escalonador desenhado para priorizar a localidade e a escalabilidade.
+
+Prioriza manter as tarefas no mesmo CPU para preservar a localidade da cache, garantindo ao mesmo tempo uma boa escalabilidade em sistemas com muitos CPUs através do uso de DSQs locais (filas de execução por CPU) quando o sistema não está saturado.
+
+- **Casos de uso:**
+  - Cargas de trabalho intensivas em cache
+  - Sistemas com um grande número de CPUs
+  - Gaming: Conhecido por funcionar surpreendentemente bem em certos jogos, embora os resultados possam variar
+  - Servidor: Bom para cargas gerais devido às otimizações de escalabilidade e localidade.
+  - Também pode ser usado para uso diário em desktop.
+
+#### Modos do Escalonador
+Nenhum de momento.
+
+---
+
+### [scx_rustland](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland)
+
+**Desenvolvido por: Andrea Righi (arighi [GitHub](https://github.com/arighi))**
+
+Pronto para Produção? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+
+Para cenários de produção críticos em termos de desempenho, outros escalonadores provavelmente exibirão melhor performance, visto que delegar todas as decisões de escalonamento para o espaço de utilizador (*user-space*) tem um certo custo (mesmo que mínimo).
+
+No entanto, um escalonador totalmente implementado no espaço de utilizador permite uma integração fluida com bibliotecas sofisticadas, ferramentas de rastreio, serviços externos (ex: IA), etc.
+
+Por isso, podem existir situações onde os benefícios superam o *overhead*, justificando o seu uso em produção.
+
+- Partilha semelhanças com o bpfland.
+- Criado para ser fácil de ler e compreender devido à implementação em *userspace*.
+- **Nota:** Existe uma ligeira desvantagem no rendimento ao usar um escalonador em *userspace*.
+
+- **Casos de uso:**
+  - Cargas de trabalho de baixa latência (Gaming, videoconferências e live streaming)
+  - Uso de desktop
+
+---
+
+### [scx_flash](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_flash)
+
+**Desenvolvido por: Andrea Righi (arighi [GitHub](https://github.com/arighi))**
+
+Pronto para Produção? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Um escalonador que se foca em garantir a justiça (*fairness*) entre tarefas e a previsibilidade de desempenho.
+
+Opera utilizando uma política [Earliest Deadline First (EDF)](https://www.geeksforgeeks.org/operating-systems/earliest-deadline-first-edf-cpu-scheduling-algorithm/), onde a cada tarefa é atribuído um peso de "latência". Este peso é ajustado dinamicamente com base na frequência com que uma tarefa liberta o CPU antes de esgotar a sua fatia de tempo (*time slice*).
+
+Tarefas que libertam o CPU cedo recebem um peso de latência maior, sendo priorizadas sobre tarefas que consomem totalmente o seu tempo de execução.
+
+- **Casos de uso:**
+  - Gaming
+  - Cargas sensíveis à latência (multimédia ou áudio em tempo real)
+  - Necessidade de responsividade em situações de sobrecarga
+  - Consistência de desempenho
+  - Servidor
+
+#### Modos do Escalonador
+
+##### Baixa Latência (Low Latency)
+* **Flags:** `-m performance -w -C 0`
+* **Descrição:** Reduz a latência à custa do rendimento. Ideal para áudio e multimédia.
+
+##### Gaming
+* **Flags:** `-m all`
+* **Descrição:** Otimiza para alto desempenho em jogos.
+
+##### Poupança de Energia (Power Save)
+* **Flags:** `-m powersave -I 10000 -t 10000 -s 10000 -S 1000`
+* **Descrição:** Prioriza a eficiência. Favorece núcleos menos potentes e introduz um ciclo de repouso forçado a cada 10ms.
+
+##### Servidor (Server)
+* **Flags:** `-m all -s 20000 -S 1000 -I -1 -D -L`
+* **Descrição:** Ajustado para servidores. Troca responsividade por rendimento bruto.
+
+---
+
+### [scx_cosmos](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cosmos)
+
+**Desenvolvido por: Andrea Righi (arighi [GitHub](https://github.com/arighi))**
+
+Pronto para Produção? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Escalonador leve otimizado para preservar a localidade tarefa-para-CPU.
+
+Quando o sistema não está saturado, o escalonador prioriza manter as tarefas no mesmo CPU. Isto reduz a contenção de bloqueios (*locking*) em comparação com filas partilhadas, permitindo uma escalabilidade excelente em muitos CPUs.
+
+- **Casos de uso:**
+  - Escalonador de propósito geral: adapta-se tanto a cargas de servidor como de desktop.
+
+#### Modos do Escalonador
+
+##### Auto
+* **Flags:** `-s 20000 -d -c 0 -p 0`
+* **Descrição:** Sacrifica a localidade e eficiência para uma distribuição uniforme entre todos os CPUs. Inclina-se para interatividade.
+
+##### Gaming
+* **Flags:** `-c 0 -p 0`
+* **Descrição:** Desativa a monitorização de carga do CPU e força o escalonamento baseado em prazos (*deadlines*) para melhorar a resposta.
+
+##### Poupança de Energia (Power Save)
+* **Flags:** `-m powersave -d -p 5000`
+* **Descrição:** Favorece a eficiência e núcleos E-cores. Desativa despertares diferidos.
+
+##### Baixa Latência (Low Latency)
+* **Flags:** `-m performance -c 0 -p 0 -w`
+* **Descrição:** Foca na previsibilidade de desempenho através de otimizações de despertar síncrono.
+
+##### Servidor (Server)
+* **Flags:** `-s 20000`
+* **Descrição:** Ativa a afinidade de espaço de endereçamento para melhorar o desempenho em cargas sensíveis à cache.
+
+---
+
+### [scx_lavd](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd)
+
+**Desenvolvido por: Changwoo Min (multics69 [GitHub](https://github.com/multics69))**
+
+Pronto para Produção? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+*LAVD é um novo algoritmo motivado por cargas de gaming, que são críticas em latência e pesadas em comunicação. Visa minimizar picos de latência mantendo um bom rendimento global.*
+
+- **Casos de uso:**
+  - Gaming e Produção de Áudio
+  - Cargas sensíveis à latência e uso de desktop
+  - Excelente interatividade sob carga intensa
+
+Uma das capacidades principais é a **Core Compaction (Compactação de Núcleos):** Quando o uso de CPU é < 50%, os núcleos ativos correm por mais tempo e a maior frequência, enquanto os núcleos inativos permanecem em C-State (Sleep) por mais tempo, poupando energia.
+
+#### Modos do Escalonador
+
+##### Gaming & Baixa Latência
+* **Flags:** `--performance`
+* **Descrição:** Maximiza o desempenho usando todos os núcleos disponíveis, priorizando núcleos físicos.
+
+##### Poupança de Energia (Power Save)
+* **Flags:** `--powersave`
+* **Descrição:** Minimiza o consumo mantendo um desempenho razoável. Prioriza núcleos eficientes e threads sobre núcleos físicos.
+
+---
+
+### [scx_rusty](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rusty)
+
+**Desenvolvido por: David Vernet (Byte-Lab [GitHub](https://github.com/Byte-Lab))**
+
+Pronto para Produção? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+- Sim, se for ajustado corretamente.
+
+O Rusty oferece uma vasta gama de funcionalidades e uma grande capacidade de ajuste (*tunability*), permitindo personalizar o escalonador para requisitos muito específicos.
+
+- **Casos de uso:** Gaming, Desktop, Multimédia e Poupança de energia.
+
+---
+
+### [scx_p2dq](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_p2dq)
+
+Pronto para Produção? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+- Sim, se ajustado ao seu hardware e carga de trabalho.
+
+**Desenvolvido por: Daniel Hodges (hodgesds [GitHub](https://github.com/hodgesds))**
+
+Escalonador de propósito geral que se foca no equilíbrio de carga "escolha dois" entre LLCs. Mantém alta localidade de cache enquanto providencia latência razoável.
+
+#### Modos do Escalonador
+
+##### Gaming
+* **Flags:** `--task-slice true -f --sched-mode performance`
+* **Descrição:** Melhora a consistência em jogos e favorece núcleos de alto desempenho.
+
+##### Baixa Latência (Low Latency)
+* **Flags:** `-y -f --task-slice true`
+* **Descrição:** Faz com que tarefas interativas "prendam" mais ao CPU original.
+
+##### Poupança de Energia (Power Save)
+* **Flags:** `--sched-mode efficiency`
+* **Descrição:** Prioriza núcleos energeticamente eficientes.
+
+##### Servidor (Server)
+* **Flags:** `--keep-running`
+* **Descrição:** Permite que tarefas corram além da sua fatia se o CPU estiver ocioso.
+
+---
+
+### [scx_tickless](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_tickless)
+
+**Desenvolvido por: Andrea Righi (arighi [Github](https://github.com/arighi))**
+
+Pronto para Produção? <Icon name="close" color="var(--sl-color-text-accent)" size="2rem" />
+- Este escalonador ainda é experimental e não recomendado para uso em produção.
+
+:::note[Nota]
+Para desativar eficazmente os "ticks" nos CPUs, o kernel deve ser iniciado com `nohz_full`. Tenha em conta que isto introduz overhead em chamadas de sistema (syscalls).
+:::
+
+Orientado a servidores, cloud e virtualização. Funciona enviando eventos de escalonamento através de um grupo de CPUs primários, permitindo desativar o "tick" nos outros CPUs para reduzir o ruído do SO.
+
+#### Modos do Escalonador
+
+##### Gaming
+* **Flags:** `-f 5000 -s 5000`
+* **Descrição:** Aumenta a frequência de deteção de contenção.
+
+##### Poupança de Energia (Power Save)
+* **Flags:** `-f 50`
+* **Descrição:** Reduz as verificações de contenção.
+
+---
+
+## Configuração e Testes de Desempenho
+
+### LAVD Autopilot & Autopower
+
+*Citações de Changwoo Min:*
+- No modo **Autopilot**, o escalonador ajusta o seu modo (Powersave, Balanced ou Performance) com base na carga do sistema (utilização de CPU).
+- **Autopower:** Decide automaticamente o modo com base no perfil de energia do sistema (EPP - Energy Performance Preference).
+
+```sh
+# O Autopower pode ser ativado pela seguinte flag:
+--autopower
+# ex:
+scx_lavd --autopower
+```
+
+### ananicy-cpp & sched-ext
+
+:::note[Atualização sobre ananicy-cpp e sched-ext]
+Após o desenvolvimento adicional dos escalonadores, o uso do ananicy-cpp em conjunto com os mesmos é, geralmente, seguro. No entanto, se experienciar quaisquer bloqueios ou instabilidade, considere desativá-lo como um passo de resolução de problemas.
+:::
+
+Para desativar/parar o ananicy-cpp, execute o seguinte comando:
+
+```sh
+systemctl disable --now ananicy-cpp
+```
+
+### Mudança de Perfil de Energia no scx_loader
+
+Implementado no pacote `power-profiles-daemon` fornecido pelo CachyOS, que inclui um [patch personalizado](https://github.com/CachyOS/CachyOS-PKGBUILDS/blob/master/power-profiles-daemon/0001-Add-support-for-scx_loader-modes-switching.patch) para suportar a mudança de perfis de energia do `scx_loader`.
+
+- Se o `scx_loader` estiver a ser executado, quando o [game-performance](/configuration/gaming#power-profile-switching-on-demand) for utilizado, ele alternará automaticamente o escalonador ativo para o perfil `Gaming` ao iniciar um jogo, e voltará ao perfil predefinido quando o jogo for fechado.
+- Ao alternar entre perfis de energia (ex: no KDE Plasma ou GNOME utilizando o seletor de perfil de energia), o `scx_loader` mudará automaticamente para o perfil de escalonador correspondente:
+
+| Perfil de Energia   | Perfil do Escalonador |
+| ------------------- | --------------------- |
+| Power Saver         | Power Save            |
+| Balanced            | Auto                  |
+| Performance         | Gaming                |
+
+### Benchmarking e comparação de escalonadores com cachyos-benchmarker
+
+A ferramenta [cachyos-benchmarker](https://github.com/CachyOS/cachyos-benchmarker) oferece uma forma fácil de avaliar e comparar o desempenho de diferentes escalonadores de CPU.
+
+Esta ferramenta executa um conjunto abrangente de testes para medir o CPU, a memória e o desempenho geral do sistema sob várias cargas de trabalho.
+
+Estão incluídos os seguintes benchmarks:
+
+| Teste                       | Mede                                     | Ferramenta   |
+| --------------------------- | ---------------------------------------- | ------------ |
+| **stress-ng cpu-cache-mem** | Desempenho de CPU, cache e memória       | `stress-ng`  |
+| **FFmpeg compilation**      | Desempenho de compilação paralela        | `make`       |
+| **x265 encoding**           | Rendimento de codificação de vídeo       | `x265`       |
+| **argon2 hashing**          | Hashing de passwords multithreaded       | `argon2`     |
+| **perf sched msg**          | Troca de contexto e desempenho de IPC    | `perf`       |
+| **perf memcpy**             | Rendimento de memória `memcpy()`         | `perf`       |
+| **prime calculation**       | Aritmética de inteiros e paralelismo     | `primesieve` |
+| **NAMD**                    | Dinâmica molecular (carga científica)    | `namd3`      |
+| **Blender render**          | Renderização 3D apenas por CPU           | `blender`    |
+| **xz compression**          | Rendimento de compressão                 | `xz`         |
+| **Kernel defconfig build**  | Desempenho de compilação do Kernel       | `make`       |
+| **y-cruncher**              | Precisão matemática e stress de memória  | `y-cruncher` |
+
+O `cachyos-benchmarker` pode ser utilizado para vários fins, incluindo:
+
+- **Testar a estabilidade do escalonador**
+  Execute o conjunto completo de benchmarks para detetar bloqueios (*stalls*), falhas (*crashes*) ou regressões introduzidas por alterações no escalonador.
+- **Recolher registos**
+  Se estiver a utilizar o `scx_loader`, pode recolher registos em caso de bloqueio ou falha com:
+  ```bash
+  journalctl --unit scx_loader.service --boot 0 > crash.log
+  ```
+  Isto criará um ficheiro chamado `crash.log` no seu diretório atual.
+- **Comparar o desempenho dos escalonadores**
+  - Avalie as diferenças de desempenho entre escalonadores. Ex: `BPFLAND vs LAVD`.
+- **Medir o efeito de atualizações do kernel ou do escalonador**
+  - Compare execuções antes e depois de aplicar patches ou alterações de versão para verificar regressões ou melhorias de desempenho.
+- **Testar ajustes de configuração**
+  - Avalie o impacto de alterações como as definições do regulador de CPU (governor), alternância de SMT ou flags modificadas do escalonador.
+
+#### Requisitos
+- 4 GB de RAM ou mais
+- Pelo menos 8 GB de espaço livre em disco
+- Tempo e paciência – **o benchmark completo pode demorar mais de uma hora em sistemas mais lentos**
+
+#### Instalação
+
+Para instalar o `cachyos-benchmarker`, execute o seguinte comando:
+```bash
+sudo pacman -S cachyos-benchmarker
+```
+
+#### Executar o benchmark
+
+<Steps>
+    1. Execute o `cachyos-benchmarker`:
+        ```bash
+        cachyos-benchmarker ~/cachyos-benchmarker/
+        # Pode substituir ~/cachyos-benchmarker/ por qualquer diretório onde deseje que os registos sejam guardados.
+        ```
+    2. Aguarde até que os passos de preparação terminem.
+    3. Siga as instruções no terminal:
+        - `Do you want to drop page cache now? Root privileges needed! (y/N) y` (Deseja limpar a cache de páginas agora? Requer privilégios de root!)
+        - `Please enter a name for this run, or leave empty for default:` (Por favor, introduza um nome para esta execução ou deixe em branco para o predefinido:)
+    4. Aguarde que os testes terminem.
+    5. Assim que terminar, acontecerá o seguinte:
+        - Criação de um ficheiro de registo com um nome semelhante a `benchie_<nome>_<DATA>.log`, que contém informações detalhadas sobre a execução do benchmark.
+          - Exemplo: `benchie_p2dq_2025-09-29-2115.log`
+          - O script `benchmark_scraper.py` será executado automaticamente para gerar um relatório de resumo em formato HTML.
+          - O que faz o script?:
+            - Lê todos os ficheiros `benchie_*.log` no diretório especificado.
+            - Extrai os nomes dos benchmarks, tempos e pontuações.
+            - Ordena ou agrega os dados.
+            - Exibe um resumo limpo dos resultados no seu terminal e cria um ficheiro HTML que pode ser aberto num navegador.
+                <details>
+                <summary>Exemplo de saída do terminal:</summary>
+                ```text
+                stress-ng cpu-cache-mem: 15.26
+                y-cruncher pi 1b: 31.23
+                perf sched msg fork thread: 8.892
+                perf memcpy: 13.53
+                namd 92K atoms: 53.54
+                cálculo de números primos: 11.126
+                hashing argon2: 6.62
+                compilação ffmpeg: 53.38
+                compressão xz: 61.13
+                kernel defconfig: 130.73
+                renderização blender: 96.29
+                codificação x265: 24.99
+
+                Tempo total (s): 506.72
+                Pontuação total: 70.71
+
+                Nome: p2dq
+                Data: 2025-09-29-2115
+
+                Sistema:    Kernel: 6.17.0-1.1-cachyos-p2dq arch: x86_64 bits: 64
+                            Desktop: KDE Plasma v: 6.4.5 Distro: CachyOS
+                Memória:    RAM do Sistema: total: 32 GiB disponível: 30.61 GiB usada: 7.54 GiB (24.6%)
+                            Dispositivo-1: Channel-A DIMM 0 tipo: LPDDR5 tamanho: 8 GiB velocidade: 7500 MT/s
+                            Dispositivo-2: Channel-B DIMM 0 tipo: LPDDR5 tamanho: 8 GiB velocidade: 7500 MT/s
+                            Dispositivo-3: Channel-C DIMM 0 tipo: LPDDR5 tamanho: 8 GiB velocidade: 7500 MT/s
+                            Dispositivo-4: Channel-D DIMM 0 tipo: LPDDR5 tamanho: 8 GiB velocidade: 7500 MT/s
+                CPU:        Info: 8-core modelo: AMD Ryzen 7 8845HS w/ Radeon 780M Graphics bits: 64 tipo: MT MCP cache: L2: 8 MiB
+                            Velocidade (MHz): média: 3366 min/max: 419/5138 núcleos: 1: 3366 2: 3366 3: 3366 4: 3366 5: 3366 6: 3366 7: 3366 8: 3366 9: 3366 10: 3366 11: 3366 12: 3366 13: 3366 14: 3366 15: 3366 16: 3366
+
+                Escalonador SCX: p2dq_1.0.21_gf90c2aa1_dirty_x86_64_unknown_linux_gnu
+
+                Versão SCX: p2dq_1.0.21_gf90c2aa1_dirty_x86_64_unknown_linux_gnu
+
+                Versão         : 0.5.1-1
+                ```
+                </details>
+                <details>
+                <summary>Exemplo em HTML de um resultado de teste comparando dois ramos diferentes do mesmo escalonador:</summary>
+                <ImageComponent imgsrc={import('~/assets/images/cachyos-benchmarker-example.png')} />
+                </details>
+    6. Para comparar duas ou mais execuções, coloque os ficheiros `.log` no mesmo diretório antes de executar o `benchmark_scraper.py`. A ferramenta irá detetá-los e compará-los automaticamente no relatório HTML.
+</Steps>
+
+### Testar a latência do escalonador com o schbench
+
+O **schbench** é um benchmark de escalonador desenhado para medir a latência do escalonador sob uma carga de trabalho simulada de estilo servidor. Este cria um número configurável de threads "worker" (trabalhadoras) e "message" (mensagens), onde as mensagens acordam repetidamente os workers. Ao medir a distribuição da latência desde o despertar até à execução destas threads, o schbench fornece informações críticas sobre a capacidade do kernel em lidar com o despertar de threads, o equilíbrio de carga (*balancing*) e a contenção de CPU, especialmente sob carga.
+
+#### Casos de uso
+
+Pode utilizar o `schbench` para:
+
+- **Avaliar a latência do escalonador:** Identificar quão rapidamente as threads são escalonadas após acordarem.
+- **Comparar o desempenho de despertar (*wakeup*) entre escalonadores:** Detetar melhorias ou regressões na troca de contexto e na latência de despertar.
+- **Testar o efeito de patches no kernel ou no escalonador:** Avaliar se ajustes ou atualizações afetam a justiça (*fairness*) e a responsividade do escalonamento.
+
+#### Instalação
+
+O `schbench` está disponível nos repositórios do CachyOS:
+```bash
+sudo pacman -S schbench
+```
+
+#### Executar o benchmark
+
+Uma forma simples de executar o `schbench` para um teste de latência geral é:
+```bash
+schbench -m 2 -t 8 -r 60
+```
+
+Este exemplo executa:
+- 2 threads de mensagem (`-m 2`)
+- 8 threads trabalhadoras (*worker threads*) por thread de mensagem (`-t 8`)
+- durante um tempo total de 60 segundos (`-r 60`)
+
+Podes ajustar estes valores dependendo do número de núcleos do teu CPU e do nível de carga desejado.
+
+Aqui está uma tabela que explica algumas das principais opções:
+
+| Opção                        | Descrição                                                                    |
+| ---------------------------- | ---------------------------------------------------------------------------- |
+| `-C, --calibrate`            | Executa a calibração e reporta o tempo (sem benchmark).                      |
+| `-L, --no-locking`           | Desativa os *spinlocks* durante o trabalho de CPU (padrão: bloqueio ativado). |
+| `-m, --message-threads <n>`  | Número de threads de mensagem (padrão: 1).                                   |
+| `-t, --threads <n>`          | Threads trabalhadoras por thread de mensagem (padrão: número de CPUs).       |
+| `-r, --runtime <seg>`        | Duração do benchmark (padrão: 30).                                           |
+| `-F, --cache_footprint <KB>` | Tamanho da pegada (*footprint*) da cache (padrão: 256).                      |
+| `-n, --operations <count>`   | Número de operações de "tempo de reflexão" a realizar (padrão: 5).           |
+| `-A, --auto-rps`             | Aumenta automaticamente o RPS até atingir o alvo de utilização de CPU.       |
+| `-R, --rps <count>`          | Modo de requisições por segundo.                                             |
+| `-p, --pipe <bytes>`         | Simula um teste de transferência por *pipe*.                                 |
+| `-w, --warmuptime <seg>`     | Duração do aquecimento antes de recolher estatísticas (padrão: 0).           |
+| `-i, --intervaltime <seg>`   | Intervalo para exibir as latências (padrão: 10).                             |
+| `-z, --zerotime <seg>`       | Intervalo para reiniciar as estatísticas de latência (padrão: nunca).        |
+
+#### Compreender os resultados
+
+Após cada execução, o `schbench` exibe os percentis de latência como:
+
+<details>
+    <summary>Exemplo de saída (Output)</summary>
+    ```bash
+    Wakeup Latencies percentiles (usec) runtime 10 (s) (2406 total samples)
+	  50.0th: 60         (648 samples)
+	  90.0th: 2034       (968 samples)
+	* 99.0th: 4104       (211 samples)
+	  99.9th: 10128      (22 samples)
+	  min=1, max=10308
+    Request Latencies percentiles (usec) runtime 10 (s) (2394 total samples)
+	  50.0th: 49216      (726 samples)
+	  90.0th: 69760      (954 samples)
+	* 99.0th: 166656     (212 samples)
+	  99.9th: 273920     (21 samples)
+	  min=11770, max=334247
+    RPS percentiles (requests) runtime 10 (s) (11 total samples)
+	  20.0th: 234        (3 samples)
+	* 50.0th: 238        (3 samples)
+	  90.0th: 241        (4 samples)
+	  min=230, max=248
+    current rps: 230.99
+    Wakeup Latencies percentiles (usec) runtime 10 (s) (2406 total samples)
+	  50.0th: 60         (648 samples)
+	  90.0th: 2034       (968 samples)
+	* 99.0th: 4104       (211 samples)
+	  99.9th: 10128      (22 samples)
+	  min=1, max=10308
+    Request Latencies percentiles (usec) runtime 10 (s) (2406 total samples)
+	  50.0th: 49216      (729 samples)
+	  90.0th: 69760      (956 samples)
+	* 99.0th: 165632     (212 samples)
+	  99.9th: 273920     (22 samples)
+	  min=11770, max=334247
+    RPS percentiles (requests) runtime 10 (s) (11 total samples)
+	  20.0th: 234        (3 samples)
+	* 50.0th: 238        (3 samples)
+	  90.0th: 241        (4 samples)
+	  min=230, max=248
+    average rps: 240.60
+    ```
+</details>
+
+##### Como interpretar os resultados
+
+- **Wakeup Latencies (Latências de Despertar):**
+  - Mede a rapidez com que as threads acordam após serem sinalizadas.
+    - Valores mais baixos aqui (especialmente no **percentil 99**) significam que o escalonador é mais responsivo.
+- **Request Latencies (Latências de Requisição):**
+  - Representa o tempo necessário para completar requisições entre threads.
+    - Uma latência mais baixa indica melhor comunicação entre threads e maior eficiência de escalonamento.
+- **RPS (Requisições Por Segundo):**
+  - Mostra o rendimento (*throughput*) sustentado:
+    - Um **RPS médio** mais elevado indica que o escalonador consegue lidar com mais trabalho por segundo sob a configuração dada.
+
+Em conclusão:
+- Um **bom escalonador** apresentará **latências de despertar e de requisição baixas** com um **RPS consistente**.
+- Um **escalonador menos eficiente** pode exibir **picos de latência altos** ou **valores de RPS instáveis** ao longo do tempo.
+
+:::note
+Estes resultados podem variar com base no CPU, contagem de núcleos, carga do sistema e se o escalonador é capaz de lidar com a arquitetura do seu CPU de forma eficiente.
+:::
+
+---
+
+### Recomendações para benchmarking de jogos
+
+Se o seu desejo é testar jogos para comparar o desempenho de diferentes escalonadores, aqui estão algumas dicas para obter os resultados mais precisos:
+
+- **Utilize benchmarks integrados:** Muitos jogos modernos incluem ferramentas de benchmark internas. Estas são desenhadas para fornecer resultados consistentes ao correr a mesma sequência de eventos em cada execução.
+  - Consulte este [website](https://www.pcgamingwiki.com/wiki/List_of_games_with_built-in_benchmarks) para uma lista de jogos que incluem benchmarks integrados.
+- **Configurações consistentes:** Certifique-se de que as definições do jogo (resolução, qualidade gráfica, etc.) são as mesmas em cada teste.
+- **Feche aplicações em segundo plano:** Outras aplicações a correr em fundo podem afetar o desempenho. Feche programas desnecessários para minimizar o seu impacto.
+- **Consistência manual:** Se não estiver a usar um benchmark integrado, tente realizar as mesmas ações no jogo em cada execução (seguir o mesmo caminho, combates semelhantes, etc.).
+  - Até o simples facto de não apontar para o mesmo local exato pode levar a variações nos resultados.
+- **Múltiplas execuções:** Realize o benchmark várias vezes e utilize a média para compensar a variabilidade.
+- **Ferramentas de monitorização:** Ferramentas como o **MangoHud** ou **GOverlay** podem fornecer métricas em tempo real, como FPS, *frame times* e utilização de CPU/GPU.
+- **Atalhos e Macros:**
+  - Pode criar um atalho de teclado para alternar entre diferentes escalonadores ou mudar os seus modos "na hora" enquanto joga.
+    - Isto pode ser feito usando uma ferramenta como o [scxctl](/configuration/sched-ext#how-to-launch-and-manage-the-scheduler) ou através de scripts personalizados.
+
+#### Upload e partilha de benchmarks
+
+Este [website](https://flightlesssomething.ambrosia.one/benchmarks) contém uma lista de benchmarks feitos pela comunidade testando diferentes escalonadores e configurações.
+
+Para carregar os seus próprios benchmarks, deverá associar a sua conta do Discord ao site.
+
+Depois, clique no botão `New benchmark` e preencha a informação necessária:
+- Pode carregar múltiplos resultados para o mesmo jogo usando diferentes escalonadores.
+- Aceita registos (*logs*) do MangoHud e Afterburner.
+- Permite pesquisa por título ou descrição.
+
+---
+
+## Transição do scx.service para o scx_loader: Um Guia Abrangente
+
+:::caution
+Não tente correr o `scx_loader.service` em conjunto com o `scx.service`. Caso contrário, o serviço do loader iniciará mas não fará nada.
+
+Este conflito ocorre porque ambos os serviços não têm conhecimento um do outro, especialmente sobre qual deles deve gerir os escalonadores.
+:::
+
+:::tip
+O CachyOS Kernel Manager já inclui uma [interface gráfica (GUI) para gerir o scx_loader.](/features/kernel_manager#sched-ext-framework-management)
+:::
+
+Vamos começar com uma comparação direta entre a estrutura do ficheiro `scx.service` e a estrutura do ficheiro de configuração do `scx_loader`.
+
+*Se anteriormente tinha o LAVD a correr com o antigo scx.service, como no exemplo abaixo:*
+
+```sh title='estrutura do ficheiro scx.service'
+# Lista de escalonadores scx: scx_bpfland scx_central scx_flash scx_lavd scx_layered scx_nest scx_qmap scx_rlfifo scx_rustland scx_rusty scx_simple scx_userland
+SCX_SCHEDULER=scx_lavd
+
+# Definir flags personalizadas para o escalonador
+SCX_FLAGS='--performance'
+```
+
+Então, o equivalente no ficheiro de configuração do scx_loader será:
+
+```sh title='estrutura do ficheiro scx_loader'
+default_sched = "scx_lavd"
+default_mode = "Auto"
+
+[scheds.scx_lavd]
+auto_mode = ["--performance"]
+```
+
+[Para mais informações sobre como configurar o ficheiro scx_loader](https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/configuration.md#scx_loader-configuration-file)
+
+Siga o guia abaixo para uma transição fácil do `scx systemd service` para o novo utilitário `scx_loader`.
+  <Steps>
+  1. ```sh title='Desativar o scx.service em favor do scx_loader.service'
+      systemctl disable --now scx.service && systemctl enable --now scx_loader.service
+      ```
+  2. ```sh title='Criar o ficheiro de configuração para o scx_loader e adicionar a estrutura predefinida'
+      # O editor Micro irá criar um novo ficheiro.
+      sudo micro /etc/scx_loader.toml
+
+      # Adicione as seguintes linhas:
+      default_sched = "scx_bpfland" # Edite esta linha para o escalonador que deseja que o scx_loader inicie no arranque
+      default_mode = "Auto" # Valores possíveis: "Auto", "Gaming", "LowLatency", "PowerSave".
+
+      # Pressione CTRL + S para guardar as alterações e CTRL + Q para sair do Micro.
+     ```
+  3. ```sh title='Restarting the scx_loader'
+     systemctl restart scx_loader.service
+     ```
+  - Concluído, o scx_loader irá agora carregar e iniciar o escalonador pretendido.
+
+  </Steps>
+
+### Depuração (Debugging) no scx_loader
+
+<Tabs>
+<TabItem label='Registo simples'>
+
+  - ```sh title='Verificar o estado do serviço'
+    systemctl status scx_loader.service
+    ```
+  - ```sh title='Visualizar todas as entradas de registo (logs) do serviço'
+    journalctl -u scx_loader.service
+    ```
+  - ```sh title='Visualizar apenas os registos (logs) da sessão atual.'
+    journalctl -u scx_loader.service -b 0
+    ```
+</TabItem>
+<TabItem label='Registo estendido'>
+
+*Para obter um registo (log) mais detalhado, siga estes passos.*
+  - ```sh title='Editar o ficheiro de serviço'
+     sudo systemctl edit scx_loader.service
+     ```
+  - ```sh title='Adicionar a seguinte linha sob a secção [Service]'
+     Environment=RUST_LOG=trace
+     ```
+  - ```sh title='Reiniciar o serviço'
+     sudo systemctl restart scx_loader.service
+     ```
+  - Verifique os registos (logs) novamente para obter informações de depuração mais detalhadas.
+</TabItem>
+
+</Tabs>
+
+## FAQ
+
+### Por que razão o escalonador X tem um desempenho pior do que o outro?
+
+- Existem muitas variáveis a considerar ao compará-los. Por exemplo, como medem o peso de uma tarefa? Priorizam tarefas interativas sobre as não interativas?
+  Em última análise, depende das suas escolhas de design.
+
+### Por que é que todos dizem que o escalonador X é o melhor para o caso X, mas não funciona tão bem para mim?
+
+- Tal como na resposta anterior, a escolha do CPU e o seu design, como o layout dos núcleos, a forma como partilham a cache entre os núcleos e outros fatores relacionados, podem levar o escalonador a operar de forma menos eficiente.
+- É por isso que ter escolhas é um dos destaques da framework sched-ext, por isso não tenha medo de experimentar um e ver qual funciona melhor para o seu caso de uso. `Exemplos: estabilidade de fps, desempenho máximo, capacidade de resposta sob cargas de trabalho intensivas, etc.`
+
+### Os casos de uso destes escalonadores são bastante semelhantes... porquê?
+
+Principalmente porque são escalonadores de uso geral (multipurpose), o que significa que podem acomodar uma variedade de cargas de trabalho, mesmo que possam não exceder-se em todas as áreas.
+
+- Para determinar qual o escalonador que melhor se adapta a si, não há melhor conselho do que experimentá-lo por si próprio.
+
+### Por que me falta um escalonador que alguns utilizadores estão a mencionar ou a testar no servidor Discord da CachyOS?
+Certifique-se de que está a usar a versão de desenvolvimento (bleeding edge) do pacote scx-scheds, denominada `scx-scheds-git`.
+
+- Uma das razões será que esse escalonador é muito recente e está atualmente a ser testado pelos utilizadores, portanto, ainda não foi adicionado ao pacote `scx-scheds-git`.
+
+### Por que é que o escalonador crashou subitamente? É instável?
+
+- *Podem existir algumas razões para isto ter acontecido:*
+  - Uma das razões mais comuns é que estava a usar o ananicy-cpp juntamente com o escalonador. É por isso que adicionámos este [aviso](/configuration/sched-ext#ananicy-cpp--sched-ext)
+  - Outra razão pode ser que a carga de trabalho que estava a executar excedeu os limites e a capacidade do escalonador, fazendo-o bloquear (stall).
+    - Exemplo de uma carga de trabalho irracional: `hackbench`
+  - Ou a razão mais óbvia: encontrou um bug no escalonador. Se for o caso, por favor reporte-o como um problema (issue) no seu [GitHub](https://github.com/sched-ext/scx/issues) ou informe os desenvolvedores no canal `sched-ext` do Discord da CachyOS.
+
+### Já utilizei anteriormente o scx_loader na interface gráfica do Kernel Manager. Ainda preciso de seguir os passos de transição?
+
+- Neste caso particular, não, não é necessário porque o Kernel Manager já lida com o processo de transição.
+  - *A menos que tenha adicionado anteriormente flags personalizadas em `/etc/default/scx` e ainda queira utilizá-las.*
+
+## Saiba Mais
+
+:::note[Créditos]
+Alguns dos links abaixo foram originalmente referenciados do [repositório GitHub do sched-ext](https://github.com/sched-ext/scx?tab=readme-ov-file#sched_ext-schedulers-and-tools).
+Todo o mérito vai para os mantenedores e contribuidores do sched-ext por organizarem e partilharem estes excelentes recursos.
+:::
+
+- [Playlist de YT do Sched_ext](https://youtube.com/playlist?list=PLLLT4NxU7U1TnhgFH6k57iKjRu6CXJ3yB&si=DETiqpfwMoj8Anvl)
+- [LWN: The extensible scheduler class (Fevereiro, 2023)](https://lwn.net/Articles/922405/)
+- [Blog de arighi: Implement your own kernel CPU scheduler in Ubuntu with sched_ext (Julho, 2023)](https://arighi.blogspot.com/2023/07/implement-your-own-cpu-scheduler-in.html)
+- [Palestra de David Vernet: Kernel Recipes 2023 - sched_ext: pluggable scheduling in the Linux kernel (Setembro, 2023)](https://youtu.be/8kAcnNVSAdI?si=F5Q-dkSS_sG9BTXA)
+- [Blog de Changwoo: sched_ext: a BPF-extensible scheduler class (Parte 1) (Dezembro, 2023)](https://blogs.igalia.com/changwoo/sched-ext-a-bpf-extensible-scheduler-class-part-1/)
+- [Blog de arighi: Getting started with sched_ext development (Abril, 2024)](https://arighi.blogspot.com/2024/04/getting-started-with-sched-ext.html)
+- [Blog de Changwoo: sched_ext: scheduler architecture and interfaces (Parte 2) (Junho, 2024)](https://blogs.igalia.com/changwoo/sched-ext-scheduler-architecture-and-interfaces-part-2/)
+- [Canal de YT de arighi: scx_bpfland Linux scheduler demo: topology awareness (Agosto, 2024)](https://youtu.be/R-FEZOveG-I)
+- [Palestra de David Vernet: Kernel Recipes 2024 - Scheduling with superpowers: Using sched_ext to get big perf gains (Setembro, 2024)](https://youtu.be/Cy7-oqdcUCs?si=bjKu3uidOdIzzAWv)

@@ -1,0 +1,499 @@
+---
+title: Pós-Instalação
+description: Passos para configurar após a instalação do CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+## Atualizar o Sistema
+
+:::tip
+Certifique-se de consultar as nossas [Práticas Recomendadas e de Segurança](/cachyos_basic/faq#security--best-practices) para evitar erros comuns e manter o seu sistema seguro.
+:::
+
+<Tabs>
+
+<TabItem label="Usar o Octopi (Interface Gráfica)">
+
+O Octopi é um gestor de pacotes gráfico para distribuições baseadas em Arch que oferece uma forma conveniente de gerir pacotes e atualizações.
+Para atualizar o seu sistema com o Octopi, siga estes passos:
+
+<Steps>
+
+1. Inicie o **Octopi** a partir do menu de aplicações.
+2. Na janela principal, clique no botão **Check updates** (Canto superior esquerdo) e, em seguida, no botão ao lado, **System upgrade**.
+3. O Octopi irá agora verificar as atualizações disponíveis e perguntar se deseja instalá-las no próprio Octopi ou num terminal.
+4. Para prosseguir com a atualização, clique no botão **Apply**.
+5. O Octopi irá descarregar e instalar as atualizações.
+6. É aconselhável reiniciar o computador após uma atualização significativa **(especialmente se o kernel tiver sido atualizado)**.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Usar o Pacman">
+
+<Steps>
+
+1. Abra um emulador de terminal (ou prima `ctrl + alt + t` - `mod + return` num gestor de janelas, ex: Qtile).
+2. Execute o seguinte comando para atualizar o sistema:
+
+</Steps>
+
+</TabItem>
+
+   ```sh
+   sudo pacman -Syu
+   ```
+3. É aconselhável reiniciar o computador após uma grande atualização **(especialmente se o kernel tiver sido atualizado)**.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Atualização do Sistema Offline">
+
+*O CachyOS suporta atualizações de sistema offline utilizando o script [`pacman-offline`](https://github.com/eworm-de/pacman-offline). Isto permite que o seu sistema descarregue as atualizações dos pacotes e as aplique no próximo reinício. (Sim, tal como no Windows)*
+
+:::note [Nota]
+A ferramenta `pacman-offline` integra-se com a funcionalidade de atualizações offline do systemd. Ela gere automaticamente as atualizações do kernel e o carregamento de módulos.
+
+O ficheiro `/etc/pacman.d/offline.conf` é crucial para gerir quais os pacotes que são atualizados durante as atualizações regulares e offline. Certifique-se de que está configurado corretamente para o kernel desejado ou adicione os pacotes que pretende para que sejam apenas atualizados durante a execução do pacman-offline e ignorados numa atualização regular. Exemplo: `pacman -Syu`.
+
+**Se ativar o temporizador de atualização automática, já não precisará de atualizar manualmente o seu sistema.**
+:::
+
+<Steps>
+
+1. **Instale o pacote pacman-offline**
+
+   ```bash
+   sudo pacman -S pacman-offline
+   ```
+
+2. **Indicar ao Pacman para ler a lista de pacotes ignorados separada.**
+
+   :::note [Adicione a linha após a secção [options]. Consulte o exemplo abaixo como referência.]
+   :::
+
+   ```bash title='Add the following line to the /etc/pacman.conf file'
+   Include = /etc/pacman.d/offline.conf
+   ```
+   *Exemplo*
+   ```bash
+   # /etc/pacman.conf
+   # REPOSITÓRIOS
+   #   - podem ser definidos aqui ou incluídos de outro ficheiro
+   #   - o pacman irá pesquisar nos repositórios pela ordem aqui definida
+   #   - mirrors locais/personalizados podem ser adicionados aqui ou em ficheiros separados
+   #   - os repositórios listados primeiro terão precedência quando os pacotes
+   #     tiverem nomes idênticos, independentemente do número da versão
+   #   - os URLs terão $repo substituído pelo nome do repositório atual
+   #   - os URLs terão $arch substituído pelo nome da arquitetura
+   #
+   # As entradas dos repositórios seguem o formato:
+   #        [nome-do-repo]
+   #        Server = NomeDoServidor
+   #        Include = CaminhoDeInclusao
+   #
+   # O cabeçalho [nome-do-repo] é crucial - deve estar presente e
+   # sem comentário para ativar o repositório.
+   #
+   # OPÇÕES GERAIS
+   [options]
+   # outras opções como 'Color', 'CheckSpace', etc. podem estar aqui
+   Include = /etc/pacman.d/offline.conf
+   ```
+3. **Adicionar os kernels do CachyOS para que o pacman os ignore durante as atualizações regulares**
+
+   A ferramenta `pacman-offline` utiliza este ficheiro para determinar quais os pacotes a ignorar durante as atualizações tradicionais do pacman.
+
+   Exemplo: quando executa `sudo pacman -Syu`
+
+   *Substitua o conteúdo do ficheiro `/etc/pacman.d/offline.conf` pelo seguinte:*
+
+   ```text
+   # Kernels Arch Linux
+   IgnorePkg = linux linux-headers linux-docs
+   IgnorePkg = linux-lts linux-lts-headers linux-lts-docs
+   IgnorePkg = linux-zen linux-zen-headers linux-zen-docs
+   IgnorePkg = linux-hardened linux-hardened-headers linux-hardened-docs
+
+   # Kernels CachyOS
+   IgnorePkg = linux-cachyos linux-cachyos-headers linux-cachyos-nvidia-open linux-cachyos-zfs
+   IgnorePkg = linux-cachyos-bmq linux-cachyos-bmq-headers linux-cachyos-bmq-nvidia-open linux-cachyos-bmq-zfs
+   IgnorePkg = linux-cachyos-bore linux-cachyos-bore-headers linux-cachyos-bore-nvidia-open linux-cachyos-bore-zfs
+   IgnorePkg = linux-cachyos-deckify linux-cachyos-deckify-headers linux-cachyos-deckify-nvidia-open linux-cachyos-deckify-zfs
+   IgnorePkg = linux-cachyos-eevdf linux-cachyos-eevdf-headers linux-cachyos-eevdf-nvidia-open linux-cachyos-eevdf-zfs
+   IgnorePkg = linux-cachyos-gcc linux-cachyos-gcc-headers linux-cachyos-gcc-nvidia-open linux-cachyos-gcc-zfs
+   IgnorePkg = linux-cachyos-hardened linux-cachyos-hardened-headers linux-cachyos-hardened-nvidia-open linux-cachyos-nvidia-hardened-zfs
+   IgnorePkg = linux-cachyos-lts linux-cachyos-lts-headers linux-cachyos-lts-nvidia-open linux-cachyos-lts-zfs
+   IgnorePkg = linux-cachyos-rc linux-cachyos-rc-headers linux-cachyos-rc-nvidia-open linux-cachyos-rc-nvidia-open linux-cachyos-rc-zfs
+   IgnorePkg = linux-cachyos-rt-bore linux-cachyos-rt-bore-headers linux-cachyos-rt-bore-nvidia-open
+   IgnorePkg = linux-cachyos-server linux-cachyos-server-headers linux-cachyos-server-nvidia-open linux-cachyos-server-zfs
+   ```
+
+   *Agora todos estes pacotes serão ignorados nas atualizações regulares, mas verificados durante a preparação offline.*
+
+3. **Inicie a preparação para a atualização offline apenas uma vez**
+
+   ```bash title='Run the following command'
+   sudo systemctl start pacman-offline-prepare.service
+   ```
+   Este comando fará com que o pacman-offline seja executado uma vez e sincronize as bases de dados dos pacotes, procedendo ao descarregamento das atualizações sem as instalar.
+
+</Steps>
+
+*Se pretender que este script seja automatizado, siga os seguintes passos:*
+
+<Steps>
+
+1. **Ative o temporizador de preparação**
+
+   A ativação do `pacman-offline-prepare.timer` permitirá que o systemd acione este script para descarregar atualizações diariamente, alguns minutos após cada arranque do sistema.
+
+   ```bash
+   sudo systemctl enable pacman-offline-prepare.timer
+   ```
+
+2. **Reinicie o seu sistema:**
+
+   As atualizações serão instaladas durante o próximo reinício do sistema.
+
+3. **(Opcional) Reinícios de Sistema Automáticos:**
+
+   Ative o `pacman-offline-reboot.timer` para reiniciar automaticamente o seu sistema por predefinição às **3 da manhã** (no seu fuso horário) se existirem atualizações pendentes. Tenha em atenção que nem sempre será no mesmo horário devido à inclusão de `RandomizedDelaySec`, que está definido para 2 horas por defeito.
+
+    ```bash
+    sudo systemctl enable pacman-offline-reboot.timer
+    ```
+
+:::tip
+    Pode editar o ficheiro `pacman-offline-reboot.timer` para modificar a hora a que pretende que o seu sistema reinicie caso haja alguma atualização pendente, ou para desativar o agendamento aleatório.
+    :::
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Cachy-Update">
+
+Fork do [Arch-Update](https://github.com/Antiz96/arch-update)
+
+Um notificador e aplicador de atualizações para Arch Linux que o auxilia com tarefas importantes de pré e pós-atualização.
+Inclui uma applet de systray dinâmica e clicável para uma integração fácil com qualquer Ambiente de Trabalho / Gestor de Janelas.
+
+Ative o Cachy-Update no CachyOS Hello > Apps/Tweaks > Cachy Update enabled
+
+- Funcionalidades:
+  - Verificação e listagem automática de atualizações disponíveis.
+  - Verificação de notícias recentes do Arch Linux (e oferta para as exibir, se existirem).
+  - Verificação de pacotes órfãos (e oferta para os remover, se existirem).
+  - Verificação de pacotes antigos e desinstalados na cache (e oferta para os remover, se existirem).
+  - Verificação de atualizações de kernel pendentes que exijam reinício (e oferta para o fazer, se houver).
+  - Verificação de serviços que exijam reinício pós-atualização (e oferta para o fazer, se existirem).
+  - Suporte para `sudo`, `sudo-rs`, `doas` e `run0`.
+
+**Intervalo de verificação de atualizações:** `Uma vez 15 segundos após o arranque e depois a cada hora.`
+
+- Como alterar o intervalo de verificação de atualizações:
+
+```sh title='Execute o seguinte comando'
+systemctl --user edit --full arch-update.timer
+# Dica: Também pode usar qualquer editor de texto à sua escolha em vez do `nano`
+# ex: EDITOR=micro systemctl --user edit --full arch-update.timer
+```
+Conteúdo predefinido do ficheiro:
+```systemd
+[Timer]
+OnStartupSec=15 # Verificar atualizações 15 segundos após o arranque
+OnUnitActiveSec=1h # Verificar atualizações a cada hora
+```
+
+Basicamente, pode alterar o valor de `OnUnitActiveSec` para o que desejar. Por exemplo, se quiser verificar se há atualizações a cada 30 minutos, mude para `30m`. Ou a cada 6 horas, mude para `6h`. Consulte este [documento](https://www.freedesktop.org/software/systemd/man/latest/systemd.time.html#Parsing%20Time%20Spans) para mais detalhes sobre como configurar o intervalo de tempo.
+
+Caso pretenda que o Cachy-Update verifique se existem novas atualizações apenas uma vez ao iniciar, pode simplesmente apagar a linha `OnUnitActiveSec` por completo.
+
+Agradecimentos ao [Antiz](https://github.com/Antiz96) por manter o projeto upstream Arch-Update e pela implementação do Cachy-Update.
+
+</TabItem>
+
+</Tabs>
+
+## Configurar a Firewall (ufw)
+:::note [Nota]
+O UFW está ativado por predefinição após a instalação.
+:::
+Para configurar o ufw, siga estes passos:
+
+<Tabs>
+
+<TabItem label="Ativar">
+
+```bash
+sudo ufw enable
+```
+
+</TabItem>
+
+<TabItem label="Desativar">
+
+```bash
+sudo ufw disable
+```
+
+</TabItem>
+
+<TabItem label="Permitir">
+
+Por predefinição, o ufw ignora o tráfego de entrada e permite o tráfego de saída; pode adicionar regras específicas à firewall para bloquear ou permitir ligações específicas.
+
+```bash
+# Por exemplo:
+sudo ufw allow ssh
+```
+
+</TabItem>
+
+<TabItem label="Recusar">
+
+```bash
+# Para recusar uma porta específica, consulte o seguinte exemplo:
+sudo ufw deny 80
+```
+
+</TabItem>
+
+<TabItem label="Estado">
+
+```bash
+sudo ufw status verbose
+```
+
+</TabItem>
+
+</Tabs>
+
+:::note
+Tenha cuidado ao configurar as regras da firewall, pois regras mal configuradas podem deixá-lo sem acesso ao seu próprio sistema.
+:::
+
+:::note
+Também pode configurar graficamente através da secção "Firewall" nas definições do KDE Plasma.
+:::
+
+## Configurar o Domínio Regulamentar do Wi-Fi
+
+O pacote `wireless-regdb` inclui uma base de dados de regras sem fios (frequências permitidas, canais, limites de potência) para vários países. Configurar a região correta para a sua localização pode desbloquear canais de Wi-Fi específicos (como os canais 12/13 ou as bandas de 5GHz/6GHz) que podem estar limitados por predefinição, ajudando a melhorar o desempenho e a qualidade da ligação Wi-Fi.
+
+**Configuração:**
+
+1. Editar a configuração:
+   Abra `/etc/conf.d/wireless-regdom` com privilégios de root.
+   ```bash
+   sudo micro /etc/conf.d/wireless-regdom
+   ```
+2. Defina o seu país:
+   Remova o comentário da linha com o seu [código de país ISO](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Officially_assigned_code_elements) de duas letras (ex: `WIRELESS_REGDOM="PT"`). Certifique-se de que apenas um país está sem comentário.
+3. Reiniciar:
+   Normalmente, é necessário reiniciar para que a alteração produza efeitos.
+
+**Verificação:**
+
+Para verificar o domínio regulamentar aplicado atualmente, utilize este comando:
+
+```bash
+iw reg get
+global
+country 00: DFS-UNSET # Country 00 uses global defaults
+	(755 - 928 @ 2), (N/A, 20), (N/A), PASSIVE-SCAN
+	(2402 - 2472 @ 40), (N/A, 20), (N/A)
+	(2457 - 2482 @ 20), (N/A, 20), (N/A), AUTO-BW, PASSIVE-SCAN
+	(2474 - 2494 @ 20), (N/A, 20), (N/A), NO-OFDM, PASSIVE-SCAN
+	(5170 - 5250 @ 80), (N/A, 20), (N/A), AUTO-BW, PASSIVE-SCAN
+	(5250 - 5330 @ 80), (N/A, 20), (0 ms), DFS, AUTO-BW, PASSIVE-SCAN
+	(5490 - 5730 @ 160), (N/A, 20), (0 ms), DFS, PASSIVE-SCAN
+	(5735 - 5835 @ 80), (N/A, 20), (N/A), PASSIVE-SCAN
+	(57240 - 63720 @ 2160), (N/A, 0), (N/A)
+```
+
+Procure a linha `country XX:`, onde `XX` deve corresponder ao código que definiu. Se aparecer `country 00:`, o sistema poderá estar a utilizar as restrições predefinidas ou ainda não determinou a região.
+
+```bash
+iw reg get
+global
+country US: DFS-FCC # Country correctly shows as US
+	(902 - 904 @ 2), (N/A, 30), (N/A)
+	(904 - 920 @ 16), (N/A, 30), (N/A)
+	(920 - 928 @ 8), (N/A, 30), (N/A)
+	(2400 - 2472 @ 40), (N/A, 30), (N/A)
+	(5150 - 5250 @ 80), (N/A, 23), (N/A), AUTO-BW
+	(5250 - 5350 @ 80), (N/A, 24), (0 ms), DFS, AUTO-BW
+	(5470 - 5730 @ 160), (N/A, 24), (0 ms), DFS
+	(5730 - 5850 @ 80), (N/A, 30), (N/A), AUTO-BW
+	(5850 - 5895 @ 40), (N/A, 27), (N/A), NO-OUTDOOR, AUTO-BW, PASSIVE-SCAN
+	(5925 - 7125 @ 320), (N/A, 12), (N/A), NO-OUTDOOR, PASSIVE-SCAN
+	(57240 - 71000 @ 2160), (N/A, 40), (N/A)
+```
+
+## Ativar o Menu Global
+Para algumas aplicações como o Visual Studio Code, o menu global pode não funcionar ou pode ficar anexado à aplicação principal em vez de aparecer no painel.
+
+```sh
+# Para ativar o suporte ao menu global, execute o comando e reinicie a aplicação.
+sudo pacman -S appmenu-gtk-module libdbusmenu-glib
+```
+
+## Ativar suporte AppArmor utilizando perfis AppArmor.d (Opcional)
+
+<Steps>
+
+1. Adicione os seguintes parâmetros de kernel ao seu Gestor de Arranque (Boot Manager), consulte [Configuração do Gestor de Arranque](/configuration/boot_manager_configuration) para referência:
+
+   ```text
+   lsm=landlock,lockdown,yama,integrity,apparmor,bpf
+   ```
+
+2. Instale os pacotes `apparmor` e `apparmord` **(Conjunto de mais de 1500 perfis)**
+   ```bash
+   sudo pacman -S apparmor apparmor.d
+   ```
+
+3. Ativar/Iniciar o serviço AppArmor
+
+   ```bash
+   systemctl enable --now apparmor.service
+   ```
+
+4. Ativar o cache para os perfis do AppArmor
+
+   ```shell
+   # /etc/apparmor/parser.conf
+   ## Adicione as seguintes linhas:
+   write-cache
+   Optimize=compress-fast
+   cache-loc /etc/apparmor/earlypolicy/
+   ```
+   Grave o ficheiro e reinicie.
+</Steps>
+
+## Alterar a Shell Predefinida
+
+Atualmente, o CachyOS utiliza a [fish](https://fishshell.com/) como a shell de início de sessão (login shell) predefinida do utilizador. No entanto, pode alterar a shell predefinida para qualquer outra que deseje.
+
+<Tabs>
+   <TabItem label='bash'>
+
+      Esta é a shell predefinida em quase todas as distribuições Linux. Também continua a ser utilizada como a shell de início de sessão do utilizador root. A bash possui uma funcionalidade básica de autoconclusão e uma gestão de histórico fácil. Difere da zsh e da fish por não possuir o ecossistema de plugins e a personalização avançada que tanto a fish como a zsh oferecem.
+
+
+      ```sh title='Alterar a sua shell predefinida para bash'
+      chsh -s /usr/bin/bash
+      ```
+
+   </TabItem>
+
+   <TabItem label='zsh'>
+
+      Disponibilizamos uma [configuração zsh](https://github.com/CachyOS/cachyos-zsh-config) com plugins e configurações comummente utilizados. O objetivo é ter uma funcionalidade 1:1 com a nossa [configuração fish](https://github.com/CachyOS/cachyos-fish-config). Esta é também a shell predefinida utilizada no MacOS.
+
+      ```sh title='Changing the default shell to zsh'
+      chsh -s /usr/bin/zsh
+      ```
+
+   </TabItem>
+</Tabs>
+
+## Atualizar/utilizar o [tldr](https://github.com/tldr-pages/tldr)
+
+:::note
+O CachyOS utiliza o [tealdeer](https://github.com/tealdeer-rs/tealdeer), que é uma implementação em Rust mais rápida do tldr original.
+:::
+
+Esta ferramenta é extremamente útil para quem não quer ler muito ou perder tempo a consultar uma página de ajuda (help) ou um manual (man page).
+
+<Steps>
+
+1. ```sh title="Abra um terminal e execute o seguinte comando:"
+   tldr --update
+   ```
+2. Exemplo de utilização do tldr:
+   ```sh
+   tldr java
+     Execute a `.jar` program:
+
+      java -jar filename.jar
+
+   # Como pode ver, é realmente útil, e novas ferramentas/páginas são adicionadas ao longo do tempo.
+   ```
+
+</Steps>
+
+## Gerir Appimages
+
+Appimages são aplicações portáteis que correm na maioria das distribuições Linux sem necessidade de instalação ou permissões de root.
+
+:::note [Nota: Todas as AppImages requerem permissões de execução para correr.]
+Pode definir a permissão de execução utilizando o seguinte comando:
+```sh
+chmod +x /path/to/your/appimage
+```
+Ou clique com o botão direito no ficheiro AppImage, vá a `Propriedades` > `Permissões` e marque a caixa que diz `Permitir executar o ficheiro como um programa.`
+:::
+
+:::note [Nota: Antes de executar AppImages, certifique-se de que o FUSE (Filesystem in Userspace) está instalado no seu sistema.]
+```sh
+sudo pacman -S fuse2
+```
+:::
+
+Para gerir AppImages, pode utilizar o [AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher), que oferece uma forma fácil de integrar AppImages no seu sistema.
+<Tabs>
+  <TabItem label='Utilizar o AppImageLauncher (GUI)'>
+    O AppImageLauncher é uma ferramenta gráfica que simplifica a gestão de AppImages no seu sistema. Integra-se com o seu ambiente de trabalho, facilitando a execução e gestão de AppImages.
+        <Steps>
+        1. Instale o AppImageLauncher:
+              ```sh
+              paru appimagelauncher
+              ```
+        2. Descarregue uma AppImage da sua escolha a partir de uma fonte fidedigna.
+
+        3. Clique duas vezes no ficheiro AppImage descarregado. O AppImageLauncher irá perguntar se deseja integrar a aplicação no seu sistema.
+
+        4. Siga as instruções para concluir o processo de integração.
+
+        5. Uma vez integrada, poderá iniciar a aplicação a partir do menu de aplicações ou clicando duas vezes no ficheiro AppImage.
+        </Steps>
+    </TabItem>
+</Tabs>
+
+## Configurar o Acesso a Partilhas Samba
+
+O Samba é uma implementação de software livre do protocolo de rede SMB. Para se ligar ao seu servidor samba, foi disponibilizada uma configuração útil para os utilizadores do CachyOS, mas esta requer a alteração da configuração do seu servidor samba.
+
+### Instalar e utilizar o ficheiro smb.conf do CachyOS
+
+Para utilizar o prático ficheiro `smb.conf`, instale primeiro o pacote específico que fornece o ficheiro necessário. Em seguida, substitua o `smb.conf` existente no seu servidor por este ficheiro e reconfigure os seus volumes partilhados.
+
+:::note [Nota: Este guia assume que já possui um servidor Samba funcional]
+:::
+
+<Steps>
+    1. Crie uma cópia de segurança (backup) do seu ficheiro `smb.conf` original, normalmente localizado em `/etc/samba/smb.conf` em sistemas Linux.
+    2. Instale o pacote de definições Samba do CachyOS na sua máquina cliente:
+        ```sh
+        sudo pacman -S cachyos-samba-settings
+        ```
+    3. Copie o `smb.conf` da sua máquina cliente para o servidor Samba.
+    4. Abra e edite o ficheiro para adicionar as suas diretorias partilhadas, impressoras, etc.
+    5. Reinicie o serviço Samba no seu servidor:
+        ```sh
+        sudo systemctl restart --now samba
+        ```
+6. Na máquina cliente, aceda aos seus recursos partilhados através do seu gestor de ficheiros (ex: `smb://<ip_do_seu_servidor>/<nome_da_partilha>`).
+
+        Se estiver configurado corretamente, ser-lhe-ão pedidas as credenciais de acesso. Lembre-se de selecionar a opção para guardar as suas informações de início de sessão, se assim o desejar.
+</Steps>
