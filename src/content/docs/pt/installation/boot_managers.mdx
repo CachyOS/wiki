@@ -1,0 +1,222 @@
+---
+title: Gestores de Arranque Oferecidos
+description: Descrição e recomendações para os gestores de arranque atualmente oferecidos
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+Para oferecer a melhor experiência numa vasta gama de dispositivos, o CachyOS oferece atualmente os seguintes gestores de arranque (boot managers): **systemd-boot, rEFInd, GRUB e Limine**.
+
+Este artigo da wiki descreve o conjunto de funcionalidades de cada gestor e inclui as nossas recomendações sobre quando os escolher.
+Para configuração, por favor consulte [Configuração do Gestor de Arranque](/configuration/boot_manager_configuration).
+
+:::caution
+**Nota Importante:** Algumas motherboards MSI possuem firmware UEFI que não cumpre totalmente a especificação UEFI. Isto pode levar a problemas de compatibilidade com certos gestores de arranque, incluindo o GRUB e o rEFInd.
+
+Se encontrar este tipo de problemas, considere utilizar o `systemd-boot` ou o `Limine`.
+:::
+
+---
+
+## Comparação Rápida de Funcionalidades
+
+<style>{`
+  .bm-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .bm-table th, .bm-table td {
+    padding: 8px 10px;
+    vertical-align: top;
+    word-break: break-word;
+  }
+  /* separadores verticais entre colunas de gestores de arranque */
+  .bm-table th:not(:first-child),
+  .bm-table td:not(:first-child) {
+    border-left: 2px solid var(--ifm-table-border-color, #e5e7eb);
+  }
+  /* linha inferior sob o cabeçalho */
+  .bm-table thead th {
+    border-bottom: 2px solid var(--ifm-table-border-color, #e5e7eb);
+  }
+`}</style>
+
+<table className="bm-table">
+  <thead>
+    <tr>
+      <th>Funcionalidade</th>
+      <th><strong>systemd-boot</strong></th>
+      <th><strong>rEFInd</strong></th>
+      <th><strong>GRUB</strong></th>
+      <th><strong>Limine</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Suporte de Firmware</strong></td>
+      <td>Apenas UEFI (sem BIOS/MBR)</td>
+      <td>Apenas UEFI</td>
+      <td>UEFI &amp; BIOS</td>
+      <td>UEFI &amp; BIOS</td>
+    </tr>
+    <tr>
+      <td><strong>Suporte de FS em <code>/boot</code></strong></td>
+      <td>De acordo com o suporte do firmware (geralmente FAT12/16/32); Mais com drivers EFI</td>
+      <td>Do firmware, ext2, ext3, ext4, btrfs, ISO-9660, HFS+ e NTFS; Mais com drivers EFI</td>
+      <td>Amplo suporte de sistemas de ficheiros (ext*, Btrfs, XFS, etc.)</td>
+      <td>FAT12/16/32, ISO9660 para <code>/boot</code></td>
+    </tr>
+    <tr>
+      <td><strong>Dual-boot com Windows</strong></td>
+      <td>Auto-deteta o Windows Boot Manager na mesma ESP</td>
+      <td>Auto-deteta loaders EFI e kernels</td>
+      <td>Suportado via <code>os-prober</code> ou configuração manual</td>
+      <td>Suportado; entradas do Windows Boot Manager podem ser adicionadas com <code>limine-scan</code></td>
+    </tr>
+    <tr>
+      <td><strong>Integração de snapshots Btrfs</strong></td>
+      <td>Possível com configuração personalizada (não fornecida pelo CachyOS)</td>
+      <td>Possível com configuração personalizada (não fornecida pelo CachyOS)</td>
+      <td><strong>Suportado no CachyOS via</strong> <code>grub-btrfs-support</code></td>
+      <td><strong>Suportado no CachyOS via</strong> <code>limine-snapper-sync</code></td>
+    </tr>
+    <tr>
+      <td><strong>Encriptação Total do Disco (FDE)</strong></td>
+      <td>Possível (root encriptado; <code>/boot</code> deve permanecer desencriptado)</td>
+      <td>Possível (root encriptado; <code>/boot</code> deve permanecer desencriptado)</td>
+      <td>Totalmente suportado, incluindo <code>/boot</code> encriptado via <code>cryptodisk</code> (apenas LUKS1/PBKDF2; suporte LUKS2 limitado/requer contornar)</td>
+      <td>Possível (root encriptado; <code>/boot</code> deve permanecer desencriptado)</td>
+    </tr>
+    <tr>
+      <td><strong>Temas / UI</strong></td>
+      <td>Minimalista, sem temas</td>
+      <td>Interface gráfica com suporte para temas</td>
+      <td>Suporta temas, interface clássica</td>
+      <td>Menu personalizável (skins)</td>
+    </tr>
+    <tr>
+      <td><strong>Facilidade de configuração no CachyOS</strong></td>
+      <td>Muito simples (CachyOS auto-configura por defeito)</td>
+      <td>Configuração fácil com deteção automática de OS e kernel</td>
+      <td>Simplificado por hooks/scripts do CachyOS (inclui snapshots Btrfs no menu)</td>
+      <td>Simplificado por ferramentas do CachyOS (ajudantes de entrada + integração de menu de snapshots)</td>
+    </tr>
+    <tr>
+      <td><strong>Particularidades UEFI MSI</strong></td>
+      <td>Funciona de forma fiável</td>
+      <td>Pode ter problemas (requer soluções alternativas)</td>
+      <td>Pode ter problemas</td>
+      <td>Funciona de forma fiável</td>
+    </tr>
+    <tr>
+      <td><strong>Arranque Medido (TPM PCR)</strong></td>
+      <td>Sim, <a href="https://systemd.io/TPM2_PCR_MEASUREMENTS/" target="_blank">nativo</a></td>
+      <td>Possível usando systemd-ukify</td>
+      <td>Sim, <a href="https://www.gnu.org/software/grub/manual/grub/html_node/Measured-Boot.html" target="_blank">nativo</a></td>
+      <td><a href="https://github.com/fwupd/fwupd/discussions/9568" target="_blank">Possível usando systemd-ukify</a></td>
+    </tr>
+    <tr>
+      <td><strong>Melhor caso de uso</strong></td>
+      <td>Configurações UEFI rápidas/simples; alternativa para falhas MSI</td>
+      <td>Multi-boot com interface polida</td>
+      <td>Necessário para <strong>/boot</strong> encriptado, BIOS ou maior suporte de FS</td>
+      <td>Setups modernos que pretendem arranque por snapshots + BIOS &amp; UEFI + chainloading</td>
+    </tr>
+  </tbody>
+</table>
+
+## Detalhes dos Gestores de Arranque
+
+### systemd-boot
+
+Parte da família systemd, o systemd-boot foi criado para ser o mais simples possível. Por isso, apenas suporta sistemas baseados em UEFI. Este design simples mas eficiente garante que seja fiável e rápido, mas à custa de funcionalidades avançadas suportadas por outros gestores.
+
+#### Prós
+- Configuração muito simples.
+- As entradas de arranque são separadas em múltiplos ficheiros, facilitando a gestão.
+- Garante compatibilidade com algumas boards MSI que enfrentam problemas UEFI com outros gestores.
+- No CachyOS, a configuração é gerada automaticamente de raiz.
+- Os PCRs do TPM são medidos durante o arranque.
+
+#### Contras
+- Sem suporte para BIOS/MBR.
+- Muito básico: sem temas ou personalização.
+- Se utilizar um sistema de ficheiros de arranque além dos padrões do firmware (FAT12/16/32), é necessário adicionar manualmente partições separadas ESP e [XBOOTLDR](https://wiki.archlinux.org/title/Systemd-boot#Installation_using_XBOOTLDR) & drivers EFI.
+- Não consegue encontrar imagens de arranque em partições que não sejam a sua própria ESP ou a partição XBOOTLDR.
+- A configuração não é auto-gerada a menos que seja configurado para tal.
+- Sem suporte nativo para rollback de snapshots Btrfs devido ao requisito de armazenar imagens do kernel na partição de boot em vez da root.
+  - O arranque por snapshots só é possível com configurações personalizadas (não fornecidas pelo CachyOS).
+
+---
+
+### rEFInd
+
+Um fork do rEFIt, o rEFInd foi feito primariamente para facilitar o multi-boot a utilizadores de MacOS. No entanto, o rEFInd evoluiu para ser agnóstico ao hardware, tornando-o uma excelente escolha para multi-boot em qualquer sistema. O principal atrativo do rEFInd é a sua capacidade de verificar todos os dispositivos de armazenamento no arranque e exibir correspondentemente as entradas para cada OS/Kernel encontrado.
+
+#### Prós
+- Auto-deteta todos os sistemas operativos e kernels nos dispositivos de armazenamento.
+- Pouca ou nenhuma configuração manual necessária.
+- Interface gráfica que lembra o seletor de arranque do MacOS.
+- Ótimo suporte para temas, com suporte opcional para ecrãs táteis.
+- Pode ler imagens de arranque de sistemas de ficheiros EFI (FAT12/16/32), bem como EXT4 e BTRFS. Suporte adicional pode ser ativado instalando drivers EFI do pacote `efifs`.
+
+#### Contras
+- Sem suporte para sistemas BIOS.
+- Incompatível com algumas boards MSI (devido a violações da especificação UEFI).
+  - Corrigível com uma solução alternativa, mas requer passos extra.
+- Os PCRs do TPM não são medidos. <a href="https://github.com/fwupd/fwupd/wiki/TPM-PCR0-differs-from-reconstruction">Irá falhar no teste de Reconstrução TPM PCR0</a>.
+  - Corrigível ao arrancar um UKI que utilize systemd-stub como stub UEFI. O systemd-ukify pode fazer isto.
+  - Outra solução é fazer chainload para outro carregador que meça o TPM PCR (ex: systemd-boot, GRUB).
+
+---
+
+### GRUB
+
+O GRUB é o mais antigo dos gestores de arranque disponíveis. Possui um conjunto de funcionalidades vasto, funciona em quase todas as máquinas e continua a ser o gestor de arranque Linux mais utilizado.
+
+#### Prós
+- Suporta quase todos os sistemas de ficheiros Linux.
+- Amplamente utilizado — a documentação e ajuda da comunidade são abundantes.
+- Suporta partições `/boot` encriptadas.
+- Suporta arranque por snapshots Btrfs (via `grub-btrfs-support` no CachyOS).
+- Suporta sistemas BIOS e UEFI.
+- Suporte para temas disponível, apesar da interface algo datada.
+- Os PCRs do TPM são medidos durante o arranque.
+
+#### Contras
+- Grande e complexo, com muitos drivers de sistemas de ficheiros.
+- Notavelmente mais lento que o systemd-boot, rEFInd e Limine.
+- Incompatível com algumas boards MSI (violações da especificação UEFI).
+
+---
+
+### Limine
+
+O Limine é um gestor de arranque multiprotocolo moderno, avançado e portátil. Serve como a implementação de referência para o protocolo de arranque Limine e suporta Linux, bem como o carregamento em cadeia (chainloading) de outros loaders.
+
+#### Prós
+- Suporta múltiplos protocolos de arranque, incluindo Multiboot2 e o protocolo de arranque Linux.
+- Pode arrancar tanto em sistemas UEFI como BIOS.
+- Possui capacidades de personalização de temas semelhantes ao GRUB.
+- Suporta snapshots Btrfs via `limine-snapper-sync`, ativado por defeito no CachyOS com Btrfs.
+
+#### Contras
+- `/boot` deve usar FAT12/16/32 ou ISO9660. Outros sistemas de ficheiros requerem configuração adicional.
+- Não adiciona automaticamente uma entrada na NVRAM UEFI. Isto deve ser feito manualmente com o `efibootmgr`, ou tratado automaticamente com o `limine-entry-tool` (pré-instalado no CachyOS).
+- Não funciona com UFS (Universal Flash Storage), usado, por exemplo, em alguns Chromebooks.
+- Os PCRs do TPM não são medidos. <a href="https://github.com/fwupd/fwupd/wiki/TPM-PCR0-differs-from-reconstruction">Irá falhar no teste de Reconstrução TPM PCR0</a>.
+  - Corrigível ao arrancar um UKI que utilize systemd-stub como stub UEFI. O systemd-ukify pode fazer isto (<a href="https://github.com/fwupd/fwupd/discussions/9568" target="_blank">veja aqui</a>).
+  - Outra solução é fazer chainload para outro carregador que meça o TPM PCR (ex: systemd-boot, GRUB).
+
+---
+
+## Resumo (TL;DR)
+
+- Escolha o **GRUB** se precisar de `/boot` encriptado, compatibilidade com BIOS, ou se quiser snapshots Btrfs com um gestor de arranque estável e maduro.
+
+- Escolha o **Limine** se quiser um gestor moderno com integração de snapshots Btrfs nativa, suporte para BIOS e UEFI, e dual-boot com Windows (via **limine-scan**).
+
+- Escolha o **rEFInd** se preferir uma interface gráfica polida e deteção automática de multi-boot em sistemas UEFI.
+
+- Escolha o **systemd-boot** se preferir a configuração mais simples e não necessitar de snapshots ou funcionalidades avançadas. É também a alternativa mais fiável para motherboards MSI com problemas de UEFI.

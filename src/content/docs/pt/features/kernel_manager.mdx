@@ -1,0 +1,109 @@
+---
+title: Gestão de Kernels Linux & Framework Sched-ext com o CachyOS Kernel Manager
+description: O CachyOS Kernel Manager é uma ferramenta poderosa para gerir kernels, permitindo aos utilizadores instalar ou compilar kernels personalizados com facilidade.
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+Instalar um Kernel a partir de um Repositório
+---------------------------------------
+
+O CachyOS Kernel Manager torna simples a instalação e gestão de kernels a partir de qualquer repositório Arch Linux.
+
+Para instalar um kernel, abra a aplicação `CachyOS Kernel Manager` e escolha o kernel pretendido assinalando a caixa `[]` na lista de todas as opções disponíveis. Depois, basta premir `Execute` para iniciar a instalação.
+
+Para desinstalar um kernel, basta desmarcar a caixa `[]` junto ao kernel instalado que deseja remover e premir `Execute` novamente.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km1.png')} />
+
+:::note
+O botão `Execute` fica indisponível quando seleciona um kernel que já está instalado.
+:::
+
+Configurar e Compilar um Kernel CachyOS personalizado
+---------------------------------
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km2.png')} />
+
+:::note
+O CachyOS Kernel Manager foi concebido especificamente para compilar kernels personalizados para as **variantes do CachyOS** e não suporta a compilação ou configuração de um kernel Arch Linux padrão ou de qualquer outra variante.
+:::
+
+*Para começar, abra o Kernel Manager e clique no botão `Configure` para começar a ajustar as várias definições, tais como o agendador pretendido, a taxa de atualização (tick rate) e muito mais. Assim que tiver efetuado as alterações desejadas, clique em `Build kernel` para iniciar a compilação do seu kernel CachyOS personalizado.*
+
+**Os pacotes de kernel compilados e a cache são armazenados em** `~/.cache/cachyos-km/`
+
+**Opções de configuração disponíveis:**
+
+* `Custom package name`: Com esta opção, pode dar ao seu kernel o nome que desejar. Por exemplo: `linux-custom-cachy`
+* Agendador (BORE, RC, RT, RT+BORE, EEVDF e BMQ)
+* Ativar a configuração CachyOS (CachyOS config)
+* Ajustar a configuração via nconfig, menuconfig, xconfig ou gconfig
+* Ativar/Desativar NUMA
+* Ativar/Desativar Modprobed-db
+* KBUILD CFLAGS (-O3 ou -O2)
+* Governador de desempenho (Performance governor) como predefinição
+* Ativar BBR3
+* Seleção da taxa de atualização / Tick rate (100Hz, 250Hz, 300Hz, 500Hz, 600Hz, 750Hz, 1000Hz)
+* Modo Tickless (idle, periodic, full)
+* Preempção (Full, Voluntary ou Server)
+* Transparent Hugepages (Always ou Madvise)
+* Ativar/Desativar DAMON
+* Ativar/Desativar deteção automática da arquitetura do CPU
+* Aplicar otimização de kernel para arquiteturas de CPU específicas
+* Ativar LTO (Full, Thin, No)
+* Compilar módulo ZFS
+* Compilar módulo NVIDIA Proprietário (Closed)
+* Compilar módulo NVIDIA Open-Source
+* Incluir vmlinux com informações/símbolos de depuração (debug)
+* Carregar/Guardar predefinições de configuração do Kernel Manager: `(Apenas predefinições do próprio gestor)`
+* Gestão de Patches de Kernel (suporte Remoto e Local)
+
+*Assim que o kernel for compilado com sucesso, ser-lhe-á solicitada a palavra-passe de sudo para proceder à instalação.*
+
+## Gestão da Framework Sched-ext
+
+:::caution[Requer um agente polkit funcional para funcionar corretamente.]
+Consulte a seguinte **[página da Arch Wiki para referência.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+O Kernel Manager fornece uma interface gráfica (GUI) para gerir e controlar os agendadores sched-ext. Aceda à interface clicando no botão `sched-ext scheduler config` na janela principal.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km3.png')} />
+
+Esta interface permite-lhe:
+
+- Alternar entre diferentes agendadores sched-ext (scx).
+- Ativar ou desativar o serviço do agendador.
+- Verificar o agendador que está a ser executado no momento.
+- Definir flags e perfis do agendador.
+
+Para o conseguir, o Kernel Manager utiliza o `scx_loader` com uma configuração armazenada em `/etc/scx_loader.toml`.
+
+Para mais informações sobre o ficheiro de configuração do `scx_loader`, consulte [esta documentação](https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/configuration.md).
+
+- Como funciona o `scx_loader`?
+    - Assim que selecionar o agendador e o perfil, o scx_loader irá iniciar o agendador com o perfil escolhido e guardar esta configuração no ficheiro `/etc/scx_loader.toml`, de forma a garantir a persistência após o reinício do sistema. Um exemplo do aspeto do ficheiro ao escolher o `scx_bpfland` com o perfil `Gaming`:
+        ```toml
+        default_sched = "scx_bpfland"
+        default_mode = "Gaming"
+
+        [scheds.scx_bpfland]
+        auto_mode = []
+        gaming_mode = ["-m", "performance"]
+        lowlatency_mode = ["-k", "-s", "5000", "-l", "5000"]
+        powersave_mode = ["-m", "powersave"]
+        ```
+
+### Perfis de Agendador (Scheduler Profiles)
+
+- Para que servem os "perfis"?
+  - São predefinições para o agendador que modificam as flags com base em combinações comprovadas, visando aumentar a eficácia em casos de uso específicos, como "Gaming" (Jogos).
+
+Consulte todos os detalhes sobre os perfis no [guia de agendadores.](/configuration/sched-ext#scheduler-guide-profiles-and-use-cases)
