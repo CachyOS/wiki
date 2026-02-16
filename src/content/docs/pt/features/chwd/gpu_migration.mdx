@@ -1,0 +1,93 @@
+---
+title: Alternar entre GPUs NVIDIA e AMD
+description: Instruções para migrar de NVIDIA para AMD (e vice-versa) no CachyOS.
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::note[Este guia aplica-se caso esteja a substituir a sua GPU (NVIDIA ↔ AMD) numa instalação existente do CachyOS.]
+:::
+
+## Pré-requisitos
+  - A sua nova GPU está corretamente instalada e ligada.
+  - Certifique-se de que o seu sistema está totalmente atualizado.
+    ```bash
+    sudo pacman -Syu
+    ```
+
+### Passos de Migração
+
+<Tabs>
+    <TabItem label='De NVIDIA para AMD'>
+        Embora os controladores (drivers) da AMD estejam incluídos no Kernel Linux, poderá ser necessário limpar a configuração antiga da NVIDIA e garantir que os pacotes necessários da AMD estão instalados.
+        <Steps>
+            1. Verifique qual o perfil de controladores NVIDIA está atualmente instalado:
+                ```bash
+                sudo chwd --list-installed
+                ```
+            2. Remova o perfil específico utilizando a flag `-r`:
+                ```bash
+                sudo chwd -r <profile-name>
+                ```
+            3. Desligue o seu sistema e proceda à instalação da sua GPU AMD.
+            4. Após iniciar o sistema, utilize o chwd para detetar automaticamente a sua GPU e instalar os pacotes AMD corretos.
+                ```bash
+                sudo chwd -a
+                ```
+            5. Após instalar os novos controladores, atualize o initramfs e a configuração do gestor de arranque (bootloader)
+                > O CachyOS inclui um hook do pacman que reconstrói automaticamente o initramfs quando os controladores são adicionados ou removidos.
+                > Isto garante que os controladores corretos sejam carregados no arranque.
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            6. Reinicie para aplicar as alterações.
+                ```bash
+                sudo reboot
+                ```
+            7. Após reiniciar, verifique se os controladores (drivers) AMD estão ativos.
+                ```bash
+                vulkaninfo | grep "deviceName"
+                ```
+                ou
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                Se vir a sua GPU AMD listada, os controladores estão a funcionar corretamente.
+        </Steps>
+    </TabItem>
+    <TabItem label='De AMD para NVIDIA'>
+        <Steps>
+            1. Limpe os pacotes AMD restantes.
+                ```bash
+                sudo chwd -r amd
+                ```
+            2. Desligue o seu sistema e proceda à instalação da sua GPU NVIDIA.
+            3. Após iniciar o sistema, utilize o chwd para detetar automaticamente a sua GPU e instalar os pacotes NVIDIA corretos.
+                ```bash
+                sudo chwd -a
+                ```
+            4. Após instalar os novos controladores, atualize o initramfs e a configuração do gestor de arranque (bootloader)
+                > O CachyOS inclui um hook do pacman que reconstrói automaticamente o initramfs quando os controladores são adicionados ou removidos.
+                > Isto garante que os controladores corretos sejam carregados no arranque.
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            5. Reinicie para aplicar as alterações.
+                ```bash
+                sudo reboot
+                ```
+            6. Após reiniciar, verifique se os controladores (drivers) NVIDIA estão ativos.
+                ```bash
+                nvidia-smi
+                ```
+                ou
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                Se vir a sua GPU NVIDIA listada, os controladores estão a funcionar corretamente.
+        </Steps>
+    </TabItem>
+</Tabs>

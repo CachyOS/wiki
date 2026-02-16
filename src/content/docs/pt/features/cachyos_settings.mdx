@@ -1,0 +1,118 @@
+---
+title: Definições do CachyOS (CachyOS Settings)
+---
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+Juntamente com os nossos kernels e repositórios otimizados, também fornecemos definições que melhoram ainda mais a experiência de desktop, bem como alguns
+scripts de auxílio para melhorias na qualidade de vida (QoL). Todas estas configurações e scripts encontram-se no pacote `cachyos-settings`.
+
+## Ajustes sysctl (sysctl Tweaks)
+
+Fornecemos diversos ajustes de sysctl que visam melhorar o desempenho geral do desktop. Cada entrada sysctl está bem documentada
+no ficheiro [70-cachyos-settings.conf](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/sysctl.d/70-cachyos-settings.conf).
+
+Para efetuar alterações em qualquer um destes valores, copie a entrada original e crie um novo ficheiro em `/etc/sysctl.d/` com o valor modificado.
+
+### Modificar valores sysctl
+
+<Steps>
+
+1. Analise o valor original em `cachyos-settings`
+
+    ```sh
+    cat /usr/lib/sysctl.d/70-cachyos-settings.conf
+    # Apenas experimental!
+    # Permite que tarefas em Tempo Real (RT) corram o tempo que for necessário
+    # sched: RT throttling ativado
+    kernel.sched_rt_runtime_us=-1
+    ```
+
+2. Crie um novo ficheiro em `/etc/sysctl.d` para efetuar alterações nas definições de sysctl
+
+    ```sh title="Reverter kernel.sched_rt_runtime_us= para o seu valor predefinido"
+    sudo micro /etc/sysctl.d/99-kernel-sched-rt.conf # Se o ficheiro não existir, este comando cria e permite-lhe editar o ficheiro
+    kernel.sched_rt_runtime_us=950000
+    ```
+
+</Steps>
+
+## Regras udev (udev Rules)
+
+- [Regras ZRAM](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/30-zram.rules) - Define o swappiness do ZRAM para um valor mais agressivo, para que a cache tenha maior probabilidade de fazer swap para o ZRAM
+- [Permissões HPET](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/40-hpet-permissions.rules) - Permite o acesso aos nós de dispositivo `rtc0` e `hpet` pelo grupo audio
+- [Gestão de Energia SATA](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/50-sata.rules) - Define a política de gestão de energia dos dispositivos SATA para `max_performance`. Apenas se o dispositivo suportar LPM.
+- [Regras de Agendador de I/O](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/60-ioschedulers.rules) - Seleciona o agendador (scheduler) ideal para cada tipo de unidade (HDD, SSD, NVMe)
+- [Regras hdparm](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/69-hdparm.rules) - Define HDDs SATA e IDE para o desempenho máximo
+- [NVIDIA RTD3](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/71-nvidia.rules) - Configura a funcionalidade de gestão dinâmica de energia para a geração de GPUs Turing. `O RTD3 não funciona corretamente em GPUs Turing com os módulos open`
+- [Latência de DMA da CPU](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/99-cpu-dma-latency.rules) - Permite o acesso ao nó de dispositivo `cpu_dma_latency` pelo grupo audio
+- [PM snd_hda_intel](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/20-audio-pm.rules) - Define a poupança de energia para `0` quando ligado à corrente (AC Power) e restaura o valor anterior ao mudar para a bateria
+
+## Opções de modprobe
+
+- Força o controlador AMDGPU em Southern Islands (GCN 1.0) e Sea Islands (GCN 2.0)
+- Ativa [vários ajustes](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/modprobe.d/nvidia.conf) para NVIDIA
+- Coloca módulos watchdog na lista negra (blacklist)
+- Desativa o power_save para o controlador de áudio **sna_hda_intel**
+
+## Scripts de Auxílio (Helper Scripts)
+
+- `cachyos-bugreport.sh` - Recolhe vários registos (logs) do `inxi`, `dmesg` e `journalctl` para ajudar na resolução de problemas
+- `game-performance` - Script wrapper para o `powerprofilesctl` para mudar para o perfil de desempenho a pedido. Consulte [Mudança de Perfil de Energia a Pedido](/configuration/gaming#power-profile-switching-on-demand)
+- `dlss-swapper` - Script wrapper para forçar a predefinição de DLSS mais recente em jogos que suportam a tecnologia
+- `dlss-swapper-dll` - Semelhante ao `dlss-swapper`, mas requer a atualização manual da biblioteca `nvngx_dlss.dll` fornecida com o jogo; pode funcionar com jogos que tenham problemas com a versão regular do script
+- `kerver` - Script de qualidade de vida para mostrar informações sobre o kernel atual
+- `paste-cachyos` - Script para colar a saída do terminal para ficheiros de texto a partir do sistema
+
+    <Tabs>
+        <TabItem label="Carregar ficheiros de texto">
+            ```sh
+            paste-cachyos /path/to/file
+            ```
+        </TabItem>
+        <TabItem label="Carregar a Saída do Terminal">
+            ```sh
+            <command> | paste-cachyos
+            ```
+        </TabItem>
+    </Tabs>
+
+- [pci-latency](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/pci-latency) - Reduz o valor de `latency_timer` para `80` em placas de som PCI e redefine todos os outros dispositivos PCI para `20` e `0`
+    ```sh title="Ativar pci-latency em todo o sistema"
+    sudo systemctl enable --now pci-latency.service
+    ```
+- `sbctl-batch-sign` - Script de auxílio para assinar facilmente imagens de kernel e binários EFI para o Secure Boot, guardando-os na base de dados do sbctl
+- `topmem` - Mostra estatísticas de RAM, swap e ksm de 10 processos por ordem decrescente
+- `zink-run` - Facilita a execução de um programa OpenGL através do controlador Zink Gallium
+
+
+## Outras configurações
+
+### Ajustes de Utilização de Memória
+
+- Configuração do THP Shrinker `max_ptes_none = 409`
+- Define o tamanho máximo de `50MB` para o journal do systemd
+- [ZRAM Generator](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/systemd/zram-generator.conf) - Define o ZRAM com o mesmo tamanho da RAM e utiliza ZSTD para compressão
+
+### Regras Ananicy-cpp
+
+- [ananicy-cpp](https://gitlab.com/ananicy-cpp/ananicy-cpp) com [conjuntos de regras mantidos pela comunidade](https://github.com/CachyOS/ananicy-rules)
+
+### Modificações de Rede
+
+- [systemd-resolved como o Resolvedor de DNS predefinido](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/NetworkManager/conf.d/dns.conf) para o NetworkManager
+
+### Qualidade de Vida (QoL) em NTP
+
+- Servidor preferencial definido para `Cloudflare`
+- Servidores de recurso (fallback): `Google` e `Arch Linux`
+
+### Ajustes de Serviços systemd
+
+- Tempo limite (timeout) para iniciar um serviço/unidade definido para `15s`
+- Tempo limite para parar um serviço/unidade definido para `10s`
+- Limite flexível (soft limit) para descritores de ficheiros abertos definido para `2048`
+- Limite rígido (hard limit) para descritores de ficheiros abertos definido para `2097152`
+
+### X.Org
+
+- Ativa o [Toque para Clicar (Tap to Click)](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/share/X11/xorg.conf.d/20-touchpad.conf) por predefinição em todas as sessões X11

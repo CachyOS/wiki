@@ -1,0 +1,156 @@
+---
+title: Kernel CachyOS
+description: Funcionalidades e alterações no kernel CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+O Kernel CachyOS é um kernel personalizado que utiliza melhorias, configurações e patches provenientes do upstream.
+
+## Funcionalidades
+
+### Otimizações de Desempenho
+
+- **Compilação Avançada**: PKGBUILD altamente personalizável com suporte para compiladores GCC e Clang.
+- **Link Time Optimization (LTO)**: Thin LTO ativado por predefinição para um melhor desempenho.
+- **Otimização Guiada por Perfil (PGO)**: Perfilagem AutoFDO + Propeller para uma geração de código ideal ([Saber mais](https://cachyos.org/blog/2411-kernel-autofdo/)).
+- **Kernel Control Flow Integrity (kCFI)**: Disponível ao utilizar LLVM para maior segurança.
+- **Opções de Frequência de Temporizador (Timer)**: Configurável entre 300Hz, 500Hz, 600Hz, 750Hz e 1000Hz (predefinição: 1000Hz).
+- **Otimizações de Arquitetura**: Suporte para builds específicas de x86-64-v3, x86-64-v4 e AMD Zen4.
+- **Otimizações de Compilador**: Flags de GCC avançadas, incluindo `-fivopts` e `-fmodulo-sched`.
+
+### Melhorias de CPU
+
+- **Múltiplos Agendadores (Schedulers)**: Agendadores BORE, EEVDF e BMQ para diferentes otimizações de carga de trabalho.
+- **Melhorias AMD P-State**: Suporte para "Preferred Core" e as mais recentes melhorias amd-pstate do linux-next.
+- **Suporte Real-Time**: Builds de kernel RT disponíveis com integração do agendador BORE.
+- **CachyOS Sauce**: Configuração personalizada `CONFIG_CACHY` com ajustes de agendador e de sistema.
+- **Otimizações de Baixa Latência**: Patches para melhor capacidade de resposta e redução de jitter.
+
+### Sistema de Ficheiros e Memória
+
+- **Suporte ZFS**: Suporte nativo para o sistema de ficheiros ZFS com módulos pré-compilados.
+- **Integração NVIDIA**:
+  - Módulos de controlador proprietário NVIDIA com patches.
+  - Suporte para controlador NVIDIA open-source.
+  - Módulos prontos a usar no repositório.
+- **Melhorias no Agendador de I/O**:
+  - Desempenho melhorado de BFQ e mq-deadline.
+  - Suporte para o agendador de I/O alternativo [ADIOS](https://github.com/firelzrd/adios).
+- **Gestão de Memória**:
+  - Patch [le9uo](https://github.com/firelzrd/le9uo) para prevenir o "page thrashing" sob pressão de memória.
+  - Ajustes de gestão de memória do Zen-kernel (compactação, otimização de watermark).
+
+### Funcionalidades Adicionais
+
+#### Suporte de Hardware
+- **Hardware de Gaming**: Patches para Steam Deck (Áudio, HW Quirks, HID) e suporte para ROG Ally.
+- **Hardware Apple**: Suporte para MacBook T2 incluído por predefinição.
+- **Hardware ASUS**: Patches de compatibilidade alargada para hardware ASUS.
+- **Gráficos**: Suporte para HDR ativado, override de min_powercap em AMDGPU (`amdgpu_ignore_min_pcap`).
+
+#### Melhorias de Sistema
+- **Multimédia**: Módulos v4l2loopback incluídos por predefinição.
+- **Virtualização**: Suporte ACS Override para pass-through de VFIO/GPU.
+- **Integração Upstream**: Patches selecionados (cherry-picked) do Clear Linux e linux-next.
+
+#### Diversos
+
+O kernel CachyOS também possui outras funcionalidades notáveis que são subtis, mas melhoram a experiência do utilizador:
+
+- Inclui uma variante "debug" do kernel que fornece um binário não despido (unstripped) para fins de depuração. Este pacote é necessário para perfilar o kernel com AutoFDO.
+- [Binder](https://developer.android.com/reference/android/os/Binder), o módulo necessário para o [Waydroid](https://waydro.id/), está ativado por predefinição na configuração do kernel e já se encontra [configurado](https://github.com/CachyOS/linux-cachyos/blob/2f380e2b35c4ad9acda98296f638f93af3742533/linux-cachyos/config#L11037).
+
+## Variantes
+
+O CachyOS oferece uma gama diversificada de opções de kernel. Todos os kernels que fornecemos são distribuídos com o [CachyOS Base Patchset](https://github.com/CachyOS/kernel-patches).
+Para cada um dos kernels, existe uma [variante -lto correspondente](#package-naming-convention) que é compilada com [clang](https://clang.llvm.org/) em vez de [GCC](https://gcc.gnu.org/).
+
+- **linux-cachyos**
+  - O kernel predefinido. Este é o recomendado se não tiver a certeza de qual utilizar.
+  - Taxa de atualização (tickrate) de 1000Hz para melhor resposta.
+  - Compilado com Clang e ThinLTO.
+  - Perfilado com o nosso próprio perfil [AutoFDO](https://cachyos.org/blog/2411-kernel-autofdo/) para melhor desempenho. [Script](https://github.com/CachyOS/cachyos-benchmarker/blob/master/kernel-autofdo.sh) utilizado para perfilar o kernel.
+- **linux-cachyos-bore**
+  - Utiliza o agendador [BORE](https://github.com/firelzrd/bore-scheduler).
+- **linux-cachyos-bmq**
+  - Utiliza o agendador BMQ do [Project C](https://gitlab.com/alfredchen/projectc/) de Alfred Chen.
+    - `Não suporta sched-ext.`
+- **linux-cachyos-deckify**
+  - O kernel predefinido para consolas portáteis (handhelds). **Não é recomendado** e **não é suportado** o uso de qualquer outro kernel em dispositivos portáteis.
+  - Utiliza o agendador [BORE](https://github.com/firelzrd/bore-scheduler).
+  - Patches específicos para portáteis sobre o patchset base para melhorar a compatibilidade e a experiência geral nestes dispositivos.
+- **linux-cachyos-eevdf**
+  - Ajusta o agendador predefinido do kernel para uma melhor capacidade de resposta.
+- **linux-cachyos-lts**
+  - Baseado no mais recente kernel de Suporte de Longo Prazo (LTS).
+  - Utiliza o agendador [BORE](https://github.com/firelzrd/bore-scheduler).
+  - Aplicados patches mínimos comparado com outros kernels para garantir a máxima estabilidade.
+- **linux-cachyos-hardened**
+  - Utiliza o agendador [BORE](https://github.com/firelzrd/bore-scheduler).
+  - Inclui o patchset [linux-hardened](https://github.com/anthraxx/linux-hardened).
+  - Configuração do kernel baseada na [configuração linux-hardened](https://gitlab.archlinux.org/archlinux/packaging/packages/linux-hardened/-/blob/main/config).
+    - Contém endurecimento (hardening) muito agressivo que prejudica significativamente o desempenho e a experiência do utilizador.
+    - `Não suporta sched-ext.`
+- **linux-cachyos-rc**
+  - Baseado no kernel "mainline" mais recente da [árvore do Linus](https://github.com/torvalds/linux/).
+  - Utiliza o agendador [BORE](https://github.com/firelzrd/bore-scheduler).
+  - Kernel principal para introduzir novas funcionalidades no nosso patchset.
+- **linux-cachyos-server**
+  - Otimizado para cargas de trabalho de servidor em vez de uso doméstico.
+    - Tickrate de 300Hz.
+    - Sem preempção (No preemption).
+    - EEVDF original (Stock).
+- **linux-cachyos-rt-bore**
+  - Preempção em tempo real (Real-time preemption).
+  - Utiliza o agendador [BORE](https://github.com/firelzrd/bore-scheduler).
+
+:::note
+Salvo indicação em contrário, é seguro assumir que todas as outras variantes de kernel têm a mesma configuração que o kernel predefinido.
+:::
+
+Por favor, abra um "issue" no [GitHub do linux-cachyos](https://github.com/CachyOS/linux-cachyos) para sugestões e melhorias que possam ser adicionadas ao kernel predefinido.
+
+### Convenção de Nomenclatura de Pacotes
+
+```sh
+linux-cachyos # Pacote base do kernel predefinido. Compilado com Clang e ThinLTO
+linux-cachyos-hardened # Pacote base do kernel hardened (endurecido). Compilado com GCC
+linux-cachyos-hardened-lto # Equivalente compilado com clang para o linux-cachyos-hardened
+linux-cachyos-hardened-{,lto-}headers
+linux-cachyos-hardened-{,lto-}nvidia
+linux-cachyos-hardened-{,lto-}nvidia-open
+linux-cachyos-hardened-{,lto-}zfs
+linux-cachyos-hardened-{,lto-}dbg
+```
+
+## Módulos de Kernel Pré-compilados
+
+Para acomodar uma base de utilizadores mais vasta, o CachyOS distribui alguns dos módulos de kernel mais conhecidos e utilizados juntamente com o kernel. Isto significa que os utilizadores já não terão de recompilar esses módulos após cada atualização de kernel ou em cada nova instalação; bastará instalá-los a partir do repositório, uma vez que já se encontram pré-compilados. Isto torna efetivamente obsoletos quaisquer pacotes `-dkms` que o utilizador possa ter e que forneçam o mesmo módulo que a versão pré-compilada.
+
+### ZFS
+
+O [ZFS](https://openzfs.org/wiki/Main_Page) é um dos muitos sistemas de ficheiros suportados no CachyOS. Devido ao facto de estar licenciado sob [CDDL](https://opensource.org/license/cddl-1-0), é incompatível com a licença do kernel Linux e, por isso, não pode ser incorporado diretamente no código-fonte (in-tree). O módulo distribuído inclui as funcionalidades e correções mais recentes do upstream para garantir a compatibilidade com o kernel mais recente.
+
+### NVIDIA
+
+O CachyOS distribui versões pré-compiladas tanto dos módulos de kernel de código fechado como dos de [código aberto](https://github.com/NVIDIA/open-gpu-kernel-modules/). Dado que o desenvolvimento do módulo de kernel da NVIDIA é feito fora da árvore principal (out-of-tree) e, como tal, não segue o ritmo de lançamento do kernel, a configuração padrão pode por vezes ser incompatível com o kernel mais recente. Como solução, o CachyOS aplica patches aos módulos recorrendo a correções criadas pela comunidade ou partilhadas diretamente pela NVIDIA.
+
+## FAQ
+
+### Porque é que o AutoFDO não é utilizado em todas as outras variantes do kernel?
+
+Porque a sua compilação é dispendiosa, uma vez que requer basicamente compilar o kernel duas vezes, resultando em mais tempo e recursos dedicados à compilação. O processo de compilar um kernel com AutoFDO envolve os seguintes passos:
+
+1) Compilar o kernel com AutoFDO e capacidades de depuração (debugging) ativadas.
+2) Criar um perfil, o que significa executar cargas de trabalho para recolher dados de perfilagem para as possíveis otimizações.
+3) Recompilar o kernel com o perfil AutoFDO.
+
+Por esse motivo, por agora, esta funcionalidade está apenas presente na variante [linux-cachyos](/features/kernel#variants).
+
+Para mais informações sobre o AutoFDO, clique [aqui](https://cachyos.org/blog/2411-kernel-autofdo/).
+
+### O kernel "realtime" melhora o desempenho em jogos?
+
+Não, não melhora. O kernel "realtime" torna muito mais código preemptível em comparação com um kernel preemptível (PREEMPT) normal. Isto significa que muito mais tarefas (incluindo processos de jogos) são frequentemente interrompidas e forçadas a ceder recursos do sistema, resultando num desempenho pior.
