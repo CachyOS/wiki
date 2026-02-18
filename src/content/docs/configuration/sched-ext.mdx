@@ -238,6 +238,27 @@ Use `scx_schedulername --help` to see the available flags and a brief descriptio
 scx_rusty --help
 ```
 
+### [scx_beerland](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_beerland)
+
+**Developed by: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Production Ready? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+scx_beerland is a scheduler designed to prioritize locality and scalability.
+
+Prioritizes keeping tasks on the same CPU to maintain cache locality, while also ensuring good scalability across many CPUs by using local DSQs (per-CPU runqueues) when the system is not saturated.
+
+- Use cases:
+  - Cache-intensive workloads
+  - Systems with a large amount of CPUs
+  - Gaming: Its known to work surprinsingly well in certain games, although your mileage may vary
+  - Server: Good for general purpose server workloads due to its scalability and locality optimizations.
+  - Can be used for desktop usage as well.
+
+#### Scheduler Modes
+
+None for the moment.
+
 ### [scx_bpfland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_bpfland>)
 
 **Developed by: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
@@ -273,46 +294,45 @@ Bpfland when making decisions on which cores to use, it takes in consideration t
 * **Command-line Flags:** `-s 20000 -S`
 * **Description:** Prioritize tasks with strict affinity. This option can increase throughput at the cost of latency and it is more suitable for server workloads.
 
-### [scx_beerland](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_beerland)
+### [scx_cosmos](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cosmos)
 
 **Developed by: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
 
-Production Ready? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+- Production Ready? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
 
-scx_beerland is a scheduler designed to prioritize locality and scalability.
+Lightweight scheduler optimized for preserving task-to-CPU locality.
 
-Prioritizes keeping tasks on the same CPU to maintain cache locality, while also ensuring good scalability across many CPUs by using local DSQs (per-CPU runqueues) when the system is not saturated.
+When the system is not saturated, the scheduler prioritizes keeping tasks on the same CPU using local DSQs. This not only maintains locality but also reduces locking contention compared to shared DSQs, enabling good scalability across many CPUs.
 
 - Use cases:
-  - Cache-intensive workloads
-  - Systems with a large amount of CPUs
-  - Gaming: Its known to work surprinsingly well in certain games, although your mileage may vary
-  - Server: Good for general purpose server workloads due to its scalability and locality optimizations.
-  - Can be used for desktop usage as well.
+  - General-purpose scheduler: the scheduler should adapt itself both for server workloads or desktop workloads.
 
 #### Scheduler Modes
 
-None for the moment.
+##### Auto
 
-### [scx_rustland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland>)
+* **Command-line Flags:** `-s 20000 -d -c 0 -p 0`
+* **Description:** Sacrifices cache locality and power efficiency for even distribution across all CPUs. Leaning more over to interactive workloads.
 
-**Developed by: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+##### Gaming
 
-Production Ready? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+* **Command-line Flags:** `-c 0 -p 0`
+* **Description:** Disable CPU load tracking and always enforce deadline-based scheduling to improve responsiveness.
 
-For performance-critical production scenarios, other schedulers are likely to exhibit better performance, as offloading all scheduling decisions to user-space comes with a certain cost (even if it's minimal).
+##### Power Save
 
-However, a scheduler entirely implemented in user-space holds the potential for seamless integration with sophisticated libraries, tracing tools, external services (e.g., AI), etc.
+* **Command-line Flags:** `-m powersave -d -p 5000`
+* **Description:** Prioritizes power efficiency. Favor less performant cores (e.g., E-cores on Intel) and disables deferred wakeups, reducing throughput while increasing power efficiency. CPU load polling increased to 5ms.
 
-Hence, there might be situations where the benefits outweigh the overhead, justifying the use of this scheduler in a production environment.
+##### Low Latency
 
-Shares similarities with bpfland, Made with the intention of being easy to read and understand how it works due to its implementation in userspace.
+* **Command-line Flags:** `-m performance -c 0 -p 0 -w`
+* **Description:** Meant to lower latency at the cost of throughput. Suitable for soft real-time applications like Audio Processing and Multimedia. Always enforce deadline-based scheduling and synchronous wake up optimizations to improve performance predictability.
 
-Keep in mind that there is a slight throughput disadvantage when using a userspace scheduler.
+##### Server
 
-- Use cases:
-  - Low latency workloads (Gaming, video conferences and live streaming)
-  - Desktop usage
+* **Command-line Flags:** `-s 20000`
+* **Description:** Enable address space affinity to improve locality and performance in certain cache-sensitive workloads. Polling increased to 20ms.
 
 ### [scx_flash](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_flash>)
 
@@ -355,46 +375,6 @@ Tasks that release the CPU early are given a higher latency weight, prioritizing
 * **Command-line Flags:** `-m all -s 20000 -S 1000 -I -1 -D -L`
 * **Description:** Tuned for server workloads. Trades responsiveness for throughput.
 
-### [scx_cosmos](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cosmos)
-
-**Developed by: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
-
-- Production Ready? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
-
-Lightweight scheduler optimized for preserving task-to-CPU locality.
-
-When the system is not saturated, the scheduler prioritizes keeping tasks on the same CPU using local DSQs. This not only maintains locality but also reduces locking contention compared to shared DSQs, enabling good scalability across many CPUs.
-
-- Use cases:
-  - General-purpose scheduler: the scheduler should adapt itself both for server workloads or desktop workloads.
-
-#### Scheduler Modes
-
-##### Auto
-
-* **Command-line Flags:** `-s 20000 -d -c 0 -p 0`
-* **Description:** Sacrifices cache locality and power efficiency for even distribution across all CPUs. Leaning more over to interactive workloads.
-
-##### Gaming
-
-* **Command-line Flags:** `-c 0 -p 0`
-* **Description:** Disable CPU load tracking and always enforce deadline-based scheduling to improve responsiveness.
-
-##### Power Save
-
-* **Command-line Flags:** `-m powersave -d -p 5000`
-* **Description:** Prioritizes power efficiency. Favor less performant cores (e.g., E-cores on Intel) and disables deferred wakeups, reducing throughput while increasing power efficiency. CPU load polling increased to 5ms.
-
-##### Low Latency
-
-* **Command-line Flags:** `-m performance -c 0 -p 0 -w`
-* **Description:** Meant to lower latency at the cost of throughput. Suitable for soft real-time applications like Audio Processing and Multimedia. Always enforce deadline-based scheduling and synchronous wake up optimizations to improve performance predictability.
-
-##### Server
-
-* **Command-line Flags:** `-s 20000`
-* **Description:** Enable address space affinity to improve locality and performance in certain cache-sensitive workloads. Polling increased to 20ms.
-
 ### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>)
 
 **Developed by: Changwoo Min (multics69 [GitHub](<https://github.com/multics69>)).**
@@ -429,24 +409,6 @@ One of the main and awesome capabilities that LAVD includes is **Core Compaction
 
 * **Command-line Flags:** `--powersave`
 * **Description:** Minimizes power consumption while maintaining reasonable performance. Prioritizes efficient cores and threads over physical cores.
-
-### [scx_rusty](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rusty>)
-
-**Developed by: David Vernet (Byte-Lab [GitHub](<https://github.com/Byte-Lab>))**
-
-- Production Ready? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
-  - Yes. If tuned correctly,
-
-Rusty offers a wide range of features that enhance its capabilities, providing greater flexibility for various use cases.
-One of these features is tunability, allowing you to customize Rusty to suit your preferences and specific requirements.
-
-- Use cases:
-  - Gaming
-  - Latency sensitive workloads
-  - Desktop usage
-  - Multimedia/Audio production
-  - Great interactivity under intensive workloads
-  - Power saving
 
 ### [scx_p2dq](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_p2dq>)
 
@@ -527,6 +489,44 @@ The scheduler works by routing all scheduling events through a pool of primary C
 
 * **Command-line Flags:** `-f 100`
 * **Description:** Reduced how often the scheduler checks for CPU contention to improve throughput at the cost of responsiveness.
+
+### [scx_rustland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland>)
+
+**Developed by: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Production Ready? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+
+For performance-critical production scenarios, other schedulers are likely to exhibit better performance, as offloading all scheduling decisions to user-space comes with a certain cost (even if it's minimal).
+
+However, a scheduler entirely implemented in user-space holds the potential for seamless integration with sophisticated libraries, tracing tools, external services (e.g., AI), etc.
+
+Hence, there might be situations where the benefits outweigh the overhead, justifying the use of this scheduler in a production environment.
+
+Shares similarities with bpfland, Made with the intention of being easy to read and understand how it works due to its implementation in userspace.
+
+Keep in mind that there is a slight throughput disadvantage when using a userspace scheduler.
+
+- Use cases:
+  - Low latency workloads (Gaming, video conferences and live streaming)
+  - Desktop usage
+
+### [scx_rusty](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rusty>)
+
+**Developed by: David Vernet (Byte-Lab [GitHub](<https://github.com/Byte-Lab>))**
+
+- Production Ready? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+  - Yes. If tuned correctly,
+
+Rusty offers a wide range of features that enhance its capabilities, providing greater flexibility for various use cases.
+One of these features is tunability, allowing you to customize Rusty to suit your preferences and specific requirements.
+
+- Use cases:
+  - Gaming
+  - Latency sensitive workloads
+  - Desktop usage
+  - Multimedia/Audio production
+  - Great interactivity under intensive workloads
+  - Power saving
 
 ## Configuration and performance testing
 
