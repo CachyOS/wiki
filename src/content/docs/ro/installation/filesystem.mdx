@@ -1,0 +1,182 @@
+---
+title: Sisteme de Fișiere
+description: Descriere și recomandări pentru sistemele de fișiere disponibile. (ext4, f2fs, btrfs, xfs, zfs, bcachefs)
+---
+
+CachyOS oferă 5 sisteme de fișiere diferite pentru a permite utilizatorului să aleagă ceea ce se potrivește cel mai bine nevoilor sale. În cele ce urmează, vom analiza avantajele, dezavantajele și recomandările pentru fiecare sistem de fișiere. Fiecare sistem de fișiere vine cu cerințele/utilitarele sale preinstalate în CachyOS.
+
+:::note
+BTRFS este sistemul de fișiere implicit și recomandat pentru CachyOS. Alege-l pe acesta dacă nu ești sigur.
+:::
+
+## XFS
+
+XFS este un sistem de fișiere cu jurnalizare creat și dezvoltat de Silicon Graphics, Inc. A fost creat în 1993, portat pe Linux în 2001 și este acum suportat pe scară largă de majoritatea distribuțiilor Linux.
+
+### Pro
+
+- XFS a fost conceput inițial având în vedere viteza și scalabilitatea extremă.
+- Fiabil, XFS folosește mai multe tehnologii pentru a preveni coruperea datelor.
+- Rezistent la fragmentare datorită naturii sale bazate pe extente (extent-based) și strategiei de alocare întârziată.
+
+### Contra
+
+- Nu poate fi micșorat.
+
+### Utilitare pentru utilizator (Userspace utility)
+
+Pachetul care conține uneltele pentru gestionarea sistemelor de fișiere XFS este `xfsprogs`.
+
+### Recomandare
+
+XFS este sistemul de fișiere recomandat pentru utilizatorii care nu au nevoie de caracteristici avansate și doresc pur și simplu un sistem de fișiere rapid și fiabil.
+
+## BTRFS
+
+BTRFS este un sistem de fișiere modern de tip copy-on-write (COW), creat în 2007 și declarat stabil în kernelul Linux în 2013. Este suportat pe scară largă și este cunoscut în principal pentru setul său de caracteristici avansate.
+
+### Pro
+
+- Compresie transparentă. BTRFS suportă compresia transparentă a fișierelor pentru a permite economii semnificative de spațiu fără intervenția utilizatorului. **CachyOS vine cu compresia ZSTD setată implicit la nivelul 3.**
+- Funcționalitate de snapshot (instantanee). BTRFS profită de natura sa COW pentru a permite crearea de snapshot-uri ale subvolumelor care ocupă foarte puțin spațiu real.
+- Funcționalitate de subvolume, permițând un control mai mare asupra sistemului de fișiere.
+- Poate fi mărit sau micșorat.
+- Dezvoltare foarte rapidă.
+
+### Contra
+
+- Uneori necesită defragmentare sau balansare (balancing).
+- Performanță mai slabă pe unitățile de stocare rotative (HDD) din cauza fragmentării menționate anterior.
+
+### Utilitare pentru utilizator (Userspace utility)
+
+Pachetul cu utilitare Btrfs este `btrfs-progs`.
+
+### Structura Subvolumelor (Subvolume Layout)
+
+CachyOS oferă o structură de subvolume gata pregătită pentru a permite funcționalitatea ușoară a snapshot-urilor.
+
+- Subvol @ = /
+- Subvol @home = /home
+- Subvol @root = /root
+- Subvol @srv = /srv
+- Subvol @cache = /var/cache
+- Subvol @tmp = /var/tmp
+- Subvol @log = /var/log
+
+### Recomandare
+
+BTRFS este recomandat pentru utilizatorii care doresc funcționalitate de snapshot/backup și compresie transparentă.
+
+## EXT4
+
+EXT4 (fourth extended filesystem) este cel mai frecvent utilizat sistem de fișiere Linux. EXT4 a devenit stabil în kernelul Linux în 2008.
+
+### Pro
+
+- Poate fi la fel de rapid sau mai rapid decât XFS în unele scenarii.
+- Foarte comun, permițând accesul ușor la numeroase resurse.
+- Fiabil. EXT4 are un istoric dovedit de a fi foarte fiabil.
+- Poate fi mărit sau micșorat.
+  - Micșorarea este suportată doar offline și necesită demontarea sistemului de fișiere.
+
+### Contra
+
+- Îi lipsesc multe dintre caracteristicile avansate oferite de alte sisteme de fișiere.
+
+### Utilitare pentru utilizator (Userspace utilities)
+
+Pachetul pentru gestionarea ext4 este `e2fsprogs`.
+
+### Recomandare
+
+EXT4 este recomandat pentru utilizatorii care doresc cel mai simplu și cel mai comun sistem de fișiere.
+
+## ZFS
+
+ZFS este un sistem de fișiere avansat, dezvoltat inițial de Sun Microsystems în 2005. ZFS are multe caracteristici, dar este licențiat sub CDDL, ceea ce înseamnă că nu poate fi inclus în kernelul Linux și necesită un modul separat instalat.
+
+:::caution
+Nu folosi un kernel Real-time împreună cu ZFS; nu este compatibil din cauza problemelor de licențiere.
+:::
+
+### Pro
+
+- Stocare combinată (zpool)
+- Snapshot-uri folosind COW
+- Compresie
+- Suport Raid-Z
+- Cache-ul ARC permite timpi de citire incredibil de rapizi pentru fișierele accesate frecvent.
+
+### Contra
+
+- Foarte complicat de utilizat și înțeles din cauza funcțiilor precum zpool și ARC.
+- ARC necesită multă memorie RAM pentru a fi eficient.
+- Nu este inclus în kernelul Linux, deci depinde de un modul de kernel terț (OpenZFS).
+- Incompatibil cu preemțiunea Real-time.
+
+### Unelte necesare
+
+'ZFS-Module' CachyOS oferă un modul zfs precompilat pentru fiecare versiune de kernel.
+`zfs-utils` pentru utilitarele de sistem.
+
+### Recomandare
+
+ZFS ar trebui folosit doar de utilizatorii avansați care doresc să îi folosească funcțiile avansate, cum ar fi stocarea combinată sau cache-ul ARC.
+
+## F2FS
+
+F2FS (Flash-Friendly File System) este un sistem de fișiere creat și dezvoltat inițial de Samsung pentru kernelul Linux. F2FS a fost creat special pentru memoria flash NAND utilizată în mediile de stocare moderne.
+
+### Pro
+
+- Proiectat având în vedere optimizarea pentru memoria flash.
+- Compresie transparentă utilizată pentru a reduce scrierile pe disc (economiile de spațiu nu sunt momentan vizibile pentru utilizator).
+- Wear leveling mai bun, ceea ce prelungește și mai mult viața memoriei flash NAND.
+
+### Contra
+
+- Nu poate fi micșorat.
+- Economiile de spațiu prin compresie nu pot fi folosite momentan de utilizator. Acest lucru ar putea fi adăugat pe viitor.
+- fsck (verificarea sistemului de fișiere) relativ slab.
+- Revenirea la un kernel mai vechi decât versiunea care a creat sistemul de fișiere poate cauza probleme.
+- Necesită o soluție de ocolire când este folosit cu GRUB pe un sistem MBR/BIOS.
+
+### Utilitare pentru utilizator (Userspace utilities)
+
+Utilitarul principal pentru f2fs este `f2fs-tools`.
+
+### Recomandare
+
+- F2FS este recomandat pentru utilizatorii care doresc să maximizeze durata de viață a dispozitivelor lor flash NAND.
+- Limine este bootloader-ul recomandat pentru utilizatorii F2FS pe sistemele MBR/BIOS, deoarece nu necesită o soluție de ocolire așa cum face GRUB.
+
+## BcacheFS
+
+Bcachefs este un sistem de fișiere nou și avansat pentru Linux, punând accent pe fiabilitate, robustețe și setul complet de caracteristici la care te-ai aștepta de la un sistem de fișiere modern.
+
+:::caution[ATENȚIE]
+Bcachefs este încă considerat experimental și poate prezenta probleme.
+:::
+
+### Pro
+
+- Copy on write (CoW) - ca BTRFS sau ZFS
+- Compresie
+- Caching, Plasarea datelor (Data Placement)
+- Replicare
+- Scalabil
+
+### Contra
+
+- Experimental
+- Configurarea poate fi complicată
+
+### Unelte necesare
+
+`bcachefs-dkms` oferă suport pentru modulul de kernel prin DKMS.
+`bcachefs-tools` pentru utilitarele de sistem.
+
+## Pe scurt (TL:DR)
+
+Folosește sistemul de fișiere implicit **BTRFS**, deoarece este considerat stabil și are o mulțime de funcții utile (snapshot-uri, compresie etc.). Folosește **XFS** sau **EXT4** pentru un sistem de fișiere simplu și rapid.

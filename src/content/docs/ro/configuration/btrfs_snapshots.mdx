@@ -1,0 +1,477 @@
+---
+title: Snapshot-uri Btrfs
+description: Gestionarea snapshot-urilor Btrfs în CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 5
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+import MultipleImageComponent from '~/components/multiple-images-component.astro';
+
+## Introducere
+
+:::caution
+Nu considera snapshot-urile Btrfs ca pe un înlocuitor pentru backup-urile obișnuite. Asigură-te întotdeauna că ai backup-uri adecvate pentru datele tale importante.
+:::
+
+### Ce este un snapshot Btrfs?
+
+Să începem cu elementele de bază:
+
+Snapshot-urile Btrfs provin din funcția de subvolum. Ce este un subvolum? Gândește-te la un subvolum ca la un sistem de fișiere separat în cadrul sistemului de fișiere Btrfs. Acesta îți permite să-ți fragmentezi datele în diferite părți. De aceea, de exemplu, în CachyOS avem subvolume diferite pentru:
+
+- Sistemul de fișiere root: (`/`)
+- Directorul root: (`/root`)
+- Directorul home: (`/home`)
+- Directoarele var: (`/var/cache`, `/var/tmp`, `/var/log`)
+- Directorul srv: (`/srv`)
+
+Având subvolume diferite pentru aceste directoare, le putem gestiona independent, putem aplica setări diferite și, cel mai important, putem crea snapshot-uri pentru ele.
+
+Aici se naște un snapshot. Un snapshot este, în esență, o copie read-only sau read-write (**implicită**) a unui subvolum la un anumit moment în timp. Acest lucru înseamnă că poți surprinde starea sistemului tău de fișiere, inclusiv toate fișierele și directoarele, în acel moment.
+
+Prin urmare, snapshot-urile devin o referință punct-în-timp, ceea ce înseamnă că atunci când fișierul țintă deviază de la datele din snapshot, snapshot-ul va păstra fișierul original, iar ținta va crea un fișier nou cu modificările, în timp ce snapshot-ul rămâne neschimbat pentru totdeauna. De aceea, unii utilizatori se referă la un snapshot ca la „date înghețate în timp”.
+
+Imaginează-ți că faci o fotografie a sistemului tău de fișiere la un moment specific și te poți întoarce oricând la acea fotografie ori de câte ori ai nevoie.
+
+Unul dintre avantajele cheie ale snapshot-urilor este că sunt foarte eficiente din punct de vedere al spațiului, deoarece sunt doar o referință la datele originale până când se fac modificări.
+
+Dar aici un snapshot diferă de un backup tradițional. Să presupunem că discul tău se defectează; dacă ai fi avut un backup tradițional, ți-ai putea restaura datele din acel backup. Totuși, dacă ai fi avut doar snapshot-uri pe discul defect, ai pierde accesul la acele snapshot-uri, deoarece ele sunt stocate pe același disc.
+
+### Cazuri de recuperare unde snapshot-urile sunt utile și unde nu sunt
+
+Sunt utile pentru recuperarea după:
+
+- Defectări sau coruperi după actualizările sistemului.
+- Configurări greșite care împiedică pornirea sistemului.
+- Ștergeri sau modificări accidentale ale fișierelor.
+
+Nu sunt utile pentru recuperarea după:
+
+- Probleme cu bootloader-ul.
+- Defecțiuni hardware (ex. hard disk-uri defecte).
+
+## Gestionarea snapshot-urilor (GUI și CLI)
+
+:::tip
+Deoarece CachyOS include `snap-pac` implicit, Snapper va crea automat snapshot-uri înainte și după orice instalare, actualizare sau eliminare de pachete folosind `pacman`. Aceasta înseamnă că nu trebuie să creezi manual snapshot-uri pentru aceste operațiuni, deoarece Snapper se ocupă de asta pentru tine.
+:::
+
+:::note
+Dacă folosești bootloader-ul GRUB, asigură-te că ai `grub-btrfs-support` pentru a avea toate scripturile și hook-urile necesare pentru a detecta automat snapshot-urile BTRFS și a le adăuga în meniul GRUB.
+```bash
+sudo pacman -Syu grub-btrfs-support
+```
+:::
+
+Câteva lucruri de luat în considerare înainte de a gestiona snapshot-urile. **Se aplică atât metodelor CLI, cât și GUI.**
+
+- Se recomandă păstrarea a maximum 10 snapshot-uri. Peste acest număr, snapshot-urile devin prea vechi și mai puțin utile. În cel mai rău caz, revenirea la un snapshot vechi poate introduce probleme de compatibilitate cu versiunile mai noi de software.
+- Snapshot-urile sunt destinate ideal scopurilor de recuperare. Totuși, le poți folosi pentru a anula modificările aduse fișierelor fără a restaura întregul snapshot.
+- Adaugă o descriere sugestivă atunci când creezi snapshot-uri. Acest lucru te va ajuta să identifici ulterior scopul fiecărui snapshot.
+
+### Btrfs Assistant (GUI)
+
+Înainte de a continua, asigură-te că ai instalat `btrfsmaintenance` pentru a profita de funcțiile de gestionare automată a snapshot-urilor.
+
+Pentru cei care preferă gestionarea Btrfs, a snapshot-urilor și a altor elemente printr-o interfață grafică, [Btrfs Assistant](https://gitlab.com/btrfs-assistant/btrfs-assistant) este un proiect excelent pentru începători.
+
+#### Configurarea curățării automate a snapshot-urilor
+
+Vom configura curățarea automată a snapshot-urilor folosind Btrfs Assistant. Acest lucru va ajuta la gestionarea eficientă a snapshot-urilor tale fără intervenție manuală.
+
+Urmează acești pași:
+
+<Steps>
+
+    1. Lansează Btrfs Assistant deschizând un terminal și rulând:
+        ```bash
+        btrfs-assistant-launcher
+        ```
+
+        Alternativ:
+
+        ```bash
+        sudo -E btrfs-assistant
+        ```
+
+  2. Navighează la tab-ul Snapper Settings:
+
+      <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperSettingsTab.png')} />
+      Modifică setările **Snapshot Retention** după cum urmează:
+      - Asigură-te că este selectată configurația `root`.
+      - Introdu valoarea `0` pentru Hourly, Daily, Weekly, Monthly și Yearly.
+      - Debifează `Enable timeline snapshots`.
+      - Introdu valoarea `10` la `Number`.
+      - Bifează ✅ la `Snapper cleanup enabled`.
+      - Apasă pe butonul `Save` din dreapta sus și pe `Apply systemd changes` din dreapta jos.
+      **snapper-cleanup.timer va fi acum activat pentru a curăța automat snapshot-urile vechi pe baza configurației tale.**
+      :::caution
+      Verifică dacă ajustările pe care tocmai le-ai făcut au fost aplicate corect verificând configurația Snapper:
+      ```bash
+      sudo nano /etc/snapper/configs/root
+      ```
+      Snippet de ieșire așteptat:
+      ```text
+      # limit for number cleanup
+      NUMBER_MIN_AGE="3600"
+      NUMBER_LIMIT="10"
+      NUMBER_LIMIT_IMPORTANT="10"
+      ```
+      Dacă `NUMBER_LIMIT` și `NUMBER_LIMIT_IMPORTANT` nu conțin valoarea `10`, actualizează-le corespunzător.
+      Salvează fișierul și ieși apăsând `CTRL + O`, `Enter` și `CTRL + X`.
+      :::
+</Steps>
+
+#### Eliminarea snapshot-urilor folosind Btrfs Assistant
+
+<Steps>
+    1. Deschide Btrfs Assistant:
+        ```bash
+        btrfs-assistant-launcher
+        ```
+
+        Alternativ:
+
+        ```bash
+        sudo -E btrfs-assistant
+        ```
+    2. Mergi la tab-ul Snapper Settings:
+        <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperTab.png')} />
+    3. Selectează snapshot-ul/snapshot-urile pe care dorești să le ștergi din listă.
+        :::tip
+        - Ține apăsat `CTRL` pentru a selecta mai multe snapshot-uri.
+        - Ține apăsat `SHIFT` pentru a selecta un interval de snapshot-uri.
+        :::
+    4. Apasă pe butonul `Delete` situat în partea de sus a ferestrei.
+    5. Regenerează intrările bootloader-ului pentru a reflecta modificările:
+        <details>
+            <summary>systemd-boot</summary>
+            ```bash
+            sudo sdboot-manage gen
+            ```
+        </details>
+        <details>
+            <summary>GRUB</summary>
+            ```bash
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+        </details>
+        <details>
+            <summary>Limine</summary>
+            ```bash
+            sudo limine-mkinitcpio
+            ```
+        </details>
+</Steps>
+
+Consultă [Wiki-ul lor oficial](https://gitlab.com/btrfs-assistant/wiki) pentru o privire mai detaliată asupra a ceea ce se poate face.
+
+### Snapper (CLI)
+
+Acum că am acoperit ce este un snapshot Btrfs și cazurile sale de utilizare, să vorbim despre cum să le gestionăm folosind o unealtă numită [Snapper](http://snapper.io/) creată de [Arvin Schnell](https://github.com/aschnell) de la [openSUSE](https://www.opensuse.org/).
+
+<details>
+<summary>CachyOS folosește următoarea configurație Snapper implicită:</summary>
+
+```text
+# subvolume to snapshot
+SUBVOLUME="/"
+
+# filesystem type
+FSTYPE="btrfs"
+
+# btrfs qgroup for space aware cleanup algorithms
+QGROUP=""
+
+# fraction or absolute size of the filesystems space the snapshots may use
+SPACE_LIMIT="0.5"
+
+# fraction or absolute size of the filesystems space that should be free
+FREE_LIMIT="0.2"
+
+# users and groups allowed to work with config
+ALLOW_USERS=""
+ALLOW_GROUPS=""
+
+# sync users and groups from ALLOW_USERS and ALLOW_GROUPS to .snapshots
+# directory
+SYNC_ACL="no"
+
+# start comparing pre- and post-snapshot in background after creating
+# post-snapshot
+BACKGROUND_COMPARISON="yes"
+
+# run daily number cleanup
+NUMBER_CLEANUP="yes"
+
+# limit for number cleanup
+NUMBER_MIN_AGE="1800"
+NUMBER_LIMIT="50"
+NUMBER_LIMIT_IMPORTANT="15"
+
+# create hourly snapshots
+TIMELINE_CREATE="no"
+
+# cleanup hourly snapshots after some time
+TIMELINE_CLEANUP="yes"
+
+# limits for timeline cleanup
+TIMELINE_MIN_AGE="1800"
+TIMELINE_LIMIT_HOURLY="5"
+TIMELINE_LIMIT_DAILY="7"
+TIMELINE_LIMIT_WEEKLY="0"
+TIMELINE_LIMIT_MONTHLY="0"
+TIMELINE_LIMIT_YEARLY="0"
+
+# cleanup empty pre-post-pairs
+EMPTY_PRE_POST_CLEANUP="yes"
+
+# limits for empty pre-post-pair cleanup
+EMPTY_PRE_POST_MIN_AGE="1800"
+```
+
+</details>
+
+:::caution
+Configurația Snapper implicită a CachyOS acoperă doar subvolumul root (`/`). Dacă ai alte subvolume pe care dorești să le gestionezi cu Snapper, va trebui să creezi configurații separate pentru fiecare dintre ele.
+
+Această configurație necesită o revizuire pentru a-i crește eficacitatea.
+:::
+
+Iată o listă cu cele mai comune comenzi Snapper.
+
+:::note
+`< >` indică un substituent (placeholder) pe care ar trebui să-l înlocuiești cu valoarea corespunzătoare.
+:::
+
+<details>
+    <summary>Obținerea configurației actuale:</summary>
+    ```bash
+    sudo snapper get-config
+    ```
+    <details>
+        <summary>Exemplu de ieșire:</summary>
+        ```bash
+        ❯ snapper list-configs
+        Config │ Subvolume
+        ───────┼──────────
+        root   │ /
+        ```
+    </details>
+</details>
+
+<details>
+    <summary>Listarea snapshot-urilor disponibile + detalii:</summary>
+    ```bash
+    sudo snapper list
+    ```
+    <details>
+        <summary>Exemplu de ieșire:</summary>
+        ```bash
+          # │ Type   │ Pre # │ Date                     │ User │ Cleanup │ Description                                                              │ Userdata
+        ────┼────────┼───────┼──────────────────────────┼──────┼─────────┼──────────────────────────────────────────────────────────────────────────┼─────────
+        0   │ single │       │                          │ root │         │ current                                                                  │
+        715 │ pre    │       │ Thu 22 Jan 2026 16:14:07 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        716 │ post   │   715 │ Thu 22 Jan 2026 16:14:25 │ root │ number  │ docker-buildx lilv sof-firmware zed                                      │
+        717 │ pre    │       │ Sat 24 Jan 2026 11:19:48 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        718 │ post   │   717 │ Sat 24 Jan 2026 11:20:19 │ root │ number  │ bpf cachyos-hello cachyos-wallpapers cpupower jdk-openjdk ldb less libev │
+        719 │ pre    │       │ Sat 24 Jan 2026 11:20:31 │ root │ number  │ pacman -U --config /etc/pacman.conf -- /home/mario/.cache/yay/visual-s   │
+        720 │ post   │   719 │ Sat 24 Jan 2026 11:20:36 │ root │ number  │ visual-studio-code-bin                                                   │
+        721 │ pre    │       │ Sat 24 Jan 2026 20:46:40 │ root │ number  │ pacman -Syu plasma-login-manager                                         │
+        722 │ post   │   717 │ Sat 24 Jan 2026 20:46:48 │ root │ number  │ cmake fastfetch harfbuzz harfbuzz-icu jdk21-openjdk lib32-harfbuzz lib32 │
+        723 │ pre    │       │ Sat 24 Jan 2026 20:46:53 │ root │ number  │ pacman -R sddm-kcm cachyos-themes-sddm sddm                              │
+        724 │ post   │   723 │ Sat 24 Jan 2026 20:46:56 │ root │ number  │ cachyos-themes-sddm sddm sddm-kcm                                        │
+        725 │ pre    │       │ Sun 25 Jan 2026 08:05:05 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        726 │ post   │   725 │ Sun 25 Jan 2026 08:05:11 │ root │ number  │ plasma-login-manager                                                     │
+        727 │ pre    │       │ Sun 25 Jan 2026 15:55:28 │ root │ number  │ pacman -S --config /etc/pacman.conf -- cachyos-extra-znver4/caligula     │
+        728 │ post   │   727 │ Sun 25 Jan 2026 15:55:30 │ root │ number  │ caligula                                                                 │
+      ```
+      - Iată un rezumat al coloanelor:
+        - `#`: Indică numărul snapshot-ului care este folosit în alte comenzi.
+        - `Type`: Indică dacă snapshot-ul este unul individual (single) sau face parte dintr-o pereche pre/post.
+            - `single`: Aceste snapshot-uri nu au nicio relație specială cu alte snapshot-uri.
+            - `pre`: Aceste snapshot-uri sunt menite să fie făcute înainte de orice tip de modificare a sistemului (cum ar fi editarea unui fișier sau instalarea unui pachet).
+            - `post`: După cum sugerează și numele, acestea se referă la snapshot-uri făcute după ce a avut loc o modificare a sistemului. Ele sunt legate de snapshot-ul `pre` corespunzător.
+        - `Pre #`: Pentru snapshot-urile `post`, această coloană indică numărul snapshot-ului `pre` corespondent.
+        - `Date`: Data și ora la care a fost creat snapshot-ul.
+        - `User`: Utilizatorul care a creat snapshot-ul.
+        - `Cleanup`: Indică algoritmul de curățare aplicat snapshot-ului.
+            - Există mai mulți algoritmi de curățare disponibili în Snapper, cum ar fi `number`, `timeline` și `empty-pre-post`. În acest exemplu, este folosit algoritmul `number`, ceea ce înseamnă că snapshot-urile mai vechi vor fi șterse pe baza unei limite predefinite.
+            - timeline: Snapshot-urile sunt curățate pe baza vechimii și frecvenței lor.
+            - empty-pre-post: Șterge perechile de snapshot-uri pre/post cu diferențe goale.
+        - `Description`: O scurtă descriere a snapshot-ului, indicând adesea motivul creării acestuia.
+        - `Userdata`: Date suplimentare definite de utilizator asociate snapshot-ului.
+    </details>
+</details>
+
+<details>
+    <summary>Crearea unui snapshot nou:</summary>
+    ```bash
+    sudo snapper create --type single --description "Descrierea mea pentru Snapshot"
+    ```
+</details>
+
+<details>
+    <summary>Modificarea unui snapshot:</summary>
+    ```bash
+    sudo snapper modify <opțiune> <număr_snapshot>
+    ```
+    <details>
+        <summary>Opțiuni disponibile:</summary>
+        ```bash
+        Opțiuni pentru comanda 'modify':
+            --description, -d <description>  Descriere pentru snapshot.
+            --cleanup-algorithm, -c <algo>   Algoritm de curățare pentru snapshot.
+            --userdata, -u <userdata>        Date utilizator pentru snapshot.
+            --read-only                      Setează snapshot-ul ca read-only.
+            --read-write                     Setează snapshot-ul ca read-write.
+            --default                        Setează snapshot-ul ca snapshot implicit.
+        ```
+        <details>
+            <summary>Exemplu: Modificarea descrierii snapshot-ului 729:</summary>
+            ```bash
+            sudo snapper modify 729 --description 'Noua mea descriere pentru Snapshot'
+            ```
+        </details>
+    </details>
+</details>
+
+<details>
+<summary>Ștergerea snapshot-urilor:</summary>
+:::note
+Snapshot-ul 0 nu poate fi șters deoarece reprezintă starea actuală a sistemului de fișiere.
+:::
+    <details>
+    <summary>Ștergerea unui singur snapshot:</summary>
+    ```bash
+    sudo snapper delete <număr_snapshot>
+    ```
+    </details>
+    <details>
+    <summary>Ștergerea unui interval de snapshot-uri:</summary>
+    ```bash
+    sudo snapper delete 718-721
+    ```
+    Snapshot-urile 718, 719, 720 și 721 vor fi șterse.
+    </details>
+</details>
+
+#### Documentație Snapper
+
+[Pagina oficială man pentru comenzile Snapper:](http://snapper.io/manpages/snapper.html#global_options)
+
+[Ghidul fișierului de configurare Snapper:](http://snapper.io/manpages/snapper-configs.html)
+
+[Ghidul Arch Wiki:](https://wiki.archlinux.org/title/Snapper)
+
+### Recomandări și sfaturi Limine
+
+#### Ajustarea setărilor de afișare a snapshot-urilor în bootloader-ul Limine
+
+- Limitează numărul de snapshot-uri afișate în meniul bootloader-ului Limine pentru a evita aglomerația:
+
+<Steps>
+    1. Creează o copie de rezervă a fișierului de configurare limine-snapper-sync:
+        ```bash
+        sudo cp /etc/limine-snapper-sync.conf /etc/limine-snapper-sync.conf.orig
+        ```
+    2. Editează fișierul de configurare limine-snapper-sync:
+        ```bash
+        sudo nano /etc/limine-snapper-sync.conf
+        ```
+        Snippet de ieșire așteptat:
+        ```bash
+        ### Max Snapshot Entries
+        ### Setează limita pentru câte intrări de snapshot apar în meniul de boot.
+        ### Aceasta depinde de dimensiunea partiției tale de boot FAT32 și de câte versiuni diferite de kernel și module vrei să păstrezi.
+        ### O partiție de boot FAT32 mai mare permite mai multe intrări de snapshot.
+        MAX_SNAPSHOT_ENTRIES=10
+        ```
+        Opțional, ajustează formatul numelui snapshot-ului:
+        ```bash
+        ### Snapshot Name Format
+        ### Alege un format pentru modul în care apar intrările de snapshot în bootloader-ul Limine:
+        ### 0. ID=111 2023-12-20 10:59:59 (implicit)
+        ### 1. 111│2023-12-20 10:59:59
+        ### 2. 111 │ 2023-12-20 10:59:59
+        ### 3. 2023-12-20 10:59:59│111
+        ### 4. 2023-12-20 10:59:59 │ 111
+        ### 5. 2023-12-20 10:59:59
+        ### 6. 111
+        ### 7. 111│descriere snapshot
+        ### 8. 2023-12-20 10:59:59│descriere snapshot
+        ### 9. │descriere snapshot
+        SNAPSHOT_FORMAT_CHOICE=8
+        ```
+        `8` este o alegere bună deoarece arată data și ora împreună cu descrierea snapshot-ului.
+    3. Salvează fișierul și ieși apăsând `CTRL+O`, `Enter`, `CTRL+X`.
+</Steps>
+
+### Restaurarea dintr-un snapshot
+
+:::caution
+Dacă snapshot-ul din care vrei să restaurezi a implicat o actualizare de kernel, nu vei putea face rollback.
+:::
+
+<details>
+    <summary>Limine</summary>
+    <Steps>
+        1. Din meniul bootloader-ului Limine, navighează la meniul Snapshots:
+            <ImageComponent imgsrc={import('~/assets/images/limine-snapshotMenu-1.jpg')} />
+        2. Selectează snapshot-ul și kernelul din care vrei să restaurezi:
+            <MultipleImageComponent
+                images={[
+                import('~/assets/images/limine-snapshotMenu-2.jpg'),
+                import('~/assets/images/limine-snapshotMenu-1.jpg')]}
+            />
+        3. Sistemul tău este acum în modul `read-only`. Ar trebui să apară o notificare pop-up indicând faptul că a fost detectat un snapshot, întrebând dacă vrei să restaurezi din el:
+            <ImageComponent imgsrc={import('~/assets/images/kde-snapshot-popup.png')} />
+        4. Apasă pe `Restore now`. O fereastră de terminal se va deschide cu un prompt și va cere câteva confirmări:
+            ```bash title="Exemplu de prompt de restaurare"
+            Snapshot ID    : 2
+            Date           : 2026-01-26 11:19:14
+            Description    : nc-git
+            Restore method : replace
+
+            Confirm restore of snapshot 2 using the "replace" method?
+            Type [y]es to restore, [l]ist to display all snapshots, or [c]ancel to abort.
+
+            Input-ul tău: yes
+
+            Enter a description for the "backup" of the subvolume: @
+
+            Input-ul tău: @
+            ```
+          5. Tastează `yes` și, opțional, adaugă o descriere pentru snapshot-ul de backup.
+          6. Procesul de restaurare va începe. Odată finalizat, tastează `yes` încă o dată în noul prompt pentru a reporni sistemul:
+              ```bash
+              The restore is complete. Please reboot now:
+              Type [y]es to reboot, [n]o or [c]ancel to abort rebooting.
+
+              Input-ul tău: yes
+              ```
+    </Steps>
+</details>
+
+<details>
+    <summary>GRUB</summary>
+    <Steps>
+        1. Din meniul bootloader-ului GRUB, bootează în snapshot-ul și kernelul dorit din care vrei să restaurezi.
+        2. Odată pornit, deschide Btrfs Assistant:
+            ```bash
+            btrfs-assistant-launcher
+            ```
+
+            Alternativ:
+
+            ```bash
+            sudo -E btrfs-assistant
+            ```
+        3. Mergi la tab-ul Snapper → tab-ul „Browse/Restore” și selectează snapshot-ul din care ai bootat:
+            <ImageComponent imgsrc={import('~/assets/images/btrfs-assistant-example.png')} />
+        4. Apasă pe butonul `Restore` și repornește sistemul pentru a aplica modificările.
+    </Steps>
+</details>

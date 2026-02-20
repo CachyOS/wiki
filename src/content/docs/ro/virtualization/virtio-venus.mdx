@@ -1,0 +1,53 @@
+---
+title: Virtio-Venus
+description: Accelerare 3D prin Vulkan
+---
+
+## Cazuri de utilizare:
+- **Accelerare 3D aproape nativă**
+
+În sistemele de operare care utilizează `libvulkan`, cum ar fi **Linux**, **BSD**-urile și **Android**, poți obține o performanță aproape nativă prin traducerea apelurilor din VM către Vulkan, apoi direct către GPU-ul tău și înapoi, fără a fi nevoie să îl treci printr-un VM.
+
+Din păcate, **Virtio-Venus** nu se află în **VMM** și, prin urmare, va necesita utilizarea **qemu-cli**. Va trebui să notezi numele pe care l-ai dat mașinii tale virtuale și locația acesteia.
+
+## Utilizarea Virtio-Venus în qemu-cli:
+Odată ce instalezi oricare VM eligibil, poți deschide terminalul și crea un prompt qemu-cli pentru mașina ta virtuală; iată un exemplu pentru VM-ul meu CachyOS:
+
+```sh
+qemu-system-x86_64                                                                             
+    -enable-kvm                                                                                
+    -M q35                                                                                     
+    -smp 6                                                                                     
+    -m 12G                                                                                     
+    -cpu host                                                                                  
+    -net nic,model=virtio                                                                      
+    -net user,hostfwd=tcp::2222-:22                                                            
+    -device virtio-sound-pci,audiodev=my_audiodev -audiodev pipewire,id=my_audiodev            
+    -device virtio-vga-gl,hostmem=4G,blob=true,venus=true                                      
+    -vga none                                                                                  
+    -display gtk,gl=on,show-cursor=on                                                          
+    -usb -device usb-tablet                                                                    
+    -object memory-backend-memfd,id=mem1,size=12G                                              
+    -machine memory-backend=mem1                                                               
+    -drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd   
+    -drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd              
+    -drive file=.local/share/libvirt/images/archlinux.qcow2
+```
+
+## Explicații:
+
+- `-smp 6` înseamnă 6 nuclee CPU.
+- `-m 12G` înseamnă 12 GB de RAM.
+- `-net user,hostfwd=tcp::2222-:22` înseamnă că portul 22 este redirecționat de la gazdă către VM ca portul 2222; astfel, dacă dorești o conexiune ssh către VM de pe un alt dispozitiv, vei face:
+
+```sh
+ssh -p 2222 numeutilizatorvm@adresaipvm
+```
+
+- `-device virtio-vga-gl,hostmem=4G,blob=true,venus=true` acesta este driverul venus; din păcate nu este încă în virt-manager; odată ce va fi, această întreagă secțiune, în afară de modul user, va fi înlocuită.
+- `-hostmem=4G` înseamnă că permit mașinii virtuale să aibă până la 4 GB din memoria VRAM a GPU-ului meu.
+- `-object memory-backend-memfd,id=mem1,size=12G` în această secțiune, dimensiunea este memoria RAM pe care i-ai oferit-o, deci 12 GB în cazul meu.
+- `-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd` acesta este fișierul firmware pentru VM, aceasta este doar calea către el.
+- `-drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd` acesta este nvram-ul mașinii virtuale; fără acesta sau cu acesta setat pe read-only, VM-ul nu va rula.
+- `-drive file=.local/share/libvirt/images/archlinux.qcow2` aceasta este calea către fișierul .qcow2 (spațiul de stocare al VM-ului).
+(Poți vedea că dispozitivul meu audio nu este `ich9` în acest caz, ci `pipewire`, acest lucru este irelevant.)

@@ -1,0 +1,155 @@
+---
+title: Kernel CachyOS
+description: Caracteristici și modificări ale kernelului CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+Kernelul CachyOS este un kernel personalizat care utilizează îmbunătățiri, configurații și patch-uri din surse upstream.
+
+## Caracteristici
+
+### Optimizări de Performanță
+
+- **Compilare Avansată**: PKGBUILD extrem de personalizabil, cu suport atât pentru compilatoarele GCC, cât și Clang.
+- **Optimizare la Timpul Legării (LTO)**: Thin LTO activat implicit pentru o performanță mai bună.
+- **Optimizare Ghidată de Profil (PGO)**: AutoFDO + Propeller profiling pentru o generare optimă de cod ([Află mai multe](https://cachyos.org/blog/2411-kernel-autofdo/)).
+- **Kernel Control Flow Integrity (kCFI)**: Disponibil la utilizarea LLVM pentru o securitate sporită.
+- **Opțiuni pentru Frecvența Timerului**: Configurabil între 300Hz, 500Hz, 600Hz, 750Hz și 1000Hz (implicit: 1000Hz).
+- **Optimizări de Arhitectură**: Suport pentru build-uri specifice x86-64-v3, x86-64-v4 și AMD Zen4.
+- **Optimizări de Compilator**: Flag-uri GCC avansate, inclusiv `-fivopts` și `-fmodulo-sched`.
+
+### Îmbunătățiri CPU
+
+- **Mai mulți Planificatori (Schedulers)**: Planificatori BORE, EEVDF și BMQ pentru optimizarea diverselor sarcini de lucru.
+- **Îmbunătățiri AMD P-State**: Suport pentru Preferred Core și cele mai recente îmbunătățiri amd-pstate din linux-next.
+- **Suport Real-Time**: Build-uri de kernel RT disponibile cu integrarea planificatorului BORE.
+- **„Sosul” CachyOS**: Configurație personalizată `CONFIG_CACHY` cu optimizări pentru planificator și sistem.
+- **Optimizări pentru Latență Scăzută**: Patch-uri pentru un timp de răspuns îmbunătățit și reducerea jitter-ului.
+
+### Sistem de Fișiere și Memorie
+
+- **Suport ZFS**: Suport integrat pentru sistemul de fișiere ZFS cu module precompilate.
+- **Integrare NVIDIA**:
+  - Module de driver NVIDIA proprietare cu patch-uri.
+  - Suport pentru driverul NVIDIA open-source.
+  - Module gata de utilizat în repozitoriu.
+- **Îmbunătățiri ale Planificatorului I/O**:
+  - Performanță îmbunătățită pentru BFQ și mq-deadline.
+  - Suport pentru planificatorul I/O alternativ [ADIOS](https://github.com/firelzrd/adios).
+- **Gestionarea Memoriei**:
+  - Patch [le9uo](https://github.com/firelzrd/le9uo) pentru a preveni page thrashing-ul sub presiunea memoriei.
+  - Optimizări de gestionare a memoriei de la Zen-kernel (compactare, optimizarea watermark-ului).
+
+### Caracteristici Suplimentare
+
+#### Suport Hardware
+- **Hardware de Gaming**: Patch-uri pentru Steam Deck (Audio, HW Quirks, HID) și suport pentru ROG Ally.
+- **Hardware Apple**: Suport inclus implicit pentru MacBook-urile cu procesor T2.
+- **Hardware ASUS**: Patch-uri extinse de compatibilitate pentru hardware-ul ASUS.
+- **Grafică**: Suport HDR activat, suprascriere AMDGPU min_powercap (`amdgpu_ignore_min_pcap`).
+
+#### Îmbunătățiri de Sistem
+- **Multimedia**: Module v4l2loopback incluse implicit.
+- **Virtualizare**: Suport ACS Override pentru VFIO/passthrough GPU.
+- **Integrare Upstream**: Patch-uri selectate cu atenție de la Clear Linux și linux-next.
+
+#### Diverse
+
+Kernelul CachyOS are și alte caracteristici notabile care sunt subtile, dar îmbunătățesc experiența utilizatorului:
+
+- Include o variantă de debug a kernelului care oferă un binar de kernel ne-strippat pentru scopuri de depanare. Acest pachet este necesar pentru profilarea kernelului cu AutoFDO.
+- [Binder](https://developer.android.com/reference/android/os/Binder), modulul necesar pentru [Waydroid](https://waydro.id/), este activat implicit în configurația kernelului și deja [setat](https://github.com/CachyOS/linux-cachyos/blob/2f380e2b35c4ad9acda98296f638f93af3742533/linux-cachyos/config#L11037).
+
+## Variante
+
+CachyOS oferă o gamă diversă de opțiuni de kernel. Toate kernelurile pe care le oferim vin cu [Setul de Patch-uri de Bază CachyOS](https://github.com/CachyOS/kernel-patches). Pentru fiecare dintre kerneluri, există o [variantă corespondentă -lto](#convenția-de-denumire-a-pachetelor) care este construită cu [clang](https://clang.llvm.org/) în loc de [GCC](https://gcc.gnu.org/).
+
+- **linux-cachyos**
+  - Kernelul implicit. Acesta este kernelul recomandat dacă nu ești sigur pe care să-l folosești.
+  - Rata de tick de 1000Hz pentru un timp de răspuns îmbunătățit.
+  - Construit cu Clang și ThinLTO.
+  - Profilat cu propriul nostru profil [AutoFDO](https://cachyos.org/blog/2411-kernel-autofdo/) pentru o performanță îmbunătățită. [Script-ul](https://github.com/CachyOS/cachyos-benchmarker/blob/master/kernel-autofdo.sh) folosit pentru profilarea kernelului.
+- **linux-cachyos-bore**
+  - Folosește planificatorul [BORE](https://github.com/firelzrd/bore-scheduler).
+- **linux-cachyos-bmq**
+  - Folosește planificatorul BMQ din [Project C](https://gitlab.com/alfredchen/projectc/) de Alfred Chen.
+    - `Nu suportă sched-ext.`
+- **linux-cachyos-deckify**
+  - Kernelul implicit pentru handheld-uri. **Nu este recomandată** și **nu este suportată** folosirea oricărui alt kernel pe handheld-uri.
+  - Folosește planificatorul [BORE](https://github.com/firelzrd/bore-scheduler).
+  - Patch-uri specifice pentru handheld-uri peste setul de patch-uri de bază pentru a îmbunătăți compatibilitatea și experiența generală pe dispozitivele portabile.
+- **linux-cachyos-eevdf**
+  - Ajustează planificatorul implicit al kernelului pentru un timp de răspuns îmbunătățit.
+- **linux-cachyos-lts**
+  - Bazat pe cel mai recent kernel Long Term Support (LTS).
+  - Folosește planificatorul [BORE](https://github.com/firelzrd/bore-scheduler).
+  - Aplicat cu un număr minim de patch-uri comparativ cu alte kerneluri, pentru a asigura o stabilitate maximă.
+- **linux-cachyos-hardened**
+  - Folosește planificatorul [BORE](https://github.com/firelzrd/bore-scheduler).
+  - Include setul de patch-uri [linux-hardened](https://github.com/anthraxx/linux-hardened).
+  - Configurația kernelului bazată pe [configurația linux-hardened](https://gitlab.archlinux.org/archlinux/packaging/packages/linux-hardened/-/blob/main/config).
+    - Conține măsuri de securitate foarte agresive care reduc semnificativ performanța și experiența utilizatorului.
+    - `Nu suportă sched-ext.`
+- **linux-cachyos-rc**
+  - Bazat pe cel mai recent kernel mainline din [arborele lui Linus](https://github.com/torvalds/linux/).
+  - Folosește planificatorul [BORE](https://github.com/firelzrd/bore-scheduler).
+  - Kernelul principal pentru introducerea de noi caracteristici în setul nostru de patch-uri.
+- **linux-cachyos-server**
+  - Reglat pentru sarcini de lucru de server comparativ cu utilizarea de tip desktop.
+    - Rată de tick de 300Hz.
+    - Fără preemțiune.
+    - EEVDF standard (stock).
+- **linux-cachyos-rt-bore**
+  - Preemțiune în timp real (Real-time).
+  - Folosește planificatorul [BORE](https://github.com/firelzrd/bore-scheduler).
+
+:::note
+Cu excepția cazului în care se specifică altfel, se poate presupune că toate celelalte variante de kernel au aceeași configurație ca și kernelul implicit.
+:::
+
+Te rugăm să deschizi un tichet în [GitHub linux-cachyos](https://github.com/CachyOS/linux-cachyos) pentru sugestii și îmbunătățiri care pot fi adăugate kernelului implicit.
+
+### Convenția de Denumire a Pachetelor
+
+```sh
+linux-cachyos # Pachetul de bază pentru kernelul implicit. Compilat cu Clang și ThinLTO.
+linux-cachyos-hardened # Pachetul de bază pentru kernelul hardened. Compilat cu GCC.
+linux-cachyos-hardened-lto # Corespondentul compilat cu clang pentru linux-cachyos-hardened.
+linux-cachyos-hardened-{,lto-}headers
+linux-cachyos-hardened-{,lto-}nvidia
+linux-cachyos-hardened-{,lto-}nvidia-open
+linux-cachyos-hardened-{,lto-}zfs
+linux-cachyos-hardened-{,lto-}dbg
+```
+
+## Module de Kernel Precompilate
+
+Pentru a acomoda o bază mai mare de utilizatori, CachyOS livrează câteva module de kernel binecunoscute și intens utilizate împreună cu kernelul. Aceasta înseamnă că utilizatorii nu vor mai fi nevoiți să recompileze acele module după fiecare actualizare a kernelului sau la fiecare instalare nouă de kernel, ci vor trebui doar să le instaleze din repozitoriu, deoarece sunt deja precompilate. Acest lucru face inutile orice pachete `-dkms` pe care un utilizator le-ar putea avea și care oferă același modul ca versiunea precompilată.
+
+### ZFS
+
+[ZFS](https://openzfs.org/wiki/Main_Page) este unul dintre numeroasele sisteme de fișiere suportate în CachyOS. Din cauza faptului că este licențiat sub [CDDL](https://opensource.org/license/cddl-1-0), este incompatibil cu licența kernelului Linux și, prin urmare, nu poate fi integrat în arborele oficial (in-tree). Modulul livrat include cele mai recente caracteristici și remedieri upstream pentru a asigura compatibilitatea cu cel mai nou kernel.
+
+### NVIDIA
+
+CachyOS livrează atât versiunile precompilate ale modulelor de kernel cu sursă închisă (close-source), cât și pe cele [open-source](https://github.com/NVIDIA/open-gpu-kernel-modules/). Deoarece dezvoltarea modulului de kernel NVIDIA se face în afara arborelui oficial (out-of-tree) și astfel nu urmează ritmul de lansare al kernelului, configurația standard poate fi uneori incompatibilă cu cel mai nou kernel. Ca soluție de ocolire, CachyOS aplică patch-uri modulelor cu patch-uri create de comunitate sau partajate direct de NVIDIA.
+
+## Întrebări Frecvente (FAQ)
+
+### De ce nu este folosit AutoFDO pentru toate celelalte variante de kernel?
+
+Deoarece este costisitor de construit, necesitând practic construirea kernelului de două ori, ceea ce duce la mai mult timp și resurse dedicate compilării. Procesul de construire a unui kernel cu AutoFDO implică următorii pași:
+
+1) Construirea kernelului cu AutoFDO și capacități de debugging activate.
+2) Crearea unui profil, ceea ce înseamnă executarea unor sarcini de lucru pentru a colecta date de profilare pentru posibilele optimizări.
+3) Reconstruirea kernelului cu profilul AutoFDO.
+
+Prin urmare, este prezent doar în varianta [linux-cachyos](/ro/features/kernel#variante) pentru moment.
+
+Pentru mai multe informații despre AutoFDO, apasă [aici.](https://cachyos.org/blog/2411-kernel-autofdo/)
+
+### Kernelul realtime îmbunătățește performanța în jocuri?
+
+Nu, nu o face. Kernelul realtime face mult mai mult cod preemtibil comparativ cu un kernel preemtibil normal (PREEMPT). Aceasta înseamnă că mult mai multe sarcini (inclusiv procesele jocurilor) sunt întrerupte frecvent și vor ceda forțat resursele sistemului, ducând la o performanță mai scăzută.

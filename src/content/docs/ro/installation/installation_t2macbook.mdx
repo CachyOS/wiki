@@ -1,0 +1,138 @@
+---
+title: T2 MacBook
+description: Cum să instalezi CachyOS pe un MacBook cu procesor T2
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+CachyOS oferă suport nativ pentru MacBook-urile cu procesor T2, incluzând patch-urile de kernel necesare în toate kernelurile oferite. Totuși, sunt necesari câțiva pași cruciali pentru a asigura o configurare reușită.
+
+:::caution[Riscuri Potențiale]
+Eliminarea completă a macOS implică riscuri, cum ar fi pierderea datelor sau imposibilitatea de a mai folosi dispozitivul. Este **recomandat cu tărie** să păstrezi o partiție macOS pentru actualizări de firmware și recuperare. Consultă [T2 Linux Roadmap](https://wiki.t2linux.org/roadmap/#can-i-completely-remove-macos) pentru detalii.
+
+Dacă totuși decizi să elimini macOS, asigură-te că ai o copie de rezervă completă și creează un [instalator macOS bootabil](https://support.apple.com/en-us/101578) în prealabil.
+:::
+
+## Pre-Instalare
+
+Crearea unui instalator macOS bootabil este opțională, dar recomandată dacă plănuiești să modifici partițiile sau să elimini macOS. Poate fi util pentru actualizări de firmware, depanare sau restaurarea sistemului. Pentru instrucțiuni detaliate, consultă [ghidul Apple](https://support.apple.com/en-us/101578).
+
+Efectuează pașii de mai jos în macOS **înainte** de a boota instalatorul CachyOS.
+
+### Pregătirea stick-ului USB bootabil CachyOS
+
+Descarcă [imaginea ISO CachyOS](/ro/cachyos_basic/download) și urmează instrucțiunile din [Crearea unui stick USB bootabil cu CachyOS](/ro/installation/installation_prepare#crearea-unui-stick-usb-bootabil-cu-cachyos) pentru a crea mediul de instalare.
+
+### (Opțional) Extragerea firmware-ului Wi-Fi
+
+:::note
+Wi-Fi-ul **nu va funcționa** imediat după instalare deoarece firmware-ul necesar este proprietar și nu poate fi redistribuit de CachyOS. Vei avea nevoie de o conexiune la internet (ex: Ethernet, tethering prin USB) pentru procesul de instalare, cu excepția cazului în care urmezi pașii de mai jos pentru a pregăti firmware-ul Wi-Fi în prealabil și a-l activa în timpul instalării.
+:::
+
+În timp ce ești încă în macOS, deschide Terminalul și rulează următoarea comandă. Aceasta copiază fișierele de firmware Wi-Fi necesare în partiția ta EFI, făcându-le accesibile mai târziu în timpul instalării CachyOS.
+```sh
+curl -sL https://wiki.t2linux.org/tools/firmware.sh | bash -s copy_to_efi
+```
+
+### Pregătirea discului
+
+Dacă plănuiești un dual-boot cu macOS (recomandat), trebuie să creezi spațiu pentru CachyOS. Folosește aplicația Disk Utility din macOS pentru a redimensiona partiția existentă:
+
+<Steps>
+
+1.  Deschide **Disk Utility**.
+2.  În bara laterală din Disk Utility, selectează **volumul** pe care dorești să-l redimensionezi (de obicei numit „Macintosh HD” sau similar).
+3.  Apasă butonul **„Partition”** din bara de unelte.
+4.  Apasă butonul **„+” (plus)** de sub graficul care reprezintă utilizarea discului.
+5.  **Crucial**, când ești întrebat, alege **„Add Partition”**, *nu* „Add Volume”. Trebuie să creezi o partiție separată pentru Linux.
+6.  **Name:** Introdu un nume descriptiv pentru noua partiție (ex: „CachyOS” sau „Linux”).
+7.  **Format:** Selectează orice format disponibil (cum ar fi APFS sau Mac OS Extended). Instalatorul CachyOS va reformata această partiție mai târziu, deci alegerea inițială nu contează.
+8.  **Size:** Alocă cantitatea dorită de spațiu de stocare pentru CachyOS. **Reține că redimensionarea partițiilor ulterior poate fi dificilă sau imposibilă**, așa că alege o dimensiune care să-ți satisfacă nevoile.
+9. Apasă pe **„Apply”** pentru a crea noua partiție. Disk Utility va redimensiona partiția macOS și va crea noul spațiu gol.
+
+</Steps>
+
+
+### Dezactivarea Secure Boot
+
+<Steps>
+
+1. Repornește Mac-ul și ține apăsat `Command (⌘) + R` imediat după pornire pentru a intra în Recovery Mode.
+2. Mergi la Utilities > Startup Security Utility.
+3. Selectează „No Security” sub **Secure Boot** și „Allow booting from external or removable media” sub **Allowed Boot Media**.
+
+</Steps>
+
+Consultă [ghidul Apple despre Startup Security Utility](https://support.apple.com/en-in/102522) pentru mai multe detalii.
+
+---
+
+Pentru o prezentare suplimentară a pregătirii unui Mac T2 pentru Linux, consultă [ghidul de preinstalare t2linux](https://wiki.t2linux.org/guides/preinstall/).
+
+## Procesul de Instalare
+
+<Steps>
+
+1.  **Bootarea de pe USB-ul CachyOS:**
+    *   Repornește Mac-ul și ține apăsată tasta `Option (⌥)` imediat după pornire.
+    *   Selectează stick-ul USB CachyOS (de obicei etichetat ca „EFI Boot”).
+2.  **(Opțional) Activarea Wi-Fi în mediul Live:**
+    *   Dacă ai nevoie de Wi-Fi în timpul instalării și nu ai Ethernet/tethering, deschide terminalul odată ce mediul live CachyOS s-a încărcat.
+    *   Rulează aceste comenzi pentru a copia firmware-ul din partiția EFI (creat la [Extragerea firmware-ului Wi-Fi](#opțional-extragerea-firmware-ului-wi-fi)) și a configura NetworkManager:
+        ```sh
+        # Montează partiția EFI (de obicei nvme0n1p1 pe Mac-urile T2)
+        sudo mkdir -p /tmp/apple-wifi-efi
+        sudo mount /dev/nvme0n1p1 /tmp/apple-wifi-efi
+
+        # Copiază firmware-ul din EFI în mediul live
+        bash /tmp/apple-wifi-efi/firmware.sh get_from_efi
+        sudo umount /tmp/apple-wifi-efi
+
+        # Configurează NetworkManager să folosească backend-ul iwd
+        cat <<EOF | sudo tee /etc/NetworkManager/conf.d/wifi_backend.conf
+        [device]
+        wifi.backend=iwd
+        EOF
+        sudo systemctl restart NetworkManager
+        ```
+    *   Acum ar trebui să te poți conecta la rețelele Wi-Fi folosind applet-ul de rețea din bara de sistem.
+3.  **Rularea instalatorului CachyOS:**
+    *   Lansează instalatorul CachyOS de pe desktop sau din meniul de aplicații.
+    *   Urmează procedura standard de instalare, consultând ghidul [Instalarea pe Root](/ro/installation/installation_on_root).
+    *   La partiționare, selectează spațiul liber creat anterior. Lasă instalatorul să se ocupe de formatare.
+        :::caution[Atenție la Partiționare]
+        Fii **foarte atent** în timpul pasului de partiționare din instalator. Asigură-te că selectezi spațiul liber corect pe care l-ai pregătit și **nu** șterge sau formata accidental partiția macOS existentă, mai ales dacă intenționezi un dual-boot. Verifică de două ori selecțiile înainte de a continua.
+        :::
+    *   Detectarea Hardware CachyOS ([chwd](/ro/features/chwd/chwd)) ar trebui să aplice automat parametrii de boot și configurațiile specifice T2 în timpul instalării.
+
+</Steps>
+
+## Pași Post-Instalare
+
+După ce instalarea este finalizată și ai repornit în noul tău sistem CachyOS, s-ar putea să fie nevoie de câțiva pași suplimentari pentru a te asigura că totul funcționează corect.
+
+### Instalarea permanentă a firmware-ului Wi-Fi
+
+Dacă ai urmat pasul opțional [Activarea Wi-Fi în mediul Live](#procesul-de-instalare) pentru a obține firmware-ul pe ISO-ul live, poți pur și simplu să-l urmezi din nou pentru a activa Wi-Fi-ul. Altfel, conectează-te la internet (ex: Ethernet, tethering prin USB) și urmează pașii de mai jos:
+
+<Steps>
+1. Deschide un terminal și descarcă pachetul de firmware de pe mirror-ul Arch Linux T2:
+   ```sh
+   curl https://mirror.funami.tech/arch-mact2/os/x86_64/apple-bcm-firmware-14.0-1-any.pkg.tar.zst -o apple-bcm-firmware-14.0-1-any.pkg.tar.zst
+   ```
+2. Instalează pachetul descărcat:
+   ```sh
+   sudo pacman -U apple-bcm-firmware-14.0-1-any.pkg.tar.zst
+   ```
+3. Reîncarcă modulele de kernel pentru Wi-Fi:
+   ```bash
+   sudo modprobe -r brcmfmac_wcc
+   sudo modprobe -r brcmfmac
+   sudo modprobe brcmfmac
+   ```
+</Steps>
+
+Acum Wi-Fi-ul ar trebui să funcționeze fiabil după reporniri. Poți șterge fișierul `.pkg.tar.zst` descărcat.
+
+### Configurare suplimentară
+Pentru configurarea altor componente hardware, cum ar fi audio, camera web, Touch Bar etc., consultă diversele ghiduri de pe [t2linux Wiki](https://wiki.t2linux.org/roadmap/#configuring-the-installation).

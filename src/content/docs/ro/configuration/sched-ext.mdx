@@ -1,0 +1,966 @@
+---
+title: Tutorial sched-ext
+description: Tutorial despre cum să folosești framework-ul și informații diverse
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 5
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Icon } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+Extensible Scheduler Class (cunoscut mai bine sub numele de `sched-ext`) este o funcție a kernelului Linux care permite implementarea planificatorilor de fire de execuție (kernel thread schedulers) în BPF (Berkeley Package Filter) și încărcarea lor dinamică. În esență, acest lucru permite utilizatorilor finali să își schimbe planificatorii în spațiul utilizatorului (userspace), fără a fi nevoie să construiască un alt kernel doar pentru a avea un planificator diferit.
+
+:::tip[Ia legătura cu dezvoltatorii pe serverul lor de [Discord](https://discord.gg/b2J8DrWa7t)]
+:::
+
+- *Planificatorii pot fi găsiți în pachetele `scx-scheds` și `scx-scheds-git`.*
+  ```sh
+  # Ramura stabilă + uneltele scx_loader și scxctl.
+  sudo pacman -S scx-scheds scx-tools
+
+  # Ramura „bleeding edge” (această ramură include cele mai recente modificări din ramura master) + uneltele scx_loader și scxctl.
+  sudo pacman -S scx-scheds-git scx-tools-git
+  ```
+
+  :::note
+  Pachetul `scx-scheds-git` s-ar putea să nu includă fiecare planificator experimental, deoarece unii sunt dezvoltați în ramuri separate care nu au fost încă integrate în ramura master.
+  :::
+
+## Cum să lansezi și să gestionezi planificatorul
+
+:::note
+Atât `scxctl`, cât și `scx_loader` necesită privilegii administrative pentru a porni/opri/schimba planificatorii.
+
+Prin urmare, va trebui să le rulezi cu `sudo` sau folosind un agent polkit care acordă permisiunile necesare.
+
+Fără `sudo`, scxctl/scx_loader va solicita autentificarea printr-un agent polkit.
+:::
+
+<Tabs>
+
+<TabItem label='Terminal'>
+
+- *Pentru a porni planificatorul, deschide terminalul și introdu următoarea comandă:*
+  ```sh title='Exemplu de pornire scx_rusty'
+  sudo scx_rusty
+  ```
+
+*Aceasta va lansa planificatorul rusty și va detașa planificatorul implicit.*
+
+Pentru a opri planificatorul, apasă `CTRL + C` și acesta va fi oprit, iar planificatorul implicit al kernelului va prelua din nou controlul.
+
+</TabItem>
+
+<TabItem label='scxctl'>
+
+:::note[Inclus în pachetele `scx-tools` și `scx-tools-git`]
+:::
+
+:::caution[Necesită un agent polkit funcțional pentru a lucra corect.]
+Consultă următoarea **[pagină Arch Wiki ca referință.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+`scxctl` este un client CLI DBUS pentru interacțiunea cu `scx_loader`.
+
+- Caracteristici:
+  - Obținerea informațiilor despre planificatorul și modul curent
+  - Listarea tuturor planificatorilor suportați
+  - Pornirea unui planificator într-un anumit mod sau cu anumite argumente
+  - Comutarea între planificatori și moduri
+  - Oprirea planificatorului care rulează
+  - Repornirea planificatorului curent
+
+<Tabs>
+    <TabItem label='Pornirea unui planificator'>
+          ```sh title='Pornirea scx_flash în modul Gaming'
+          scxctl start --sched flash --mode gaming
+          ```
+    </TabItem>
+    <TabItem label='Oprirea unui planificator'>
+          ```sh title='Oprirea planificatorului care rulează în prezent'
+          scxctl stop
+          ```
+    </TabItem>
+    <TabItem label='Restaurarea planificatorului implicit'>
+          ```sh title='Restaurează planificatorul implicit setat în fișierul de configurare scx_loader'
+          scxctl restore
+          ```
+    </TabItem>
+    <TabItem label='Comutarea planificatorilor'>
+          ```sh title='Comutarea la scx_bpfland în modul Gaming'
+          scxctl switch --sched bpfland --mode gaming
+          ```
+    </TabItem>
+    <TabItem label='Pornirea și comutarea cu argumente personalizate'>
+          :::note[Adaugă o virgulă între fiecare argument]
+          Exemplu: `--args="-c,75,-m,0-15"` = Argument, Valoare
+          :::
+          ```sh title='Pornirea scx_cosmos cu argumente personalizate'
+          scxctl start --sched cosmos --args="-c,75,-m,0-15"
+          ```
+          ```sh title='Comutarea la scx_flash cu argumente personalizate'
+          scxctl switch --sched flash --args="-s,20000"
+          ```
+    </TabItem>
+</Tabs>
+
+```sh
+$ scxctl --help
+Usage: scxctl <COMMAND>
+
+Commands:
+  get      Get the info on the running scheduler
+  list     List all supported schedulers
+  start    Start a scheduler in a mode or with arguments
+  switch   Switch schedulers or modes, optionally with arguments
+  stop     Stop the current scheduler
+  restart  Restart the current scheduler with original configuration
+  restore  Restore the default scheduler from configuration
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
+```
+
+</TabItem>
+
+<TabItem label='scx_loader (DBus)'>
+
+:::caution[Necesită un agent polkit funcțional pentru a lucra corect.]
+Consultă următoarea **[pagină Arch Wiki ca referință.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+*După cum sugerează și numele, este un utilitar care funcționează ca un încărcător și manager pentru framework-ul sched-ext folosind interfața D-Bus.*
+
+*Deși nu necesită systemd, poate fi totuși utilizat împreună cu acesta.* [Consultă ghidul de tranziție pentru referință](/ro/configuration/sched-ext#tranziția-de-la-scxservice-la-scx_loader-un-ghid-cuprinzător).
+
+- Are capacitatea de a opri, porni, reporni, citi informații despre un planificator scx și multe altele.
+  - *Poți folosi unelte precum `dbus-send` sau `gdbus` pentru a comunica cu acesta.*
+- Acest ghid explică cum să folosești scx_loader cu comanda dbus-send.
+  - ```sh title='Pornirea scx_rusty cu argumentele sale implicite'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartScheduler string:scx_rusty uint32:0
+    ```
+  - ```sh title='Pornirea unui planificator cu argumente'
+    # Acest exemplu pornește scx_bpfland cu următoarele flag-uri: -k -c 0
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title='Oprirea planificatorului care rulează în prezent'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StopScheduler
+    ```
+  - ```sh title='Comutarea la planificatorul implicit'
+    # scx_loader va comuta la planificatorul implicit setat în fișierul său de configurare
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.RestoreDefault
+    ```
+  - ```sh title='Comutarea la alt planificator în Modul 2'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchScheduler string:scx_lavd uint32:2
+    # Aceasta comută la scx_lavd cu modul 2, ceea ce pornește LAVD în powersaving
+    ```
+  - ```sh title='Comutarea la alt planificator cu argumente'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title='Obținerea planificatorului care rulează în prezent'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:CurrentScheduler
+    ```
+  - ```sh title='Obținerea unei liste cu planificatorii suportați'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:SupportedSchedulers
+    ```
+:::tip
+Iată o explicație a ceea ce înseamnă fiecare mod în scx_loader:
+
+- Mode 0 = `Flag-urile implicite ale planificatorului`
+- Mode 1 = `Gaming`
+- Mode 2 = `Power Saving`
+- Mode 3 = `Low Latency`
+- Mode 4 = `Server`
+
+Exemplu: LAVD rulând în Mode 1 este echivalentul comenzii `scx_lavd --performance`
+
+*TLDR: Fiecare mod este un set de flag-uri diferite menite să îmbunătățească cazul de utilizare vizat.*
+
+[Pentru o privire mai detaliată asupra a ceea ce schimbă aceste moduri la fiecare planificator](<https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/src/config.rs#L193>)
+:::
+
+</TabItem>
+
+<TabItem label='CachyOS Kernel Manager'>
+
+:::caution[Necesită un agent polkit funcțional pentru a lucra corect.]
+Consultă următoarea **[pagină Arch Wiki ca referință.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+Îi poți accesa și configura prin butonul `sched-ext scheduler config`.
+
+</TabItem>
+
+<TabItem label='SCX Manager'>
+
+:::caution[Necesită un agent polkit funcțional pentru a lucra corect.]
+Consultă următoarea **[pagină Arch Wiki ca referință.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+SCX Manager este o unealtă GUI independentă derivată din CachyOS Kernel Manager. Permite utilizatorilor să gestioneze framework-ul sched-ext și planificatorii săi prin intermediul `scx_loader`.
+
+Caracteristici:
+- Verificarea planificatorului activ curent
+- Selectarea unui planificator sau profil: (Auto, Gaming, Power save, Low Latency sau Server)
+- Setarea de flag-uri suplimentare
+- Dezactivarea planificatorului curent
+
+<details>
+<summary>Captură de ecran</summary>
+
+<ImageComponent imgsrc={import('~/assets/images/scx-manager-main.png')} />
+
+</details>
+
+</TabItem>
+
+</Tabs>
+
+## Ghidul planificatorului: Profiluri și cazuri de utilizare
+
+Deoarece există mulți planificatori din care poți alege, dorim să oferim o scurtă introducere despre planificatorii actuali.
+
+:::note
+Acești planificatori sunt în dezvoltare constantă și sunt testați continuu, așa că așteaptă-te ca unele dintre caracteristicile/flag-urile lor să se schimbe.
+:::
+
+Simte-te liber să raportezi orice problemă sau feedback în repozitoriul planificatorului respectiv.
+
+Folosește `scx_numeplanificator --help` pentru a vedea flag-urile disponibile și o scurtă descriere a ceea ce fac.
+
+```sh title='Exemplu pentru a obține ajutor pentru scx_rusty'
+scx_rusty --help
+```
+
+### [scx_bpfland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_bpfland>)
+
+**Dezvoltat de: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Gata pentru producție? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Un planificator sched_ext bazat pe vruntime care prioritizează sarcinile interactive. Foarte flexibil și ușor de adaptat.
+
+Bpfland, când ia decizii despre ce nuclee să folosească, ia în considerare structura cache-ului acestora și care nuclee partajează același cache L2/L3, ceea ce duce la mai puține ratări de cache (cache misses) = mai multă performanță.
+
+- Cazuri de utilizare:
+  - Gaming
+  - Utilizare desktop
+  - Producție multimedia/audio
+  - Interactivitate excelentă sub sarcini intensive
+  - Economisire de energie (Power saving)
+  - Server
+
+#### Moduri de planificator
+
+##### Low Latency
+
+* **Flag-uri în linie de comandă:** `-m performance -w`
+* **Descriere:** Menit să scadă latența cu prețul lățimii de bandă (throughput). Potrivit pentru aplicații soft real-time precum procesarea audio și multimedia.
+
+##### Power Save
+
+* **Flag-uri în linie de comandă:** `-s 20000 -m powersave -I 100 -t 100`
+* **Descriere:** Prioritizează eficiența energetică. Favorizează nucleele mai puțin performante (ex. nucleele E pe Intel).
+
+##### Server
+
+* **Flag-uri în linie de comandă:** `-s 20000 -S`
+* **Descriere:** Prioritizează sarcinile cu afinitate strictă. Această opțiune poate crește lățimea de bandă cu prețul latenței și este mai potrivită pentru sarcinile de tip server.
+
+### [scx_beerland](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_beerland)
+
+**Dezvoltat de: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Gata pentru producție? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+scx_beerland este un planificator conceput să prioritizeze localizarea și scalabilitatea.
+
+Prioritizează menținerea sarcinilor pe același CPU pentru a păstra localizarea cache-ului, asigurând în același timp o scalabilitate bună pe mai multe CPU-uri prin utilizarea DSQ-urilor locale (cozi de rulare per-CPU) atunci când sistemul nu este saturat.
+
+- Cazuri de utilizare:
+  - Sarcini de lucru intensive pe cache
+  - Sisteme cu un număr mare de procesoare
+  - Gaming: Este cunoscut pentru faptul că funcționează surprinzător de bine în anumite jocuri, deși rezultatele pot varia
+  - Server: Bun pentru sarcini de server de uz general datorită optimizărilor pentru scalabilitate și localizare.
+  - Poate fi folosit și pentru utilizare desktop.
+
+#### Moduri de planificator
+
+Niciunul pentru moment.
+
+### [scx_rustland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland>)
+
+**Dezvoltat de: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Gata pentru producție? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+
+Pentru scenarii de producție critice pentru performanță, alți planificatori vor prezenta probabil o performanță mai bună, deoarece mutarea tuturor deciziilor de planificare în spațiul utilizatorului (user-space) vine cu un anumit cost (chiar dacă este minim).
+
+Totuși, un planificator implementat integral în user-space are potențialul unei integrări perfecte cu biblioteci sofisticate, unelte de tracing, servicii externe (ex. AI) etc.
+
+Prin urmare, pot exista situații în care beneficiile depășesc costurile, justificând utilizarea acestui planificator într-un mediu de producție.
+
+Partajează similitudini cu bpfland. Creat cu intenția de a fi ușor de citit și de înțeles cum funcționează datorită implementării sale în userspace.
+
+Reține că există un ușor dezavantaj de lățime de bandă la utilizarea unui planificator în userspace.
+
+- Cazuri de utilizare:
+  - Sarcini de lucru cu latență scăzută (gaming, conferințe video și streaming live)
+  - Utilizare desktop
+
+### [scx_flash](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_flash>)
+
+**Dezvoltat de: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Gata pentru producție? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Un planificator care se concentrează pe asigurarea echității între sarcini și predictibilitatea performanței.
+
+Funcționează folosind o politică [earliest deadline first (EDF)](https://www.geeksforgeeks.org/operating-systems/earliest-deadline-first-edf-cpu-scheduling-algorithm/), unde fiecărei sarcini îi este atribuită o pondere de „latență”. Această pondere este ajustată dinamic în funcție de cât de des o sarcină eliberează CPU-ul înainte ca intervalul său de timp (time slice) să fie epuizat.
+
+Sarcinile care eliberează CPU-ul mai devreme primesc o pondere de latență mai mare, fiind prioritizate față de sarcinile care își consumă complet intervalul de timp.
+
+- Cazuri de utilizare:
+  - Gaming
+  - Sarcini sensibile la latență, cum ar fi multimedia sau procesarea audio în timp real
+  - Necesitatea de răspuns rapid sub situații de suprasolicitare
+  - Consistență în performanță
+  - Server
+
+#### Moduri de planificator
+
+##### Low Latency
+
+* **Flag-uri în linie de comandă:** `-m performance -w -C 0`
+* **Descriere:** Menit să scadă latența cu prețul lățimii de bandă. Potrivit pentru aplicații soft real-time precum procesarea audio și multimedia.
+
+##### Gaming
+
+* **Flag-uri în linie de comandă:** `-m all`
+* **Descriere:** Optimizează pentru performanță ridicată în jocuri.
+
+##### Power Save
+
+* **Flag-uri în linie de comandă:** `-m powersave -I 10000 -t 10000 -s 10000 -S 1000`
+* **Descriere:** Prioritizează eficiența energetică. Favorizează nucleele mai puțin performante (ex. nucleele E pe Intel) și introduce un ciclu de repaus forțat la fiecare 10ms pentru a crește economisirea de energie.
+
+##### Server
+
+* **Flag-uri în linie de comandă:** `-m all -s 20000 -S 1000 -I -1 -D -L`
+* **Descriere:** Reglat pentru sarcini de tip server. Sacrifică timpul de răspuns pentru lățimea de bandă.
+
+### [scx_cosmos](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cosmos)
+
+**Dezvoltat de: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+- Gata pentru producție? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Planificator ușor optimizat pentru păstrarea localizării sarcină-CPU.
+
+Când sistemul nu este saturat, planificatorul prioritizează menținerea sarcinilor pe același CPU folosind DSQ-uri locale. Acest lucru nu doar menține localizarea, dar reduce și conflictele de blocare (locking contention) comparativ cu DSQ-urile partajate, permițând o scalabilitate bună pe multe CPU-uri.
+
+- Cazuri de utilizare:
+  - Planificator de uz general: planificatorul ar trebui să se adapteze atât pentru sarcinile de server, cât și pentru cele de desktop.
+
+#### Moduri de planificator
+
+##### Auto
+
+* **Flag-uri în linie de comandă:** `-s 20000 -d -c 0 -p 0`
+* **Descriere:** Sacrifică localizarea cache-ului și eficiența energetică pentru o distribuție uniformă pe toate CPU-urile. Înclină mai mult spre sarcinile interactive.
+
+##### Gaming
+
+* **Flag-uri în linie de comandă:** `-c 0 -p 0`
+* **Descriere:** Dezactivează urmărirea sarcinii CPU și impune întotdeauna planificarea bazată pe termene limită pentru a îmbunătăți timpul de răspuns.
+
+##### Power Save
+
+* **Flag-uri în linie de comandă:** `-m powersave -d -p 5000`
+* **Descriere:** Prioritizează eficiența energetică. Favorizează nucleele mai puțin performante (ex. nucleele E pe Intel) și dezactivează pornirile amânate (deferred wakeups), reducând lățimea de bandă în favoarea eficienței energetice. Interogarea sarcinii CPU crescută la 5ms.
+
+##### Low Latency
+
+* **Flag-uri în linie de comandă:** `-m performance -c 0 -p 0 -w`
+* **Descriere:** Menit să scadă latența cu prețul lățimii de bandă. Potrivit pentru aplicații soft real-time precum procesarea audio și multimedia. Impune întotdeauna planificarea bazată pe termene limită și optimizări de pornire sincronă pentru a îmbunătăți predictibilitatea performanței.
+
+##### Server
+
+* **Flag-uri în linie de comandă:** `-s 20000`
+* **Descriere:** Activează afinitatea spațiului de adrese pentru a îmbunătăți localizarea și performanța în anumite sarcini sensibile la cache. Interogarea crescută la 20ms.
+
+### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>)
+
+**Dezvoltat de: Changwoo Min (multics69 [GitHub](<https://github.com/multics69>)).**
+
+- Gata pentru producție? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Scurtă introducere în LAVD de la Changwoo:
+
+*LAVD este un nou algoritm de planificare care se află încă în curs de dezvoltare. Este motivat de sarcinile de gaming, care sunt critice pentru latență și implică multă comunicare. Acesta își propune să minimizeze vârfurile de latență, menținând în același timp o lățime de bandă generală bună și o utilizare echitabilă a timpului CPU între sarcini.*
+
+- Cazuri de utilizare:
+  - Gaming
+  - Producție audio
+  - Sarcini sensibile la latență
+  - Utilizare desktop
+  - Interactivitate excelentă sub sarcini intensive
+  - Power saving
+
+Una dintre principalele și extraordinarele capacități pe care LAVD le include este **Core Compaction**, care, fără a intra în detalii tehnice: când utilizarea CPU < 50%, nucleele active curent vor rula mai mult timp și la o frecvență mai mare. În acest timp, nucleele inactive vor rămâne în C-State (Sleep) pentru o durată mult mai lungă, obținând un consum total de energie mai mic.
+
+##### Moduri de planificator
+
+##### Gaming & Low Latency
+
+* **Flag-uri în linie de comandă:** `--performance`
+* **Descriere:** Maximizează performanța folosind toate nucleele disponibile, prioritizând nucleele fizice.
+
+##### Power Save
+
+* **Flag-uri în linie de comandă:** `--powersave`
+* **Descriere:** Minimizează consumul de energie menținând o performanță rezonabilă. Prioritizează nucleele eficiente și firele de execuție în fața nucleelor fizice.
+
+### [scx_rusty](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rusty>)
+
+**Dezvoltat de: David Vernet (Byte-Lab [GitHub](<https://github.com/Byte-Lab>))**
+
+- Gata pentru producție? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+  - Da, dacă este reglat corect.
+
+Rusty oferă o gamă largă de caracteristici care îi sporesc capacitățile, oferind o flexibilitate mai mare pentru diverse cazuri de utilizare. Una dintre aceste caracteristici este reglabilitatea, permițându-ți să personalizezi Rusty pentru a se potrivi preferințelor tale și cerințelor specifice.
+
+- Cazuri de utilizare:
+  - Gaming
+  - Sarcini sensibile la latență
+  - Utilizare desktop
+  - Producție multimedia/audio
+  - Interactivitate excelentă sub sarcini intensive
+  - Power saving
+
+### [scx_p2dq](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_p2dq>)
+
+- Gata pentru producție? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+  - Da, dacă este reglat corect pentru sarcina ta de lucru și hardware-ul tău specific.
+
+**Dezvoltat de: Daniel Hodges (hodgesds [GitHub](<https://github.com/hodgesds>))**
+
+Un planificator de uz general care se concentrează pe echilibrarea sarcinii de tip „pick two” între LLC-uri. Menține o localizare ridicată a cache-ului și conservarea muncii, oferind în același timp o latență rezonabilă.
+
+- Cazuri de utilizare:
+  - Server
+  - Medii desktop
+  - Gaming (cu câteva reglaje manuale)
+
+#### Moduri de planificator
+
+##### Gaming
+
+* **Flag-uri în linie de comandă:** `--task-slice true -f --sched-mode performance`
+* **Descriere:** Îmbunătățește consistența performanței în jocuri și crește înclinația spre planificarea pe nucleele cu performanță mai mare.
+
+##### Low Latency
+
+* **Flag-uri în linie de comandă:** `-y -f --task-slice true`
+* **Descriere:** Scade latența făcând sarcinile interactive să rămână mai mult pe CPU-ul la care au fost alocate și crescând stabilitatea timpului de felie (slice time).
+
+##### Power Save
+
+* **Flag-uri în linie de comandă:** `--sched-mode efficiency`
+* **Descriere:** Sporește eficiența energetică prin prioritizarea nucleelor eficiente din punct de vedere energetic.
+
+##### Server
+
+* **Flag-uri în linie de comandă:** `--keep-running`
+* **Descriere:** Îmbunătățește sarcinile de tip server permițând sarcinilor să ruleze dincolo de felia lor dacă CPU-ul este inactiv.
+
+### [scx_tickless](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_tickless>)
+
+**Dezvoltat de: Andrea Righi (arighi [Github](<https://github.com/arighi>))**
+
+- Gata pentru producție? <Icon name="close" color="var(--sl-color-text-accent)" size="2rem" />
+  - Acest planificator este încă experimental și nu este recomandat pentru utilizare în producție.
+
+:::note
+Pentru a dezactiva eficient tick-urile pe procesoarele „tickless”, kernelul trebuie bootat cu `nohz_full`. Reține că `nohz_full` introduce un cost suplimentar pentru apelurile de sistem, deci acest lucru poate degrada sarcinile sensibile la latență.
+:::
+
+scx_tickless este un planificator orientat spre server, conceput pentru cloud computing, virtualizare și sarcini de calcul de înaltă performanță.
+
+Planificatorul funcționează prin rutarea tuturor evenimentelor de planificare printr-un grup de CPU-uri primare desemnate să gestioneze aceste evenimente. Acest lucru permite dezactivarea tick-ului planificatorului pe celelalte CPU-uri, reducând zgomotul produs de OS.
+
+- Cazuri de utilizare:
+  - Cloud computing
+  - Virtualizare
+  - Sarcini de calcul de înaltă performanță (HPC)
+  - Server
+
+#### Moduri de planificator
+
+##### Gaming
+
+* **Flag-uri în linie de comandă:** `-f 5000 -s 5000`
+* **Descriere:** Sporește performanța în gaming prin creșterea frecvenței cu care planificatorul detectează conflictele CPU și declanșează comutările de context cu o felie de timp mai scurtă.
+
+##### Power Save
+
+* **Flag-uri în linie de comandă:** `-f 50`
+* **Descriere:** Sporește eficiența energetică prin reducerea verificărilor de conflict.
+
+##### Low Latency
+* **Flag-uri în linie de comandă:** `-f 5000 -s 1000`
+* **Descriere:** Similar cu profilul de gaming, dar cu o felie redusă și mai mult.
+
+##### Server
+
+* **Flag-uri în linie de comandă:** `-f 100`
+* **Descriere:** Reduce frecvența verificărilor de conflict CPU pentru a îmbunătăți lățimea de bandă în detrimentul timpului de răspuns.
+
+## Configurare și testarea performanței
+
+### LAVD Autopilot și Autopower
+
+*Citate de la Changwoo Min:*
+- În modul autopilot, planificatorul își ajustează modul de putere `Powersave, Balanced sau Performance` în funcție de sarcina sistemului, mai exact de utilizarea CPU.
+
+- Autopower: Decide automat modul de putere al planificatorului pe baza profilului energetic al sistemului, alias EPP (Energy Performance Preference).
+
+```sh
+# Autopower poate fi activat prin următorul flag:
+--autopower
+# ex:
+scx_lavd --autopower
+```
+
+### ananicy-cpp și sched-ext
+
+:::note[Actualizare despre ananicy-cpp și sched-ext]
+După dezvoltarea ulterioară a planificatorilor, folosirea ananicy-cpp împreună cu aceștia este de obicei în regulă. Totuși, dacă experimentezi blocări sau instabilitate, ia în considerare dezactivarea acestuia ca pas de depanare.
+:::
+
+Pentru a dezactiva/opri ananicy-cpp, rulează următoarea comandă:
+
+```sh
+systemctl disable --now ananicy-cpp
+```
+
+### Comutarea Profilului de Putere în scx_loader
+
+Implementată în pachetul `power-profiles-daemon` furnizat de CachyOS, care include un [patch personalizat](https://github.com/CachyOS/CachyOS-PKGBUILDS/blob/master/power-profiles-daemon/0001-Add-support-for-scx_loader-modes-switching.patch) pentru a suporta comutarea modurilor în `scx_loader`.
+
+- Dacă `scx_loader` rulează în prezent, când se folosește [game-performance](/ro/configuration/gaming#comutarea-profilului-de-putere-la-cerere), acesta va comuta automat planificatorul activ pe profilul `Gaming` atunci când este lansat un joc și va reveni la profilul implicit când jocul este închis.
+- La schimbarea profilurilor de putere, ex. în KDE Plasma sau GNOME folosind comutatorul de profiluri de putere, `scx_loader` va trece automat la profilul de planificator corespunzător:
+
+| Profil Putere       | Profil Planificator|
+| ------------------- | ------------------ |
+| Power Saver         | Power Save         |
+| Balanced            | Auto               |
+| Performance         | Gaming             |
+
+### Benchmarking și compararea planificatorilor cu cachyos-benchmarker
+
+Unealta [cachyos-benchmarker](https://github.com/CachyOS/cachyos-benchmarker) oferă o modalitate ușoară de a evalua și compara performanța diferiților planificatori CPU.
+
+Aceasta rulează o suită cuprinzătoare de benchmark-uri pentru a măsura performanța CPU, a memoriei și a sistemului în ansamblu sub diverse sarcini de lucru.
+
+Sunt incluse următoarele benchmark-uri:
+
+| Test                        | Măsoară                                  | Unealtă      |
+| --------------------------- | ---------------------------------------- | ------------ |
+| **stress-ng cpu-cache-mem** | Performanța CPU, cache și memorie        | `stress-ng`  |
+| **Compilare FFmpeg**        | Performanța build-ului paralel           | `make`       |
+| **Codificare x265**         | Lățimea de bandă pentru codificare video | `x265`       |
+| **Hashing argon2**          | Hashing de parole multithreaded          | `argon2`     |
+| **perf sched msg**          | Comutarea de context și performanța IPC  | `perf`       |
+| **perf memcpy**             | Lățimea de bandă a memoriei `memcpy()`   | `perf`       |
+| **Calcul numere prime**     | Aritmetică pe întregi și paralelism      | `primesieve` |
+| **NAMD**                    | Dinamică moleculară (sarcini științifice)| `namd3`      |
+| **Randare Blender**         | Randare 3D doar pe CPU                   | `blender`    |
+| **Compresie xz**            | Lățimea de bandă a compresiei            | `xz`         |
+| **Build kernel defconfig**  | Performanța compilării kernelului        | `make`       |
+| **y-cruncher**              | Precizie matematică și stres de memorie  | `y-cruncher` |
+
+`cachyos-benchmarker` poate fi folosit pentru mai multe scopuri, inclusiv:
+
+- **Testarea stabilității planificatorului**
+  Rulează întreaga suită de benchmark pentru a detecta blocări, crash-uri sau regresii introduse de schimbările planificatorului. Dacă folosești `scx_loader`, poți colecta log-urile în caz de blocare sau crash cu:
+  ```bash
+  journalctl --unit scx_loader.service --boot 0 > crash.log
+  ```
+  Aceasta va crea un fișier numit `crash.log` în directorul curent.
+- **Compararea performanței planificatorilor**
+  - Evaluează diferențele de performanță între planificatori. Ex. `BPFLAND vs LAVD`
+- **Măsurarea efectului actualizărilor de kernel sau planificator**
+  - Compară rulările înainte și după aplicarea patch-urilor sau schimbarea versiunilor pentru a verifica regresiile sau îmbunătățirile de performanță.
+- **Testarea optimizărilor de configurare**
+  - Evaluează impactul schimbărilor precum setările guvernatorului CPU, comutarea SMT sau flag-urile modificate ale planificatorului.
+
+#### Cerințe
+- 4 GB RAM sau mai mult
+- Cel puțin 8 GB de spațiu de stocare liber
+- Timp și răbdare - **benchmark-ul complet poate dura peste o oră pe sistemele mai lente**
+
+#### Instalare
+
+Pentru a instala `cachyos-benchmarker`, rulează următoarea comandă:
+```bash
+sudo pacman -S cachyos-benchmarker
+```
+
+#### Rularea benchmark-ului
+
+<Steps>
+    1. Execută `cachyos-benchmarker:`
+        ```bash
+        cachyos-benchmarker ~/cachyos-benchmarker/
+        # Poți înlocui ~/cachyos-benchmarker/ cu orice director în care dorești să fie salvate log-urile.
+        ```
+    2. Așteaptă până când pașii de pregătire se termină.
+    3. Urmează prompturile:
+        - `Do you want to drop page cache now? Root privileges needed! (y/N) y`
+        - `Please enter a name for this run, or leave empty for default:`
+    4. Așteaptă ca testele să se finalizeze.
+    5. Odată finalizate, se vor întâmpla următoarele:
+        - Crearea unui fișier log cu un nume de forma `benchie_<nume>_<DATA>.log`, care conține informații detaliate despre rularea benchmark-ului.
+          - Exemplu: `benchie_p2dq_2025-09-29-2115.log`
+          - Scriptul `benchmark_scraper.py` se va executa automat pentru a genera un raport rezumat în format HTML.
+          - Ce face scriptul?:
+            - Citește toate fișierele `benchie_*.log` din directorul specificat.
+            - Extrage numele benchmark-urilor, timpii și scorurile.
+            - Le sortează sau le agregă.
+            - Afișează un rezumat curat al rezultatelor în terminal și creează un fișier HTML care poate fi deschis în browser.
+                <details>
+                <summary>Exemplu de ieșire în terminal:</summary>
+                ```text
+                stress-ng cpu-cache-mem: 15.26
+                y-cruncher pi 1b: 31.23
+                perf sched msg fork thread: 8.892
+                perf memcpy: 13.53
+                namd 92K atoms: 53.54
+                calculating prime numbers: 11.126
+                argon2 hashing: 6.62
+                ffmpeg compilation: 53.38
+                xz compression: 61.13
+                kernel defconfig: 130.73
+                blender render: 96.29
+                x265 encoding: 24.99
+
+                Total time (s): 506.72
+                Total score: 70.71
+
+                Name: p2dq
+                Date: 2025-09-29-2115
+
+                System:    Kernel: 6.17.0-1.1-cachyos-p2dq arch: x86_64 bits: 64
+                           Desktop: KDE Plasma v: 6.4.5 Distro: CachyOS
+                Memory:    System RAM: total: 32 GiB available: 30.61 GiB used: 7.54 GiB (24.6%)
+                           Device-1: Channel-A DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                           Device-2: Channel-B DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                           Device-3: Channel-C DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                           Device-4: Channel-D DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                CPU:       Info: 8-core model: AMD Ryzen 7 8845HS w/ Radeon 780M Graphics bits: 64 type: MT MCP cache: L2: 8 MiB
+                           Speed (MHz): avg: 3366 min/max: 419/5138 cores: 1: 3366 2: 3366 3: 3366 4: 3366 5: 3366 6: 3366 7: 3366 8: 3366 9: 3366 10: 3366 11: 3366 12: 3366 13: 3366 14: 3366 15: 3366 16: 3366
+
+                SCX Scheduler: p2dq_1.0.21_gf90c2aa1_dirty_x86_64_unknown_linux_gnu
+
+                SCX Version: p2dq_1.0.21_gf90c2aa1_dirty_x86_64_unknown_linux_gnu
+
+                 Version         : 0.5.1-1
+                ```
+                </details>
+                <details>
+                <summary>Exemplu HTML al unui rezultat de test comparând două ramuri diferite ale aceluiași planificator:</summary>
+                <ImageComponent imgsrc={import('~/assets/images/cachyos-benchmarker-example.png')} />
+                </details>
+    6. Pentru a compara două sau mai multe rulări, plasează fișierele `.log` în același director înainte de a rula `benchmark_scraper.py`. Unealta le va detecta și le va compara automat în raportul HTML.
+</Steps>
+
+### Testarea latenței planificatorului cu schbench
+
+schbench este un benchmark de planificator conceput pentru a măsura latența planificatorului sub o sarcină de lucru simulată de tip server. Acesta lansează un număr configurabil de fire de execuție „worker” și „message”, unde mesajele trezesc în mod repetat workerii. Măsurând distribuția latenței de la trezire până la execuția acestor fire worker, acesta oferă informații critice despre capacitatea kernelului de a gestiona trezirile firelor, echilibrarea și conflictele CPU, în special sub sarcină.
+
+#### Cazuri de utilizare
+
+Poți folosi `schbench` pentru:
+
+- **Evaluarea latenței planificatorului:** Identificarea rapidității cu care firele sunt planificate după trezire.
+- **Compararea performanței de trezire între planificatori:** Detectarea îmbunătățirilor sau regresiilor în comutarea de context și latența de trezire.
+- **Testarea efectului patch-urilor de kernel sau planificator:** Evaluarea modului în care reglajele sau actualizările afectează echitatea și timpul de răspuns al planificării.
+
+#### Instalare
+
+`schbench` este disponibil în repozitoriile CachyOS:
+```bash
+sudo pacman -S schbench
+```
+
+#### Rularea benchmark-ului
+
+O modalitate simplă de a rula `schbench` pentru un test general de latență este:
+```bash
+schbench -m 2 -t 8 -r 60
+```
+
+Acest exemplu rulează:
+- 2 fire de mesaje (`-m 2`)
+- 8 fire worker per fir de mesaj (`-t 8`)
+- pentru un timp total de rulare de 60 de secunde (`-r 60`)
+
+Poți ajusta aceste valori în funcție de numărul de nuclee ale CPU-ului tău și de nivelul de sarcină dorit.
+
+Iată un tabel care explică câteva dintre opțiunile cheie:
+
+| Opțiune                      | Descriere                                                       |
+| ---------------------------- | --------------------------------------------------------------- |
+| `-C, --calibrate`            | Rulează calibrarea și raportează timpii (fără benchmark).       |
+| `-L, --no-locking`           | Dezactivează spinlocks în timpul lucrului CPU (implicit: activat). |
+| `-m, --message-threads <n>`  | Numărul de fire de mesaje (implicit: 1).                        |
+| `-t, --threads <n>`          | Fire worker per fir de mesaj (implicit: numărul de CPU-uri).    |
+| `-r, --runtime <sec>`        | Durata benchmark-ului (implicit: 30).                           |
+| `-F, --cache_footprint <KB>` | Dimensiunea amprentei cache (implicit: 256).                    |
+| `-n, --operations <count>`   | Numărul de operațiuni „think time” de efectuat (implicit: 5).   |
+| `-A, --auto-rps`             | Crește automat RPS până când se atinge ținta de utilizare CPU.  |
+| `-R, --rps <count>`          | Modul cereri pe secundă (Requests per second).                  |
+| `-p, --pipe <bytes>`         | Simulează un test de transfer prin pipe.                        |
+| `-w, --warmuptime <sec>`     | Durata de încălzire înainte de colectarea statisticilor (imp: 0).|
+| `-i, --intervaltime <sec>`   | Intervalul pentru afișarea latențelor (implicit: 10).           |
+| `-z, --zerotime <sec>`       | Intervalul pentru resetarea statisticilor de latență (imp: niciodată).|
+
+#### Înțelegerea rezultatelor
+
+După fiecare rulare, `schbench` afișează percentilele de latență, cum ar fi:
+
+<details>
+    <summary>Exemplu de ieșire</summary>
+    ```bash
+    Wakeup Latencies percentiles (usec) runtime 10 (s) (2406 total samples)
+	  50.0th: 60         (648 samples)
+	  90.0th: 2034       (968 samples)
+	* 99.0th: 4104       (211 samples)
+	  99.9th: 10128      (22 samples)
+	  min=1, max=10308
+    Request Latencies percentiles (usec) runtime 10 (s) (2394 total samples)
+	  50.0th: 49216      (726 samples)
+	  90.0th: 69760      (954 samples)
+	* 99.0th: 166656     (212 samples)
+	  99.9th: 273920     (21 samples)
+	  min=11770, max=334247
+    RPS percentiles (requests) runtime 10 (s) (11 total samples)
+	  20.0th: 234        (3 samples)
+	* 50.0th: 238        (3 samples)
+	  90.0th: 241        (4 samples)
+	  min=230, max=248
+    current rps: 230.99
+    Wakeup Latencies percentiles (usec) runtime 10 (s) (2406 total samples)
+	  50.0th: 60         (648 samples)
+	  90.0th: 2034       (968 samples)
+	* 99.0th: 4104       (211 samples)
+	  99.9th: 10128      (22 samples)
+	  min=1, max=10308
+    Request Latencies percentiles (usec) runtime 10 (s) (2406 total samples)
+	  50.0th: 49216      (729 samples)
+	  90.0th: 69760      (956 samples)
+	* 99.0th: 165632     (212 samples)
+	  99.9th: 273920     (22 samples)
+	  min=11770, max=334247
+    RPS percentiles (requests) runtime 10 (s) (11 total samples)
+	  20.0th: 234        (3 samples)
+	* 50.0th: 238        (3 samples)
+	  90.0th: 241        (4 samples)
+	  min=230, max=248
+    average rps: 240.60
+    ```
+</details>
+
+##### Cum să interpretezi rezultatele
+
+- **Latențele de trezire (Wakeup Latencies):**
+  - Măsoară cât de repede firele se trezesc după ce au fost semnalate.
+    - Valorile mai mici aici (în special **percentila 99**) înseamnă că planificatorul este mai receptiv.
+- **Latențele cererilor (Request Latencies):**
+  - Reprezintă timpul necesar pentru a finaliza cererile între fire.
+    - O latență mai mică indică o mai bună comunicare între fire și o eficiență mai mare a planificării.
+- **RPS (Cereri pe Secundă):**
+  - Arată lățimea de bandă susținută:
+    - Un **RPS mediu** mai mare indică faptul că planificatorul poate gestiona mai multă muncă pe secundă sub configurația dată.
+
+În concluzie:
+- Un **planificator bun** va prezenta **latențe de trezire și de cerere mici**, cu un **RPS consistent**.
+- Un **planificator mai puțin eficient** poate prezenta **vârfuri mari de latență** sau **valori RPS instabile** în timp.
+
+:::note
+Aceste rezultate pot varia în funcție de CPU, numărul de nuclee, sarcina sistemului și dacă planificatorul este capabil să gestioneze eficient arhitectura CPU-ului tău.
+:::
+
+### Recomandări pentru benchmark-ul jocurilor
+
+Dacă dorința ta este să faci benchmark jocurilor pentru a compara cum performează diferiți planificatori, iată câteva sfaturi pentru a obține cele mai precise rezultate:
+
+- **Folosește benchmark-urile integrate:** Multe jocuri moderne vin cu unelte de benchmark incluse. Acestea sunt concepute să ofere rezultate consistente prin rularea aceleiași secvențe de evenimente de fiecare dată.
+  - Consultă acest [site](https://www.pcgamingwiki.com/wiki/List_of_games_with_built-in_benchmarks) pentru o listă de jocuri care includ benchmark-uri integrate.
+- **Setări consistente:** Asigură-te că setările jocului (rezoluție, calitate grafică etc.) sunt aceleași pentru fiecare test.
+- **Închide aplicațiile de fundal:** Alte aplicații care rulează în fundal pot afecta performanța. Închide programele inutile pentru a minimiza impactul lor.
+- Dacă nu folosești un benchmark integrat, încearcă să efectuezi aceleași acțiuni în joc pentru fiecare rulare. Aceasta ar putea include urmarea aceluiași traseu, angajarea în scenarii de luptă similare sau efectuarea acelorași sarcini.
+  - Chiar și faptul că nu țintești în același loc poate duce la rezultate de performanță diferite.
+- **Rulări multiple:** Efectuează mai multe rulări ale benchmark-ului și fă media pentru a lua în calcul variabilitatea.
+- **Folosește unelte de monitorizare a performanței:** Unelte precum MangoHud sau GOverlay pot oferi metrici de performanță în timp real, cum ar fi FPS, timpii cadrelor (frame times) și utilizarea CPU/GPU.
+- **Profită de scurtăturile de tastatură sau macro-uri:**
+  - Un exemplu este crearea unei combinații de taste prin care poți comuta între diferiți planificatori sau le poți schimba modurile din mers în timp ce ești în joc.
+    - Acest lucru se poate face folosind o unealtă precum [scxctl](/ro/configuration/sched-ext#cum-să-lansezi-și-să-gestionezi-planificatorul) sau prin crearea unor scripturi personalizate care schimbă planificatorul activ și modul acestuia.
+
+#### Încărcarea și partajarea benchmark-urilor tale
+
+Acest [site](https://flightlesssomething.ambrosia.one/benchmarks) conține o listă de benchmark-uri realizate de comunitate folosind diferiți planificatori sau testând diverse setări.
+
+Pentru a-ți încărca propriile benchmark-uri, va trebui să îți conectezi contul de Discord la site și apoi poți trimite propriile teste.
+
+Apoi apasă pe butonul `New benchmark` și completează informațiile solicitate.
+
+- Poți încărca mai multe rezultate pentru același joc folosind planificatori sau setări diferite.
+- Acceptă atât log-uri MangoHud, cât și Afterburner.
+- Permite căutarea după titlu sau descriere.
+
+## Tranziția de la scx.service la scx_loader: Un ghid cuprinzător
+
+:::caution
+Nu încerca să rulezi scx_loader.service alături de scx.service; altfel, serviciul loader va porni, dar nu va face nimic.
+
+Acest conflict apare deoarece ambele servicii nu știu unul de celălalt, în special în ceea ce privește care dintre ele gestionează planificatorii.
+:::
+
+:::tip
+CachyOS Kernel Manager include deja o [interfață grafică (GUI) pentru gestionarea scx_loader.](/ro/features/kernel_manager#gestionarea-framework-ului-sched-ext)
+:::
+
+Mai întâi, să începem cu o comparație între structura fișierului scx.service și structura fișierului de configurare scx_loader.
+
+*Dacă ai avut anterior LAVD rulând cu vechiul scx.service, ca în exemplul de mai jos:*
+
+```sh title='Structura fișierului scx.service'
+# Listă de planificatori scx: scx_bpfland scx_central scx_flash scx_lavd scx_layered scx_nest scx_qmap scx_rlfifo scx_rustland scx_rusty scx_simple scx_userland
+SCX_SCHEDULER=scx_lavd
+
+# Setează flag-uri personalizate pentru planificator
+SCX_FLAGS='--performance'
+```
+
+Atunci echivalentul în fișierul de configurare scx_loader va arăta astfel:
+
+```sh title='Structura fișierului scx_loader'
+default_sched = "scx_lavd"
+default_mode = "Auto"
+
+[scheds.scx_lavd]
+auto_mode = ["--performance"]
+```
+
+[Pentru mai multe informații despre cum să configurezi fișierul scx_loader](https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/configuration.md#scx_loader-configuration-file)
+
+  Urmează ghidul de mai jos pentru o tranziție ușoară de la `scx systemd service` la noul utilitar `scx_loader`.
+  <Steps>
+  1. ```sh title='Dezactivarea scx.service în favoarea scx_loader.service'
+      systemctl disable --now scx.service && systemctl enable --now scx_loader.service
+      ```
+  2. ```sh title='Crearea fișierului de configurare pentru scx_loader și adăugarea structurii implicite'
+     # Editorul Micro va crea un fișier nou.
+     sudo micro /etc/scx_loader.toml
+     # Adaugă următoarele linii:
+
+     default_sched = "scx_bpfland" # Modifică această linie cu planificatorul pe care dorești ca scx_loader să îl pornească la boot
+     default_mode = "Auto" # Valori posibile: "Auto", "Gaming", "LowLatency", "PowerSave".
+
+     # Apasă CTRL + S pentru a salva modificările și CTRL + Q pentru a ieși din Micro.
+     ```
+  3. ```sh title='Repornirea scx_loader'
+     systemctl restart scx_loader.service
+     ```
+     - Ai terminat, scx_loader va încărca și va porni acum planificatorul dorit.
+
+  </Steps>
+
+### Debugging în scx_loader
+
+<Tabs>
+<TabItem label='Logging simplu'>
+
+  - ```sh title='Verificarea stării serviciului'
+    systemctl status scx_loader.service
+    ```
+  - ```sh title='Vizualizarea tuturor intrărilor de log ale serviciului'
+    journalctl -u scx_loader.service
+    ```
+  - ```sh title='Vizualizarea doar a log-urilor sesiunii curente'
+    journalctl -u scx_loader.service -b 0
+    ```
+</TabItem>
+<TabItem label='Logging extins'>
+
+*Pentru a obține un log mai detaliat, urmează acești pași.*
+  - ```sh title='Editează fișierul serviciului'
+     sudo systemctl edit scx_loader.service
+     ```
+  - ```sh title='Adaugă următoarea linie sub secțiunea [Service]'
+     Environment=RUST_LOG=trace
+     ```
+  - ```sh title='Repornește serviciul'
+     sudo systemctl restart scx_loader.service
+     ```
+  - Verifică log-urile din nou pentru informații de depanare mai detaliate.
+</TabItem>
+
+</Tabs>
+
+## FAQ
+
+### De ce planificatorul X performează mai slab decât celălalt?
+
+- Sunt multe variabile de luat în considerare atunci când îi compari. De exemplu, cum măsoară ponderea unei sarcini? Prioritizează sarcinile interactive față de cele neinteractive? În ultimă instanță, depinde de alegerile lor de proiectare.
+
+### De ce toată lumea spune că planificatorul X este cel mai bun pentru cazul X, dar pentru mine nu performează la fel de bine?
+
+- Ca și în răspunsul anterior, alegerea CPU-ului și proiectarea sa, cum ar fi structura nucleelor, modul în care partajează cache-ul între nuclee și alți factori înrudiți pot face ca planificatorul să funcționeze mai puțin eficient.
+- De aceea, posibilitatea de a alege este unul dintre punctele forte ale framework-ului sched-ext, deci nu te teme să încerci unul și să vezi care funcționează cel mai bine pentru cazul tău de utilizare. `Exemple: stabilitatea fps-urilor, performanță maximă, timp de răspuns sub sarcini intensive etc.`
+
+### Cazurile de utilizare ale acestor planificatori sunt destul de similare... de ce?
+
+În principal pentru că sunt planificatori polivalenți, ceea ce înseamnă că pot acomoda o varietate de sarcini de lucru, chiar dacă s-ar putea să nu exceleze în fiecare domeniu.
+
+- Pentru a determina care planificator ți se potrivește cel mai bine, nu există sfat mai bun decât să îl încerci singur.
+
+### De ce îmi lipsește un planificator pe care unii utilizatori îl menționează sau îl testează pe serverul de Discord CachyOS?
+Asigură-te că folosești versiunea „bleeding edge” a pachetului scx-scheds, numită `scx-scheds-git`.
+
+- Unul dintre motive poate fi faptul că acest planificator este foarte nou și este testat în prezent de utilizatori, prin urmare nu a fost încă adăugat în pachetul `scx-scheds-git`.
+
+### De ce planificatorul s-a blocat brusc? Este instabil?
+
+- *Pot exista câteva motive pentru care s-a întâmplat acest lucru:*
+  - Unul dintre cele mai comune motive este că foloseai ananicy-cpp împreună cu planificatorul. De aceea am adăugat acest [avertisment](/ro/configuration/sched-ext#ananicy-cpp-și-sched-ext).
+  - Un alt motiv ar putea fi faptul că sarcina de lucru pe care o rulai a depășit limitele și capacitatea planificatorului, cauzându-i blocarea.
+    - Exemplu de sarcină de lucru nerezonabilă: `hackbench`.
+  - Sau motivul cel mai evident, ai găsit un bug în planificator; dacă da, te rugăm să îl raportezi ca problemă (issue) pe [GitHub-ul lor](https://github.com/sched-ext/scx/issues) sau să îi anunți despre acesta pe canalul de Discord CachyOS `sched-ext`.
+
+### Am folosit anterior scx_loader în interfața grafică a Kernel Manager. Mai trebuie să urmez pașii de tranziție?
+
+- În acest caz particular, nu, nu este necesar, deoarece Kernel Manager se ocupă deja de procesul de tranziție.
+  - *Cu excepția cazului în care ai adăugat anterior flag-uri personalizate în `/etc/default/scx` și încă dorești să le folosești.*
+
+## Află mai multe
+
+:::note[Credite]
+Unele dintre link-urile de mai jos au fost preluate inițial din [repozitoriul GitHub sched-ext](https://github.com/sched-ext/scx?tab=readme-ov-file#sched_ext-schedulers-and-tools). Toate mulțumirile merg către menținătorii și contribuitorii sched-ext pentru selectarea și partajarea acestor resurse excelente.
+:::
+
+- [Playlist YT Sched_ext](https://youtube.com/playlist?list=PLLLT4NxU7U1TnhgFH6k57iKjRu6CXJ3yB&si=DETiqpfwMoj8Anvl)
+- [LWN: The extensible scheduler class (Februarie, 2023)](https://lwn.net/Articles/922405/)
+- [Blogul lui arighi: Implement your own kernel CPU scheduler in Ubuntu with sched_ext (Iulie, 2023)](https://arighi.blogspot.com/2023/07/implement-your-own-cpu-scheduler-in.html)
+- [Discursul lui David Vernet: Kernel Recipes 2023 - sched_ext: pluggable scheduling in the Linux kernel (Septembrie, 2023)](https://youtu.be/8kAcnNVSAdI?si=F5Q-dkSS_sG9BTXA)
+- [Blogul lui Changwoo: sched_ext: a BPF-extensible scheduler class (Partea 1) (Decembrie, 2023)](https://blogs.igalia.com/changwoo/sched-ext-a-bpf-extensible-scheduler-class-part-1/)
+- [Blogul lui arighi: Getting started with sched_ext development (Aprilie, 2024)](https://arighi.blogspot.com/2024/04/getting-started-with-sched-ext.html)
+- [Blogul lui Changwoo: sched_ext: scheduler architecture and interfaces (Partea 2) (Iunie, 2024)](https://blogs.igalia.com/changwoo/sched-ext-scheduler-architecture-and-interfaces-part-2/)
+- [Canalul YT al lui arighi: scx_bpfland Linux scheduler demo: topology awareness (August, 2024)](https://youtu.be/R-FEZOveG-I)
+- [Discursul lui David Vernet: Kernel Recipes 2024 - Scheduling with superpowers: Using sched_ext to get big perf gains (Septembrie, 2024)](https://youtu.be/Cy7-oqdcUCs?si=bjKu3uidOdIzzAWv)

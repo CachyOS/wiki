@@ -1,0 +1,62 @@
+---
+title: Configurarea QEMU și VMM
+description: Pașii necesari pentru a pune în funcțiune ambele programe pe CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import { Steps } from '@astrojs/starlight/components';
+
+## Instalare
+Pentru a instala și rula **VMM** (Virtual Machine Manager) și **QEMU** pe **CachyOS**, procesul este următorul:
+
+```sh
+# Această comandă va instala pachetele necesare (reține nota despre „Windows 11” de mai jos):
+sudo pacman -S qemu-full virt-manager swtpm
+# Aceasta va adăuga utilizatorul în grupul „libvirt” pentru a-l putea folosi:
+sudo usermod -aG libvirt $USER
+# Backend LXC (opțional, pentru containere linux; activarea ambelor backend-uri nu creează conflicte):
+systemctl enable --now libvirtd.service
+# Backend QEMU (pentru mașini virtuale):
+systemctl enable --now libvirtd.socket
+# Aceasta va activa automat internetul într-un VM ori de câte ori pornește unul:
+sudo virsh net-autostart default
+```
+
+:::note[Windows 11]
+Dacă instalezi **Windows 11** într-o mașină virtuală, va trebui fie să faci passthrough modulului tău TPM compatibil ulterior în pasul de configurare, fie să instalezi `swtpm` dacă nu ai unul.
+:::
+
+## Noțiuni de bază pentru crearea unui VM
+:::note[User Session]
+Înainte de a continua, s-ar putea să vrei să consulți pe scurt secțiunea [Sesiune Utilizator QEMU](/ro/virtualization/qemu_user_session).
+:::
+
+<Steps>
+
+1. Mai întâi, lansează **VMM**; primul lucru care te va întâmpina sunt aceste conexiuni: <ImageComponent imgsrc={import('~/assets/images/vmmstart.png')} />
+2. Apoi, apasă pe `Edit -> Preferences -> ✅ Enable XML editing` și închide acel sub-meniu.
+3. Acum poți crea o mașină virtuală nouă, fie apăsând pe **ecranul cu o stea și pictograma play**, fie pe `File -> New Virtual Machine`.
+4. Vei fi întâmpinat de creatorul de VM; lângă `Connection:` vei vedea un meniu derulant, apasă-l și selectează-l pe cel corespunzător, apoi mergi `Forward`. <ImageComponent imgsrc={import('~/assets/images/vmmcreatestep1.png')} />
+5. Ți se va cere să localizezi imaginea `.iso` a unui OS pe care l-ai descărcat; apasă pe `Browse...` și localizeaz-o. S-ar putea să vrei să adaugi sau să faci un director dedicat pentru stocarea fișierelor .iso; poți face asta apăsând pe butonul `+ (Add Pool)`. Dacă vrei să refolosești calea `User Session` pentru asta, ea se află în `~/.config/libvirt/`. <ImageComponent imgsrc={import('~/assets/images/vmmcreatestep2browse.png')} />
+**Dacă sistemul tău de operare nu este detectat automat**, pur și simplu debifează detecția automată și alege manual cea mai apropiată potrivire, `exemplu: CachyOS = Arch Linux`.
+
+6. Pasul 3 este simplu: oferă-i mașinii tale virtuale cât de mult RAM și câte nuclee CPU dorești; acest lucru nu este bătut în cuie și se poate schimba ușor.
+7. La pasul 4, poți alege să creezi un spațiu de stocare virtual (aceasta creează un fișier **.qcow2**) sau o cale pe care să o folosească mașina virtuală.
+8. La pasul 5, bifează `Customize configuration before install -> Finish`.
+9. Acum vei ajunge aici: <ImageComponent imgsrc={import('~/assets/images/vmmprevminstall.png')} />
+Sunt câteva lucruri pe care ar trebui să le confirmi aici dacă instalezi un VM Linux: în `Overview`, confirmă că chipset-ul este **Q35** și că firmware-ul este **UEFI**. Cu excepția cazului în care instalezi ceva cu adevărat antic sau faci ceva neobișnuit, nu vei dori niciodată altă variație aici. Dacă faci un VM Windows 11, verifică dacă a fost adăugat modulul TPM; altfel, mergi la Add Hardware -> TPM, selectează fie Emulated, fie Passthrough (vezi nota de sus) și Finish pentru a închide sub-meniul.
+
+10. Acum apasă pe `Begin Installation`.
+11. Dacă ești într-un VM **Linux** (sau alt OS care folosește OpenGL și/sau include libvulkan), mergi la [EGL Headless](/ro/virtualization/egl_headless) și/sau, respectiv, [Virtio-Venus](/ro/virtualization/virtio-venus).
+
+</Steps>
+
+### Notă finală
+Dacă ești într-un VM `Windows 11`, pentru a îmbunătăți performanța, poți:
+- să instalezi driverele **Virtio-Win** de la RedHat în sistemul oaspete (guest)
+- dacă ai un iGPU Intel, poți cerceta opțiunile **GVT-g** și **MDEV**
+- dacă ai un iGPU Intel și un dGPU, poți cerceta opțiunea **GVT-d**
+- dacă ai un iGPU și un dGPU sau 2+ dGPU-uri și vrei să faci passthrough unui dGPU, poți cerceta opțiunea **VFIO**

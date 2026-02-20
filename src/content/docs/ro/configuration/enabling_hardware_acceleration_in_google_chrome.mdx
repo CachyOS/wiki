@@ -1,0 +1,273 @@
+---
+title: Accelerarea Hardware în Browserele bazate pe Chromium
+description: Configurează accelerarea hardware pentru decodarea/codificarea video în browserele bazate pe Chromium pe CachyOS. Include configurarea pentru GPU AMD și un șablon pentru alte GPU-uri/browsere.
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+Acest ghid descrie activarea accelerării hardware în browserele bazate pe Chromium pe CachyOS. Aceasta mută sarcinile video/grafice pe GPU-ul tău, îmbunătățind performanța.
+
+## Cerințe prealabile
+
+**Obligatorii:**
+* **Browser bazat pe Chromium:** (ex. Chrome, Brave, Ungoogled Chromium, Edge)
+* **Drivere/API-uri GPU:** Drivere Mesa (AMD/Intel) sau NVIDIA la zi, cu Vulkan/VA-API/VDPAU configurate.
+
+**Opționale:**
+
+* **amdgpu_top:** Instalează `amdgpu_top` din repozitoriu prin managerul de pachete dacă dorești să monitorizezi activitatea GPU AMD din terminal.
+* **nvtop:** (Doar pentru GPU Intel) Instalează `nvtop` (Lunar Lake) și `intel-gpu-tools` (Pre-Lunar Lake) prin managerul de pachete octopi dacă dorești să monitorizezi activitatea GPU Intel din terminal.
+
+
+## Contribuție
+
+Acest ghid este extensibil. Dacă ai o configurație funcțională de accelerare hardware pentru un anumit GPU și un browser bazat pe Chromium, contribuie prin adăugarea unei noi secțiuni sub „Configurații GPU și Browser”. Include:
+
+* **Numele Browserului**
+* **Modelul GPU**
+* **Flag-uri:** Conținutul `~/.config/[browser]-flags.conf`.
+* **Calea fișierului:** Calea completă către fișierul de flag-uri.
+* **Note (Opțional):** Drivere cheie, pachete sau detalii specifice configurării.
+
+## Pași de configurare
+
+<Steps>
+
+1. Identifică fișierul de flag-uri: Găsește calea fișierului de flag-uri al browserului tău în secțiunea „Configurații GPU și Browser”.
+2. Editează fișierul de flag-uri: Deschide/creează fișierul folosind `nano` (sau editorul tău preferat precum `micro`, `vim`).
+
+    ```bash
+    nano [CALE_CĂTRE_FIȘIERUL_TĂU_DE_FLAGURI]
+    # Exemplu: nano ~/.config/chrome-flags.conf
+    ```
+
+3. Adaugă flag-urile: Inserează flag-urile relevante pentru GPU/browser în fișier.
+4. Salvează și Închide.
+5. Repornește Browserul: Închide toate instanțele browserului și relansează-l.
+6. Verifică: Navighează la `chrome://gpu` (sau `brave://gpu`, `edge://gpu` etc.). Confirmă starea „Hardware accelerated” sub „Video Acceleration Information” și „Graphics Feature Status”.
+
+</Steps>
+
+## Cum să verifici accelerarea hardware video
+
+<Tabs>
+
+<TabItem label='GPU-uri AMD (amdgpu_top)'>
+
+<Steps>
+
+1. Deschide un terminal și rulează comanda:
+    ```bash
+    amdgpu_top
+    ```
+2. Începe să redai un videoclip în browser (ex. pe YouTube).
+3. Observă secțiunea `media` în `amdgpu_top`. Ar trebui să vezi o anumită utilizare aici, indicând faptul că motorul media al GPU-ului tău este activ. Dacă rămâne la 0% în timpul redării video, s-ar putea ca accelerarea hardware să nu fie complet activată pentru decodare.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='GPU-uri Intel (nvtop)'>
+
+<Steps>
+
+1. Deschide un terminal și rulează comanda:
+    ```bash
+    sudo nvtop
+    ```
+2. Începe să redai un videoclip în browser (ex. pe YouTube).
+3. Observă procentul `ENC/DEC` în `nvtop`; procentul ar trebui să crească dacă decodarea video funcționează hardware.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='GPU-uri Intel (intel_gpu_tools)'>
+
+<Steps>
+
+1. Deschide un terminal și rulează comanda:
+
+    ```bash
+    sudo intel_gpu_top
+    ```
+
+    Notă: Unele GPU-uri Intel mai noi, cum ar fi cele Lunar Lake, nu mai expun contoarele de performanță GPU prin `intel_gpu_top`; folosește `nvtop` pentru aceste sisteme.
+
+2. Începe să redai un videoclip în browser (ex. pe YouTube).
+3. Observă procentele `Video` și `VideoEnhance` în intel_gpu_top; acestea ar trebui să crească dacă decodarea video funcționează hardware.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='Uneltele de Dezvoltare din Browser'>
+
+<Steps>
+
+1. Deschide browserul tău bazat pe Chromium.
+
+2. Începe să redai un videoclip (ex. pe YouTube sau un fișier local).
+
+3. Deschide Uneltele de Dezvoltare (Developer Tools): Apasă `F12` sau `Ctrl+Shift+I`.
+
+4. Navighează la tab-ul **Media**. Dacă nu îl vezi, fă click pe cele trei puncte (`...`) sau `>>` (Mai multe tab-uri) de pe bara de instrumente, apoi selectează `Media`.
+
+5. În secțiunea „Players” din stânga, fă click pe intrarea corespunzătoare videoclipului tău.
+
+6. În panoul principal, derulează în jos până la secțiunea **Video Decoder**.
+
+7. Caută eticheta `Hardware decoder`. Ar trebui să fie `true`. Dacă scrie `false` sau arată un nume de decodor software (ex. `FFmpegVideoDecoder`, `VpxVideoDecoder`, `Dav1dVideoDecoder`), accelerarea hardware nu este activă pentru acel videoclip.
+
+</Steps>
+
+</TabItem>
+
+</Tabs>
+
+## Configurații GPU și Browser
+
+### AMD Radeon RX 6900 XT (Google Chrome)
+
+* **Browser:** Google Chrome
+
+* **GPU:** AMD Radeon RX 6900 XT
+
+* **Fișier Flag-uri:** `~/.config/chrome-flags.conf`
+
+```bash
+--use-gl=angle
+--use-angle=vulkan
+--enable-features=Vulkan,VulkanFromANGLE,DefaultANGLEVulkan,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
+--ozone-platform-hint=x11
+```
+
+**Note:** Utilizează Vulkan (prin ANGLE) și VA-API. `--ozone-platform-hint=x11` poate fi util chiar și pe Wayland pentru anumite căi de accelerare.
+
+### Nvidia RTX 4090 (Vivaldi)
+
+* **Browser:** Vivaldi
+
+* **GPU:** Nvidia RTX 4090
+
+* **Fișier Flag-uri:** `~/.config/vivaldi-stable.conf`
+
+```bash
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL
+```
+
+* **Fișier Flag-uri:** `/usr/share/applications/vivaldi-stable.desktop`
+
+```bash
+# Păstrează toate celelalte linii la fel
+# Ar trebui să schimbi doar intrarea Exec= sub secțiunea '[Desktop Entry]'
+Exec=/usr/bin/vivaldi-stable --enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL %U
+```
+
+**Note:**
+
+Ar trebui să fie suficient să aplici doar una dintre aceste modificări de fișiere conf, dar aplicarea ambelor nu ar trebui să cauzeze probleme.
+
+Alternativ, poți face următoarele pentru KDE:
+1. Șterge orice scurtături Vivaldi din Task Manager / bara de activități.
+2. Caută `Vivaldi` în lista lansatorului de aplicații.
+3. Fă click dreapta pe intrarea din lansatorul de aplicații și selectează `Edit Application...`.
+4. În secțiunea `Command-line arguments`, adaugă următoarele argumente înainte de ultimul argument `%U`:
+```
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL
+```
+5. Lansează Vivaldi și fixează procesul în Task Manager / bara de activități.
+
+### AMD Radeon RX 550 (UnGoogled Chromium)
+
+* **Browser:** UnGoogled Chromium
+
+* **GPU:** AMD Radeon RX 550
+
+* **Fișier Flag-uri:** `~/.config/chromium-flags.conf`
+
+```bash
+--enable-wayland-ime
+--ozone-platform=wayland
+--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,WaylandSessionManagement,WaylandTextInputV3,WaylandUiScale,WaylandWindowDecorations
+```
+
+**Note:**
+
+Dacă folosești X11, folosește asta:
+```bash
+--ozone-platform=x11
+--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder
+```
+
+### Nvidia RTX 5070 TI (Brave)
+
+* **Browser:** Brave
+
+* **GPU:** Nvidia RTX 5070 TI
+
+* **Fișier Flag-uri:** `~/.config/brave-flags.conf`
+
+```bash
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks
+```
+
+**Note:**
+- Decodarea **și** codificarea video apar ca fiind „Hardware accelerated” pe `brave://gpu`.
+- Uneori, inspectarea tab-ului `media` la un videoclip YouTube va arăta accelerarea hardware, alteori nu.
+
+
+
+### Brave - 7700xt (Contribuit de DaJRJesus)
+
+* **Browser:** Brave  
+
+* **GPU:** AMD Radeon RX 7700 XT  
+
+* **Calea Fișierului de Flag-uri:** `~/.config/brave-flags.conf`  
+
+```bash
+--ignore-gpu-blocklist
+--enable-gpu-rasterization
+--enable-zero-copy
+--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,CanvasOopRasterization,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
+--ozone-platform-hint=auto
+```
+
+**Note:**
+Funcționează pe Wayland. Dezactivarea „Ambient Mode” în setările YouTube este necesară pentru a preveni lag-ul interfeței.
+
+---
+
+### Șablon pentru a contribui
+
+### [Browser-ul tău] - [Modelul GPU-ului tău] (Contribuit de [Numele/Pseudonimul tău])
+
+* **Browser:** [ex. Brave, Ungoogled Chromium, Microsoft Edge, Vivaldi, Opera, Chromium]
+
+* **GPU:** [ex. NVIDIA GeForce RTX 3080, Intel Iris Xe]
+
+* **Calea Fișierului de Flag-uri:** (Crucială, variază per browser!)
+
+  * Căi comune pentru `.conf`:
+
+    * Chromium: `~/.config/chromium-flags.conf`
+
+    * Brave Browser: `~/.config/brave-flags.conf`
+
+    * Ungoogled Chromium: `~/.config/ungoogled-chromium-flags.conf`
+
+  * Modificarea fișierului `.desktop`: Unele browsere (Brave, Edge, Vivaldi, Opera) ar putea necesita editarea liniei `Exec=` în fișierul lor `.desktop` (copiază mai întâi din `/usr/share/applications/` în `~/.local/share/applications/`).
+
+Conținutul Flag-urilor (pentru fișierul `.conf` sau linia `Exec=`):
+
+```bash
+# Inserează flag-urile tale aici.
+# Pentru fișierele .desktop, flag-urile sunt separate prin spațiu după executabil.
+```
+
+**Note (Opționale):**
+
+* Drivere necesare (ex. `nvidia-dkms`, `intel-media-driver`).
+
+* Considerente specifice de configurare sau instrucțiuni de modificare a fișierului `.desktop`.

@@ -1,0 +1,470 @@
+---
+title: Optimizări Generale ale Sistemului
+description: Lucruri pe care le poți face pentru a optimiza sistemul după instalare
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import { Tabs, TabItem, Steps, LinkButton } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+## Optimizări de performanță pentru AMD
+
+### Driverul AMD P-State
+---------------------------
+
+`amd-pstate` este driverul de scalare a performanței procesorului AMD care introduce un nou mecanism de control al frecvenței CPU pe seriile moderne de APU și CPU AMD în kernelul Linux. Noul mecanism se bazează pe Collaborative Processor Performance Control (CPPC), care oferă o gestionare mai fină a frecvenței decât vechile P-State-uri hardware ACPI.
+
+Platformele actuale de CPU/APU AMD utilizează driverul ACPI P-states pentru a gestiona frecvența și ceasurile procesorului, cu comutare doar între 3 P-state-uri. CPPC înlocuiește controalele ACPI P-states și permite o interfață flexibilă, cu latență scăzută, pentru ca kernelul Linux să comunice direct hardware-ului sugestiile de performanță.
+
+Mai jos sunt cele 3 moduri de operare ale driverului `amd-pstate` și intrările cmdline de kernel pentru a le folosi la pornire:
+
+- AMD P-State (Mod Non-Autonom): `amd-pstate=passive`
+- AMD P-State Guided (Mod Autonom Ghidat): `amd-pstate=guided`
+- AMD P-State EPP (Mod Autonom): `amd-pstate=active`
+
+:::note
+Driverul AMD P-State EPP este utilizat implicit atunci când nu se face nicio configurare explicită.
+:::
+
+Poți, de asemenea, să comuți între modurile de operare în timpul funcționării pentru a testa opțiunile:
+
+- **Modul autonom**: platforma ia în considerare doar valorile setate pentru performanța minimă, performanța maximă și Energy Performance Preference (EPP).
+   ```sh
+   echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+- **Modul autonom ghidat**: platforma stabilește nivelul de performanță de operare în funcție de sarcina de lucru curentă și în limitele stabilite de OS prin registrele de performanță minimă și maximă.
+   ```sh
+   echo guided | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+- **Modul non-autonom**: platforma primește nivelul de performanță dorit direct de la OS prin Desired Performance Register.
+   ```sh
+   echo passive | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+Pentru informații mai detaliate:
+
+<LinkButton href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html">Documentație AMD P-State</LinkButton>
+<LinkButton href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html#amd-pstate-driver-operation-modes">Moduri de operare ale driverului AMD P-State</LinkButton>
+<LinkButton href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html#user-space-interface-in-sysfs-per-policy-control">Interfața User Space AMD P-State</LinkButton>
+
+### Configurarea AMD P-State EPP
+
+Pentru a utiliza P-State EPP, sunt disponibile două guverne de scalare a frecvenței CPU: `powersave` și `performance`. Se recomandă utilizarea guvernului powersave și setarea unei preferințe.
+
+*   Setează guvernul powersave: `sudo cpupower frequency-set -g powersave`
+*   Setează guvernul performance: `sudo cpupower frequency-set -g performance`
+
+Pentru a seta o preferință, rulează următoarea comandă cu preferința dorită:
+
+```sh
+echo power | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
+```
+
+Preferințe disponibile: `performance`, `power`, `balance_power`, `balance_performance`
+
+<LinkButton href="https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/">Benchmark oficial pentru fiecare preferință</LinkButton>
+
+### Optimizatorul AMD 3D V-Cache
+
+AMD a publicat un patch pentru a optimiza planificarea cache-ului pe procesoarele cu CCD-uri duale 3D, cum ar fi 7950X3D și 7900X3D.
+Trebuie să setezi în BIOS, sub opțiunea CPPC, valoarea „Driver”. Acest lucru va permite suprascrierea modului utilizat prin sysfs.
+
+Există două moduri:
+
+1. Frequency (Frecvență)
+2. Cache
+
+Dacă este setat `cache`, driverul va încerca să plaseze sarcinile mai întâi pe CCD-ul cu cache-ul mai mare; acest lucru este profitabil în principal în jocuri.
+Opțiunea `frequency` va încerca să plaseze sarcinile pe al doilea CCD, care are o frecvență mai mare decât CCD-ul cu 3D Cache.
+
+Frequency (Implicit):
+```sh
+echo frequency | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
+```
+
+Cache:
+```sh
+echo cache | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
+```
+
+După ce ai schimbat modurile, statisticile amd preferred core ar trebui să ofere un clasament diferit. Îl poți citi cu:
+```sh
+grep -v /sys/devices/system/cpu/cpu*/cpufreq/amd_pstate_prefcore_ranking
+```
+
+### AMD P-State Core Performance Boost
+
+AMD Core Performance Boost (alias AMD Turbo Core) este o tehnologie de scalare dinamică a frecvenței de la AMD, care permite
+procesorului să ajusteze și să controleze dinamic frecvența de operare a procesorului în anumite versiuni de procesoare,
+ceea ce permite o performanță crescută atunci când este necesar, menținând în același timp parametri de putere și termici mai mici în timpul funcționării normale.
+
+Pentru a gestiona AMD CPB pe CachyOS, poți folosi următoarele comenzi:
+
+```sh
+❯ echo 0 | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/boost # Dezactivează boost pentru toate nucleele
+❯ lscpu -ae # Aceasta arată că AMD CPB este dezactivat la nivel global
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
+  0    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1212.8250
+  1    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1394.2180
+  2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 1204.4600
+
+❯ echo 1 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/boost # Activează boost pe cpu0
+❯ lscpu -ae
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
+  0    0      0    0 0:0:0:0          yes 4564.0000 400.0000 1393.2380
+  1    0      0    0 0:0:0:0          yes 3301.0000 400.0000  400.0000
+  2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 2157.8469
+```
+
+CachyOS oferă, de asemenea, o versiune de `power-profiles-daemon` care include un commit ce activează
+suportul pentru AMD CPB. AMD CPB va fi dezactivat dacă este utilizat profilul `powersave` și va fi activat pe `balanced` sau `performance`.
+
+Pentru mai multe informații, vezi:
+- https://lore.kernel.org/linux-pm/1a78eeaa-fadd-4734-aaeb-2fe11e96e198@amd.com/T/#m4a0c8917ea8fb033504055bd61512c80c85410c8
+- https://lore.kernel.org/linux-pm/20240624213400.67773-1-mario.limonciello@amd.com/
+
+## Îmbunătățiri de Performanță
+
+### [Planificatorul I/O ADIOS](https://github.com/firelzrd/adios)
+
+Creat de [firelzrd](https://github.com/firelzrd)
+
+:::note
+CachyOS include ramura stabilă a ADIOS în kernel.
+
+Versiunea curentă în **linux-cachyos**: `3.1.9`
+
+Versiunea curentă în **linux-cachyos-rc**: `3.1.9`
+:::
+
+Scurtă prezentare din README:
+
+- *ADIOS (Adaptive Deadline I/O Scheduler) este un planificator I/O de nivel bloc pentru kernelul Linux, conceput pentru dispozitivele moderne cu mai multe cozi (blk-mq). Acesta își propune să ofere o latență scăzută pentru operațiunile I/O prin combinarea principiilor de planificare pe bază de termene limită (deadline scheduling) cu un mecanism adaptiv de control al latenței bazat pe învățare.*
+  - *Inspirat de și construit pe conceptele de la planificatorii mq-deadline și Kyber. Caracteristica sa principală este capacitatea de a prezice latența de finalizare I/O pe baza performanțelor trecute și a caracteristicilor cererii (tip de operațiune, dimensiune) și de a folosi această predicție pentru a ajusta dinamic termenele cererilor și comportamentul de batching.*
+
+TLDR: ADIOS funcționează prin învățarea profilului de latență al dispozitivului tău de stocare și folosirea acestor cunoștințe pentru a seta dinamic termene limită pentru cererile I/O. Acesta prioritizează cererile în patru niveluri, de la operațiuni critice de sistem (Nivel 0) la sarcini de fundal (Nivel 3), pentru a asigura o experiență de utilizare fluidă. Deși se concentrează pe timpul de răspuns, comportamentul său poate fi ajustat fin prin setările sysfs pentru a echilibra latența și lățimea de bandă.
+
+Pentru o demonstrație live, poți viziona acest [videoclip](https://www.youtube.com/watch?v=L9WDcEeHgy4)
+
+#### Cum să activezi ADIOS
+
+<Tabs>
+    <TabItem label='Temporar (intră în vigoare imediat)'>
+        Această metodă setează planificatorul pentru sesiunea curentă. Schimbarea se va pierde la repornire.
+        ```sh
+        sync && echo adios | sudo tee /sys/block/<unitate>/queue/scheduler
+            # Înlocuiește <unitate> cu identificatorul real al unității (ex. sda, sdb, nvme0n1)
+        ```
+    </TabItem>
+    <TabItem label='Persistent după repornire'>
+        <Steps>
+            1. Deschide sau creează un nou fișier de reguli udev în editorul tău preferat (ex. nano, micro, vim):
+                ```sh title='Exemplu'
+                sudo nano /etc/udev/rules.d/60-ioschedulers.rules
+                ```
+            2. Adaugă următoarele reguli în fișier. Aceste reguli aplică automat un anumit planificator I/O pe baza tipului de unitate (HDD, SSD sau NVMe).
+                ```text
+                # HDD
+                ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", 
+                    ATTR{queue/scheduler}="bfq"
+
+                # SSD
+                ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", 
+                    ATTR{queue/scheduler}="adios"
+
+                # NVMe SSD
+                ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", 
+                    ATTR{queue/scheduler}="adios"
+                ```
+              3.  Salvează fișierul și închide editorul.
+              4.  Reîncarcă regulile `udev` pentru a aplica modificările imediat fără repornire.
+                  ```sh
+                  sudo udevadm control --reload-rules
+                  sudo udevadm trigger
+                  ```
+        </Steps>
+    </TabItem>
+</Tabs>
+
+FAQ:
+
+- Dacă îmbunătățește timpul de răspuns, de ce nu este activat implicit?
+  - ADIOS este încă în curs de dezvoltare activă și testare continuă. Deși oferă beneficii semnificative pentru timpul de răspuns al desktopului, nu este încă considerat suficient de stabil pentru a fi implicit pentru toate sarcinile de lucru și tipurile de hardware. În unele cazuri marginale, bug-urile ar putea duce la probleme precum blocarea sistemului. Din acest motiv, este o caracteristică opțională pentru utilizatorii care doresc să testeze și să beneficieze de cele mai recente îmbunătățiri ale sale.
+
+### NVIDIA Smooth Motion (Seriile RTX 40xx și 50xx)
+
+:::note[Compatibilitate jocuri]
+Jocuri care rulează pe DX11, DX12 și Vulkan.
+
+Atât DXVK, cât și VKD3D funcționează bine.
+
+**Sunt suportate doar aplicațiile pe 64 de biți. Smooth Motion nu va funcționa cu aplicațiile pe 32 de biți (ex. jocuri vechi DX11).**
+
+:::
+
+Citat direct din documentația NVIDIA:
+
+*NVIDIA Smooth Motion este un nou model AI bazat pe driver care oferă un gameplay mai fluid prin deducerea unui cadru suplimentar între două cadre randate. Pentru jocurile fără DLSS Frame Generation, NVIDIA Smooth Motion este o nouă opțiune pentru îmbunătățirea experienței pe GPU-urile GeForce RTX Seria 40 și mai noi.*
+
+- Cum să activezi NVIDIA Smooth Motion pentru un joc:
+  - Adaugă următoarea variabilă de mediu:
+    ```text
+    NVPRESENT_ENABLE_SMOOTH_MOTION=1
+    ```
+
+FAQ:
+
+- De ce să folosesc Smooth Motion în locul DLSS Frame Generation?
+  - Când un joc nu are suport pentru DLSS Frame Generation, Smooth Motion servește ca alternativă datorită modelului său AI bazat pe driver.
+- Există vreun dezavantaj în utilizarea Smooth Motion?
+  - Da, activarea Smooth Motion poate introduce un ușor lag de intrare din cauza procesului suplimentar de deducere a cadrelor.
+  - Este predispus să cauzeze probleme cu overlay-urile de la terți. Pentru a evita acest lucru, include următoarea variabilă de mediu:
+    ```text
+    NVPRESENT_QUEUE_FAMILY=1
+    ```
+    :::note[Se poate observa un impact asupra performanței atunci când se folosește această variabilă.]
+    :::
+- De ce MangoHud nu raportează rata de cadre crescută?
+  - În prezent, MangoHud nu ia în calcul cadrele suplimentare generate de Smooth Motion, ceea ce duce la raportarea unei rate de cadre înșelătoare.
+    - Utilizarea contorului de FPS integrat al monitorului va furniza rata de cadre corectă.
+- Cum este calitatea imaginii comparativ cu DLSS Frame Generation?
+  - Calitatea imaginii nu este la fel de bună și poate introduce artefacte, în special în timpul scenelor cu mișcare rapidă.
+- Este compatibil cu uneltele externe de limitare a cadrelor? Exemplu: MangoHud.
+  - Nu. Limitarea din interiorul jocului ar trebui să funcționeze bine.
+- Poate fi combinat Smooth Motion cu DLSS Frame Generation?
+  - Nu. Doar o singură metodă de generare a cadrelor poate fi activă la un moment dat.
+
+## Optimizări pentru Economisirea Energiei
+
+### Activarea RCU Lazy
+
+RCU Lazy ajută la reducerea consumului de energie în sistemele aflate în repaus sau cu sarcini reduse. Acest lucru poate fi util pentru laptopuri și dispozitive portabile. Îmbunătățirea este între 5-10% în ceea ce privește economisirea energiei. Totuși, este important de reținut că această funcție de economisire a energiei poate veni cu costul unei performanțe ușor reduse, în funcție de scenariu. Kernelul linux-cachyos-deckify va avea această opțiune activată implicit, deoarece economisirea energiei este cheia și necesitatea pentru aceste dispozitive.
+
+Pentru a activa RCU Lazy, adaugă următorul parametru la lista de parametri ai kernelului în [cmdline](/ro/configuration/boot_manager_configuration/):
+```text
+rcutree.enable_rcu_lazy=1
+```
+
+## Depanare NVIDIA
+
+### Dezactivarea Backend-ului SDDM Wayland
+
+:::note
+Începând cu cachyos-kde-settings 4.3, SDDM folosește KWin ca și compozitor Wayland implicit.
+:::
+
+Deși acesta este un pas înainte frumos, ar putea introduce unele neplăceri, cum ar fi stricarea suportului pentru overclocking folosind nvidia-settings sau cauzarea incompatibilității cu GPU-urile mai vechi care au dificultăți sub Wayland.
+
+Pentru a anula această schimbare, elimină pachetul cachyos-kde-settings:
+```sh
+sudo pacman -R cachyos-kde-settings
+```
+
+### Firmware-ul NVIDIA GSP
+
+Firmware-ul NVIDIA GSP poate duce **„în unele cazuri”** la o scădere a performanței. Deși driverul NVIDIA 555.58.02 a abordat în mare măsură această problemă, aceasta poate persista pe anumite sisteme. Dacă întâmpini sacadări în KDE sau performanțe slabe în unele cazuri, poți dezactiva firmware-ul GSP cu următorul fișier de configurare:
+`/etc/modprobe.d/nvidia-gsp.conf`
+
+```text
+options nvidia NVreg_EnableGpuFirmware=0
+```
+
+După crearea fișierului, execută următoarea comandă:
+```sh
+sudo mkinitcpio -P
+```
+
+:::note
+[Modulele de kernel open](https://github.com/NVIDIA/open-gpu-kernel-modules) ale NVIDIA se bazează pe firmware-ul GSP. Din acest motiv, GSP nu poate fi dezactivat și această opțiune modprobe va fi ignorată atunci când le folosești. Folosește `linux-cachyos-nvidia` sau `nvidia-dkms`.
+:::
+
+În general, se recomandă testarea firmware-ului GSP după fiecare instalare nouă a driverului NVIDIA, deoarece adesea introduce caracteristici benefice. Mai mult, NVIDIA a început să efectueze testele de QA în principal folosind firmware-ul GSP.
+
+## Îmbunătățiri Audio și Software
+
+### Îmbunătățirea sunetului difuzoarelor de laptop
+
+Difuzoarele laptopurilor produc adesea un sunet slab și nesatisfăcător din cauza dimensiunilor lor compacte și a capabilităților hardware limitate. [EasyEffects](https://wiki.archlinux.org/title/PipeWire#EasyEffects) poate îmbunătăți semnificativ calitatea sunetului difuzoarelor încorporate ale laptopului tău prin aplicarea diverselor efecte audio și configurații personalizate.
+
+Pentru a începe, trebuie să instalezi EasyEffects și dependențele necesare:
+
+```bash
+# Instalează EasyEffects
+sudo pacman -S easyeffects
+# Instalează pluginuri suplimentare pentru mai multe efecte
+sudo pacman -S lsp-plugins-lv2
+sudo pacman -S zam-plugins
+sudo pacman -S calf
+sudo pacman -S mda.lv2
+```
+
+#### Configurare
+
+Urmează acești pași pentru a configura EasyEffects:
+
+1. Lansează EasyEffects din meniul de aplicații sau tastând `easyeffects` în terminal.
+2. Navighează la tab-ul **Output** pentru a gestiona efectele aplicate sunetului difuzoarelor tale.
+3. Comută la tab-ul **Effects** pentru a adăuga, modifica sau ajusta efectele audio.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects.png')} />
+
+##### Utilizarea presetărilor comunității
+
+Pentru o configurare rapidă și eficientă, începe cu **presetările create de comunitate**, adaptate pentru diverse scenarii audio:
+
+1. Descarcă presetările din repozitoriul [EasyEffects Community Presets](https://github.com/wwmm/easyeffects/wiki/Community-presets).
+2. În EasyEffects, apasă butonul **Presets** și alege **"Import preset from local storage"**.
+3. Localizează și selectează fișierul de presetare descărcat.
+4. Odată importată, presetarea va apărea în lista ta — apasă pe **"Load"** pentru a o aplica la ieșirea audio.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects-presets.png')} />
+
+##### Crearea unui profil personalizat
+
+Pentru o experiență audio mai personalizată, creează un profil propriu adaptat difuzoarelor laptopului tău:
+
+1. Apasă butonul **"+"** în meniul Presets pentru a crea o presetare nouă (ex. numește-o **"Difuzoare Laptop"**).
+2. Selectează **"Load"** pentru a activa noua presetare.
+3. Adaugă și configurează efecte în tab-ul **Output** > **Effects**, experimentând cu opțiuni precum egalizatoare, amplificatoare de bas sau lărgitoare stereo (stereo wideners).
+
+##### Utilizarea efectului Convolver (Laptopuri Dolby Atmos)
+
+**Efectul Convolver** poate îmbunătăți dramatic sunetul prin aplicarea unor răspunsuri la impuls (impulse responses) care simulează medii audio de înaltă calitate. Totuși, acesta necesită o configurare precisă:
+
+1. Adaugă efectul **Convolver** în lanțul tău de efecte din tab-ul **Effects**.
+2. Încarcă un fișier de răspuns la impuls (în format `.wav`) specific modelului tău de laptop, dacă este disponibil. Poți căuta aceste fișiere online pe resurse precum:
+   - https://wiki.archlinux.org/title/Lenovo_ThinkPad_T14_(AMD)_Gen_4#Speakers
+   - https://github.com/m4tx/thinkpad-p14s-g4-linux/#sound
+   - https://github.com/shuhaowu/linux-thinkpad-speaker-improvements/
+3. **Prevenirea clipping-ului**: Efectul Convolver poate crește semnificativ volumul. Adaugă un efect **Limiter** după Convolver în lanțul tău de efecte pentru a controla vârfurile și a evita distorsiunile.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects-convolver.png')} />
+
+#### Sfaturi pentru rezultate optime
+
+- **Experimentează** cu diferite presetări pentru a identifica cea mai bună potrivire pentru modelul tău specific de laptop și preferințele tale personale de sunet.
+- **Fă ajustări incrementale** la efectele individuale pentru a preveni distorsiunile sau un sunet nenatural.
+- **Compară cu un comutator**: Activează/dezactivează frecvent EasyEffects (**on/off**) pentru a evalua îmbunătățirile față de sunetul implicit.
+- Caută **presetări specifice dispozitivului sau răspunsuri la impuls Convolver** pentru modele de laptop populare precum **Framework Laptop 13** sau **ThinkPad T14** pentru a obține rezultate personalizate.
+- **Automatizează pornirea**: Configurează EasyEffects să pornească automat la pornirea sistemului prin preferințele aplicației pentru a te asigura că profilul tău personalizat este întotdeauna aplicat.
+- **Încarcă automat presetări pentru mai multe dispozitive**: Folosește tab-ul **PipeWire** > **Presets Autoloading** pentru a asocia presetări specifice cu diferite dispozitive de ieșire (ex. Difuzoare vs. Căști) pentru o comutare fără probleme. <ImageComponent imgsrc={import('~/assets/images/easyeffects-autoloading.png')} />
+
+#### Alternativă la EasyEffects
+
+Ca alternativă, poți încerca să folosești [JDSP4Linux](https://github.com/Audio4Linux/JDSP4Linux), care este un procesor de efecte audio pentru clienții PipeWire și PulseAudio.
+
+### OBS Studio
+
+Oferim un pachet personalizat `obs-studio-browser` în repozitoriul nostru, care este recomandat în locul pachetului standard `obs-studio`. Acesta conține patch-uri pentru a repara unele dintre problemele comune, cum ar fi erorile cuda și problemele cu camera virtuală.
+
+```sh title='Deschide un terminal și rulează următoarea comandă'
+sudo pacman -S obs-studio-browser
+# Dacă ai avut instalat anterior obs-studio, atunci pacman te va întreba dacă
+# dorești să îl înlocuiești; dacă da, introdu „Y”.
+```
+
+## Configurarea Swap
+
+### Trecerea de la ZRam la Zswap
+
+Implicit, CachyOS folosește ZRam pentru gestionarea swap-ului. Totuși, dacă preferi să folosești Zswap în schimb, poți comuta cu ușurință urmând acești pași:
+
+:::note
+Acest ghid presupune că ai configurația implicită CachyOS cu ZRam activat și nu a fost creată nicio partiție sau fișier swap în timpul instalării.
+:::
+
+<Steps>
+    1. Dezactivează ZRam prin adăugarea unui parametru de kernel. [Editează-ți configurația bootloader-ului](/ro/configuration/boot_manager_configuration) și adaugă următoarea linie:
+        ```text
+        systemd.zram=0
+        ```
+    2. Activează Zswap adăugând următorul parametru de kernel:
+        ```text
+        zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=30
+        ```
+    3. Creează un fișier de suprascriere gol pentru a dezactiva [regula udev a CachyOS](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/30-zram.rules) care dezactivează Zswap:
+        ```bash
+        sudo touch /etc/udev/rules.d/30-zram.rules
+        ```
+    4. Creează un fișier swap pentru Zswap.
+        <details>
+            <summary>Dacă folosești Btrfs:</summary>
+                <Steps>
+                    1. Creează un subvolum Btrfs pentru fișierul swap:
+                        ```bash
+                        sudo btrfs subvolume create /swap
+                        ```
+                    2. Creează un fișier swap cu dimensiunea dorită (ex. 8GB) prin modificarea parametrului `--size`:
+                        ```bash "--size"
+                        sudo btrfs filesystem mkswapfile --size 4g --uuid clear /swap/swapfile
+                        ```
+                    3. Activează fișierul swap:
+                        ```bash
+                        sudo swapon /swap/swapfile
+                        ```
+                    4. Adaugă fișierul swap în `/etc/fstab` pentru a-l face persistent între reporniri:
+                        ```bash
+                        sudo echo "/swap/swapfile none swap defaults 0 0" >> /etc/fstab
+                        ```
+                </Steps>
+        </details>
+        <details>
+            <summary>Dacă nu folosești Btrfs:</summary>
+            <Steps>
+                1. Creează un fișier swap cu dimensiunea dorită (ex. 8GB) prin modificarea parametrului `count=`:
+                    ```bash "count=8"
+                    sudo dd if=/dev/zero of=/swapfile bs=1G count=8
+                    ```
+                2. Setează permisiunile corecte pentru fișierul swap:
+                    ```bash
+                    sudo chmod 0600 /swapfile
+                    ```
+                3. Formatează fișierul swap:
+                    ```bash
+                    sudo mkswap /swapfile
+                    ```
+                4. Adaugă fișierul swap în `/etc/fstab` pentru a-l face persistent între reporniri:
+                    ```bash
+                    sudo echo "/swapfile none swap defaults 0 0" >> /etc/fstab
+                    ```
+                5. Activează fișierul swap:
+                    ```
+                    sudo swapon /swapfile
+                    ```
+            </Steps>
+        </details>
+    5. Adaugă modulul de compresie lz4 în fișierul de configurare `mkinitcpio.conf`:
+        1. Deschide fișierul cu un editor de text:
+            ```bash
+            sudo nano /etc/mkinitcpio.conf
+            ```
+        2. Găsește matricea `MODULES` și adaugă `lz4` în ea. Ar trebui să arate cam așa:
+            ```text
+            MODULES=(... lz4)
+            ```
+        3. Salvează fișierul apăsând `Ctrl + O` și `Enter` pentru a confirma, apoi ieși din editor cu `Ctrl + X`.
+    6. Reconstruiește-ți initramfs pentru a aplica modificările. Comanda variază în funcție de bootloader-ul tău:
+        <details>
+            <summary>systemd-boot</summary>
+            ```bash
+            sudo sdboot-manage gen
+            ```
+        </details>
+        <details>
+            <summary>GRUB</summary>
+            ```bash
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+        </details>
+        <details>
+            <summary>Limine</summary>
+            ```bash
+            sudo limine-mkinitcpio
+            ```
+        </details>
+    7. Repornește sistemul pentru a aplica toate modificările.
+</Steps>
