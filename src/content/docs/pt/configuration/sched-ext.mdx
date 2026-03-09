@@ -288,6 +288,96 @@ Ao decidir quais núcleos usar, o **Bpfland** leva em consideração o layout da
 * **Flags de Linha de Comando:** `-s 20000 -S`
 * **Descrição:** Prioriza tarefas com afinidade estrita. Esta opção pode aumentar o rendimento à custa da latência, sendo mais adequada para cargas de trabalho de servidor.
 
+### [scx_cake](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cake)
+
+**Desenvolvido por: RitzDaCat (RitzDaCat [GitHub](<https://github.com/RitzDaCat>))**
+
+- Pronto para Produção? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+
+O `scx_cake` é um escalonador de CPU BPF experimental que adapta o algoritmo DRR++ (Deficit Round Robin++) do CAKE de rede para o escalonamento de CPU.
+- Classificação de 4 Níveis — Tarefas ordenadas por avg_runtime EWMA em Crítico / Interativo / Frame / Bulk
+- Zero Atómicos Globais — Arrays BSS por CPU com escritas protegidas por MESI eliminam o bloqueio de barramento (bus locking)
+- Seleção de Ociosidade Delegada pelo Kernel — scx_bpf_select_cpu_dfl() para uma seleção de CPU autoritária e sem latência
+- Particionamento DSQ por LLC — Elimina a contenção de bloqueio entre CCDs em CPUs multi-chiplet
+- Rastreio de Défice DRR++ — Algoritmo de equidade de fluxo do CAKE de rede adaptado para o escalonamento de tarefas de CPU
+
+Concebido para cargas de trabalho de jogos em hardware AMD e Intel moderno.
+
+- Casos de uso:
+  - Jogos
+
+#### Sistema de 4 Níveis
+
+O `scx_cake` classifica cada tarefa num de quatro níveis com base no seu runtime **EWMA** (Média Móvel Ponderada Exponencial). A classificação é automática e contínua — as tarefas movem-se entre níveis à medida que o seu comportamento muda.
+
+##### Portões de Nível
+
+| Nível | Nome        | avg_runtime | Carga de Trabalho Típica                               | Quantum | Inanição (Starvation) |
+| :---- | :---------- | :---------- | :----------------------------------------------------- | :------ | :-------------------- |
+| **T0** | Crítico    | < 100µs     | Handlers de IRQ, drivers de input, áudio (PipeWire), rede | 0.5ms   | 3ms                  |
+| **T1** | Interativo | < 2ms       | Compositores, física de jogos, IA de jogos, workers curtos | 2.0ms   | 8ms                  |
+| **T2** | Frame      | < 8ms       | Threads de renderização de jogos, codificação de vídeo    | 4.0ms   | 40ms                 |
+| **T3** | Bulk       | ≥ 8ms       | Compilação, indexação em fundo, trabalhos em lote        | 8.0ms   | 100ms                |
+
+> [!TIP]
+> **Nenhuma tarefa de jogo deve estar em T3**. As threads de renderização de jogos correm 2-8ms por frame → T2. Física/IA correm 0.5-2ms → T1. Handlers de input correm < 100µs → T0. Apenas tarefas a realizar 8ms+ de trabalho contínuo de CPU (compilação de shaders, ecrãs de carregamento) vão para T3.
+
+##### Como funciona a Classificação
+
+1. **Posicionamento inicial**: Com base no valor `nice` — `nice < 0` → T0, `nice 0-10` → T1, `nice > 10` → T3
+2. **Autoridade de runtime**: Após ~3 paragens, o avg_runtime EWMA torna-se autoritário. Uma tarefa com nice -5 que corra em picos de 50ms será reclassificada para T3 independentemente do valor nice.
+3. **Histerese**: Uma zona morta de 10% evita oscilações nos limites dos níveis. A promoção requer um avg_runtime claramente abaixo do limite; a despromoção é imediata.
+4. **Backoff graduado**: Uma vez que um nível está estável durante 3+ paragens consecutivas, a frequência de reclassificação diminui por nível: T0 verifica novamente a cada 1024ª paragem, T3 a cada 16ª. A instabilidade repõe a verificação para a frequência total.
+
+##### Rastreio de Défice DRR++
+
+Adaptado da equidade de fluxo do CAKE de rede:
+
+- Cada tarefa começa com um **défice** (quantum + bónus de novo fluxo ≈ 10ms de crédito)
+- Cada ciclo de execução consome défice proporcional ao runtime
+- Quando o défice esgota → bónus de novo fluxo é removido → a tarefa compete normalmente
+- Isto confere às threads recém-criadas (um jogo a lançar um worker) uma capacidade de resposta instantânea que decai naturalmente
+
+##### DVFS (Escalonamento de Frequência de CPU)
+
+Cada nível mapeia para um alvo de desempenho de CPU através de uma tabela de pesquisa RODATA:
+
+| Nível | Alvo                 | Justificação                                            |
+| :---- | :------------------- | :---------------------------------------------------- |
+| T0-T2 | 100% (frequência máx) | Cargas de jogo precisam de desempenho total            |
+| T3    | 75%                  | Trabalho em fundo pode correr mais devagar para poupar energia |
+
+Em CPUs híbridos Intel (`has_hybrid = true`), os alvos são ajustados pela `cpuperf_cap` de cada núcleo para evitar pedir frequência excessiva em E-cores.
+
+#### Perfis (`--profile, -p`)
+
+| Perfil      | Quantum | Inanição | Caso de Uso                                            |
+| :---------- | :------ | :------- | :------------------------------------                  |
+| **gaming**  | 2ms     | 100ms    | **(Predefinido)** Equilibrado para a maioria dos jogos |
+| **esports** | 1ms     | 50ms     | FPS competitivo, latência ultra-baixa                  |
+| **legacy**  | 4ms     | 200ms    | CPUs antigos, poupança de bateria                      |
+| **default** | 2ms     | 100ms    | Alias para gaming                                      |
+
+#### Argumentos CLI
+
+| Argumento                 | Predef.  | Descrição                             |
+| :------------------------ | :------- | :------------------------------------ |
+| `--profile, -p <PERFIL>`  | `gaming` | Selecionar perfil predefinido         |
+| `--quantum <µs>`          | perfil   | Fatia de tempo base em microssegundos |
+| `--new-flow-bonus <µs>`   | perfil   | Défice extra para tarefas recém-acordadas |
+| `--starvation <µs>`       | perfil   | Tempo de execução máx antes de preempção forçada |
+| `--verbose, -v`           | `false`  | Ativar visualização de estatísticas TUI em tempo real |
+| `--interval <secs>`       | `1`      | Intervalo de atualização da TUI       |
+
+#### Afinação por Nível (Perfil Gaming)
+
+| Nível          | Multiplicador de Quantum | Fatia Efetiva | Limite de Inanição |
+| :------------- | :----------------------- | :------------ | :----------------- |
+| T0 Crítico     | 0.75x                    | 1.5ms         | 3ms                |
+| T1 Interativo  | 1.0x                     | 2.0ms         | 8ms                |
+| T2 Frame       | 1.2x                     | 2.4ms         | 40ms               |
+| T3 Bulk        | 1.4x                     | 2.8ms         | 100ms              |
+
 ### [scx_cosmos](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cosmos)
 
 **Desenvolvido por: Andrea Righi (arighi [GitHub](https://github.com/arighi))**
