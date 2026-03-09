@@ -294,6 +294,96 @@ Bpfland when making decisions on which cores to use, it takes in consideration t
 * **Command-line Flags:** `-s 20000 -S`
 * **Description:** Prioritize tasks with strict affinity. This option can increase throughput at the cost of latency and it is more suitable for server workloads.
 
+### [scx_cake](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cake)
+
+**Developed by: RitzDaCat (RitzDaCat [GitHub](<https://github.com/RitzDaCat>))**
+
+- Production Ready? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+
+`scx_cake` is an experimental BPF CPU scheduler that adapts the network [CAKE](https://www.bufferbloat.net/projects/codel/wiki/Cake/) algorithm's DRR++ (Deficit Round Robin++) for CPU scheduling.
+- 4-Tier Classification — Tasks sorted by EWMA avg_runtime into Critical / Interactive / Frame / Bulk
+- Zero Global Atomics — Per-CPU BSS arrays with MESI-guarded writes eliminate bus locking
+- Kernel-Delegated Idle Selection — scx_bpf_select_cpu_dfl() for authoritative, zero-staleness CPU selection
+- Per-LLC DSQ Sharding — Eliminates cross-CCD lock contention on multi-chiplet CPUs
+- DRR++ Deficit Tracking — Network CAKE's flow fairness algorithm adapted for CPU task scheduling
+
+Designed for gaming workloads on modern AMD and Intel hardware.
+
+- Use cases:
+  - Gaming
+
+#### 4-Tier System
+
+`scx_cake` classifies every task into one of four tiers based on its **EWMA** (Exponential Weighted Moving Average) runtime. Classification is automatic and continuous — tasks move between tiers as their behavior changes.
+
+##### Tier Gates
+
+| Tier   | Name        | avg_runtime | Typical Workload                                       | Quantum | Starvation |
+| :----- | :---------- | :---------- | :----------------------------------------------------- | :------ | :--------- |
+| **T0** | Critical    | < 100µs     | IRQ handlers, input drivers, audio (PipeWire), network | 0.5ms   | 3ms        |
+| **T1** | Interactive | < 2ms       | Compositors, game physics, game AI, short workers      | 2.0ms   | 8ms        |
+| **T2** | Frame       | < 8ms       | Game render threads, video encoding                    | 4.0ms   | 40ms       |
+| **T3** | Bulk        | ≥ 8ms       | Compilation, background indexing, batch jobs           | 8.0ms   | 100ms      |
+
+> [!TIP]
+> **No game task should be in T3**. Game render threads run 2-8ms per frame → T2. Physics/AI run 0.5-2ms → T1. Input handlers run < 100µs → T0. Only tasks doing 8ms+ uninterrupted CPU work (shader compilation, loading screens) land in T3.
+
+##### How Classification Works
+
+1. **Initial placement**: Based on `nice` value — `nice < 0` → T0, `nice 0-10` → T1, `nice > 10` → T3
+2. **Runtime authority**: After ~3 stops, the EWMA avg_runtime becomes authoritative. A nice -5 task that runs 50ms bursts will reclassify to T3 regardless of nice value.
+3. **Hysteresis**: 10% deadband prevents oscillation at tier boundaries. Promotion requires avg_runtime clearly below the gate; demotion is immediate.
+4. **Graduated backoff**: Once a tier is stable for 3+ consecutive stops, reclassification frequency drops per-tier: T0 rechecks every 1024th stop, T3 every 16th. Instability resets to full-frequency checking.
+
+##### DRR++ Deficit Tracking
+
+Adapted from network CAKE's flow fairness:
+
+- Each task starts with a **deficit** (quantum + new-flow bonus ≈ 10ms credit)
+- Each execution bout consumes deficit proportional to runtime
+- When deficit exhausts → new-flow bonus removed → task competes normally
+- This gives newly spawned threads (game launching a worker) instant responsiveness that naturally decays
+
+##### DVFS (CPU Frequency Scaling)
+
+Each tier maps to a CPU performance target via RODATA lookup table:
+
+| Tier  | Target               | Rationale                                             |
+| :---- | :------------------- | :---------------------------------------------------- |
+| T0-T2 | 100% (max frequency) | Gaming workloads need full performance                |
+| T3    | 75%                  | Background work can run slightly slower to save power |
+
+On Intel hybrid CPUs (`has_hybrid = true`), targets are scaled by each core's `cpuperf_cap` to prevent over-requesting frequency on E-cores.
+
+#### Profiles (`--profile, -p`)
+
+| Profile     | Quantum | Starvation | Use Case                              |
+| :---------- | :------ | :--------- | :------------------------------------ |
+| **gaming**  | 2ms     | 100ms      | **(Default)** Balanced for most games |
+| **esports** | 1ms     | 50ms       | Competitive FPS, ultra-low latency    |
+| **legacy**  | 4ms     | 200ms      | Older CPUs, battery saving            |
+| **default** | 2ms     | 100ms      | Alias for gaming                      |
+
+#### CLI Arguments
+
+| Argument                  | Default  | Description                           |
+| :------------------------ | :------- | :------------------------------------ |
+| `--profile, -p <PROFILE>` | `gaming` | Select preset profile                 |
+| `--quantum <µs>`          | profile  | Base time slice in microseconds       |
+| `--new-flow-bonus <µs>`   | profile  | Extra deficit for newly woken tasks   |
+| `--starvation <µs>`       | profile  | Max run time before forced preemption |
+| `--verbose, -v`           | `false`  | Enable live TUI stats display         |
+| `--interval <secs>`       | `1`      | TUI refresh interval                  |
+
+#### Per-Tier Tuning (Gaming Profile)
+
+| Tier           | Quantum Multiplier | Effective Slice | Starvation Limit |
+| :------------- | :----------------- | :-------------- | :--------------- |
+| T0 Critical    | 0.75x              | 1.5ms           | 3ms              |
+| T1 Interactive | 1.0x               | 2.0ms           | 8ms              |
+| T2 Frame       | 1.2x               | 2.4ms           | 40ms             |
+| T3 Bulk        | 1.4x               | 2.8ms           | 100ms            |
+
 ### [scx_cosmos](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cosmos)
 
 **Developed by: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
