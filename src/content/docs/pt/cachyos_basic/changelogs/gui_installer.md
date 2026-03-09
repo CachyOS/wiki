@@ -4,6 +4,60 @@ description: Changelogs do Calamares e da ISO Live GUI
 sidebar:
   order: 1
 ---
+26.03
+----
+
+**Funcionalidades:**
+
+* **Instalador:**
+    * Adicionado suporte para exibir vídeos GIF/WebP na Seleção de Ambiente de Trabalho para demonstrar os mesmos. Disponível para Plasma, GNOME, Niri e COSMIC.
+    * Adicionado suporte para JPEG XL na Seleção de Ambiente de Trabalho para reduzir o tamanho das imagens.
+    * O Cachy-Update está agora ativado por defeito para as instalações GNOME e KDE.
+    * Melhorada a lógica de instalação do microcódigo — agora deteta o hardware e instala o microcódigo correto em vez de instalar ambos e remover o desnecessário posteriormente.
+    * Melhorada a mensagem de erro quando a partição EFI é demasiado pequena.
+    * Ordenada a lista de Ambientes de Trabalho: das configurações mais fáceis e acessíveis para as mais avançadas (como WMs).
+
+* **CachyOS-Welcome:**
+    * Adicionado um botão para instalar e ativar facilmente o "Winboat" para uma VM Docker de Windows simplificada.
+    * Adicionado suporte para o servidor DNS FFMUC na seleção de DNS.
+    * Adicionada tradução para Ucraniano.
+
+* **chwd:** Redução massiva do tamanho do initramfs para configurações com dGPU NVIDIA.
+
+* **linux-cachyos:** Em vez de gerar um patch `0001-cachyos-base-all.patch`, é agora gerada uma "release" num repositório Linux para cada versão do nosso kernel com patches.
+
+* **cachyos-rate-mirrors:** Melhoria significativa da experiência para utilizadores na China e Rússia com uma verificação adequada antes da classificação dos mirrors (espelhos).
+
+* **cachyos-settings:** Adicionado suporte para definir automaticamente o domínio regulatório sem fios com base no fuso horário.
+
+* **Website:** O design do site foi reformulado e melhorado para seguir padrões mais modernos.
+
+* **GitHub:** Adicionados modelos de problemas (issue templates) nos repositórios importantes do GitHub para melhorar a qualidade dos relatórios de erros e orientar o utilizador.
+
+* **Mirrors:** Novos mirrors na Rússia (jura12, cachy-arch.ru), Suécia (Zyner) e Canadá (All Things Linux).
+
+**Correções:**
+
+* **Instalador:**
+    * Removido o suporte para bcachefs na seleção de sistemas de ficheiros devido à necessidade do bcachefs-dkms.
+    * Corrigida a encriptação quando o LUKS2 é utilizado em dispositivos específicos.
+    * Corrigida a ativação do gestor de sessão "ly".
+
+* **cachyos-settings:** O script `cachyos-bugreport.sh` agora oculta o IP, nome de utilizador, hostname e endereço MAC.
+
+* **chwd:**
+    * Perfis genéricos para consolas portáteis (handhelds) e suporte melhorado para GPUs de dispositivos portáteis.
+    * O fwupd está agora ativado para consolas portáteis da Lenovo.
+
+**Changelog para Edição Handheld (Consolas):**
+
+* **gamescope-session:** Substituído o gamescope-session-plus pelo gamescope-session-cachyos, que é um fork do gamescope-session da Valve.
+    * Permite atualizações de firmware para dispositivos Steam Deck e Lenovo Legion Go.
+* **plasma-login-manager:** Substituído o SDDM pelo plasma-login-manager como gestor de login.
+* **Bootloaders:** O Limine é agora selecionado por defeito com snapshots automáticos. O systemd-boot continuará a ser selecionável.
+* **Instalador:** Fusão do Calamares da edição Handheld com o da edição Desktop.
+* **ISO:** O ISO utiliza agora Wayland em vez de X11.
+
 26.01
 ----
 
