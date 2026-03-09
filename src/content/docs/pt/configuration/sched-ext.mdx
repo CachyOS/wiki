@@ -475,6 +475,39 @@ Uma das capacidades principais é a **Core Compaction (Compactação de Núcleos
 * **Flags:** `--powersave`
 * **Descrição:** Minimiza o consumo mantendo um desempenho razoável. Prioriza núcleos eficientes e threads sobre núcleos físicos.
 
+### [scx_pandemonium](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_pandemonium)
+
+**Desenvolvido por: Will Clingan (willclngn [GitHub](https://github.com/wllclngn/))**
+
+Um escalonador de classificação comportamental que utiliza pontuação baseada em EWMA (frequência de *wakeup*, taxa de mudança de contexto, variância de tempo de execução) para organizar as tarefas em três níveis de despacho — LAT_CRITICAL, INTERACTIVE e BATCH — cada um com o seu próprio *time slice*, regras de preempção e encaminhamento DSQ. Um mecanismo de resgate de permanência (*sojourn rescue*), inspirado no CoDel, monitoriza os tempos de espera da fila *batch* e resgata tarefas antigas antes que bloqueiem, com limiares que se adaptam à taxa de despacho e ao número de núcleos. A deteção de rajadas dual (detetor de ponto de mudança CUSUM + contador de taxa de *wakeup*) lida com tempestades de *forks*, e um ciclo de controlo adaptativo em Rust ajusta os parâmetros de escalonamento uma vez por segundo, com base na deteção do regime de carga de trabalho e na telemetria de histogramas BPF.
+
+Os compositores (KWin, GNOME Shell, Hyprland, Sway, entre outros) são automaticamente promovidos para LAT_CRITICAL. Uma base de dados de processos persistente memoriza as classificações das tarefas entre reinícios.
+
+* **Casos de uso:**
+    * Jogos
+    * Uso de computador de secretária
+    * Produção multimédia/áudio
+    * Compilação de código
+    * Interatividade sob cargas de trabalho intensivas
+    * Cargas de trabalho mistas
+
+#### Modos do Escalonador
+
+##### Predefinido (Adaptativo)
+
+* **Argumentos da linha de comandos:** *(nenhum — corre em modo adaptativo por defeito)*
+* **Descrição:** Modo totalmente adaptativo. O ciclo de controlo em Rust deteta o regime de carga de trabalho (LIGHT / MIXED / HEAVY) e ajusta os parâmetros de escalonamento em tempo real. Ideal para uso geral em computador e jogos.
+
+##### Apenas BPF
+
+* **Argumentos da linha de comandos:** `--no-adaptive`
+* **Descrição:** Desativa o ciclo de controlo adaptativo em Rust. O escalonador BPF funciona com parâmetros estáticos. Menor sobrecarga (*overhead*), útil para *benchmarking* ou caso a camada adaptativa esteja a corrigir excessivamente a sua carga de trabalho.
+
+##### Detalhado / Depuração
+
+* **Argumentos da linha de comandos:** `-v` ou `--verbose`
+* **Descrição:** Ativa a saída de telemetria detalhada, incluindo contagens de despacho por nível, tempos de permanência e estatísticas de classificação comportamental. Útil para diagnosticar o comportamento do escalonamento.
+
 ### [scx_p2dq](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_p2dq)
 
 Pronto para Produção? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
