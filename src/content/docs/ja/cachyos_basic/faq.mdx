@@ -1,0 +1,908 @@
+---
+title: CachyOS のよくある質問とトラブルシューティングガイド
+description: よくある質問とヒント
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 5
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::note
+ここでの質問と回答は CachyOS と Arch ベースのディストリビューションにあてはまるものです。
+
+**この記事は Arch Linux Wiki の情報を置き換えるものではありません。**
+:::
+
+:::tip
+CachyOS の[フォーラム](https://discuss.cachyos.org/c/announcements/5)、[公式サブレディット](https://www.reddit.com/r/cachyos/)での投稿、または [Discord の #announcements](https://discord.com/channels/862292009423470592/873309651364610118) と [#updates-repo](https://discord.com/channels/862292009423470592/871739561364033566) で、パッケージの既知の問題や手動での対応が必要なアップデートに関する公式アナウンスを日頃から把握しておきましょう。
+:::
+
+## CachyOS の問題やバグの報告方法
+
+:::danger
+生成AI (ChatGPT など) が提供する情報やコマンドを、公式情報を確認せずに信用しないようご注意ください。生成AIは、特に技術的な文脈において、誤情報や誤解を招く情報を提供することがあります。常に信頼できるドキュメントやコミュニティリソースと照らし合わせてください。
+
+これを忘れると、システムが完全に破損したり、問題が悪化することにつながります。
+:::
+
+:::tip
+Linux の世界には素晴らしいことばがあります。ぜひ覚えておきましょう。<br/><i>"Most likely someone else had the same issue before you."</i><br/>訳: たいてい、あなたの前にも同じ問題に遭った誰かがいるものだ。<br/>問題を報告する前に、Google、Arch Wiki、または CachyOS フォーラムや Discord の検索機能を使ってください。すでに解決策が投稿されているかもしれません。
+:::
+
+:::tip
+なじみのないコマンドのマニュアルページの簡易版を表示するには `tldr` コマンドを活用しましょう。以下はコマンド例です。
+
+git のコマンドと説明の概要:
+```bash
+tldr git
+```
+
+特定の git コマンドのパラメーターについて詳しい情報を読むこともできます。
+```bash
+tldr git add
+```
+:::
+
+### 問題やバグの報告先
+
+- [Github](https://github.com/CachyOS/distribution)
+- [フォーラム](https://discuss.cachyos.org/c/feedback/bugreports/10)
+- **Discord:** [サポートフォーラム](https://discord.com/channels/862292009423470592/1400865136373403708)
+  - 新しい投稿を作成する前に、チャンネルにピン留めされている[サポートガイドラインと情報](https://discord.com/channels/862292009423470592/1402210965700739082)をお読みください。
+    - 問題がすぐに解決できそうなときは、[#support チャンネル](https://discord.com/channels/862292009423470592/862294383470051348)を使ってください
+- [Reddit](https://www.reddit.com/r/cachyos/)
+
+### 冷静かつ礼儀を大切に
+
+CachyOS のチームとコミュニティは、余暇にこのプロジェクトに取り組むボランティアです。やり取りをするときは忍耐を持ち、礼儀正しく接してください。質の高いバグ報告が、問題を解決する近道です。
+
+あいまいな質問をしたり、情報が不十分だったりすると、あいまいな回答しか得られないか、まったく回答が得られないこともあります。
+
+以下に参考となる質問の例を示します。
+
+- **良い質問:**
+  - 最近のアップデート(最後にアプデしたのは何月何日)以降、システムが黒画面のまま起動しなくなりました。NVIDIAの○○(モデル名)を使用しています。`linux-cachyos` パッケージを前のバージョンに戻してみましたが、状況が変わりません。ライブ環境でとった `journalctl -b -1` と `dmesg` の出力を添付します。
+- **悪い・曖昧な質問:**
+  - パソコンが壊れた、たすけて
+  <details>
+  <summary>このミーム画像のようにならないようお気をつけください☟</summary>
+   <ImageComponent imgsrc={import('~/assets/images/abraham-meme.jpg')} />
+   <i>老人、雲に向かって叫ぶ ― 『ザ・シンプソンズ』シーズン13 第13話より</i>
+  </details>
+
+### 問題を説明するとき
+
+まずは自問自答してみましょう。
+
+- 動作していないものはなにか
+- パッケージ✕✕をダウングレードすると問題は解決するか
+- 同じ問題を経験した人はいるか、またはすでに解決されているか (検索機能を活用)
+- 更新後に問題が発生したか
+- 自分で変更を加えたか
+  - 例: modprobe ファイルに追加のフラグを設定したなど
+- ハードウェアに関係しているか (GPU、Wi-Fi など)
+- ソフトウェアに関係しているか (特定のアプリケーション、デスクトップ環境など)
+- 新規インストール直後か、それとも使用しているうちに問題が発生したか
+
+## ログの収集方法
+
+システムからログを収集する方法はたくさんあります。ログ収集に使えるツールと方法をいくつか紹介します。
+
+### 一般的なバグ報告の作成
+
+CachyOS には `cachyos-bugreport.sh` というシステムログを収集する便利なツールがあります。
+このツールは以下のログを収集します。
+  - `dmesg`
+  - `journalctl`
+  - `inxi` (ハードウェア情報の収集)
+
+ログ収集後、CachyOS 独自のログ投稿サイトにアップロードするかどうかを確認するプロンプトが表示されます。
+
+スクリプトを実行するには、ターミナルで以下のコマンドを入力し、生成されたリンクを報告に添付してください。
+  ```sh
+  sudo cachyos-bugreport.sh
+  ```
+
+### 起動しないプログラムのログ収集
+
+GUI 形式のプログラムが起動しない原因はさまざまです。こうした問題のログを収集する最善の方法は、ターミナルからプログラムを実行することです。これにより、問題の調査に役立つエラーメッセージや出力を確認できます。
+
+例えば、Firefox が正常に起動しないときは、ターミナルから起動してエラーメッセージを見てみましょう。
+  ```sh
+  firefox
+  ```
+
+:::tip
+  出力をテキストファイルに保存して共有しやすいようにするには、以下のように出力をリダイレクトすることで実現できます。
+    ```sh
+    firefox &> firefox-log.txt
+    ```
+  起動に失敗したのち `CTRL + C` でプロセスを終了すると、ターミナルが出力をファイルに書き込みます。
+:::
+
+### pacman で最近更新されたパッケージを確認する
+
+システムで最近更新されたパッケージの一覧を取得するには、以下のコマンドを使います。
+
+```bash
+grep "\[ALPM\] upgraded" /var/log/pacman.log | tail -n 50
+```
+
+:::tip
+`tail` の `-n` パラメーターを調整して、表示する行数を増減できます。
+:::
+
+### journalctl と dmesg の操作方法
+
+less または閲覧モードでログを確認する際の主な操作方法です。
+
+`↑ / ↓ キーまたは J / K` で1行ずつスクロール
+
+`PageUp / PageDown または Ctrl + B/D` で1ページずつスクロール
+
+`G または Home` でログの先頭に移動
+
+`Shift + G または End` でログの末尾に移動
+
+### journalctl を使ったシステムログの収集
+
+`journalctl` コマンドはシステムログを表示するとても便利なツールです。よく使われるコマンドの組み合わせを紹介します。
+
+#### 基本的な使い方とよくある例
+
+:::tip
+複数のオプションを組み合わせることで、より細かくフィルタリングすることができます。
+:::
+
+<details>
+<summary>全ログを表示する (古い順)</summary>
+```bash
+journalctl
+```
+</details>
+
+<details>
+<summary>現在のブートのログのみ表示する</summary>
+```bash
+journalctl -b
+```
+</details>
+
+<details>
+<summary>セキュリティと認証の問題</summary>
+```bash
+journalctl -u sshd -u polkit -b -0 | grep -i "fail\|error\|denied"
+```
+認証の失敗やセキュリティポリシーの拒否を確認できます。
+</details>
+
+<details>
+<summary>リアルタイムでログを追跡する</summary>
+```bash
+journalctl -f
+```
+:::tip
+ほかのフィルターと組み合わせることもできます。以下はコマンド例です。
+```bash
+# Adguard Home サービスのログを追跡
+journalctl -u adguardhome -f
+```
+:::
+</details>
+
+<details>
+<summary>現在のブートの音声関連の問題</summary>
+```bash
+journalctl --user -u pipewire -u pipewire-pulse -u wireplumber -b 0
+```
+音声サービスのログを表示してサウンドの問題のトラブルシューティングを行います。
+</details>
+
+<details>
+<summary>メモリ (RAM) のエラー</summary>
+```bash
+journalctl -k | grep -i "memory\|ram"
+```
+メモリの破損や検出の問題を確認できます。
+</details>
+
+<details>
+<summary>Bluetooth の問題</summary>
+```bash
+# 現在のブート
+journalctl -u bluetooth -b 0
+journalctl -u bluetooth -b 0
+# 前回のブート
+journalctl -u bluetooth -b -1
+```
+</details>
+
+##### 時間によるフィルタリング
+<details>
+
+<summary>直近の数分・数時間のログを表示する</summary>
+```bash
+journalctl --since "10 minutes ago"
+journalctl --since "1 hour ago"
+journalctl --since "2024-01-15 14:30:00"
+```
+</details>
+
+<details>
+<summary>特定の時間範囲のログを表示する</summary>
+```bash
+journalctl --since "09:00" --until "10:00"
+```
+</details>
+
+##### 優先度とサービス・プログラムによるフィルタリング
+
+指定できる優先度レベルは `debug`, `info`, `notice`, `warning`, `err`, `crit`, `alert`, `emerg` です。
+
+数値でも指定できます。
+
+`0` = `emerg`
+
+`1` = `alert`
+
+`2` = `crit`
+
+`3` = `err`
+
+`4` = `warning`
+
+`5` = `notice`
+
+`6` = `info`
+
+`7` = `debug`
+
+<details>
+<summary>エラー・クリティカル・緊急メッセージのみ表示する</summary>
+```bash
+journalctl -p err..emerg
+```
+:::tip
+前述の例と組み合わせることもできます。以下はコマンド例です。
+```bash
+journalctl -p err..emerg --since "9:00" --until "10:00"
+```
+:::
+</details>
+
+<details>
+<summary>特定のシステムサービスのログを表示する</summary>
+```bash title='コマンド例'
+# NetworkManager サービスのログ
+journalctl -u NetworkManager
+# GDM (GNOME ディスプレイマネージャー) サービスのログ
+journalctl -u gdm
+# SDDM (シンプルデスクトップディスプレイマネージャー) サービスのログ
+journalctl -u sddm
+```
+</details>
+
+<details>
+<summary>特定のプロセス ID (PID) のログを表示する</summary>
+```bash
+journalctl _PID=pid
+# コマンド例
+journalctl _PID=3344
+```
+</details>
+
+<details>
+<summary>特定の実行ファイルのログを表示する</summary>
+```bash
+journalctl path/to/executable
+# コマンド例
+journalctl /usr/bin/firefox
+```
+</details>
+
+### journalctl を使ったカーネルメッセージの確認
+
+:::note
+`journalctl -k` と `dmesg` の使い分け:
+
+- `journalctl -k` は systemd ジャーナルに保存されたカーネルメッセージにアクセスします (再起動後も保存するよう設定でき、時間ベースのフィルタリングやジャーナル機能との連携がしやすい)。
+- `dmesg` は現在のカーネルリングバッファを読み取ります (揮発性で、再起動後に失われる)。
+:::
+
+<details>
+<summary>基本的なカーネルメッセージの表示</summary>
+```bash
+journalctl -k
+```
+ジャーナル視点での全カーネルメッセージを表示します。`dmesg` と同じです。
+</details>
+
+<details>
+<summary>現在の起動のカーネルメッセージのみ表示</summary>
+```bash
+journalctl -k -b 0
+```
+現在のブートセッションのカーネルメッセージのみを表示します。
+</details>
+
+<details>
+<summary>前回のブートのカーネルメッセージを表示</summary>
+```bash
+journalctl -k -b -1
+```
+前回のブートのカーネルメッセージを表示します。ブートの失敗やクラッシュの診断に役立ちます。
+</details>
+
+<details>
+<summary>新しいカーネルメッセージをリアルタイムで追跡</summary>
+```bash
+journalctl -k -f
+```
+カーネルメッセージをリアルタイムで監視します。ハードウェアイベントやドライバーの読み込みの監視に向いています。
+</details>
+
+<details>
+<summary>特定のドライバーメッセージを検索</summary>
+```bash
+# コマンド例
+# GPU 関連のメッセージ:
+journalctl -k | grep -i "nvidia\|amd\|intel"
+# USB デバイスのメッセージ:
+journalctl -k | grep -i "usb\|pci"
+```
+</details>
+
+<details>
+<summary>時間ベースのカーネルメッセージフィルタリング</summary>
+```bash
+journalctl -k --since "1 hour ago"
+journalctl -k --since "09:00" --until "10:00"
+```
+特定の時間帯のカーネルメッセージを表示します。
+</details>
+
+### dmesg を使ったカーネルメッセージの確認
+
+`dmesg` コマンドはカーネルリングバッファを表示します。ハードウェアの識別、ドライバーの初期化、システムイベントに関するカーネルメッセージが含まれています。
+
+#### 基本的な使い方とフォーマット
+
+<details>
+<summary>カーネルメッセージバッファ全体を表示</summary>
+```bash
+dmesg
+```
+</details>
+
+<details>
+<summary>人間が読みやすいタイムスタンプ付きで表示</summary>
+```bash
+dmesg -T
+```
+</details>
+
+<details>
+<summary>ページャーで読みやすく表示</summary>
+```bash
+dmesg | less
+```
+</details>
+
+#### 優先度レベルによるフィルタリング
+
+journalctl と同様に、dmesg でも優先度レベルでメッセージをフィルタリングできます。
+
+<details>
+<summary>エラーとクリティカルメッセージのみ表示</summary>
+```bash
+dmesg -l err,crit,alert,emerg
+```
+指定できる優先度レベルは `debug`, `info`, `notice`, `warning`, `err`, `crit`, `alert`, `emerg` です。
+
+数値でも指定できます。
+
+`0` = `emerg`
+
+`1` = `alert`
+
+`2` = `crit`
+
+`3` = `err`
+
+`4` = `warning`
+
+`5` = `notice`
+
+`6` = `info`
+
+`7` = `debug`
+</details>
+
+<details>
+<summary>最新のカーネルメッセージを表示</summary>
+```bash
+dmesg -w
+```
+</details>
+
+<details>
+<summary>特定のハードウェアやドライバーのメッセージを検索</summary>
+```bash
+# コマンド例
+# USB 関連のメッセージの検索:
+dmesg | grep -i usb | less
+# Bluetooth デバイス:
+dmesg | grep -i bluetooth
+# NVIDIA 関連:
+dmesg | grep -i nvidia | less
+# 初期化に失敗したデバイス:
+dmesg | grep -i "error\|failed" | less
+```
+</details>
+
+##### dmesg を使った特定の問題への対処例
+
+<details>
+<summary>USB デバイスが認識されないとき</summary>
+```bash
+dmesg -w | grep -i usb
+```
+このコマンドを実行してからデバイスを接続し、新しく送信されたメッセージを読んでください。
+</details>
+
+<details>
+<summary>GPU の初期化の問題</summary>
+```bash
+dmesg | grep -i "nvidia\|amd\|intel\|radeon\|drm\|gpu" | less
+```
+</details>
+
+<details>
+<summary>Wi-Fi またはネットワークアダプターの問題</summary>
+```bash
+dmesg | grep -i "wlan\|wifi\|network\|firmware" | tail -20
+```
+無線カードが動作しない原因となる、ファームウェアの読み込み失敗やドライバーエラーを確認できます。
+</details>
+
+<details>
+<summary>HDD/SSD の検出の問題</summary>
+```bash
+dmesg | grep -i "sda\|sdb\|nvme\|scsi\|disk" | head -30
+```
+ストレージデバイスが認識されない場合や、ブート時にエラーが表示される場合に使用してください。
+</details>
+
+<details>
+<summary>システムフリーズやカーネルパニック</summary>
+```bash
+dmesg -T -l emerg,alert,crit,err | tail -30
+```
+システムのクラッシュやフリーズの前に発生した重大なカーネルメッセージを確認できます。
+</details>
+
+<details>
+<summary>メモリ (RAM) のエラー</summary>
+```bash
+dmesg | grep -i "memory\|ram"
+```
+メモリの破損、検出の問題、ECC エラーレポートを確認できます。
+</details>
+
+<details>
+<summary>オーディオデバイスのイベント</summary>
+```bash
+dmesg | grep -i "audio\|snd\|hda" | grep -i "error\|fail\|card"
+```
+サウンドカードが正しく検出されているか、ドライバーが正常に読み込まれているかを確認できます。
+</details>
+
+<details>
+<summary>カーネルモジュールの読み込み失敗</summary>
+```bash
+dmesg | grep -i "module\|init" | grep -i "error\|fail"
+```
+特定のハードウェアドライバーが読み込まれない場合や、初期化に失敗している場合に使用します。
+</details>
+
+<details>
+<summary>ハードウェアイベントのリアルタイム監視</summary>
+```bash
+dmesg -w -l warn,err,crit,alert,emerg -T
+```
+問題を再現することで、新しい重要なカーネルメッセージが送信されないか確認してください。
+</details>
+
+<details>
+<summary>BIOS/UEFI とファームウェアの問題</summary>
+```bash
+dmesg | grep -i "bios\|uefi\|firmware\|efi"
+```
+ハードウェアファームウェアと Linux カーネルの互換性の問題を確認できます。
+</details>
+
+## インストールとライブ環境
+
+### CachyOS のライブ ISO に KDE Plasma しか入っていないのはなぜですか？
+
+開発とメンテナンスを KDE Plasma デスクトップ環境に集中させることにしました。これにより、ライブ ISO でより良く、安定した一貫性のあるユーザー体験を提供しています。
+
+ライブ環境は主に CachyOS のインストールや、システム復旧のための cachy-chroot の使用を目的としています。ほかのデスクトップ環境やウィンドウマネージャーを**テスト**するためには、仮想マシン (VM) の利用を強くおすすめします。
+
+### 「インストーラーを起動」をクリックしてもインストーラーの起動に時間がかかるのはなぜですか？
+
+:::caution
+インターネット接続が有効でないときは、このボタンを押しても何も起こりません。
+:::
+
+インストーラーがフリーズしているわけではなく、インストールの準備をするために必要なバックグラウンドスクリプトが実行されています。この作業によってシステムのキーリングと時刻が最新の状態に更新され、よくあるインストールの問題を防ぐことができます。
+
+スクリプトの内容を詳しく知りたい場合は [GitHub で確認](https://github.com/CachyOS/CachyOS-Live-ISO/blob/master/archiso/airootfs/usr/local/bin/calamares-online.sh)できます。
+<Steps>
+  1. 古いキーリングファイルを削除します。
+  2. Arch Linux と CachyOS のキーリングパッケージを最新バージョンに更新します。
+  3. pacman キーリングを初期化して展開します。
+  4. ネットワーク時刻同期を有効にします。
+  5. システムのブート形式 (UEFI または BIOS/MBR) を確認し、タイプに応じてブートローダーを選択するプロンプトを表示します。
+</Steps>
+
+### インストールが 33% で止まるのはなぜですか？
+
+これはインストーラーによるパッケージのダウンロードが止まっているときに発生します。通常はネット接続がとても遅くなっているか、不安定であることを表しています。ネットワーク接続を確認してからもう一度お試しください。
+
+## ブートローダーの復旧
+
+:::note
+`/boot` パーティションが削除された場合は、[パーティション構成](/ja/installation/installation_on_root#uefigpt)の手順 5 から順にしたがって、新しいパーティションを作成してください。
+:::
+
+### ブートローダーを復旧する手順
+
+:::tip
+`cachy-chroot` の使い方がわからない場合は、先に[CachyOS chroot ヘルパー](/ja/features/cachy_chroot)のドキュメントをお読みください。
+:::
+
+<Steps>
+    1. CachyOS ライブ ISO でブートしてください。
+    2. ターミナルを開き、`cachy-chroot` コマンドを使ってインストール済みのシステムに chroot してください。
+
+        ```bash
+        sudo cachy-chroot
+        ```
+        BTRFS プリセットを使用している場合はプロンプトで `y` を入力してください。
+         ```bash title='コマンド例'
+         Do you want to use CachyOS BTRFS preset to auto mount root subvolume? y
+         Do you want to mount additional partitions? · yes
+         Enter the mount point for additional partition (e.g. /boot) type 'skip' to cancel:
+         # systemd-boot, Limine, rEFInd の場合は /boot を入力
+         # GRUB の場合は /boot/efi を入力
+         ```
+    3. インストール済みのブートローダーとシステムのタイプ (UEFI または MBR/BIOS) に応じて以下の手順にしたがってください。
+        <Tabs>
+            <TabItem label='GRUB'>
+                以下のコマンドで GRUB を再インストールしてください。
+                <Tabs>
+                    <TabItem label='UEFI'>
+                        ```bash
+                        sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos
+                        ```
+                    </TabItem>
+                    <TabItem label='MBR/BIOS'>
+                        ```bash
+                        sudo grub-install --target=i386-pc /dev/sdX # sdX を実際のディスク名 (例: sda) に置き換えてください
+                        ```
+                    </TabItem>
+                </Tabs>
+            </TabItem>
+            <TabItem label='systemd-boot (UEFI のみ)'>
+                以下のコマンドで systemd-boot を再インストールしてください。
+                ```bash
+                sudo bootctl install
+                ```
+            </TabItem>
+            <TabItem label='Limine'>
+                以下のコマンドで Limine を再インストールしてください。
+                <Tabs>
+                    <TabItem label='UEFI'>
+                        ```bash
+                        sudo limine-install
+                        ```
+                    </TabItem>
+                    <TabItem label='MBR/BIOS'>
+                        ```bash
+                        sudo limine bios-install /dev/sdX # sdX を実際のディスク名 (例: sda) に置き換えてください
+                        ```
+                    </TabItem>
+                </Tabs>
+            </TabItem>
+            <TabItem label='rEFInd (UEFI のみ)'>
+                以下のコマンドで rEFInd を再インストールしてください。
+                ```bash
+                sudo refind-install
+                ```
+            </TabItem>
+        </Tabs>
+    4. CachyOS カーネルを再インストールしてください。
+        ```bash
+        sudo pacman -Syu linux-cachyos linux-cachyos-headers
+        ```
+    5. cachy-chroot を終了してください。
+        ```bash
+        exit
+        ```
+    6. システムを再起動してください。
+</Steps>
+
+## パッケージ管理とアップデート
+
+### Pacman のトラブルシューティング
+
+#### エラー: ○○の署名は無効です
+
+このエラーはパッケージの暗号署名に問題があることを示しています。通常、ミラーが古い場合や、システムのキーリングが壊れている場合に発生します。
+
+ミラーの問題は時間が経てば自然に解決することが多いですが、問題が続く場合は以下のどれかの解決策を試してください。
+
+<Tabs>
+
+<TabItem label='解決策 1: Pacman ミラーを再同期'>
+
+```sh
+sudo pacman -Syu
+```
+
+</TabItem>
+
+<TabItem label='解決策 2: ミラーをレート測定'>
+
+```sh title='ミラーをレート測定'
+sudo cachyos-rate-mirrors
+```
+
+</TabItem>
+
+<TabItem label='解決策 3: キーリングをリセット'>
+
+ミラーのレート測定でも解決しない場合は、システムのキーリングが壊れている可能性があります。
+
+- CachyOS Hello を開き、**アプリ/チューニング** に移動します。
+- 「キーリングをリセット」ボタンをクリックします。
+
+</TabItem>
+
+</Tabs>
+
+#### error: 404 Not Found
+
+このエラーはインストールしようとしているパッケージが現在のミラーで見つからないことを意味します。通常、ローカルのパッケージデータベースがリモートリポジトリと同期していない場合に発生します。
+
+**解決策:**
+
+以下のコマンドを実行してパッケージデータベースを更新し、システム全体をアップグレードしてください。これにより、最新のパッケージ情報が取得されます。
+
+```sh
+sudo pacman -Syu
+# その後、インストールしたいパッケージを再度インストールしてください。
+```
+
+#### エラー: ○○を削除できません
+
+このエラーは pacman キャッシュにシステムが自動管理できないファイルが含まれている場合に発生します。すぐに修正できる一般的な問題です。
+
+- 解決策 1: CachyOS Hello を使用する。
+  - 一番かんたんな方法は CachyOS Hello を使用することです。CachyOS Hello 内の **アプリ/チューニング** に移動し、**パッケージキャッシュをクリア** をクリックしてください。
+
+- 解決策 2: キャッシュを手動で削除する。
+  - 以下のコマンドを実行してキャッシュ内の孤立パッケージをすべて削除してください。
+  ```sh
+  sudo rm -r /var/cache/pacman/pkg/*
+  ```
+
+#### エラー: ファイル ○○ は破損しています (無効または破損したパッケージ (PGP 鍵))
+
+```sh
+# 例:
+:: ファイル /var/cache/pacman/pkg/python-charset-normalizer-3.4.0-1-any.pkg.tar.zst
+は破損しています (無効または破損したパッケージ (PGP 鍵)).
+```
+
+このエラーは通常、パッケージが本物かどうかを検証する pacman キーリングに問題があることが原因です。以下のコマンドでキーリングをリセット・再展開することで解決できます。
+
+```sh
+sudo rm -rf /etc/pacman.d/gnupg/
+sudo pacman-key --init
+sudo pacman-key --populate
+
+sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
+sudo pacman-key --lsign-key F3B607488DB35A47
+
+sudo rm -R /var/lib/pacman/sync
+```
+
+上記で解決しない場合は、キーリングではなく、ミラーに問題がある可能性があります。有効なミラーに設定してからキャッシュを削除してください。
+
+```sh
+sudo cachyos-rate-mirrors
+sudo pacman -Scc
+```
+
+#### エラー: データベースをロックできません
+
+このエラーは別の pacman プロセスがすでに実行中で、データベースが破損しないようにロックされている場合に発生します。以前のプロセスがクラッシュまたは中断された場合、ロックファイルである `db.lck` が削除されていないことがあります。
+
+- 解決策 1: CachyOS Hello を使う
+  - 一番かんたんな方法は CachyOS Hello の **アプリ/チューニング** タブにある **DB ロックを解除** 機能を使うことです。
+
+- 解決策 2: ロックファイルを手動で削除する
+  - CachyOS Hello を使わない場合は、ロックファイルを手動で削除してください。
+
+```sh
+sudo rm /var/lib/pacman/db.lck
+```
+
+#### エラー: ファイル ○○ を ×× から取得するのに失敗しました : Connection timed out
+
+以下のようなエラーが表示されることがあります。
+
+```text
+# エラーの例:
+エラー: ファイル '○○' を ×× から取得するのに失敗しました : Connection timed out
+エラー: ファイル '○○' を ×× から取得するのに失敗しました : Couldn't resolve host name
+エラー: ファイル '○○' を ×× から取得するのに失敗しました : The requested URL returned error: 526
+```
+
+こうしたエラーはほとんどの場合、現在設定されているミラーに原因があります。ミラーが重い、一時的にダウンしている、またはお住まいの地域からアクセスできないなどといった場合があります。
+
+- 解決策: より速くて信頼性の高いミラーへミラーリストを更新するのが最善です。
+
+```sh
+sudo cachyos-rate-mirrors
+# 更新されたミラーリストでシステムをアップデートしてみる
+sudo pacman -Syu
+```
+
+:::tip
+`cachyos-rate-mirrors` コマンドは利用可能な CachyOS ミラーを速度と更新状況でテストし、最もパフォーマンスの高いミラーでミラーリストファイル (`/etc/pacman.d/cachyos-mirrorlist`) を更新します。
+
+とくにシステムアップデート時に遅さを感じた場合は、定期的に実行することをおすすめします。
+:::
+
+#### 警告: ローカル (○○) の方が ×× よりも最新です
+
+この警告はシステム上のパッケージバージョンが公式リポジトリで利用可能なバージョンより新しい場合に表示されます。ミラーが古い場合、リポジトリでパッケージがダウングレードされた場合、または別のソースからパッケージをインストールした場合に発生することがあります。
+
+- 解決策: `pacman -Syuu` コマンドはシステム全体をアップグレードしつつダウングレードも許可するため、ローカルパッケージをリポジトリのバージョンと同期させることでこの警告を解消できます。
+
+```sh title='警告を解消するコマンド'
+sudo pacman -Syuu
+```
+
+#### エラー: 処理を完了できませんでした (衝突しているファイル)
+
+このエラーは pacman がインストールまたは更新しようとしているパッケージに、別のソースからすでにシステム上に存在するファイルが含まれている場合に発生します。これはシステムの破損を防ぐための安全機能です。
+
+- 解決策: 競合しているファイルを手動で削除することで解決できます。詳しい情報と解決策については [Arch Wiki](https://wiki.archlinux.org/title/Pacman#%22Failed_to_commit_transaction_(conflicting_files)%22_error) をご覧ください。
+
+```sh title='エラーの例'
+エラー: 処理を完了できませんでした (衝突しているファイル)
+nvidia-utils: /usr/lib/environment.d/10-gsk.conf がファイルシステムに存在しています
+エラーが発生したため、パッケージは更新されませんでした。
+ -> error installing repo packages
+```
+
+上記の例の場合、競合しているファイルを削除してからアップデートコマンドを再実行すると解決します。
+
+```sh
+sudo rm /usr/lib/environment.d/10-gsk.conf
+```
+
+#### ERROR: module not found: 'nvidia', 'nvidia_modeset', ...
+
+```sh title='エラーの例'
+==> ERROR: module not found: 'nvidia'
+==> ERROR: module not found: 'nvidia_modeset'
+==> ERROR: module not found: 'nvidia_uvm'
+==> ERROR: module not found: 'nvidia_drm'
+```
+
+**このエラーの原因は主に 2 つあります。**
+
+1) chwd では常に「モジュールの早期ロード」が有効になっているため、mkinitcpio は NVIDIA モジュールがあることを常に前提とします。モジュールが見つからない場合にこのエラーが発生します。
+
+2) システムにインストールされているほかのカーネルに NVIDIA モジュールがない可能性があります。
+
+このエラーを修正するには以下のパッケージをインストールしてください。
+
+```sh
+sudo pacman -S nvidia
+```
+
+### 特定のソフトウェアの問題
+
+#### Discord でまだリポジトリにないアップデートを求められる
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/discord-update.png')} />
+
+これは Discord が独自のアップデートシステムを使用しており、公式リポジトリが更新されるよりも先に新バージョンがリリースされるために発生します。新しいバージョンがリリースされたが、まだミラーでパッケージ化されていないということです。
+
+この問題を回避するには、[Arch Wiki の修正ガイド](https://wiki.archlinux.org/title/Discord#Discord_asks_for_an_update_not_yet_available_in_the_repository)に従ってください。
+
+### よくある質問
+
+#### CachyOS という名前の由来は何ですか？
+
+CachyOS は "Cachy" スケジューラにちなんで名付けられています。これは Linux カーネル向けの CPU スケジューラである [cacULE スケジューラ](https://github.com/hamadmarri/cacule-cpu-scheduler)の元の名前です。
+
+このプロジェクトは 2020〜2021 年頃、CachyOS の創設者のひとりである ptr1337 が Hamad という開発者と cacULE スケジューラのテストと共同作業を行っていたことに始まります。x86-64-v3 最適化パッケージを採用した Arch Linux ベースの最適化ディストリビューションをつくることにしたとき、ふたりを結びつけたスケジューラにちなんで "CachyOS" と名付けました。
+
+#### -git パッケージはどのくらいの頻度で更新されますか？
+
+通常は毎週月曜日ですが、例外もあります。
+
+#### CachyOS リポジトリの -bin パッケージも同じパフォーマンス最適化の恩恵を受けることができますか？
+
+いいえ。`-bin` パッケージはコンパイル済みのバイナリであり、CachyOS リポジトリのソースベースのパッケージと同じパフォーマンス最適化は適用されていません。
+
+#### ブートアニメーション (Plymouth) を無効にする方法
+
+:::note[古い NVIDIA GPU を搭載したシステム等では、これにより黒画面の問題が解決することがあります。]
+:::
+
+ブートアニメーションを無効にするには、[ブートローダーの設定](/ja/configuration/boot_manager_configuration)を編集して以下のカーネルパラメーターを追加してください。
+
+```sh
+plymouth.enable=0 disablehooks=plymouth
+```
+
+:::note[systemd-boot, GRUB, Limine では initramfs イメージの再生成が必要です]
+systemd-boot: `sudo sdboot-manage gen`
+
+GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+
+Limine: `sudo limine-mkinitcpio`
+:::
+
+#### CachyOS へのパッケージリクエストの送り方
+
+CachyOS は多くのコンパイル済み AUR パッケージの一覧を提供しており、よく使われるパッケージが含まれています。
+ユーザーは追加してほしい AUR パッケージをリクエストすることができ、承認されると自動的にビルドサーバーによって更新されます。
+
+パッケージの追加を希望する場合は、GitHub またはフォーラムでリクエストを送ることができます。
+
+- [GitHub](https://github.com/CachyOS/distribution/issues)
+- [フォーラム](https://discuss.cachyos.org/c/feedback/repository/11)
+- [Discord フィードバックチャンネル](https://discord.com/channels/862292009423470592/1150723027986813018)
+
+## セキュリティとベストプラクティス
+
+### AUR を安全に使うために
+
+AUR は豊富なパッケージを提供していますが、セキュリティを最優先に気をつけなれけばいけません。以下は CachyOS システムで AUR を安全に使用するために大切なことです。
+
+* **PKGBUILD を理解しよう** PKGBUILD はビルドスクリプトです。その構造、変数 (`source`, `pkgname`)、関数 (`build()`, `package()`) を把握しておきましょう。
+* **ソースリンクを確認しよう** `source` の URL がかならず公式のサイトまたは信頼できるリポジトリを指しているか確認してください。不審な URL や個人リンクは避けましょう。
+* **インストール手順を確認しよう** ファイルのインストール先 (`package()` 関数) や、不審なコマンドや機密性の高いシステム領域に触れるコマンドがないか確認してください。`.install` スクリプトも確認しましょう。
+* **メンテナーを調査しよう** AUR でのメンテナーの過去の履歴を調べ、セキュリティ上の問題や不審な活動がないかを確認しましょう。
+* **チェックサムと PGP を確認しよう** とてもたいせつなポイントです！すべてのチェックサム (SHA256, BLAKE2b など) が上流リポジトリと一致することを確認してください。利用可能であれば PGP 署名 (`validpgpkeys`) で本物かどうかを確認しましょう。
+* **`-bin` パッケージには注意しよう** コンパイル済みバイナリを使用するため、ソースを確認できません。その出所と整合性について、最大限吟味してください。
+* **コミュニティのコメントを読もう** AUR ページのコメントで、ほかのユーザーからの警告や問題、有益な情報がないか確認しましょう。
+* **整合性チェックをスキップしないで** `--skipinteg` などのフラグを使うとすべてのセキュリティチェックが無効になります。絶対に使わないでください。
+* **AUR ヘルパーを理解しよう** ヘルパー (yay, paru など) の動作を理解しましょう。PKGBUILD とその差分を表示するよう設定するか、`makepkg` で手動ビルドしてください。
+* **必要性を判断しよう** インストール前に、その AUR パッケージが本当に必要か、または公式リポジトリに代替がないかを確認しましょう。
+* **システムを常に最新の状態に保つ** 定期的に `sudo pacman -Syu` を実行して、`pacman` や `makepkg` を含むすべてのシステムコンポーネントに最新のセキュリティパッチが適用されていることを確認しましょう。
+
+Arch ベースのシステムのセキュリティを保つために、常に最新の注意をはらいましょう。
+
+### GUI パッケージマネージャーの選び方
+
+GUI 形式のパッケージマネージャーは便利ですが、CachyOS のようなローリングリリースのシステムで深刻な問題を発生させるため、システムパッケージの管理で使用するべきでないものもあります。
+
+- **Pamac:** システムのパッケージキーリングの破損など、特定のパッケージ管理処理を正常に実行できないことが知られています。これにより PGP 署名エラーが発生し、システムのアップデートができなくなる可能性があります。
+- **Discover (KDE) と GNOME ソフトウェアセンター:** こうしたアプリストアは PackageKit バックエンドを使用しています。Flatpak の管理には概ね安全ですが、**システムパッケージ**のインストールやアップデートには使用しないことをおすすめします。PackageKit ベースのマネージャーは不安定またはクラッシュしやすく、トランザクションが失敗した場合にシステムを破損させることがあります。
+
+安定性と信頼性のために、システムパッケージの管理は `pacman` を使ったコマンドラインでの操作を**強く推奨します**。
+
+GUI 形式のインターフェースを好む場合は、**[Octopi](</ja/configuration/post_install_setup/#updating-the-system>)** や **CachyOS パッケージインストーラー** などの GUI フロントエンドが安全な代替として推奨されています。この2つは内部で pacman の機能をより直接的に操作します。
