@@ -1,0 +1,66 @@
+---
+title: QEMU と VMM のセットアップ
+description: CachyOS で QEMU と VMM を動かすための手順
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import { Steps } from '@astrojs/starlight/components';
+
+## インストール
+CachyOS では以下の手順で **VMM** (仮想マシンマネージャー) と **QEMU** をインストールして実行することができます。
+
+```sh
+# 必要なパッケージのインストール (下記の "Windows 11" に関するメモ参照)
+sudo pacman -S qemu-full virt-manager swtpm
+# iptables を使用するよう libvirt を設定
+echo 'firewall_backend = "iptables"' | sudo tee -a /etc/libvirt/network.conf
+# ユーザーを "libvirt" グループに追加して使用できるように
+sudo usermod -aG libvirt $USER
+# LXC バックエンド (任意、Linux コンテナでは両方のバックエンドを有効にしても衝突しません)
+systemctl enable --now libvirtd.service
+# QEMU バックエンド (仮想マシン用)
+systemctl enable --now libvirtd.socket
+# 仮想マシンが起動するたびにインターネット接続を行うように
+sudo virsh net-autostart default
+# 仮想マシンネットワーク全体で通信を無制限に (用途とセキュリティを考慮して、より細かくファイヤウォールを設定することをおすすめします)
+sudo ufw route allow from 192.168.122.0/24
+```
+
+:::note[Windows 11]
+仮想マシンに **Windows 11** をインストールする場合は、後半の手順で互換性のある TPM モジュールをパススルーするか、TPM モジュールがない場合は `swtpm` をインストールする必要があります。
+:::
+
+## 仮想マシン作成の基礎
+:::note[ユーザーセッション]
+事前に [QEMU ユーザーセッション](/ja//virtualization/qemu_user_session) を軽く読むことをおすすめします。
+:::
+
+<Steps>
+
+1. まず **VMM** を起動すると、最初に以下のものが接続されます。<ImageComponent imgsrc={import('~/assets/images/vmmstart.png')} />*※**VMM** は日本語に対応しています。*
+2. つぎに、`編集 -> 設定 -> ✅ XML 編集の有効化` をクリックして設定画面を閉じます。
+3. 新しい仮想マシンを作成するには**星と再生マークのついた画面アイコン**をクリックするか、`ファイル -> 新しい仮想マシン` から行うことができます。
+4. VM 作成画面が表示されます。`接続:` の横のドロップダウンメニューをクリックして適切なものを選択し、`次へ` をクリックしてください。 <ImageComponent imgsrc={import('~/assets/images/vmmcreatestep1.png')} />
+5. ダウンロードした OS の`.iso`イメージの場所を指定する画面が表示されるため、`参照...` をクリックして指定してください。また .iso ファイルを保存するための専用ディレクトリを追加または作成することもできます。その場合は `+ (プールの追加)` ボタンをクリックしてください。`ユーザーセッション` パスは `~/.config/libvirt/` から再利用することができます。 <ImageComponent imgsrc={import('~/assets/images/vmmcreatestep2browse.png')} />
+**OS が自動検出されない場合**、自動検出のチェックを外して、インストールする OS に近いものを選択してください。`例: CachyOS = Arch Linux`
+
+6. ステップ3で、仮想マシンに好みの RAM と CPU コア数を割り当てることができます。これは後から変更することができます。
+7. ステップ4で、仮想ストレージ領域を作成したり (**.qcow2**ファイルが作成されます)、仮想マシンが使用するパスを指定することができます。
+8. ステップ5で、`インストールの前に設定をカスタマイズする` をオンにしてから `完了` をクリックしてください。
+9. この画面が表示されます。<ImageComponent imgsrc={import('~/assets/images/vmmprevminstall.png')} />
+Linux の仮想マシンをインストールする場合は、`概要` でチップセットが **Q35**、ファームウェアが **UEFI** に設定されていることを確認してください。よほど古い OS をインストールしたり特殊なことをするわけではないかぎり、ここでほかの設定を選択する必要はありません。Windows 11 の仮想マシンを作成する場合は、TPM モジュールが追加されているか確認してください。追加されていない場合は、ハードウェアの追加 -> TPM を開き、「エミュレート」または「パススルー」を選択し (上記メモ参照)、完了をクリックして設定を閉じてください。
+
+10. `インストールの開始` をクリックします。
+11. **Linux** (または OpenGL を使用したり libvulkan を内蔵する OS) の仮想マシンの場合は、[EGL ヘッドレス](/ja/virtualization/egl_headless)や [Virtio-Venus](/ja/virtualization/virtio-venus) もお読みください。
+
+</Steps>
+
+### さいごに
+`Windows 11` の仮想マシンの場合は、以下の方法でパフォーマンスを改善することができます。
+- ゲスト内で RedHat の **Virtio-Win** ドライバをインストールする
+- Intel iGPU の場合、代わりに **GVT-g** と **MDEV** をおすすめします。
+- Intel iGPU と dGPU の両方の場合、**GVT-d** をおすすめします。
+- iGPU と dGPU、または2つ以上の dGPU があり、そのうち1つの dGPU をパススルーしたい場合は、**VFIO**をおすすめします。

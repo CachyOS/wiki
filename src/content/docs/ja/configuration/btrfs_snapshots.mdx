@@ -1,0 +1,477 @@
+---
+title: Btrfs スナップショット
+description: CachyOS での Btrfs スナップショット管理
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 5
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+import MultipleImageComponent from '~/components/multiple-images-component.astro';
+
+## はじめに
+
+:::caution
+Btrfs スナップショットは通常のバックアップの代わりにはなりません。重要なデータはかならず適切にバックアップを取ってください。
+:::
+
+### Btrfs スナップショットとは
+
+詳しく説明します。
+
+Btrfs スナップショットはサブボリュームという機能から生まれています。サブボリュームとはなにかというと、Btrfs ファイルシステム内の独立したファイルシステムのようなものです。これによりデータをさまざまな部分に分割できます。例えば CachyOS では、以下のような用途で異なるサブボリュームを使用しています。
+
+- ルートファイルシステム: (`/`)
+- ルートディレクトリ: (`/root`)
+- ホームディレクトリ: (`/home`)
+- var ディレクトリ: (`/var/cache`, `/var/tmp`, `/var/log`)
+- srv ディレクトリ: (`/srv`)
+
+これらのディレクトリに異なるサブボリュームを使うことで、それぞれを独立して管理したり、それぞれ別々の設定を適用したり、一番重要な機能として、スナップショットを作成することができます。
+
+この仕組みからスナップショットが生まれます。スナップショットとはかんたんに言うと、特定の時点でのサブボリュームの読み取り専用、または読み書き可能 (**デフォルト**) なコピーです。ある時点のすべてのファイルやディレクトリを含むファイルシステムの状態を保存しています。
+
+ここから、スナップショットはある時点の「原本」として機能します。スナップショット作成後にファイルが変更されると、スナップショット上では元のデータはそのままで、変更後のデータは別の場所に新たに書き込まれます。スナップショット自体は作成された時点から変化することがありません。このことからスナップショットはしばしば「時の止まったデータ」と表現されます。
+
+ファイルシステムのある瞬間を写真に収めるイメージです。必要になればいつでもその写真の状態に戻れます。
+
+スナップショットの大きな利点のひとつは、変更が加えられるまでは元のデータへの参照に過ぎないため、とても容量の効率が良いことです。
+
+ただし、ここが従来のバックアップとスナップショットとの違いです。ディスクが故障した場合、従来のバックアップがあればそこからデータを復元できます。しかし故障したディスクにスナップショットしかない場合、スナップショットも同じディスクに保存されているため、アクセスできなくなります。
+
+### スナップショットが役立つ場合と役立たない場合
+
+こんなときに役立ちます。
+
+- システムアップデート後の破損や不具合からの復旧
+- システムのブートを妨げる設定ミスからの復旧
+- 誤ったファイルの削除や変更からの復旧
+
+こうした場合は役に立ちません。
+
+- ブートローダーの問題
+- ハードウェアの故障 (例: ハードドライブの障害)
+
+## スナップショットの管理 (GUI と CLI)
+
+:::tip
+CachyOS にはデフォルトで `snap-pac` がインストールされており、これにより Snapper は `pacman` を使ったパッケージのインストール、アップグレード、削除の前後に自動的にスナップショットを作成します。こうした操作の際に手動でスナップショットを作成する必要はありません。
+:::
+
+:::note
+GRUB ブートローダーを使用している場合は、BTRFS スナップショットを自動検出して GRUB メニューに追加できるよう `grub-btrfs-support` がインストールされているか確認してください。
+```bash
+sudo pacman -Syu grub-btrfs-support
+```
+:::
+
+スナップショットを管理する前に、いくつか気をつけるべきことがあります。**CLI と GUI のどちらにも適用されます。**
+
+- スナップショットは最大 10 個がおすすめです。それ以上のスナップショットは古くなりすぎて、あまり役に立ちません。最悪の場合、古いスナップショットに戻した際に新しいバージョンのソフトウェアとの互換性の問題が生じることがあります。
+- 本来、スナップショットは復旧目的で使用されます。ただしスナップショット全体を復元せず、ファイルへの変更を取り消すためにも使えます。
+- スナップショットを作成するときはわかりやすい説明を追加してください。後でそれぞれの目的を見分けるのに役立ちます。
+
+### Btrfs Assistant (GUI)
+
+作業を始める前に、自動スナップショット管理機能を活用するために `btrfsmaintenance` がインストールされていることを確認してください。
+
+GUI で Btrfs、スナップショットなどを管理したい方には [Btrfs Assistant](https://gitlab.com/btrfs-assistant/btrfs-assistant) が初心者にとても優しいプロジェクトになっています。
+
+#### スナップショットの自動クリーンアップの設定
+
+Btrfs Assistant を使った自動スナップショットクリーンアップを設定します。手動で操作することなく効果的にスナップショットを管理できるようになります。
+
+以下の手順にしたがってください。
+
+<Steps>
+
+    1. ターミナルを開き以下のコマンドで Btrfs Assistant を起動してください。
+        ```bash
+        btrfs-assistant-launcher
+        ```
+
+        以下のコマンドでも起動できます。
+
+        ```bash
+        sudo -E btrfs-assistant
+        ```
+
+  2. Snapper Settings タブに移動してください。
+
+      <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperSettingsTab.png')} />
+      **Snapshot Retention** の設定を以下のように変更してください。
+      - `root` 設定が選択されていることを確認する
+      - Hourly, Daily, Weekly, Monthly, Yearly に `0` を入力する
+      - `Enable timeline snapshots` のチェックを外す
+      - `Number` に `10` を入力する
+      - `Snapper cleanup enabled` に ✅ を付ける
+      - 右上の `Save` ボタンと右下の `Apply systemd changes` をクリックする
+      **snapper-cleanup.timer が有効になり、設定に基づいて古いスナップショットを自動的に削除するようになります。**
+      :::caution
+      行った変更が正しく適用されているか確認するため、Snapper の設定ファイルを確認してください。
+      ```bash
+      sudo nano /etc/snapper/configs/root
+      ```
+      以下は設定ファイル例の抜粋です。
+      ```text
+      # limit for number cleanup
+      NUMBER_MIN_AGE="3600"
+      NUMBER_LIMIT="10"
+      NUMBER_LIMIT_IMPORTANT="10"
+      ```
+      `NUMBER_LIMIT` と `NUMBER_LIMIT_IMPORTANT` の値が `10` でない場合は更新してください。
+      `CTRL + O` -> `Enter` -> `CTRL + X` でファイルを保存して閉じてください。
+      :::
+</Steps>
+
+#### Btrfs Assistant でスナップショットを削除する
+
+<Steps>
+    1. Btrfs Assistant を開いてください。
+        ```bash
+        btrfs-assistant-launcher
+        ```
+
+        以下のコマンドでも起動できます。
+
+        ```bash
+        sudo -E btrfs-assistant
+        ```
+    2. Snapper Settings タブに移動してください。
+        <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperTab.png')} />
+    3. 一覧から削除したいスナップショットを選択してください。
+        :::tip
+        - `CTRL` を押しながらクリックで複数のスナップショットを選択できます。
+        - `SHIFT` を押しながらクリックで範囲選択できます。
+        :::
+    4. ウィンドウ上部の `Delete` ボタンをクリックしてください。
+    5. 変更を反映させるためにブートローダーのエントリを再生成してください。
+        <details>
+            <summary>systemd-boot</summary>
+            ```bash
+            sudo sdboot-manage gen
+            ```
+        </details>
+        <details>
+            <summary>GRUB</summary>
+            ```bash
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+        </details>
+        <details>
+            <summary>Limine</summary>
+            ```bash
+            sudo limine-mkinitcpio
+            ```
+        </details>
+</Steps>
+
+詳しい使い方については [Btrfs Assistant 公式 Wiki](https://gitlab.com/btrfs-assistant/wiki) をご覧ください。
+
+### Snapper (CLI)
+
+ここまでは Btrfs スナップショットとはなにかと、その使用例について説明しました。次に [openSUSE](https://www.opensuse.org/) の [Arvin Schnell](https://github.com/aschnell) が開発した [Snapper](http://snapper.io/) というツールを使った管理方法を説明します。
+
+<details>
+<summary>CachyOS のデフォルト Snapper 設定</summary>
+
+```text
+# スナップショットのサブボリューム
+SUBVOLUME="/"
+
+# ファイルシステムの種類
+FSTYPE="btrfs"
+
+# 容量を考慮したクリーンアップアルゴリズムに使用する btrfs qgroup
+QGROUP=""
+
+# スナップショットが使用できるファイルシステム容量の割合、または絶対サイズ
+SPACE_LIMIT="0.5"
+
+# 空けておくファイルシステム容量の割合、または絶対サイズ
+FREE_LIMIT="0.2"
+
+# この設定の操作を許可するユーザーとグループ
+ALLOW_USERS=""
+ALLOW_GROUPS=""
+
+# ALLOW_USERS および ALLOW_GROUPS のユーザーとグループを
+# .snapshots ディレクトリの権限に同期するかどうか
+SYNC_ACL="no"
+
+# post-snapshot の作成後、バックグラウンドで pre との
+# 比較を開始する
+BACKGROUND_COMPARISON="yes"
+
+# 番号によるクリーンアップを毎日実行する
+NUMBER_CLEANUP="yes"
+
+# 番号によるクリーンアップの制限
+NUMBER_MIN_AGE="1800"
+NUMBER_LIMIT="50"
+NUMBER_LIMIT_IMPORTANT="15"
+
+# 1時間毎のスナップショット作成を有効化
+TIMELINE_CREATE="no"
+
+# 一定時間経過後に1時間毎のスナップショットをクリーンアップする
+TIMELINE_CLEANUP="yes"
+
+# タイムラインのクリーンアップの制限
+TIMELINE_MIN_AGE="1800"
+TIMELINE_LIMIT_HOURLY="5"
+TIMELINE_LIMIT_DAILY="7"
+TIMELINE_LIMIT_WEEKLY="0"
+TIMELINE_LIMIT_MONTHLY="0"
+TIMELINE_LIMIT_YEARLY="0"
+
+# 空の pre-post-pairs のクリーンアップを有効化
+EMPTY_PRE_POST_CLEANUP="yes"
+
+# 空の pre-post-pair のクリーンアップの制限
+EMPTY_PRE_POST_MIN_AGE="1800"
+```
+
+</details>
+
+:::caution
+CachyOS の標準の Snapper 設定はルートサブボリューム (`/`) のみを対象としています。ほかのサブボリュームを Snapper で管理したい場合は、それぞれ別の設定を作成する必要があります。
+
+この設定は好みに応じて調整することでより効果的にすることができます。
+:::
+
+以下は Snapper の主要なコマンドの一覧です。
+
+:::note
+`< >` は適切な値に置き換えるプレースホルダーを表します。
+:::
+
+<details>
+    <summary>現在の設定を取得する</summary>
+    ```bash
+    sudo snapper get-config
+    ```
+    <details>
+        <summary>出力例</summary>
+        ```bash
+        ❯ snapper list-configs
+        Config │ Subvolume
+        ───────┼──────────
+        root   │ /
+        ```
+    </details>
+</details>
+
+<details>
+    <summary>利用可能なスナップショットの一覧と詳細を表示する</summary>
+    ```bash
+    sudo snapper list
+    ```
+    <details>
+        <summary>出力例</summary>
+        ```bash
+          # │ Type   │ Pre # │ Date                     │ User │ Cleanup │ Description                                                              │ Userdata
+        ────┼────────┼───────┼──────────────────────────┼──────┼─────────┼──────────────────────────────────────────────────────────────────────────┼─────────
+        0   │ single │       │                          │ root │         │ current                                                                  │
+        715 │ pre    │       │ Thu 22 Jan 2026 16:14:07 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        716 │ post   │   715 │ Thu 22 Jan 2026 16:14:25 │ root │ number  │ docker-buildx lilv sof-firmware zed                                      │
+        717 │ pre    │       │ Sat 24 Jan 2026 11:19:48 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        718 │ post   │   717 │ Sat 24 Jan 2026 11:20:19 │ root │ number  │ bpf cachyos-hello cachyos-wallpapers cpupower jdk-openjdk ldb less libev │
+        719 │ pre    │       │ Sat 24 Jan 2026 11:20:31 │ root │ number  │ pacman -U --config /etc/pacman.conf -- /home/mario/.cache/yay/visual-s   │
+        720 │ post   │   719 │ Sat 24 Jan 2026 11:20:36 │ root │ number  │ visual-studio-code-bin                                                   │
+        721 │ pre    │       │ Sat 24 Jan 2026 20:46:40 │ root │ number  │ pacman -Syu plasma-login-manager                                         │
+        722 │ post   │   721 │ Sat 24 Jan 2026 20:46:48 │ root │ number  │ cmake fastfetch harfbuzz harfbuzz-icu jdk21-openjdk lib32-harfbuzz lib32 │
+        723 │ pre    │       │ Sat 24 Jan 2026 20:46:53 │ root │ number  │ pacman -R sddm-kcm cachyos-themes-sddm sddm                              │
+        724 │ post   │   723 │ Sat 24 Jan 2026 20:46:56 │ root │ number  │ cachyos-themes-sddm sddm sddm-kcm                                        │
+        725 │ pre    │       │ Sun 25 Jan 2026 08:05:05 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        726 │ post   │   725 │ Sun 25 Jan 2026 08:05:11 │ root │ number  │ plasma-login-manager                                                     │
+        727 │ pre    │       │ Sun 25 Jan 2026 15:55:28 │ root │ number  │ pacman -S --config /etc/pacman.conf -- cachyos-extra-znver4/caligula     │
+        728 │ post   │   727 │ Sun 25 Jan 2026 15:55:30 │ root │ number  │ caligula                                                                 │
+        ```
+        - 各列の説明
+          - `#`: ほかのコマンドで使用するスナップショット番号
+          - `Type`: スナップショットが単独か pre/post ペアの一部か
+              - `single`: ほかのスナップショットと特別な関係がないスナップショット
+              - `pre`: システムの変更 (ファイルの編集やパッケージのインストールなど) の前に作成されるスナップショット
+              - `post`: システムの変更後に作成されるスナップショット、対応する `pre` スナップショットと紐付けられる
+          - `Pre #`: `post` スナップショットの場合、対応する `pre` スナップショットの番号
+          - `Date`: スナップショットの作成日時
+          - `User`: スナップショットを作成したユーザー
+          - `Cleanup`: スナップショットに使用されるクリーンアップアルゴリズム
+              - Snapper にはいくつかのクリーンアップアルゴリズムがあります (`number`, `timeline`, `empty-pre-post` など)。この例では `number` アルゴリズムが使われており、古いスナップショットが上限に基づいて削除されます。
+              - timeline: スナップショットは年齢と頻度に基づいてクリーンアップされます。
+              - empty-pre-post: 差分が空の pre/post スナップショットペアを削除します。
+          - `Description`: スナップショットの簡単な説明、多くは作成の理由が記される
+          - `Userdata`: スナップショットに関連付けられたユーザー定義のデータ
+    </details>
+</details>
+
+<details>
+    <summary>新しいスナップショットを作成する</summary>
+    ```bash
+    sudo snapper create --type single --description "My Snapshot Description"
+    ```
+</details>
+
+<details>
+    <summary>スナップショットを変更する</summary>
+    ```bash
+    sudo snapper modify <option> <snapshot_number>
+    ```
+    <details>
+        <summary>利用可能なオプション</summary>
+        ```bash
+        'modify' コマンドのオプション:
+            --description, -d <説明>               スナップショットの説明
+            --cleanup-algorithm, -c <アルゴリズム>  スナップショットのクリーンアップアルゴリズム
+            --userdata, -u <ユーザーデータ>         スナップショットのユーザーデータ
+            --read-only                           スナップショットを読み取り専用に設定
+            --read-write                          スナップショットを読み書き可能に設定
+            --default                             スナップショットをデフォルトのスナップショットに設定
+        ```
+        <details>
+            <summary>例: スナップショット 729 の説明を変更する</summary>
+            ```bash
+            sudo snapper modify 729 --description '新しい説明'
+            ```
+        </details>
+    </details>
+</details>
+
+<details>
+<summary>スナップショットの削除</summary>
+:::note
+スナップショット 0 はファイルシステムの現在の状態を表しているため削除できません。
+:::
+    <details>
+    <summary>ひとつのスナップショットを削除する</summary>
+    ```bash
+    sudo snapper delete <snapshot_number>
+    ```
+    </details>
+    <details>
+    <summary>範囲を指定してスナップショットを削除する</summary>
+    ```bash
+    sudo snapper delete 718-721
+    ```
+    スナップショット 718, 719, 720, 721 が削除されます。
+    </details>
+</details>
+
+#### Snapper ドキュメント
+
+[Snapper 公式コマンドマニュアルページ](http://snapper.io/manpages/snapper.html#global_options)
+
+[Snapper 設定ファイルガイド](http://snapper.io/manpages/snapper-configs.html)
+
+[Arch Wiki 日本語版ガイド](https://wiki.archlinux.jp/index.php/Snapper)
+
+### Limine 向けの推奨事項とヒント
+
+#### Limine ブートローダーのスナップショット表示設定の調整
+
+- 以下は Limine ブートローダーメニューに表示されるスナップショットの数を制限して見やすくする方法です。
+
+<Steps>
+    1. limine-snapper-sync 設定ファイルのバックアップを作成してください。
+        ```bash
+        sudo cp /etc/limine-snapper-sync.conf /etc/limine-snapper-sync.conf.orig
+        ```
+    2. limine-snapper-sync 設定ファイルを編集してください。
+        ```bash
+        sudo nano /etc/limine-snapper-sync.conf
+        ```
+        設定ファイル例の抜粋:
+        ```bash
+        ### Max Snapshot Entries
+        ### Sets the limit for how many snapshot entries show up in the boot menu.
+        ### This depends on the size of your FAT32 boot partition and how many different kernel and module versions you want to keep.
+        ### A larger FAT32 boot partition allows more snapshot entries.
+        MAX_SNAPSHOT_ENTRIES=10
+        ```
+        任意でスナップショット名のフォーマットも変更できます。
+        ```bash
+        ### Snapshot Name Format
+        ### Choose a format for how snapshot entries look in the Limine bootloader:
+        ### 0. ID=111 2023-12-20 10:59:59 (default)
+        ### 1. 111│2023-12-20 10:59:59
+        ### 2. 111 │ 2023-12-20 10:59:59
+        ### 3. 2023-12-20 10:59:59│111
+        ### 4. 2023-12-20 10:59:59 │ 111
+        ### 5. 2023-12-20 10:59:59
+        ### 6. 111
+        ### 7. 111│snapshot description
+        ### 8. 2023-12-20 10:59:59│snapshot description
+        ### 9. │snapshot description
+        SNAPSHOT_FORMAT_CHOICE=8
+        ```
+        日付・時刻とスナップショットの説明が表示される `8` がおすすめです。
+    3. `CTRL+O`、`Enter`、`CTRL+X` でファイルを保存して閉じてください。
+</Steps>
+
+### スナップショットから復元する
+
+:::caution
+復元したいスナップショットにカーネルのアップデートが含まれている場合はロールバックできません。
+:::
+
+<details>
+    <summary>Limine</summary>
+    <Steps>
+        1. Limine ブートローダーメニューからスナップショットメニューに移動してください。
+            <ImageComponent imgsrc={import('~/assets/images/limine-snapshotMenu-1.jpg')} />
+        2. 復元したいスナップショットとカーネルをえらんでください。
+            <MultipleImageComponent
+                images={[
+                import('~/assets/images/limine-snapshotMenu-2.jpg'),
+                import('~/assets/images/limine-snapshotMenu-1.jpg')]}
+            />
+        3. システムが `読み取り専用モード` になります。スナップショットが検出されたことを表すポップアップ通知が表示され、復元するかどうか確認されます。
+            <ImageComponent imgsrc={import('~/assets/images/kde-snapshot-popup.png')} />
+        4. `Restore now` をクリックしてください。ターミナルウィンドウが開き、確認を求めるプロンプトが表示されます。
+            ```bash title="復元プロンプトの例"
+            Snapshot ID    : 2
+            Date           : 2026-01-26 11:19:14
+            Description    : nc-git
+            Restore method : replace
+
+            Confirm restore of snapshot 2 using the "replace" method?
+            Type [y]es to restore, [l]ist to display all snapshots, or [c]ancel to abort.
+
+            Your input: yes
+
+            Enter a description for the "backup" of the subvolume: @
+
+            Your input: @
+            ```
+          5. `yes` を入力し、任意でバックアップスナップショットの説明を追加してください。
+          6. 復元プロセスが始まります。完了したら、新しいプロンプトでもう一度 `yes` を入力してシステムを再起動してください。
+              ```bash
+              The restore is complete. Please reboot now:
+              Type [y]es to reboot, [n]o or [c]ancel to abort rebooting.
+
+              Your input: yes
+              ```
+    </Steps>
+</details>
+
+<details>
+    <summary>GRUB</summary>
+    <Steps>
+        1. GRUB ブートローダーメニューから復元したいスナップショットとカーネルでブートしてください。
+        2. 起動後、Btrfs Assistant を開いてください。
+            ```bash
+            btrfs-assistant-launcher
+            ```
+
+            以下のコマンドでも起動できます。
+
+            ```bash
+            sudo -E btrfs-assistant
+            ```
+        3. Snapper タブ → "Browse/Restore" タブに移動し、ブートしたスナップショットをえらんでください。
+            <ImageComponent imgsrc={import('~/assets/images/btrfs-assistant-example.png')} />
+        4. `Restore` ボタンをクリックしてシステムを再起動して変更を適用してください。
+    </Steps>
+</details>

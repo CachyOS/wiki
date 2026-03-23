@@ -162,6 +162,9 @@ export default defineConfig({
             {
               label: 'ISO Changelogs',
               autogenerate: { directory: 'cachyos_basic/changelogs' },
+              translations: {
+                ja: 'ISO 更新ログ',
+              },
             },
             {
               label: 'FAQ & Troubleshooting',
@@ -372,7 +375,7 @@ export default defineConfig({
                 de: 'Kernel-Manager',
                 es: 'Gestor de núcleos',
                 fr: 'Gestion de Noyaux',
-                ja: 'Kernel Manager',
+                ja: 'カーネルマネージャー',
                 pl: 'Menedżer jądra',
                 ru: 'Менеджер ядер',
                 sk: 'Správca jadra',
@@ -433,7 +436,7 @@ export default defineConfig({
                 de: 'Secure Boot-Einrichtung',
                 es: 'Configuración de arranque seguro',
                 fr: 'Configuration de Secure Boot',
-                ja: 'Secure Boot の設定',
+                ja: 'セキュアブートの設定',
                 pl: 'Konfiguracja Secure Boot',
                 ru: 'Настройка Secure Boot',
                 sk: 'Nastavenie zabezpečeného spúšťania',
@@ -579,6 +582,9 @@ export default defineConfig({
             {
               label: 'Desktop Environments',
               autogenerate: { directory: 'configuration/desktop_environments' },
+              translations: {
+                ja: 'デスクトップ環境',
+              },
             },
           ],
         },
@@ -592,7 +598,7 @@ export default defineConfig({
             {
               label: 'QEMU and VMM Setup',
               translations: {
-                ja: 'QEMU と VMM の設定',
+                ja: 'QEMU と VMM のセットアップ',
                 pt: 'Configuração do QEMU e VMM',
               },
               link: 'virtualization/qemu_and_vmm_setup',
@@ -608,7 +614,7 @@ export default defineConfig({
             {
               label: 'EGL Headless',
               translations: {
-                ja: 'EGL Headless',
+                ja: 'EGL ヘッドレス',
                 pt: 'EGL Headless',
               },
               link: 'virtualization/egl_headless',
