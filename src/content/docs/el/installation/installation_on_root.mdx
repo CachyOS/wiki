@@ -1,0 +1,276 @@
+---
+title: CachyOS Installation Desktop/Laptop
+description: How to install CachyOS in a Desktop or Laptop
+sidebar:
+  order: 1
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Before you begin
+
+:::note
+If you only get GRUB and Limine as boot manager options after pressing **Launch Installer**, then the system is booted in Legacy/BIOS mode.
+:::
+
+:::note[Installing multiple desktop environments is not allowed during the installation process.]
+:::
+
+:::caution[Secure Boot and CSM must be disabled in the BIOS/UEFI settings when installing in UEFI mode.]
+To set up Secure Boot after installation, refer to the [Secure Boot](/configuration/secure_boot_setup) section.
+
+`Legacy USB Support` should be set to `Auto`.
+:::
+
+:::caution
+The `Install alongside` and `Replace partition` options are not 100% reliable and can cause the installation to fail.
+
+`Manual partitioning` is **strongly preferred** when installing CachyOS.
+:::
+
+:::tip
+It is highly recommended to reboot into the ISO after a failed installation attempt.
+
+Otherwise, continuous errors can happen during the installation process.
+
+This happens because the installer doesn't properly unmount partitions on a failed install.
+
+:::
+
+## Installation Methods
+
+### Manual Partitioning
+
+:::note[Before proceeding with partitioning the disk for a UEFI installation.]
+    ```sh title='Execute this command in the terminal'
+    efibootmgr -v
+    ```
+If the output is `EFI variables are not supported on this system.`, then the system is booted in Legacy/BIOS mode, and you need to ensure that UEFI mode is configured in the BIOS/UEFI settings. Refer to the [Requisites](/installation/installation_on_root/#before-you-begin) section.
+:::
+
+<Tabs>
+
+The partition table for each boot manager varies. Follow the instructions in **Step 5** for the desired boot manager.
+
+<TabItem label='UEFI/GPT'>
+
+<Steps>
+
+1. Boot into the ISO and click on **Launch Installer**.
+
+2. Set the preferred **Language** and **Region/Timezone**.
+
+3. Configure the **Keyboard Layout**.
+
+4. Select **Manual partitioning**.
+
+5. Create a new partition with the following parameters depending on the boot manager of choice:
+    <Tabs>
+        <TabItem label='systemd-boot & rEFInd'>
+            - ##### Size: At least **2048 MiB**
+            - ##### Filesystem: **FAT32**
+            - ##### Mount point: **/boot**
+            - ##### Flags: **boot**
+        </TabItem>
+        <TabItem label='Limine'>
+            - ##### Size: At least **4096 MiB**
+            - ##### Filesystem: **FAT32**
+            - ##### Mount point: **/boot**
+            - ##### Flags: **boot**
+        </TabItem>
+        <TabItem label='GRUB'>
+            - ##### Size: At least **512 MiB**
+            - ##### Filesystem: **FAT32**
+            - ##### Mount point: **/boot/efi**
+            - ##### Flags: **boot**
+        </TabItem>
+    </Tabs>
+
+6. Create another partition for **root**:
+   - ##### Size: At least **20000 MiB**
+   - ##### Filesystem: **Any**, refer to [Filesystem](/installation/filesystem)
+   - ##### Mount point: **/**
+   - ##### Flags:
+
+7. Select the [Desktop Environment](/installation/desktop_environments) of choice.
+
+8. Choose which packages should be installed during the installation process.
+
+9. Set up the login credentials.
+
+10. Review the installation summary carefully. Proceed with the installation by clicking on **Install Now** if everything looks correct. Otherwise, go back and make any necessary changes.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='MBR/BIOS'>
+<Steps>
+
+1. Boot into the ISO and click on **Launch Installer**.
+
+2. Set the preferred **Language** and **Region/Timezone**.
+
+3. Configure the **Keyboard Layout**.
+
+4. Select **Manual partitioning**.
+
+5. Create a new partition with the following parameters depending on the boot manager of choice:
+    <Tabs>
+        <TabItem label='GRUB'>
+            - ##### Size: At least **20000 MiB**
+            - ##### Filesystem: **Any**, refer to [Filesystem](/installation/filesystem)
+            - ##### Mount point: **/**
+            - ##### Flags:
+        </TabItem>
+        <TabItem label='Limine'>
+            - ##### Size: At least **4096 MiB**
+            - ##### Filesystem: **FAT32**
+            - ##### Mount point: **/boot**
+            - ##### Flags: **boot**
+            **Another partition is needed for the root filesystem with the following parameters:**
+            - ##### Size: At least **20000 MiB**
+            - ##### Filesystem: **Any**, refer to [Filesystem](/installation/filesystem)
+            - ##### Mount point: **/**
+            - ##### Flags:
+        </TabItem>
+    </Tabs>
+6. Double check that **Install boot loader on:** is pointing to your boot drive, e.g., **/dev/sda**.
+
+7. Select the [Desktop Environment](/installation/desktop_environments) of choice.
+
+8. Choose which packages should be installed during the installation process.
+
+9. Set up the login credentials.
+
+10. Review the installation summary carefully. Proceed with the installation by clicking on **Install Now** if everything looks correct. Otherwise, go back and make any necessary changes.
+
+</Steps>
+
+</TabItem>
+
+</Tabs>
+
+## Dual Booting Windows and CachyOS
+
+:::note[This guide assumes that Windows is already installed on the system and you decided to install CachyOS alongside it, sharing the same drive.]
+:::
+
+:::caution
+Dual booting Windows and Linux is not 100% reliable. Windows updates can break the bootloader by overwriting the EFI partition.
+In some cases, issues might never occur, but for some users it can be a recurring problem.
+
+One way to avoid this issue is to install each operating system on a separate drive.
+:::
+
+:::caution
+The EFI partition may need to be resized, depending on the recommended minimum size on the target boot manager. Refer to [Manual Partitioning](/installation/installation_on_root#manual-partitioning).
+
+FAT filesystems cannot be resized in-place. To properly "resize" the FAT EFI partition, one must back up the existing EFI filesystem, use a tool such as `gparted` to resize the existing partition and reformat the new partition, then copy the previous filesystem structure back into the EFI partition.
+:::
+
+### Prerequisites
+
+- Windows Fast Startup and Hibernation must be disabled.
+  - Open Windows Powershell as administrator and execute the following command:
+      ```ps
+      powercfg /H off
+      ```
+    Reboot the system to ensure the changes take effect.
+- Windows BitLocker must be disabled.
+  - Checking if BitLocker is enabled:
+    ```ps title='Open a Command Prompt as administrator and execute the following command'
+    manage-bde -status
+    ```
+  If **Encryption Method** shows as `None`, then BitLocker is disabled.
+- Secure Boot must be disabled.
+- A ≥30 GB empty partition.
+  - Guide on how to shrink a Windows partition:
+    - Press `Win + R`, type `diskmgmt.msc`, and press Enter to open Disk Management.
+    - Identify your main Windows partition (usually C:) and right-click it.
+    - Click on `Shrink Volume...`, specify at least **30720 MB** (30 GiB), and click on `Shrink`.
+- A bootable USB with CachyOS.
+  - Refer to the [Creating a Bootable CachyOS USB Drive](/installation/installation_prepare#creating-a-bootable-cachyos-usb-drive) section.
+
+<Tabs>
+    <TabItem label='systemd-boot'>
+        **We need to copy the Windows EFI binaries to the Linux EFI partition so that the boot manager can recognize them.**
+
+        <Steps>
+        1. Locate the **Windows EFI partition** with `lsblk`.
+
+            ```sh title='Execute this command in the terminal'
+            lsblk -o NAME,FSTYPE,SIZE,MOUNTPOINT
+            ```
+            ```sh title='Example output'
+                        NAME        FSTYPE   SIZE MOUNTPOINT
+            zram0               15.3G [SWAP]
+            nvme0n1            476.9G
+            ├─nvme0n1p1 vfat     100M
+            ├─nvme0n1p2           16M
+            ├─nvme0n1p3 ntfs   234.4G
+            ├─nvme0n1p4 ntfs     830M
+            ├─nvme0n1p5 vfat       2G /boot
+            └─nvme0n1p6 btrfs  239.6G /var/tmp
+            ```
+            EFI partitions are almost always formatted as `FAT32/vfat`. Since `nvme0n1p1` does not have a Linux mount point, we can assume that this partition is the Windows EFI partition.
+
+        2. Temporarily mount the Windows EFI partition.
+
+            ```sh
+            sudo mkdir /mnt/WinBoot
+            sudo mount /dev/nvme0n1p1 /mnt/WinBoot # Replace `nvme0n1p1` with the name of the Windows EFI partition.
+            ```
+
+        3. Copy the EFI binaries from the **Windows EFI partition** to the **Linux EFI partition**.
+
+            ```sh
+            sudo cp -r /mnt/WinBoot/EFI/Microsoft/ /boot/EFI
+            ```
+
+        4. Unmount the previously-mounted partition. Windows should appear in the boot menu on the next startup.
+
+            ```sh
+            sudo umount /mnt/WinBoot
+            sudo rm -r /mnt/WinBoot
+            ```
+
+        </Steps>
+    </TabItem>
+
+    <TabItem label='GRUB'>
+        **GRUB uses os-prober to automatically detect the Windows EFI partition and add it to the boot menu.**
+
+        <Steps>
+        1. Install **os-prober**.
+
+            ```sh
+            sudo pacman -S os-prober
+            ```
+
+        2. Enable **os-prober** in the GRUB configuration file.
+
+            ```sh title='Press CTRL+S to save and CTRL+Q to exit from Micro'
+            sudo micro /etc/default/grub
+            # /etc/default/grub
+            # Probing for other operating systems is disabled for security reasons. Read
+            # documentation on GRUB_DISABLE_OS_PROBER, if still want to enable this
+            # functionality install os-prober and uncomment to detect and include other
+            # operating systems.
+            GRUB_DISABLE_OS_PROBER=false
+
+            ```
+
+        3. Update grub.cfg, now using **os-prober**.
+            ```sh
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+
+            **Windows should now be added to the boot menu.**
+
+        </Steps>
+    </TabItem>
+</Tabs>
