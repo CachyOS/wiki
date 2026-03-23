@@ -1,0 +1,162 @@
+---
+title: セキュアブートの設定
+description: CachyOS のインストール後に sbctl でセキュアブートを設定する
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+# sbctl
+
+[sbctl](https://github.com/Foxboron/sbctl) は使いやすいセキュアブートキーマネージャーです。セキュアブートの設定、キーの管理、ブートチェーンで署名が必要なファイルの追跡に対応しています。
+
+## sbctl のインストール
+
+```bash
+sudo pacman -S sbctl
+```
+
+## 事前準備
+
+### GRUB ブートマネージャー
+
+GRUB を使用している場合は、以下のコマンドを実行して CA キーを使った GRUB のセキュアブートサポートを有効にしてください。
+
+```bash
+sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
+```
+
+:::note
+不要なモジュールをブートマネージャーに読み込むとセキュリティリスクになる可能性があります。
+実際にセキュアブートが必要な場合のみこのコマンドを実行してください。
+:::
+
+### UEFI でセットアップモードに入る
+
+まず、ファームウェア設定に移動してセキュアブートモードを「セットアップモード」に設定する必要があります。起動中のシステムから以下のコマンドでファームウェア設定に再起動できます。
+
+```bash
+systemctl reboot --firmware-setup
+```
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/ideapad-bios-secure-boot.jpg')} />
+
+これは Lenovo Ideapad 5 Pro の BIOS の画面です。セットアップモードにリセットするかファクトリーキーを復元し、システムに再起動してください。
+
+一部の MSI マザーボードにはセットアップモードがありません。同様の処理を行うには、以下の 2 つの手順にしたがってください。
+<br />
+<ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
+
+## sbctl のセットアップ
+
+```bash
+sudo sbctl status # セットアップモードが有効な場合は次の手順に進めます
+Installed:      ✘ sbctl is not installed
+Setup Mode:     ✘ Enabled
+Secure Boot     ✘ Disabled
+
+sudo sbctl create-keys # カスタムセキュアブートキーを作成する
+Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Creating secure boot keys...✔
+Secure boot keys created!
+
+# Microsoft と OEM ファームウェアの組み込みキーとともにキーを登録する
+sudo sbctl enroll-keys --microsoft --firmware-builtin
+Enrolling keys to EFI variables...✔
+Enrolled keys to the EFI variables!
+
+sudo sbctl status
+# sbctl がインストールされたので、カーネルイメージとブートマネージャーの署名に進めます
+Installed:      ✔ sbctl is installed
+Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Setup Mode:     ✔ Disabled
+Secure Boot     ✘ Disabled
+Vendor Keys:    microsoft
+```
+
+## カーネルイメージとブートマネージャーへの署名
+
+CachyOS は [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign) を提供しています。これは `sudo sbctl verify` から署名が必要なファイルの一覧を取得して、すべてに署名するスクリプトです。
+Limine をお使いの場合は [Limine](#limine) まで読み飛ばしてください。
+
+:::caution
+`/boot` と `/boot/efi` を別々のパーティションに分けているシステムでは、`sbctl` が `/boot/efi` の EFI バイナリしかスキャンしないことがあります。
+これが原因で `/boot` にあるカーネルイメージが検出されなくなります。`sbctl-batch-sign` はこの問題を回避するために `vmlinuz-*` ファイルを `/boot` で**常に**スキャンしています。
+:::
+
+```bash
+sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is not signed
+✘ /boot/EFI/BOOT/BOOTX64.EFI is not signed
+✘ /boot/EFI/systemd/systemd-bootx64.efi is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is not signed
+
+sudo sbctl-batch-sign
+
+sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is signed
+✔ /boot/EFI/BOOT/BOOTX64.EFI is signed
+✔ /boot/EFI/systemd/systemd-bootx64.efi is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
+```
+
+すべてのファイルへの署名が完了しました。**システムを再起動して UEFI 設定でセキュアブートを有効にしてください。**
+
+`-s` フラグで署名されたファイルは `sbctl` のデータベースに保存されるため、これ以降同じ手順を行う必要はありません。
+
+:::tip[補足]
+`sbctl` には [pacman フック](https://wiki.archlinux.jp/index.php/Pacman_%E3%83%95%E3%83%83%E3%82%AF) が付属しており、カーネルやブートマネージャーのアップデート時に新しいファイルに自動的に署名します。
+:::
+
+### systemd-boot
+
+CachyOS は systemd が提供する `systemd-boot-update.service` を使って再起動時にブートマネージャーを更新します。そのため `sbctl` の pacman フックは更新された EFI バイナリに**署名しません**。回避策として、ブートマネージャーに直接署名することができます。
+
+```sh
+sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+```
+
+### Limine
+
+Limine は特殊なブートマネージャーで、ブート時に使用するカーネルイメージやその他のファイルのハッシュを検証できます。この機能が有効な場合、`sbctl-batch-sign` による署名など、ユーザーが手動で行った変更はファイルのハッシュを変更するため、Limine のチェックサム検証の失敗につながります。
+
+ただし、Limine は EFI チェーンロードと署名チェックをバイパスする特殊なブートプロセスを持つため、これらのファイルへの署名は必要ありません。署名が必要な EFI バイナリは Limine 自身だけです。
+
+```sh
+# limine-enroll-config を使って Limine の EFI バイナリに署名する
+# 内部では sbctl を使用しています
+sudo limine-enroll-config
+sudo limine-update
+```
+
+## セキュアブートが有効かどうかの確認
+
+セキュアブートが有効かどうかを確認するには、以下のいずれかのコマンドを実行してください。
+
+```bash
+sudo sbctl status
+Installed:      ✓ sbctl is installed
+Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Setup Mode:     ✓ Disabled
+Secure Boot:    ✓ Enabled
+Vendor Keys:    microsoft
+
+bootctl
+System:
+      Firmware: UEFI 2.80 (INSYDE Corp. 28724.16435)
+ Firmware Arch: x64
+   Secure Boot: enabled (user)
+  TPM2 Support: yes
+  Measured UKI: no
+  Boot into FW: supported
+```
+
+## リンクとクレジット
+
+- このガイドの基礎となった [Arch Wiki (クリックすると日本語版に飛びます)](https://wiki.archlinux.jp/index.php/Unified_Extensible_Firmware_Interface/%E3%82%BB%E3%82%AD%E3%83%A5%E3%82%A2%E3%83%96%E3%83%BC%E3%83%88#sbctl_%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%97%E3%81%9F%E3%82%A2%E3%82%B7%E3%82%B9%E3%83%88%E3%83%97%E3%83%AD%E3%82%BB%E3%82%B9)。ここに記載された内容の多くはここから引用しています。
+- [sbctl](https://github.com/Foxboron/sbctl) — このようなわかりやすいセキュアブート設定ガイドは、このソフトウェアの素晴らしい開発があってこそ実現しました。
+- [Improving the Secure Boot Experience by Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) — `sbctl` が開発される以前のセキュアブート設定の複雑さについて書かれた Morten "Foxboron" Linderud のブログ記事。

@@ -1,0 +1,1087 @@
+---
+title: sched-ext チュートリアル
+description: フレームワークの使い方とその他の情報
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 5
+---
+
+import { Steps, Tabs, TabItem, Icon } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+Extensible Scheduler Class (`sched-ext` とも呼ばれます) は BPF (Berkeley Package Filter) でカーネルスレッドスケジューラを実装して動的に読み込めるようにする Linux カーネルの機能です。これにより、異なるスケジューラを使用するためだけに別のカーネルをビルドすることなく、エンドユーザーがユーザー空間でスケジューラを変更できるようになります。
+
+:::tip[開発者たちの [Discord サーバー](https://discord.gg/b2J8DrWa7t)に参加してみてください]
+:::
+
+- *スケジューラは `scx-scheds` と `scx-scheds-git` パッケージに含まれています。*
+  ```sh
+  # 安定版ブランチ + scx_loader と scxctl ツール
+  sudo pacman -S scx-scheds scx-tools
+
+  # 最新版ブランチ (マスターブランチの最新変更が含まれる) + scx_loader と scxctl ツール
+  sudo pacman -S scx-scheds-git scx-tools-git
+  ```
+
+  :::note
+  `scx-scheds-git` パッケージにはすべての実験的なスケジューラが含まれているわけではありません。一部はマスターブランチにまだマージされていない別の機能ブランチで開発されています。
+  :::
+
+## スケジューラの起動と管理方法
+
+:::note
+`scxctl` と `scx_loader` はスケジューラの開始/停止/切り替えに管理者権限が必要です。
+
+そのため `sudo` を使うか、必要な権限を付与する polkit エージェントを使う必要があります。
+
+`sudo` がない場合は、scxctl/scx_loader は polkit エージェント経由で認証を求めます。
+:::
+
+<Tabs>
+
+<TabItem label='ターミナル'>
+
+- *スケジューラを起動するには、ターミナルを開いて以下のコマンドを入力してください。*
+  ```sh title='rusty を起動する例'
+  sudo scx_rusty
+  ```
+
+*これにより rusty スケジューラが起動し、デフォルトスケジューラが切り離されます。*
+
+スケジューラを停止するには `CTRL + C` を押してください。スケジューラが停止し、デフォルトのカーネルスケジューラに戻ります。
+
+</TabItem>
+
+<TabItem label='scxctl'>
+
+:::note[`scx-tools` と `scx-tools-git` パッケージに含まれています]
+:::
+
+:::caution[正常に動作するには polkit エージェントが必要です。]
+**[詳しくは Arch Wiki のページを確認してください。](https://wiki.archlinux.jp/index.php/Polkit#認証エージェント)**
+:::
+
+`scxctl` は `scx_loader` と連携するための CLI の DBUS クライアントです。
+
+- 機能:
+  - 現在のスケジューラとモードの取得
+  - 利用可能なスケジューラの一覧表示
+  - 指定したモードまたは引数でスケジューラを起動
+  - スケジューラとモードの切り替え
+  - 実行中のスケジューラの停止
+  - 実行中のスケジューラの再起動
+
+<Tabs>
+    <TabItem label='スケジューラを起動する'>
+          ```sh title='scx_flash をゲームモードで起動する'
+          scxctl start --sched flash --mode gaming
+          ```
+    </TabItem>
+    <TabItem label='スケジューラを停止する'>
+          ```sh title='現在実行中のスケジューラを停止する'
+          scxctl stop
+          ```
+    </TabItem>
+    <TabItem label='デフォルトスケジューラに戻す'>
+          ```sh title='scx_loader 設定ファイルに設定されたデフォルトスケジューラに戻す'
+          scxctl restore
+          ```
+    </TabItem>
+    <TabItem label='スケジューラを切り替える'>
+          ```sh title='scx_bpfland をゲームモードに切り替える'
+          scxctl switch --sched bpfland --mode gaming
+          ```
+    </TabItem>
+    <TabItem label='カスタム引数で起動・切り替える'>
+          :::note[引数の間はコンマで区切ってください]
+          例: `--args="-c,75,-m,0-15"` = 引数, 値
+          :::
+          ```sh title='カスタム引数で scx_cosmos を起動する'
+          scxctl start --sched cosmos --args="-c,75,-m,0-15"
+          ```
+          ```sh title='カスタム引数で scx_flash に切り替える'
+          scxctl switch --sched flash --args="-s,20000"
+          ```
+    </TabItem>
+</Tabs>
+
+```sh
+$ scxctl --help
+使用法: scxctl <コマンド>
+
+コマンド:
+  get      実行中のスケジューラの情報を取得
+  list     対応しているスケジューラの一覧を取得
+  start    指定したモードまたは引数でスケジューラを起動
+  switch   任意で引数付きでスケジューラとモードの切り替え
+  stop     実行中のスケジューラの停止
+  restart  標準設定で実行中のスケジューラの再起動
+  restore  設定からデフォルトのスケジューラを復元
+  help     このメッセージを出力するかサブコマンドのヘルプを表示
+
+オプション:
+  -h, --help     ヘルプを出力
+  -V, --version  バージョンを出力
+```
+
+</TabItem>
+
+<TabItem label='scx_loader (DBus)'>
+
+:::caution[正常に動作するには polkit エージェントが必要です。]
+**[詳しくは Arch Wiki のページを確認してください。](https://wiki.archlinux.jp/index.php/Polkit#認証エージェント)**
+:::
+
+*名前の通り、D-Bus インターフェースを使って sched-ext フレームワークのローダーおよびマネージャーとして機能するツールです。*
+
+*systemd は必須ではありませんが、組み合わせて使うこともできます。*[移行ガイドをご覧ください](/ja/configuration/sched-ext#scxservice-から-scx_loader-への移行ガイド)。
+
+- scx スケジューラの停止、起動、再起動、情報の読み取りなどができます。
+  - *`dbus-send` や `gdbus` などのツールで通信できます。*
+- ここでは scx_loader を dbus-send コマンドで使う方法を説明します。
+  - ```sh title='デフォルト引数で scx_rusty を起動する'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartScheduler string:scx_rusty uint32:0
+    ```
+  - ```sh title='引数付きでスケジューラを起動する'
+    # この例では scx_bpfland を -k -c 0 フラグで起動します
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title='現在実行中のスケジューラを停止する'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StopScheduler
+    ```
+  - ```sh title='デフォルトスケジューラに切り替える'
+    # scx_loader は scx_loader 設定ファイルに設定されたデフォルトスケジューラに切り替えます
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.RestoreDefault
+    ```
+  - ```sh title='モード 2 で別のスケジューラに切り替える'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchScheduler string:scx_lavd uint32:2
+    # scx_lavd をスケジューラモード 2 (省電力) で起動します
+    ```
+  - ```sh title='引数付きで別のスケジューラに切り替える'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title='現在実行中のスケジューラを取得する'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:CurrentScheduler
+    ```
+  - ```sh title='対応しているスケジューラの一覧を取得する'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:SupportedSchedulers
+    ```
+:::tip
+scx_loader の各モードの意味は以下のとおりです。
+
+- モード 0 = `デフォルトスケジューラフラグ`
+- モード 1 = `ゲーム`
+- モード 2 = `省電力`
+- モード 3 = `低遅延`
+- モード 4 = `サーバー`
+
+例: LAVD をモード 1 で実行するのは `scx_lavd --performance` と同等です。
+
+*要約: 各モードはそれぞれの用途に応じてフラグを設定することで動作を改善します。*
+
+[各スケジューラでこれらのモードが変更する内容の詳細](<https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/src/config.rs#L193>)
+:::
+
+</TabItem>
+
+<TabItem label='CachyOS カーネルマネージャー'>
+
+:::caution[正常に動作するには機能する polkit エージェントが必要です。]
+**[参考として Arch Wiki のページを確認してください。](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+`sched-ext スケジューラ設定` ボタンからアクセスして設定できます。
+
+</TabItem>
+
+<TabItem label='SCX Manager'>
+
+:::caution[正常に動作するには機能する polkit エージェントが必要です。]
+**[参考として Arch Wiki のページを確認してください。](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+SCX Manager は CachyOS カーネルマネージャーから派生したスタンドアロンの GUI ツールです。`scx_loader` を通じて sched-ext フレームワークとそのスケジューラを管理できます。
+
+機能:
+- 現在アクティブなスケジューラの確認
+- スケジューラまたはプロファイルの選択 (Auto, Gaming, Power save, Low Latency, Server)
+- 追加フラグの設定
+- 現在のスケジューラを無効にする
+
+<details>
+<summary>スクリーンショット</summary>
+
+<ImageComponent imgsrc={import('~/assets/images/scx-manager-main.png')} />
+
+</details>
+
+</TabItem>
+
+</Tabs>
+
+## スケジューラガイド: プロファイルと用途
+
+えらべるスケジューラが多いため、各スケジューラについて簡単に紹介します。
+
+:::note
+これらのスケジューラは継続的に開発・テストされているため、機能やフラグは変更される可能性があります。
+:::
+
+問題やフィードバックはスケジューラのリポジトリに報告してください。
+
+利用可能なフラグと説明を確認するには `scx_schedulername --help` を使ってください。
+
+```sh title='scx_rusty のヘルプを取得する例'
+scx_rusty --help
+```
+
+### [scx_beerland](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_beerland)
+
+**開発者: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+本番環境への対応状況 <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+scx_beerland は局所性とスケーラビリティを優先するスケジューラです。
+
+キャッシュの局所性を保つため、処理を同一 CPU で行うようキープすることを優先しながら、システムが飽和していないときはローカルの DSQ (CPU ごとのランキュー) を使って多数の CPU 間で優れたスケーラビリティを生むことができます。
+
+- 用途:
+  - キャッシュ集約型の処理
+  - 多数の CPU を持つシステム
+  - ゲーム: 特定のゲームで驚くほどよく動作することが知られていますが、結果は異なる場合があります。
+  - サーバー: スケーラビリティと局所性の最適化により汎用サーバー用途に適しています。
+  - デスクトップ用途にも使えます。
+
+#### スケジューラモード
+
+現時点ではありません。
+
+### [scx_bpfland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_bpfland>)
+
+**開発者: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+本番環境への対応状況 <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+インタラクティブな処理を優先する vruntime ベースの sched_ext スケジューラです。柔軟性が高く、適応しやすい設計になっています。
+
+Bpfland はどのコアを使うかを決定する際に、キャッシュレイアウトと同じ L2/L3 キャッシュを共有するコアを考慮するため、キャッシュミスが減ってパフォーマンスが向上します。
+
+- 用途:
+  - ゲーム
+  - デスクトップ用途
+  - マルチメディア/オーディオ制作
+  - 高負荷な処理中でも優れた応答性
+  - 省電力
+  - サーバー
+
+#### スケジューラモード
+
+##### 低遅延
+
+* **コマンドラインフラグ:** `-m performance -w`
+* **説明:** スループットを代償に遅延を削減します。オーディオ処理やマルチメディアなどのソフトリアルタイムアプリケーションに適しています。
+
+##### 省電力
+
+* **コマンドラインフラグ:** `-s 20000 -m powersave -I 100 -t 100`
+* **説明:** 電力効率を優先します。効率の低いコア (Intel の E コアなど) を優先します。
+
+##### サーバー
+
+* **コマンドラインフラグ:** `-s 20000 -S`
+* **説明:** 厳密なアフィニティのあるタスクを優先します。このオプションはレイテンシを代償にスループットを向上させるため、サーバー用途に適しています。
+
+### [scx_cake](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cake)
+
+**開発者: RitzDaCat (RitzDaCat [GitHub](<https://github.com/RitzDaCat>))**
+
+- 本番環境への対応状況 <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+
+`scx_cake` はネットワークの [CAKE](https://www.bufferbloat.net/projects/codel/wiki/Cake/) アルゴリズムの DRR++ (Deficit Round Robin++) を CPU スケジューリングに適用した実験的な BPF CPU スケジューラです。
+- 4階層分類 — EWMA avg_runtime に基づいてタスクを Critical / Interactive / Frame / Bulk (訳注: 重要/操作応答/フレームごと/後回し) に分類
+- グローバルアトミックなし — MESI ガード書き込みによる CPU ごとの BSS 配列でバスロックをなくす
+- カーネル委任のアイドル選択 — scx_bpf_select_cpu_dfl() で信頼性の高い、*ゼロステールネスな CPU 選択
+- LLC 毎 DSQ シャーディング — マルチチップレット CPU において CCD をまたぐ際のロック競合をなくす
+- DRR++ デフィシットトラッキング — CPU タスクスケジューリングに適応したネットワーク CAKE のフロー公平性アルゴリズム
+
+<small>*訳注: ゼロステールネス (zero-staleness) … 直訳で「ゼロ腐敗」。キャッシュから情報を読み取るのではなく、常に最新情報を取得して処理することをあらわします。ここでは、タスクを CPU のコアに振り分ける際に毎回 scx_bpf_select_cpu_dfl 関数でコアの空き状況を参照できるという意味です。</small>
+
+最新の AMD および Intel ハードウェアでのゲーム用途向けに設計されています。
+
+- 用途:
+  - ゲーム
+
+#### 4階層システム
+
+`scx_cake` はすべてのタスクを **EWMA** (指数加重移動平均) ランタイムに基づいて4つの層に自動分類します。分類は自動かつ常に行われ、タスクは動作の変化に応じて層間を移動します。
+
+##### 層のゲート
+
+| 層 | 名前 | avg_runtime | 処理内容の例 | クォンタム | スターベーション |
+| :----- | :---------- | :---------- | :----------------------------------------------------- | :------ | :--------- |
+| **T0** | Critical | 100µs 未満 | IRQ ハンドラ、入力ドライバ、オーディオ (PipeWire)、ネットワーク | 0.5ms | 3ms |
+| **T1** | Interactive | 2ms 未満 | コンポジター、ゲーム物理、ゲーム AI、短期ワーカー | 2.0ms | 8ms |
+| **T2** | Frame | 8ms 未満 | ゲームレンダリングスレッド、動画エンコード | 4.0ms | 40ms |
+| **T3** | Bulk | 8ms 以上 | コンパイル、バックグラウンドインデックス、バッチジョブ | 8.0ms | 100ms |
+
+> [!TIP]
+> **ゲームのタスクは T3 に入るべきではありません。** ゲームの描画スレッドは1フレームあたり2\~8ms → T2、物理演算/AI は0.5\~2ms → T1、入力処理は 100µs 未満 → T0、シェーダーコンパイルや読み込み画面など8ms以上の CPU 作業を連続して行うタスクのみが T3 に入ります。
+
+##### 分類の仕組み
+
+1. **初期配置**: `nice` 値を基準に配置 — `nice < 0` → T0, `nice 0-10` → T1, `nice > 10` → T3
+2. **ランタイムの優先**: 3ストップ後、EWMA avg_runtime が信頼性を持ちます。50ms バーストで実行する nice 値が -5 のタスクは nice 値に関わらず T3 に再分類されます。
+3. **ヒステリシス**: 層の境界でのゆれを防ぐ10%のデッドバンド (余裕) があります。昇格には avg_runtime がゲートを明確に下回ることが必要で、降格はすぐに行われます。
+4. **段階的なバックオフ**: 層が3ストップ以上安定すると、再分類頻度が層ごとに下がります。T0 は1024ストップごと、T3 は16ストップごとに再確認が行われます。不安定な状態になると全頻度チェックにリセットされます。
+
+##### DRR++ デフィシットトラッキング
+
+フロー公平性がネットワーク CAKE をもとにスケジューラ用に改変されています。
+
+- 各タスクは**デフィシット** (クォンタム + 新フローボーナス ≈ 10ms クレジット) から始まります。
+- 各実行ブートはランタイムに比例したデフィシットを消費します。
+- デフィシットが枯渇した → 新フローボーナスが削除 → タスクは通常通り競合
+- これによりワーカーを起動するゲームなどの新規生成スレッドに即座の応答性を与えつつ、その減衰が自然に起こるようになります。
+
+##### DVFS (CPU 周波数スケーリング)
+
+各層は RODATA ルックアップテーブルを通じて CPU パフォーマンスターゲットにマッピングされます。
+
+| 層 | ターゲット | 理由 |
+| :---- | :------------------- | :---------------------------------------------------- |
+| T0-T2 | 100% (最大周波数) | ゲーム用途には最大パフォーマンスが必要であるため |
+| T3 | 75% | バックグラウンド作業は電力節約のために若干遅くてもOK |
+
+Intel ハイブリッド CPU (`has_hybrid = true`) では、E コアでの過剰な周波数要求を防ぐために各コアの `cpuperf_cap` によってターゲットがスケーリングされます。
+
+#### プロファイル (`--profile, -p`)
+
+| プロファイル | クォンタム | スターベーション | 用途 |
+| :---------- | :------ | :--------- | :------------------------------------ |
+| **gaming** | 2ms | 100ms | **(デフォルト)** ほとんどのゲームでバランスがとれる |
+| **esports** | 1ms | 50ms | 競技系 FPS、超低遅延 |
+| **legacy** | 4ms | 200ms | 古い CPU、省電力 |
+| **default** | 2ms | 100ms | gaming の別名 |
+
+#### CLI 引数
+
+| 引数 | デフォルト | 説明 |
+| :------------------------ | :------- | :------------------------------------ |
+| `--profile, -p <PROFILE>` | `gaming` | プリセットプロファイルを選択 |
+| `--quantum <µs>` | profile | マイクロ秒単位のベースタイムスライス |
+| `--new-flow-bonus <µs>` | profile | 新規ウェイクアップタスクへの追加デフィシット |
+| `--starvation <µs>` | profile | 強制プリエンプション前の最大実行時間 |
+| `--verbose, -v` | `false` | ライブ TUI 統計表示を有効化 |
+| `--interval <secs>` | `1` | TUI リフレッシュ間隔 |
+
+#### 層ごとのチューニング (ゲームプロファイル)
+
+| 層 | クォンタム倍率 | 有効スライス | スターベーション上限 |
+| :------------- | :----------------- | :-------------- | :--------------- |
+| T0 Critical | 0.75倍 | 1.5ms | 3ms |
+| T1 Interactive | 1.0倍 | 2.0ms | 8ms |
+| T2 Frame | 1.2倍 | 2.4ms | 40ms |
+| T3 Bulk | 1.4倍 | 2.8ms | 100ms |
+
+### [scx_cosmos](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cosmos)
+
+**開発者: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+- 本番環境への対応状況 <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+タスクと CPU の局所性を保つことに最適化された軽量スケジューラです。
+
+システムが飽和していないとき、ローカルの DSQ を使ってタスクを同一 CPU にキープすることを優先します。これにより局所性を保つだけでなく、共有 DSQ と比べてロック競合を減らし、多数の CPU 間での優れたスケーラビリティが実現できます。
+
+- 用途:
+  - 汎用スケジューラ: サーバー用途とデスクトップ用途の両方に向いています。
+
+#### スケジューラモード
+
+##### 自動
+
+* **コマンドラインフラグ:** `-s 20000 -d -c 0 -p 0`
+* **説明:** キャッシュ局所性と電力効率を代償に全 CPU への均等分散を実現します。応答性が重要な処理に重点をおいています。
+
+##### ゲーム
+
+* **コマンドラインフラグ:** `-c 0 -p 0`
+* **説明:** CPU 負荷追跡を無効にして常にデッドラインベーススケジューリングを強制し、応答性を向上させます。
+
+##### 省電力
+
+* **コマンドラインフラグ:** `-m powersave -d -p 5000`
+* **説明:** 電力効率を優先します。効率の低いコア (Intel の E コアなど) を優先し、遅延ウェイクアップを無効にしてスループットを下げつつ電力効率を向上させます。CPU 負荷ポーリングは 5ms に増加します。
+
+##### 低遅延
+
+* **コマンドラインフラグ:** `-m performance -c 0 -p 0 -w`
+* **説明:** スループットを代償に遅延を削減します。オーディオ処理やマルチメディアなどのソフトリアルタイムアプリケーションに適しています。常にデッドラインベーススケジューリングと同期ウェイクアップ最適化を強制してパフォーマンスの予測可能性を向上させています。
+
+##### サーバー
+
+* **コマンドラインフラグ:** `-s 20000`
+* **説明:** アドレス空間アフィニティを有効にしてキャッシュが重要な処理での局所性とパフォーマンスを改善します。ポーリングは 20ms に増加します。
+
+### [scx_flash](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_flash>)
+
+**開発者: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+本番環境への対応状況 <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+タスク間の公平性とパフォーマンスの予測可能性の確保に重点をおいたスケジューラです。
+
+各タスクに「レイテンシウェイト」を割り当てる[Earliest Deadline First (EDF) ポリシー](https://www.geeksforgeeks.org/operating-systems/earliest-deadline-first-edf-cpu-scheduling-algorithm/)で動作します。このウェイトはタスクがタイムスライスを使い切る前に CPU を解放する頻度に基づいて動的に調整されます。
+
+CPU を早めに解放するタスクにはより高いレイテンシウェイトが与えられ、タイムスライスを完全に消費するタスクよりも優先されるようになります。
+
+- 用途:
+  - ゲーム
+  - マルチメディアやリアルタイムオーディオ処理などの低遅延が重要な処理
+  - 高負荷状態での応答性の確保
+  - パフォーマンスの一貫性
+  - サーバー
+
+#### スケジューラモード
+
+##### 低遅延
+
+* **コマンドラインフラグ:** `-m performance -w -C 0`
+* **説明:** スループットを代償に遅延を削減します。オーディオ処理やマルチメディアなどのソフトリアルタイムアプリケーションに適しています。
+
+##### ゲーム
+
+* **コマンドラインフラグ:** `-m all`
+* **説明:** ゲームでの高パフォーマンスを目指して最適化します。
+
+##### 省電力
+
+* **コマンドラインフラグ:** `-m powersave -I 10000 -t 10000 -s 10000 -S 1000`
+* **説明:** 電力効率を優先します。効率の低いコア (Intel の E コアなど) を優先し、10ms ごとに強制アイドルサイクルを導入して省電力を向上させます。
+
+##### サーバー
+
+* **コマンドラインフラグ:** `-m all -s 20000 -S 1000 -I -1 -D -L`
+* **説明:** サーバー用途向けにチューニングされています。応答性よりもスループットを優先します。
+
+### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>)
+
+**開発者: Changwoo Min (multics69 [GitHub](<https://github.com/multics69>))**
+
+- 本番環境への対応状況 <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Changwoo による LAVD の簡単な紹介
+
+*LAVD はまだ開発中の新しいスケジューリングアルゴリズムです。レイテンシが重要で通信量の多いゲーム用途を考えて開発しています。タスク間の CPU 時間の公平性と全体的に優れたスループットを保ちながら、レイテンシスパイクを削減することを目指しています。*
+
+- 用途:
+  - ゲーム
+  - オーディオ制作
+  - 低遅延が重要な用途
+  - デスクトップ用途
+  - 高負荷な処理中でも優れた応答性
+  - 省電力
+
+LAVD の主な素晴らしい機能のひとつが**コアコンパクション**です。ざっくり説明すると、CPU 使用率が50%未満の場合、現在アクティブなコアがより長時間、より高い周波数で動作します。一方、アイドルコアは C ステート (スリープ) をより長時間キープして、全体的な消費電力を大幅に削減します。
+
+##### スケジューラモード
+
+##### ゲーム & 低遅延
+
+* **コマンドラインフラグ:** `--performance`
+* **説明:** 物理コアを優先して利用可能なすべてのコアを使用することでパフォーマンスを最大化します。
+
+##### 省電力
+
+* **コマンドラインフラグ:** `--powersave`
+* **説明:** 合理的なパフォーマンスを保ちながら消費電力を最小化します。物理コアよりも、効率的なコアとスレッドを優先します。
+
+### [scx_pandemonium](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_pandemonium)
+
+**開発者: Will Clingan (willclngn [GitHub](https://github.com/wllclngn/))**
+
+EWMA 駆動のスコアリング (ウェイクアップ頻度、コンテキストスイッチレート、ランタイム分散) を使ってタスクを3つのディスパッチ層 (LAT_CRITICAL, INTERACTIVE, BATCH) に分類する動作分類スケジューラです。各層に固有のタイムスライス、プリエンプションルール、DSQ ルーティングがあります。CoDel を参考にしたソジョーン救済メカニズムがバッチキューの待機時間を追跡し、ディスパッチレートとコア数に適応するしきい値でタスクがフリーズする前に救済します。デュアルバースト検出 (CUSUM 変化点 + ウェイクアップレートカウンター) がフォークストームを処理し、Rust 適応制御ループがワークロード体制検出と BPF ヒストグラムテレメトリに基づいて毎秒スケジューリング度を調整します。
+
+コンポジター (KWin, GNOME Shell, Hyprland, Sway など) は自動的に LAT_CRITICAL にブーストされます。永続的なプロセスデータベースが再起動をまたいでタスク分類を学習します。
+
+*   用途:
+    *   ゲーム
+    *   デスクトップ用途
+    *   マルチメディア/オーディオ制作
+    *   コードベースのコンパイル
+    *   高負荷な処理中でも優れた応答性
+    *   さまざまな処理や用途を一度に行うとき
+
+#### スケジューラモード
+
+##### デフォルト (適応)
+
+*   **コマンドラインフラグ:** *(なし — デフォルトで適応モードで動作)*
+*   **説明:** 完全適応モード。Rust 制御ループがワークロード体制 (LIGHT / MIXED / HEAVY) を検出してスケジューリングパラメーターをリアルタイムで調整します。一般的なデスクトップ用途とゲームに最適です。
+
+##### BPF のみ
+
+*   **コマンドラインフラグ:** `--no-adaptive`
+*   **説明:** Rust 適応制御ループを無効にします。BPF スケジューラは静的なチューニング度で動作します。オーバーヘッドが低く、ベンチマークや適応レイヤーが処理内容を過剰補正している場合に有用です。
+
+##### 診断 / デバッグ
+
+*   **コマンドラインフラグ:** `-v` または `--verbose`
+*   **説明:** 層ごとのディスパッチ数、ソジョーン時間、動作分類統計を含む詳細なテレメトリ出力を有効にします。スケジューリング動作の診断に役立ちます。
+
+
+### [scx_p2dq](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_p2dq>)
+
+- 本番環境への対応状況 <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+  - 特定の用途とハードウェアに合わせて正しくチューニングされていることが前提となっています。
+
+**開発者: Daniel Hodges (hodgesds [GitHub](<https://github.com/hodgesds>))**
+
+LLC 間のピックツー負荷分散に重点を置いた汎用スケジューラです。合理的なレイテンシを保ちながら高いキャッシュ局所性と*ワークコンサーブ性を保ちます。
+
+<small>*訳注: ワークコンサーブ性 (work conservation) … 直訳すると「仕事量保存」。手が空いている CPU がいるなら、待たせている仕事を即座に割り当てるという意味です。</small>
+
+- 用途:
+  - サーバー
+  - デスクトップ環境
+  - ゲーム (手動チューニングが必要)
+
+#### スケジューラモード
+
+##### ゲーム
+
+* **コマンドラインフラグ:** `--task-slice true -f --sched-mode performance`
+* **説明:** ゲームパフォーマンスの一貫性を向上させ、より高いパフォーマンスのコアへのスケジューリングバイアスを強化します。
+
+##### 低遅延
+
+* **コマンドラインフラグ:** `-y -f --task-slice true`
+* **説明:** 応答性が重要な処理を割り当てられた CPU に固定させ、スライスタイムの安定性を向上させることで遅延を削減します。
+
+##### 省電力
+
+* **コマンドラインフラグ:** `--sched-mode efficiency`
+* **説明:** 電力効率の高いコアを優先することで電力効率を向上させます。
+
+##### サーバー
+
+* **コマンドラインフラグ:** `--keep-running`
+* **説明:** CPU がアイドルの場合にタスクがスライスを超えて実行できるようにすることで、サーバー用途の処理を改善します。
+
+### [scx_tickless](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_tickless>)
+
+**開発者: Andrea Righi (arighi [Github](<https://github.com/arighi>))**
+
+- 本番環境への対応状況 <Icon name="close" color="var(--sl-color-text-accent)" size="2rem" />
+  - このスケジューラはまだ実験的であり、本番環境での使用はおすすめしません。
+
+:::note
+「ティックレス」CPU でティックを効果的に無効にするには、カーネルを `nohz_full` でブートする必要があります。`nohz_full` はシステムコールのオーバーヘッドをもたらすため、レイテンシが重要な処理では性能が低下することがあります。
+:::
+
+scx_tickless はクラウドコンピューティング、仮想化、高性能コンピューティングワークロード向けのサーバー向けスケジューラです。
+
+スケジューラはすべてのスケジューリングイベントをこれらのイベントを処理するためのプライマリ CPU プールを通じてルーティングすることで動作します。これにより他の CPU でスケジューラのティックを無効にでき、OS ノイズを削減します。
+
+- 用途:
+  - クラウドコンピューティング
+  - 仮想化
+  - 高性能コンピューティングワークロード
+  - サーバー
+
+#### スケジューラモード
+
+##### ゲーム
+
+* **コマンドラインフラグ:** `-f 5000 -s 5000`
+* **説明:** スケジューラが CPU 競合を検出する頻度を上げてより短いタイムスライスでコンテキストスイッチを起こすことで、ゲームでのパフォーマンスを向上させます。
+
+##### 省電力
+
+* **コマンドラインフラグ:** `-f 50`
+* **説明:** 競合チェックを下げることで電力効率を向上させます。
+
+##### 低遅延
+* **コマンドラインフラグ:** `-f 5000 -s 1000`
+* **説明:** ゲームプロファイルと同様ですが、スライスをさらに短くしています。
+
+##### サーバー
+
+* **コマンドラインフラグ:** `-f 100`
+* **説明:** スケジューラが CPU 競合を確認する頻度を下げ、応答性を代償にスループットを向上させます。
+
+### [scx_rustland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland>)
+
+**開発者: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+本番環境への対応状況 <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+
+パフォーマンスが重要な本番環境では、すべてのスケジューリング判断をユーザー空間に任せることによるコストが (多少) あるため、ほかのスケジューラの方がパフォーマンスが良いことが多いです。
+
+一方で、完全にユーザー空間で実装されたスケジューラは高度なライブラリ、トレースツール、外部サービス (AI など) との統合の可能性を秘めています。
+
+そのため場合によってはメリットがオーバーヘッドを上回り、本番環境での使用が正当化される可能性もあります。
+
+bpfland との類似点があります。ユーザー空間での実装により、読みやすく理解しやすい設計を目指して作られています。
+
+ユーザー空間スケジューラを使用する場合、わずかにスループット面が不利であることを認識しておいてください。
+
+- 用途:
+  - 低遅延が重要な用途 (ゲーム、ビデオ会議、ライブ配信)
+  - デスクトップ
+
+### [scx_rusty](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rusty>)
+
+**開発者: David Vernet (Byte-Lab [GitHub](<https://github.com/Byte-Lab>))**
+
+- 本番環境への対応状況 <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+  - 正しくチューニングされていることが前提となっています。
+
+Rusty は幅広い機能を提供しており、さまざまな用途に対して優れた柔軟性があります。その機能のひとつがチューナビリティで、好みや特定の要件に合わせて Rusty をカスタマイズできます。
+
+- 用途:
+  - ゲーム
+  - 低遅延が重要な用途
+  - デスクトップ
+  - マルチメディア/オーディオ制作
+  - 高負荷ワークロード下での優れた応答性
+  - 省電力
+
+## 設定とパフォーマンステスト
+
+### LAVD オートパイロット & オートパワー
+
+*Changwoo Min より引用*
+- オートパイロットモードでは、スケジューラはシステム負荷、具体的には CPU 使用率に基づいて `Powersave, Balanced, Performance` の電源モードを調整します。
+
+- オートパワー: システムのエネルギープロファイル (EPP: Energy Performance Preference) に基づいてスケジューラの電源モードを自動的に決定します。
+
+```sh
+# オートパワーは以下のフラグで有効にできます
+--autopower
+# 例
+scx_lavd --autopower
+```
+
+### ananicy-cpp と sched-ext
+
+:::note[ananicy-cpp と sched-ext に関して]
+スケジューラの開発が進み、ananicy-cpp とセットで使用しても基本的に問題はなくなりましたが、フリーズが発生したり不安定になった場合には、トラブルシューティングの手順として ananicy-cpp の無効化があることを認識しておいてください。
+:::
+
+ananicy-cpp を無効化・停止するには以下のコマンドを実行してください。
+
+```sh
+systemctl disable --now ananicy-cpp
+```
+
+### scx_loader 電源プロファイル切り替え
+
+CachyOS が提供する `power-profiles-daemon` パッケージに実装されており、`scx_loader` の電源プロファイル切り替えをサポートする[カスタムパッチ](https://github.com/CachyOS/CachyOS-PKGBUILDS/blob/master/power-profiles-daemon/0001-Add-support-for-scx_loader-modes-switching.patch)が適用されています。
+
+- `scx_loader` が現在実行中の場合、[game-performance](/ja/configuration/gaming#オンデマンドの電源プロファイル切り替え) を使用するとゲーム起動時に自動的にアクティブなスケジューラがゲームプロファイルに切り替わり、ゲーム終了時にデフォルトプロファイルに戻ります。
+- KDE Plasma や GNOME の電源プロファイルスイッチャーなどで電源プロファイルを変更すると、`scx_loader` が自動的に対応するスケジューラプロファイルに切り替えます。
+
+| 電源プロファイル | スケジューラプロファイル |
+| ------------------- | ------------------ |
+| 省電力 | 省電力 |
+| バランス | 自動 |
+| パフォーマンス | ゲーム |
+
+### cachyos-benchmarker でスケジューラをベンチマーク・比較する
+
+[cachyos-benchmarker](https://github.com/CachyOS/cachyos-benchmarker) ツールは異なる CPU スケジューラのパフォーマンスを評価・比較するかんたんな方法です。
+
+さまざまな用途や処理内容のもとで CPU、メモリ、システム全体のパフォーマンスを測定する包括的なベンチマークスイートを実行できます。
+
+内蔵ベンチマーク:
+
+| テスト | 測定内容 | ツール |
+| --------------------------- | ---------------------------------------- | ------------ |
+| **stress-ng cpu-cache-mem** | CPU、キャッシュ、メモリのパフォーマンス | `stress-ng` |
+| **FFmpeg コンパイル** | 並列ビルドパフォーマンス | `make` |
+| **x265 エンコード** | 動画エンコードのスループット | `x265` |
+| **argon2 ハッシュ** | マルチスレッドパスワードハッシュ | `argon2` |
+| **perf sched msg** | コンテキストスイッチと IPC パフォーマンス | `perf` |
+| **perf memcpy** | メモリスループット `memcpy()` | `perf` |
+| **素数計算** | 整数演算と並列処理 | `primesieve` |
+| **NAMD** | 分子動力学 (科学的ワークロード) | `namd3` |
+| **Blender レンダリング** | CPU のみの 3D レンダリング | `blender` |
+| **xz 圧縮** | 圧縮スループット | `xz` |
+| **カーネル defconfig ビルド** | カーネルコンパイルパフォーマンス | `make` |
+| **y-cruncher** | 数学的精度とメモリストレス | `y-cruncher` |
+
+`cachyos-benchmarker` はさまざまな目的で使えます。
+
+- **スケジューラの安定性テスト**
+  スケジューラの変更によるフリーズ、クラッシュ、リグレッションを検出するためにフルベンチマークスイートを実行できます。
+  `scx_loader` を使用している場合、フリーズやクラッシュ時のログを以下のコマンドで収集できます。
+  ```bash
+  journalctl --unit scx_loader.service --boot 0 > crash.log
+  ```
+  これにより現在のディレクトリに `crash.log` という名前のファイルが作成されます。
+- **スケジューラパフォーマンスの比較**
+  - スケジューラ間のパフォーマンスの差を評価できます。(例: `BPFLAND vs LAVD`)
+- **カーネルやスケジューラのアップデートによる影響の測定**
+  - パッチやバージョン変更の前後を比較してパフォーマンスのリグレッションや改善を確認できます。
+- **設定チューニングのテスト**
+  - CPU ガバナーの設定、SMT の切り替え、スケジューラフラグの変更などによる影響を評価できます。
+
+#### 要件
+- RAM 4 GB 以上
+- 空きストレージ 8 GB 以上
+- 時間と忍耐 — **遅いシステムでは、フルベンチマークは1時間以上かかることがあります**
+
+#### インストール
+
+`cachyos-benchmarker` をインストールするには以下のコマンドを実行してください。
+```bash
+sudo pacman -S cachyos-benchmarker
+```
+
+#### ベンチマークの実行
+
+<Steps>
+    1. `cachyos-benchmarker` を実行してください。
+        ```bash
+        cachyos-benchmarker ~/cachyos-benchmarker/
+        # ~/cachyos-benchmarker/ を任意のログ保存ディレクトリに置き換えることができます。
+        ```
+    2. 準備作業が完了するまでお待ちください。
+    3. プロンプトにしたがってください。
+        - `Do you want to drop page cache now? Root privileges needed! (y/N) y` \
+          訳: ページキャッシュを生成しますか？ルート権限が必要です。 (y/N)
+        - `Please enter a name for this run, or leave empty for default:` \
+          訳: テスト名に名前を付けてください。 (空欄の場合はデフォルト名になります):
+    4. テストが完了するまでお待ちください。
+    5. 完了すると以下の処理が行われます。
+        - ベンチマーク実行の詳細情報を記録した `benchie_<n>_<DATE>.log` という名前のログファイルが作成されます。
+          - 例: `benchie_p2dq_2025-09-29-2115.log`
+          - `benchmark_scraper.py` スクリプトが自動実行され、HTML 形式の結果レポートが生成されます。
+          - スクリプトの処理内容:
+            - 指定ディレクトリ内のすべての `benchie_*.log` ファイルを読み込み
+            - ベンチマーク名、時間、スコアを抽出
+            - ソートまたは集約
+            - 読みやすい結果をターミナルに出力し、ブラウザで開ける HTML ファイルを作成
+                <details>
+                <summary>ターミナル出力例</summary>
+                ```text
+                stress-ng cpu-cache-mem: 15.26
+                y-cruncher pi 1b: 31.23
+                perf sched msg fork thread: 8.892
+                perf memcpy: 13.53
+                namd 92K atoms: 53.54
+                calculating prime numbers: 11.126
+                argon2 hashing: 6.62
+                ffmpeg compilation: 53.38
+                xz compression: 61.13
+                kernel defconfig: 130.73
+                blender render: 96.29
+                x265 encoding: 24.99
+
+                Total time (s): 506.72
+                Total score: 70.71
+
+                Name: p2dq
+                Date: 2025-09-29-2115
+
+                System:    Kernel: 6.17.0-1.1-cachyos-p2dq arch: x86_64 bits: 64
+                           Desktop: KDE Plasma v: 6.4.5 Distro: CachyOS
+                Memory:    System RAM: total: 32 GiB available: 30.61 GiB used: 7.54 GiB (24.6%)
+                           Device-1: Channel-A DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                           Device-2: Channel-B DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                           Device-3: Channel-C DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                           Device-4: Channel-D DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                CPU:       Info: 8-core model: AMD Ryzen 7 8845HS w/ Radeon 780M Graphics bits: 64 type: MT MCP cache: L2: 8 MiB
+                           Speed (MHz): avg: 3366 min/max: 419/5138 cores: 1: 3366 2: 3366 3: 3366 4: 3366 5: 3366 6: 3366 7: 3366 8: 3366 9: 3366 10: 3366 11: 3366 12: 3366 13: 3366 14: 3366 15: 3366 16: 3366
+
+                SCX Scheduler: p2dq_1.0.21_gf90c2aa1_dirty_x86_64_unknown_linux_gnu
+
+                SCX Version: p2dq_1.0.21_gf90c2aa1_dirty_x86_64_unknown_linux_gnu
+
+                 Version         : 0.5.1-1
+                ```
+                </details>
+                <details>
+                <summary>同じスケジューラの2つの異なるブランチを比較したテスト結果の HTML 例</summary>
+                <ImageComponent imgsrc={import('~/assets/images/cachyos-benchmarker-example.png')} />
+                </details>
+    6. 2つ以上のベンチマークを比較するには、`benchmark_scraper.py` を実行する前に `.log` ファイルを同じディレクトリに置いてください。ツールが自動的に検出し、HTML レポートで比較できます。
+</Steps>
+
+### schbench でスケジューラのレイテンシをテストする
+
+schbench はサーバー風の処理をシミュレートしてスケジューラのレイテンシを測定するスケジューラベンチマークです。個数を指定できる「ワーカー」と「メッセージ」スレッドを生成し、メッセージスレッドが繰り返しワーカーをウェイクアップします。これらのワーカースレッドのウェイクアップから実行までのレイテンシ分布を測定することで、特に負荷下でのスレッドのウェイクアップ、バランシング、CPU 競合を処理するカーネルの能力に関する重要な調査結果を出力します。
+
+#### 用途
+
+`schbench` は以下の目的で使えます。
+
+- **スケジューラのレイテンシ評価:** ウェイクアップ後にスレッドがどれだけ素早くスケジュールされるかを測定
+- **スケジューラ間のウェイクアップパフォーマンスの比較:** コンテキストスイッチとウェイクアップレイテンシの改善やリグレッションを測定
+- **カーネルやスケジューラのパッチの影響をテストする:** チューニングやアップデートがスケジューリングの公平性と応答性に影響するかどうか評価
+
+#### インストール
+
+`schbench` は CachyOS リポジトリで利用できます。
+```bash
+sudo pacman -S schbench
+```
+
+#### ベンチマークの実行
+
+通常のレイテンシテストの実行コマンド:
+```bash
+schbench -m 2 -t 8 -r 60
+```
+
+この例では以下のパラメーターで実行しています。
+- 2つのメッセージスレッド (`-m 2`)
+- メッセージスレッドあたり8つのワーカースレッド (`-t 8`)
+- 合計実行時間 60 秒 (`-r 60`)
+
+CPU コア数と希望する負荷レベルに応じてこれらの値を調整できます。
+
+以下は主なオプションの説明です。
+
+| オプション | 説明 |
+| ---------------------------- | --------------------------------------------------------------- |
+| `-C, --calibrate` | キャリブレーションを実行してタイミングを出力 (ベンチマークなし) |
+| `-L, --no-locking` | CPU 作業中のスピンロックを無効にする (デフォルト: ロックあり) |
+| `-m, --message-threads <n>` | メッセージスレッド数 (デフォルト: 1) |
+| `-t, --threads <n>` | メッセージスレッドあたりのワーカースレッド数 (デフォルト: CPU 数) |
+| `-r, --runtime <sec>` | ベンチマーク実行時間 (デフォルト: 30) |
+| `-F, --cache_footprint <KB>` | キャッシュフットプリントサイズ (デフォルト: 256) |
+| `-n, --operations <count>` | 実行する「思考時間」操作の数 (デフォルト: 5) |
+| `-A, --auto-rps` | CPU 使用率ターゲットに達するまで秒あたりリクエスト数を自動的に増加させる |
+| `-R, --rps <count>` | 秒あたりリクエスト数モード |
+| `-p, --pipe <bytes>` | パイプ転送テストをシミュレートする |
+| `-w, --warmuptime <sec>` | 統計収集前のウォームアップ時間 (デフォルト: 0) |
+| `-i, --intervaltime <sec>` | レイテンシ出力間隔 (デフォルト: 10) |
+| `-z, --zerotime <sec>` | レイテンシ統計をゼロにする間隔 (デフォルト: なし) |
+
+#### 出力の解釈
+
+それぞれのベンチマークの後、`schbench` はレイテンシの％を出力します。
+
+<details>
+    <summary>出力例</summary>
+    ```bash
+    Wakeup Latencies percentiles (usec) runtime 10 (s) (2406 total samples)
+	  50.0th: 60         (648 samples)
+	  90.0th: 2034       (968 samples)
+	* 99.0th: 4104       (211 samples)
+	  99.9th: 10128      (22 samples)
+	  min=1, max=10308
+    Request Latencies percentiles (usec) runtime 10 (s) (2394 total samples)
+	  50.0th: 49216      (726 samples)
+	  90.0th: 69760      (954 samples)
+	* 99.0th: 166656     (212 samples)
+	  99.9th: 273920     (21 samples)
+	  min=11770, max=334247
+    RPS percentiles (requests) runtime 10 (s) (11 total samples)
+	  20.0th: 234        (3 samples)
+	* 50.0th: 238        (3 samples)
+	  90.0th: 241        (4 samples)
+	  min=230, max=248
+    current rps: 230.99
+    ```
+</details>
+
+##### 結果の読み取り方
+
+- **ウェイクアップレイテンシ:**
+  - シグナル後にスレッドがどれだけ素早くウェイクアップするかを測定します。
+    - 低い値 (特に **99パーセンタイル**) が出た場合はスケジューラの応答性が高いことを表します。
+- **リクエストレイテンシ:**
+  - スレッド間のリクエスト完了にかかる時間を表します。
+    - レイテンシが低ければスレッド間通信とスケジューリング効率が良いと言えます。
+- **RPS (秒あたりリクエスト数):**
+  - 実効スループットを表します。
+    - **平均 RPS** が高ければスケジューラが指定した設定下でたくさんの作業を行えるという意味です。
+
+まとめ:
+- **良いスケジューラ** は **低いウェイクアップレイテンシやリクエストレイテンシ** と **一定の RPS** が大切
+- **低効率のスケジューラ** を見分けるには **高いレイテンシスパイク** や **時間経過とともに不安定な RPS 値** がサイン
+
+:::note
+こうした結果は CPU、コア数、システム負荷、およびスケジューラが CPU アーキテクチャーを効率的に処理できるかどうかによって異なります。
+:::
+
+### ゲームのベンチマークに関する推奨事項
+
+異なるスケジューラのパフォーマンスを比較するためにゲームをベンチマークしたい場合、より正確な結果を得るためのコツを一部ご紹介します。
+
+- **組み込みベンチマークを活用しよう** 多くの現代的なゲームには組み込みのベンチマークツールが含まれています。毎回同じ処理内容を実行することで一貫した結果を出すよう設計されています。
+  - 組み込みベンチマークを持つゲームの一覧は[こちらのウェブサイト](https://www.pcgamingwiki.com/wiki/List_of_games_with_built-in_benchmarks)をご覧ください。
+- **一貫した設定** テストを実行する際、毎回ゲームの設定 (解像度、グラフィックス品質など) が同じであることを確認してください。
+- **バックグラウンドアプリを閉じよう** バックグラウンドで実行されているほかのアプリケーションがパフォーマンスに影響することがあります。不要なプログラムを閉じてなるべく影響しないようにしましょう。
+- 組み込みベンチマークを使わない場合は、それぞれのテストで同じ操作をゲーム内で行うようにしましょう。(例: 同じ経路をたどる、戦闘状況と方法をそろえる)
+  - エイムが少し変わるだけでもパフォーマンス結果が異なることがあります。
+- **何度もテストしよう** 変動を考慮するためにベンチマークを複数回実行して平均をとりましょう。
+- **パフォーマンス監視ツールを活用しよう** MangoHud や GOverlay などのツールは FPS、フレーム時間、CPU/GPU 使用率などのリアルタイムのパフォーマンス統計を計測できます。
+- **キーボードショートカットやマクロを活用しよう**
+  - 例: ゲーム内でリアルタイムに異なるスケジューラを切り替えたりモードを変更するキーバインド
+    - これは [scxctl](/ja/configuration/sched-ext#スケジューラの起動と管理方法) などのツールや、アクティブなスケジューラとそのモードを変更するカスタムスクリプトで実現できます。
+
+#### ベンチマークの投稿と共有
+
+[このウェブサイト](https://flightlesssomething.ambrosia.one/benchmarks)にはコミュニティが異なるスケジューラや各種設定でテストしたベンチマークの一覧があります。
+
+自分のベンチマークを投稿するには Discord アカウントをウェブサイトに連携する必要があります。
+
+`New benchmark` ボタンをクリックして必要な情報を記入してください。
+
+- 同じゲームで別のスケジューラや設定を使った複数の結果を投稿できます。
+- MangoHud と Afterburner のログに対応しています。
+- タイトルまたは説明で検索できます。
+
+## scx.service から scx_loader への移行ガイド
+
+:::caution
+scx_loader.service と scx.service を同時に実行しないでください。ローダーサービスは起動しますが何もしません。
+
+両方のサービスがどちらがスケジューラを管理しているかを互いに認識できないため、競合が発生します。
+:::
+
+:::tip
+CachyOS カーネルマネージャーにはすでに [scx_loader を管理するための GUI が実装されています。](/ja/features/kernel_manager#sched-ext-フレームワーク管理)
+:::
+
+まず scx.service ファイルの構造と scx_loader 設定ファイルの構造をくらべることから始めましょう。
+
+*以前に LAVD を以下のような古い scx.service で実行していた場合…*
+
+```sh title='scx.service ファイルの構造'
+# List of scx_schedulers: scx_bpfland scx_central scx_flash scx_lavd scx_layered scx_nest scx_qmap scx_rlfifo scx_rustland scx_rusty scx_simple scx_userland
+SCX_SCHEDULER=scx_lavd
+
+# Set custom flags for the scheduler
+SCX_FLAGS='--performance'
+```
+
+scx_loader 設定ファイルでの同等の設定は以下のようになります。
+
+```sh title='scx_loader ファイルの構造'
+default_sched = "scx_lavd"
+default_mode = "Auto"
+
+[scheds.scx_lavd]
+auto_mode = ["--performance"]
+```
+
+[scx_loader ファイルの設定方法の詳細](https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/configuration.md#scx_loader-configuration-file)
+
+  以下のガイドにしたがって `scx systemd サービス` から新しい `scx_loader` ツールへかんたんに移行できます。
+  <Steps>
+  1. ```sh title='scx.service を無効にして scx_loader.service を有効化'
+      systemctl disable --now scx.service && systemctl enable --now scx_loader.service
+      ```
+  2. ```sh title='scx_loader の設定ファイルを作成してデフォルト構造を追加する'
+     # Micro エディターが新しいファイルを作成します。
+     sudo micro /etc/scx_loader.toml
+     # 以下の行を追加してください。
+
+     default_sched = "scx_bpfland" # ブート時に scx_loader が起動するスケジューラに変更してください
+     default_mode = "Auto" # 可能な値: "Auto", "Gaming", "LowLatency", "PowerSave"
+
+     # CTRL + S で変更を保存し、CTRL + Q で Micro を終了してください。
+     ```
+  3. ```sh title='scx_loader を再起動する'
+     systemctl restart scx_loader.service
+     ```
+     - これで、scx_loader が希望するスケジューラを読み込んで起動します。
+
+  </Steps>
+
+### scx_loader でのデバッグ
+
+<Tabs>
+<TabItem label='シンプルなログ'>
+
+  - ```sh title='サービスの状態を確認する'
+    systemctl status scx_loader.service
+    ```
+  - ```sh title='すべてのサービスのログエントリを表示する'
+    journalctl -u scx_loader.service
+    ```
+  - ```sh title='現在のセッションのログのみを表示する'
+    journalctl -u scx_loader.service -b 0
+    ```
+</TabItem>
+<TabItem label='詳細なログ'>
+
+*より詳細なログを取得するには以下の手順にしたがってください。*
+  - ```sh title='サービスファイルを編集する'
+     sudo systemctl edit scx_loader.service
+     ```
+  - ```sh title='[Service] セクションの下に以下の行を追加する'
+     Environment=RUST_LOG=trace
+     ```
+  - ```sh title='サービスを再起動する'
+     sudo systemctl restart scx_loader.service
+     ```
+  - 再度ログを確認すると詳細なデバッグ情報を読むことができます。
+</TabItem>
+
+</Tabs>
+
+## よくある質問
+
+### 色々ありすぎる… なぜこれ一本なスケジューラを作らない？
+
+主な理由は CPU スケジューリングにおいて、一本でなんでも解決する方法というのは存在しないからです。環境や用途に応じてそれぞれの要件と優先事項があるため、ある用途や処理内容に最適化されたスケジューラが別の用途や処理内容でうまく機能しないということは多々あります。
+
+CPU スケジューラは用途に合わせた靴だと考えてください。例えばサーバー用途に最適化されたスケジューラでゲームを実行すると、パフォーマンスが下がったり、遅延が大きくなる可能性があります。一方ゲーム向けに設計されたスケジューラをサーバーで使用すると、非効率なリソースの利用とスループットの低下につながる可能性があります。
+
+ここで sched-ext の魔法です。制約というのはもはや問題になりません。
+
+### なぜ○○スケジューラがほかよりもパフォーマンスが悪い？
+
+- 比較するときには多くの条件を考慮する必要があります。例えば、タスクのウェイトをどのように測定するのか、応答性が求められるタスクをそうでないタスクより優先するのか… 最終的に、この点はスケジューラそれぞれの設計の趣旨に左右されます。
+
+### ○○の場合には✕✕スケジューラが最適だと言われているのに、なぜ自分の環境ではうまくいかない？
+
+- ひとつ前の回答と同じく、CPU の種類とコアレイアウト、コア間でキャッシュを共有する方法などの設計が、スケジューラの効率の低下につながることがあります。
+- だからこそ、いろいろためせるのが sched-ext フレームワークの魅力のひとつです。怖がらずにいろいろためしてみて、自分に合うものを見つけましょう。`例: FPS の安定性、最大パフォーマンス、高負荷処理での応答性など`
+
+### スケジューラの用途がかなり似ていることがあるのはなぜ？
+
+主にこれらが多目的スケジューラだからです。すべての分野で優れているわけではなくても、さまざまな用途に対応できます。
+
+- どう自分にぴったりのスケジューラを決めるのかと言っても、実際に試してみようという以外に言えることはありません。
+
+### 一部のユーザーが CachyOS Discord でテストしているスケジューラが見当たない
+
+`scx-scheds-git` という名前の scx-scheds パッケージの最新版を使っていることを確認してください。
+
+- その理由のひとつとして、そのスケジューラがまだ開発されたばかりでユーザーによってテスト中であるため、まだ `scx-scheds-git` パッケージに追加されていない可能性があります。
+
+### スケジューラが突然クラッシュした。不安定なのか？
+
+- *以下の理由が考えられます。*
+  - 最も一般的な理由のひとつは、スケジューラと一緒に ananicy-cpp を使用していることです。そのため[この警告](/ja/configuration/sched-ext#ananicy-cpp-と-sched-ext)を追加しました。
+  - もう一つの理由として、実行していた処理内容がスケジューラの限界と容量を超えていた可能性があります。
+    - 無理を起こす処理の例: `hackbench`
+  - または、より明白な例として、スケジューラのバグを発見した可能性があります。その場合は [GitHub](https://github.com/sched-ext/scx/issues) に Issue として報告するか、CachyOS Discord の `sched-ext` チャンネルでお知らせください。
+
+### 以前カーネルマネージャーの GUI で scx_loader を使用していました。移行手順は必要ですか？
+
+- この場合は不要です。カーネルマネージャーがすでに移行プロセスを処理しているからです。
+  - *ただし `/etc/default/scx` にカスタムフラグを追加しており、引き続き使用したい場合を除きます。*
+
+## 詳細情報
+
+:::note[クレジット]
+以下のリンクの一部は [sched-ext GitHub リポジトリ](https://github.com/sched-ext/scx?tab=readme-ov-file#sched_ext-schedulers-and-tools)から抜粋しています。こうした優れた資料を収集・共有してくれた sched-ext のメンテナーと貢献者に全面的に感謝を申し上げます。
+:::
+
+- [Sched_ext YouTube 再生リスト](https://youtube.com/playlist?list=PLLLT4NxU7U1TnhgFH6k57iKjRu6CXJ3yB&si=DETiqpfwMoj8Anvl)
+- [LWN: The extensible scheduler class (2023年2月)](https://lwn.net/Articles/922405/)
+- [arighi のブログ: Implement your own kernel CPU scheduler in Ubuntu with sched_ext (2023年7月)](https://arighi.blogspot.com/2023/07/implement-your-own-cpu-scheduler-in.html)
+- [David Vernet の講演: Kernel Recipes 2023 - sched_ext: pluggable scheduling in the Linux kernel (2023年9月)](https://youtu.be/8kAcnNVSAdI?si=F5Q-dkSS_sG9BTXA)
+- [Changwoo のブログ: sched_ext: a BPF-extensible scheduler class (Part 1) (2023年12月)](https://blogs.igalia.com/changwoo/sched-ext-a-bpf-extensible-scheduler-class-part-1/)
+- [arighi のブログ: Getting started with sched_ext development (2024年4月)](https://arighi.blogspot.com/2024/04/getting-started-with-sched-ext.html)
+- [Changwoo のブログ: sched_ext: scheduler architecture and interfaces (Part 2) (2024年6月)](https://blogs.igalia.com/changwoo/sched-ext-scheduler-architecture-and-interfaces-part-2/)
+- [arighi の YouTube チャンネル: scx_bpfland Linux scheduler demo: topology awareness (2024年8月)](https://youtu.be/R-FEZOveG-I)
+- [David Vernet の講演: Kernel Recipes 2024 - Scheduling with superpowers: Using sched_ext to get big perf gains (2024年9月)](https://youtu.be/Cy7-oqdcUCs?si=bjKu3uidOdIzzAWv)

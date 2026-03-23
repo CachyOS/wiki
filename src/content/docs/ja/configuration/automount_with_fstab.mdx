@@ -1,0 +1,217 @@
+---
+title: fstab を使ったドライブの自動マウント
+description: /etc/fstab を使って追加のドライブをブート時に自動マウントする方法
+---
+
+このガイドでは `/etc/` にある fstab ファイルを使ってブート時に追加のドライブをマウントする基本的な方法を説明します。パーティションや UUID の調べ方、各オプションの意味、さらに詳しく知りたい場合の参考資料についても紹介しています。
+
+## 要件
+
+- ルートまたは sudo 権限
+
+## /etc/fstab へのエントリの追加
+
+:::note[Linux での NTFS について]
+NTFS ファイルシステムは、ntfs3 ドライバや ntfs-3g ドライバを使用する場合でも Linux では不安定になることがあります。自己責任で使用してください。安定性とパフォーマンスを重視するなら、ext4, xfs, btrfs などの Linux ネイティブなファイルシステムをおすすめします。
+:::
+
+### 1. パーティション UUID の確認
+
+```sh title="ターミナルで以下のコマンドを実行"
+lsblk -f
+```
+
+```text title="出力例"
+# NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+# zram0                                                                              [SWAP]
+# nvme0n1
+# ├─nvme0n1p1 vfat   FAT32       E04D-9F05
+# ├─nvme0n1p2
+# ├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
+# ├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
+# ├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
+# └─nvme0n1p6 ntfs
+```
+
+今回の例では、マウントしたいのは Windows パーティション (ntfs 形式)で、空き容量がおよそ半分あることがわかっています。この条件から、マウントしたいパーティションは `nvme0n1p3`、UUID は `08A24E90A24E81E4`、ファイルシステムは `ntfs` であると判断できます。
+
+### 2. パーティションを特定する
+
+多くの場合、`lsblk -f` の出力だけで `/etc/fstab` にマウントするための情報は十分です。それでも正しいパーティションかどうか確信が持てない場合は、以下のコマンドを実行してください。
+
+```sh
+sudo fdisk -l
+```
+
+```text title="出力例"
+# Device              Start        End    Sectors  Size Type
+# /dev/nvme0n1p1       2048     206847     204800  100M EFI System
+# /dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
+# /dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
+# /dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
+# /dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
+# /dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
+```
+
+この例では UUID はすでに把握しています。ただし `fdisk -l` を使うとパーティションの正確なサイズ (1.4T) と種類 (Microsoft basic data) が表示されるため、さらに明確になります。
+
+これにより、マウントしたいパーティションが先ほど確認した UUID `08A24E90A24E81E4` の `nvme0n1p3` であることが正確にわかります。本来はここまでする必要はありませんが、念の為確認することでミスを防げます。
+
+正しいパーティションを特定できたら UUID をコピーしてください。ターミナルでのコピーは通常 `Ctrl+Shift+C` で行うことができます。
+
+### 3. /etc/fstab にエントリを追加する
+
+UUID を取得できたので、fstab ファイルを開きましょう。
+
+好みのテキストエディターを使ってください。この例では nano を使います。fstab ファイルを編集するにはルートとして開く必要があります。
+
+```sh
+sudo nano /etc/fstab
+```
+
+矢印キーでファイルの末尾に移動し、空行に新しいエントリを追加してください。
+
+```sh
+UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000 0 0
+```
+
+:::note
+`/media/windows` がファイルシステム上に存在している必要があります。存在しない場合は `mkdir` で作成してください。
+:::
+
+各項目の説明は以下のとおりです。
+
+- `UUID=08A24E90A24E81E4` はマウントしたいファイルシステムを UUID で指定しています。ファイルシステムを識別する方法はほかにもありますが、UUID が最も安全です。その他の方法は[こちら](https://wiki.archlinux.jp/index.php/Fstab#%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E3%81%AE%E8%AD%98%E5%88%A5)をご覧ください。
+- `/media/windows` はドライブのマウントポイントです。[Linux ファイルシステム階層標準](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)では `/media/` がリムーバブルドライブのマウント先として適切とされています。`windows` はマウント先のディレクトリ名です。マウントしたいドライブごとに専用のディレクトリが必要です。
+
+- `ntfs3` は使用するファイルシステムの種類です。この例では明示的に ntfs3 カーネルドライバを使用しています。ほかには `ext4`、`xfs` などがあります。`auto` に置き換えると mount コマンドが自動で判断するようになります。
+
+- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000` はマウントオプションです。
+
+  - `defaults`: `rw, suid, dev, exec, auto, nouser, async` を含む標準的なオプションセットです。
+
+  - `nofail`: このマウントが失敗してもブートを続行します。
+
+  - `uid=1000` と `gid=1000`: マウントされたファイルのユーザーとグループの所有権を ID 1000 に設定します。
+
+  - `rw`: ファイルシステムを読み書き可能としてマウントします。
+
+  - `user`: ルート以外のユーザーがファイルシステムをマウントできるようにします。
+
+  - `exec`: マウントされたファイルシステム上のバイナリの実行を許可します。
+
+  - `umask=000`: 全ユーザーに読み取り、書き込み、実行権限を付与するファイルパーミッションマスクを設定します。
+
+  - `最初の 0`: dump は現代のシステムでは通常廃止されています。0 のままにしても問題ありません。詳細は[こちら](https://linux.die.net/man/8/dump)をご覧ください。
+
+  - `2番目の 0`: ブート時のファイルシステムチェックの順序を設定します。ルートパーティションの場合は 1 ですが、btrfs の場合は 0 にしてください。fstab 内のそのほかのファイルシステムは 0 (無効) または 2 に設定してください。詳細は[こちら](https://man.archlinux.org/man/fsck.8)をご覧ください。
+
+各オプションの詳細は [fstab のマニュアルページ](https://man7.org/linux/man-pages/man5/fstab.5.html)と [mount のマニュアルページ](https://man7.org/linux/man-pages/man8/mount.8.html)をご覧ください。
+#### 補足
+
+ファイルシステムの種類以降のオプションはすべて省略可能で、デフォルト値から変更しない場合は省略できます。
+
+つまり
+
+`UUID=<パーティション UUID> /media/foo somefs`
+
+と
+
+`UUID=<パーティション UUID> /media/foo somefs defaults 0 0`
+
+は同等です。`somefs` の後に何も指定しない場合、暗黙的に `somefs defaults 0 0` として扱われます。
+
+### 4. 仕上げ
+
+エントリを追加したドライブを今すぐマウントするには、以下の2つのコマンドを実行してください。
+
+```sh
+sudo systemctl daemon-reload
+```
+
+```sh
+sudo mount -a
+```
+
+ドライブが `/media/windows` に表示されるようになり、再起動後も自動的にマウントされます。
+
+```sh
+ls /media/windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+# 'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
+ ```
+
+ホームディレクトリに新しくマウントしたドライブへのリンクを作成したい場合は以下を実行してください。
+
+ ```sh
+ ln -s /media/windows ~/Windows
+ ```
+
+ 以下のコマンドで作成できたか確認できます。
+
+ ```sh
+ ls ~/Windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+#'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
+ ```
+
+## まとめ
+
+- パーティションの **UUID** の確認
+
+```sh
+lsblk -f
+```
+
+- `/etc/fstab` を開く
+
+```sh
+sudo nano /etc/fstab
+```
+
+- ファイルの末尾にエントリを追加する
+
+```sh
+UUID=<パーティション UUID> /media/foo somefs defaults 0 0
+```
+
+`<パーティション UUID>`、`foo`、`somefs` をそれぞれの UUID、ディレクトリ名、ファイルシステム (例: ext4) に置き換えてください。NAS には `_netdev`、重要でないドライブには `nofail` など、必要に応じてオプションを追加してください。
+
+- デーモンをリロードする
+
+```sh
+sudo systemctl daemon-reload
+```
+
+- ドライブをマウントする
+
+```sh
+sudo mount -a
+```
+
+ドライブがマウントされ、以降のブート時にも自動的にマウントされます。
+
+## 参考リンク
+
+- [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS の /media/ について](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [dump のマニュアル](<https://linux.die.net/man/8/dump>)
+- [fsck のマニュアル](https://man.archlinux.org/man/fsck.8)
+- [fstab のマニュアルページ](https://man.archlinux.org/man/fstab.5.en)
+- [Arch Linux Wiki 日本語版 - fstab](https://wiki.archlinux.jp/index.php/Fstab)

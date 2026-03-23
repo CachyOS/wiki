@@ -1,0 +1,525 @@
+---
+title: インストール後の設定
+description: CachyOS インストール後の設定手順
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+## インストール後の推奨設定
+
+### システムの更新
+
+:::tip
+よくある落とし穴を避けてシステムを安全に保つために、[セキュリティとベストプラクティス](/ja/cachyos_basic/faq#セキュリティとベストプラクティス)を確認してください。
+:::
+
+<Tabs>
+
+<TabItem label="Octopi を使う (GUI)">
+
+Octopi は Arch ベースのディストリビューション向けのグラフィカルなパッケージマネージャーで、パッケージとアップデートを便利に管理できます。
+Octopi でシステムをアップデートするには以下の手順にしたがってください。
+
+<Steps>
+
+1. アプリケーションメニューから **Octopi** を起動してください。
+2. メインウィンドウで **アップデートを確認** ボタン (左上) をクリックし、そのとなりの **システムアップグレード** をクリックしてください。
+3. Octopi が利用可能なアップデートを確認し、Octopi 自体またはターミナルでインストールするかどうかを確認します。
+4. アップデートを進めるには **適用** ボタンをクリックしてください。
+5. Octopi がアップデートをダウンロードしてインストールします。
+6. 大きなアップデートの後は (特にカーネルがアップデートされた場合) コンピューターを再起動することをおすすめします。
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Pacman を使う">
+
+<Steps>
+
+1. ターミナルエミュレーターを開いてください。(`ctrl + alt + t` や、Qtile など WM の場合は `mod + return` でも開けます)
+2. 以下のコマンドを実行してシステムをアップデートしてください。
+
+   ```sh
+   sudo pacman -Syu
+   ```
+3. 大きなアップデートの後は (特にカーネルがアップデートされた場合) コンピューターを再起動することをおすすめします。
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="オフラインシステムアップデート">
+
+*CachyOS は [`pacman-offline`](https://github.com/eworm-de/pacman-offline) スクリプトを使ったオフラインシステムアップグレードをサポートしています。パッケージのアップデートをダウンロードして次回の再起動時に適用できます。(Windows に似たアップデート方式です)*
+
+:::note
+`pacman-offline` ツールは systemd のオフラインアップデート機能と連携しています。カーネルのアップデートとモジュールの読み込みを自動的に処理します。
+
+`/etc/pacman.d/offline.conf` ファイルは通常のアップデートとオフラインアップデートで更新するパッケージを管理するための重要なファイルです。希望するカーネルに合わせて正しく設定するか、pacman-offline の実行時のみ更新して通常のアップデート (例: `pacman -Syu`) では無視したいパッケージを追加してください。
+
+**自動アップデートタイマーを有効にすると、手動でのシステムアップデートは不要になります。**
+:::
+
+<Steps>
+
+1. **pacman-offline パッケージをインストールしてください。**
+
+   ```bash
+   sudo pacman -S pacman-offline
+   ```
+
+2. **作成したパッケージ除外リストを pacman が読み込むよう設定してください。**
+
+   :::note[[options] セクションの後に追記してください。以下は記述例です。]
+   :::
+
+   ```bash title='/etc/pacman.conf ファイルに以下の行を追加'
+   Include = /etc/pacman.d/offline.conf
+   ```
+   *記述例*
+   ```bash
+   # /etc/pacman.conf
+   # REPOSITORIES
+   #   - can be defined here or included from another file
+   #   - pacman will search repositories in the order defined here
+   #   - local/custom mirrors can be added here or in separate files
+   #   - repositories listed first will take precedence when packages
+   #     have identical names, regardless of version number
+   #   - URLs will have $repo replaced by the name of the current repo
+   #   - URLs will have $arch replaced by the name of the architecture
+   #
+   # Repository entries are of the format:
+   #       [repo-name]
+   #       Server = ServerName
+   #       Include = IncludePath
+   #
+   # The header [repo-name] is crucial - it must be present and
+   # uncommented to enable the repo.
+   #
+   # GENERAL OPTIONS
+   [options]
+   # other options like 'Color', 'CheckSpace', etc. can be here
+   Include = /etc/pacman.d/offline.conf
+   ```
+3. **通常のアップデートで pacman がカーネルを無視するよう CachyOS カーネルを追加してください。**
+
+   `pacman-offline` ツールはこのファイルを使って従来の pacman アップデート時に無視するパッケージを決定します。
+
+   例: `sudo pacman -Syu` を実行したとき
+
+   `/etc/pacman.d/offline.conf` ファイルの内容を以下に置き換えてください。
+
+   ```text
+   # Arch Linux kernels
+   IgnorePkg = linux linux-headers linux-docs
+   IgnorePkg = linux-lts linux-lts-headers linux-lts-docs
+   IgnorePkg = linux-zen linux-zen-headers linux-zen-docs
+   IgnorePkg = linux-hardened linux-hardened-headers linux-hardened-docs
+
+   # CachyOS kernels
+   IgnorePkg = linux-cachyos linux-cachyos-headers linux-cachyos-nvidia-open linux-cachyos-zfs
+   IgnorePkg = linux-cachyos-bmq linux-cachyos-bmq-headers linux-cachyos-bmq-nvidia-open linux-cachyos-bmq-zfs
+   IgnorePkg = linux-cachyos-bore linux-cachyos-bore-headers linux-cachyos-bore-nvidia-open linux-cachyos-bore-zfs
+   IgnorePkg = linux-cachyos-deckify linux-cachyos-deckify-headers linux-cachyos-deckify-nvidia-open linux-cachyos-deckify-zfs
+   IgnorePkg = linux-cachyos-eevdf linux-cachyos-eevdf-headers linux-cachyos-eevdf-nvidia-open linux-cachyos-eevdf-zfs
+   IgnorePkg = linux-cachyos-gcc linux-cachyos-gcc-headers linux-cachyos-gcc-nvidia-open linux-cachyos-gcc-zfs
+   IgnorePkg = linux-cachyos-hardened linux-cachyos-hardened-headers linux-cachyos-hardened-nvidia-open linux-cachyos-nvidia-hardened-zfs
+   IgnorePkg = linux-cachyos-lts linux-cachyos-lts-headers linux-cachyos-lts-nvidia-open linux-cachyos-lts-zfs
+   IgnorePkg = linux-cachyos-rc linux-cachyos-rc-headers linux-cachyos-rc-nvidia-open linux-cachyos-rc-nvidia-open linux-cachyos-rc-zfs
+   IgnorePkg = linux-cachyos-rt-bore linux-cachyos-rt-bore-headers linux-cachyos-rt-bore-nvidia-open
+   IgnorePkg = linux-cachyos-server linux-cachyos-server-headers linux-cachyos-server-nvidia-open linux-cachyos-server-zfs
+   ```
+
+   これらのパッケージは通常のアップデートでは無視されますが、オフラインアップデートの前処理時に確認されます。
+
+3. **オフラインアップデートの前処理を一度だけ実行してください。**
+
+   ```bash title='以下のコマンドを実行してください'
+   sudo systemctl start pacman-offline-prepare.service
+   ```
+   このコマンドは pacman-offline を一度実行し、パッケージデータベースを同期してアップデートをダウンロードしますが、インストールは行いません。
+
+</Steps>
+
+*このスクリプトを自動化したい場合は以下の手順にしたがってください。*
+
+<Steps>
+
+1. **前処理タイマーを有効にしてください。**
+
+   `pacman-offline-prepare.timer` を有効にすると、毎日システムの起動から数分後にこのスクリプトを起動してアップデートをダウンロードするよう systemd が設定されます。
+
+   ```bash
+   sudo systemctl enable pacman-offline-prepare.timer
+   ```
+
+2. **システムを再起動してください。**
+
+   次回の再起動時にアップデートがインストールされます。
+
+3. **(任意) 自動システム再起動:**
+
+    `pacman-offline-reboot.timer` を有効にすると、保留中のアップデートがある場合にデフォルトで**深夜3時** (お住まいのタイムゾーン) に自動的に再起動します。デフォルトで2時間の `RandomizedDelaySec` が設定されているため、常に同じ時刻になるわけではありません。
+
+    ```bash
+    sudo systemctl enable pacman-offline-reboot.timer
+    ```
+
+    :::tip
+    `pacman-offline-reboot.timer` ファイルを編集して、保留中のアップデートがある場合の再起動時刻を変更したり、ランダム化されたスケジュールを無効にしたりできます。
+    :::
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Cachy-Update">
+
+[Arch-Update](https://github.com/Antiz96/arch-update) のフォーク
+
+Arch Linux 向けのアップデート通知・適用ツールで、重要なアップデート前後の作業をサポートします。
+デスクトップ環境やウィンドウマネージャーとかんたんに連携できる動的でクリック操作に対応しているシステムトレイアプレットを含んでいます。
+
+<details>
+    <summary>Cachy-Update を有効にする方法</summary>
+    `CachyOS Hello > アプリ/チューニング > Cachy Update を有効化` で Cachy-Update を有効にしてください。
+</details>
+<details>
+    <summary>Cachy-Update を無効にする方法</summary>
+        ターミナルを開き以下のコマンドを実行してください。
+            ```bash
+            sudo systemctl --global disable arch-update-tray.service
+            sudo systemctl --global disable arch-update.timer
+            ```
+            :::tip
+            システムトレイアプレットは残しつつ自動アップデートチェックだけを無効にする場合は、サービスを無効にせずタイマーのみを無効にしてください。
+            :::
+</details>
+
+- 機能:
+  - 利用可能なアップデートの自動確認と一覧表示
+  - 最近の Arch Linux のニュースを確認 (ある場合は表示するかどうかを確認)
+  - 孤立したパッケージを確認 (ある場合は削除するかどうかを確認)
+  - キャッシュ内の古い・アンインストール済みパッケージを確認 (ある場合は削除するかどうかを確認)
+  - 再起動が必要なカーネルアップデートを確認 (ある場合は再起動するかどうかを確認)
+  - アップグレード後の再起動が必要なサービスを確認 (ある場合は再起動するかどうかを確認)
+  - `sudo`, `sudo-rs`, `doas`, `run0` に対応
+
+**アップデート確認間隔:** `起動から15秒後に1回、その後1時間ごと`
+
+- アップデート確認間隔を変更する方法:
+
+```sh title='以下のコマンドを実行'
+systemctl --user edit --full arch-update.timer
+# メモ: nano の代わりに好みのテキストエディターも使えます。
+# 例: EDITOR=micro systemctl --user edit --full arch-update.timer
+```
+
+<details>
+<summary>設定ファイルの初期設定</summary>
+    ```systemd
+    [Timer]
+    OnStartupSec=15 # 起動から15秒後にアップデートを確認
+    OnUnitActiveSec=1h # 1時間ごとにアップデートを確認
+    ```
+</details>
+`OnUnitActiveSec` の値を好きな値に変更できます。30分ごとにチェックするなら `30m`、6時間ごとなら `6h` に設定してください。時間間隔の指定方法の詳細は[こちらのドキュメント](https://www.freedesktop.org/software/systemd/man/latest/systemd.time.html#Parsing%20Time%20Spans)をご覧ください。
+
+起動時に一度だけアップデートを確認したい場合は `OnUnitActiveSec` の行を削除してください。
+
+アップストリームの Arch-Update プロジェクトのメンテナンスと Cachy-Update の実装を担当している [Antiz](https://github.com/Antiz96) に感謝申し上げます。
+
+</TabItem>
+
+</Tabs>
+
+### ファイアウォールの設定 (ufw)
+:::note
+UFW はインストール後にデフォルトで有効になっています。
+:::
+ufw を設定するには以下の手順にしたがってください。
+
+<Tabs>
+
+<TabItem label="有効にする">
+
+```bash
+sudo ufw enable
+```
+
+</TabItem>
+
+<TabItem label="無効にする">
+
+```bash
+sudo ufw disable
+```
+
+</TabItem>
+
+<TabItem label="許可する">
+
+デフォルトでは ufw は受信トラフィックを無視して送信トラフィックを許可します。特定の接続をブロックまたは許可するルールを追加できます。
+
+```bash
+# 例
+sudo ufw allow ssh
+```
+
+</TabItem>
+
+<TabItem label="拒否する">
+
+```bash
+# 特定のポートを拒否する例
+sudo ufw deny 80
+```
+
+</TabItem>
+
+<TabItem label="状態確認">
+
+```bash
+sudo ufw status verbose
+```
+
+</TabItem>
+
+</Tabs>
+
+:::note
+ファイアウォールのルールを設定する際は注意してください。設定を誤ると自分自身がシステムにアクセスできなくなる場合があります。
+:::
+
+:::note
+KDE Plasma の設定の「ファイアウォール」の項目で UI 操作で設定することもできます。
+:::
+
+### Wi-Fi 規制ドメインの設定
+
+`wireless-regdb` パッケージには各国の無線ルール (許可された周波数、チャンネル、電力制限) のデータベースが含まれています。お住まいの地域を正しく設定することで、デフォルトでは制限されているチャンネル (チャンネル 12/13 や 5GHz/6GHz 帯域など) が解放され、Wi-Fi のパフォーマンスと接続品質の向上につながる場合があります。
+
+**設定方法:**
+
+1. 設定ファイルの編集:
+   ルート権限で `/etc/conf.d/wireless-regdom` を開いてください。
+   ```bash
+   sudo micro /etc/conf.d/wireless-regdom
+   ```
+2. 国を設定:
+   2文字の [ISO 国コード](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Officially_assigned_code_elements)が記載された行のコメントを外してください。(例: `WIRELESS_REGDOM="US"`) 1つの国だけのコメントが外れていることを確認してください。
+3. 再起動:
+   通常、変更を有効にするには再起動が必要です。
+
+**確認方法:**
+
+現在適用されている規制ドメインを確認するには以下のコマンドを使用してください。
+
+```bash
+iw reg get
+global
+country 00: DFS-UNSET # country 00 はグローバルデフォルトに設定
+	(755 - 928 @ 2), (N/A, 20), (N/A), PASSIVE-SCAN
+	(2402 - 2472 @ 40), (N/A, 20), (N/A)
+	(2457 - 2482 @ 20), (N/A, 20), (N/A), AUTO-BW, PASSIVE-SCAN
+	(2474 - 2494 @ 20), (N/A, 20), (N/A), NO-OFDM, PASSIVE-SCAN
+	(5170 - 5250 @ 80), (N/A, 20), (N/A), AUTO-BW, PASSIVE-SCAN
+	(5250 - 5330 @ 80), (N/A, 20), (0 ms), DFS, AUTO-BW, PASSIVE-SCAN
+	(5490 - 5730 @ 160), (N/A, 20), (0 ms), DFS, PASSIVE-SCAN
+	(5735 - 5835 @ 80), (N/A, 20), (N/A), PASSIVE-SCAN
+	(57240 - 63720 @ 2160), (N/A, 0), (N/A)
+```
+
+設定したコードと一致する `country XX:` の行を確認してください。`country 00:` と表示されている場合は、システムがデフォルトの制限を使用しているか、地域をまだ特定できていない可能性があります。
+
+```bash
+iw reg get
+global
+country US: DFS-FCC # 国コードが正しく US と表示されている
+	(902 - 904 @ 2), (N/A, 30), (N/A)
+	(904 - 920 @ 16), (N/A, 30), (N/A)
+	(920 - 928 @ 8), (N/A, 30), (N/A)
+	(2400 - 2472 @ 40), (N/A, 30), (N/A)
+	(5150 - 5250 @ 80), (N/A, 23), (N/A), AUTO-BW
+	(5250 - 5350 @ 80), (N/A, 24), (0 ms), DFS, AUTO-BW
+	(5470 - 5730 @ 160), (N/A, 24), (0 ms), DFS
+	(5730 - 5850 @ 80), (N/A, 30), (N/A), AUTO-BW
+	(5850 - 5895 @ 40), (N/A, 27), (N/A), NO-OUTDOOR, AUTO-BW, PASSIVE-SCAN
+	(5925 - 7125 @ 320), (N/A, 12), (N/A), NO-OUTDOOR, PASSIVE-SCAN
+	(57240 - 71000 @ 2160), (N/A, 40), (N/A)
+```
+
+### グローバルメニューを有効にする
+Visual Studio Code などの一部のアプリでは、グローバルメニューが動作しないか、パネルではなく親アプリについてしまうことがあります。
+
+```sh
+# グローバルメニューを対応させるには、このコマンドを実行してアプリを再起動してください。
+sudo pacman -S appmenu-gtk-module libdbusmenu-glib
+```
+
+## オプションの設定
+
+### デフォルトシェルの変更
+
+現在 CachyOS はユーザーのデフォルトログインシェルとして [fish](https://fishshell.com/) を使用していますが、好みのシェルに変更できます。
+
+<Tabs>
+   <TabItem label='bash'>
+
+      bash はほぼすべての Linux ディストリビューションに採用されているシェルです。ルートユーザーのログインシェルとしても使われています。基本的な自動補完機能と使いやすい履歴管理を備えています。zsh や fish のような高度なカスタマイズやプラグインのエコシステムはありません。
+
+
+      ```sh title='デフォルトシェルを bash に変更する'
+      chsh -s /usr/bin/bash
+      ```
+
+   </TabItem>
+
+   <TabItem label='zsh'>
+
+      よく使われるプラグインと設定を含む [zsh 設定](https://github.com/CachyOS/cachyos-zsh-config)を提供しています。[fish 設定](https://github.com/CachyOS/cachyos-fish-config)と同等の機能になるよう目指しています。macOS の標準のシェルにも採用されています。
+
+      ```sh title='デフォルトシェルを zsh に変更する'
+      chsh -s /usr/bin/zsh
+      ```
+
+   </TabItem>
+</Tabs>
+
+### [tldr](https://github.com/tldr-pages/tldr) の更新と使い方
+
+:::note
+CachyOS では、オリジナルの tldr を Rust で高速に実装した [tealdeer](https://github.com/tealdeer-rs/tealdeer) を使用しています。
+:::
+
+ヘルプページや man ページを読む時間を節約したい方にとても便利なツールです。
+
+<Steps>
+
+1. ```sh title="ターミナルを開き以下のコマンドを実行"
+   tldr --update
+   ```
+2. tldr の使用例:
+   ```sh
+   tldr java
+     Execute a `.jar` program:
+
+      java -jar filename.jar
+
+   # ご覧のとおり、とても便利で新しいツール/ページが随時追加されています。
+   ```
+
+</Steps>
+
+### AppImage の管理
+
+AppImage はインストールやルート権限なしでほとんどの Linux ディストリビューションで動作するポータブルなアプリケーションです。
+
+:::note[すべての AppImage を実行するには実行権限が必要です。]
+以下のコマンドで実行権限を設定できます。
+```sh
+chmod +x /path/to/your/appimage
+```
+または AppImage ファイルを右クリックして `プロパティ` > `権限` に移動し、「ファイルを実行可能として許可する」にチェックを入れてください。
+:::
+
+:::note[AppImage を実行する前に FUSE (Filesystem in Userspace) がインストールされていることを確認してください。]
+```sh
+sudo pacman -S fuse2
+```
+:::
+
+AppImage を管理するには [gearlever](https://github.com/mijorus/gearlever) を使うとシステムへの統合が便利です。
+
+`gearlever` は AppImage の管理を簡単にするグラフィカルツールです。デスクトップ環境と連携して AppImage の実行と管理をかんたんにします。
+
+gearlever をインストールするには以下の手順にしたがってください。
+
+<Steps>
+    1. まだインストールしていない場合は flatpak をインストールしてください。
+        ```sh
+        sudo pacman -S flatpak
+        ```
+    2. システムを再起動してください。
+    3. flatpak を使って gearlever をインストールしてください。
+        ```sh
+        flatpak install flathub it.mijorus.gearlever
+        ```
+    4. インストール後、ログアウトしてからログインし直すとアプリケーションメニューに gearlever が表示されます。
+</Steps>
+
+### Samba 共有へのアクセス設定
+
+Samba は SMB ネットワークプロトコルのオープンなソフトウェア実装です。Samba サーバーに接続するには CachyOS ユーザー向けの便利な設定が用意されていますが、Samba サーバーの設定を変更する必要があります。
+
+#### CachyOS の smb.conf ファイルのインストールと使用
+
+便利な smb.conf ファイルを使うには、まず必要な smb.conf ファイルを提供する特定のパッケージをインストールします。次にサーバーの既存の smb.conf をこのファイルで置き換えて、共有ボリュームを再設定します。
+
+:::note[このガイドは動作する Samba サーバーがすでにあることを前提としています。]
+:::
+
+<Steps>
+    1. もとの `smb.conf` ファイル (通常 Linux システムでは `/etc/samba/smb.conf`) のバックアップを作成してください。
+    2. クライアントマシンに CachyOS Samba 設定パッケージをインストールしてください。
+        ```sh
+        sudo pacman -S cachyos-samba-settings
+        ```
+    3. クライアントマシンの `smb.conf` を Samba サーバーにコピーしてください。
+    4. ファイルを開いて共有ディレクトリやプリンターなどを追加・編集してください。
+    5. サーバーで Samba サービスを再起動してください。
+        ```sh
+        sudo systemctl restart --now samba
+        ```
+    6. クライアントマシンでファイルマネージャーから共有リソースにアクセスしてください。(例: `smb://<サーバーIP>/<共有名>`)
+
+        正しく設定されていればログイン情報の入力を求められます。必要に応じてログイン情報を保存するオプションをえらんでください。
+</Steps>
+
+### AppArmor.d プロファイルを使った AppArmor サポート
+
+ウィキペディアより引用:
+
+*AppArmor（Application Armor）とは、Linux Security Modulesの一種である。各プログラムにセキュリティプロファイルを結びつけ、できることに制限をかける。ネットワークアクセス、Raw socket アクセス、ファイルへの読み書き実行などを制限できる。*
+
+これは AppArmor に慣れていない方向けの基本的なセットアップ方法の紹介です。影響を理解しないまま操作を行うのはやめてください。
+
+AppArmor.d の詳細情報と独自プロファイルの作成方法については [AppArmor.d のドキュメント](https://github.com/roddhjav/apparmor.d?tab=readme-ov-file#configuration)をご覧ください。
+
+:::caution[注意して操作してください。AppArmor の設定が不適切だと問題が発生することがあります。]
+:::
+
+<Steps>
+
+1. ブートマネージャーに以下のカーネルパラメーターを追加してください。参考として[ブートマネージャーの設定](/ja/configuration/boot_manager_configuration)をご覧ください。
+
+   ```text
+   lsm=landlock,lockdown,yama,integrity,apparmor,bpf
+   ```
+
+2. apparmor と apparmord **(1500以上のプロファイルセット)** パッケージをインストールしてください。
+   ```bash
+   sudo pacman -S apparmor apparmor.d
+   ```
+
+3. AppArmor サービスを有効化・起動してください。
+
+   ```bash
+   systemctl enable --now apparmor.service
+   ```
+
+4. AppArmor プロファイルのキャッシュを有効にしてください。
+
+   ```shell
+   # /etc/apparmor/parser.conf
+   ## 以下の行を追加
+   write-cache
+   Optimize=compress-fast
+   cache-loc /etc/apparmor/earlypolicy/
+   ```
+   ファイルを保存して再起動してください。
+</Steps>

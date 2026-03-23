@@ -1,0 +1,59 @@
+---
+title: Virtio-Venus
+description: Vulkan を通した 3D アクセラレーション
+---
+
+## 用途
+- **ネイティブに近い 3D アクセラレーション**
+
+**Linux**, **BSD**, **Android** などの `libvulkan` を使用する OS では、仮想マシンからの呼び出しを Vulkan に変換し、GPU に直接送信して仮想マシンに返すことで、VM をパススルーさせることなく、ネイティブに近いパフォーマンスを実現できます。
+
+残念ながら **VMM** は **Virtio-Venus** に対応していないため、**qemu-cli** を使用する必要があります。
+
+仮想マシンに付けた名前と、その仮想マシンの場所をメモしておいてください。
+
+## qemu-cli で Virtio-Venus を使用する
+対応している仮想マシンをインストールした後、ターミナルを開いて仮想マシン用の qemu-cli コマンドを作成できます。以下は CachyOS の仮想マシンの一例です。
+
+```sh
+qemu-system-x86_64                                                                             \
+    -enable-kvm                                                                                \
+    -M q35                                                                                     \
+    -smp 6                                                                                     \
+    -m 12G                                                                                     \
+    -cpu host                                                                                  \
+    -net nic,model=virtio                                                                      \
+    -net user,hostfwd=tcp::2222-:22                                                            \
+    -device virtio-sound-pci,audiodev=my_audiodev -audiodev pipewire,id=my_audiodev            \
+    -device virtio-vga-gl,hostmem=4G,blob=true,venus=true                                      \
+    -vga none                                                                                  \
+    -display gtk,gl=on,show-cursor=on                                                          \
+    -usb -device usb-tablet                                                                    \
+    -object memory-backend-memfd,id=mem1,size=12G                                              \
+    -machine memory-backend=mem1                                                               \
+    -drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd   \
+    -drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd              \
+    -drive file=.local/share/libvirt/images/archlinux.qcow2
+```
+
+## くわしく
+
+- `-smp 6` で 6コア の CPU を割り当て
+- `-m 12G` で 12GB の RAM を割り当て
+- `-net user,hostfwd=tcp::2222-:22` でホストのポート 2222 を仮想マシンのポート 22 へ転送
+  - これにより、ほかのデバイスから仮想マシンに SSH 接続したい場合は、以下のコマンドで行うことができます。
+
+```sh
+ssh -p 2222 <仮想マシンユーザー名>@<仮想マシンIPアドレス>
+```
+
+- `-device virtio-vga-gl,hostmem=4G,blob=true,venus=true` Venus ドライバを指定
+  - 残念ながら、まだ virt-manager では対応していません。Venus ドライバが実装されれば、ここでのユーザーモード以外に関する手順はすべて変更されます。
+- `-hostmem=4G` でホスト GPU の VRAM のうち 4GB を割り当て
+- `-object memory-backend-memfd,id=mem1,size=12G` ここでは、size は先ほど割り当てた RAM
+  - 今回の例では 12GB になります。
+- `-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd` で仮想マシンで利用するファームウェアファイルのパスを指定
+- `-drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd` で仮想マシンの NVRAM を指定
+  - 指定しない場合や読み取り専用である場合は仮想マシンは動作しません。
+- `-drive file=.local/share/libvirt/images/archlinux.qcow2` で仮想マシンのストレージとなる .qcow2 ファイルのパスを指定\
+(今回の例においてオーディオデバイスは `ich9` ではなく `pipewire` になっていますが、とくに意味はありません。)

@@ -1,0 +1,275 @@
+---
+title: CachyOS のデスクトップ/ノートパソコンへのインストール
+description: デスクトップまたはノートパソコンへの CachyOS のインストール方法
+sidebar:
+  order: 1
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## はじめる前に
+
+:::note
+**インストーラーを起動** を押した後にブートマネージャーの選択肢として GRUB と Limine しか表示されない場合、システムがレガシーまたは BIOS モードで起動しています。
+:::
+
+:::note[インストール中に複数のデスクトップ環境を選択することはできません。]
+:::
+
+:::caution[UEFI モードでインストールする場合、BIOS/UEFI 設定でセキュアブートと CSM を無効にする必要があります。]
+インストール後にセキュアブートを設定する場合は、[セキュアブート](/ja/configuration/secure_boot_setup)の項目をご覧ください。
+
+`Legacy USB Support` は `Auto` に設定してください。
+:::
+
+:::caution
+`共存してインストール` と `パーティションの置換` オプションは完全に信頼できるものではなく、インストールが失敗することがあります。
+
+CachyOS をインストールする際は **手動パーティション** を**強くおすすめします**。
+:::
+
+:::tip
+インストールに失敗した場合は、ISO に再起動することを強くおすすめします。
+
+再起動しない場合、インストール中に毎回エラーが発生するおそれがあります。
+
+これはインストーラーがインストール失敗後にパーティションを正しくアンマウントしないことが原因で発生するものです。
+:::
+
+## インストール方法
+
+### 手動パーティション設定
+
+:::note[UEFI インストール向けのディスクパーティション設定を行う前に]
+    ```sh title='ターミナルでこのコマンドを実行してください'
+    efibootmgr -v
+    ```
+出力が `EFI variables are not supported on this system.` の場合、システムはレガシーまたは BIOS モードで起動しています。BIOS/UEFI 設定で UEFI モードが有効になっているか確認してください。[はじめる前に](/ja/installation/installation_on_root/#before-you-begin)の項目をご覧ください。
+:::
+
+<Tabs>
+
+各ブートマネージャーによってパーティションテーブルは異なります。えらんだブートマネージャーの **手順 5** の指示にしたがってください。
+
+<TabItem label='UEFI/GPT'>
+
+<Steps>
+
+1. ISO でブートして **インストーラーを起動** をクリックしてください。
+
+2. 希望する **言語** と **地域/タイムゾーン** を設定してください。
+
+3. **キーボードレイアウト** を設定してください。
+
+4. **手動パーティション** をえらんでください。
+
+5. えらんだブートマネージャーに応じて、以下のパラメーターで新しいパーティションを作成してください。
+    <Tabs>
+        <TabItem label='systemd-boot & rEFInd'>
+            - ##### サイズ: 最低 **2048 MiB**
+            - ##### ファイルシステム: **FAT32**
+            - ##### マウントポイント: **/boot**
+            - ##### フラグ: **boot**
+        </TabItem>
+        <TabItem label='Limine'>
+            - ##### サイズ: 最低 **4096 MiB**
+            - ##### ファイルシステム: **FAT32**
+            - ##### マウントポイント: **/boot**
+            - ##### フラグ: **boot**
+        </TabItem>
+        <TabItem label='GRUB'>
+            - ##### サイズ: 最低 **512 MiB**
+            - ##### ファイルシステム: **FAT32**
+            - ##### マウントポイント: **/boot/efi**
+            - ##### フラグ: **boot**
+        </TabItem>
+    </Tabs>
+
+6. **root** 用のパーティションを作成してください。
+   - ##### サイズ: 最低 **20000 MiB**
+   - ##### ファイルシステム: **任意**、[ファイルシステム](/ja/installation/filesystem)を参照
+   - ##### マウントポイント: **/**
+   - ##### フラグ:
+
+7. 希望する[デスクトップ環境](/ja/installation/desktop_environments)をえらんでください。
+
+8. インストール時に自動でインストールするパッケージをえらんでください。
+
+9. ログイン情報を設定してください。
+
+10. インストールの概要をよく確認してください。問題がなければ **今すぐインストール** をクリックしてインストールを進めてください。修正が必要な場合は戻って修正してください。
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='MBR/BIOS'>
+<Steps>
+
+1. ISO でブートして **インストーラーを起動** をクリックしてください。
+
+2. 希望する **言語** と **地域/タイムゾーン** を設定してください。
+
+3. **キーボードレイアウト** を設定してください。
+
+4. **手動パーティション** をえらんでください。
+
+5. えらんだブートマネージャーに応じて、以下のパラメーターで新しいパーティションを作成してください。
+    <Tabs>
+        <TabItem label='GRUB'>
+            - ##### サイズ: 最低 **20000 MiB**
+            - ##### ファイルシステム: **任意**、[ファイルシステム](/ja/installation/filesystem)を参照
+            - ##### マウントポイント: **/**
+            - ##### フラグ:
+        </TabItem>
+        <TabItem label='Limine'>
+            - ##### サイズ: 最低 **4096 MiB**
+            - ##### ファイルシステム: **FAT32**
+            - ##### マウントポイント: **/boot**
+            - ##### フラグ: **boot**
+            **ルートファイルシステム用のパーティションも必要です。以下のパラメーターで作成してください。**
+            - ##### サイズ: 最低 **20000 MiB**
+            - ##### ファイルシステム: **任意**、[ファイルシステム](/ja/installation/filesystem)を参照
+            - ##### マウントポイント: **/**
+            - ##### フラグ:
+        </TabItem>
+    </Tabs>
+6. **ブートローダーのインストール先** がブートドライブ (例: **/dev/sda**) を指していることを確認してください。
+
+7. 希望する[デスクトップ環境](/ja/installation/desktop_environments)をえらんでください。
+
+8. インストール時に自動でインストールするパッケージをえらんでください。
+
+9. ログイン情報を設定してください。
+
+10. インストールの概要をよく確認してください。問題がなければ **今すぐインストール** をクリックしてインストールを進めてください。修正が必要な場合は戻って修正してください。
+
+</Steps>
+
+</TabItem>
+
+</Tabs>
+
+## Windows と CachyOS のデュアルブート
+
+:::note[このガイドは Windows がすでにインストールされており、同じドライブに CachyOS を追加インストールする場合を想定しています。]
+:::
+
+:::caution
+Windows と Linux のデュアルブートは完全に信頼できるものではありません。Windows のアップデートによって EFI パーティションが上書きされ、ブートローダーが壊れることがあります。
+問題が発生しないユーザーもいれば、なんども問題が発生するユーザーもいます。
+
+この問題を回避する方法のひとつは、それぞれの OS を別々のドライブにインストールすることです。
+:::
+
+:::caution
+対象のブートマネージャーの推奨最小サイズによっては、EFI パーティションのサイズ変更が必要になることがあります。[手動パーティション設定](/ja/installation/installation_on_root#手動パーティション設定)をご覧ください。
+
+FAT ファイルシステムはその場でサイズ変更できません。FAT EFI パーティションのサイズを適切に変更するには、既存の EFI ファイルシステムをバックアップし、`gparted` などのツールで既存パーティションのサイズを変更して再フォーマットしてから、以前のファイルシステム構造を EFI パーティションにコピーしなおす必要があります。
+:::
+
+### 要件
+
+- Windows の高速スタートアップと休止状態が無効
+  - Windows PowerShell を管理者として開き、以下のコマンドを実行してください。
+      ```ps
+      powercfg /H off
+      ```
+    変更を反映させるためにシステムを再起動してください。
+- Windows BitLocker が無効
+  - 以下のコマンドで BitLocker が有効かどうか確認できます。
+    ```ps title='コマンドプロンプトを管理者として開き、以下のコマンドを実行'
+    manage-bde -status
+    ```
+  **暗号化方式** が `None` と表示されていれば、BitLocker は無効になっています。
+- セキュアブートが無効
+- 30 GB 以上の空のパーティション
+  - Windows パーティションを縮小する方法:
+    - `Win + R` を押し、`diskmgmt.msc` と入力して Enter を押してディスクの管理を開いてください。
+    - メインの Windows パーティション (通常 C:) を右クリックしてください。
+    - `ボリュームの縮小...` をクリックし、少なくとも **30720 MB** (30 GiB) を指定して `縮小` をクリックしてください。
+- CachyOS のブート可能な USB
+  - [ブート可能な CachyOS USB ドライブの作成](/ja/installation/installation_prepare#ブート可能な-cachyos-usb-ドライブの作成)の項目をご覧ください。
+
+<Tabs>
+    <TabItem label='systemd-boot'>
+        **ブートマネージャーが Windows を認識できるように、Windows の EFI バイナリを Linux の EFI パーティションにコピーする必要があります。**
+
+        <Steps>
+        1. `lsblk` で **Windows EFI パーティション** を特定してください。
+
+            ```sh title='ターミナルでこのコマンドを実行'
+            lsblk -o NAME,FSTYPE,SIZE,MOUNTPOINT
+            ```
+            ```sh title='出力例'
+                        NAME        FSTYPE   SIZE MOUNTPOINT
+            zram0               15.3G [SWAP]
+            nvme0n1            476.9G
+            ├─nvme0n1p1 vfat     100M
+            ├─nvme0n1p2           16M
+            ├─nvme0n1p3 ntfs   234.4G
+            ├─nvme0n1p4 ntfs     830M
+            ├─nvme0n1p5 vfat       2G /boot
+            └─nvme0n1p6 btrfs  239.6G /var/tmp
+            ```
+            EFI パーティションは通常、`FAT32/vfat` でフォーマットされています。`nvme0n1p1` には Linux のマウントポイントがないため、このパーティションが Windows EFI パーティションであると判断できます。
+
+        2. Windows EFI パーティションを一時的にマウントしてください。
+
+            ```sh
+            sudo mkdir /mnt/WinBoot
+            sudo mount /dev/nvme0n1p1 /mnt/WinBoot # `nvme0n1p1` を Windows EFI パーティションの名前に置き換えてください。
+            ```
+
+        3. **Windows EFI パーティション** から **Linux EFI パーティション** に EFI バイナリをコピーしてください。
+
+            ```sh
+            sudo cp -r /mnt/WinBoot/EFI/Microsoft/ /boot/EFI
+            ```
+
+        4. マウントしたパーティションをアンマウントしてください。次回起動時にブートメニューに Windows が表示されます。
+
+            ```sh
+            sudo umount /mnt/WinBoot
+            sudo rm -r /mnt/WinBoot
+            ```
+
+        </Steps>
+    </TabItem>
+
+    <TabItem label='GRUB'>
+        **GRUB は os-prober を使って Windows EFI パーティションを自動検出し、ブートメニューに追加します。**
+
+        <Steps>
+        1. **os-prober** をインストールしてください。
+
+            ```sh
+            sudo pacman -S os-prober
+            ```
+
+        2. GRUB 設定ファイルで **os-prober** を有効にしてください。
+
+            ```sh title='保存は CTRL+S、終了は CTRL+Q'
+            sudo micro /etc/default/grub
+            # /etc/default/grub
+            # Probing for other operating systems is disabled for security reasons. Read
+            # documentation on GRUB_DISABLE_OS_PROBER, if still want to enable this
+            # functionality install os-prober and uncomment to detect and include other
+            # operating systems.
+            GRUB_DISABLE_OS_PROBER=false
+
+            ```
+
+        3. **os-prober** を使って grub.cfg を更新してください。
+            ```sh
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+
+            **Windows がブートメニューに追加されます。**
+
+        </Steps>
+    </TabItem>
+</Tabs>

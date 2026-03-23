@@ -1,0 +1,276 @@
+---
+title: Chromium 系ブラウザのハードウェアアクセラレーション
+description: CachyOS の Chromium 系ブラウザで動画のデコード/エンコードにハードウェアアクセラレーションを設定する方法です。AMD GPU の設定とほかの GPU/ブラウザ向けのテンプレートも掲載しています。
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+このガイドでは CachyOS の Chromium 系ブラウザでハードウェアアクセラレーションを有効にする方法を説明します。動画やグラフィックスの処理を GPU に任せることでパフォーマンスを向上させることができます。
+
+## 要件
+
+**必須**
+* **Chromium 系ブラウザ:** (例: Chrome, Brave, Ungoogled Chromium, Edge)
+* **GPU ドライバ/API:** Vulkan/VA-API/VDPAU が設定済みの最新の Mesa (AMD/Intel) または NVIDIA ドライバ
+
+**任意**
+
+* **amdgpu_top:** ターミナルから AMD GPU のアクティビティを監視したい場合は、パッケージマネージャーからリポジトリの `amdgpu_top` をインストールしてください。
+* **nvtop:** (Intel GPU のみ) ターミナルから Intel GPU のアクティビティを監視したい場合は、Octopi パッケージマネージャーから `nvtop` (Lunar Lake) と `intel-gpu-tools` (Lunar Lake 以前) をインストールしてください。
+
+
+## 貢献について
+
+このガイドはみなさまの力に支えられています。特定の GPU と Chromium 系ブラウザで動作するハードウェアアクセラレーション設定をお持ちの場合は、「GPU とブラウザの設定」セクションに新しい項目を追加して貢献をお願いします。以下の情報を含めてください。
+
+* **ブラウザ名**
+* **GPU モデル**
+* **フラグ:** `~/.config/[browser]-flags.conf` の内容
+* **ファイルパス:** フラグファイルへのフルパス
+* **補足 (任意):** 主要なドライバ、パッケージ、設定の詳細
+
+## セットアップ手順
+
+<Steps>
+
+1. フラグファイルの特定: このページ下部の「GPU とブラウザの設定」セクションでブラウザのフラグファイルのパスを確認してください。
+2. フラグファイルの編集: `nano` (または `micro`, `vim` などのテキストエディター) でファイルを開いてください。
+
+    ```bash
+    nano [ブラウザフラグファイルへのパス]
+    # 例: nano ~/.config/chrome-flags.conf
+    ```
+
+3. フラグの追加: 該当する GPU/ブラウザ向けのフラグをファイルに貼り付けてください。
+4. 保存して終了してください。
+5. ブラウザの再起動: すべてのブラウザ画面を閉じて再起動してください。
+6. 確認: `chrome://gpu` (または `brave://gpu`、`edge://gpu` など) に移動してください。"Video Acceleration Information"と"Graphics Feature Status"が"Hardware accelerated"になっているか確認してください。
+
+</Steps>
+
+## ビデオハードウェアアクセラレーションの確認方法
+
+<Tabs>
+
+<TabItem label='AMD GPU (amdgpu_top)'>
+
+<Steps>
+
+1. ターミナルを開き以下のコマンドを実行してください。
+    ```bash
+    amdgpu_top
+    ```
+2. ブラウザで動画を再生してください。(例: YouTube)
+3. `amdgpu_top` の `media` セクションを確認してください。GPU のメディアエンジンが動作していれば、ここに使用率が表示されます。動画再生中に 0% のままの場合、デコードにハードウェアアクセラレーションが適切に動作していない可能性があります。
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='Intel GPU (nvtop)'>
+
+<Steps>
+
+1. ターミナルを開き以下のコマンドを実行してください。
+    ```bash
+    sudo nvtop
+    ```
+2. ブラウザで動画を再生してください。(例: YouTube)
+3. `nvtop` の `ENC/DEC` の％を確認してください。ハードウェアでのデコードが動作していれば数値が上昇します。
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='Intel GPU (intel_gpu_tools)'>
+
+<Steps>
+
+1. ターミナルを開き以下のコマンドを実行してください。
+
+    ```bash
+    sudo intel_gpu_top
+    ```
+
+    注意: Lunar Lake GPU など一部の新しい Intel GPU は `intel_gpu_top` で GPU パフォーマンスカウンターを表示しないようになりました。その場合は `nvtop` を使ってください。
+
+2. ブラウザで動画を再生してください。(例: YouTube)
+3. `intel_gpu_top` の `Video` と `VideoEnhance` の％を確認してください。ハードウェアでのデコードが動作していれば数値が上昇します。
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='ブラウザの開発者ツール'>
+
+<Steps>
+
+1. Chromium 系ブラウザを開いてください。
+
+2. 動画を再生してください。(例: YouTube またはローカルファイル)
+
+3. `F12` または `Ctrl+Shift+I` で開発者ツールを開いてください。
+
+4. **メディア** タブに移動してください。表示されていない場合は、開発者ツールのツールバーの三点リーダー (`...`) または `>>` (その他のタブ) をクリックして `メディア` をクリックしてください。
+
+5. 左側の「プレーヤー」セクションで再生中の動画に対応する項目をクリックしてください。
+
+6. メインパネルで **動画 デコーダ** セクションまでスクロールしてください。
+
+7. `ハードウェア デコーダ` の値を確認してください。`true` であれば正常です。`false` またはソフトウェアデコーダーの名前 (例: `FFmpegVideoDecoder`, `VpxVideoDecoder`, `Dav1dVideoDecoder`) が表示されている場合、その動画ではハードウェアアクセラレーションが有効になっていません。
+
+</Steps>
+
+</TabItem>
+
+</Tabs>
+
+## GPU とブラウザの設定
+
+### AMD Radeon RX 6900 XT (Google Chrome)
+
+* **ブラウザ:** Google Chrome
+
+* **GPU:** AMD Radeon RX 6900 XT
+
+* **フラグファイル:** `~/.config/chrome-flags.conf`
+
+```bash
+--use-gl=angle
+--use-angle=vulkan
+--enable-features=Vulkan,VulkanFromANGLE,DefaultANGLEVulkan,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
+--ozone-platform-hint=x11
+```
+
+**補足:** ANGLE 経由の Vulkan と VA-API を利用しています。`--ozone-platform-hint=x11` は Wayland 環境でも特定のアクセラレーション条件で有効な場合があります。
+
+### Nvidia RTX 4090 (Vivaldi)
+
+* **ブラウザ:** Vivaldi
+
+* **GPU:** Nvidia RTX 4090
+
+* **フラグファイル:** `~/.config/vivaldi-stable.conf`
+
+```bash
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL
+```
+
+* **フラグファイル:** `/usr/share/applications/vivaldi-stable.desktop`
+
+```bash
+# ほかの行はそのままにしてください
+# '[Desktop Entry]' セクションの Exec= エントリーのみ変更してください
+Exec=/usr/bin/vivaldi-stable --enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL %U
+```
+
+**補足:**
+
+どちらか一方の設定ファイルへの変更だけで十分ですが、両方に適用しても問題ありません。
+
+KDE の場合は以下の方法もあります。
+1. Vivaldi のタスクマネージャー/タスクバーのショートカットをすべて削除する
+2. アプリケーションランチャーの一覧から `Vivaldi` を検索する
+3. アプリケーションランチャーのエントリーを右クリックして `アプリケーションを編集...` をクリック
+4. `コマンドライン引数` の項目で最後の引数 `%U` の前に以下の引数を追加する
+```
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL
+```
+5. Vivaldi を起動してタスクマネージャー/タスクバーにピン留めする
+
+### AMD Radeon RX 550 (UnGoogled Chromium)
+
+* **ブラウザ:** UnGoogled Chromium
+
+* **GPU:** AMD Radeon RX 550
+
+* **フラグファイル:** `~/.config/chromium-flags.conf`
+
+```bash
+--enable-wayland-ime
+--ozone-platform=wayland
+--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,WaylandSessionManagement,WaylandTextInputV3,WaylandUiScale,WaylandWindowDecorations
+```
+
+**補足:**
+
+X11 を使用している場合はこちら
+```bash
+--ozone-platform=x11
+--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder
+```
+
+### Nvidia RTX 5070 TI (Brave)
+
+* **ブラウザ:** Brave
+
+* **GPU:** Nvidia RTX 5070 TI
+
+* **フラグファイル:** `~/.config/brave-flags.conf`
+
+```bash
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks
+```
+
+**補足:**
+- `brave://gpu` で動画のデコードとエンコードの**両方**が `ハードウェアアクセラレーション` と表示されます。
+- YouTube 動画の `メディア` タブでハードウェアアクセラレーションが表示される場合とされない場合があります。
+
+
+
+### Brave - 7700xt (DaJRJesus 提供)
+
+* **ブラウザ:** Brave
+
+* **GPU:** AMD Radeon RX 7700 XT
+
+* **フラグファイルのパス:** `~/.config/brave-flags.conf`
+
+```bash
+--ignore-gpu-blocklist
+--enable-gpu-rasterization
+--enable-zero-copy
+--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,CanvasOopRasterization,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
+--ozone-platform-hint=auto
+```
+
+**補足:**
+Wayland で動作します。UI のラグを防ぐには YouTube 設定の「アンビエントモード」を無効にする必要があります。
+
+---
+
+### 貢献用テンプレート
+
+訳注: 英語版ページに貼り付けられる形式にしています。
+{/* Translator note: This can be pasted into the English version of this page. */}
+
+### [ブラウザ名] - [GPU モデル] (Contributed by [名前/ハンドルネーム])
+
+* **Browser:** [例: Brave, Ungoogled Chromium, Microsoft Edge, Vivaldi, Opera, Chromium]
+
+* **GPU:** [例: NVIDIA GeForce RTX 3080, Intel Iris Xe]
+
+* **Flags File Path:** (ここは重要です。ブラウザによって異なります。)
+
+  * よく使われる `.conf` のパス:
+
+    * Chromium: `~/.config/chromium-flags.conf`
+
+    * Brave Browser: `~/.config/brave-flags.conf`
+
+    * Ungoogled Chromium: `~/.config/ungoogled-chromium-flags.conf`
+
+  * `.desktop` ファイルの編集: 一部のブラウザ (Brave, Edge, Vivaldi, Opera など) では `.desktop` ファイルの `Exec=` 行を編集する必要があります。(`/usr/share/applications/` から `~/.local/share/applications/` にコピーしてから編集してください)
+
+Flags Content (for `.conf` file or `Exec=` line):
+
+```bash
+# フラグをここに貼り付けてください。
+# .desktop ファイルの場合、フラグは実行ファイルの後にスペース区切りで追加してください。
+```
+
+**Notes (任意):**
+
+* 必要なドライバ (例: `nvidia-dkms`、`intel-media-driver`)
+
+* 設定に関する注意事項や `.desktop` ファイルの編集手順

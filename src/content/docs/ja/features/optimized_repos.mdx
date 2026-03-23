@@ -1,0 +1,313 @@
+---
+title: 最適化リポジトリ
+description: 最適化リポジトリについての情報
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+パフォーマンスに最適化されたディストリビューションを提供するために、CachyOS は Arch Linux パッケージを `x86-64-v3`、`x86-64-v4`、`Zen4+` アーキテクチャー向けに特別に再コンパイルしています。
+
+- **x86-64-v3:** x86-64 と比べて 5〜20% のパフォーマンス向上
+- **x86-64-v4:** AVX512 サポートによる大幅なパフォーマンス向上を実現 (用途によって変動)
+- **Zen 4/5:** x86-64-v4 の命令セットに加え、以下の命令を追加
+
+```text
+abm, adx, aes, avx512bf16, avx512bitalg, avx512ifma, avx512vbmi, avx512vbmi2, avx512vnni,
+avx512vpopctndq, clflushopt, clwb, clzero, fsgsbase, gfni, mwaitx, pclmul, pku, prfchw,
+rpdid, rdrnd, rdseed, sha, sse4a, vaes, vockmulqdq, wbnoinvd, savec, xsaveopt, xsaves
+```
+
+これらのアーキテクチャーの詳細については、[ウィキペディアの記事 (日本語) ](https://ja.wikipedia.org/wiki/X64#マイクロアーキテクチャの世代)をご覧ください。
+
+## カスタマイズされたパッケージ
+
+[CachyOS-PKGBUILDs](https://github.com/CachyOS/CachyOS-PKGBUILDS) リポジトリには、継続的な更新やパッチ、バックポートされた修正が適用されたパッケージが含まれています。パフォーマンスを高めるために、PGO, LTO, BOLT の最適化を場合に応じて適用しています。mesa-git などの `-git` パッケージもいくつかメンテナンスしています。
+
+### [CachyOS パッケージ検索](<https://packages.cachyos.org/>)
+
+CachyOS の新しいパッケージ検索ページです。かんたんにパッケージを検索でき、コンパイルアーキテクチャーや最終更新日などの詳細情報にアクセスできます。
+
+<ImageComponent imgsrc={import('~/assets/images/cachyos-package-dashboard.png')} />
+
+## x86-64-v3 から x86-64-v4 または znver4 への移行
+
+現在 x86-64-v3 リポジトリを使用していて、新しい CPU が x86-64-v4 (または AMD Zen 4/5) をサポートしている場合、以下の手順で移行できます。
+
+### CPU 互換性の確認
+
+:::caution
+Intel 第12世代 (Alder Lake) 以降の CPU は `x86-64-v4` 対応と表示される場合がありますが、実際には **AVX-512 命令を実行できません**。
+
+理由は以下のとおりです。
+- **ハイブリッドアーキテクチャーの問題**: 大きな「P コア」は AVX-512 をサポートしていますが、小さな「E コア」はサポートしていません。E コアが有効な状態で AVX-512 を実行すると不安定になります。
+- **Intel の対応策**: ここでのずれを避けるため、Intel は2つの方法で AVX-512 を無効化しています。
+  - **マイクロコード/BIOS アップデート** (初期の Alder Lake チップ): マイクロコードのアップデートを避けるかロールバックすることで AVX-512 を再有効化できます。
+  - **ハードウェアヒューズ** (2022年以降のチップ): AVX-512 が工場出荷時に永久的に無効化されており、再有効化は不可能です。
+
+`x86-64-v4` には AVX-512 が必要なため、こうした CPU は **x86-64-v3 専用**としてみなす必要があります。
+:::
+
+- `x86-64-v4` 対応の確認:
+  ```sh title='以下のコマンドを実行'
+  /lib/ld-linux-x86-64.so.2 --help | grep supported
+  ```
+  - ✅ `x86-64-v4 (supported, searched)` → CPU は v4 をサポートしています
+  - ❌ `x86-64-v4` の行がない → CPU は v4 をサポートしていません
+
+例 (CPU が v4 をサポートしている場合):
+  ```sh
+  $ /lib/ld-linux-x86-64.so.2 --help | grep supported
+    x86-64-v2 (supported, searched)
+    x86-64-v3 (supported, searched)
+    x86-64-v4 (supported, searched)
+  ```
+
+- AMD Zen 4/5 CPU の場合、CPU が znver4 または znver5 に対応していると表示されるか確認してください。
+  - 以下のコマンドを実行してください。
+    ```sh
+    gcc -march=native -Q --help=target 2>&1 | grep -Po "^\s+-march=\s+\K(\w+)\$"
+    ```
+    出力が `znver4` または `znver5` であれば移行することができます。
+
+:::note
+x86-64-v4 と znver4 は同じミラーリスト `/etc/pacman.d/cachyos-v4-mirrorlist` を使用します。
+:::
+
+:::note[リポジトリを元に戻したり変更を取り消す必要がある場合は、このガイドが役立ちます。]
+例: znver4 から v4 へ戻す場合
+:::
+
+### 移行手順
+
+<Steps>
+1. `/etc/pacman.conf` を編集して、CPU の対応に応じて `x86-64-v3` リポジトリを以下のいずれかに置き換えてください。
+    <Tabs>
+        <TabItem label="x86-64-v4">
+            ```ini title='/etc/pacman.conf'
+            [cachyos-v4]
+            Include = /etc/pacman.d/cachyos-v4-mirrorlist
+
+            [cachyos-core-v4]
+            Include = /etc/pacman.d/cachyos-v4-mirrorlist
+
+            [cachyos-extra-v4]
+            Include = /etc/pacman.d/cachyos-v4-mirrorlist
+            ```
+        </TabItem>
+
+        <TabItem label="znver4 (AMD Zen 4/5 のみ)">
+          ```ini title='/etc/pacman.conf'
+          [cachyos-znver4]
+          Include = /etc/pacman.d/cachyos-v4-mirrorlist
+
+          [cachyos-core-znver4]
+          Include = /etc/pacman.d/cachyos-v4-mirrorlist
+
+          [cachyos-extra-znver4]
+          Include = /etc/pacman.d/cachyos-v4-mirrorlist
+        ```
+        </TabItem>
+        `[cachyos]`, `[core]`, `[extra]`, `[multilib]` はそのまま残してください。
+        </Tabs>
+2. パッケージキャッシュを削除してデータベースを同期してください。
+
+   ```sh
+   sudo pacman -Scc   # 2回 'y' で確認
+   sudo pacman -Sy
+   ```
+
+3. すべてのパッケージを再インストールして新しいアーキテクチャーに切り替えてください。
+
+   ```sh
+   pacman -Qqn | sudo pacman -S -
+   ```
+
+4. システムを再起動してください。
+</Steps>
+
+---
+
+## 既存の Arch Linux へのリポジトリの追加
+
+:::tip
+リポジトリの追加を検討する前に、[**CPU 互換性一覧**](/ja/installation/installation_prepare#x86_64-マイクロアーキテクチャーレベルの対応状況)を確認してください。
+:::
+
+<Tabs>
+
+<TabItem label='自動'>
+
+CachyOS は既存の Arch ベースのシステムへのリポジトリのインストールを自動化するスクリプトを提供しています。
+
+```sh
+curl https://mirror.cachyos.org/cachyos-repo.tar.xz -o cachyos-repo.tar.xz
+tar xvf cachyos-repo.tar.xz && cd cachyos-repo
+sudo ./cachyos-repo.sh
+```
+
+:::tip[スクリプトの動作について]
+このスクリプトは CPU が対応している命令セットを検出し、最も最適化されたバージョンのリポジトリをインストールします。また、スクリプトによるリポジトリ削除の際、古い `pacman.conf` をバックアップします。
+:::
+
+</TabItem>
+
+<TabItem label='手動'>
+    :::caution
+    CachyOS の Pacman をインストールすると、"INSTALLED_FROM" や自動アーキテクチャーチェックなど CachyOS が追加した機能を持つフォーク版 pacman がインストールされます。Pacman 6.1 でバリデーション機能が追加されましたが、Arch Linux の pacman を使用すると警告が表示される場合があります。Arch Linux と協力して適切な互換性の再提供に取り組んでいます。これを避けたい場合は、カスタマイズされた pacman を含む "cachyos" リポジトリを追加しないでください。cachyos-v3, cachyos-v4, cachyos-extra/core-v3/4 などのほかのリポジトリは安全に追加できます。
+    :::
+
+<Steps>
+
+1. CachyOS キーリングをインストールしてください。
+
+   ```sh
+   # リポジトリキーをインポート
+   sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
+   # リポジトリキーに署名
+   sudo pacman-key --lsign-key F3B607488DB35A47
+   ```
+2. 必要なパッケージをインストールしてください。
+
+   ```sh
+   sudo pacman -U 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-20240331-1-any.pkg.tar.zst' \
+   'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-mirrorlist-22-1-any.pkg.tar.zst' \
+   'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v3-mirrorlist-22-1-any.pkg.tar.zst' \
+   'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v4-mirrorlist-22-1-any.pkg.tar.zst' \
+   'https://mirror.cachyos.org/repo/x86_64/cachyos/pacman-7.1.0.r9.g54d9411-2-x86_64.pkg.tar.zst'
+   ```
+3. CachyOS リポジトリを pacman 設定ファイルに追加してください。
+   :::note
+   これらのリポジトリは Arch Linux のリポジトリより上に記述してください。
+   :::
+
+   ```ini
+   # /etc/pacman.conf
+   # CPU が x86-64 のみ対応している場合は [cachyos] リポジトリを追加
+   # cachyos repos
+   [cachyos]
+   Include = /etc/pacman.d/cachyos-mirrorlist
+
+   # CPU が x86-64-v3 をサポートしている場合は [cachyos-v3], [cachyos-core-v3], [cachyos-extra-v3] と [cachyos] を追加
+   # cachyos repos
+
+   [cachyos-v3]
+   Include = /etc/pacman.d/cachyos-v3-mirrorlist
+   [cachyos-core-v3]
+   Include = /etc/pacman.d/cachyos-v3-mirrorlist
+   [cachyos-extra-v3]
+   Include = /etc/pacman.d/cachyos-v3-mirrorlist
+   [cachyos]
+   Include = /etc/pacman.d/cachyos-mirrorlist
+
+   # CPU が x86-64-v4 をサポートしている場合は [cachyos-v4], [cachyos-core-v4], [cachyos-extra-v4] と [cachyos] を追加
+   # cachyos repos
+
+   [cachyos-v4]
+   Include = /etc/pacman.d/cachyos-v4-mirrorlist
+   [cachyos-core-v4]
+   Include = /etc/pacman.d/cachyos-v4-mirrorlist
+   [cachyos-extra-v4]
+   Include = /etc/pacman.d/cachyos-v4-mirrorlist
+   [cachyos]
+   Include = /etc/pacman.d/cachyos-mirrorlist
+
+   # CPU が Zen 4 または Zen 5 ベースの場合は [cachyos-znver4], [cachyos-core-znver4], [cachyos-extra-znver4] と [cachyos] を追加
+
+   [cachyos-znver4]
+   Include = /etc/pacman.d/cachyos-v4-mirrorlist
+   [cachyos-core-znver4]
+   Include = /etc/pacman.d/cachyos-v4-mirrorlist
+   [cachyos-extra-znver4]
+   Include = /etc/pacman.d/cachyos-v4-mirrorlist
+   [cachyos]
+   Include = /etc/pacman.d/cachyos-mirrorlist
+   ```
+      :::tip
+   `v4` リポジトリから `znver4` に移行するには
+
+   前の手順の対応するエントリを追加して以下のコマンドを実行してください。
+    ```sh
+    sudo pacman -Scc # 両方 Y を入力
+    sudo pacman -Sy
+    pacman -Qqn | sudo pacman -S --needed - # v4 パッケージを znver4 パッケージに置き換える
+    # システムを再起動
+    ```
+   :::
+
+4. 最後に CachyOS パッケージでシステムをアップデートしてください。
+   ```sh
+   sudo pacman -Syu
+   ```
+
+</Steps>
+
+</TabItem>
+
+</Tabs>
+
+### CachyOS リポジトリのアンインストール
+
+<Tabs>
+<TabItem label='自動'>
+
+**以下のコマンドを実行してシステムから CachyOS リポジトリを削除してください。**
+```sh
+curl https://mirror.cachyos.org/cachyos-repo.tar.xz -o cachyos-repo.tar.xz
+tar xvf cachyos-repo.tar.xz
+cd cachyos-repo
+sudo ./cachyos-repo.sh --remove
+```
+
+</TabItem>
+
+<TabItem label='手動'>
+
+<Steps>
+
+1. Arch Linux のオリジナル版 pacman を再インストールしてください。
+   ```sh
+   sudo pacman -S core/pacman
+   ```
+2. 以下のコマンドを実行してください。
+   ```sh
+   # %INSTALLED_DB% の警告を回避
+   sudo find /var/lib/pacman/local/ -type f -name "desc" -exec sed -i '/^%INSTALLED_DB%$/,+2d' {} \;
+   ```
+3. バックアップから pacman 設定ファイルを復元してください。
+   ```sh
+   sudo mv /etc/pacman.conf.bak /etc/pacman.conf
+   ```
+4. 以下のコマンドでデフォルトの Arch Linux パッケージに戻してください。
+   ```sh
+   pacman -Qqn | sudo pacman -S -
+   sudo pacman -Syu
+   ```
+</Steps>
+
+</TabItem>
+</Tabs>
+
+## テストとベンチマーク
+
+Phoronix の Michael がこれまで数回 CachyOS のベンチマークを行っており、ベンチマークグラフや全テスト結果の相乗平均でほぼトップの結果を出しています。2022年の最初のベンチマーク以来、CachyOS は使いやすさとパフォーマンスの両面で大きく進化・成熟してきました。
+
+リポジトリによるパフォーマンス向上について詳しく知りたい場合は、以下のリンクをご覧ください。
+
+* **2021年3月14日:** x86-64-v3 の影響に関する RFC ディスカッションが Arch Linux の **Mateusz Jończyk** によって開始され、初期の結果が示されました。
+  * [RFC: Use x86_64-v2 architecture](https://lists.archlinux.org/pipermail/arch-general/2021-March/048739.html)
+
+* **2022年12月9日:** Michael による最初のベンチマークが行われました。
+  * [The Performance Of Arch Linux Powered CachyOS](https://www.phoronix.com/review/cachyos-linux-perf)
+
+* **2024年2月29日:** x86-64-v4、x86-64-v3、x86-64 (汎用) パッケージの違いを示す Phoronix でのベンチマークが行われました。PKGBUILD をカスタマイズしている PHP や GCC などの例では、大きなパフォーマンス改善が見られます。
+  * [Arch Linux CachyOS Benchmarks Of x86-64-v3 & x86-64-v4 Repositories](https://www.phoronix.com/review/cachyos-x86-64-v3-v4)
+
+* **2024年8月20日:** Michael が AMD Ryzen 9950x での新しいベンチマークを公開し、CachyOS とほかの Linux ディストリビューションを比較しています。
+  * [Intel Continues To Show AMD The Importance Of Software Optimizations: 16% More Ryzen 9 9950X Performance](https://www.phoronix.com/review/linux-os-amd-ryzen9-9950x)
+   :::note
+   Liquid-DSP と RocksDB は Phoronix Benchmark Suite を使ってコンパイルされており、/etc/makepkg.conf で指定されたコンパイルフラグが無視されたため、CachyOS では予期しないパフォーマンス結果が出ています。
+   :::

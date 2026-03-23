@@ -1,6 +1,6 @@
 ---
 title: GUI インストーラー
-description: Calamares と GUIライブISO の更新ログ
+description: Calamares と GUI ライブ ISO の更新ログ
 sidebar:
   order: 1
 ---
