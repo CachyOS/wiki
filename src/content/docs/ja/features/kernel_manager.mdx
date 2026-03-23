@@ -1,0 +1,110 @@
+---
+title: CachyOS カーネルマネージャーによるカーネルと sched-ext フレームワークの管理
+description: CachyOS カーネルマネージャーはカーネルを管理するための強力なツールで、カーネルのインストールやカスタムカーネルのビルドをかんたんに行えます。
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+リポジトリからカーネルをインストールする
+---------------------------------------
+
+CachyOS カーネルマネージャーを使うと、任意の Arch Linux リポジトリからカーネルをかんたんにインストール・管理できます。
+
+カーネルをインストールするには、`CachyOS カーネルマネージャー` アプリケーションを起動し、利用可能なカーネルの一覧からインストールしたいカーネルのチェックボックス `▢` にチェックを入れ、`実行` を押すだけでインストールが始まります。
+
+カーネルをアンインストールするには、削除したいインストール済みカーネルのチェックボックス `▢` のチェックを外して `実行` を押してください。
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km1.png')} />
+*※CachyOS カーネルマネージャーは日本語に対応しています。*
+
+:::note
+すでにインストールされているカーネルをえらんだ場合、`実行` ボタンは無効になります。
+:::
+
+カスタム CachyOS カーネルの設定とビルド
+---------------------------------
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km2.png')} />
+
+:::note
+CachyOS カーネルマネージャーは **CachyOS バリアント**のカスタムカーネルをビルドするために設計されており、標準の Arch Linux カーネルやそのほかのバリアントのビルドや設定には対応していません。
+:::
+
+*はじめに、カーネルマネージャーを開いて `設定` ボタンをクリックし、スケジューラ、ティックレートなどの各種設定を調整してください。設定が完了したら `カーネルをビルド` をクリックしてカスタム CachyOS カーネルのビルドを開始できます。*
+
+**ビルドされたカーネルパッケージとキャッシュは** `~/.cache/cachyos-km/` **に保存されます。**
+
+**利用可能な設定オプション:**
+
+* `カスタムパッケージ名`: このオプションでカーネルに好きな名前を付けられます。例: `linux-custom-cachy`
+* スケジューラ (BORE, RC, RT, RT+BORE, EEVDF, BMQ)
+* CachyOS のカスタム設定を有効化
+* nconfig, menuconfig, xconfig, gconfig で詳細設定を調整
+* NUMA の有効/無効
+* Modprobed-db の有効/無効
+* KBUILD CFLAGS (-O3 または -O2)
+* デフォルトのパフォーマンスガバナー
+* BBR3 を有効化
+* ティックレート設定 (100Hz, 250Hz, 300Hz, 500Hz, 600Hz, 750Hz, 1000Hz)
+* tickless 設定 (idle, periodic, full)
+* preempt 設定 (Full, Voluntary, Server)
+* Transparent Hugepages (Always または Madvise)
+* DAMON の有効/無効
+* CPU アーキテクチャーの自動検出の有効/無効
+* 特定の CPU アーキテクチャー向けカーネル最適化の適用
+* LTO を有効化 (Full, Thin, No)
+* ZFS モジュールのビルド
+* NVIDIA クローズドモジュールのビルド
+* NVIDIA オープンモジュールのビルド
+* デバッグ情報・シンボルつきの vmlinux を含める
+* カーネルマネージャー設定プリセットの読み込み/保存: `(マネージャー自身のプリセットのみ対応)`
+* カーネルパッチ管理 (リモートとローカルに対応)
+
+*カーネルのビルドが完了すると、カーネルをインストールするために sudo パスワードを求められます。*
+
+## sched-ext フレームワーク管理
+
+:::caution[正常に動作するには機能する polkit エージェントが必要です。]
+[**Arch Wiki 日本語版のページ**](https://wiki.archlinux.jp/index.php/Polkit)を確認してください。
+:::
+
+カーネルマネージャーは sched-ext スケジューラを管理・制御するためのグラフィカルインターフェース (GUI) を提供しています。メインウィンドウの `sched-ext スケジューラ設定` ボタンをクリックして開くことができます。
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km3.png')} />
+
+この画面でできること
+
+- さまざまな sched-ext (scx) スケジューラの切り替え
+- スケジューラサービスの有効/無効の切り替え
+- 現在動作しているスケジューラの確認
+- スケジューラのフラグとプロファイルの設定
+
+これを実現するために、カーネルマネージャーは `/etc/scx_loader.toml` に保存された設定とともに `scx_loader` を使用しています。
+
+`scx_loader` 設定ファイルの詳細については[このドキュメント](https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/configuration.md)をご覧ください。
+
+- `scx_loader` はどんな仕組み？
+    - スケジューラとプロファイルをえらぶと、scx_loader は選択されたプロファイルでスケジューラを起動し、再起動後も設定が維持されるよう `/etc/scx_loader.toml` ファイルに設定を保存します。`Gaming` プロファイルで `scx_bpfland` をえらんだ場合のファイル例:
+        ```toml
+        default_sched = "scx_bpfland"
+        default_mode = "Gaming"
+
+        [scheds.scx_bpfland]
+        auto_mode = []
+        gaming_mode = ["-m", "performance"]
+        lowlatency_mode = ["-k", "-s", "5000", "-l", "5000"]
+        powersave_mode = ["-m", "powersave"]
+        ```
+
+### スケジューラプロファイル
+
+- 「プロファイル」の用途は？
+  - ゲームなどの特定の用途での効果を高めるために、実績のあるフラグの組み合わせに基づいてスケジューラを調整するプリセットです。
+
+プロファイルの詳細については[スケジューラガイド](/ja/configuration/sched-ext#scheduler-guide-profiles-and-use-cases)をご覧ください。

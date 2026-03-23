@@ -1,0 +1,468 @@
+---
+title: システムの全般的なチューニング
+description: インストール後にできるチューニング
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import { Tabs, TabItem, Steps, LinkButton } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+## AMD のパフォーマンスチューニング
+
+### AMD P-State ドライバ
+---------------------------
+
+`amd-pstate` は Linux カーネルにおける最新の AMD APU および CPU シリーズ向けの CPU 周波数制御メカニズムに対応する、AMD CPU パフォーマンス制御ドライバです。この新しい仕組みは Collaborative Processor Performance Control (CPPC) に基づいており、これまでの ACPI ハードウェア P-States よりも細かな周波数管理を実現します。
+
+現在の AMD CPU/APU プラットフォームは ACPI P-States ドライバを使用しており、P-State の切り替えが3段階でしか制御できません。CPU 周波数とクロックを管理するために CPPC は ACPI P-States の制御を置き換え、Linux カーネルがハードウェアにパフォーマンスの制御情報を直接伝えるための柔軟で低遅延のインターフェースを提供します。
+
+以下は `amd-pstate` ドライバの3つの動作モードとブート時のカーネルコマンドラインのオプションです。
+
+- AMD P-State (非自律モード): `amd-pstate=passive`
+- AMD P-State Guided (ガイド付き自律モード): `amd-pstate=guided`
+- AMD P-State EPP (自律モード): `amd-pstate=active`
+
+:::note
+明示的に指定されていない場合、デフォルトで AMD P-State EPP ドライバが使用されます。
+:::
+
+実行時にモードを切り替えてオプションをテストすることもできます。
+
+- **自律モード**: プラットフォームは最小パフォーマンス、最大パフォーマンス、エネルギーパフォーマンス設定の値のみを考慮します。
+   ```sh
+   echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+- **ガイド付き自律モード**: プラットフォームは OS が最小・最大パフォーマンスレジスタで設定した範囲内で、現在の処理内容に応じた動作パフォーマンスレベルを設定します。
+   ```sh
+   echo guided | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+- **非自律モード**: プラットフォームは OS から直接 Desired Performance Register を通じてパフォーマンスレベルの指示を受け取ります。
+   ```sh
+   echo passive | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+詳しい情報は以下からご覧ください。
+
+<LinkButton href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html">AMD P-State ドキュメント</LinkButton>
+<LinkButton href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html#amd-pstate-driver-operation-modes">AMD P-State ドライバ動作モード</LinkButton>
+<LinkButton href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html#user-space-interface-in-sysfs-per-policy-control">AMD P-State ユーザー空間インターフェース</LinkButton>
+
+### AMD P-State EPP の設定
+
+P-State EPP を使用するには `powersave` と `performance` の2つの CPU 周波数スケーリングガバナーが利用できます。powersave ガバナーを使用して設定値を調整することをおすすめします。
+
+*   powersave ガバナーを設定: `sudo cpupower frequency-set -g powersave`
+*   performance ガバナーを設定: `sudo cpupower frequency-set -g performance`
+
+設定値を変更するには、希望する設定値で以下のコマンドを実行してください。
+
+```sh
+echo power | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
+```
+
+利用可能な設定値: `performance`, `power`, `balance_power`, `balance_performance`
+
+<LinkButton href="https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/](https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/">各設定値の公式ベンチマーク</LinkButton>
+
+### AMD 3D V-Cache オプティマイザー
+
+AMD は 7950X3D や 7900X3D などのデュアル CCD 3D CPU のキャッシュスケジューリングを最適化するパッチを公開しました。BIOS の CPPC オプションを "Driver" に設定する必要があります。これにより sysfs でモードを上書きできるようになります。
+
+2つのモードがあります。
+
+1. Frequency (周波数)
+2. Cache (キャッシュ)
+
+`cache` を設定すると、ドライバはより多くのキャッシュを持つ CCD にタスクを優先的に割り当てます。主にゲームで効果的です。
+`frequency` オプションは、3D Cache CCD より高いクロック周波数を持つ2番目の CCD にタスクを割り当てます。
+
+Frequency (デフォルト):
+```sh
+echo frequency | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
+```
+
+Cache:
+```sh
+echo cache | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
+```
+
+モードを変更すると、amd の優先コア統計の順位が変動します。以下のコマンドで確認できます。
+```sh
+grep -v /sys/devices/system/cpu/cpu*/cpufreq/amd_pstate_prefcore_ranking
+```
+
+### AMD P-State コアパフォーマンスブースト
+
+AMD Core Performance Boost (AMD Turbo Core とも呼ばれます) は AMD による動的周波数スケーリング技術で、特定のプロセッサバージョンでプロセッサの動作周波数を動的に調整・制御できます。通常の動作時は低電力・低発熱の動作を保ちながら、必要に応じてパフォーマンスを増加させます。
+
+CachyOS で AMD CPB を管理するには以下のコマンドを使用できます。
+
+```sh
+❯ echo 0 | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/boost # 全コアのブーストを無効にする
+❯ lscpu -ae # AMD CPB がグローバルで無効になっていることがわかる
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
+  0    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1212.8250
+  1    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1394.2180
+  2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 1204.4600
+
+❯ echo 1 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/boost # cpu0 のブーストを有効化
+❯ lscpu -ae
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
+  0    0      0    0 0:0:0:0          yes 4564.0000 400.0000 1393.2380
+  1    0      0    0 0:0:0:0          yes 3301.0000 400.0000  400.0000
+  2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 2157.8469
+```
+
+CachyOS は AMD CPB のサポートを有効にするコミットをバックポートした `power-profiles-daemon` のカスタムバージョンも提供しています。`powersave` プロファイルを使用すると AMD CPB が無効になり、`balanced` または `performance` では有効になります。
+
+詳細については以下をご覧ください。
+- https://lore.kernel.org/linux-pm/1a78eeaa-fadd-4734-aaeb-2fe11e96e198@amd.com/T/#m4a0c8917ea8fb033504055bd61512c80c85410c8
+- https://lore.kernel.org/linux-pm/20240624213400.67773-1-mario.limonciello@amd.com/
+
+## パフォーマンスの改善
+
+### [ADIOS I/O スケジューラ](https://github.com/firelzrd/adios)
+
+開発: [firelzrd](https://github.com/firelzrd)
+
+:::note
+CachyOS はカーネルに ADIOS の安定版ブランチを内蔵しています。
+
+**linux-cachyos** の現在のバージョン: `3.1.9`
+
+**linux-cachyos-rc** の現在のバージョン: `3.1.9`
+:::
+
+README の概要:
+
+- *ADIOS (Adaptive Deadline I/O Scheduler) は Linux カーネルのブロックレイヤー I/O スケジューラで、最新のマルチキューブロックデバイス (blk-mq) 向けに設計されています。デッドラインスケジューリングの原則と学習ベースの適応レイテンシ制御メカニズムを組み合わせることで、低遅延の I/O 操作を実現することを目的としています。*
+  - *mq-deadline と Kyber I/O スケジューラのコンセプトを参考にしています。中核となるのは、過去のパフォーマンスとリクエストの特性 (操作の種類、サイズ) に基づいて I/O の完了レイテンシを予測し、その予測を使って動的にリクエストのデッドラインとバッチング動作を調整する機能です。*
+
+要約: ADIOS はストレージデバイスの遅延の動きを学習し、その情報を使って I/O リクエストの完了期限を動的に設定します。重要なシステム操作 (ティア 0) からバックグラウンド処理 (ティア 3) までの4段階でリクエストを優先付けし、スムーズなユーザー体験を確保します。応答性に重点を置きつつ、sysfs 設定でレイテンシとスループットのバランスを調整できます。
+
+ライブデモは[こちらの動画](https://www.youtube.com/watch?v=L9WDcEeHgy4)でご覧ください。
+
+#### ADIOS を有効にする方法
+
+<Tabs>
+    <TabItem label='一時的 (起動中)'>
+        この方法では現在のセッション中のみでスケジューラを設定します。再起動すると変更は失われます。
+        ```sh
+        sync && echo adios | sudo tee /sys/block/<yourdrive>/queue/scheduler
+        # <yourdrive> を実際のドライブ識別子に置き換えてください (例: sda, sdb, nvme0n1)
+        ```
+    </TabItem>
+    <TabItem label='再起動後も適用する'>
+        <Steps>
+            1. テキストエディター (例: nano, micro, vim) で新しい udev ルールファイルを開くか作成してください。
+                ```sh title='例'
+                sudo nano /etc/udev/rules.d/60-ioschedulers.rules
+                ```
+            2. ドライブの種類 (HDD, SSD, NVMe) に応じて特定の I/O スケジューラを自動設定する以下のルールをファイルに追加してください。
+                ```text
+                # HDD
+                ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", \
+                    ATTR{queue/scheduler}="bfq"
+
+                # SSD
+                ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="adios"
+
+                # NVMe SSD
+                ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="adios"
+                ```
+              3. ファイルを保存してエディターを閉じてください。
+              4. 再起動せずに適用するには `udev` ルールを再読み込みしてください。
+                  ```sh
+                  sudo udevadm control --reload-rules
+                  sudo udevadm trigger
+                  ```
+        </Steps>
+    </TabItem>
+</Tabs>
+
+FAQ:
+
+- 応答性が向上するのに、なぜデフォルトで有効にしない？
+  - ADIOS はまだ活発に開発・テスト中です。デスクトップの応答性に大きなメリットをもたらしますが、デフォルトとして採用するにはすべての処理内容とハードウェアに対して、十分に安定していないと判断されています。エッジケースではシステムのロックアップなどの問題につながるバグが発生する可能性があります。このため最新の改善をテストして恩恵を受けたいユーザー向けの機能となっています。
+
+### NVIDIA スムーズモーション (RTX 40xx & 50xx シリーズ)
+
+:::note[ゲームの互換性について]
+DX11, DX12, Vulkan で動作するゲームに対応しています。
+
+DXVK と VKD3D はどちらも問題なく動作します。
+
+**64ビットアプリケーションのみ対応しています。スムーズモーションは 32 ビットアプリケーション (古い DX11 ゲームなど) では動作しません。**
+
+:::
+
+以下は NVIDIA の公式ドキュメントからの引用です。
+
+*NVIDIA スムーズモーションは、レンダリングされた2フレーム間で追加のフレームを推論することでよりスムーズなゲームプレイを実現する、ドライバベースの新しい AI モデルです。DLSS フレーム生成がないゲームに対して、NVIDIA スムーズモーションは GeForce RTX 40 シリーズ以降の GPU で体験を向上させる新しいオプションです。*
+
+- ゲームで NVIDIA スムーズモーションを有効にする方法
+  - 以下の環境変数を追加してください。
+    ```text
+    NVPRESENT_ENABLE_SMOOTH_MOTION=1
+    ```
+
+FAQ:
+
+- DLSS フレーム生成よりもスムーズモーションを使う理由は？
+  - ゲームが DLSS フレーム生成に対応していない場合、ドライバベースの AI モデルによるスムーズモーションが代替手段となります。
+- スムーズモーションにデメリットはある？
+  - あります。スムーズモーションを有効にすると、追加フレームの推論処理による若干の入力遅延が生じる場合があります。
+  - サードパーティのオーバーレイと相性が悪いことがあります。回避するには以下の環境変数を追加してください。
+    ```text
+    NVPRESENT_QUEUE_FAMILY=1
+    ```
+    :::note[この変数を使用するとパフォーマンスへの影響が生じることがあります。]
+    :::
+- MangoHud がフレームレートが増加したことを表示しないのはなぜ？
+  - 現在 MangoHud はスムーズモーションが生成する追加フレームを考慮しないため、報告されるフレームレートが実際と異なります。
+    - モニター内蔵の FPS カウンターを使うと正確なフレームレートを確認できます。
+- DLSS フレーム生成と比べて画質は？
+  - 画質は劣り、特に高速な動きのシーンでノイズが発生することがあります。
+- MangoHud などの外部の FPS 制限ツールと互換性はある？
+  - ありません。ゲーム内の FPS 上限設定は問題なく動作します。
+- スムーズモーションと DLSS フレーム生成を組み合わせることはできる？
+  - できません。一度に有効にできるフレーム生成機能は1つだけです。
+
+## 省電力のチューニング
+
+### RCU Lazy を有効にする
+
+RCU Lazy はアイドル時または低負荷時の消費電力を削減でき、ノートパソコンやハンドヘルドデバイスで便利です。5~10% 程度の電力を削減できます。ただし場合によって若干のパフォーマンス低下を引き起こすことがあります。
+linux-cachyos-deckify カーネルはこうしたデバイスにとって省電力が重要なため、この設定がデフォルトで有効になっています。
+
+RCU Lazy を有効にするには、カーネルの[コマンドライン](/ja/configuration/boot_manager_configuration/)パラメーターに以下のパラメーターを追加してください。
+```text
+rcutree.enable_rcu_lazy=1
+```
+
+## NVIDIA のトラブルシューティング
+
+### SDDM の Wayland バックエンドを無効にする
+
+:::note
+cachyos-kde-settings 4.3 以降、SDDM はデフォルトで KWin を Wayland コンポジターとして使用しています。
+:::
+
+これ自体は大きな進化ですが、nvidia-settings を使ったオーバークロック設定が壊れたり、Wayland でうまく動作しない古い GPU との互換性が失われるなど、不便が生じることがあります。
+
+この変更を元に戻すには cachyos-kde-settings パッケージを削除してください。
+```sh
+sudo pacman -R cachyos-kde-settings
+```
+
+### NVIDIA GSP ファームウェア
+
+NVIDIA GSP ファームウェアは「**場合によっては**」パフォーマンスの低下を引き起こすことがあります。555.58.02 の NVIDIA ドライバでこの問題の大部分は解決されましたが、特定のシステムではまだ問題が残っています。
+KDE でのフリーズや特定の状況でのパフォーマンス低下が発生している場合は、以下の設定ファイルで GSP ファームウェアを無効にできます。
+`/etc/modprobe.d/nvidia-gsp.conf`
+
+```text
+options nvidia NVreg_EnableGpuFirmware=0
+```
+
+ファイルを作成したら以下のコマンドを実行してください。
+```sh
+sudo mkinitcpio -P
+```
+
+:::note
+NVIDIA の[オープンカーネルモジュール](https://github.com/NVIDIA/open-gpu-kernel-modules)は GSP ファームウェアをベースにしています。そのため GSP を無効にすることはできず、この modprobe オプションは使用時に無視されます。`linux-cachyos-nvidia` または `nvidia-dkms` を使用してください。
+:::
+
+新しい NVIDIA ドライバのインストール後は GSP ファームウェアをテストすることをおすすめします。多くの場合、有益な機能が追加されています。また NVIDIA は主に GSP ファームウェアを使って QA テストを実施するようになっています。
+
+## オーディオとソフトウェアの改善
+
+### ノートパソコンのスピーカー音質を向上させる
+
+ノートパソコンのスピーカーはサイズが小さいため、こもったような音になることがあります。[EasyEffects](https://wiki.archlinux.org/title/PipeWire#EasyEffects) を使うと、さまざまなオーディオエフェクトとカスタム設定によってノートパソコンの内蔵スピーカーの音質を大幅に改善できます。
+
+EasyEffects と必要な依存関係をインストールしてください。
+
+```bash
+# EasyEffects をインストール
+sudo pacman -S easyeffects
+# さらに多くのエフェクトのための追加プラグインをインストール
+sudo pacman -S lsp-plugins-lv2
+sudo pacman -S zam-plugins
+sudo pacman -S calf
+sudo pacman -S mda.lv2
+```
+
+#### 設定
+
+以下の手順にしたがって EasyEffects を設定してください。
+
+1. アプリケーションメニューから EasyEffects を起動するか、ターミナルで `easyeffects` と入力してください。
+2. **出力** タブに移動してスピーカーのオーディオに適用するエフェクトを管理してください。
+3. **エフェクト** タブに切り替えてオーディオエフェクトの追加、変更、調整を行ってください。
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects.png')} />
+*※ EasyEffects は日本語に対応しています。*
+
+##### コミュニティプリセットを使う
+
+かんたんに音質アップをするなら、色々な環境に合わせた **コミュニティプリセット** から始めてみましょう。
+
+1. [EasyEffects コミュニティプリセット](https://github.com/wwmm/easyeffects/wiki/Community-presets)リポジトリからプリセットをダウンロードしてください。
+2. EasyEffects で **プリセット** ボタンをクリックして「ローカルストレージからプリセットをインポート」をえらんでください。
+3. ダウンロードしたプリセットファイルを指定してください。
+4. インポートされたプリセットが一覧に表示されます。**読み込む** をクリックして音声出力に適用してください。
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects-presets.png')} />
+
+##### カスタムプロファイルを作成する
+
+より自分に合った音質にするには、カスタムプロファイルを作成しましょう。
+
+1. プリセットメニューの **「+」** ボタンをクリックして新しいプリセットを作成してください。(名前の例: **「ノートパソコンのスピーカー」**)
+2. **読み込む**をクリックして新しいプリセットを有効にしてください。
+3. **出力** > **エフェクト** タブでエフェクトを追加・設定し、イコライザー、ベースエンハンサー、ステレオツールなどのエフェクトをためしてみてください。
+
+##### コンボルバーエフェクトを使う (Dolby Atmos 対応ノートパソコン)
+
+**コンボルバーエフェクト**では、高品質なオーディオ環境をシミュレートするインパルスレスポンスを適用することで音質を劇的に改善できます。ただし正確なセットアップが必要です。
+
+1. **エフェクト** に **コンボルバー** を追加してください。
+2. ノートパソコンのモデルに対応したインパルスレスポンスファイル (`.wav` 形式) があれば読み込んでください。以下から検索できます。
+   - https://wiki.archlinux.org/title/Lenovo_ThinkPad_T14_(AMD)_Gen_4#Speakers
+   - https://github.com/m4tx/thinkpad-p14s-g4-linux/#sound
+   - https://github.com/shuhaowu/linux-thinkpad-speaker-improvements/
+3. **クリッピングを防ぐ**: コンボルバーエフェクトは音量を大きくすることがあります。エフェクトでコンボルバーの後に **リミッター** を追加してピークを調節し、歪まないようにしてください。
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects-convolver.png')} />
+
+#### 最適な結果のために
+
+- **色々ためしてみよう** 特定のノートパソコンモデルと個人の音の好みに最も合うプリセットを見つけるには、さまざまなプリセットをためしてみてください。
+- **調整は少しずつ** 音声が歪んだり不自然になったりすることを防ぐために、各エフェクトは少しずつ調整しましょう。
+- **切り替えて比較しよう** EasyEffects のオン/オフをこまめに切り替えてデフォルトの音声と比較してみてください。
+- **自分のデバイス専用のプリセットやコンボルバーインパルスがないか探そう** たとえば **Framework Laptop 13** や **ThinkPad T14** などの、人気のノートパソコンには専用のプリセットやインパルスが用意されていることがあります。これを活用して最適な音質にしましょう。
+- **自動起動を設定しよう** アプリの設定から EasyEffects が起動後に自動的に実行されるよう設定して、いつでも自分のカスタマイズが適用されるようにしましょう。
+- **複数デバイスへのプリセット自動読み込み** **PipeWire** > **プリセット自動読み込み** タブを使って異なる出力デバイス (スピーカーとヘッドフォンなど) に特定のプリセットを連携させてスムーズに切り替えられるよう設定することができます。<ImageComponent imgsrc={import('~/assets/images/easyeffects-autoloading.png')} />
+
+#### EasyEffects の代替
+
+代替として [JDSP4Linux](https://github.com/Audio4Linux/JDSP4Linux) も使用できます。PipeWire と PulseAudio クライアント向けのオーディオエフェクトプロセッサです。
+
+### OBS Studio
+
+通常の `obs-studio` パッケージよりもおすすめのカスタムの obs-studio-browser パッケージをリポジトリで提供しています。CUDA エラーや仮想カメラの問題などよくある問題を修正するパッチが適用されています。
+
+```sh title='ターミナルを開き以下のコマンドを実行'
+sudo pacman -S obs-studio-browser
+# 前に OBS をインストールしていた場合は、pacman が置き換えるかどうか確認します
+# 置き換える場合は "Y" を入力してください
+```
+
+## スワップの設定
+
+### ZRam から Zswap への切り替え
+
+デフォルトで CachyOS はスワップ管理に ZRam を使用しています。代わりに Zswap を使用したい場合は、以下の手順にしたがって切り替えることができます。
+:::note
+このガイドは ZRam が有効でスワップパーティションやスワップファイルがインストール時に作成されていない CachyOS の標準設定を前提としています。
+:::
+
+<Steps>
+    1. カーネルパラメーターを追加して ZRam を無効にしてください。[ブートローダーの設定を編集して](/ja/configuration/boot_manager_configuration)以下の行を追加してください。
+        ```text
+        systemd.zram=0
+        ```
+    2. 以下のカーネルパラメーターを追加して Zswap を有効にしてください。
+        ```text
+        zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=30
+        ```
+    3. Zswap を無効にする [CachyOS の udev ルール](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/30-zram.rules)を無効化するための空のオーバーライドファイルを作成してください。
+        ```bash
+        sudo touch /etc/udev/rules.d/30-zram.rules
+        ```
+    4. Zswap 用のスワップファイルを作成してください。
+        <details>
+            <summary>Btrfs を使用している場合</summary>
+                <Steps>
+                    1. スワップファイル用の Btrfs サブボリュームを作成してください。
+                        ```bash
+                        sudo btrfs subvolume create /swap
+                        ```
+                    2. 好きなサイズ (例: 8GB) のスワップファイルを作成してください。`--size` パラメーターで変更できます。
+                        ```bash "--size"
+                        sudo btrfs filesystem mkswapfile --size 4g --uuid clear /swap/swapfile
+                        ```
+                    3. スワップファイルを有効にしてください。
+                        ```bash
+                        sudo swapon /swap/swapfile
+                        ```
+                    4. 再起動後も適用するため、スワップファイルを `/etc/fstab` に追加してください。
+                        ```bash
+                        sudo echo "/swap/swapfile none swap defaults 0 0" >> /etc/fstab
+                        ```
+                </Steps>
+        </details>
+        <details>
+            <summary>Btrfs を使用していない場合</summary>
+            <Steps>
+                1. 好きなサイズ (例: 8GB) のスワップファイルを作成してください。`count=` パラメーターで変更できます。
+                    ```bash "count=8"
+                    sudo dd if=/dev/zero of=/swapfile bs=1G count=8
+                    ```
+                2. スワップファイルの正しいパーミッションを設定してください。
+                    ```bash
+                    sudo chmod 0600 /swapfile
+                    ```
+                3. スワップファイルをフォーマットしてください。
+                    ```bash
+                    sudo mkswap /swapfile
+                    ```
+                4. 再起動後も適用するため、スワップファイルを `/etc/fstab` に追加してください。
+                    ```bash
+                    sudo echo "/swapfile none swap defaults 0 0" >> /etc/fstab
+                    ```
+                5. スワップファイルを有効にしてください。
+                    ```
+                    sudo swapon /swapfile
+                    ```
+            </Steps>
+        </details>
+    5. `mkinitcpio.conf` 設定ファイルに lz4 圧縮モジュールを追加してください。
+        1. テキストエディターでファイルを開いてください。
+            ```bash
+            sudo nano /etc/mkinitcpio.conf
+            ```
+        2. `MODULES` 配列を見つけて `lz4` を追加してください。以下のようになります。
+            ```text
+            MODULES=(... lz4)
+            ```
+        3. `Ctrl + O` と `Enter` で編集内容を確認してファイルを保存し、`Ctrl + X` でエディターを終了してください。
+    6. 変更を適用するために initramfs を再ビルドしてください。コマンドはブートローダーによって異なります。
+        <details>
+            <summary>systemd-boot</summary>
+            ```bash
+            sudo sdboot-manage gen
+            ```
+        </details>
+        <details>
+            <summary>GRUB</summary>
+            ```bash
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+        </details>
+        <details>
+            <summary>Limine</summary>
+            ```bash
+            sudo limine-mkinitcpio
+            ```
+        </details>
+    7. すべての変更を適用するためにシステムを再起動してください。
+</Steps>
