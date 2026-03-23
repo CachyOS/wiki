@@ -1,0 +1,68 @@
+---
+title: Virtio-Venus
+description: Επιτάχυνση 3D μέσω Vulkan
+---
+
+## Περιπτώσεις χρήσης
+- **Σχεδόν εγγενής επιτάχυνση 3D**
+
+Στα λειτουργικά συστήματα που αξιοποιούν το `libvulkan`, όπως τα **Linux**, **BSD** και **Android**,
+μπορείτε να επιτύχετε σχεδόν εγγενείς επιδόσεις, μεταφράζοντας τις κλήσεις από την εικονική μηχανή
+στο Vulkan και έπειτα, απευθείας στην GPU σας και αντίστροφα, χωρίς να χρειάζεται να την
+παραχωρήσετε στην εικονική μηχανή.
+
+Δυστυχώς, το **Virtio-Venus** δεν υποστηρίζεται στο **VMM**, επομένως θα πρέπει να χρησιμοποιήσετε
+το **qemu-cli**. Θα χρειαστεί να σημειώσετε το όνομα που δώσατε στην εικονική μηχανή σας, καθώς και
+την τοποθεσία της.
+
+## Χρήση του Virtio-Venus στο qemu-cli:
+Μόλις εγκαταστήσετε οποιαδήποτε επιλέξιμη εικονική μηχανή, μπορείτε να ανοίξετε το τερματικό και να
+δημιουργήσετε μια εντολή του qemu-cli για την εικονική μηχανή σας. Ακολουθεί ένα παράδειγμα εικονικής
+μηχανής με το CachyOS:
+
+```sh
+qemu-system-x86_64                                                                             \
+    -enable-kvm                                                                                \
+    -M q35                                                                                     \
+    -smp 6                                                                                     \
+    -m 12G                                                                                     \
+    -cpu host                                                                                  \
+    -net nic,model=virtio                                                                      \
+    -net user,hostfwd=tcp::2222-:22                                                            \
+    -device virtio-sound-pci,audiodev=my_audiodev -audiodev pipewire,id=my_audiodev            \
+    -device virtio-vga-gl,hostmem=4G,blob=true,venus=true                                      \
+    -vga none                                                                                  \
+    -display gtk,gl=on,show-cursor=on                                                          \
+    -usb -device usb-tablet                                                                    \
+    -object memory-backend-memfd,id=mem1,size=12G                                              \
+    -machine memory-backend=mem1                                                               \
+    -drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd   \
+    -drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd              \
+    -drive file=.local/share/libvirt/images/archlinux.qcow2
+```
+
+## Επεξήγηση
+
+- Το `-smp 6` σημαίνει 6 πυρήνες CPU
+- Το `-m 12G` σημαίνει 12GB μνήμης RAM
+- To `-net user,hostfwd=tcp::2222-:22` σημαίνει ότι η θύρα 22 προωθείται από το κύριο σύστημα (host) στην
+εικονική μηχανή ως θύρα 2222. Επομένως, αν θέλατε να συνδεθείτε μέσω SSH στην εικονική μηχανή από κάποια
+συσκευή, θα κάνατε το εξής:
+
+```sh
+ssh -p 2222 όνομα_χρήστη_εικονικής_μηχανής@διεύθυνση_ip_εικονικής_μηχανής
+```
+
+- Το `-device virtio-vga-gl,hostmem=4G,blob=true,venus=true` είναι ο οδηγός Venus, ο οποίος δεν είναι δυστυχώς
+ακόμα διαθέσιμος στο virt-manager. Μόλις γίνει, θα αντικατασταθεί εξ ολοκλήρου αυτή η ενότητα, εκτός από το τμήμα
+που αναφέρεται στη λειτουργία χρήστη.
+- Το `-hostmem=4G` σημαίνει ότι η εικονική μηχανή μπορεί να έχει έως 4GB μνήμης VRAM από την GPU.
+- Το `-object memory-backend-memfd,id=mem1,size=12G` είναι το μέγεθος της μνήμης RAM (12GB στη συγκεκριμένη περίπτωση).
+- Το `-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd` είναι απλώς η διαδρομή
+προς το αρχείο υλικολογισμικού για την εικονική μηχανή.
+- Το `-drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd` είναι η μνήμη NVRAM της εικονικής
+μηχανής. Χωρίς αυτή (ή αν οριστεί με πρόσβαση μόνο για ανάγνωση), δεν θα είναι εφικτή η εκτέλεση της εικονικής μηχανής.
+- Το `-drive file=.local/share/libvirt/images/archlinux.qcow2` είναι η διαδρομή προς το αρχείο .qcow2 (αποθηκευτικός
+χώρος της εικονικής μηχανής).
+(Μπορείτε επίσης να δείτε ότι η συσκευή ήχου σε αυτήν την περίπτωση δεν έχει οριστεί σε `ich9`, αλλά σε `pipewire`· αυτό
+δεν έχει σημασία.)
