@@ -1,0 +1,117 @@
+---
+title: Instalarea altui DE/WM folosind Setările CachyOS
+description: Ghid despre cum să instalezi alt DE/WM într-o instalare CachyOS existentă folosind setările furnizate
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+## Lucruri de luat în considerare înainte de a instala un alt mediu desktop
+
+- Instalarea mai multor DE-uri/WM-uri poate duce la conflicte, în special cu managerii de setări, aplicațiile implicite și configurațiile de aspect precum temele și pictogramele în aplicațiile GTK sau QT.
+- Cei mai mari vinovați când vine vorba de conflicte sunt GNOME și KDE Plasma, deoarece folosesc două seturi de unelte complet diferite (GTK și, respectiv, QT) și au multe servicii care rulează în fundal și care pot interfera cu alte DE-uri/WM-uri.
+  - Acest fapt nu înseamnă că nu le poți avea instalate împreună, doar fii conștient că s-ar putea să întâmpini unele probleme.
+- Aglomerarea pachetelor: DE-urile populare precum GNOME și KDE Plasma pot veni cu sute de pachete de care s-ar putea să nu ai nevoie sau pe care nu le dorești.
+- Poți amesteca multe Window Managere cu diferite DE-uri fără prea multe probleme. De exemplu, poți avea KDE Plasma și Hyprland instalate împreună și poți alege pe care să-l folosești la autentificare.
+- DE-urile/WM-urile oferite de CachyOS conțin propriul lor pachet `-settings`. De exemplu: `cachyos-i3wm-settings`.
+  - Ce înseamnă acest lucru? Dacă dorești să instalezi un alt DE/WM și vrei să ai același aspect sau set de modificări pe care îl oferim noi, ar trebui să instalezi pachetul `-settings` corespunzător.
+  - Aceste pachete plasează fișiere de configurare în `/etc/skel/`, care servește ca șablon pentru noile conturi de utilizator.
+  - Important: Pentru utilizatorii existenți, aceste setări **NU sunt aplicate automat** pentru a preveni suprascrierea configurațiilor tale personale.
+
+## Cum să instalezi un alt DE/WM cu setările CachyOS
+
+:::note
+Ai două opțiuni când instalezi un alt DE sau WM:
+1. **Păstrezi fișierele tale de configurare actuale** și ajustezi manual sau copiezi fișierele din `/etc/skel` după cum este necesar.
+  - De exemplu: dacă dorești doar fișierele de configurare i3wm, dar vrei să păstrezi tema GTK actuală, poți doar să copiezi fișierele legate de i3wm din `/etc/skel/.config/i3` în directorul tău home.
+2. **Suprascrii fișierele tale de configurare actuale** cu cele noi din `/etc/skel/`.
+  - Acest lucru îți oferă experiența CachyOS completă, dar îți va înlocui setările actuale.
+:::
+
+:::tip
+Profită de Arch Wiki pentru respectivul DE sau WM pentru informații mai detaliate.
+:::
+
+<Steps>
+1. Creează o copie de rezervă a fișierelor tale de configurare actuale în directorul tău home:
+    ```bash
+    mkdir -p ~/config-backup
+    cp -r ~/.config ~/config-backup/
+    cp -r ~/.local ~/config-backup/
+    ```
+2. Dezinstalează pachetul `-settings` curent, dacă ai unul instalat. De exemplu, dacă folosești KDE, rulează:
+    ```bash
+    sudo pacman -R cachyos-kde-settings
+    ```
+    :::note
+    Eliminarea acestui pachet nu elimină niciuna dintre configurațiile tale actuale de DE/WM. Elimină doar fișierele stocate în `/etc/skel`.
+    :::
+3. Instalează noul DE/WM împreună cu pachetul său `-settings` corespondent. De exemplu, pentru a instala i3wm:
+    ```bash
+    sudo pacman -Syu i3-wm cachyos-i3wm-settings
+    ```
+    :::tip
+    Poți verifica lista DE-urilor/WM-urilor disponibile și pachetele lor `-settings` corespunzătoare în [repozitoriul GitHub CachyOS PKGBUILDs](https://github.com/CachyOS/CachyOS-PKGBUILDS).
+    :::
+    Sau folosind managerul de fișiere preferat.
+4. Copiază noile fișiere de configurare din `/etc/skel` în directorul tău home:
+    - De exemplu: pachetul `cachyos-i3wm-settings` conține configurații pentru Kvantum, dunst, GTK, i3, polybar, QT5 și rofi.
+    - Iată cum să o faci folosind un manager de fișiere:
+        <Steps>
+        1. Deschide managerul de fișiere (Dolphin, Nautilus, Thunar etc.).
+        2. Activează vizualizarea fișierelor ascunse:
+            - **Majoritatea managerelor de fișiere**: `Ctrl+H` sau prin meniu: `View` → `Show Hidden Files`.
+        3. Navighează la `/etc/skel` în managerul de fișiere.
+        4. Selectează toate fișierele și dosarele (`Ctrl+A`).
+        5. Copiază-le (`Ctrl+C`).
+        6. Navighează în directorul tău home.
+        7. Lipeste fișierele (`Ctrl+V`).
+        8. Când ești întrebat despre suprascriere, alege:
+            - **„Merge” (Fuziune)** sau **„Apply to All”** pentru dosare.
+            - **„Replace” (Înlocuire)** pentru fișierele individuale pe care dorești să le actualizezi.
+            :::caution
+            Ai grijă când înlocuiești fișierele. Acest lucru va suprascrie configurațiile tale actuale!
+            :::
+        </Steps>
+        - Sau folosește doar un terminal dacă ești familiarizat cu el.
+</Steps>
+
+După instalarea noului DE/WM și copierea fișierelor de configurare, deconectează-te de la sesiunea curentă. În ecranul de autentificare, selectează noul DE/WM instalat din opțiunile de sesiune înainte de a te reconecta.
+
+### FAQ
+
+#### Cum revin la configurația mea anterioară de DE/WM?
+
+- Restaurează din copia de rezervă pe care ai creat-o:
+  ```bash
+  cp -r ~/config-backup/.config/* ~/.config/
+  cp -r ~/config-backup/.local/* ~/.local/
+  ```
+  Sau folosind un manager de fișiere.
+
+#### Ce se întâmplă cu noile actualizări ale pachetului `-settings`?
+
+- Când un pachet `-settings` se actualizează, noile fișiere sunt plasate în `/etc/skel/`, dar configurația utilizatorului tău din `/home/` rămâne neschimbată. Pentru a aplica actualizările, va trebui să copiezi manual fișierele actualizate din `/etc/skel/` din nou.
+
+Va trebui să urmărești repozitoriul GitHub al respectivului DE/WM pentru orice modificări.
+
+Iată o listă cu toate repozitoriile diferitelor DE-uri și WM-uri întreținute de CachyOS:
+- [KDE Plasma](https://github.com/CachyOS/cachyos-kde-settings)
+- [Niri](https://github.com/CachyOS/cachyos-niri-settings)
+- [i3](https://github.com/CachyOS/cachyos-i3wm-settings)
+- [Qtile](https://github.com/CachyOS/cachyos-qtile-settings)
+- [Wayfire](https://github.com/CachyOS/cachyos-wayfire-settings)
+
+Toate celelalte DE și WM pe care le oferim la instalarea CachyOS nu au propriul pachet `-settings` în acest moment, ceea ce înseamnă că sunt doar versiunile vanilla.
+
+#### Pot păstra mai multe pachete de setări DE/WM instalate?
+
+- Da și nu. Poți avea mai multe DE-uri/WM-uri instalate, dar se recomandă să ai instalat un singur pachet `-settings` la un moment dat pentru a evita conflictele în `/etc/skel/`. Altfel, pacman s-ar putea plânge de conflicte de fișiere atunci când încerci să instalezi un alt pachet `-settings`.
+
+#### Ce sunt „Setările CachyOS”?
+
+„Setările CachyOS” sunt pachete de configurare convenabile pentru diverse medii desktop și manageri de ferestre. Ele oferă setări pre-configurate, teme și optimizări în funcție de DE/WM pe care îl alegi.
+
+Când instalezi unul dintre aceste pachete, acesta va instala automat și dependențe suplimentare care nu fac parte din DE/WM-ul vanilla, cum ar fi teme, pictograme, tapeturi și aplicații adiționale. De exemplu, în `cachyos-i3wm-settings` instalăm `rofi`, `dunst`, `picom`, `lxappearance` și multe altele.

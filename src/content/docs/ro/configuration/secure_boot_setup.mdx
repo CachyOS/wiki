@@ -1,0 +1,157 @@
+---
+title: Configurare Secure Boot
+description: Configurează secure boot cu sbctl după instalarea CachyOS
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+# sbctl
+
+[sbctl](https://github.com/Foxboron/sbctl) este un manager de chei secure boot prietenos, capabil să configureze secure boot, oferind capacități de gestionare a cheilor și urmărind fișierele care trebuie semnate în lanțul de boot.
+
+## Instalare sbctl
+
+```bash
+sudo pacman -S sbctl
+```
+
+## Pregătire
+
+### Managerul de Boot GRUB
+
+Dacă folosești GRUB, rulează următoarea comandă pentru a activa suportul secure boot pe GRUB folosind cheile CA.
+
+```bash
+sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
+```
+
+:::note
+Încărcarea modulelor inutile în managerul de boot poate prezenta un risc de securitate. Rulează această comandă doar dacă ai într-adevăr nevoie de secure boot.
+:::
+
+### Intrarea în modul Setup în UEFI
+În primul rând, trebuie să mergem la setările firmware-ului și să setăm modul secure boot pe „Setup Mode”. Poți reporni dintr-un sistem care rulează deja direct în setările firmware-ului cu următoarea comandă:
+
+```bash
+systemctl reboot --firmware-setup
+```
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/ideapad-bios-secure-boot.jpg')} />
+
+Așa arată BIOS-ul pe un Lenovo Ideapad 5 Pro. Resetează pe modul setup sau restaurează cheile din fabrică și repornește în sistem.
+
+Totuși, unele plăci de bază MSI nu au un mod setup. Pentru a obține același efect, urmează cei doi pași din imaginea de mai jos:
+<br />
+<ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
+
+## Configurarea sbctl
+
+```bash
+sudo sbctl status # Dacă modul setup este activat, putem trece la pasul următor
+Installed:      ✘ sbctl is not installed
+Setup Mode:     ✘ Enabled
+Secure Boot     ✘ Disabled
+
+sudo sbctl create-keys # Creează-ți propriile chei personalizate pentru secure boot
+Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Creating secure boot keys...✔
+Secure boot keys created!
+
+sudo sbctl enroll-keys --microsoft # Înregistrează-ți cheile împreună cu cheile Microsoft
+Enrolling keys to EFI variables...✔
+Enrolled keys to the EFI variables!
+
+sudo sbctl status
+# sbctl ar trebui să fie acum instalat, putem trece la semnarea imaginilor de kernel și a managerului de boot
+Installed:      ✔ sbctl is installed
+Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Setup Mode:     ✔ Disabled
+Secure Boot     ✘ Disabled
+Vendor Keys:    microsoft
+```
+
+## Semnarea imaginii Kernelului și a Managerului de Boot
+
+CachyOS oferă [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign), un script care preia lista fișierelor care trebuie semnate din `sudo sbctl verify` și le semnează pe toate. Utilizatorii Limine ar trebui să sară la secțiunea [Limine](#limine).
+
+:::caution
+Pe sistemele cu o structură separată de partiții `/boot` și `/boot/efi`, `sbctl` ar putea scana doar după binare EFI în `/boot/efi`. Acest lucru face ca imaginile de kernel aflate în `/boot` să nu fie detectate. `sbctl-batch-sign` rezolvă acest lucru scanând **întotdeauna** `/boot` după fișiere `vmlinuz-*`.
+:::
+
+```bash
+sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is not signed
+✘ /boot/EFI/BOOT/BOOTX64.EFI is not signed
+✘ /boot/EFI/systemd/systemd-bootx64.efi is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is not signed
+
+sudo sbctl-batch-sign
+
+sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is signed
+✔ /boot/EFI/BOOT/BOOTX64.EFI is signed
+✔ /boot/EFI/systemd/systemd-bootx64.efi is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
+```
+
+Acum că toate fișierele sunt semnate, **repornește sistemul și mergi în setările UEFI pentru a activa Secure Boot.**
+
+Reține că acesta este un proces unic, deoarece semnarea fișierelor cu flag-ul `-s` va salva acele fișiere în baza de date `sbctl`.
+
+:::tip[Memento]
+`sbctl` vine cu un [hook pacman](https://wiki.archlinux.org/title/Pacman_hook), ceea ce înseamnă că va semna automat toate fișierele noi la o actualizare de kernel sau de manager de boot.
+:::
+
+### systemd-boot
+
+CachyOS folosește `systemd-boot-update.service` furnizat de systemd pentru a actualiza managerul de boot la repornire. Acest lucru înseamnă că hook-ul pacman `sbctl` **nu** va semna binarele EFI actualizate. Ca soluție, putem semna direct managerul de boot:
+
+```sh
+sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+```
+
+### Limine
+
+Limine este un manager de boot special care permite verificarea hash-ului imaginilor de kernel și a altor fișiere pe care Limine le folosește în timpul pornirii. Dacă acest lucru este activat, orice tip de configurare manuală făcută de utilizator, ex. semnarea imaginii prin `sbctl-batch-sign`, va modifica hash-ul fișierelor corespunzătoare și va duce la eșecul verificării checksum-ului Limine.
+
+Totuși, semnarea acestor fișiere nu este necesară pe Limine deoarece acesta are un proces de boot special care ocolește chainloading-ul EFI și verificările de semnătură. Singurele binare EFI care trebuie semnate sunt Limine însuși.
+
+```sh
+# Folosește limine-enroll-config pentru a semna binarul EFI al Limine
+# Acesta folosește sbctl în fundal
+sudo limine-enroll-config
+sudo limine-update
+```
+
+## Verificarea activării Secure Boot
+
+Pentru a verifica dacă secure boot este într-adevăr activat, poți rula una dintre următoarele comenzi:
+
+```bash
+sudo sbctl status
+Installed:      ✓ sbctl is installed
+Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Setup Mode:     ✓ Disabled
+Secure Boot:    ✓ Enabled
+Vendor Keys:    microsoft
+
+bootctl
+System:
+      Firmware: UEFI 2.80 (INSYDE Corp. 28724.16435)
+ Firmware Arch: x64
+   Secure Boot: enabled (user)
+  TPM2 Support: yes
+  Measured UKI: no
+  Boot into FW: supported
+```
+
+## Link-uri și credite
+
+- [Arch Wiki](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl) a pus bazele acestui ghid. Majoritatea informațiilor de aici au fost preluate de acolo.
+- [sbctl](https://github.com/Foxboron/sbctl) - Acest ghid ușor de activare a suportului secure boot nu ar fi fost posibil fără munca extraordinară depusă pentru crearea acestui software.
+- [Îmbunătățirea experienței Secure Boot de Morten Linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) - Postare pe blog de Morten „Foxboron” Linderud despre cum experiența secure boot era complicată înainte de `sbctl`.

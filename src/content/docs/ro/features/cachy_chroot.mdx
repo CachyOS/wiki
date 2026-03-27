@@ -1,0 +1,140 @@
+---
+title: Asistent chroot CachyOS
+description: Unealtă de ajutor pentru a face mai ușoară intrarea în chroot în sisteme
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import {Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+[cachy-chroot](https://github.com/CachyOS/cachy-chroot) este un program simplu de ajutor pentru a ușura procesul de intrare în chroot într-o instalare existentă
+de CachyOS sau bazată pe Arch. Acesta listează toate partițiile descoperite pe mașină și suportă, de asemenea, listarea subvolumelor BTRFS.
+Nu în ultimul rând, `cachy-chroot` suportă și sisteme criptate prin LUKS. Va mapa fiecare intrare `fstab` la intrările sale `crypttab`
+desemnate și va închide cu grație toate volumele LUKS la ieșirea din chroot.
+
+:::caution[cachy-chroot este destinat să fie rulat dintr-un mediu live CachyOS.]
+:::
+
+:::note
+cachy-chroot suportă montarea aproape oricărui sistem de fișiere suportat de kernelul Linux, cu excepția ZFS.
+:::
+
+## Utilizare
+
+:::tip
+Folosește tastele săgeată pentru a naviga prin opțiuni și `ENTER` pentru a selecta.
+
+Simbolul **❯** indică opțiunea selectată curent.
+
+**?** indică o solicitare de introducere a datelor de către utilizator.
+:::
+
+<Steps>
+1. Bootează într-un ISO live CachyOS
+2. Deschide un terminal și intră ca utilizator root cu `sudo su`
+3. Asigură-te că ai instalată cea mai recentă versiune `cachy-chroot` rulând:
+    ```bash
+    pacman -Sy cachy-chroot
+    ```
+4. Rulează `cachy-chroot` tastând:
+    ```bash
+    cachy-chroot
+    ```
+    `cachy-chroot` va scana și va lista toate partițiile disponibile.
+    <details>
+    <summary>Exemplu de ieșire cu o instalare CachyOS BTRFS</summary>
+        ```bash
+        Info: Found 3 block devices
+        Info: Found partition: Partition: /dev/nvme0n1p1: FS: vfat UUID: EDA6-ED98
+        Info: Found partition: Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+        Info: Found partition: Partition: /dev/nvme0n1p4: FS: btrfs UUID: 66e84339-8c77-4131-afce-50ec2cf67a80
+        ? Select the block device for the root partition (use arrow keys):  ›
+        Partition: /dev/nvme0n1p1: FS: vfat UUID: EDA6-ED98
+        ❯ Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+        ```
+    </details>
+    <details>
+    <summary>Exemplu de ieșire cu EXT4</summary>
+        ```bash
+        Info: Found 8 block devices
+        Info: Found partition: Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+        Info: Found partition: Partition: /dev/sda2: FS: vfat UUID: CA0D-2D5A
+        Info: Found partition: Partition: /dev/sdb1: FS: ntfs UUID: A4763F77763F48F6
+        Info: Found partition: Partition: /dev/sdc1: FS: ntfs UUID: C4CA216BCA215B46
+        Info: Found partition: Partition: /dev/sdc2: FS: ntfs UUID: 060C28590C284651
+        Info: Found partition: Partition: /dev/sdc3: FS: ntfs UUID: 3A3CF8B13CF86971
+        Info: Found partition: Partition: /dev/sdd1: FS: exfat UUID: 4FDC-0AAB
+        Info: Found partition: Partition: /dev/sdd2: FS: vfat UUID: 3105-B091
+        ? Select the block device for the root partition (use arrow keys):  ›
+        ❯ Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+        Partition: /dev/sda2: FS: vfat UUID: CA0D-2D5A
+        Partition: /dev/sdb1: FS: ntfs UUID: A4763F77763F48F6
+        Partition: /dev/sdc1: FS: ntfs UUID: C4CA216BCA215B46
+        Partition: /dev/sdc2: FS: ntfs UUID: 060C28590C284651
+        Partition: /dev/sdc3: FS: ntfs UUID: 3A3CF8B13CF86971
+        Partition: /dev/sdd1: FS: exfat UUID: 4FDC-0AAB
+        Partition: /dev/sdd2: FS: vfat UUID: 3105-B091
+        ```
+        În acest exemplu, partiția root este `/dev/sda1` cu sistemul de fișiere `ext4`. Celelalte partiții nu sunt relevante pentru chroot.
+    </details>
+5. Selectează partiția care conține sistemul de fișiere root:
+    <details>
+    <summary>Exemplu cu CachyOS BTRFS</summary>
+        ```bash title="Selectarea partiției root"
+        ✔ Select the block device for the root partition (use arrow keys):  · Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+        Info: Selected BTRFS partition, mounting and listing subvolumes...
+        Info: Mounting partition /dev/nvme0n1p2 at /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-858f-2e02be61b342-hwAeIm with options: []
+        Info: Unmounting partition at /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-858f-2e02be61b342-hwAeIm
+        ? Do you want to use CachyOS BTRFS preset to auto mount root subvolume? (y/n) › # Introdu y dacă ești pe CachyOS
+        ```
+        **Dacă folosești CachyOS cu BTRFS**, introdu `y` pentru a folosi presetarea CachyOS BTRFS. Aceasta va monta automat subvolumul root și alte subvolume importante precum `/home`, `/var`, `/tmp` și `/srv`. Dacă folosești o structură BTRFS personalizată sau un sistem care nu este CachyOS, introdu `n` pentru a selecta manual subvolumele.
+    </details>
+    <details>
+    <summary>Exemplu cu EXT4</summary>
+            ```bash title="Selectarea partiției root"
+            ✔ Select the block device for the root partition (use arrow keys):  · Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+            Info: Mounting partition /dev/sda1 at /tmp/cachyos-chroot-root-mount-b7fef200-fbb8-4783-9fad-46c5e8b7ca0e-LtsXXC with options: []
+            Info: Mounting additional partitions based on /etc/fstab...
+            Info: Found 3 entries in /etc/fstab
+            Warning: Partition UUID=b7fef200-fbb8-4783-9fad-46c5e8b7ca0e already mounted, skipping...
+            Info: Mounting partition /dev/sda2 at /tmp/cachyos-chroot-root-mount-b7fef200-fbb8-4783-9fad-46c5e8b7ca0e-LtsXXC/boot with options: []
+            Info: Finished mounting additional partitions
+            ✔ Do you want to mount additional partitions? · no
+            Info: Chrooting into the configured root partition...
+            Info: To exit the chroot, type 'exit' or press Ctrl+D
+            ```
+    </details>
+6. `cachy-chroot` va încerca să monteze automat toate partițiile și subvolumele listate sub `/etc/fstab` de pe dispozitivul root. Dacă montarea vreunei partiții eșuează, vei fi notificat și vei avea opțiunea de a le monta manual dacă este necesar. Poți alege `no` pentru a omite montarea partițiilor suplimentare.
+7. **Acum ești în mediul chroot**.
+    ```bash
+    [root@CachyOS /]#
+    ```
+    Acum poți rula comenzi ca și cum ai fi pornit sistemul instalat. De exemplu, poți actualiza sistemul cu:
+    ```bash title="Actualizarea sistemului în chroot"
+    pacman -Syu
+    ```
+    sau poți efectua alte sarcini de întreținere după cum este necesar.
+8. Când ai terminat, ieși din mediul chroot scriind `exit` la prompt sau apăsând `CTRL+D` pe tastatură.
+    ```bash title="Ieșirea din chroot"
+    exit
+    ```
+9. După ieșire, `cachy-chroot` va curăța automat partițiile montate și va închide orice containere LUKS. Te vei întoarce în consola mediului live.
+</Steps>
+
+### Depanare
+
+- **Nu au fost găsite partiții:** Asigură-te că discul care conține instalarea ta este conectat și recunoscut de sistemul live. Poți verifica cu `lsblk` sau `fdisk -l`.
+- **Montarea automată eșuează pentru unele partiții:** Poți încerca să le montezi manual din interiorul mediului chroot. `cachy-chroot` va ignora eșecurile și va continua.
+
+### Întrebări frecvente (FAQ)
+
+- **Î: La ce folosește montarea partițiilor suplimentare?**
+  - R: Există mai multe cazuri de utilizare pentru montarea manuală a partițiilor suplimentare, inclusiv:
+    - **Fișier fstab corupt sau lipsă:** Poți monta manual partițiile necesare (precum `/boot` sau `/home`) pentru a efectua reparații sau recuperarea datelor.
+    - **UUID-uri de partiție actualizate:** Dacă sistemul tău nu pornește pentru că ai schimbat UUID-ul unei partiții, poți folosi `cachy-chroot` pentru a monta partițiile și apoi să actualizezi fstab corespunzător.
+
+### Află mai multe
+
+- [Arch Wiki - chroot](https://wiki.archlinux.org/title/Chroot)
+- [Demonstrație video pentru cachy-chroot](https://github.com/user-attachments/assets/29360aaf-b775-4cfa-9051-465ad5360ae8)

@@ -1,0 +1,221 @@
+---
+title: Manageri de Boot Oferiți
+description: Descriere și recomandări pentru managerii de boot oferiți în prezent
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+Pentru a oferi cea mai bună experiență pe o gamă largă de dispozitive, CachyOS oferă în prezent următorii manageri de boot: **systemd-boot, rEFInd, GRUB și Limine**.
+
+Acest articol wiki descrie setul de caracteristici al fiecărui manager de boot și include recomandările noastre despre când să îi alegi.
+Pentru configurare, te rugăm să consulți [Configurarea Managerului de Boot](/ro/configuration/boot_manager_configuration).
+
+:::caution
+**Notă importantă:** Unele plăci de bază MSI au un firmware UEFI care nu respectă pe deplin specificația UEFI. Acest lucru poate duce la probleme de compatibilitate cu anumiți manageri de boot, inclusiv GRUB și rEFInd.
+
+Dacă întâmpini astfel de probleme, ia în considerare utilizarea `systemd-boot` sau `Limine`.
+:::
+
+---
+
+## Comparație Rapidă a Caracteristicilor
+
+<style>{`
+  .bm-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .bm-table th, .bm-table td {
+    padding: 8px 10px;
+    vertical-align: top;
+    word-break: break-word;
+  }
+  /* separatoare verticale între coloanele managerilor de boot */
+  .bm-table th:not(:first-child),
+  .bm-table td:not(:first-child) {
+    border-left: 2px solid var(--ifm-table-border-color, #e5e7eb);
+  }
+  /* linie sub antet */
+  .bm-table thead th {
+    border-bottom: 2px solid var(--ifm-table-border-color, #e5e7eb);
+  }
+`}</style>
+
+<table className="bm-table">
+  <thead>
+    <tr>
+      <th>Caracteristică</th>
+      <th><strong>systemd-boot</strong></th>
+      <th><strong>rEFInd</strong></th>
+      <th><strong>GRUB</strong></th>
+      <th><strong>Limine</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Suport Firmware</strong></td>
+      <td>Doar UEFI (fără BIOS/MBR)</td>
+      <td>Doar UEFI</td>
+      <td>UEFI &amp; BIOS</td>
+      <td>UEFI &amp; BIOS</td>
+    </tr>
+    <tr>
+      <td><strong>Suport sistem de fișiere <code>/boot</code></strong></td>
+      <td>În funcție de suportul firmware-ului (de obicei FAT12/16/32); Mai multe cu drivere EFI</td>
+      <td>Cel al firmware-ului, ext2, ext3, ext4, btrfs, ISO-9660, HFS+ și NTFS; Mai multe cu drivere EFI</td>
+      <td>Suport larg pentru sisteme de fișiere (ext*, Btrfs, XFS, etc.)</td>
+      <td>FAT12/16/32, ISO9660 pentru <code>/boot</code></td>
+    </tr>
+    <tr>
+      <td><strong>Dual-boot Windows</strong></td>
+      <td>Detectează automat Windows Boot Manager pe același ESP</td>
+      <td>Detectează automat loaderele EFI și kernelurile</td>
+      <td>Suportat prin <code>os-prober</code> sau configurare manuală</td>
+      <td>Suportat; intrările Windows Boot Manager pot fi adăugate cu <code>limine-scan</code></td>
+    </tr>
+    <tr>
+      <td><strong>Integrare snapshot Btrfs</strong></td>
+      <td>Posibilă cu configurare personalizată (nu este oferită de CachyOS)</td>
+      <td>Posibilă cu configurare personalizată (nu este oferită de CachyOS)</td>
+      <td><strong>Suportat pe CachyOS prin</strong> <code>grub-btrfs-support</code></td>
+      <td><strong>Suportat pe CachyOS prin</strong> <code>limine-snapper-sync</code></td>
+    </tr>
+    <tr>
+      <td><strong>Criptare completă a discului (FDE)</strong></td>
+      <td>Posibilă (root criptat; <code>/boot</code> trebuie să rămână necriptat)</td>
+      <td>Posibilă (root criptat; <code>/boot</code> trebuie să rămână necriptat)</td>
+      <td>Complet suportat, inclusiv <code>/boot</code> criptat prin <code>cryptodisk</code> (doar LUKS1/PBKDF2; suport LUKS2 limitat/necesită soluții de ocolire)</td>
+      <td>Posibilă (root criptat; <code>/boot</code> trebuie să rămână necriptat)</td>
+    </tr>
+    <tr>
+      <td><strong>Tematică / UI</strong></td>
+      <td>Minimalist, fără teme</td>
+      <td>Interfață grafică, personalizabilă prin teme</td>
+      <td>Interfață clasică, suportă teme</td>
+      <td>Meniu personalizabil (skin-uri)</td>
+    </tr>
+    <tr>
+      <td><strong>Ușurința configurării pe CachyOS</strong></td>
+      <td>Foarte simplu (CachyOS îl configurează automat în mod implicit)</td>
+      <td>Configurare ușoară cu detectare automată a OS-ului și kernelului</td>
+      <td>Simplificat prin hook-uri/scripturi CachyOS (include snapshot-uri Btrfs în meniu)</td>
+      <td>Simplificat prin uneltele CachyOS (asistenți pentru intrări + integrare meniu snapshot)</td>
+    </tr>
+    <tr>
+      <td><strong>Particularități MSI UEFI</strong></td>
+      <td>Funcționează fiabil</td>
+      <td>Poate avea probleme (necesită soluții de ocolire)</td>
+      <td>Poate avea probleme</td>
+      <td>Funcționează fiabil</td>
+    </tr>
+    <tr>
+      <td><strong>Măsurare Boot prin TPM PCR</strong></td>
+      <td>Da, <a href="https://systemd.io/TPM2_PCR_MEASUREMENTS/" target="_blank">integrat</a></td>
+      <td>Posibil folosind systemd-ukify</td>
+      <td>Da, <a href="https://www.gnu.org/software/grub/manual/grub/html_node/Measured-Boot.html" target="_blank">integrat</a></td>
+      <td><a href="https://github.com/fwupd/fwupd/discussions/9568" target="_blank">Posibil folosind systemd-ukify</a></td>
+    </tr>
+    <tr>
+      <td><strong>Cel mai bun caz de utilizare</strong></td>
+      <td>Configurații UEFI rapide/simple; soluție de rezervă pentru problemele MSI</td>
+      <td>Multi-boot cu interfață grafică finisată</td>
+      <td>Necesar pentru <strong>/boot</strong> criptat, BIOS sau suportul cel mai larg pentru FS</td>
+      <td>Configurații moderne care doresc bootare din snapshot-uri + BIOS &amp; UEFI + chainloading</td>
+    </tr>
+  </tbody>
+</table>
+
+## Detalii Manageri de Boot
+
+### systemd-boot
+
+Parte din familia systemd, systemd-boot a fost creat pentru a fi cât mai simplu posibil. Prin urmare, are suport doar pentru sistemele bazate pe UEFI. Acest design simplu, dar eficient, îi asigură fiabilitatea și viteza, dar vine cu prețul lipsei unor caracteristici avansate suportate de ceilalți manageri de boot.
+
+#### Pro
+- Configurare foarte simplă.
+- Intrările de boot sunt separate în mai multe fișiere, ceea ce le face ușor de gestionat.
+- Asigură compatibilitatea cu unele plăci MSI care întâmpină probleme UEFI la utilizarea altor manageri de boot.
+- Pe CachyOS, configurația este generată automat.
+- Valorile TPM PCR sunt măsurate în timpul pornirii.
+
+#### Contra
+- Nu are suport pentru BIOS/MBR.
+- Foarte limitat: fără teme sau personalizare.
+- Dacă se folosește un sistem de fișiere de boot în afara celor implicite ale firmware-ului (FAT12/16/32), atunci partițiile ESP și [XBOOTLDR](https://wiki.archlinux.org/title/Systemd-boot#Installation_using_XBOOTLDR) separate și driverele EFI trebuie adăugate manual.
+- Nu poate găsi imagini de boot pe alte partiții în afara propriului ESP sau a partiției XBOOTLDR.
+- Configurația nu este generată automat decât dacă este setat să facă asta.
+- Nu are suport nativ pentru revenirea la snapshot-uri Btrfs din cauza cerinței de a stoca imaginile de kernel pe partiția de boot în loc de partiția root.
+  - Bootarea din snapshot-uri este posibilă doar cu configurări personalizate (nu sunt oferite de CachyOS).
+
+---
+
+### rEFInd
+
+Un fork al rEFIt, rEFInd a fost creat în principal pentru a le ușura utilizatorilor MacOS procesul de multi-boot. Totuși, rEFInd a evoluat devenind independent de hardware, fiind o alegere excelentă pentru multi-boot pe orice sistem. Principalul avantaj al rEFInd este capacitatea sa de a scana toate dispozitivele de stocare la pornire și de a afișa intrările corespunzătoare pentru fiecare OS/Kernel găsit.
+
+#### Pro
+- Detectează automat toate sistemele de operare și kernelurile de pe dispozitivele de stocare.
+- Necesită puțină sau deloc configurare manuală.
+- Interfață grafică ce amintește de selectorul de boot din MacOS.
+- Suport excelent pentru teme, cu suport opțional pentru ecrane tactile.
+- Poate citi imagini de boot de pe sisteme de fișiere EFI (FAT12/16/32), precum și EXT4 și BTRFS. Suportul pentru sisteme de fișiere suplimentare poate fi activat prin instalarea driverelor EFI din pachetul `efifs`.
+
+#### Contra
+- Nu are suport pentru sistemele BIOS.
+- Incompatibil cu unele plăci MSI (din cauza încălcării specificațiilor UEFI).
+  - Se poate remedia cu o soluție de ocolire, dar necesită pași suplimentari.
+- Valorile TPM PCR nu sunt măsurate. <a href="https://github.com/fwupd/fwupd/wiki/TPM-PCR0-differs-from-reconstruction">Va eșua testul de reconstrucție TPM PCR0</a>.
+  - Se poate remedia prin bootarea unui UKI care folosește systemd-stub ca stub UEFI. Unealta systemd-ukify poate face acest lucru.
+  - O altă soluție este pornirea în lanț (chainload) a unui alt bootloader care măsoară TPM PCR (ex: systemd-boot, GRUB).
+---
+
+### GRUB
+
+GRUB este cel mai vechi dintre managerii de boot disponibili. Are un set foarte mare de caracteristici, funcționează pe aproape orice mașină și rămâne cel mai utilizat manager de boot Linux.
+
+#### Pro
+- Suportă aproape toate sistemele de fișiere Linux.
+- Utilizat pe scară largă — documentația și ajutorul comunității sunt abundente.
+- Suportă partiții `/boot` criptate.
+- Suportă bootarea din snapshot-uri Btrfs (prin `grub-btrfs-support` pe CachyOS).
+- Suportă sisteme BIOS și UEFI.
+- Suport pentru teme, în ciuda interfeței grafice oarecum învechite.
+- Valorile TPM PCR sunt măsurate în timpul pornirii.
+
+#### Contra
+- Mare și complex, cu multe drivere pentru sisteme de fișiere.
+- Vizibil mai lent decât systemd-boot, rEFInd și Limine.
+- Incompatibil cu unele plăci MSI (încălcări ale specificațiilor UEFI).
+
+---
+
+### Limine
+
+Limine este un bootloader multiprotocol modern, avansat și portabil. Servește ca implementare de referință pentru protocolul de boot Limine și suportă atât Linux, cât și pornirea în lanț a altor loadere.
+
+#### Pro
+- Suportă multiple protocoale de boot, inclusiv Multiboot2 și protocolul de boot Linux.
+- Poate boota atât pe sisteme UEFI, cât și pe BIOS.
+- Are capacități de tematică similare cu GRUB.
+- Suportă snapshot-uri Btrfs prin `limine-snapper-sync`, activat implicit pe CachyOS cu Btrfs.
+
+#### Contra
+- `/boot` trebuie să folosească FAT12/16/32 sau ISO9660. Alte sisteme de fișiere necesită configurare suplimentară.
+- Nu adaugă automat o intrare în NVRAM-ul UEFI. Acest lucru trebuie făcut manual cu `efibootmgr`, sau gestionat automat cu `limine-entry-tool` (preinstalat pe CachyOS).
+- Nu funcționează cu UFS (Universal Flash Storage), utilizat de exemplu în unele Chromebook-uri.
+- Valorile TPM PCR nu sunt măsurate. <a href="https://github.com/fwupd/fwupd/wiki/TPM-PCR0-differs-from-reconstruction">Va eșua testul de reconstrucție TPM PCR0</a>.
+  - Se poate remedia prin bootarea unui UKI care folosește systemd-stub ca stub UEFI. Unealta systemd-ukify poate face acest lucru (<a href="https://github.com/fwupd/fwupd/discussions/9568" target="_blank">vezi aici</a>).
+  - O altă soluție este pornirea în lanț (chainload) a unui alt bootloader care măsoară TPM PCR (ex: systemd-boot, GRUB).
+
+---
+
+## Pe scurt (TL;DR)
+
+- Alege **GRUB** dacă ai nevoie de `/boot` criptat, compatibilitate BIOS sau dorești snapshot-uri Btrfs cu un manager de boot stabil și matur.
+
+- Alege **Limine** dacă dorești un bootloader modern cu integrare pentru snapshot-uri Btrfs din fabrică, plus suport atât pentru BIOS, cât și pentru UEFI și dual-boot Windows (prin **limine-scan**).
+
+- Alege **rEFInd** dacă dorești o interfață grafică finisată și detectare automată multi-boot pe sistemele UEFI.
+
+- Alege **systemd-boot** dacă preferi cea mai simplă configurare și nu ai nevoie de snapshot-uri sau caracteristici avansate. Este, de asemenea, cea mai fiabilă soluție de rezervă pentru plăcile de bază MSI cu probleme UEFI.

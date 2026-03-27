@@ -1,0 +1,93 @@
+---
+title: Comutarea între GPU-urile NVIDIA și AMD
+description: Instrucțiuni pentru migrarea de la NVIDIA la AMD (și invers) pe CachyOS.
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::note[Acest ghid se aplică dacă îți înlocuiești placa video (NVIDIA ↔ AMD) pe o instalare existentă de CachyOS.]
+:::
+
+## Cerințe preliminare
+  - Noua placă video este instalată și conectată corespunzător.
+  - Asigură-te că sistemul tău este complet actualizat.
+    ```bash
+    sudo pacman -Syu
+    ```
+
+### Pașii de migrare
+
+<Tabs>
+    <TabItem label='De la NVIDIA la AMD'>
+        Deși driverele AMD sunt incluse în Kernelul Linux, s-ar putea să fie nevoie să cureți vechea configurație NVIDIA și să te asiguri că pachetele AMD necesare sunt instalate.
+        <Steps>
+            1. Verifică ce profil de driver NVIDIA este instalat în prezent:
+                ```bash
+                sudo chwd --list-installed
+                ```
+            2. Elimină profilul specific folosind flag-ul `-r`:
+                ```bash
+                sudo chwd -r <nume-profil>
+                ```
+            3. Închide sistemul și instalează placa video AMD.
+            4. După pornire, folosește chwd pentru a detecta automat placa video și a instala pachetele AMD corecte.
+                ```bash
+                sudo chwd -a
+                ```
+            5. După instalarea noilor drivere, actualizează configurația initramfs și a bootloader-ului.
+                > CachyOS include un hook pacman care reconstruiește automat initramfs atunci când driverele sunt adăugate sau eliminate.
+                > Acest lucru asigură încărcarea driverelor corecte la pornire.
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            6. Repornește pentru a aplica modificările.
+                ```bash
+                sudo reboot
+                ```
+            7. După repornire, verifică dacă driverele AMD sunt active.
+                ```bash
+                vulkaninfo | grep "deviceName"
+                ```
+                sau
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                Dacă placa ta video AMD este listată, driverele funcționează corect.
+        </Steps>
+    </TabItem>
+    <TabItem label='De la AMD la NVIDIA'>
+        <Steps>
+            1. Curăță pachetele AMD rămase.
+                ```bash
+                sudo chwd -r amd
+                ```
+            2. Închide sistemul și instalează placa video NVIDIA.
+            3. După pornire, folosește chwd pentru a detecta automat placa video și a instala pachetele NVIDIA corecte.
+                ```bash
+                sudo chwd -a
+                ```
+            4. După instalarea noilor drivere, actualizează configurația initramfs și a bootloader-ului.
+                > CachyOS include un hook pacman care reconstruiește automat initramfs atunci când driverele sunt adăugate sau eliminate.
+                > Acest lucru asigură încărcarea driverelor corecte la pornire.
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            5. Repornește pentru a aplica modificările.
+                ```bash
+                sudo reboot
+                ```
+            6. După repornire, verifică dacă driverele NVIDIA sunt active.
+                ```bash
+                nvidia-smi
+                ```
+                sau
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                Dacă placa ta video NVIDIA este listată, driverele funcționează corect.
+        </Steps>
+    </TabItem>
+</Tabs>

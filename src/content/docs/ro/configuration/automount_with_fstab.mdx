@@ -1,0 +1,221 @@
+---
+title: Montarea Automată a Unităților Suplimentare prin fstab la Pornire
+description: Montează unități statice suplimentare la pornire utilizând fișierul aflat la /etc/fstab
+---
+
+Acest tutorial descrie noțiunile de bază ale utilizării fișierului fstab aflat în /etc/ pentru a monta unități statice în timpul pornirii sistemului. Explică pe scurt cum să găsești UUID-ul unei partiții sau unități, ce fac unele opțiuni și oferă resurse pentru lectură suplimentară în cazul în care informațiile furnizate sunt insuficiente.
+
+## Cerințe prealabile
+
+- Acces root sau sudo
+
+## Adăugarea intrărilor în /etc/fstab
+
+:::note[NTFS pe Linux]
+Sistemul de fișiere NTFS poate fi instabil sub Linux, indiferent dacă se folosește driverul ntfs3 sau ntfs-3g. Folosește-l pe propriul risc. Pentru o mai bună stabilitate și performanță, ia în considerare sistemele de fișiere native Linux precum ext4, xfs sau btrfs.
+:::
+
+### 1. Listează UUID-urile partițiilor tale
+
+```sh title="Deschide un terminal și rulează următoarea comandă"
+lsblk -f
+```
+
+```text title="Exemplu de rezultat"
+# NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+# zram0                                                                              [SWAP]
+# nvme0n1
+# ├─nvme0n1p1 vfat   FAT32       E04D-9F05
+# ├─nvme0n1p2
+# ├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
+# ├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
+# ├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
+# └─nvme0n1p6 ntfs
+```
+
+În exemplul nostru, știm că vrem să montăm o partiție Windows, care este ntfs. Știm, de asemenea, că aproximativ jumătate din spațiul său este disponibil. Prin urmare, putem determina că partiția pe care dorim să o montăm este `nvme0n1p3` și UUID-ul său este `08A24E90A24E81E4`, cu un sistem de fișiere `ntfs` în acest exemplu.
+
+### 2. Identificarea partiției tale
+
+Adesea, `lsblk -f` va furniza toate informațiile de care ai nevoie pentru a-ți monta discul prin /etc/fstab în acest punct. Dacă tot nu ești sigur care este partiția corectă, poți rula următoarea comandă:
+
+```sh
+sudo fdisk -l
+```
+
+```text title="Exemplu de rezultat"
+# Device              Start        End    Sectors  Size Type
+# /dev/nvme0n1p1       2048     206847     204800  100M EFI System
+# /dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
+# /dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
+# /dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
+# /dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
+# /dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
+```
+
+Știm deja UUID-ul nostru în acest exemplu. Totuși, `fdisk -l` ne poate clarifica puțin lucrurile arătând dimensiunea exactă a partiției (1.4T), precum și tipul acesteia (Microsoft basic data).
+
+Asta ar trebui să facă destul de clar faptul că partiția pe care o dorim este `nvme0n1p3` cu un UUID de `08A24E90A24E81E4`, așa cum am descris anterior. Știam deja, dar acum suntem siguri.
+
+Odată ce ești sigur că ai găsit partiția corectă, copiază UUID-ul. Copierea din emulatorul de terminal se face de obicei cu `ctrl+shift+C`.
+
+### 3. Adăugarea unei intrări în /etc/fstab
+
+Acum că am obținut UUID-ul partiției noastre, este timpul să deschidem fișierul fstab.
+
+Simte-te liber să folosești editorul de text preferat. În acest exemplu, vom folosi nano. Pentru a edita fișierul fstab, acesta trebuie deschis ca root:
+
+```sh
+sudo nano /etc/fstab
+```
+
+Folosind tastele săgeată, navighează până la sfârșitul fișierului fstab, apoi creează noua noastră intrare pe o linie goală nouă:
+
+```sh
+UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000 0 0
+```
+
+:::note
+Calea `/media/windows` trebuie să existe în sistemul tău de fișiere. Folosește `mkdir` pentru a crea directorul dacă nu există.
+:::
+
+Detalierea acestei intrări este următoarea:
+
+- `UUID=08A24E90A24E81E4` este sistemul de fișiere pe care dorim să-l montăm, identificat prin UUID-ul său. Există și alte metode de a-ți identifica sistemul de fișiere, deși UUID-ul tinde să fie cea mai sigură. Metode suplimentare sunt listate [aici](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems).
+
+- `/media/windows` este punctul de montare al unității noastre. [Standardul Ierarhiei Sistemului de Fișiere Linux](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html) spune că `/media/` este locația corespunzătoare pentru montarea unităților amovibile. `windows` indică directorul în care dorim să ne montăm unitatea. Fiecare unitate pe care dorim să o montăm va avea nevoie de propriul său director.
+
+- `ntfs3` este tipul sistemului de fișiere care va fi utilizat. Folosim explicit driverul de kernel ntfs3 în exemplul nostru. Alte exemple ar fi `ext4`, `xfs` sau similare. Această declarație explicită a tipului de sistem de fișiere poate fi înlocuită cu `auto` pentru a permite comenzii mount să facă cea mai bună estimare.
+
+- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000`: Acestea sunt opțiuni de montare:
+
+  - `defaults`: un set standard de opțiuni incluzând `rw, suid, dev, exec, auto, nouser și async.`
+
+  - `nofail`: permite procesului de pornire să continue chiar dacă această montare eșuează.
+
+  - `uid=1000` și `gid=1000`: setează proprietatea utilizatorului și a grupului pentru fișierele montate la utilizatorul și grupul cu ID-ul 1000.
+
+  - `rw`: montează sistemul de fișiere în mod citire-scriere.
+
+  - `user`: permite unui utilizator non-root să monteze sistemul de fișiere.
+
+  - `exec`: permite executarea binarelor pe sistemul de fișiere montat.
+
+  - `umask=000`: setează masca de permisiuni a fișierelor pentru a permite permisiuni de citire, scriere și executare pentru toată lumea.
+
+  - `primul 0` (dump): este de obicei depășit în sistemele moderne. Lăsarea acestuia la 0 nu va dăuna cu nimic. Poți citi mai multe despre el [aici](https://linux.die.net/man/8/dump).
+
+  - `al doilea 0` (pass): setează ordinea pentru verificările sistemului de fișiere la momentul pornirii. Pentru o partiție root, aceasta ar trebui să fie 1, cu excepția cazului în care sistemul tău de fișiere root este btrfs, caz în care ar trebui setat la 0. Toate celelalte sisteme de fișiere din fstab-ul tău ar trebui să fie fie 0 (dezactivat), fie 2. Mai multe informații [aici](https://man.archlinux.org/man/fsck.8).
+
+Pentru o privire mai detaliată asupra fiecărei opțiuni, vizitează aceste două pagini: [fstab man page](https://man7.org/linux/man-pages/man5/fstab.5.html) și [mount man page](https://man7.org/linux/man-pages/man8/mount.8.html)
+
+#### Mai multe info
+
+Ca o notă secundară, toate opțiunile de după declararea tipului de sistem de fișiere sunt opționale dacă nu le schimbi de la valorile implicite.
+
+Astfel,
+
+`UUID=<UUID partiție> /media/foo sistem_fișiere`
+
+și
+
+`UUID=<UUID partiție> /media/foo sistem_fișiere defaults 0 0`
+
+sunt echivalente. `sistem_fișiere` urmat de nimic este implicit `sistem_fișiere defaults 0 0`.
+
+### 4. Finalizarea
+
+Dacă dorești să montezi acum unitatea pentru care ai creat o intrare, trebuie să rulezi următoarele:
+
+```sh
+sudo systemctl daemon-reload
+```
+
+și apoi:
+
+```sh
+sudo mount -a
+```
+
+Unitatea ta ar trebui să apară acum sub `/media/windows` și va apărea acolo de fiecare dată când repornești.
+
+```sh
+ls /media/windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+# 'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
+ ```
+
+ Dacă dorești să creezi o legătură (link) către unitatea nou montată în directorul tău home, poți rula următoarele:
+
+ ```sh
+ ln -s /media/windows ~/Windows
+ ```
+
+ Pentru a arăta că a funcționat:
+
+ ```sh
+ ls ~/Windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+#'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
+ ```
+
+## Pe scurt (tl;dr)
+
+- Găsește **UUID**-ul partiției tale
+
+```sh
+lsblk -f
+```
+
+- Deschide `/etc/fstab`
+
+```sh
+sudo nano /etc/fstab
+```
+
+- Creează o intrare la sfârșitul fișierului
+
+```sh
+UUID=<UUID partiție> /media/foo sistem_fișiere defaults 0 0
+```
+
+Înlocuind `<UUID partiție>`, `foo` și `sistem_fișiere` cu UUID-ul, directorul și sistemul tău de fișiere (ex. ext4), precum și setând orice alte opțiuni dorești după defaults, cum ar fi `_netdev` pentru un NAS sau `nofail` pentru orice unitate non-critică.
+
+- Reîncarcă demonul
+
+```sh
+sudo systemctl daemon-reload
+```
+
+- Montează-ți unitatea
+
+```sh
+sudo mount -a
+```
+
+Această unitate este acum montată și va fi montată la pornire și de acum înainte.
+
+## Lectură suplimentară
+
+- [Standardul Ierarhiei Sistemului de Fișiere](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS despre /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Manual pentru dump](<https://linux.die.net/man/8/dump>)
+- [Manual pentru fsck](https://man.archlinux.org/man/fsck.8)
+- [Pagina man pentru fstab](https://man.archlinux.org/man/fstab.5.en)
+- [Intrarea Arch Linux Wiki pentru fstab](https://wiki.archlinux.org/title/Fstab)

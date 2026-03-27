@@ -112,6 +112,7 @@ export default defineConfig({
             ru: 'Начало работы',
             sk: 'Začíname',
             pt: 'Introdução',
+            ro: 'Primii Pași',
           },
           items: [
             {
@@ -126,6 +127,7 @@ export default defineConfig({
                 ru: 'Как ориентироваться в вики',
                 sk: 'Ako sa orientovať v wiki',
                 pt: 'Como navegar na wiki',
+                ro: 'Cum să navighezi prin wiki',
               },
               link: 'cachyos_basic/navigation-guide',
             },
@@ -141,6 +143,7 @@ export default defineConfig({
                 ru: 'Почему CachyOS?',
                 sk: 'Prečo CachyOS?',
                 pt: 'Porquê o CachyOS?',
+                ro: 'De ce CachyOS?',
               },
               link: 'cachyos_basic/why_cachyos',
             },
@@ -156,6 +159,7 @@ export default defineConfig({
                 ru: 'Скачать и проверить ISO',
                 sk: 'Stiahnutie a overenie ISO',
                 pt: 'Descarregar e Verificar ISO',
+                ro: 'Descărcare și Verificare ISO',
               },
               link: 'cachyos_basic/download',
             },
@@ -178,6 +182,7 @@ export default defineConfig({
                 ru: 'FAQ и устранение неполадок',
                 sk: 'FAQ a riešenie problémov',
                 pt: 'Perguntas Frequentes e Resolução de Problemas',
+                ro: 'FAQ și Depanare',
               },
               link: 'cachyos_basic/faq',
             },
@@ -195,6 +200,7 @@ export default defineConfig({
             ru: 'Установка',
             sk: 'Inštalácia',
             pt: 'Instalação',
+            ro: 'Instalare',
           },
           items: [
             {
@@ -209,6 +215,7 @@ export default defineConfig({
                 ru: 'Требования и подготовка USB',
                 sk: 'Požiadavky a príprava USB',
                 pt: 'Requisitos e Preparação do USB',
+                ro: 'Cerințe și pregătire USB',
               },
               link: 'installation/installation_prepare',
             },
@@ -224,6 +231,7 @@ export default defineConfig({
                 ru: 'Boot менеджер',
                 sk: 'Boot manažéry',
                 pt: 'Gestores de Arranque',
+                ro: 'Manageri Boot'
               },
               link: 'installation/boot_managers',
             },
@@ -239,6 +247,7 @@ export default defineConfig({
                 ru: 'Файловая система',
                 sk: 'Súborový systém',
                 pt: 'Sistema de Ficheiros',
+                ro: 'Sistem de fișiere',
               },
               link: 'installation/filesystem',
             },
@@ -254,6 +263,7 @@ export default defineConfig({
                 ru: 'Окружения рабочего стола',
                 sk: 'Desktopové prostredia',
                 pt: 'Ambientes de Trabalho',
+                ro: 'Medii Desktop',
               },
               link: 'installation/desktop_environments',
             },
@@ -269,6 +279,7 @@ export default defineConfig({
                 ru: 'Руководства',
                 sk: 'Príručky',
                 pt: 'Guias',
+                ro: 'Ghiduri',
               },
               items: [
                 {
@@ -283,6 +294,7 @@ export default defineConfig({
                     ru: 'Десктоп версия',
                     sk: 'Desktop verzia',
                     pt: 'Edição Desktop',
+                    ro: 'Ediția Desktop',
                   },
                   link: 'installation/installation_on_root',
                 },
@@ -298,6 +310,7 @@ export default defineConfig({
                     ru: 'Портативная версия',
                     sk: 'Handheld verzia',
                     pt: 'Edição Handheld',
+                    ro: 'Ediția Handheld',
                   },
                   link: 'installation/installation_handheld',
                 },
@@ -321,6 +334,7 @@ export default defineConfig({
             ru: 'Возможности CachyOS',
             sk: 'Funkcie CachyOS',
             pt: 'Funcionalidades do CachyOS',
+            ro: 'Caracteristici CachyOS'
           },
           items: [
             {
@@ -336,6 +350,7 @@ export default defineConfig({
                 ru: 'CachyOS chroot помощник (cachy-chroot)',
                 sk: 'Pomôcka pre chroot CachyOS (cachy-chroot)',
                 pt: 'Assistente chroot do CachyOS (cachy-chroot)',
+                ro: 'CachyOS asistent chroot (cachy-chroot)',
               },
             },
             {
@@ -351,6 +366,7 @@ export default defineConfig({
                 ru: 'CachyOS Обнаружение оборудования (chwd)',
                 sk: 'Detekcia hardvéru CachyOS (chwd)',
                 pt: 'Deteção de Hardware do CachyOS (chwd)',
+                ro: 'CachyOS Detectare Hardware (chwd)',
               },
             },
             {
@@ -365,6 +381,7 @@ export default defineConfig({
                 ru: 'Ядро CachyOS',
                 sk: 'Jadro CachyOS',
                 pt: 'Kernel do CachyOS',
+                ro: 'Kernel CachyOS',
               },
               link: 'features/kernel',
             },
@@ -380,6 +397,7 @@ export default defineConfig({
                 ru: 'Менеджер ядер',
                 sk: 'Správca jadra',
                 pt: 'Gestor de Kernel',
+                ro: 'Manager de Kernel',
               },
               link: 'features/kernel_manager',
             },
@@ -395,6 +413,7 @@ export default defineConfig({
                 ru: 'Настройки CachyOS',
                 sk: 'Nastavenia CachyOS',
                 pt: 'Definições do CachyOS',
+                ro: 'Setări CachyOS',
               },
               link: 'features/cachyos_settings',
             },
@@ -410,6 +429,7 @@ export default defineConfig({
                 ru: 'Оптимизированные репозитории',
                 sk: 'Optimalizované repozitáre',
                 pt: 'Repositórios Otimizados',
+                ro: 'Repozitorii Optimizate',
               },
               link: 'features/optimized_repos',
             },
@@ -427,6 +447,7 @@ export default defineConfig({
             ru: 'Конфигурация',
             sk: 'Konfigurácia',
             pt: 'Configuração',
+            ro: 'Configurare',
           },
           items: [
             {
@@ -441,6 +462,7 @@ export default defineConfig({
                 ru: 'Настройка Secure Boot',
                 sk: 'Nastavenie zabezpečeného spúšťania',
                 pt: 'Configuração do Secure Boot',
+                ro: 'Configurare Secure Boot',
               },
               link: 'configuration/secure_boot_setup',
             },
@@ -456,6 +478,7 @@ export default defineConfig({
                 ru: 'Рекомендации после установки',
                 sk: 'Rekomendácie po inštalácii',
                 pt: 'Recomendações Pós-Instalação',
+                ro: 'Recomandări post-instalare'
               },
               link: 'configuration/post_install_setup',
             },
@@ -471,6 +494,7 @@ export default defineConfig({
                 ru: 'Конфигурация Boot менеджера',
                 sk: 'Konfigurácia Boot manažéra',
                 pt: 'Configuração do Gestor de Arranque',
+                ro: 'Configurare Manager Boot',
               },
               link: 'configuration/boot_manager_configuration',
             },
@@ -486,6 +510,7 @@ export default defineConfig({
                 ru: 'Снимки Btrfs',
                 sk: 'Btrfs snapshoty',
                 pt: 'Snapshots Btrfs',
+                ro: 'Snapshoturi Btrfs',
               },
               link: 'configuration/btrfs_snapshots',
             },
@@ -501,6 +526,7 @@ export default defineConfig({
                 ru: 'Двойная GPU',
                 sk: 'Dvojité GPU',
                 pt: 'GPU Dupla',
+                ro: 'GPU Dual',
               },
               link: 'configuration/dual_gpu',
             },
@@ -517,6 +543,7 @@ export default defineConfig({
                 ru: 'Игры',
                 sk: 'Hranie hier',
                 pt: 'Jogos / Gaming',
+                ro: 'Gaming',
               },
             },
             {
@@ -531,6 +558,7 @@ export default defineConfig({
                 ru: 'Общие настройки системы',
                 sk: 'Všeobecné systémové úpravy',
                 pt: 'Ajustes Gerais do Sistema',
+                ro: 'Ajustări generale ale sistemului',
               },
               link: 'configuration/general_system_tweaks',
             },
@@ -546,6 +574,7 @@ export default defineConfig({
                 ru: 'Руководство по sched-ext',
                 sk: 'sched-ext návod',
                 pt: 'Tutorial do sched-ext',
+                ro: 'Tutorial sched-ext',
               },
               link: 'configuration/sched-ext',
             },
@@ -561,6 +590,7 @@ export default defineConfig({
                 ru: 'Автоматическое монтирование дополнительных дисков',
                 sk: 'Automatické pripájanie ďalších diskov',
                 pt: 'Montagem Automática de Unidades Adicionais',
+                ro: 'Montarea automată a unităților suplimentare'
               },
               link: 'configuration/automount_with_fstab',
             },
@@ -576,6 +606,7 @@ export default defineConfig({
                 ru: 'Включение аппаратного ускорения в Google Chrome',
                 sk: 'Povolenie hardvérovej akcelerácie v Google Chrome',
                 pt: 'Ativar Aceleração de Hardware no Google Chrome',
+                ro: 'Activarea accelerării hardware în Google Chrome',
               },
               link: 'configuration/enabling_hardware_acceleration_in_google_chrome',
             },
@@ -593,6 +624,7 @@ export default defineConfig({
           translations: {
             ja: '仮想化',
             pt: 'Virtualização',
+            ro: 'Virtualizare',
           },
           items: [
             {
@@ -600,6 +632,7 @@ export default defineConfig({
               translations: {
                 ja: 'QEMU と VMM のセットアップ',
                 pt: 'Configuração do QEMU e VMM',
+                ro: 'Configurare QEMU și VMM'
               },
               link: 'virtualization/qemu_and_vmm_setup',
             },
@@ -608,6 +641,7 @@ export default defineConfig({
               translations: {
                 ja: 'QEMU ユーザーセッション',
                 pt: 'Sessão de Utilizador QEMU',
+                ro: 'Sesiune Utilizator QEMU',
               },
               link: 'virtualization/qemu_user_session',
             },
@@ -616,6 +650,7 @@ export default defineConfig({
               translations: {
                 ja: 'EGL ヘッドレス',
                 pt: 'EGL Headless',
+                ro: 'EGL Headless',
               },
               link: 'virtualization/egl_headless',
             },
@@ -624,6 +659,7 @@ export default defineConfig({
               translations: {
                 ja: 'Virtio-Venus',
                 pt: 'Virtio-Venus',
+                ro: 'Virtio-Venus',
               },
               link: 'virtualization/virtio-venus',
             },
@@ -641,6 +677,7 @@ export default defineConfig({
             ru: 'Поддержка',
             sk: 'Podpora',
             pt: 'Suporte',
+            ro: 'Susține-ne'
           },
           items: [
             {
@@ -655,6 +692,7 @@ export default defineConfig({
                 ru: 'Пожертвования',
                 sk: 'Darcovstvo',
                 pt: 'Doações',
+                ro: 'Donații'
               },
               link: 'support/donation',
             },
@@ -670,6 +708,7 @@ export default defineConfig({
                 ru: 'Социальные сети',
                 sk: 'Sociálne siete',
                 pt: 'Redes Sociais',
+                ro: 'Rețele Sociale'
               },
               link: 'support/social',
             },
@@ -687,6 +726,7 @@ export default defineConfig({
             ru: 'Правила',
             sk: 'Politika',
             pt: 'Políticas',
+            ro: 'Politică',
           },
           items: [
             {
@@ -701,6 +741,7 @@ export default defineConfig({
                 ru: 'Правила сообщества',
                 sk: 'Pravidlá komunity',
                 pt: 'Regras da Comunidade',
+                ro: 'Regulile Comunității'
               },
               link: 'policy/community-rules',
             },
@@ -716,6 +757,7 @@ export default defineConfig({
                 ru: 'Кодекс поведения',
                 sk: 'Kódex správania',
                 pt: 'Código de Conduta',
+                ro: 'Codul de Conduită',
               },
               link: 'policy/code_of_conduct',
             },
@@ -731,6 +773,7 @@ export default defineConfig({
                 ru: 'Условия обслуживания',
                 sk: 'Podmienky služby',
                 pt: 'Termos de Serviço',
+                ro: 'Termeni și Condiții',
               },
               link: 'policy/terms_of_service',
             },
@@ -746,6 +789,7 @@ export default defineConfig({
                 ru: 'Политика конфиденциальности',
                 sk: 'Zásady ochrany osobných údajov',
                 pt: 'Política de Privacidade',
+                ro: 'Politica de Confidențialitate',
               },
               link: 'policy/privacy_policy',
             },
@@ -761,6 +805,7 @@ export default defineConfig({
                 ru: 'Правила репозитория',
                 sk: 'Politika repozitárov',
                 pt: 'Política de Repositórios',
+                ro: 'Politica Repozitoriilor',
               },
               link: 'policy/repository_policy',
             },

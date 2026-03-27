@@ -1,0 +1,116 @@
+---
+title: Setări CachyOS
+---
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+
+Pe lângă kernelurile și repozitoriile noastre optimizate, oferim și setări care îmbunătățesc și mai mult experiența desktop, precum și câteva scripturi de ajutor pentru îmbunătățirea calității vieții (QoL). Toate aceste configurații și scripturi se află în pachetul `cachyos-settings`.
+
+## Optimizări sysctl
+
+Oferim o mulțime de optimizări sysctl care vizează îmbunătățirea performanței generale a desktopului. Fiecare intrare sysctl este bine documentată în fișierul [70-cachyos-settings.conf](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/sysctl.d/70-cachyos-settings.conf).
+
+Pentru a face modificări la oricare dintre aceste valori, copiază intrarea originală și creează un fișier nou sub `/etc/sysctl.d/` cu valoarea modificată.
+
+### Modificarea valorilor sysctl
+
+<Steps>
+
+1. Aruncă o privire la valoarea originală din `cachyos-settings`
+
+    ```sh
+    cat /usr/lib/sysctl.d/70-cachyos-settings.conf
+    # Doar experimental!
+    # Lasă sarcinile Realtime să ruleze cât timp au nevoie
+    # sched: RT throttling activat
+    kernel.sched_rt_runtime_us=-1
+    ```
+
+2. Creează un fișier nou în `/etc/sysctl.d` pentru a face modificări setărilor sysctl
+
+    ```sh title="Revenirea kernel.sched_rt_runtime_us= la valoarea sa implicită"
+    sudo micro /etc/sysctl.d/99-kernel-sched-rt.conf # Dacă fișierul nu există, această comandă îl creează și îți permite să-l editezi
+    kernel.sched_rt_runtime_us=950000
+    ```
+
+</Steps>
+
+## Reguli udev
+
+- [Reguli ZRAM](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/30-zram.rules) - Setează swappiness-ul ZRAM la o valoare mai agresivă, astfel încât cache-ul să fie mai probabil să facă swap în ZRAM.
+- [Permisiuni HPET](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/40-hpet-permissions.rules) - Permite accesul la nodurile de dispozitiv `rtc0` și `hpet` de către grupul audio.
+- [Gestionarea energiei SATA](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/50-sata.rules) - Setează politica de gestionare a energiei a dispozitivelor SATA la `max_performance`. Doar dacă dispozitivul suportă LPM.
+- [Reguli pentru planificatorul I/O](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/60-ioschedulers.rules) - Selectează planificatorul optim pentru fiecare tip de unitate (HDD, SSD, NVMe).
+- [Reguli hdparm](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/69-hdparm.rules) - Setează HDD-urile SATA și IDE la performanță maximă.
+- [NVIDIA RTD3](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/71-nvidia.rules) - Configurează funcționalitatea de gestionare dinamică a energiei pentru generația de GPU-uri Turing. `RTD3 nu funcționează corect pe GPU-urile Turing cu modulele deschise (open modules)`.
+- [Latența CPU DMA](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/99-cpu-dma-latency.rules) - Permite accesul la nodul de dispozitiv `cpu_dma_latency` de către grupul audio.
+- [PM snd_hda_intel](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/20-audio-pm.rules) - Setează economisirea energiei la `0` când este conectat la priză și restabilește valoarea anterioară când se trece pe baterie.
+
+## Opțiuni modprobe
+
+- Forțează driverul AMDGPU pe Southern Islands (GCN 1.0) și Sea Islands (GCN 2.0).
+- Activează [diverse optimizări](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/modprobe.d/nvidia.conf) pentru NVIDIA.
+- Pune pe lista neagră (blacklist) modulele watchdog.
+- Dezactivează `power_save` pentru driverul audio **snd_hda_intel**.
+
+## Scripturi de ajutor
+
+- `cachyos-bugreport.sh` - Colectează diverse log-uri de la `inxi`, `dmesg` și `journalctl` pentru a ajuta la depanare.
+- `game-performance` - Script wrapper pentru `powerprofilesctl` pentru a trece la profilul de performanță la cerere. Vezi [Comutarea profilului de putere la cerere](/ro/configuration/gaming#comutarea-profilului-de-putere-la-cerere).
+- `dlss-swapper` - Script wrapper pentru a forța cel mai recent preset DLSS în jocurile care suportă tehnologia.
+- `dlss-swapper-dll` - Similar cu `dlss-swapper`, dar necesită actualizarea manuală a bibliotecii `nvngx_dlss.dll` livrată cu jocul; poate funcționa cu jocuri care au probleme cu versiunea obișnuită a scriptului.
+- `kerver` - Script QoL pentru a afișa informații despre kernelul curent.
+- `paste-cachyos` - Script pentru a trimite (paste) ieșirea terminalului sau fișiere text de pe sistem.
+
+    <Tabs>
+        <TabItem label="Încărcarea fișierelor text">
+            ```sh
+            paste-cachyos /cale/către/fișier
+            ```
+        </TabItem>
+        <TabItem label="Încărcarea ieșirii terminalului">
+            ```sh
+            <comandă> | paste-cachyos
+            ```
+        </TabItem>
+    </Tabs>
+- [pci-latency](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/pci-latency) - Reduce valoarea `latency_timer` la `80` pentru plăcile de sunet PCI și resetează toate celelalte dispozitive PCI la `20` și `0`.
+    ```sh title="Activarea pci-latency la nivel de sistem"
+    sudo systemctl enable --now pci-latency.service
+    ```
+- `sbctl-batch-sign` - Script de ajutor pentru a semna cu ușurință imaginile de kernel și binarele EFI pentru secure boot și pentru a le salva în baza de date a sbctl.
+- `topmem` - Afișează statisticile RAM, swap și ksm pentru 10 procese în ordine descrescătoare.
+- `zink-run` - Facilitează executarea unui program OpenGL prin intermediul driverului Zink Gallium.
+
+
+## Alte configurații
+
+### Optimizări pentru utilizarea memoriei
+
+- Configurare THP Shrinker `max_ptes_none = 409`.
+- Setarea dimensiunii maxime la `50MB` pentru jurnalul systemd.
+- [Generator ZRAM](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/systemd/zram-generator.conf) - Setează ZRAM la aceeași dimensiune cu RAM-ul și folosește ZSTD pentru compresie.
+
+### Reguli Ananicy-cpp
+
+- [ananicy-cpp](https://gitlab.com/ananicy-cpp/ananicy-cpp) cu [seturi de reguli menținute de comunitate](https://github.com/CachyOS/ananicy-rules).
+
+### Modificări de rețea
+
+- [systemd-resolved ca rezolvitor DNS implicit](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/NetworkManager/conf.d/dns.conf) pentru NetworkManager.
+
+### QoL NTP
+
+- Server preferat setat la `Cloudflare`.
+- Servere de rezervă (fallback): `Google` și `Arch Linux`.
+
+### Optimizări servicii systemd
+
+- Timpul de expirare (timeout) pentru pornirea unui serviciu/unități setat la `15s`.
+- Timpul de expirare pentru oprirea unui serviciu/unități setat la `10s`.
+- Limita soft pentru descriptori de fișiere deschiși setată la `2048`.
+- Limita hard pentru descriptori de fișiere deschiși setată la `2097152`.
+
+### X.Org
+
+- Activarea [Tap to Click](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/share/X11/xorg.conf.d/20-touchpad.conf) în mod implicit pentru toate sesiunile X11.

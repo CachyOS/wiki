@@ -1,0 +1,483 @@
+---
+title: După Instalare
+description: Pași pentru configurarea CachyOS după instalare
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+## Actualizarea Sistemului
+
+:::tip
+Asigură-te că verifici secțiunea noastră de [Securitate și Bune Practici](/ro/cachyos_basic/faq#securitate-și-bune-practici) pentru a evita greșelile comune și pentru a-ți păstra sistemul în siguranță.
+:::
+
+<Tabs>
+
+<TabItem label="Folosind Octopi (GUI)">
+
+Octopi este un manager de pachete grafic pentru distribuțiile bazate pe Arch, care oferă o modalitate convenabilă de a gestiona pachetele și actualizările. Pentru a-ți actualiza sistemul cu Octopi, urmează acești pași:
+
+<Steps>
+
+1. Lansează **Octopi** din meniul de aplicații.
+2. În fereastra principală, apasă pe butonul **Check updates** (stânga sus), apoi lângă acesta pe **System upgrade**.
+3. Octopi va verifica acum actualizările disponibile și te va întreba dacă dorești să le instalezi direct în Octopi sau într-un terminal.
+4. Pentru a continua cu actualizarea, apasă butonul **Apply**.
+5. Octopi va descărca și va instala actualizările.
+6. Se recomandă să repornești computerul după o actualizare mare **(mai ales dacă a fost actualizat kernelul)**.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Folosind Pacman">
+
+<Steps>
+
+1. Deschide un emulator de terminal (sau apasă `ctrl + alt + t` - `mod + return` într-un WM, ex. Qtile).
+2. Rulează următoarea comandă pentru a actualiza sistemul:
+
+   ```sh
+   sudo pacman -Syu
+   ```
+3. Se recomandă să repornești computerul după o actualizare mare **(mai ales dacă a fost actualizat kernelul)**.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Actualizare Offline a Sistemului">
+
+*CachyOS suportă actualizările de sistem offline folosind scriptul [`pacman-offline`](https://github.com/eworm-de/pacman-offline). Acest lucru permite sistemului tău să descarce actualizările de pachete și să le aplice la următoarea repornire (da, la fel ca pe Windows).*
+
+:::note
+Unealta `pacman-offline` se integrează cu funcția de actualizări offline a systemd. Aceasta gestionează automat actualizările de kernel și încărcarea modulelor.
+
+Fișierul `/etc/pacman.d/offline.conf` este crucial pentru a gestiona ce pachete sunt actualizate în timpul actualizărilor obișnuite și a celor offline. Asigură-te că este configurat corect pentru kernelul dorit sau adaugă pachetele pe care le vrei astfel încât să fie actualizate doar în timpul execuției pacman-offline și ignorate într-o actualizare obișnuită. Exemplu: `pacman -Syu`.
+
+**Dacă activezi timerul de actualizare automată, nu mai trebuie să-ți actualizezi manual sistemul.**
+:::
+
+<Steps>
+
+1. **Instalează pachetul pacman-offline**
+
+   ```bash
+   sudo pacman -S pacman-offline
+   ```
+
+2. **Instruirea Pacman să citească din lista separată de pachete ignorate.**
+
+   :::note[Adaugă linia după secțiunea [options]. Verifică exemplul de mai jos pentru referință.]
+   :::
+
+   ```bash title='Adaugă următoarea linie în fișierul /etc/pacman.conf'
+   Include = /etc/pacman.d/offline.conf
+   ```
+   *Exemplu*
+   ```bash
+   # /etc/pacman.conf
+   # REPOSITORIES
+   #   - can be defined here or included from another file
+   #   - pacman will search repositories in the order defined here
+   #   - local/custom mirrors can be added here or in separate files
+   #   - repositories listed first will take precedence when packages
+   #     have identical names, regardless of version number
+   #   - URLs will have $repo replaced by the name of the current repo
+   #   - URLs will have $arch replaced by the name of the architecture
+   #
+   # Repository entries are of the format:
+   #       [repo-name]
+   #       Server = ServerName
+   #       Include = IncludePath
+   #
+   # The header [repo-name] is crucial - it must be present and
+   # uncommented to enable the repo.
+   #
+   # GENERAL OPTIONS
+   [options]
+   # other options like 'Color', 'CheckSpace', etc. can be here
+   Include = /etc/pacman.d/offline.conf
+   ```
+3. **Adăugarea kernelurilor CachyOS pentru ca pacman să le ignore în timpul actualizărilor obișnuite**
+
+   Unealta `pacman-offline` folosește acest fișier pentru a determina ce pachete să ignore în timpul actualizărilor tradiționale pacman.
+
+   Exemplu: când rulezi `sudo pacman -Syu`
+
+   *Înlocuiește conținutul fișierului `/etc/pacman.d/offline.conf` cu următorul:*
+
+   ```text
+   # Kerneluri Arch Linux
+   IgnorePkg = linux linux-headers linux-docs
+   IgnorePkg = linux-lts linux-lts-headers linux-lts-docs
+   IgnorePkg = linux-zen linux-zen-headers linux-zen-docs
+   IgnorePkg = linux-hardened linux-hardened-headers linux-hardened-docs
+
+   # Kerneluri CachyOS
+   IgnorePkg = linux-cachyos linux-cachyos-headers linux-cachyos-nvidia-open linux-cachyos-zfs
+   IgnorePkg = linux-cachyos-bmq linux-cachyos-bmq-headers linux-cachyos-bmq-nvidia-open linux-cachyos-bmq-zfs
+   IgnorePkg = linux-cachyos-bore linux-cachyos-bore-headers linux-cachyos-bore-nvidia-open linux-cachyos-bore-zfs
+   IgnorePkg = linux-cachyos-deckify linux-cachyos-deckify-headers linux-cachyos-deckify-nvidia-open linux-cachyos-deckify-zfs
+   IgnorePkg = linux-cachyos-eevdf linux-cachyos-eevdf-headers linux-cachyos-eevdf-nvidia-open linux-cachyos-eevdf-zfs
+   IgnorePkg = linux-cachyos-gcc linux-cachyos-gcc-headers linux-cachyos-gcc-nvidia-open linux-cachyos-gcc-zfs
+   IgnorePkg = linux-cachyos-hardened linux-cachyos-hardened-headers linux-cachyos-hardened-nvidia-open linux-cachyos-nvidia-hardened-zfs
+   IgnorePkg = linux-cachyos-lts linux-cachyos-lts-headers linux-cachyos-lts-nvidia-open linux-cachyos-lts-zfs
+   IgnorePkg = linux-cachyos-rc linux-cachyos-rc-headers linux-cachyos-rc-nvidia-open linux-cachyos-rc-nvidia-open linux-cachyos-rc-zfs
+   IgnorePkg = linux-cachyos-rt-bore linux-cachyos-rt-bore-headers linux-cachyos-rt-bore-nvidia-open
+   IgnorePkg = linux-cachyos-server linux-cachyos-server-headers linux-cachyos-server-nvidia-open linux-cachyos-server-zfs
+   ```
+
+   *Acum toate aceste pachete vor fi ignorate în actualizările obișnuite, dar verificate în timpul pregătirii offline.*
+
+3. **Pornește pregătirea pentru actualizarea offline o singură dată**
+
+   ```bash title='Rulează următoarea comandă'
+   sudo systemctl start pacman-offline-prepare.service
+   ```
+   Această comandă va face ca pacman-offline să se execute o dată, să sincronizeze bazele de date de pachete și să descarce actualizările, dar fără să le instaleze.
+
+</Steps>
+
+*Dacă dorești ca acest script să fie automatizat, urmează pașii aceștia:*
+
+<Steps>
+
+1. **Activează timerul de pregătire**
+
+   Activarea `pacman-offline-prepare.timer` va permite systemd să declanșeze acest script pentru a descărca actualizările zilnic, la câteva minute după fiecare pornire a sistemului.
+
+   ```bash
+   sudo systemctl enable pacman-offline-prepare.timer
+   ```
+
+2. **Repornește-ți sistemul:**
+
+   Actualizările vor fi instalate în timpul următoarei reporniri a sistemului.
+
+3. **(Opțional) Reporniri Automate ale Sistemului:**
+
+    Activează `pacman-offline-reboot.timer` pentru a-ți reporni automat sistemul, implicit la ora **3 dimineața** (ora ta locală), dacă există actualizări în așteptare. Reține că nu este întotdeauna la aceeași oră din cauza includerii `RandomizedDelaySec`, care este setat la 2 ore implicit.
+
+    ```bash
+    sudo systemctl enable pacman-offline-reboot.timer
+    ```
+
+    :::tip
+    Poți edita fișierul `pacman-offline-reboot.timer` pentru a modifica ora la care dorești ca sistemul să repornească dacă există vreo actualizare în așteptare sau pentru a dezactiva programarea aleatorie.
+    :::
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Cachy-Update">
+
+Fork al [Arch-Update](https://github.com/Antiz96/arch-update)
+
+Un notificator și aplicator de actualizări pentru Arch Linux care te ajută cu sarcinile importante pre și post actualizare. Include un applet de systray dinamic și interactiv pentru o integrare ușoară cu orice Mediu Desktop / Window Manager.
+
+Activează Cachy-Update în CachyOS Hello > Apps/Tweaks > Cachy Update enabled
+
+- Caracteristici:
+  - Verificare și listare automată a actualizărilor disponibile.
+  - Verificare pentru știri recente Arch Linux (și oferă posibilitatea de a le afișa).
+  - Verificare pentru pachete orfane (și oferă eliminarea lor).
+  - Verificare pentru pachete vechi și dezinstalate din cache (și oferă eliminarea lor).
+  - Verificare pentru actualizări de kernel în așteptare care necesită repornire (și oferă posibilitatea de a o face).
+  - Verificare pentru servicii care necesită repornire după actualizare.
+  - Suport pentru `sudo`, `sudo-rs`, `doas` și `run0`.
+
+**Interval de verificare a actualizărilor:** `O dată la 15 secunde după pornire și apoi în fiecare oră.`
+
+- Cum să schimbi intervalul de verificare a actualizărilor:
+
+```sh title='Rulează următoarea comandă'
+systemctl --user edit --full arch-update.timer
+# Sfat: Poți folosi orice editor de text preferi în loc de `nano`
+# ex. EDITOR=micro systemctl --user edit --full arch-update.timer
+```
+Conținutul implicit al fișierului:
+```systemd
+[Timer]
+OnStartupSec=15 # Verifică actualizările la 15 secunde după pornire
+OnUnitActiveSec=1h # Verifică actualizările în fiecare oră
+```
+
+Practic, poți schimba valoarea `OnUnitActiveSec` cu orice dorești. De exemplu, dacă vrei să verifici actualizările la fiecare 30 de minute, schimbă-l în `30m`, sau la fiecare 6 ore, în `6h`. Consultă acest [document](https://www.freedesktop.org/software/systemd/man/latest/systemd.time.html#Parsing%20Time%20Spans) pentru mai multe detalii despre setarea intervalului de timp.
+
+În cazul în care dorești ca Cachy-Update să verifice actualizările noi doar o singură dată la pornire, poți pur și simplu să ștergi complet linia `OnUnitActiveSec`.
+
+Mulțumiri lui [Antiz](https://github.com/Antiz96) pentru întreținerea proiectului upstream Arch-Update și pentru implementarea Cachy-Update.
+
+</TabItem>
+
+</Tabs>
+
+## Configurarea Firewall-ului (ufw)
+:::note
+UFW este activat implicit după instalare.
+:::
+Pentru a configura ufw, urmează acești pași:
+
+<Tabs>
+
+<TabItem label="Activare">
+
+```bash
+sudo ufw enable
+```
+
+</TabItem>
+
+<TabItem label="Dezactivare">
+
+```bash
+sudo ufw disable
+```
+
+</TabItem>
+
+<TabItem label="Permite (Allow)">
+
+Implicit, ufw ignoră traficul de intrare și îl permite pe cel de ieșire; poți adăuga reguli specifice firewall-ului pentru a bloca sau permite anumite conexiuni.
+
+```bash
+# De exemplu:
+sudo ufw allow ssh
+```
+
+</TabItem>
+
+<TabItem label="Refuză (Deny)">
+
+```bash
+# Pentru a refuza un anumit port, consultă exemplul următor:
+sudo ufw deny 80
+```
+
+</TabItem>
+
+<TabItem label="Status">
+
+```bash
+sudo ufw status verbose
+```
+
+</TabItem>
+
+</Tabs>
+
+:::note
+Ai grijă când configurezi regulile de firewall, deoarece regulile configurate incorect te pot bloca din propriul sistem.
+:::
+
+:::note
+Îl poți configura și grafic folosind secțiunea „Firewall” din setările KDE Plasma.
+:::
+
+## Configurarea domeniului de reglementare Wi-Fi
+
+Pachetul `wireless-regdb` include o bază de date cu reguli wireless (frecvențe permise, canale, limite de putere) pentru diverse țări. Setarea regiunii corecte pentru locația ta poate debloca anumite canale Wi-Fi (cum ar fi canalele 12/13 sau benzile de 5GHz/6GHz) care pot fi limitate implicit, ajutând la îmbunătățirea performanței și a calității conexiunii Wi-Fi.
+
+**Configurare:**
+
+1. Editează configurația:
+   Deschide `/etc/conf.d/wireless-regdom` cu privilegii de root.
+   ```bash
+   sudo micro /etc/conf.d/wireless-regdom
+   ```
+2. Setează-ți țara:
+   Decomentează linia cu [codul de țară ISO](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Officially_assigned_code_elements) din două litere (ex. `WIRELESS_REGDOM="RO"`). Asigură-te că o singură țară este decomentată.
+3. Repornește:
+   O repornire este de obicei necesară pentru ca modificarea să intre în vigoare.
+
+**Verificare:**
+
+Pentru a verifica domeniul de reglementare aplicat curent, folosește această comandă:
+
+```bash
+iw reg get
+global
+country 00: DFS-UNSET # Țara 00 folosește valorile globale implicite
+	(755 - 928 @ 2), (N/A, 20), (N/A), PASSIVE-SCAN
+	(2402 - 2472 @ 40), (N/A, 20), (N/A)
+	(2457 - 2482 @ 20), (N/A, 20), (N/A), AUTO-BW, PASSIVE-SCAN
+	(2474 - 2494 @ 20), (N/A, 20), (N/A), NO-OFDM, PASSIVE-SCAN
+	(5170 - 5250 @ 80), (N/A, 20), (N/A), AUTO-BW, PASSIVE-SCAN
+	(5250 - 5330 @ 80), (N/A, 20), (0 ms), DFS, AUTO-BW, PASSIVE-SCAN
+	(5490 - 5730 @ 160), (N/A, 20), (0 ms), DFS, PASSIVE-SCAN
+	(5735 - 5835 @ 80), (N/A, 20), (N/A), PASSIVE-SCAN
+	(57240 - 63720 @ 2160), (N/A, 0), (N/A)
+```
+
+Caută linia `country XX:`, unde `XX` ar trebui să se potrivească cu codul pe care l-ai setat. Dacă arată `country 00:`, sistemul ar putea folosi restricțiile implicite sau nu a determinat încă regiunea.
+
+```bash
+iw reg get
+global
+country RO: DFS-ETSI # Țara apare corect ca RO
+...
+```
+
+## Activarea meniului global (Global Menu)
+Pentru unele aplicații precum Visual Studio Code, meniul global ar putea să nu funcționeze sau ar putea fi atașat aplicației părinte în loc de panou.
+
+```sh
+# Pentru a activa suportul pentru meniul global, rulează comanda și repornește aplicația.
+sudo pacman -S appmenu-gtk-module libdbusmenu-glib
+```
+
+## Activarea suportului AppArmor folosind profilurile AppArmor.d (Opțional)
+
+<Steps>
+
+1. Adaugă următorii parametri de kernel în Managerul de Boot (consultă [Configurarea Managerului de Boot](/ro/configuration/boot_manager_configuration) pentru referință):
+
+   ```text
+   lsm=landlock,lockdown,yama,integrity,apparmor,bpf
+   ```
+
+2. Instalează pachetele apparmor și apparmor.d **(set de peste 1500 de profiluri)**:
+   ```bash
+   sudo pacman -S apparmor apparmor.d
+   ```
+
+3. Activează/Pornește serviciul AppArmor:
+
+   ```bash
+   systemctl enable --now apparmor.service
+   ```
+
+4. Activează cache-ul pentru profilurile AppArmor:
+
+   ```shell
+   # /etc/apparmor/parser.conf
+   ## Adaugă următoarele linii:
+   write-cache
+   Optimize=compress-fast
+   cache-loc /etc/apparmor/earlypolicy/
+   ```
+   Salvează fișierul și repornește sistemul.
+</Steps>
+
+## Schimbarea shell-ului implicit
+
+În prezent, CachyOS folosește [fish](https://fishshell.com/) ca shell de autentificare implicit al utilizatorului. Totuși, poți schimba shell-ul implicit cu oricare altul preferi.
+
+<Tabs>
+   <TabItem label='bash'>
+
+      Acesta este shell-ul implicit pe aproape orice distribuție Linux. Este încă folosit și ca shell de autentificare pentru utilizatorul root. bash are funcționalitate de bază de completare automată (autocomplete) și gestionare ușoară a istoricului. Diferă de zsh și fish prin faptul că nu are sistemul complex de personalizare și ecosistemul de plugin-uri pe care îl au ambele.
+
+
+      ```sh title='Schimbarea shell-ului tău implicit în bash'
+      chsh -s /usr/bin/bash
+      ```
+
+   </TabItem>
+
+   <TabItem label='zsh'>
+
+      Oferim o [configurație zsh](https://github.com/CachyOS/cachyos-zsh-config) cu plugin-uri și configurații utilizate în mod obișnuit. Acesta își propune să aibă o funcționalitate 1:1 cu [configurația noastră fish](https://github.com/CachyOS/cachyos-fish-config). Acesta este, de asemenea, shell-ul implicit folosit în MacOS.
+
+      ```sh title='Schimbarea shell-ului implicit în zsh'
+      chsh -s /usr/bin/zsh
+      ```
+
+   </TabItem>
+</Tabs>
+
+## Actualizarea/utilizarea [tldr](https://github.com/tldr-pages/tldr)
+
+:::note
+CachyOS folosește [tealdeer](https://github.com/tealdeer-rs/tealdeer), care este o implementare mai rapidă în Rust a tldr-ului original.
+:::
+
+Această unealtă este extrem de utilă pentru cei care nu vor să citească mult sau să piardă timpul citind o pagină de ajutor/man.
+
+<Steps>
+
+1. ```sh title="Deschide un terminal și rulează următoarea comandă"
+   tldr --update
+   ```
+2. Exemplu de utilizare tldr:
+   ```sh
+   tldr java
+     Executarea unui program `.jar`:
+
+      java -jar nume_fisier.jar
+
+   # După cum poți vedea, este foarte util, și noi unelte/pagini sunt adăugate în timp.
+   ```
+
+</Steps>
+
+## Gestionarea AppImages
+
+AppImages sunt aplicații portabile care rulează pe majoritatea distribuțiilor Linux fără a necesita instalare sau permisiuni de root.
+
+:::note[Toate AppImage-urile necesită permisiuni de executare pentru a rula.]
+Poți seta permisiunea de executare folosind următoarea comandă:
+```sh
+chmod +x /cale/către/appimage-ul_tău
+```
+Sau fă click dreapta pe fișierul AppImage, mergi la `Properties` > `Permissions` și bifează căsuța care spune `Allow executing file as program.`
+:::
+
+:::note[Înainte de a rula AppImages, asigură-te că FUSE (Filesystem in Userspace) este instalat pe sistemul tău.]
+```sh
+sudo pacman -S fuse2
+```
+:::
+
+Pentru a gestiona AppImages, poți folosi [AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher), care oferă o modalitate ușoară de a integra AppImages în sistemul tău.
+<Tabs>
+  <TabItem label='Folosind AppImageLauncher (GUI)'>
+    AppImageLauncher este o unealtă grafică ce simplifică gestionarea AppImages pe sistemul tău. Se integrează cu mediul tău desktop, facilitând rularea și gestionarea AppImages.
+        <Steps>
+        1. Instalează AppImageLauncher:
+              ```sh
+              paru appimagelauncher
+              ```
+        2. Descarcă un AppImage la alegere dintr-o sursă de încredere.
+
+        3. Fă dublu click pe fișierul AppImage descărcat. AppImageLauncher te va întreba dacă dorești să integrezi aplicația în sistem.
+
+        4. Urmează instrucțiunile pentru a finaliza procesul de integrare.
+
+        5. Odată integrată, poți lansa aplicația din meniul tău de aplicații sau făcând dublu click pe fișierul AppImage.
+        </Steps>
+    </TabItem>
+</Tabs>
+
+## Configurarea accesului la share-uri Samba
+
+Samba este o re-implementare software liberă a protocolului de rețea SMB. Pentru a te conecta la serverul tău Samba, o configurație utilă a fost pusă la dispoziția utilizatorilor CachyOS, dar necesită schimbarea configurației serverului tău Samba.
+
+### Instalarea și utilizarea fișierului smb.conf de la CachyOS
+
+Pentru a folosi fișierul convenabil smb.conf, instalează mai întâi un pachet specific care furnizează fișierul smb.conf necesar. Apoi, înlocuiește fișierul smb.conf existent al serverului tău cu acest fișier și reconfigurează-ți volumele partajate.
+
+:::note[Acest ghid presupune că ai deja un server Samba funcțional]
+:::
+
+<Steps>
+    1. Creează o copie de rezervă a fișierului tău original `smb.conf`, situat de obicei la `/etc/samba/smb.conf` pe sistemele Linux.
+    2. Instalează pachetul de setări Samba CachyOS pe mașina ta client:
+        ```sh
+        sudo pacman -S cachyos-samba-settings
+        ```
+    3. Copiază fișierul `smb.conf` de pe mașina client pe serverul Samba.
+    4. Deschide și editează fișierul pentru a adăuga directoarele partajate, imprimantele etc.
+    5. Repornește serviciul Samba pe server:
+        ```sh
+        sudo systemctl restart --now samba
+        ```
+    6. Pe mașina client, accesează resursele partajate prin managerul tău de fișiere (ex. `smb://<ip_server>/<nume_partajare>`).
+
+        Dacă este configurat corect, ți se vor solicita datele de autentificare. Nu uita să selectezi opțiunea de a salva informațiile de autentificare dacă dorești.
+</Steps>

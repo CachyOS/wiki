@@ -1,0 +1,111 @@
+---
+title: Ghid de Configurare Dual GPU
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+## Ce este grafica hibridă?
+
+Grafica hibridă este o configurație hardware în care ai două plăci grafice care pot lucra în tandem. Această abordare se găsește în principal la laptopuri, unde ai grafica integrată (iGPU) a procesorului și grafica discretă (dGPU).
+
+Principalul avantaj este că grafica integrată ar trebui să fie folosită (dar nu neapărat) doar pentru sarcini simple, cum ar fi navigarea pe internet, vizionarea videoclipurilor etc. Pe de altă parte, grafica discretă este utilizată pentru lucruri de înaltă performanță, cum ar fi jocurile, editarea video, modelarea 3D și așa mai departe.
+
+În consecință, dacă cele două GPU-uri împart sarcinile „mari” și „mici”, atunci dacă avem doar sarcini „mici” rulând în acest moment, nu trebuie să folosim dGPU-ul nostru, deci acesta poate fi pur și simplu dezactivat (ca și cum ar dormi), reducând astfel semnificativ consumul de energie. În acest fel, când dGPU-ul nostru este necesar din nou (rulăm o aplicație care îl folosește), acesta se va trezi și va începe să lucreze.
+
+## Ce este PRIME Offload?
+
+PRIME este o tehnologie unificatoare pentru lucrul cu diferite seturi de grafică hibridă în Linux, cum ar fi NVIDIA Optimus/AMD Dynamic Switchable Graphics. PRIME Offload este o implementare a ideii de a muta execuția randării de la un GPU la altul în Linux.
+
+Suportul PRIME într-un driver NVIDIA închis a început de fapt abia cu driverul 435.17. Deci, dacă ești utilizator al ramurilor de driver învechite 390xx sau chiar 340xx, PRIME Offload nu va funcționa pentru tine. Reține că, de asemenea, te sfătuim cu tărie să nu folosești modalități învechite de a gestiona grafica hibridă, cum ar fi nvidia-xrun sau Bumblebee. Acestea sunt depășite și nesuportate (Bumblebee nu a mai fost actualizat de peste 8 ani), se bazează exclusiv pe hack-uri și au o performanță scăzută. În același timp, driverul Nouveau suportă PRIME Offload, ceea ce poate fi o alternativă pentru dGPU-urile mai vechi.
+
+În CachyOS, **nu trebuie să configurezi nimic pentru ca PRIME Offload să funcționeze**. Cu pachetul nvidia-utils și cachyos-settings ai deja tot ce îți trebuie pentru a folosi PRIME Offload.
+
+De asemenea, te rugăm să eviți folosirea uneltelor precum optimus-manager. Acestea pot părea destul de la îndemână, dar crede-ne, pot cauza multe probleme și chiar nu ai nevoie de ele dacă dGPU-ul tău suportă PRIME Offload și gestionarea dinamică a energiei.
+
+### Cum să folosești PRIME Offload
+
+Pentru a indica sistemului PRIME că dorești să folosești grafica discretă în locul graficii integrate, trebuie să specifici o serie de variabile de mediu înainte de a rula programul:
+
+```bash
+__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia <program>
+```
+
+Acest set de variabile pare foarte greoi și ușor de uitat, așa că poți instala pachetul `nvidia-prime` (`sudo pacman -S nvidia-prime`), care conține un alias de script pentru toate aceste variabile. Apoi, rularea unei aplicații folosindu-l va arăta astfel:
+
+```bash
+prime-run <program>
+```
+
+Unde `<program>` este numele comenzii care rulează aplicația ta.
+
+:::note
+Unele jocuri DX12 au probleme în alegerea dGPU-ului chiar și cu `prime-run`. Pentru a ocoli acest lucru, adaugă variabila de mediu `VK_DRIVER_FILES=/usr/share/vulkan/icd.d/nvidia_icd.json` înainte de scriptul wrapper `prime-run`.
+:::
+
+Pentru configurațiile în care ambele plăci grafice sunt gestionate de drivere open Mesa (ex. AMD+AMD, AMD+Intel sau chiar Intel+NVIDIA unde grafica discretă NVIDIA este gestionată de driverul open source Nouveau), nu trebuie configurat nimic și pentru a folosi grafica discretă trebuie doar să specifici variabila de mediu `DRI_PRIME=1` înainte de lansarea aplicațiilor sau jocurilor, similar cu toate acele variabile descrise anterior pentru NVIDIA, sau să folosești metodele grafice gata făcute discutate mai jos.
+
+## Metoda grafică
+
+S-ar putea să ți se pară incomod să lansezi toate aplicațiile necesare prin terminal folosind `prime-run`. Din fericire, unele aplicații și medii desktop oferă unelte pentru a controla ce GPU este folosit pentru anumite aplicații.
+
+### Lutris
+
+Pentru a configura jocurile să ruleze cu grafica discretă în Lutris, trebuie să mergi la setări (cele trei linii din colțul din dreapta jos al ferestrei și butonul „Preferences”). Apoi, mergi la *"Global Options"* -> *"Display"*. Aici poți selecta GPU-ul pe care va rula jocul.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/lutris-prime.png')} />
+
+### Steam
+
+Steam nu are o setare specifică pentru a forța un joc să folosească grafica discretă. Totuși, poți accesa proprietățile jocului făcând click pe pictograma rotiță înainte de a-l lansa. În câmpul „Launch options”, poți adăuga comanda prime-run sau variabilele de mediu.
+Exemplu:
+
+```bash
+prime-run %command%
+```
+
+Asigură-te că adaugi `%command%` după `prime-run`. Reține că opțiunile jocului vin după substituent, în timp ce variabilele de mediu ale sistemului sau comenzile ar trebui să îl preceadă.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/steam-prime.png')} />
+
+### KDE Plasma
+
+Plasma are un mod foarte la îndemână de a configura pornirea aplicațiilor cu grafica discretă. Totuși, această metodă funcționează numai dacă pachetul switcheroo-control și serviciul său corespunzător sunt instalate pe sistemul tău.
+
+Într-o instalare proaspătă de CachyOS, acest pachet și serviciu ar trebui să fie deja activate implicit prin chwd.
+
+```bash
+sudo pacman -S switcheroo-control
+sudo systemctl enable --now switcheroo-control
+```
+
+După ce ai executat ambele comenzi, fă click dreapta pe intrarea de pe desktop pe care o dorești sau în meniul de aplicații, apoi mergi la *"Properties"* -> *"Application"* -> *"Advanced Options"*.
+
+Ar trebui să ai bifată căsuța *"Run using dedicated graphics card"*.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/plasma-prime.jpg')} />
+
+:::note
+Folosirea switcheroo-control permite acestor căsuțe de bifat să funcționeze pe toate configurațiile PRIME care nici măcar nu au dGPU NVIDIA, cum ar fi AMD-APU+AMD-Dedicated.
+:::
+
+### GNOME
+
+Pe GNOME, ar trebui să instalezi de asemenea switcheroo-control așa cum este arătat mai sus și să faci click dreapta pe pictograma aplicației și să selectezi *"Run using discrete graphics"*. Dar reține că GNOME nu reține această alegere pentru mai târziu, iar data viitoare când vei rula aplicația de pe pictogramă, aceasta va rula folosind grafica integrată în loc de cea discretă.
+
+### Cinnamon
+
+Similar cu Plasma, Cinnamon îți permite de asemenea să selectezi GPU-ul pentru aplicații specifice. Fă click dreapta pe intrarea de desktop a aplicației, mergi la Properties și activează opțiunea relevantă.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cinnamon-prime.png')} />
+
+Dacă nu este disponibilă, asigură-te că ai `switcheroo-control` instalat și serviciul său activat, deoarece toate mediile desktop se bazează pe acesta pentru această funcționalitate.
+
+## Depanare
+
+### „Monitorul meu extern are lag mare pe PRIME”
+
+Aceasta este o problemă cunoscută a driverului NVIDIA. Ar trebui să ai instalat cel mai recent driver NVIDIA și să folosești Wayland cu un compozitor care suportă explicit sync. Pentru GNOME, acest lucru a fost rezolvat în versiunea 46.2. Pentru Plasma 6, probabil va fi rezolvat cu 6.1, deși unii utilizatori raportează performanțe normale deja pe 6.0. Alte medii/manageri de ferestre au încă această problemă, așa că trebuie să treci la cea mai recentă versiune de GNOME sau Plasma pentru a o rezolva.

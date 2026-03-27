@@ -1,0 +1,109 @@
+---
+title: Gestionarea Kernelurilor Linux și a framework-ului sched-ext cu CachyOS Kernel Manager
+description: CachyOS Kernel Manager este o unealtă puternică pentru gestionarea kernelurilor, permițând utilizatorilor să instaleze sau să construiască cu ușurință kerneluri personalizate.
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+Instalarea unui Kernel dintr-un Repozitoriu
+---------------------------------------
+
+CachyOS Kernel Manager facilitează instalarea și gestionarea kernelurilor din orice repozitoriu Arch Linux.
+
+Pentru a instala un kernel, lansează aplicația `CachyOS Kernel Manager` și alege kernelul dorit bifând căsuța `[]` din lista de opțiuni disponibile, apoi apasă pur și simplu `Execute` pentru a începe instalarea kernelului.
+
+Pentru a dezinstala un kernel, debifează căsuța `[]` din dreptul kernelului instalat pe care dorești să-l elimini și apasă din nou `Execute`.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km1.png')} />
+
+:::note
+Butonul `Execute` devine indisponibil atunci când alegi un kernel deja instalat.
+:::
+
+Configurarea și construirea unui kernel CachyOS personalizat
+---------------------------------
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km2.png')} />
+
+:::note
+CachyOS Kernel Manager este conceput special pentru a construi kerneluri personalizate pentru **variantele CachyOS** și nu suportă construirea sau configurarea unui kernel Arch Linux standard sau a oricărei alte variante.
+:::
+
+*Pentru a începe, deschide Kernel Manager și apasă pe butonul `Configure` pentru a începe ajustarea diverselor setări, cum ar fi planificatorul (scheduler) dorit, rata de tick și multe altele. După ce ai făcut modificările dorite, apasă pe `Build kernel` pentru a începe construirea kernelului tău CachyOS personalizat.*
+
+**Pachetele de kernel construite și cache-ul sunt stocate în** `~/.cache/cachyos-km/`
+
+**Opțiuni de configurare disponibile:**
+
+* `Custom package name`: Cu această opțiune, îți poți numi kernelul cum dorești. De exemplu: `linux-custom-cachy`.
+* Planificator (BORE, RC, RT, RT+BORE, EEVDF și BMQ).
+* Activare configurare CachyOS.
+* Ajustare configurare prin nconfig, menuconfig, xconfig sau gconfig.
+* Activare/Dezactivare NUMA.
+* Activare/Dezactivare Modprobed-db.
+* KBUILD CFLAGS (-O3 sau -O2).
+* Guvernator de performanță (Performance governor) ca implicit.
+* Activare BBR3.
+* Selecția ratei de tick (100Hz, 250Hz, 300Hz, 500Hz, 600Hz, 750Hz, 1000Hz).
+* Modul tickless (idle, periodic, full).
+* Preemțiune (Full, Voluntary sau Server).
+* Transparent Hugepages (Always sau Madvise).
+* Activare/Dezactivare DAMON.
+* Activare/Dezactivare detectare automată a arhitecturii CPU.
+* Aplicare optimizare kernel pentru arhitecturi CPU specifice.
+* Activare LTO (Full, Thin, No).
+* Construire modul ZFS.
+* Construire modul NVIDIA închis (Closed).
+* Construire modul NVIDIA deschis (Open).
+* Includere vmlinux cu informații/simboluri de depanare (debug).
+* Încărcare/Salvare presetare configurare Kernel Manager: `(Doar presetări din managerul propriu-zis)`.
+* Gestionare patch-uri de kernel (suport la distanță și local).
+
+*După ce kernelul a fost construit cu succes, ți se va solicita parola sudo pentru a instala kernelul.*
+
+## Gestionarea framework-ului sched-ext
+
+:::caution[Necesită un agent polkit funcțional pentru a lucra corect.]
+Consultă următoarea **[pagină Arch Wiki ca referință.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+Kernel Manager oferă o interfață grafică (GUI) pentru gestionarea și controlul planificatorilor sched-ext. Accesează GUI-ul apăsând pe butonul `sched-ext scheduler config` din fereastra principală.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km3.png')} />
+
+Această interfață îți permite să:
+
+- Comuți între diferiți planificatori sched-ext (scx).
+- Activezi sau dezactivezi serviciul planificatorului.
+- Verifici planificatorul care rulează în prezent.
+- Setezi flag-uri și profiluri pentru planificator.
+
+Pentru a realiza acest lucru, Kernel Manager folosește `scx_loader` cu o configurație stocată în `/etc/scx_loader.toml`.
+
+Pentru mai multe informații despre fișierul de configurare `scx_loader`, consultă [această documentație](https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/configuration.md).
+
+- Cum funcționează `scx_loader`?
+    - După ce ai selectat planificatorul și profilul, scx_loader va porni planificatorul cu profilul selectat și va salva această configurație în fișierul `/etc/scx_loader.toml` pentru a asigura persistența după repornire. Un exemplu de cum va arăta fișierul alegând `scx_bpfland` cu profilul `Gaming`:
+        ```toml
+        default_sched = "scx_bpfland"
+        default_mode = "Gaming"
+
+        [scheds.scx_bpfland]
+        auto_mode = []
+        gaming_mode = ["-m", "performance"]
+        lowlatency_mode = ["-k", "-s", "5000", "-l", "5000"]
+        powersave_mode = ["-m", "powersave"]
+        ```
+
+### Profiluri de planificator
+
+- Pentru ce sunt „profilurile”?
+  - Acestea sunt presetări pentru planificator care modifică flag-urile pe baza unor combinații dovedite pentru a spori eficacitatea în cazuri de utilizare specifice, cum ar fi „Gaming”.
+
+Verifică toate detaliile despre profiluri în [ghidul planificatorului.](/ro/configuration/sched-ext#ghidul-planificatorului-profiluri-și-cazuri-de-utilizare)
