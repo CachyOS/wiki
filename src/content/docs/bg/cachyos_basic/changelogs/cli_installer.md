@@ -6,93 +6,93 @@ description: Changelogs CLI Installer
 
 ## Features ✨
 
-- **Improved Partition Handling:**  Significant refactoring and improvements have been made to how the installer handles partitions, leading to better accuracy and reliability.
-- **Kernel Parameter Generation:** The installer now automatically generates kernel parameters based on the detected partition scheme.
-- **Enhanced `gucc` Library:**  The `gucc` library has been significantly enhanced, now encompassing refind installation and configuration capabilities.
+- **Подобрено управление на дялове:** Направен е значителен рефакторинг и подобрения в начина, по който инсталаторът обработва дяловете, което води до по-добра точност и надеждност.
+- **Генериране на параметри на ядрото:** Инсталаторът вече автоматично генерира параметри на ядрото въз основа на откритата схема на дяловете.
+- **Подобрена библиотека `gucc`:** Библиотеката `gucc` е значително подобрена, като вече включва възможности за инсталиране и конфигуриране на refind.
 
 ## Chores 🧹
 
-- **Clang-Format and Clang-Tidy:** Codebase consistency and quality have been improved through the application of clang-format and clang-tidy.
-- **Refactoring with String Views:**  Several areas of the codebase now utilize string_view literals for improved performance and readability.
-- **Doctest Implementation:**  C asserts have been replaced with doctest for more robust and informative testing.
-- **Refactored Tests:** Test suites have been refactored for clarity and maintainability.
-- **Refind Handling in `gucc`:**  Refind-related code has been refactored and moved into the `gucc` library for better organization and maintainability.
+- **Clang-Format и Clang-Tidy:** Постоянството и качеството на кода са подобрени чрез прилагането на clang-format и clang-tidy.
+- **Рефакторинг с низови изгледи (string views):** Няколко области от кода вече използват string_view литерали за подобрена производителност и четимост.
+- **Внедряване на Doctest:** C asserts бяха заменени с doctest за по-стабилно и информативно тестване.
+- **Рефакторирани тестове:** Тестовите набори бяха рефакторирани за яснота и поддръжка.
+- **Обработка на Refind в `gucc`:** Кодът, свързан с refind, беше рефакториран и преместен в библиотеката `gucc` за по-добра организация и поддръжка.
 
 ## Bug Fixes 🐛
 
-- **Btrfs Subvolume Detection:** Issues with detecting existing btrfs subvolumes have been resolved.
-- **Partition Information Accuracy:** Improvements have been made to ensure the accurate collection and display of partition information.
-- **Root Mount Point for Refind:**  A bug affecting the root mount point used by refind has been fixed.
-- **UUID Detection:** The process of detecting partition UUIDs during initialization has been improved.
-- **Meson Build Fixes:**  Issues encountered during the meson build process have been addressed.
-- **Btrfs Subvolume Appending:**  A bug related to appending btrfs subvolumes in development environments has been fixed.
-- **Rootfs in Predefined Configurations:**  An issue with the rootfs of partition schemes derived from predefined configurations has been resolved.
-- **Refind Read-Write Mounting:**  Ensured that refind mounts the necessary partitions with read-write permissions.
+- **Откриване на подтомове Btrfs:** Проблемите с откриването на съществуващи подтомове btrfs бяха разрешени.
+- **Точност на информацията за дяловете:** Направени са подобрения за осигуряване на точно събиране и показване на информация за дяловете.
+- **Точка на монтиране за refind:** Грешка, засягаща кореновата точка на монтиране, използвана от refind, беше коригирана.
+- **Откриване на UUID:** Процесът на откриване на UUID на дяловете по време на инициализация е подобрен.
+- **Поправки на изграждане с Meson:** Проблемите, срещани по време на процеса на изграждане с Meson, бяха адресирани.
+- **Добавяне на подтомове Btrfs:** Грешка, свързана с добавянето на подтомове btrfs в среди за разработка, беше коригирана.
+- **Rootfs в предварително дефинирани конфигурации:** Проблем с rootfs на схемите за дялове, получени от предварително дефинирани конфигурации, беше разрешен.
+- **Монтиране на refind с права за четене и запис:** Осигурено е, че refind монтира необходимите дялове с права за четене и запис.
 
 # 0.8.3
 
 ## Chores 🧹
 
-- Updated the CPR dependency to a newer version for improved functionality.
-- Explicitly instructed CTRE (Compile Time Regular Expressions library) to utilize the C++23 standard for consistency and potential performance enhancements.
-- Increased the connection check timeout in the utilities section to accommodate potential network delays or slow responses.
+- Актуализирана зависимостта CPR до по-нова версия за подобрена функционалност.
+- Изрично е указано на CTRE (библиотека за регулярни изрази по време на компилация) да използва стандарта C++23 за последователност и потенциални подобрения на производителността.
+- Увеличен таймаутът за проверка на връзката в секцията за помощни програми, за да се отчетат евентуални мрежови закъснения или бавни отговори.
 
 # 0.8.2
 
 ## Fixes 🐛
 
-- Resolved an issue where "gucc" didn't correctly handle btrfs subvolume mountpoints.
-- Improved "gucc" to handle different btrfs subvolume mount statuses.
+- Разрешен е проблем, при който "gucc" не обработваше правилно точките на монтиране на подтомове btrfs.
+- Подобрен "gucc" за обработка на различни състояния на монтиране на подтомове btrfs.
 
 ## Chores 🧹
 
-- Fixed a typo in the README file and updated the version information.
+- Поправена печатна грешка в README файла и актуализирана информацията за версията.
 
 # 0.8.1
 
 ## Fixes 🐛
 
-- Resolved an issue where ISA repos were incorrectly enabled on Oracle VM.
-- Addressed command style inconsistencies for improved user experience.
+- Разрешен е проблем, при който ISA хранилищата бяха неправилно активирани на Oracle VM.
+- Адресирани са несъответствия в стила на командите за подобрено потребителско изживяване (user experience).
 
 ## Chores 🧹
 
-- Removed unnecessary ucode logic related to refind, streamlining the codebase.
+- Премахната ненужната ucode логика, свързана с refind, което опростява кодовата база.
 
 # 0.8.0
 
 ## Features ✨
 
-- Added parser for network package profiles.
-- Introduced the ability to fetch environment packages from a TOML file parsed by gucc.
-- Implemented a helper function in gucc to download files from URLs 📥.
-- Added support for fetching network profiles from a URL with a fallback mechanism within gucc.
-- Integrated the installation of network profiles with the binary distribution.
-- Moved the mounting of specified partitions and detection logic into gucc.
-- Introduced `utils::exec_checked` for safer execution of external commands.
+- Добавен парсер за мрежови профили на пакети.
+- Въведена възможност за извличане на пакети от средата от TOML файл, анализиран от gucc.
+- Реализирана помощна функция в gucc за изтегляне на файлове от URL адреси 📥.
+- Добавена поддръжка за извличане на мрежови профили от URL адрес с механизъм за резервен вариант в gucc.
+- Интегрирана инсталацията на мрежови профили с двоичното разпространение.
+- Преместени логиката за монтиране на зададени дялове и откриването им в gucc.
+- Въведено `utils::exec_checked` за по-безопасно изпълнение на външни команди.
 
 ## Improvements ✅
 
-- Enhanced test coverage for crypttab functionality in gucc 🧪.
-- Improved logging in gucc by setting up the logger appropriately.
-- **Updated C++ version to C++23** ⬆️.
-- Refactored codebase to utilize C++23 features like `std::ranges` and `contains` for better readability and efficiency.
-- Refactored various components to utilize `utils::exec_checked`.
+- Подобрено тестовото покритие за функционалността на crypttab в gucc 🧪.
+- Подобрено логване в gucc чрез подходящо настройване на логера.
+- **Актуализирана версията на C++ до C++23** ⬆️.
+- Рефакториран кодът за използване на функции от C++23 като `std::ranges` и `contains` за по-добра четимост и ефективност.
+- Рефакторирани различни компоненти за използване на `utils::exec_checked`.
 
 ## Fixes 🐛
 
-- Resolved an issue with hardcoded library types in gucc.
-- Addressed missing logger implementation and header file in gucc.
-- Enabled CPR library for non-development environment builds.
-- Fixed static build process.
-- Addressed issues introduced in commit [`a70e641e364`](https://github.com/CachyOS/New-Cli-Installer/commit/a70e641e364).
-- Fixed compilation errors in the TUI component.
-- Corrected a dependency issue where FTXUI's dependency on range-v3 was not public.
+- Разрешен проблем с твърдо зададени типове библиотеки в gucc.
+- Адресирана липсваща реализация на логер и хедърен файл в gucc.
+- Включена библиотеката CPR за изграждания в не-среди за разработка.
+- Поправен процесът на статично изграждане.
+- Адресирани проблеми, въведени в комит [`a70e641e364`](https://github.com/CachyOS/New-Cli-Installer/commit/a70e641e364).
+- Поправени грешки при компилация в TUI компонента.
+- Коригиран проблем със зависимост, при който зависимостта на FTXUI от range-v3 не беше публична.
 
 ## Chores 🧹
 
-- Updated CI checks, build processes, and fixed related issues.
-- Removed the reverted installation of network profiles alongside the binary distribution.
-- Refactored and cleaned up code in various components: TUI, utils, chwd_profiles, user, and tests.
-- Removed the unused range-v3 library from installer dependencies.
-- Updated README file.
+- Актуализирани CI проверки, процеси на изграждане и поправени свързани проблеми.
+- Премахната върнатата инсталация на мрежови профили заедно с двоичното разпространение.
+- Рефакториран и изчистен код в различни компоненти: TUI, utils, chwd_profiles, user и тестове.
+- Премахната неизползваната библиотека range-v3 от зависимостите на инсталатора.
+- Актуализиран README файл.
