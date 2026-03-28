@@ -1,0 +1,140 @@
+---
+title: CachyOS chroot Helper
+description: Helper tool to make it easier to chroot into systems
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import {Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+[cachy-chroot](https://github.com/CachyOS/cachy-chroot) is a simple helper program to ease the process of chrooting into an existing
+CachyOS or Arch-based install. It lists all the partitions discovered on the machine and also supports listing BTRFS subvolumes.
+Last but not least, `cachy-chroot` also supports encrypted systems via LUKS. It will map each `fstab` entries to its designated `crypttab`
+entries and will gracefully close all LUKS volumes when exiting the chroot.
+
+:::caution[cachy-chroot is intended to be run from a live CachyOS environment.]
+:::
+
+:::note
+cachy-chroot supports mounting pretty much any filesystem supported by the Linux kernel except for ZFS.
+:::
+
+## Usage
+
+:::tip
+Use your arrow keys to navigate the options and `ENTER` to select.
+
+The **❯** symbol indicates the currently selected option.
+
+**?** indicates a prompt for user input.
+:::
+
+<Steps>
+1. Boot into a live ISO of CachyOS
+2. Open a terminal and enter the root user with `sudo su`
+3. Make sure you have the latest `cachy-chroot` installed by running:
+    ```bash
+    pacman -Sy cachy-chroot
+    ```
+4. Run `cachy-chroot` by typing:
+    ```bash
+    cachy-chroot
+    ```
+    `cachy-chroot` will scan and list all available partitions.
+    <details>
+    <summary>Example output with CachyOS BTRFS install</summary>
+        ```bash
+        Info: Found 3 block devices
+        Info: Found partition: Partition: /dev/nvme0n1p1: FS: vfat UUID: EDA6-ED98
+        Info: Found partition: Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+        Info: Found partition: Partition: /dev/nvme0n1p4: FS: btrfs UUID: 66e84339-8c77-4131-afce-50ec2cf67a80
+        ? Select the block device for the root partition (use arrow keys):  ›
+        Partition: /dev/nvme0n1p1: FS: vfat UUID: EDA6-ED98
+        ❯ Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+        ```
+    </details>
+    <details>
+    <summary>Example output with EXT4</summary>
+        ```bash
+        Info: Found 8 block devices
+        Info: Found partition: Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+        Info: Found partition: Partition: /dev/sda2: FS: vfat UUID: CA0D-2D5A
+        Info: Found partition: Partition: /dev/sdb1: FS: ntfs UUID: A4763F77763F48F6
+        Info: Found partition: Partition: /dev/sdc1: FS: ntfs UUID: C4CA216BCA215B46
+        Info: Found partition: Partition: /dev/sdc2: FS: ntfs UUID: 060C28590C284651
+        Info: Found partition: Partition: /dev/sdc3: FS: ntfs UUID: 3A3CF8B13CF86971
+        Info: Found partition: Partition: /dev/sdd1: FS: exfat UUID: 4FDC-0AAB
+        Info: Found partition: Partition: /dev/sdd2: FS: vfat UUID: 3105-B091
+        ? Select the block device for the root partition (use arrow keys):  ›
+        ❯ Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+        Partition: /dev/sda2: FS: vfat UUID: CA0D-2D5A
+        Partition: /dev/sdb1: FS: ntfs UUID: A4763F77763F48F6
+        Partition: /dev/sdc1: FS: ntfs UUID: C4CA216BCA215B46
+        Partition: /dev/sdc2: FS: ntfs UUID: 060C28590C284651
+        Partition: /dev/sdc3: FS: ntfs UUID: 3A3CF8B13CF86971
+        Partition: /dev/sdd1: FS: exfat UUID: 4FDC-0AAB
+        Partition: /dev/sdd2: FS: vfat UUID: 3105-B091
+        ```
+        In this example, the root partition is `/dev/sda1` with `ext4` filesystem. The other partitions are not relevant for the chroot.
+    </details>
+5. Select the partition that contains the root filesystem:
+    <details>
+    <summary>Example with CachyOS BTRFS</summary>
+        ```bash title="Selecting root partition"
+        ✔ Select the block device for the root partition (use arrow keys):  · Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+        Info: Selected BTRFS partition, mounting and listing subvolumes...
+        Info: Mounting partition /dev/nvme0n1p2 at /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-858f-2e02be61b342-hwAeIm with options: []
+        Info: Unmounting partition at /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-858f-2e02be61b342-hwAeIm
+        ? Do you want to use CachyOS BTRFS preset to auto mount root subvolume? (y/n) › # Enter yes if on CachyOS
+        ```
+        **If using CachyOS with BTRFS**, enter `y` to use the CachyOS BTRFS preset. This will automatically mount the root subvolume and other important subvolumes such as `/home`, `/var`, `/tmp` and `/srv`. If you're using a custom BTRFS layout or non-CachyOS system, enter `n` to manually select subvolumes.
+    </details>
+    <details>
+    <summary>Example with EXT4</summary>
+            ```bash title="Selecting root partition"
+            ✔ Select the block device for the root partition (use arrow keys):  · Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+            Info: Mounting partition /dev/sda1 at /tmp/cachyos-chroot-root-mount-b7fef200-fbb8-4783-9fad-46c5e8b7ca0e-LtsXXC with options: []
+            Info: Mounting additional partitions based on /etc/fstab...
+            Info: Found 3 entries in /etc/fstab
+            Warning: Partition UUID=b7fef200-fbb8-4783-9fad-46c5e8b7ca0e already mounted, skipping...
+            Info: Mounting partition /dev/sda2 at /tmp/cachyos-chroot-root-mount-b7fef200-fbb8-4783-9fad-46c5e8b7ca0e-LtsXXC/boot with options: []
+            Info: Finished mounting additional partitions
+            ✔ Do you want to mount additional partitions? · no
+            Info: Chrooting into the configured root partition...
+            Info: To exit the chroot, type 'exit' or press Ctrl+D
+            ```
+    </details>
+6. `cachy-chroot` will attempt to automatically mount all the partitions and subvolumes listed under `/etc/fstab` of the root device. If any partitions fail to mount, you will be notified and given the option to mount them manually if needed. You can choose `no` to skip mounting additional partitions.
+7. **You are now in the chroot environment**.
+    ```bash
+    [root@CachyOS /]#
+    ```
+    You can now run commands as if you were booted into the installed system. For example, you can update the system with:
+    ```bash title="Updating system in chroot"
+    pacman -Syu
+    ```
+    or perform other maintenance tasks as needed.
+8. When finished, exit the chroot environment by passing `exit` to the prompt or pressing `CTRL+D` on the keyboard.
+    ```bash title="Exiting chroot"
+    exit
+    ```
+9. After exiting, `cachy-chroot` will automatically clean up mounted partitions and close any LUKS containers. You'll return to the live environment shell.
+</Steps>
+
+### Troubleshooting
+
+- **No partitions found:** Ensure that the disk containing your installation is connected and recognized by the live system. You can check with `lsblk` or `fdisk -l`.
+- **Automount fails for some partitions:** You can try mounting them manually from within the chroot environment. `cachy-chroot` will ignore failures and continue.
+
+### FAQ
+
+- **Q: What is the use for mounting additional partitions?**
+  - A: There are several use cases for manually mounting additional partitions, including:
+    - **Broken or missing fstab file:** You can manually mount necessary partitions (such as `/boot` or `/home`) to perform repairs or data recovery.
+    - **Updated partition UUIDs:** If your system is not booting because you changed the UUID of a partition, you can use `cachy-chroot` to mount the partitions and then update the fstab accordingly.
+
+### Learn More
+
+- [Arch Wiki - chroot](https://wiki.archlinux.org/title/Chroot)
+- [Video demonstration of cachy-chroot](https://github.com/user-attachments/assets/29360aaf-b775-4cfa-9051-465ad5360ae8)
