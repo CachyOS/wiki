@@ -1,60 +1,60 @@
 ---
-title: Filesystems
-description: Description and recommendations for the available filesystems. (ext4, f2fs, btrfs, xfs, zfs, bcachefs)
+title: Файлови системи
+description: Описание и препоръки за наличните файлови системи (ext4, f2fs, btrfs, xfs, zfs, bcachefs)
 ---
 
-CachyOS offers 5 different filesystems to allow the user to choose what best fits their needs. The following will go over advantages, disadvantages, and recommendations for each filesystem. Each filesystem comes with its requirements/utilities preinstalled on CachyOS.
+CachyOS предлага 5 различни файлови системи, за да може потребителят да избере тази, която най-добре отговаря на нуждите му. По-долу са описани предимствата, недостатъците и препоръките за всяка файлова система. Всяка файлова система идва със своите изисквания/полезни инструменти, предварително инсталирани в CachyOS.
 
 :::note
-BTRFS is the default and recommended filesystem for CachyOS. Choose it if unsure.
+BTRFS е файловата система по подразбиране и препоръчителна за CachyOS. Изберете нея, ако не сте сигурни.
 :::
 
 ## XFS
 
-XFS is a journaling filesystem created and developed by Silicon Graphics, Inc. It was created in 1993, ported to linux in 2001, and is now widely supported by most Linux distributions.
+XFS е журналираща файлова система, създадена и разработена от Silicon Graphics, Inc. Създадена е през 1993 г., пренесена в Linux през 2001 г. и вече се поддържа широко от повечето Linux дистрибуции.
 
-### Pros
+### Предимства
 
-- XFS was originally designed with speed and extreme scalability in mind.
-- Reliable, XFS makes use of several technologies to prevent data corruption.
-- Resistant to fragmentation due to its extent-based nature and delayed allocation strategy.
+- XFS първоначално е проектирана с мисъл за скорост и изключителна мащабируемост.
+- Надеждна, XFS използва няколко технологии за предотвратяване на корупция на данни.
+- Устойчива на фрагментация поради своята екстентна природа и стратегия за забавено разпределение.
 
-### Cons
+### Недостатъци
 
-- Cannot be shrunk.
+- Не може да се свива (shrink).
 
-### Userspace utility
+### Потребителски инструменти
 
-The package containing userspace tools to manage XFS filesystems is `xfsprogs`.
+Пакетът, съдържащ инструменти за управление на XFS файлови системи, е `xfsprogs`.
 
-### Recommendation
+### Препоръка
 
-XFS is the recommended filesystem for users who do not need advanced features and simply want a fast and reliable filesystem.
+XFS е препоръчителната файлова система за потребители, които не се нуждаят от разширени функции и просто искат бърза и надеждна файлова система.
 
 ## BTRFS
 
-BTRFS is a modern copy-on-write(COW) filesystem created in 2007 and declared stable in the linux kernel in 2013. It is widely supported and is mainly known for its advanced feature set.
+BTRFS е модерна файлова система тип copy-on-write (COW), създадена през 2007 г. и обявена за стабилна в ядрото на Linux през 2013 г. Тя се поддържа широко и е известна главно със своя набор от разширени функции.
 
-### Pros
+### Предимства
 
-- Transparent compression. BTRFS supports transparently compressing files to allow for significant space savings with no user intervention. **CachyOS ships with ZSTD compression set to level 3 by default.**
-- Snapshot functionality. BTRFS leverages its COW nature to allow for the creation of snapshots of subvolumes that take up very little actual space.
-- Subvolume functionality allowing for greater control over the filesystem.
-- Able to grow or shrink.
-- Very fast development.
+- Прозрачна компресия. BTRFS поддържа прозрачно компресиране на файлове, което позволява значително спестяване на дисково пространство без намеса на потребителя. **CachyOS идва с компресия ZSTD, настроена на ниво 3 по подразбиране.**
+- Функционалност за моментни снимки (snapshots). BTRFS използва своята COW природа, за да позволи създаването на моментни снимки на подтомове, които заемат много малко реално пространство.
+- Функционалност на подтомове, даваща по-голям контрол върху файловата система.
+- Възможност за уголемяване и свиване.
+- Много бързо развитие.
 
-### Cons
+### Недостатъци
 
-- Sometimes requires defragmentation or balancing.
-- Worse on rotational drives due to aforementioned fragmentation.
+- Понякога изисква дефрагментация или балансиране.
+- По-лоша работа на въртящи се дискове поради споменатата фрагментация.
 
-### Userspace utility
+### Потребителски инструменти
 
-Btrfs userspace utility package is `btrfs-progs`
+Пакетът за инструменти на Btrfs е `btrfs-progs`.
 
-### Subvolume Layout
+### Оформление на подтомовете
 
-CachyOS provides a subvolume layout out of the box to allow easy snapshot functionality.
+CachyOS предоставя оформление на подтомове от кутията, което позволява лесна функционалност за моментни снимки.
 
 - Subvol @ = /
 - Subvol @home = /home
@@ -64,120 +64,119 @@ CachyOS provides a subvolume layout out of the box to allow easy snapshot functi
 - Subvol @tmp = /var/tmp
 - Subvol @log = /var/log
 
-### Recommendation
+### Препоръка
 
-BTRFS is recommended for users who want snapshot/backup functionality and transparent compression.
+BTRFS се препоръчва за потребители, които искат функционалност за моментни снимки/архивиране и прозрачна компресия.
 
 ## EXT4
 
-EXT4 (fourth extended filesystem) is the most commonly used Linux filesystem. EXT4 was made stable in the linux kernel in 2008.
+EXT4 (четвърта разширена файлова система) е най-често използваната файлова система за Linux. EXT4 става стабилна в ядрото на Linux през 2008 г.
 
-### Pros
+### Предимства
 
-- Can be as fast or faster than XFS in some scenarios.
-- Very common, allowing easy access to plenty of resources.
-- Reliable. EXT4 has a proven track record of being very reliable.
-- Able to grow or shrink.
-  - Shrinking is only supported offline and requires the filesystem to be unmounted.
+- Може да бъде толкова бърза, колкото XFS, или по-бърза в някои сценарии.
+- Много разпространена, което позволява лесен достъп до много ресурси.
+- Надеждна. EXT4 има доказана репутация на изключителна надеждност.
+- Възможност за уголемяване и свиване.
+  - Свиването се поддържа само офлайн и изисква файловата система да бъде демонтирана.
 
-### Cons
+### Недостатъци
 
-- Lacks many of the advanced features other filesystems offer.
+- Липсват много от разширените функции, които предлагат други файлови системи.
 
-### Userspace utilities
+### Потребителски инструменти
 
-The package to manage ext4 is `e2fsprogs`
+Пакетът за управление на ext4 е `e2fsprogs`.
 
-### Recommendation
+### Препоръка
 
-EXT4 is recommended for users who want the simplest and most commonly used filesystem.
+EXT4 се препоръчва за потребители, които искат най-простата и най-често използвана файлова система.
 
 ## ZFS
 
-ZFS is an advanced filesystem originally developed by Sun Microsystems in 2005. ZFS has many features, but is licensed under CDDL which means it cannot be included inside the linux kernel and requires a separate module installed.
+ZFS е модерна файлова система, първоначално разработена от Sun Microsystems през 2005 г. ZFS има много функции, но е лицензирана под CDDL, което означава, че не може да бъде включена в ядрото на Linux и изисква отделен модул за инсталиране.
 
 :::caution
-Do not use a Real-time kernel together with ZFS, it's not compatible due to licensing issues.
+Не използвайте Real-time ядро заедно с ZFS, те не са съвместими поради лицензионни проблеми.
 :::
 
-### Pros
+### Предимства
 
-- Pooled storage (zpool)
-- Snapshots using COW
-- Compression
-- Raid-Z support
-- ARC cache allows insanely fast read times on commonly accessed files.
+- Пулво съхранение (zpool)
+- Моментни снимки чрез COW
+- Компресия
+- Поддръжка на RAID-Z
+- ARC кешът позволява невероятно бързо четене на често достъпвани файлове.
 
-### Cons
+### Недостатъци
 
-- Very complicated to use and understand due to features like zpool and ARC.
-- ARC requires a lot of ram to be effective.
-- Not included in the linux kernel therefore dependent on a third party kernel module (OpenZFS)
-- Incompatible with Real-time preemption
+- Много сложна за използване и разбиране поради функции като zpool и ARC.
+- ARC изисква много RAM, за да бъде ефективен.
+- Не е включена в ядрото на Linux, следователно зависи от модул на трета страна (OpenZFS).
+- Несъвместима с превантивно изпълнение в реално време (Real-time preemption).
 
-### Required tools
+### Необходими инструменти
 
-'ZFS-Module' CachyOS provides a precompiled zfs module for each kernel version.
-`zfs-utils` for the userspace utilities.
+'ZFS-Module' CachyOS предоставя прекомпилиран zfs модул за всяка версия на ядрото.
+`zfs-utils` за потребителските инструменти.
 
-### Recommendation
+### Препоръка
 
-ZFS should only be used by advanced users who want to use its advanced features, such as pooled storage or the ARC cache.
+ZFS трябва да се използва само от напреднали потребители, които искат да използват нейните разширени функции, като пулво съхранение или ARC кеша.
 
 ## F2FS
 
-F2FS (Flash-Friendly File System) is a flash file system originally created and developed by Samsung for the linux kernel. F2FS was created to cater specifically for the NAND flash used in modern day storage.
+F2FS (Flash-Friendly File System) е файлова система за флаш памет, първоначално създадена и разработена от Samsung за ядрото на Linux. F2FS е създадена специално за NAND флаш паметта, използвана в съвременните устройства за съхранение.
 
-### Pros
+### Предимства
 
-- Designed with flash friendliness in mind.
-- Transparent compression used to reduce disk writes (space savings not currently usable by the user).
-- Better wear leveling, which further prolongs the life of NAND flash.
+- Проектирана с мисъл за приятелство към флаш паметта.
+- Прозрачна компресия, използвана за намаляване на записванията на диска (спестяването на пространство в момента не е достъпно за потребителя).
+- По-добро износване (wear leveling), което допълнително удължава живота на NAND флаш паметта.
 
-### Cons
+### Недостатъци
 
-- Cannot shrink.
-- Space savings from compression cannot currently be used by the user. This may be added in the future.
-- Relatively weak fsck (filesystem check).
-- Downgrading to a kernel older than the version that created the filesystem may cause issues.
-- Requires a workaround when used with GRUB on MBR/BIOS system.
+- Не може да се свива.
+- Спестяването на пространство от компресията в момента не може да се използва от потребителя. Това може да бъде добавено в бъдеще.
+- Относително слаба fsck (проверка на файловата система).
+- Връщането към ядро, по-старо от версията, която е създала файловата система, може да причини проблеми.
+- Изисква заобиколно решение, когато се използва с GRUB на MBR/BIOS система.
 
-### Userspace utilities
+### Потребителски инструменти
 
-The main utility for f2fs is `f2fs-tools`
+Основният инструмент за f2fs е `f2fs-tools`.
 
-### Recommendation
+### Препоръка
 
-- F2FS is recommended for users who want to maximize the lifespan of their NAND flash devices.
-- Limine is the recommended bootloader for F2FS users on MBR/BIOS systems since it does not require a workaround like GRUB does.
+- F2FS се препоръчва за потребители, които искат да удължат максимално живота на своите NAND флаш устройства.
+- Limine е препоръчителният bootloader за потребители на F2FS на MBR/BIOS системи, тъй като не изисква заобиколно решение като GRUB.
 
 ## BcacheFS
 
-Bcachefs is an advanced new filesystem for Linux, with an emphasis on reliability and robustness and the complete set of features one would expect from a modern filesystem.
+Bcachefs е нова, модерна файлова система за Linux с акцент върху надеждност и стабилност, както и пълен набор от функции, които бихме очаквали от съвременна файлова система.
 
-:::caution[ATTENTION]
-Bcachefs is still considered as experimental and may have issues.
+:::caution[ВНИМАНИЕ]
+Bcachefs все още се счита за експериментална и може да има проблеми.
 :::
 
-### Pros
+### Предимства
 
-- Copy on write (CoW) - like BTRFS or ZFS
-- Compression
-- Caching, Data Placement
-- Replication
-- Scalable
+- Copy on write (CoW) – като BTRFS или ZFS
+- Компресия
+- Кеширане, разположение на данни (Data Placement)
+- Репликация
+- Мащабируема
 
-### Cons
+### Недостатъци
 
-- Experimental
-- Setup can be complicated
+- Експериментална
+- Настройката може да бъде сложна
 
-### Required tools
+### Необходими инструменти
 
-`bcachefs-dkms` provides out-of-tree kernel module support.
-`bcachefs-tools` for the userspace utilities.
+`bcachefs-dkms` осигурява поддръжка на модул на ядрото извън дървото.
+`bcachefs-tools` за потребителските инструменти.
 
-## TL:DR
+## TL;DR
 
-Use the default filesystem **BTRFS** as it is considered stable and has a lot of neat features (snapshots, compression, etc). Use **XFS** or **EXT4** for a simple
-and fast filesystem.
+Използвайте файловата система по подразбиране **BTRFS**, тъй като тя се счита за стабилна и има много полезни функции (моментни снимки, компресия и т.н.). Използвайте **XFS** или **EXT4** за проста и бърза файлова система.
