@@ -1,137 +1,137 @@
 ---
-title: Terms of Service
+title: Общи условия за ползване
 ---
 
-## 1. Scope of the Terms of Service
+## 1. Обхват на Общите условия
 
-### 1.1. Definitions
+### 1.1. Определения
 
-These Terms of Service govern the use of the CachyOS platform and associated services, including the forums, wiki, bug reporting tool, and other collaborative tools ("Services").
-CachyOS ("we," "us," "our") operates the platform accessible at cachyos.org and related subdomains. Users ("you," "your") must accept these terms to use the Services.
+Настоящите Общи условия уреждат използването на платформата CachyOS и свързаните с нея услуги, включително форуми, wiki, инструменти за докладване на грешки и други съвместни инструменти („Услугите“).  
+CachyOS („ние“, „нас“ или „наше“) управлява платформата, достъпна на cachyos.org и свързаните с нея поддомейни. Потребителите („вие“ или „ваш“) трябва да приемат настоящите условия, за да използват Услугите.
 
-### 1.2. Use of the Services
+### 1.2. Използване на Услугите
 
-Only natural persons of legal age and with full legal capacity are permitted to use the Services. Minors may use the Services with parental or legal guardian consent.
+Само физически лица с навършена пълнолетна възраст и пълна дееспособност имат право да използват Услугите. Непълнолетни лица могат да използват Услугите със съгласието на родител или законен настойник.
 
-### 1.3. Access to Terms of Service
+### 1.3. Достъп до Общите условия
 
-The latest version of the Terms of Service can be accessed at any time on our website: <https://wiki.cachyos.org/policy/terms_of_service>.
+Най-актуалната версия на Общите условия е достъпна по всяко време на нашия уебсайт: <https://wiki.cachyos.org/policy/terms_of_service>.
 
-## 2. Registration, Conclusion of Contract, and Subject Matter
+## 2. Регистрация, сключване на договор и предмет
 
-### 2.1. Requirements
+### 2.1. Изисквания
 
-To use our Interactive Services (e.g., forums, package contributions), you must register via our online form, provide accurate contact information, and agree to these Terms of Service.
-Activation of your account signifies the conclusion of the contract. There is no entitlement to activation or participation.
+За да използвате нашите интерактивни услуги (напр. форуми, принос на пакети), трябва да се регистрирате чрез нашия онлайн формуляр, да предоставите точна информация за контакт и да се съгласите с настоящите Общи условия.  
+Активирането на профила ви означава сключване на договора. Няма гарантирано право на активиране или участие.
 
-### 2.2. Change of the Platform
+### 2.2. Промяна на платформата
 
-We reserve the right to change or expand the Services and structure of the platform. Changes that significantly affect the purpose of these Terms of Service will be communicated to users.
+Запазваме си правото да променяме или разширяваме Услугите и структурата на платформата. Промени, които съществено засягат целта на настоящите Общи условия, ще бъдат съобщени на потребителите.
 
-## 3. Duties as a User of the Interactive Services
+## 3. Задължения като потребител на интерактивните услуги
 
-### 3.1. Completeness of Information
+### 3.1. Пълнота на информацията
 
-You must provide complete and accurate contact information and update it as necessary.
+Трябва да предоставите пълна и точна информация за контакт и да я актуализирате при необходимост.
 
-### 3.2. Account Use
+### 3.2. Използване на профила
 
-Your account is personal and must be protected from unauthorized use. You are responsible for any misuse of your account.
+Вашият профил е личен и трябва да бъде защитен от неоторизирано използване. Носите отговорност за всяка злоупотреба с профила ви.
 
-### 3.3. Conduct
+### 3.3. Поведение
 
-Users must interact respectfully and lawfully, adhering to our General Guidelines and Code of Conduct.
+Потребителите трябва да взаимодействат уважително и законосъобразно, като спазват нашите Общи насоки и Кодекс за поведение.
 
-### 3.4. Content and Conduct
+### 3.4. Съдържание и поведение
 
-You are responsible for any content you contribute, ensuring it does not violate these terms or applicable laws.
+Носите отговорност за всяко съдържание, което предоставяте, като се уверите, че то не нарушава настоящите условия или приложимите закони.
 
-### 3.5. Violations
+### 3.5. Нарушения
 
-You must not publish content that is insulting, false, malicious, or violates any laws, including copyright and trademark laws.
+Не трябва да публикувате съдържание, което е обидно, невярно, злонамерено или нарушава каквито и да било закони, включително авторски права и търговски марки.
 
-### 3.6. Permanent Entries
+### 3.6. Постоянни записи
 
-Contributions may be indexed by search engines and remain accessible worldwide. You cannot claim deletion or correction of such entries.
+Вашите приноси могат да бъдат индексирани от търсачки и да останат достъпни по целия свят. Не можете да изисквате изтриване или коригиране на такива записи.
 
-### 3.7. Content Discretion
+### 3.7. Преценка на съдържанието
 
-We reserve the right to refuse, delete, modify, or remove any content at our discretion and to impose sanctions for violations of these terms.
+Запазваме си правото да отказваме, изтриваме, променяме или премахваме всяко съдържание по наша преценка и да налагаме санкции за нарушения на настоящите условия.
 
-## 4. Liability of the Users; Indemnification
+## 4. Отговорност на потребителите; обезщетение
 
-You agree to indemnify us against all costs incurred from third-party claims due to your violations of these Terms of Service.
+Вие се съгласявате да ни обезщетите за всички разходи, направени в резултат на претенции на трети лица, произтичащи от ваши нарушения на настоящите Общи условия.
 
-## 5. Transfer of Rights of Use
+## 5. Прехвърляне на права за използване
 
-### 5.1. Copyright
+### 5.1. Авторско право
 
-By posting content, you grant us the rights needed to provide our Services. You must ensure you have the rights to any content you upload.
+Като публикувате съдържание, ни предоставяте правата, необходими за предоставянето на нашите Услуги. Трябва да гарантирате, че притежавате правата върху всяко съдържание, което качвате.
 
-### 5.2. Contribution Licenses
+### 5.2. Лицензи за софтуерни приноси
 
-Software contributions must be licensed under the project's license or the GNU General Public License version 3.
+Софтуерните приноси трябва да бъдат лицензирани съгласно лиценза на проекта или GNU General Public License версия 3.
 
-### 5.3. Continuation of Rights
+### 5.3. Продължаване на правата
 
-Rights of use remain in effect even after account termination.
+Правата за използване остават в сила дори след прекратяване на профила.
 
-## 6. Availability of the Platform
+## 6. Наличност на платформата
 
-We strive to keep the platform available but cannot guarantee 100% uptime.
+Полагаме усилия да поддържаме платформата достъпна, но не можем да гарантираме 100% непрекъсната работа.
 
-## 7. Liability of CachyOS
+## 7. Отговорност на CachyOS
 
-### 7.1. Limitation of Liability
+### 7.1. Ограничаване на отговорността
 
-We are not responsible for user content or any damages resulting from its use. Users must take precautions against harmful content.
+Не носим отговорност за съдържание, предоставено от потребителите, нито за каквито и да е щети, произтичащи от използването му. Потребителите трябва да вземат предпазни мерки срещу вредно съдържание.
 
-### 7.2. Content Review
+### 7.2. Преглед на съдържанието
 
-We do not review all content posted by users and are not responsible for it. Unlawful content will be removed upon discovery.
+Не преглеждаме цялото публикувано от потребителите съдържание и не носим отговорност за него. Незаконосъобразно съдържание ще бъде премахнато след откриването му.
 
-### 7.3. Limitation of Damage Claims
+### 7.3. Ограничаване на искове за обезщетение
 
-We exclude liability for damages except in cases of gross negligence, intentional misconduct, or violation of essential contractual obligations.
+Изключваме отговорност за вреди, освен в случаите на груба небрежност, умишлено неправомерно поведение или нарушение на основни договорни задължения.
 
-### 7.4. Further Limitation of Liability
+### 7.4. Допълнително ограничаване на отговорността
 
-We are not liable for the content of external linked sites.
+Не носим отговорност за съдържанието на външни сайтове, към които се предоставят връзки.
 
-## 8. Amendment of the Terms of Service
+## 8. Изменение на Общите условия
 
-### 8.1. Amendments
+### 8.1. Изменения
 
-We may amend these Terms of Service as necessary. Users will be notified of changes by email. Failure to object to changes within two weeks signifies acceptance.
+Може да изменяме настоящите Общи условия при необходимост. Потребителите ще бъдат уведомени за промените по имейл. Ако не възразите срещу промените в двуседмичен срок, се счита, че ги приемате.
 
-### 8.2. Objections to Amendments
+### 8.2. Възражения срещу изменения
 
-If you object to changes, the contract will continue under the previous terms, but we may terminate the agreement at the next possible date.
+Ако възразите срещу промените, договорът ще продължи да действа при предишните условия, но ние може да прекратим споразумението на следващата възможна дата.
 
-## 9. Term and Termination of the Agreement
+## 9. Срок и прекратяване на споразумението
 
-### 9.1. Period of Terms of Service
+### 9.1. Срок на действие
 
-These Terms of Service are concluded for an indefinite period.
+Настоящите Общи условия са сключени за неопределен срок.
 
-### 9.2. Termination
+### 9.2. Прекратяване
 
-Either party can terminate these Terms of Service without cause at any time.
+Всяка от страните може да прекрати Общите условия без посочване на причина по всяко време.
 
-### 9.3. Account Deletion
+### 9.3. Изтриване на профил
 
-Public statements and contributions may remain visible even after account deletion.
+Публични изказвания и приноси могат да останат видими дори след изтриване на профила.
 
-## 10. Miscellaneous
+## 10. Други разпоредби
 
-### 10.1. Applicable Law
+### 10.1. Приложимо право
 
-These Terms of Service are governed exclusively by the laws of the relevant jurisdiction, excluding the United Nations Convention on Contracts for the International Sale of Goods (CISG).
+Настоящите Общи условия се уреждат изключително от законите на съответната юрисдикция, без прилагане на Конвенцията на ООН за договорите за международна продажба на стоки (CISG).
 
-### 10.2. Severability Clause
+### 10.2. Действителност на разпоредбите
 
-If any provision of these Terms of Service is found to be invalid, the remaining provisions will remain in effect.
+Ако някоя от разпоредбите на настоящите Общи условия бъде счетена за недействителна, останалите разпоредби остават в сила.
 
-### 10.3. Disputes
+### 10.3. Спорове
 
-The European Commission's online dispute resolution platform can be accessed at <https://ec.europa.eu/consumers/odr>. We are not obligated to participate in dispute resolution procedures before a consumer arbitration board.
+Онлайн платформата на Европейската комисия за решаване на спорове е достъпна на <https://ec.europa.eu/consumers/odr>. Не сме задължени да участваме в процедури за решаване на спорове пред арбитражен съвет за потребителите.

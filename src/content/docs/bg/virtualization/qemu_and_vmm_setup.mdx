@@ -1,6 +1,6 @@
 ---
-title: QEMU and VMM Setup
-description: Necessary steps to get both programs working on CachyOS
+title: QEMU и VVM настройка
+description: Необходими стъпки за правилната работа на двете програми в CachyOS
 tableOfContents:
   minHeadingLevel: 1
   maxHeadingLevel: 3
@@ -9,60 +9,58 @@ tableOfContents:
 import ImageComponent from '~/components/image-component.astro';
 import { Steps } from '@astrojs/starlight/components';
 
-## Installation
-To get **VMM** (Virtual Machine Manager) and **QEMU** installed and running on
-**CachyOS**, the process is thus:
+## Инсталиране
+За да инсталирате и пуснете **VMM** (Virtual Machine Manager) и **QEMU** на **CachyOS**, процесът е следният:
 
 ```sh
-# This will install the needed packages (note the "Windows 11" note below):
+# Това ще инсталира нужните пакети (обърнете внимание на бележката за Windows 11 по-долу):
 sudo pacman -S qemu-full virt-manager swtpm
-# Force libvirt to use iptables
+# Принуждаване libvirt да използва iptables
 echo 'firewall_backend = "iptables"' | sudo tee -a /etc/libvirt/network.conf
-# This will add the user to the "libvirt" group so they can use it:
+# Това добавя потребителя в групата "libvirt", за да може да я използва:
 sudo usermod -aG libvirt $USER
-# LXC backend (optional, for linux containers, enabling both backends does not conflict):
+# LXC backend (по избор, за Linux контейнери; активирането на двата back-end-а не създава конфликт):
 systemctl enable --now libvirtd.service
-# QEMU backend (for VMs):
+# QEMU backend (за виртуални машини):
 systemctl enable --now libvirtd.socket
-# This will bring Internet up in a VM whenever one starts:
+# Това ще осигури интернет на виртуалната машина, когато тя бъде стартирана:
 sudo virsh net-autostart default
-# And to enable the entire VM network to have unfettered transit: (You should consider if you need more granular firewall rules based on your use case and security posture)
+# За да разрешите на цялата мрежа на виртуалните машини неограничен достъп: (Преценете дали са ви нужни по-фини firewall правила според вашия случай на употреба и сигурност)
 sudo ufw route allow from 192.168.122.0/24
 ```
 
 :::note[Windows 11]
-If you are installing **Windows 11** in a virtual machine, you'll either need to pass through your compatible TPM module, later in the configuration step, or install `swtpm` if you don't have one.
+Ако инсталирате **Windows 11** във виртуална машина, ще трябва или да подадете съвместимия TPM модул (passthrough) в по-късната стъпка на конфигурация, или да инсталирате `swtpm`, ако нямате такъв.
 :::
 
-## The basics of creating a VM
-:::note[User Session]
-Before proceeding you may want to briefly defer to [QEMU User Session](/virtualization/qemu_user_session).
+## Основни стъпки при създаване на Виртуална машина
+:::note[Потребителска сесия (User Session)]
+Преди да продължите, може да искате да погледнете накратко [QEMU User Session](/virtualization/qemu_user_session).
 :::
 
 <Steps>
 
-1. First, launch **VMM**, the first thing that will greet you are these things connecting: <ImageComponent imgsrc={import('~/assets/images/vmmstart.png')} />
-2. Next, click on `Edit -> Preferences -> ✅ Enable XML editing` and close out of that sub-menu.
-3. Now you can create a new virtual machine, either by clicking **the screen with a star and play icon** or `File -> New Virtual Machine`.
-4. You will be greeted with the vm creator, next to `Connection:` you will see a dropdown menu, click it and select the appropriate one then proceed `Forward`. <ImageComponent imgsrc={import('~/assets/images/vmmcreatestep1.png')} />
-5. You will be asked to locate the `.iso` image of an OS you downloaded, click on `Browse...` and locate it, you may also want to add or make a dedicated directory for storing .iso files, you can do so by clicking on the `+ (Add Pool)` button. If you want to reuse the `User Session` path for this, that one lives in `~/.config/libvirt/`. <ImageComponent imgsrc={import('~/assets/images/vmmcreatestep2browse.png')} />
-**If your OS doesn't get autodetected**, simply untick the autodetection and choose the closest match manually, `example: CachyOS = Arch Linux`.
+1. Първо стартирайте **VMM**. Първото нещо, което ще ви посрещне, са тези неща, които се свързват: <ImageComponent imgsrc={import('~/assets/images/vmmstart.png')} />
+2. След това кликнете на `Edit -> Preferences -> ✅ Enable XML editing` и затворете този подпрозорец.
+3. Сега можете да създадете нова виртуална машина – кликнете върху **иконата на екран със звезда и бутон за плей** или `File -> New Virtual Machine`.
+4. Ще видите създателя на виртуални машини. До `Connection:` има падащо меню – кликнете и изберете подходящото, след което продължете с `Forward`. <ImageComponent imgsrc={import('~/assets/images/vmmcreatestep1.png')} />
+5. Ще бъдете попитани да посочите `.iso` образа на операционната система, която сте изтеглили. Кликнете на `Browse...` и го намерете. Може също да добавите или създадете специална директория за съхранение на .iso файлове – това става с бутона `+ (Add Pool)`. Ако искате да използвате пътя на `User Session` за това, той се намира в `~/.config/libvirt/`. <ImageComponent imgsrc={import('~/assets/images/vmmcreatestep2browse.png')} />
+**Ако вашата операционна система не бъде автоматично разпозната**, просто махнете отметката от автодетекцията и ръчно изберете най-близкото съвпадение - `например: CachyOS = Arch Linux`.
 
-6. Step 3 is straightforward, simply give your VM however much RAM and CPU cores you like, this isn't set in stone and is easily changeable.
-7. In step 4, you can choose to create a virtual storage space (this creates a **.qcow2** file), or a path for the VM to use.
-8. In step 5, tick on `Customize configuration before install -> Finish`.
-9. You will now land here: <ImageComponent imgsrc={import('~/assets/images/vmmprevminstall.png')} />
-There are a few things you should confirm here if installing a Linux VM, in `Overview` confirm that the chipset is **Q35** and that the firmware is **UEFI**. Unless you're installing something truly ancient or doing something silly, you never want any other variation here. If you're making a Windows 11 VM, check if the TPM module has been added, otherwise head over to Add Hardware -> TPM then select either Emulated or Passthrough (see the note at the top) and Finish to close the sub-menu.
+6. Стъпка 3 е лесна – задайте на виртуалната машина желаната RAM и брой процесорни ядра. Това не е окончателно и може лесно да се промени по-късно.
+7. В стъпка 4 можете да създадете виртуално хранилище (това създава .qcow2 файл) или да посочите път, който машината да използва.
+8. В стъпка 5 отметнете `Customize configuration before install -> Finish`.
+9. Сега ще попаднете тук: <ImageComponent imgsrc={import('~/assets/images/vmmprevminstall.png')} />
+Има няколко неща, които трябва да проверите тук, ако инсталирате Linux VM. В `Overview` се уверете, че чипсетът е **Q35** и че firmware-ът е **UEFI**. Освен ако не инсталирате нещо наистина старо или не правите нещо необичайно, никога няма да искате друга настройка. Ако създавате VM с Windows 11, проверете дали TPM модулът е добавен; ако не е, отидете на Add Hardware -> TPM и изберете Emulated или Passthrough (вижте бележката в началото) и затворете подпрозореца с Finish.
 
-10. Now click on `Begin Installation`.
-11. If in a **Linux** VM (or another OS that uses OpenGL and/or ships libvulkan), head over to [EGL Headless](/virtualization/egl_headless) and/or [Virtio-Venus](/virtualization/virtio-venus) respectively.
+10. След това кликнете на `Begin Installation`.
+11. Ако сте в **Linux** VM (или друга операционна система, която използва OpenGL и/или включва libvulkan), отидете съответно на [EGL Headless](/virtualization/egl_headless) и/или [Virtio-Venus](/virtualization/virtio-venus).
 
 </Steps>
 
-### Final note
-If in a `Windows 11` VM, to improve performance, you can:
-- install **Virtio-Win** drivers from RedHat in the guest
-- if you have an Intel iGPU, you can instead look into **GVT-g** and **MDEV**
-- if you have an Intel iGPU and a dGPU, you can instead look into **GVT-d**
-- if you have an iGPU and a dGPU or 2+ dGPU's and want to pass a dGPU instead,
-you can look into **VFIO**
+### Последна бележка
+Ако използвате `Windows 11` VM, за да подобрите производителността, можете:
+- да инсталирате **Virtio-Win** драйверите от RedHat в госта(Guest)
+- ако имате Intel iGPU, вместо това можете да разгледате **GVT-g** и **MDEV**
+- ако имате Intel iGPU и dGPU, можете да разгледате **GVT-d**
+- ако имате iGPU и dGPU или 2+ и искате да подадете dGPU (passthrough), можете да разгледате **VFIO**

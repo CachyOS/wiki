@@ -1,93 +1,93 @@
 ---
-title: Privacy Policy
+title: Политика за поверителност
 ---
 
-## 1. Introduction
+## 1. Въведение
 
-CachyOS ("we," "us," or "our") is committed to protecting your privacy. This Privacy Policy outlines how we collect, use, disclose, and safeguard your information when you visit our website and use our services, including the forum based on Discourse software. By using our services, you agree to the collection and use of information in accordance with this policy.
+CachyOS („ние“, „нас“ или „наше“) се ангажира да защитава вашата поверителност. Настоящата Политика за поверителност описва как събираме, използваме, разкриваме и защитаваме вашата информация, когато посещавате нашия уебсайт и използвате нашите услуги, включително форума, базиран на платформата Discourse. Използвайки нашите услуги, вие се съгласявате със събирането и използването на информация в съответствие с тази политика.
 
-## 2. Controller
+## 2. Администратор
 
-The data controller responsible for your personal data is:
-CachyOS Team
-Email: admin at cachyos dot org
+Администраторът на данни, отговорен за вашите лични данни, е:
+Екипът на CachyOS
+Имейл: admin [at] cachyos [dot] org
 
-## 3. Data Collection and Use
+## 3. Събиране и използване на данни
 
-### 3.1. General Use of the Platform
+### 3.1. Общо използване на платформата
 
-When you visit our website, our hosting provider automatically collects certain technical data:
+Когато посещавате нашия уебсайт, нашият хостинг доставчик автоматично събира определени технически данни:
 
-- IP address
-- Accessed content
-- Date and time of access
-- Browser type and version
-- Referrer URL
+- IP адрес
+- Достъпно съдържание
+- Дата и час на достъп
+- Тип и версия на браузъра
+- Референтен URL (Referrer URL)
 
-This data is necessary for the operation of the website and to ensure its security, in compliance with Art. 6(1)(f) GDPR. The data is stored for 91 days before being deleted.
+Тези данни са необходими за работата на уебсайта и за осигуряване на неговата сигурност, в съответствие с чл. 6, параграф 1, буква f от GDPR. Данните се съхраняват 91 дни, след което се изтриват.
 
-### 3.2. User Account Registration
+### 3.2. Регистрация на потребителски профил
 
-When you create a user account, we collect:
+Когато създавате потребителски профил, събираме:
 
-- Username
-- Email address
-- Password
+- Потребителско име
+- Имейл адрес
+- Парола
 
-We may also collect additional data such as your IP address, language preference, and timezone. This information is used to manage your account and provide our services, under Art. 6(1)(b) GDPR. Your data will be stored as long as you have an account with us.
+Може да събираме и допълнителни данни, като вашия IP адрес, езикови предпочитания и часови пояс. Тази информация се използва за управление на профила ви и предоставяне на нашите услуги на основание чл. 6, параграф 1, буква b от GDPR. Вашите данни се съхраняват, докато имате активен профил при нас.
 
-## 4. Services
+## 4. Услуги
 
-### 4.1. Forum
+### 4.1. Форум
 
-To participate in our forum, you must register an account. We collect your username, email address, and a captcha response to prevent spam. You can choose whether to display your email address to other users. Posts and comments will display your username and registration date. Upon account deletion, posts will remain anonymized.
+За да участвате в нашия форум, трябва да регистрирате профил. Събираме вашето потребителско име, имейл адрес и captcha отговор, за да предотвратим спам. Можете да изберете дали да показвате имейл адреса си на други потребители. Публикациите и коментарите ще показват вашето потребителско име и дата на регистрация. При изтриване на профила публикациите остават анонимизирани.
 
-### 4.2. Website
+### 4.2. Уебсайт
 
-You can browse our website without providing personal data. However, certain interactions, such as contacting us or subscribing to newsletters, may require you to provide personal data such as your email address and name. This data is processed to fulfill your requests, under Art. 6(1)(b) GDPR.
+Можете да разглеждате уебсайта ни, без да предоставяте лични данни. Някои взаимодействия обаче, като свързване с нас или абонамент за бюлетин, може да изискват предоставяне на лични данни, като имейл адрес и име. Тези данни се обработват, за да изпълним вашите заявки на основание чл. 6, параграф 1, буква b от GDPR.
 
-## 5. Contact
+## 5. Контакт
 
-When you contact us via email, we collect your email address and any other information you provide. This data is used to respond to your inquiry and is stored for as long as necessary to fulfill this purpose, in compliance with Art. 6(1)(f) GDPR.
+Когато се свържете с нас по имейл, събираме вашия имейл адрес и всяка друга информация, която предоставите. Тези данни се използват, за да отговорим на вашето запитване, и се съхраняват толкова дълго, колкото е необходимо за тази цел, в съответствие с чл. 6, параграф 1, буква f от GDPR.
 
-## 6. Data Retention
+## 6. Срок за съхранение на данните
 
-We retain your personal data only for as long as necessary to fulfill the purposes for which it was collected. Once the data is no longer needed, it will be deleted in accordance with our data retention policies.
+Запазваме вашите лични данни само докато е необходимо за изпълнение на целите, за които са събрани. След като данните вече не са необходими, те се изтриват в съответствие с нашите политики за съхранение.
 
-## 7. Data Recipients
+## 7. Получатели на данни
 
-We may share your data with external service providers, such as our hosting provider, to facilitate our services. These providers are contractually obligated to protect your data and use it only for the specified purposes.
+Може да споделяме вашите данни с външни доставчици на услуги, например нашия хостинг доставчик, за да улесним предоставянето на услугите ни. Тези доставчици са задължени по договор да защитават данните ви и да ги използват само за определените цели.
 
-## 8. Your Rights
+## 8. Вашите права
 
-Under the GDPR, you have the following rights regarding your personal data:
+Съгласно GDPR имате следните права по отношение на вашите лични данни:
 
-- Right of access (Art. 15 GDPR)
-- Right to rectification (Art. 16 GDPR)
-- Right to deletion (Art. 17 GDPR)
-- Right to restriction of processing (Art. 18 GDPR)
-- Right to data portability (Art. 20 GDPR)
-- Right to object (Art. 21 GDPR)
-- Right to withdraw consent (Art. 7(3) GDPR)
-- Right to lodge a complaint with a supervisory authority (Art. 77 GDPR)
+- Право на достъп (чл. 15 от GDPR)
+- Право на коригиране (чл. 16 от GDPR)
+- Право на изтриване (чл. 17 от GDPR)
+- Право на ограничаване на обработването (чл. 18 от GDPR)
+- Право на преносимост на данните (чл. 20 от GDPR)
+- Право на възражение (чл. 21 от GDPR)
+- Право да оттеглите съгласието си (чл. 7, параграф 3 от GDPR)
+- Право да подадете жалба до надзорен орган (чл. 77 от GDPR)
 
-To exercise these rights, please contact us at <admin@cachyos.org>.
+За да упражните тези права, моля, свържете се с нас на <admin@cachyos.org>.
 
-## 9. Data Security
+## 9. Сигурност на данните
 
-We implement appropriate technical and organizational measures to ensure a level of security appropriate to the risk, protecting your data from unauthorized access, alteration, disclosure, or destruction.
+Прилагаме подходящи технически и организационни мерки, за да осигурим ниво на сигурност, съобразено с риска, и да защитим данните ви от неоторизиран достъп, промяна, разкриване или унищожаване.
 
-## 10. Changes to This Privacy Policy
+## 10. Промени в тази Политика за поверителност
 
-We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page. Changes are effective immediately upon posting.
+Може да актуализираме нашата Политика за поверителност от време на време. Ще ви уведомим за промените, като публикуваме новата Политика за поверителност на тази страница. Промените влизат в сила незабавно след публикуването им.
 
-## 11. Contact Us
+## 11. Свържете се с нас
 
-If you have any questions or concerns about this Privacy Policy, please contact us at:
-Email: admin at cachyos dot org
+Ако имате въпроси или притеснения относно тази Политика за поверителност, моля, свържете се с нас на:
+Имейл: admin [at] cachyos [dot] org
 
 ---
 
-This Privacy Policy ensures compliance with GDPR and outlines the practices regarding your personal data for CachyOS services and website.
+Тази Политика за поверителност гарантира съответствие с GDPR и описва практиките по отношение на личните ви данни за услугите и уебсайта на CachyOS.
 
-Date: 1.06.2024
+Дата: 1 юни 2024 г.

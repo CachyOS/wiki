@@ -1,16 +1,16 @@
 ---
-title: Official CachyOS Community
+title: Официална общност на CachyOS
 description: Discord, Reddit, X, Forum, Mastodon
 ---
 
-The following Social Media are maintained by the CachyOS Team.
+Следните социални медии се поддържат от екипа на CachyOS.
 
-You can follow the links to chat and ask for help.
+Можете да последвате връзките, за да общувате и да потърсите помощ.
 
-Feel free to join!
+Не се колебайте да се присъедините!
 
 - [Discord](<https://discord.gg/cachyos-862292009423470592>)
 - [Reddit](<https://www.reddit.com/r/cachyos>)
 - [Forum](<https://discuss.cachyos.org>)
-- [X](<https://x.com/cachyos>) - `Excluded from asking for help.`
-- [Mastodon](<https://fosstodon.org/@CachyOS>) - `Excluded from asking for help.`
+- [X](<https://x.com/cachyos>) - `Изключен за търсене на помощ.`
+- [Mastodon](<https://fosstodon.org/@CachyOS>) - `Изключен за търсене на помощ.`

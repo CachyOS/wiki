@@ -1,21 +1,21 @@
 ---
-title: Official CachyOS Community Rules
+title: Официални правила на общността на CachyOS
 description: Discord, Reddit, Twitter, Forum
 ---
 
-Violating these rules is not allowed and account ban will follow:
+Нарушаването на тези правила не е позволено и води до блокиране на акаунт:
 
-1. Insulting community participants is prohibited.
-2. Incitement of ethnic hatred is prohibited.
-3. The posting of pornographic materials is prohibited.
-4. Discussion of political topics is prohibited when it gets out of control.
-5. Discussion of religious topics is prohibited.
-6. It is forbidden to advertise other resources without the consent of the administration.
-7. It is forbidden to impersonate another person.
-8. It is forbidden to flood (publish the same type of information several times in a row).
-9. It is forbidden to provoke conflicts between participants.
-10. This is a LGBTQ+ safe place, and so it is forbidden to provoke and insult LGBTQ+ people.
+1. Забранено е обиждането на участници в общността.
+2. Забранено е подбуждането към етническа омраза.
+3. Забранено е публикуването на порнографски материали.
+4. Обсъждането на политически теми е забранено, когато излезе извън контрол.
+5. Обсъждането на религиозни теми е забранено.
+6. Забранено е рекламирането на други ресурси без съгласието на администрацията.
+7. Забранено е представянето за друго лице.
+8. Забранено е flоод-ването (повтарящо се публикуване на еднотипна информация).
+9. Забранено е провокиране на конфликти между участниците.
+10. Това е безопасно пространство за LGBTQ+ хора и съответно е забранено провокиране и обиждане на LGBTQ+ хора.
 
-Violating these rules will result in timeouts, escalating to an account ban for repeated offenses:
+Нарушаването на тези правила води до временни ограничения (timeouts), а при повторение – до блокиране на акаунта:
 
-1. The use of languages other than English for communication is prohibited unless the convo is a "small-talk" or dedicated language channel exist.
+1. Забранено е използването на езици, различни от английски, за комуникация, освен ако става въпрос за „small-talk“ или съществува специален канал за съответния език.

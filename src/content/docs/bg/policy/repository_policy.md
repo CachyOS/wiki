@@ -1,83 +1,90 @@
 ---
-title: Repository Usage Policy
+title: Правила за използване на хранилището
 ---
 
-CachyOS Repository Usage Policy
+Правила за използване на хранилището на CachyOS
 
-## 1. Introduction
+## 1. Въведение
 
-The CachyOS repository is designed to provide high-quality, optimized packages for users of the CachyOS and ArchLinux distributions. This policy outlines the terms and conditions for the use of the CachyOS repository.
+Хранилището на CachyOS е създадено, за да предоставя висококачествени, оптимизирани пакети за потребителите на дистрибуциите CachyOS и ArchLinux. Този документ очертава условията за използване на хранилището на CachyOS.
 
-## 2. Disclaimer of Warranty
+## 2. Отказ от гаранция
 
-Unless required by applicable law or agreed to in writing, the CachyOS team provides the repository on an **"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND**, either express or implied, including, without limitation,
-any warranties or conditions of **TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A PARTICULAR PURPOSE**. You, as repository users, are solely responsible for determining the appropriateness of using the repository and assume
-any risks associated with your exercise of permissions.
+Освен ако не се изисква от приложимото законодателство или не е договорено писмено, екипът на CachyOS предоставя хранилището 
+**"„КАКТО Е“ (AS IS), БЕЗ КАКВИТО И ДА Е ГАРАНЦИИ ИЛИ УСЛОВИЯ**, изрични или подразбиращи се, включително, без ограничение, 
+всякакви гаранции или условия за **ЗАГЛАВИЕ, НЕНАРУШАВАНЕ НА ПРАВА, ПРОДАВАЕМОСТ ИЛИ ГОДНОСТ ЗА КОНКРЕТНА ЦЕЛ***. 
+Вие, като потребители на хранилището, носите единствена отговорност за определяне на целесъобразността от използването му и поемате всички рискове, свързани с упражняването на разрешенията.
 
-## 3. Limitation of Liability
+## 3. Ограничаване на отговорността
 
-In no event and under no legal theory, whether in tort (including negligence), contract, or otherwise, unless required by applicable law (such as deliberate and grossly negligent acts) or agreed to in writing, shall the CachyOS team
-be liable to repository users for damages, including any direct, indirect, special, incidental, or consequential damages of any character arising as a result of this policy or out of the use or inability to use the repository
-(including but not limited to damages for loss of goodwill, work stoppage, computer failure or malfunction, or any and all other commercial damages or losses), even if the CachyOS team has been advised of the possibility of such damages.
+При никакви обстоятелства и на никакво правно основание, независимо дали в деликт (включително небрежност), 
+договор или друго, освен ако не се изисква от приложимото законодателство (например умишлени или грубо небрежни действия) или не е договорено писмено, 
+екипът на CachyOS не носи отговорност пред потребителите на хранилището за вреди, включително преки, косвени, специални, 
+инцидентни или последващи щети от всякакво естество, произтичащи от това правило или от използването или невъзможността за използване на хранилището 
+(включително, но не само, загуба на репутация, прекъсване на работа, повреда или неизправност на компютър, както и всякакви други търговски загуби), 
+дори ако екипът на CachyOS е бил информиран за възможността за такива вреди.
 
-## 4. Supported Users
+## 4. Поддържани потребители
 
-The CachyOS repository (and its mirrors) provides support exclusively for the following users:
+Хранилището на CachyOS (и неговите огледала) предоставя поддръжка единствено за следните потребители:
 
-- CachyOS Users
-- ArchLinux Users
+- Потребители на CachyOS
+- Потребители на ArchLinux
 
-## 5. Unsupported Users
+## 5. Неподдържани Потребители
 
-Users from other distributions are **NOT SUPPORTED** and **HIGHLY DISCOURAGED** to use the CachyOS repository (and its mirrors). This includes, but is not limited to:
-
-- Manjaro
-- EndeavourOS
-- ArcoLinux
-- Parabola
-- Users of any other Linux distribution not explicitly mentioned in the "Supported Users" section.
-
-## 5. Redistribution of the Repository
-
-This policy defines "redistribution" as the behaviors of inclusion of the CachyOS repository (and its mirrors) or packages obtained from the CachyOS repository as a part of the distributed image of the operating system or sysroots.
-Redistribution also includes the behaviors of **Linux distributions** to provide the utilities that enable CachyOS repository by users' choice, or to provide any distributed or official document that guide users to enable CachyOS
-repository (and its mirrors) by their means. End users and third-party mirrors are not subject to the redistribution policy.
-
-Redistribution of CachyOS repository is exclusively authorized to the CachyOS team only.
-
-## 6. Prohibited Redistribution
-
-Redistribution of the CachyOS repository (and its mirrors) in any unauthorized Linux distribution, including other Arch-based distributions, is **STRICTLY PROHIBITED**. This includes, but is not limited to:
+Потребители от други дистрибуции **НЕ СЕ ПОДДЪРЖАТ** и **ОБЕЗКУРАЖАВА** да използват хранилището на CachyOS (и неговите огледала). Това включва, но не само:
 
 - Manjaro
 - EndeavourOS
 - ArcoLinux
 - Parabola
-- Any other Linux distribution not explicitly mentioned in the "Redistribution of the Repository" section.
+- Потребители на всяка друга Linux дистрибуция, която не е изрично посочена в раздел „Поддържани потребители“.
 
-## 7.Mirror
+## 6. Разпространение на Репоситорита
 
-It is allowed to mirror the repository via rsync and syncthing. Third-party mirrors are permitted to mirror the repository and provide a web server for it, as long as they ensure that the repository data remains unchanged.
+Това правило определя „разпространение“ (redistribution) като действия по включване на хранилището на CachyOS (или неговите огледала) или пакети, 
+получени от хранилището на CachyOS, като част от разпространявания образ на операционната система или системни среди (sysroots). 
+Разпространение включва също действията на **Linux distributions** да предоставят инструменти, 
+които позволяват на потребителите да активират хранилището на CachyOS по свой избор, 
+или да предоставят всякакви разпространявани или официални документи, 
+които насочват потребителите да активират хранилището на CachyOS (и неговите огледала) по свой начин. 
 
-## 8. Compliance and Monitoring
+Крайните потребители и огледала на трети страни не попадат под обхвата на политиката за разпространение.
 
-We reserve the right to monitor the usage of our repository to ensure compliance with this policy. Any unauthorized use may result in access being revoked.
+## 7. Забранено разпространение
 
-## 9. Reporting Violations
+Разпространението на хранилището на CachyOS (и неговите огледала) във всяка неоторизирана Linux дистрибуция, включително други базирани на Arch дистрибуции, е **STRICTLY PROHIBITED**. Това включва, но не само:
 
-If you suspect that this policy is being violated, please report it to us at [admin@cachyos.org].
+- Manjaro
+- EndeavourOS
+- ArcoLinux
+- Parabola
+- Всяка друга Linux дистрибуция, която не е изрично посочена в раздел „Разпространение на хранилището“.
 
-## 10. Policy Changes
+## 8. Огледала (Mirror)
 
-CachyOS reserves the right to modify this policy at any time. Changes will be communicated through our official channels.
+Позволено е създаването на огледала на хранилището чрез rsync и syncthing. На огледала от трети страни е разрешено да създават огледало на хранилището и да предоставят уеб сървър за него, стига да гарантират, че данните в хранилището остават непроменени.
 
-## 11. Contact Information
+## 9. Спазване и мониторинг
 
-For any questions or concerns regarding this policy, please contact us at:
+Запазваме си правото да наблюдаваме използването на нашето хранилище, за да гарантираме спазването на настоящите правила. Всяка неоторизирана употреба може да доведе до отнемане на достъпа.
 
-- Email: <admin@cachyos.org>
-- Website: <https://cachyos.org>
+## 10. Докладване на нарушения
 
-## 12. Acknowledgment
+Ако подозирате, че настоящите правила се нарушават, моля, докладвайте ни на [admin@cachyos.org].
 
-By using the CachyOS repository (and its mirrors), you acknowledge that you have read, understood, and agree to comply with this policy.
+## 11. Промени в правилата
+
+CachyOS си запазва правото да променя настоящите правила по всяко време. Промените ще бъдат съобщени чрез официалните ни канали.
+
+## 12. Информация за контакт
+
+За въпроси или притеснения относно тези правила, моля, свържете се с нас на:
+
+- Имейл: <admin@cachyos.org>
+- Уебсайт: <https://cachyos.org>
+
+## 13. Потвърждение
+
+Използвайки хранилището на CachyOS (и неговите огледала), вие потвърждавате, че сте прочели, разбрали и се съгласявате да спазвате настоящите правила.

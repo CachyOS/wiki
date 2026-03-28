@@ -1,18 +1,18 @@
 ---
-title: Donation
-description: Ways to support us
+title: Дарения
+description: Начини да ни подкрепите
 ---
 
-If you want to support our work, you can donate us and help to pay our buildservers.
-Every Donator gets a Donator Rank in our Discord.
+Ако искате да подкрепите работата ни, можете да дарите средства, които да помогнат за заплащането на нашите сървъри за компилация (buildservers).
+Всеки дарител получава ранг **Donator** в нашия Discord.
 
-Here a list of the current costs per months:
+Ето списък с текущите разходи на месец:
 
 - Buildserver 127 € (Hetzner 7950X3D)
 - Second Buildserver 70€ (Hetzner 7700X)
 - Webserver/mirror 17 €
 - Mailserver/mirror 17 €
-- Forum Server (Netcup VPS) 7 Euro
+- Forum Server (Netcup VPS) 7 €
 
 ### Patreon
 

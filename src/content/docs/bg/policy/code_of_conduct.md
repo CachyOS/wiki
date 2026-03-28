@@ -1,132 +1,90 @@
 ---
-title: Code of Conduct
+title: Кодекс за поведение
 ---
 
-# Contributor Covenant Code of Conduct
+# Кодекс за поведение на Contributor Covenant
 
-## Our Pledge
+## Нашият ангажимент
 
-We as members, contributors, and leaders pledge to make participation in our
-community a harassment-free experience for everyone, regardless of age, body
-size, visible or invisible disability, ethnicity, sex characteristics, gender
-identity and expression, level of experience, education, socio-economic status,
-nationality, personal appearance, race, religion, or sexual identity
-and orientation.
+Ние като членове, сътрудници и ръководители се ангажираме да направим участието в нашата общност свободно от тормоз за всеки, независимо от възраст, телосложение, видимо или невидимо увреждане, етническа принадлежност, полови белези, полова идентичност и изразяване, степен на опит, образование, социално-икономически статус, националност, личен външен вид, раса, религия или сексуална идентичност и ориентация.
 
-We pledge to act and interact in ways that contribute to an open, welcoming,
-diverse, inclusive, and healthy community.
+Ние се ангажираме да действаме и взаимодействаме по начини, които допринасят за отворена, приветлива, разнообразна, включваща и здрава общност.
 
-## Our Standards
+## Нашите стандарти
 
-Examples of behavior that contributes to a positive environment for our
-community include:
+Примери за поведение, което допринася за положителна среда в нашата общност, включват:
 
-* Demonstrating empathy and kindness toward other people
-* Being respectful of differing opinions, viewpoints, and experiences
-* Giving and gracefully accepting constructive feedback
-* Accepting responsibility and apologizing to those affected by our mistakes,
-  and learning from the experience
-* Focusing on what is best not just for us as individuals, but for the
-  overall community
+* Проявяване на емпатия и доброта към другите хора
+* Зачитане на различни мнения, гледни точки и опит
+* Даване и приемане на конструктивна обратна връзка с благодарност
+* Поемане на отговорност и извинение към засегнатите от нашите грешки, както и учене от опита
+* Фокусиране върху това, което е най-добро не само за нас като индивиди, но и за цялата общност
 
-Examples of unacceptable behavior include:
+Примери за неприемливо поведение включват:
 
-* The use of sexualized language or imagery, and sexual attention or
-  advances of any kind
-* Trolling, insulting or derogatory comments, and personal or political attacks
-* Public or private harassment
-* Publishing others' private information, such as a physical or email
-  address, without their explicit permission
-* Other conduct which could reasonably be considered inappropriate in a
-  professional setting
+* Използване на сексуализиран език или образи, както и сексуално внимание или намеци от какъвто и да е вид
+* Тролване, обидно или унизително коментиране, както и лични или политически нападки
+* Публичен или частен тормоз
+* Публикуване на чужда лична информация, като физически или имейл адрес, без изричното им разрешение
+* Друго поведение, което разумно може да се сметне за неподходящо в професионална среда
 
-## Enforcement Responsibilities
+## Отговорности по прилагане
 
-Community leaders are responsible for clarifying and enforcing our standards of
-acceptable behavior and will take appropriate and fair corrective action in
-response to any behavior that they deem inappropriate, threatening, offensive,
-or harmful.
+Лидерите на общността са отговорни за изясняване и прилагане на нашите стандарти за приемливо поведение и ще предприемат подходящи и справедливи коригиращи действия в отговор на всяко поведение, което считат за неподходящо, заплашително, обидно или вредно.
 
-Community leaders have the right and responsibility to remove, edit, or reject
-comments, commits, code, wiki edits, issues, and other contributions that are
-not aligned to this Code of Conduct, and will communicate reasons for moderation
-decisions when appropriate.
+Лидерите на общността имат право и отговорност да премахват, редактират или отхвърлят коментари, commits, код, редакции в wiki, проблеми (issues) и други приноси, които не отговарят на този Кодекс за поведение, и ще съобщават причините за решенията си за модериране, когато е уместно.
 
-## Scope
+## Обхват
 
-This Code of Conduct applies within all community spaces, and also applies when
-an individual is officially representing the community in public spaces.
-Examples of representing our community include using an official e-mail address,
-posting via an official social media account, or acting as an appointed
-representative at an online or offline event.
+Този Кодекс за поведение се прилага във всички общностни пространства, а също така се прилага, когато дадено лице официално представя общността в публични пространства. Примери за представяне на нашата общност включват използване на официален имейл адрес, публикуване чрез официален профил в социални медии или действие като назначен представител на онлайн или офлайн събитие.
 
-## Enforcement
+## Прилагане
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement at
-<admin@cachyos.org>.
-All complaints will be reviewed and investigated promptly and fairly.
+Случаи на насилническо, тормозещо или друго неприемливо поведение могат да бъдат докладвани на лидерите на общността, отговорни за прилагането, на адрес <admin@cachyos.org>. Всички жалби ще бъдат прегледани и разследвани бързо и справедливо.
 
-All community leaders are obligated to respect the privacy and security of the
-reporter of any incident.
+Всички лидери на общността са задължени да зачитат неприкосновеността на личния живот и сигурността на подателя на всеки инцидент.
 
-## Enforcement Guidelines
+## Насоки за прилагане
 
-Community leaders will follow these Community Impact Guidelines in determining
-the consequences for any action they deem in violation of this Code of Conduct:
+Лидерите на общността ще следват тези Насоки за въздействие върху общността, когато определят последствията за всяко действие, което сметнат за нарушение на този Кодекс за поведение:
 
-### 1. Correction
+### 1. Корекция
 
-**Community Impact**: Use of inappropriate language or other behavior deemed
-unprofessional or unwelcome in the community.
+**Въздействие върху общността**: Използване на неподходящ език или друго поведение, считано за непрофесионално или нежелано в общността.
 
-**Consequence**: A private, written warning from community leaders, providing
-clarity around the nature of the violation and an explanation of why the
-behavior was inappropriate. A public apology may be requested.
+**Последица**: Частно, писмено предупреждение от лидерите на общността, което изяснява естеството на нарушението и обяснява защо поведението е неподходящо. Може да бъде поискано публично извинение.
 
-### 2. Warning
+### 2. Предупреждение
 
-**Community Impact**: A violation through a single incident or series
+**Въздействие върху общността**: Нарушение чрез единичен инцидент или серия от действия.
 of actions.
 
-**Consequence**: A warning with consequences for continued behavior. No
-interaction with the people involved, including unsolicited interaction with
-those enforcing the Code of Conduct, for a specified period of time. This
-includes avoiding interactions in community spaces as well as external channels
-like social media. Violating these terms may lead to a temporary or
-permanent ban.
+**Последица**: Предупреждение с последици за продължаващо поведение. За определен период от време не се допуска взаимодействие със замесените лица, включително неподканено взаимодействие с тези, които прилагат Кодекса за поведение. Това включва избягване на взаимодействия в общностните пространства, както и във външни канали като социални медии. Нарушаването на тези условия може да доведе до временно или постоянно блокиране.
 
-### 3. Temporary Ban
+### 3. Временно блокиране
 
-**Community Impact**: A serious violation of community standards, including
-sustained inappropriate behavior.
+**Въздействие върху общността**: Сериозно нарушение на стандартите на общността, включително продължително неподходящо поведение.
 
-**Consequence**: A temporary ban from any sort of interaction or public
-communication with the community for a specified period of time. No public or
-private interaction with the people involved, including unsolicited interaction
-with those enforcing the Code of Conduct, is allowed during this period.
-Violating these terms may lead to a permanent ban.
+**Последица**: Временно блокиране от всякакъв вид взаимодействие или публична комуникация с общността за определен период от време. През този период не се допуска публично или частно взаимодействие със замесените лица, включително неподканено взаимодействие с тези, които прилагат Кодекса за поведение. Нарушаването на тези условия може да доведе до постоянно блокиране.
 
-### 4. Permanent Ban
 
-**Community Impact**: Demonstrating a pattern of violation of community
-standards, including sustained inappropriate behavior,  harassment of an
-individual, or aggression toward or disparagement of classes of individuals.
+### 4. Постоянно блокиране
 
-**Consequence**: A permanent ban from any sort of public interaction within
-the community.
+**Въздействие върху общността**: Проявяване на модел на нарушаване на стандартите на общността, включително продължително неподходящо поведение, тормоз на дадено лице или агресия или омаловажаване на групи от хора.
 
-## Attribution
+**Последица**: Постоянно блокиране от всякакъв вид публично взаимодействие в рамките на общността.
 
-This Code of Conduct is adapted from the [Contributor Covenant][homepage],
-version 2.0, available at
+## Признание
+
+Този Кодекс за поведение е адаптиран от [Contributor Covenant][homepage],
+версия 2.0, достъпен на адрес
 <https://www.contributor-covenant.org/version/2/0/code_of_conduct.html>.
 
-Community Impact Guidelines were inspired by [Mozilla's code of conduct
+Насоките за въздействие върху общността са вдъхновени от [Mozilla's code of conduct
 enforcement ladder](https://github.com/mozilla/diversity).
 
 [homepage]: https://www.contributor-covenant.org
 
-For answers to common questions about this code of conduct, see the FAQ at
-<https://www.contributor-covenant.org/faq>. Translations are available at
+За отговори на често задавани въпроси относно този кодекс за поведение вижте ЧЗВ на адрес
+<https://www.contributor-covenant.org/faq>. Налични са преводи на адрес
 <https://www.contributor-covenant.org/translations>.
