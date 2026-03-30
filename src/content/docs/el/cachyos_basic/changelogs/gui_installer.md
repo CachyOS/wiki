@@ -1,991 +1,989 @@
 ---
-title: GUI Installer
-description: Changelogs of Calamares and the GUI Live ISO
+title: Πρόγραμμα εγκατάστασης GUI
+description: Αρχείο αλλαγών για το Calamares και το Live ISO με GUI
 sidebar:
   order: 1
 ---
 26.03
 ----
 
-**Features:**
+**Λειτουργίες:**
 
-* **Installer:**
-  * Added support to show GIF/WebP videos in the Desktop Selection to showcase the desktops. This is enabled for Plasma, GNOME, Niri and COSMIC
-  * Added support for JPEG XL in the Desktop Selection to reduce image sizes
-  * Cachy-Update is now enabled by default for the GNOME and KDE installations
-  * Improved microcode installation logic — it will now detect the hardware and install the proper microcode instead of installing both and then removing the unneeded one
-  * Improved error message when the EFI partition is too small
-  * Sorted the Desktop Environment list from easy and accessible setups to more advanced ones like WMs
+* **Πρόγραμμα εγκατάστασης:**
+  * Προσθήκη υποστήριξης για προβολή βίντεο GIF/WebP στην ενότητα επιλογής επιφάνειας εργασίας για την παρουσίαση των διαθέσιμων περιβαλλόντων. Η λειτουργία είναι ενεργή για τα Plasma, GNOME, Niri και COSMIC.
+  * Προσθήκη υποστήριξης JPEG XL στην ενότητα επιλογής επιφάνειας εργασίας για τη μείωση του μεγέθους των εικόνων.
+  * Το Cachy-Update είναι πλέον ενεργοποιημένο από προεπιλογή για τις εγκαταστάσεις με GNOME και KDE.
+  * Βελτιωμένη λογική εγκατάστασης μικροκώδικα: πλέον εντοπίζεται το υλικό και εγκαθίσταται ο κατάλληλος μικροκώδικας, αντί να εγκαθίστανται και οι δύο και μετά να αφαιρείται ο περιττός.
+  * Βελτιωμένο μήνυμα σφάλματος σε περίπτωση που το διαμέρισμα EFI είναι πολύ μικρό.
+  * Ταξινόμηση της λίστας περιβαλλόντων εργασίας, από τα πιο εύκολα και προσβάσιμα στα πιο σύνθετα, όπως οι διαχειριστές παραθύρων.
 * **CachyOS-Welcome:**
-  * Added a button to easily install and enable "Winboat" for an easy Windows Docker VM
-  * Added support for FFMUC DNS server in DNS selection
-  * Added Ukrainian translation
-* **chwd:** Decreased the initramfs size massively for NVIDIA dGPU configurations
-* **linux-cachyos:** Instead of generating a `0001-cachyos-base-all.patch`, a release is now generated in a Linux repository for each release of our patched kernel
-* **cachyos-rate-mirrors:** Improved the experience for users in China&Russia massively with a proper check before rating the mirrors
-* **cachyos-settings:** Added support to automatically set the wireless regulatory domain based on timezone
-* **website:** The website design has been reworked and improved to follow more modern standards
-* **GitHub:** Added issue templates to important GitHub repos to improve the quality of bug reports and provide guidance for the user
-* **Mirrors:** New mirrors in Russia (jura12, cachy-arch.ru), Sweden (Zyner), and Canada (All Things Linux)
+  * Προσθήκη κουμπιού για εύκολη εγκατάσταση και ενεργοποίηση του «Winboat» για τη δημιουργία μιας εικονικής μηχανής docker για Windows.
+  * Προσθήκη υποστήριξης για τον διακομιστή DNS FFMUC στην ενότητα επιλογής διακομιστή DNS.
+  * Προσθήκη ουκρανικής μετάφρασης.
+* **chwd:** Σημαντική μείωση του μεγέθους του initramfs για διαμορφώσεις με ανεξάρτητες κάρτες γραφικών της NVIDIA.
+* **linux-cachyos:** Αντί για ένα `0001-cachyos-base-all.patch`, πλέον δημιουργείται μια έκδοση σε ένα αποθετήριο του Linux για κάθε έκδοση του τροποποιημένου πυρήνα μας.
+* **cachyos-rate-mirrors:** Σημαντική βελτίωση της εμπειρίας για χρήστες σε Κίνα και Ρωσία, με σωστό έλεγχο πριν από την αξιολόγηση των ειδώλων διακομιστών.
+* **cachyos-settings:** Προσθήκη υποστήριξης για αυτόματη ρύθμιση της γεωγραφικής ζώνης των ασύρματων δικτύων βάσει της ζώνης ώρας.
+* **Ιστότοπος:** Ο σχεδιασμός της ιστοσελίδας ανανεώθηκε και βελτιώθηκε ακολουθώντας πιο σύγχρονα πρότυπα.
+* **GitHub:** Προσθήκη προτύπων αναφοράς ζητημάτων (issue templates) στα σημαντικά αποθετήρια του GitHub για τη βελτίωση της ποιότητας των αναφορών σφαλμάτων και την καθοδήγηση των χρηστών.
+* **Είδωλα διακομιστών:** Νέα είδωλα διακομιστών σε Ρωσία (jura12, cachy-arch.ru), Σουηδία (Zyner) και Καναδά (All Things Linux).
 
-**Fixes:**
+**Διορθώσεις:**
 
-* **Installer:**
-  * Removed support for bcachefs in the filesystem selection due to the requirement of bcachefs-dkms
-  * Fixed encryption when LUKS2 is used for specific devices
-  * Fixed enabling the "ly" display manager
-* **cachyos-settings:** `cachyos-bugreport.sh` now redacts IP, username, hostname, and MAC address
+* **Πρόγραμμα εγκατάστασης:**
+  * Αφαίρεση υποστήριξης για το bcachefs στην ενότητα επιλογής συστήματος αρχείων λόγω της απαίτησης για bcachefs-dkms.
+  * Διόρθωση της κρυπτογράφησης κατά τη χρήση LUKS2 σε συγκεκριμένες συσκευές.
+  * Διόρθωση της ενεργοποίησης του διαχειριστή σύνδεσης «ly».
+* **cachyos-settings:** Το `cachyos-bugreport.sh` αφαιρεί πλέον τη διεύθυνση IP, το όνομα χρήστη, το όνομα υπολογιστή και τη διεύθυνση MAC.
 * **chwd:**
-  * Generic handheld profiles and improved support for handheld GPUs
-  * fwupd is now enabled for Lenovo handhelds
+  * Γενικά προφίλ για φορητές συσκευές και βελτιωμένη υποστήριξη για τις κάρτες γραφικών τους.
+  * Το fwupd είναι πλέον ενεργοποιημένες για τις φορητές συσκευές της Lenovo.
 
+**Αρχείο αλλαγών για την έκδοση Handheld:**
 
-**Changelog for Handheld Edition:**
-
-* **gamescope-session:** Replaced gamescope-session-plus with gamescope-session-cachyos, which is forked from Valve's gamescope-session
-  * Enables firmware updates for Steam Deck and Lenovo Legion Go devices
-* **plasma-login-manager:** Replaced SDDM with plasma-login-manager for the login manager
-* **bootloaders:** Limine is now selected as default with automatic snapshots. systemd-boot will still be selectable
-* **Installer:** Merged Handheld Calamares with desktop edition calamares together
-* **ISO:** ISO now uses Wayland instead of X11
+* **gamescope-session:** Αντικατάσταση του gamescope-session-plus με το gamescope-session-cachyos, το οποίο αποτελεί παραλλαγή του gamescope-session της Valve.
+  * Επιτρέπει ενημερώσεις υλικολογισμικού για τις συσκευές Steam Deck και Lenovo Legion Go.
+* **plasma-login-manager:** Αντικατάσταση του SDDM με το plasma-login-manager για τη διαχείριση της σύνδεσης.
+* **Φορτωτές εκκίνησης:** Το Limine έχει οριστεί πλέον ως προεπιλογή με αυτόματα στιγμιότυπα. Το systemd-boot παραμένει διαθέσιμο προς επιλογή.
+* **Πρόγραμμα εγκατάστασης:** Συγχώνευση των δύο εκδόσεων (Handheld και Desktop) του Calamares.
+* **ISO:** Το ISO χρησιμοποιεί πλέον Wayland αντί για X11.
 
 26.01
 ----
 
-**Features:**
+**Λειτουργίες:**
 
-* **Installer:**
-  * Moved bootloader selection to Calamares; management is now consolidated into a single package.
-  * Architecture detection is now performed **before** the base system installation to reduce download size.
-  * GRUB now uses LUKS2 for encryption.
-  * Pass --needed to pacman to avoid installing packages twice.
-  * Use single-level compression on NVMe for Btrfs
-  * Removed xorg dependecies on Wayland desktops environments.
+* **Πρόγραμμα εγκατάστασης:**
+  * Η επιλογή του φορτωτή εκκίνησης μεταφέρθηκε στο Calamares· η διαχείριση γίνεται πλέον μέσω ενός ενιαίου πακέτου.
+  * Ο εντοπισμός της αρχιτεκτονικής πραγματοποιείται πλέον **πριν** από την εγκατάσταση του βασικού συστήματος για τη μείωση του μεγέθους λήψης.
+  * Το GRUB χρησιμοποιεί πλέον LUKS2 για την κρυπτογράφηση.
+  * Προσθήκη της παραμέτρου --needed στο pacman για την αποφυγή διπλής εγκατάστασης πακέτων.
+  * Χρήση συμπίεσης ενός επιπέδου σε δίσκους NVMe για το Btrfs.
+  * Αφαίρεση εξαρτήσεων του xorg από τα περιβάλλοντα εργασίας που βασίζονται στο Wayland.
 * **ISO:**
-  * Switched to `plasma-login-manager` for the ISO environment.
-  * The ISO now contains both Stable and LTS kernels. The Stable kernel is selected by default.
-  * Switched the ISO session from X11 to Wayland.
+  * Μετάβαση στο `plasma-login-manager` για το περιβάλλον του ISO.
+  * Το ISO περιλαμβάνει πλέον τόσο τη σταθερή έκδοση (Stable) όσο και την έκδοση LTS του πυρήνα. Η έκδοση Stable είναι επιλεγμένη από προεπιλογή.
+  * Μετάβαση της συνεδρίας του ISO από X11 σε Wayland.
 * **Netinstall:**
-  * Plasma installations now use `plasma-login-manager` instead of SDDM.
-  * Niri now uses `noctalia-shell` and updated dotfiles.
-  * Cleaned up the GNOME installation process.
-* **Slides:** Fixed typos in the Calamares slides and added a new slide showcasing the Wiki.
-* **Mirrors:** The mirror status page (<https://packages.cachyos.org/mirrors>) now displays the syncing state of CachyOS mirrors.
-* **cachyos-settings:** Enabled `EnableAggressiveVblank` for the NVIDIA module. This reduces time spent in the interrupt top half for low-latency display interrupts.
+  * Οι εγκαταστάσεις Plasma χρησιμοποιούν πλέον το `plasma-login-manager` αντί για το SDDM.
+  * Το Niri χρησιμοποιεί πλέον το `noctalia-shell` και ενημερωμένα dotfile.
+  * Βελτιστοποίηση της διαδικασίας εγκατάστασης του GNOME.
+* **Διαφάνειες:** Διόρθωση τυπογραφικών λαθών στις διαφάνειες του Calamares και προσθήκη νέας διαφάνειας που παρουσιάζει το wiki.
+* **Είδωλα διακομιστών:** Η σελίδα κατάστασης των ειδώλων (<https://packages.cachyos.org/mirrors>) εμφανίζει πλέον την κατάσταση συγχρονισμού των ειδώλων του CachyOS.
+* **cachyos-settings:** Ενεργοποίηση του `EnableAggressiveVblank` για το άρθρωμα της NVIDIA. Αυτό μειώνει τον χρόνο που δαπανάται στις διακοπές του πάνω μισού για διακοπές χαμηλού λανθάνοντος χρόνου της οθόνης.
 * **chwd:**
-  * Installs `nouveau-fw` to enable VA-API support in Nouveau for NVIDIA Kepler-family cards.
-  * Added AI-SDK support for several new AMD GPUs.
-  * Replaced HHD with `steamos-manager` and `inputplumber`.
+  * Εγκαθιστά το `nouveau-fw` για την ενεργοποίηση υποστήριξης του VA-API στο Nouveau για κάρτες της οικογένειας Kepler της NVIDIA.
+  * Προσθήκη υποστήριξης AI-SDK για αρκετές νέες κάρτες γραφικών AMD.
+  * Αντικατάσταση του HHD με τα `steamos-manager` και `inputplumber`.
 * **Proton-CachyOS:**
-  * Added FSR4 MLFG (Machine Learning Frame Generation) support; automatically enabled when using `PROTON_FSR4_[RDNA3_]UPGRADE`
-  * Added `d7vk` module support. This can be enabled via `PROTON_DXVK_DDRAW=1`
-  * Imported DualSense haptic feedback patches
-  * Added `WINE_BLOCK_HOSTS` to prevent Wine from connecting to specific domains
-  * Automatically enable `ENABLE_HDR_WSI=1` when using `winewayland` on NVIDIA dGPUs
-  * Fixed keyboard layout issues when using `winewayland.drv`
-  * Removed a long-standing patch that was causing degraded 1% low FPS
-  * Patched `protonfixes` to better handle DLSS preset selection and `libxess_dx11.dll` redirection
-  * proton-cachyos-slr is now used as default in the “gaming-meta”. The native version will be still supported.
+  * Προσθήκη υποστήριξης FSR4 MLFG (Machine Learning Frame Generation)· ενεργοποιείται αυτόματα με τη χρήση του `PROTON_FSR4_[RDNA3_]UPGRADE`.
+  * Προσθήκη υποστήριξης για το άρθρωμα `d7vk`. Μπορεί να ενεργοποιηθεί μέσω του `PROTON_DXVK_DDRAW=1`.
+  * Ενσωμάτωση διορθώσεων για την απτική ανάδραση του DualSense.
+  * Προσθήκη του `WINE_BLOCK_HOSTS` για την αποτροπή σύνδεσης του Wine σε συγκεκριμένους τομείς.
+  * Αυτόματη ενεργοποίηση του `ENABLE_HDR_WSI=1` κατά τη χρήση του `winewayland` σε ανεξάρτητες κάρτες γραφικών NVIDIA.
+  * Διόρθωση προβλημάτων στη διάταξη πληκτρολογίου κατά τη χρήση του `winewayland.drv`.
+  * Αφαίρεση μιας παλιάς διόρθωσης που προκαλούσε πτώση στα «1% low FPS».
+  * Διορθώσεις στο `protonfixes` για καλύτερο χειρισμό των προεπιλογών DLSS και ανακατεύθυνση του `libxess_dx11.dll`.
+  * Το `proton-cachyos-slr` χρησιμοποιείται πλέον ως προεπιλογή στο «gaming-meta». Η εγγενής έκδοση θα συνεχίσει να υποστηρίζεται.
 
+**Διορθώσεις:**
 
-**Fixes:**
-
-* **Limine:** Increased boot partition size to 4192MB to accommodate high requirements from `limine-snapper-sync`.
-* **Installer:** 
-  * The installer now blocks/prevents proceeding if the EFI partition is too small when using "alongside" or "replace partition" options.
-  * Fixed an issue, when selected a desktop and go a step further, then going back again and selecting a different desktop it would result that both are selected.
-* **chwd:** Removed the environment variable forcing `libva-nvidia-driver`, as it caused issues on dual-GPU systems.
-* **cachyos-hello**: Fixed an issue that cachy-update shows being disabled, while its enabled.
-* **Controller**: Fixed several controllers input due updating the input rules to the latest.
-* **Framework 16 (Zen5)**: Fixed an issue that the session freeze, when writing into calamares
+* **Limine:** Αύξηση του μεγέθους του διαμερίσματος εκκίνησης (boot) στα 4192MB για την κάλυψη των υψηλών απαιτήσεων του `limine-snapper-sync`.
+* **Πρόγραμμα εγκατάστασης:**
+  * Πλέον, το πρόγραμμα εγκατάστασης εμποδίζει τη συνέχεια της διαδικασίας αν το διαμέρισμα EFI είναι πολύ μικρό κατά τη χρήση των επιλογών «Παράλληλη εγκατάσταση» ή «Αντικατάσταση διαμερίσματος».
+  * Διόρθωση ζητήματος όπου η επιλογή ενός περιβάλλοντος εργασίας, η επιστροφή σε προηγούμενο βήμα και μετά, η αλλαγή της επιλογής περιβάλλοντος εργασίας είχε ως αποτέλεσμα να παραμένουν επιλεγμένα και τα δύο.
+* **chwd:** Αφαίρεση της μεταβλητής περιβάλλοντος που εξανάγκαζε τη χρήση του `libva-nvidia-driver`, καθώς προκαλούσε προβλήματα σε συστήματα με διπλή κάρτα γραφικών.
+* **cachyos-hello:** Διόρθωση ζητήματος όπου το cachy-update εμφανιζόταν ως απενεργοποιημένο ενώ ήταν ενεργό.
+* **Χειριστήρια:** Διόρθωση της απόκρισης αρκετών χειριστηρίων μέσω ενημέρωσης των κανόνων εισόδου στις τελευταίες εκδόσεις.
+* **Framework 16 (Zen5):** Διόρθωση ζητήματος όπου η συνεδρία «πάγωνε» κατά την πληκτρολόγηση στο Calamares.
 
 25.11
 ----
 
-**Features:**
+**Λειτουργίες:**
 
-* **ISO/Installer:** Added Orca and espeak-ng for better accessibility
-* **initcpiocfg:** Enabled systemd hook on supported configurations
-* **Netinstall:** Hyprland dotfiles have been removed
-* **pacstrap:** Install `bcachefs-dkms` if `bcachefs` is selected as the filesystem
-* **Calamares:** Added support for plasma-login-manager and cosmic-greeter
-* **Cosmic:** Switched from SDDM to cosmic-greeter
-* **Fonts:** Improved fonts for Asian users
+* **ISO/Πρόγραμμα εγκατάστασης:** Προσθήκη των Orca και espeak-ng για βελτιωμένη προσβασιμότητα.
+* **initcpiocfg:** Ενεργοποίηση του hook του systemd σε υποστηριζόμενες διαμορφώσεις.
+* **Netinstall:** Τα dotfile του Hyprland έχουν αφαιρεθεί.
+* **pacstrap:** Εγκατάσταση του `bcachefs-dkms` σε περίπτωση που επιλεγεί το `bcachefs` ως σύστημα αρχείων.
+* **Calamares:** Προσθήκη υποστήριξης για τα plasma-login-manager και cosmic-greeter.
+* **Cosmic:** Μετάβαση από το SDDM στο cosmic-greeter.
+* **Γραμματοσειρές:** Βελτιωμένες γραμματοσειρές για χρήστες ασιατικών γλωσσών.
 * **chwd:**
-  * Installs `intel-media-sdk` and `vpl-gpu-rt` on supported GPUs
-  * Enabled Nouveau NvBoost for Fermi GPUs
-  * Dropped support for 390xx legacy NVIDIA driver
-  * Added support for Xbox ROG Ally/X
+  * Εγκατάσταση των `intel-media-sdk` και `vpl-gpu-rt` σε υποστηριζόμενες κάρτες γραφικών.
+  * Ενεργοποίηση του Nouveau NvBoost για κάρτες γραφικών Fermi.
+  * Διακοπή υποστήριξης για τον παλιό οδηγό NVIDIA 390xx.
+  * Προσθήκη υποστήριξης για το Xbox ROG Ally/X.
 * **cachyos-hello:**
-  * Removed internal package installer; opens CachyOS package installer instead
-  * Added CLI interface for the GUI functionality
-  * Various ISO version check fixes
-* **cachyos-settings:** zram-generator: Removed compression for incompressible pages
+  * Αφαίρεση του εσωτερικού προγράμματος εγκατάστασης πακέτων· πλέον ανοίγει το επίσημο πρόγραμμα εγκατάστασης πακέτων του CachyOS.
+  * Προσθήκη διεπαφής γραμμής εντολών (CLI) για τις λειτουργίες του γραφικού περιβάλλοντος (GUI).
+  * Διάφορες διορθώσεις στον έλεγχο έκδοσης του ISO.
+* **cachyos-settings:** (zram-generator) Αφαίρεση της συμπίεσης για σελίδες που δεν επιδέχονται συμπίεση.
 * **Proton-CachyOS:**
-  * Added `dxvk-gplasync` as alternative DXVK. This can be enabled via `PROTON_DXVK_GPLASYNC=1`
-  * Added `DISABLE_LAYER_MESA_ANTI_LAG` when using `PROTON_FSR4_UPGRADE`
-  * Brought in multiple **Wayland fixes** (fullscreen offset, dead keys, DPI behavior, video output tweaks) and `winewayland.drv` improvements
-  * Introduced and tuned **per-game shader cache** behavior and larger shader caches (especially for NVIDIA)
-  * Added FSR3 and XeSS upscaler upgrades
+  * Προσθήκη του `dxvk-gplasync` ως εναλλακτικού DXVK. Μπορεί να ενεργοποιηθεί μέσω του `PROTON_DXVK_GPLASYNC=1`.
+  * Προσθήκη του `DISABLE_LAYER_MESA_ANTI_LAG` κατά τη χρήση του `PROTON_FSR4_UPGRADE`.
+  * Ενσωμάτωση πολλαπλών **διορθώσεων για Wayland** (μετατόπιση πλήρους οθόνης, νεκρά πλήκτρα, συμπεριφορά DPI, προσαρμογές εξόδου βίντεο) και βελτιώσεων του `winewayland.drv`.
+  * Εισαγωγή και βελτιστοποίηση της συμπεριφοράς **προσωρινής μνήμης shader ανά παιχνίδι** και μεγαλύτερες προσωρινές μνήμες shader (ειδικά για NVIDIA).
+  * Προσθήκη αναβαθμίσεων για τους upscaler FSR3 και XeSS.
 
-**Fixes:**
+**Διορθώσεις:**
 
 * **Limine:**
-  * Fixed installation of Limine without entry registering on broken UEFI
-  * Uses systemd variant of `btrfs-overlayfs` hook
-* **Calamares:** Removed `attr2` as an option on XFS mount settings
-* **chwd:** Disabled T2 chip's USB Ethernet interface
+  * Διόρθωση της εγκατάστασης του Limine χωρίς εγγραφή καταχώρησης  σε προβληματικά UEFI.
+  * Χρήση της παραλλαγής του hook `btrfs-overlayfs` από το systemd.
+* **Calamares:** Αφαίρεση του `attr2` από τις επιλογές στις ρυθμίσεις προσάρτησης του XFS.
+* **chwd:** Απενεργοποίηση της διεπαφής USB Ethernet του chip T2.
+
 
 25.08
 ----
 
-**Features:**
+**Λειτουργίες:**
 
-* **Services:** Added **packages.cachyos.org**, a package search equivalent to Arch Linux’s website, with an option to exclude CachyOS packages.
-* **Kernel:** The installer now additionally installs **linux-cachyos-lts** as a secondary/backup kernel after installation. We still recommend using the Stable kernel.
-* **ISO:** Switched the live ISO’s kernel from Stable to LTS due to ongoing issues with the Stable kernel, improving boot reliability.
-* **Desktop:** Added **Niri** as a desktop option, including a few preconfigured dotfiles.
-* **NVIDIA:** Enabled **S0ix** sleep on supported hardware for modern low-power standby.
-* **GRUB:** Bootable snapshots are now automatically enabled and set up when the root filesystem uses **Btrfs**.
-* **Tweaks:** Integrated **Cachy-Update** into the Welcome app’s Tweaks page. Cachy-Update adds a timer and a system tray indicator to notify users about updates and lets them update with a click.
+* **Υπηρεσίες:** Προσθήκη του **packages.cachyos.org**, ενός ιστοτόπου αναζήτησης πακέτων αντίστοιχου με εκείνον του Arch Linux, με επιλογή εξαίρεσης των πακέτων του CachyOS.
+* **Πυρήνας:** Το πρόγραμμα εγκατάστασης εγκαθιστά πλέον και το **linux-cachyos-lts** ως δευτερεύοντα/εφεδρικό πυρήνα. Εξακολουθούμε να προτείνουμε τη χρήση της σταθερής έκδοσης (Stable).
+* **ISO:** Αλλαγή του πυρήνα στο Live ISO από Stable σε LTS λόγω συνεχιζόμενων προβλημάτων με τον Stable πυρήνα, βελτιώνοντας την αξιοπιστία της εκκίνησης.
+* **Επιφάνεια εργασίας:** Προσθήκη του **Niri** ως επιλογή περιβάλλοντος εργασίας, συμπεριλαμβανομένων ορισμένων προρυθμισμένων dotfile.
+* **NVIDIA:** Ενεργοποίηση της λειτουργίας αναστολής **S0ix** σε υποστηριζόμενο υλικό για μια σύγχρονη κατάσταση αναμονής χαμηλής κατανάλωσης.
+* **GRUB:** Τα εκκινήσιμα στιγμιότυπα ενεργοποιούνται και ρυθμίζονται πλέον αυτόματα όταν το σύστημα αρχείων ρίζας (root) χρησιμοποιεί **Btrfs**.
+* **Βελτιώσεις:** Ενσωμάτωση του **Cachy-Update** στη σελίδα «Προσαρμογές» της εφαρμογής Welcome. Το Cachy-Update προσθέτει έναν χρονοδιακόπτη και μια ένδειξη στην περιοχή εικονιδίων συστήματος για την ενημέρωση των χρηστών σχετικά με νέες ενημερώσεις, επιτρέποντας την εγκατάστασή τους με ένα κλικ.
 * **Proton-CachyOS:**
-    - Added downloader for DLSS dlls (version **310.3.0**), similar to the FSR4 downloader. Use `PROTON_DLSS_UPGRADE=1` environment variable to enable it.
-    - Added `PROTON_DLSS_INDICATOR=1` environment variable to enable DLSS hud.
-    - Added downloader for XeSS dlls (version **2.1.0**), similar to the DLSS downloader. Use `PROTON_XESS_UPGRADE=1` environment variable to enable it.
-    - Added `PROTON_FSR4_RDNA3_UPGRADE` for RDNA3 GPUs. Does the same thing as `PROTON_FSR4_UPGRADE` but also sets some other necessary variables.
-    - Added completer implementations of Nvidia libraries missing from Proton. Should help with enabling options such as PhysX on games they were disabled before. You can also enable them individually using `PROTON_NVIDIA_NVCUDA`, `PROTON_NVIDIA_NVENC`, `PROTON_NVIDIA_NVML` and `PROTON_NVIDIA_NVOPTIX`.
-    - Added per-game shader cache, enabled by default, can be disabled with `PROTON_LOCAL_SHADER_CACHE=0`. Shaders will be cached under `<steamlibrary>/shadercache/<appid>` for each game, similarly to when shader pre-caching is enabled. You will get stuttering as the shader cache for each game is rebuilt but the cached shaders won't be evicted due to limited cache size.
-    - Added [dxvk-sarek](https://github.com/pythonlover02/DXVK-Sarek) as an optional DXVK replacement for older GPUs that don't properly support Vulkan 1.3. It is using the `async` branch, so it SHOULD NOT to be used with games using anti-cheat or multiplayer games in general. You have been warned. Use `PROTON_DXVK_SAREK=1` to enable.
-    - Added `PROTON_FSR3_UPGRADE` to upgrade FSR 3.1 DLLs to newer versions.
+    - Προσθήκη εργαλείου λήψης για αρχεία DLL του DLSS (έκδοση **310.3.0**), παρόμοιο με αυτό του FSR4. Χρησιμοποιήστε τη μεταβλητή περιβάλλοντος `PROTON_DLSS_UPGRADE=1` για ενεργοποίηση.
+    - Προσθήκη της μεταβλητής περιβάλλοντος `PROTON_DLSS_INDICATOR=1` για την ενεργοποίηση του DLSS HUD.
+    - Προσθήκη εργαλείου λήψης για τα αρχεία DLL του XeSS (έκδοση **2.1.0**), παρόμοιο με αυτό του DLSS. Χρησιμοποιήστε τη μεταβλητή περιβάλλοντος `PROTON_XESS_UPGRADE=1` για ενεργοποίηση.
+    - Προσθήκη του `PROTON_FSR4_RDNA3_UPGRADE` για κάρτες γραφικών RDNA3.   Επιτελεί την ίδια λειτουργία με το `PROTON_FSR4_UPGRADE` αλλά ορίζει και μερικές ακόμα, απαραίτητες μεταβλητές.
+    - Προσθήκη πληρέστερων υλοποιήσεων για βιβλιοθήκες της Nvidia που έλειπαν από το Proton. Αυτό θα βοηθήσει στην ενεργοποίηση επιλογών, όπως το PhysX, σε παιχνίδια όπου παλαιότερα ήταν απενεργοποιημένες. Μπορείτε επίσης να τις ενεργοποιήσετε μεμονωμένα χρησιμοποιώντας τα `PROTON_NVIDIA_NVCUDA`, `PROTON_NVIDIA_NVENC`, `PROTON_NVIDIA_NVML` και `PROTON_NVIDIA_NVOPTIX`.
+    - Προσθήκη, ενεργοποιημένης από προεπιλογή, προσωρινής μνήμης shader ανά παιχνίδι (μπορεί να απενεργοποιηθεί με το `PROTON_LOCAL_SHADER_CACHE=0`). Τα shader αποθηκεύονται στο `<steamlibrary>/shadercache/<appid>` για κάθε παιχνίδι, όπως γίνεται και όταν είναι ενεργοποιημένη η προαποθήκευση shader στην προσωρινή μνήμη. Ενδέχεται να παρατηρηθούν παροδικά «κολλήματα» κατά την αναδημιουργία της προσωρινής μνήμης κάθε παιχνιδιού, αλλά τα ήδη προσωρινά shader δεν θα διαγράφονται λόγω περιορισμένου μεγέθους προσωρινής μνήμης.
+    - Προσθήκη του [dxvk-sarek](https://github.com/pythonlover02/DXVK-Sarek) ως προαιρετικής αντικατάστασης του DXVK για παλαιότερες κάρτες γραφικών που δεν υποστηρίζουν πλήρως το Vulkan 1.3. Βασίζεται στον κλάδο `async`, οπότε ΔΕΝ ΠΡΕΠΕΙ να χρησιμοποιείται σε παιχνίδια με μηχανισμούς anti-cheat ή γενικά σε παιχνίδια πολλαπλών παικτών. Σας έχουμε προειδοποιήσει! Χρησιμοποιήστε το `PROTON_DXVK_SAREK=1` για ενεργοποίηση.
+    - Προσθήκη του `PROTON_FSR3_UPGRADE` για την αναβάθμιση των αρχείων DLL του FSR 3.1 σε νεότερες εκδόσεις.
 
-**Fixes:**
+**Διορθώσεις:**
 
 * **Limine:**
-    - Fixed `limine bios-install /dev/sdaX` error when selecting the **/boot** mount point as the boot location on MBR systems.
-    - Fixed uninitialized value of the `bootLoader` path, which caused installation failures on MBR systems when the bootloader location wasn’t explicitly selected.
-    - Added a warning about using the **bios-grub** flag on the boot partition, which can cause a “Stage 3 file not found” error.
-    - Fixed out-of-the-box dual-boot with Windows for BIOS installations.
-    - Fixed Btrfs snapshots failing to boot when using **GNOME (GDM)**.
-* **Launch Installer:** Added fallback IPs for the online check if pinging **cachyos.org** fails.
+    - Διόρθωση του σφάλματος `limine bios-install /dev/sdaX` κατά την επιλογή του σημείου προσάρτησης **/boot** ως τοποθεσία εκκίνησης σε συστήματα MBR.
+    - Διόρθωση μη αρχικοποιημένης τιμής στη διαδρομή `bootLoader`, που προκαλούσε αποτυχία εγκατάστασης σε συστήματα MBR όταν η τοποθεσία του φορτωτή εκκίνησης δεν είχε επιλεγεί ρητά.
+    - Προσθήκη προειδοποίησης σχετικά με τη χρήση της παραμέτρου **bios-grub** στο διαμέρισμα εκκίνησης, η οποία μπορεί να προκαλέσει το σφάλμα «Stage 3 file not found».
+    - Διόρθωση της αυτόματης παράλληλης εγκατάστασης (dual-boot) με Windows για εγκαταστάσεις BIOS.
+    - Διόρθωση της αποτυχίας εκκίνησης στιγμιότυπων Btrfs κατά τη χρήση του **GNOME (GDM)**.
+* **Εκκίνηση προγράμματος εγκατάστασης:** Προσθήκη εφεδρικών διευθύνσεων IP για τον διαδικτυακό έλεγχο σε περίπτωση που αποτύχει η απόκριση (ping) στο **cachyos.org**.
 
 25.07
 ----
 
-**Features:**
+**Λειτουργίες:**
 
-- **Shell**: The user shell can now be chosen at installation time between fish, zsh and bash. Fish stays enabled by default.
-- **chwd**: Install plasma-x11 for legacy NVIDIA Drivers
-- **Netinstall**: Added fwupd to KDE Plasma and Gnome
-- **mesa-git**: Added support for AMD Anti Lag
-- **firefox**: Introduced an alternative firefox called "firefox-pure", which includes improvement with the userjs profile. Additionally, there has been "cachyos-firefox-settings" added, which can be installed on top of firefox.
-- **Proton-CachyOS**:
-  - Imported upstream wine-wayland commits
-  - Added "PROTON_FSR4_UPGRADE" env variable, which will automatically download the latest FSR4 DLL and then replace it for an automatic upgrade on FSR 3.1 supported games
-  - Added many Wayland-related patches from upstream Wine that were released after Wine 10.0.
-  - added patches to help with better anticheat integration. Thanks to NelloKudo
-  - Added patches for AMD's Anti Lag 2 for vkd3d-proton and wine
-  - Updated umu-protonfixes to latest commit
+- **Κέλυφος:** Το κέλυφος χρήστη μπορεί πλέον να επιλεχθεί κατά την εγκατάσταση (διαθέσιμες επιλογές: fish, zsh και bash). Το fish παραμένει ενεργοποιημένο από προεπιλογή.
+- **chwd:** Εγκατάσταση του plasma-x11 για τους παλιούς οδηγούς της NVIDIA.
+- **Netinstall:** Προσθήκη του fwupd στα KDE Plasma και GNOME.
+- **mesa-git:** Προσθήκη υποστήριξης για το AMD Anti Lag.
+- **firefox:** Εισαγωγή μιας εναλλακτικής έκδοσης του Firefox με το όνομα «firefox-pure», η οποία περιλαμβάνει βελτιώσεις στο προφίλ userjs. Επιπλέον, προστέθηκε το πακέτο «cachyos-firefox-settings», το οποίο μπορεί να εγκατασταθεί πάνω στο Firefox.
+- **Proton-CachyOS:**
+  - Ενσωμάτωση των τελευταίων commit του wine-wayland από το πρωτόλειο έργο.
+  - Προσθήκη της μεταβλητής περιβάλλοντος «PROTON_FSR4_UPGRADE», η οποία πραγματοποιεί αυτόματα λήψη του πιο πρόσφατου αρχείου DLL του FSR4 και έπειτα, το αντικαθιστά για αυτόματη αναβάθμιση σε παιχνίδια που υποστηρίζουν FSR 3.1.
+  - Προσθήκη πολλών διορθώσεων για το Wayland από το πρωτόλειο έργο Wine, οι οποίες κυκλοφόρησαν μετά το Wine 10.0.
+  - Προσθήκη διορθώσεων για την καλύτερη ενσωμάτωση συστημάτων anti-cheat (ευχαριστούμε τον NelloKudo).
+  - Προσθήκη διορθώσεων για την τεχνολογία Anti Lag 2 της AMD στα vkd3d-proton και wine.
+  - Ενημέρωση του umu-protonfixes στο τελευταίο commit.
 
-**Fixes:**
+**Διορθώσεις:**
 
-- **Keyring**: Improved the handling of the keyring installation to avoid issues and do several retries.
-- **systemd-oomd**: Disabled systemd-oomd, since it had problems handling this together with le9 and killed applications way to early
+- **Κλειδοθήκη:** Βελτιωμένος χειρισμός της εγκατάστασης της κλειδοθήκης για την αποφυγή προβλημάτων, με προσθήκη πολλαπλών προσπαθειών.
+- **systemd-oomd:** Απενεργοποίηση του systemd-oomd, καθώς παρουσίαζε προβλήματα σε συνδυασμό με το le9, τερματίζοντας εφαρμογές πρόωρα.
 
-**Changelog for Handheld Edition:**
+**Αρχείο αλλαγών για την έκδοση Handheld:**
 
-- **handheld-settings**: Imported several tweaks of SteamOS to the Handheld Edition
-- **pipewire**: Set minimum quantum to 256
-- **SteamDeck-OLED**: Install galileo-mura for Steam Deck OLED
-- **Lenovo Legion Go S**: Added support for the Lenovo Legion Go S
+- **handheld-settings:** Ενσωμάτωση διαφόρων προσαρμογών από το SteamOS στην έκδοση Handheld.
+- **pipewire:** Ορισμός του ελάχιστου quantum στα 256.
+- **SteamDeck-OLED:** Εγκατάσταση του galileo-mura για το Steam Deck OLED.
+- **Lenovo Legion Go S:** Προσθήκη υποστήριξης για το Lenovo Legion Go S.
 
 25.05
 ----
 
-**Features:**
+**Λειτουργίες:**
 
-- **ISO**: Added automatic detection during ISO boot to identify the system's NVIDIA GPU and load the appropriate module (e.g., nvidia-open, nvidia), providing better support for 10xx series and older.
-- **Plymouth**: Added a new Plymouth animation.
-  - Thanks to Eren ([https://github.com/erenyldz89](https://github.com/erenyldz89)) for working on this!
-- **Browser**: Cachy-Browser has been deprecated. We now provide Firefox as the default preinstalled browser. A guide to migrate profiles to Firefox (and its forks) can be found here: [https://wiki.cachyos.org/support/faq/#migrating-your-profile-from-cachy-browser-to-firefox](https://wiki.cachyos.org/support/faq/#migrating-your-profile-from-cachy-browser-to-firefox)
-- **netinstall**: Added kcalc, filelight, plymouth-kcm, and kio-admin to the KDE installation.
-- **mkinitcpio**: Disabled fallback initramfs by default. This will save a significant amount of space.
-- **Mirrors**: Added a new 10 Gbps mirror in Bangladesh. Thanks to Limda for hosting this!
-- **Proton**:
-  - Rebased almost all patches from **Proton CachyOS 9.0**.
-  - Enabled the Wayland driver for Steam Linux Runtime builds. Enable with `PROTON_ENABLE_WAYLAND=1`. Thanks to [GloriousEggroll](https://github.com/GloriousEggroll) for making it happen.
-  - Added many Wayland-related patches from upstream Wine that were released after Wine 10.0.
-  - Fixed various issues with the Wayland driver and Vulkan games. Thanks to [Etaash-mathamsetty](https://github.com/Etaash-mathamsetty) for all the hard work.
-  - Added a stub implementation for `amdxc64.dll` to enable FSR4. Use `FSR4_UPGRADE=1` to upgrade FSR3.1 games to FSR4. Thanks again to [Etaash-mathamsetty](https://github.com/Etaash-mathamsetty). Instructions: [https://github.com/Etaash-mathamsetty/wine-builds/releases/tag/fsr4](https://github.com/Etaash-mathamsetty/wine-builds/releases/tag/fsr4)
-  - Added DualSense-related patches for more complete audio device detection functionality for wired sound-based haptics. Some games that relied on that specific behaviour should now have that functionality. Thanks to [ClearlyClaire](https://github.com/ClearlyClaire) for the original patches and [Exotic0015](https://github.com/Exotic0015) for looking into it since **Proton CachyOS 9.0**. Upstream: [https://gitlab.winehq.org/wine/wine/-/merge_requests/7238](https://gitlab.winehq.org/wine/wine/-/merge_requests/7238)
-  - Removed the Dragon Age Inquisition patch as it was not working. Please use **Proton CachyOS 9.0** for now with that game.
-- **GRUB**: Added a new GRUB theme. Thanks to [diegons490](https://github.com/diegons490/cachyos-grub-theme).
+- **ISO:** Προσθήκη αυτόματου εντοπισμού κατά την εκκίνηση του ISO για την αναγνώριση της κάρτας γραφικών NVIDIA του συστήματος και τη φόρτωση του κατάλληλου αρθρώματος (π.χ. nvidia-open, nvidia), παρέχοντας καλύτερη υποστήριξη για τη σειρά 10xx και παλαιότερες.
+- **Plymouth:** Προσθήκη νέου εφέ κίνησης στο Plymouth.
+  - Ευχαριστούμε τον Eren ([https://github.com/erenyldz89](https://github.com/erenyldz89)) για την εργασία του πάνω σε αυτό!
+- **Πρόγραμμα περιήγησης:** Το Cachy-Browser έχει καταργηθεί. Πλέον παρέχουμε το Firefox ως το προεπιλεγμένο, προεγκατεστημένο πρόγραμμα περιήγησης. Ένας οδηγός για τη μεταφορά των προφίλ στο Firefox (και στα παράγωγά του) βρίσκεται εδώ: [https://wiki.cachyos.org/support/faq/#migrating-your-profile-from-cachy-browser-to-firefox](https://wiki.cachyos.org/support/faq/#migrating-your-profile-from-cachy-browser-to-firefox).
+- **Netinstall:** Προσθήκη των kcalc, filelight, plymouth-kcm και kio-admin στην εγκατάσταση του KDE.
+- **mkinitcpio:** Απενεργοποίηση του εφεδρικού initramfs από προεπιλογή. Αυτό εξοικονομεί σημαντικό αποθηκευτικό χώρο.
+- **Είδωλα διακομιστών:** Προσθήκη νέου ειδώλου 10 Gbps στο Μπαγκλαντές. Ευχαριστούμε τη Limda για τη φιλοξενία!
+- **Proton:**
+  - Μεταφορά σχεδόν όλων των διορθώσεων από το **Proton CachyOS 9.0**.
+  - Ενεργοποίηση του οδηγού Wayland για τις δομές Steam Linux Runtime. Ενεργοποιήστε τον με την εντολή `PROTON_ENABLE_WAYLAND=1`. Ευχαριστούμε τον [GloriousEggroll](https://github.com/GloriousEggroll) που το έκανε πραγματικότητα.
+  - Προσθήκη πολλών διορθώσεων σχετικών με το Wayland από το πρωτόλειο έργο του Wine, οι οποίες κυκλοφόρησαν μετά το Wine 10.0.
+  - Διόρθωση διαφόρων προβλημάτων με τον οδηγό Wayland και τα παιχνίδια Vulkan. Ευχαριστούμε τον [Etaash-mathamsetty](https://github.com/Etaash-mathamsetty) για τη σκληρή δουλειά.
+  - Προσθήκη stub υλοποίησης για το `amdxc64.dll` για την ενεργοποίηση του FSR4. Χρησιμοποιήστε το `FSR4_UPGRADE=1` για να αναβαθμίσετε τα παιχνίδια FSR3.1 σε FSR4. Ευχαριστούμε και πάλι τον [Etaash-mathamsetty](https://github.com/Etaash-mathamsetty). Οδηγίες: [https://github.com/Etaash-mathamsetty/wine-builds/releases/tag/fsr4](https://github.com/Etaash-mathamsetty/wine-builds/releases/tag/fsr4)
+  - Προσθήκη διορθώσεων σχετικών με το DualSense για πληρέστερη λειτουργία εντοπισμού συσκευών ήχου για την απτική ανάδραση μέσω ενσύρματου ήχου. Ορισμένα παιχνίδια που βασίζονταν στη συγκεκριμένη συμπεριφορά θα πρέπει πλέον να λειτουργούν κανονικά. Ευχαριστούμε την [ClearlyClaire](https://github.com/ClearlyClaire) για τις αρχικές διορθώσεις και τον [Exotic0015](https://github.com/Exotic0015) που το ανέλαβε από την έκδοση **Proton CachyOS 9.0**. Πρωτόλειο έργο: [https://gitlab.winehq.org/wine/wine/-/merge_requests/7238](https://gitlab.winehq.org/wine/wine/-/merge_requests/7238)
+  - Αφαίρεση της διόρθωσης για το Dragon Age Inquisition καθώς δεν λειτουργούσε. Χρησιμοποιήστε το **Proton CachyOS 9.0** προς το παρόν για αυτό το παιχνίδι.
+- **GRUB:** Προσθήκη νέου θέματος για το GRUB. Ευχαριστούμε τον [diegons490](https://github.com/diegons490/cachyos-grub-theme).
 
-**Fixes:**
+**Διορθώσεις:**
 
-- **Mirrors**: Fixed an issue where users from Russia could no longer install. This was mitigated by not using CDN77, which Russia had started to block.
-- **kde-settings**: Disabled the Discover icon in the taskbar.
-- **ddcutil**: Pushed the ddcutil 2.2.1 pre-release to fix an issue where AMD GPUs were freezing when watching YouTube videos.
+- **Είδωλα διακομιστών:** Διόρθωση προβλήματος όπου οι χρήστες από τη Ρωσία δεν μπορούσαν πλέον να κάνουν εγκατάσταση. Το πρόβλημα αντιμετωπίστηκε με τη διακοπή χρήσης του CDN77, το οποίο η Ρωσία άρχισε να αποκλείει.
+- **kde-settings:** Απενεργοποίηση του εικονιδίου του Discover στη γραμμή εργασιών.
+- **ddcutil:** Προώθηση της πρώιμης έκδοσης ddcutil 2.2.1 για τη διόρθωση ενός προβλήματος όπου οι κάρτες γραφικών AMD «πάγωναν» κατά την παρακολούθηση βίντεο στο YouTube.
 
-**Changelog for Handheld Edition:**
+**Αρχείο αλλαγών για την έκδοση Handheld:**
 
-- **os-branch**: Game Mode now correctly shows that CachyOS Linux is being used.
-- **audio**: Updated convolver profiles.
-- **steamos-manager**: This is used for GPU clock and TDP management, BIOS/dock updates, storage device maintenance, external storage formatting, and battery charge limit for the Steam Deck.
-- **steamos-powerbuttond**: This component replaces the standard powerbuttond for a better sleep experience.
-- **jupiter-hw-support**: Updated to 20250501.
+- **os-branch:** Η Λειτουργία παιχνιδιών (Game Mode) εμφανίζει πλέον σωστά ότι χρησιμοποιείται το CachyOS Linux.
+- **Ήχος:** Ενημέρωση των προφίλ convolver.
+- **steamos-manager:** Χρησιμοποιείται για τη διαχείριση του χρονισμού της GPU και του TDP, ενημερώσεις BIOS/dock, συντήρηση συσκευών αποθήκευσης, διαμόρφωση εξωτερικών μέσων και όριο φόρτισης μπαταρίας για το Steam Deck.
+- **steamos-powerbuttond:** Αυτό το στοιχείο αντικαθιστά το τυπικό powerbuttond για καλύτερη εμπειρία κατά την αναστολή λειτουργίας.
+- **jupiter-hw-support:** Ενημέρωση στην έκδοση 20250501.
 
 25.04
 ----
 
-**Features:**
+**Λειτουργίες:**
 
-- **occt**: Added OCCT to the ISO to have a live environment for stress testing
-  - Thanks to Marek for providing this idea!
+- **occt:** Προσθήκη του OCCT στο ISO για την παροχή ενός Live περιβάλλοντος για δοκιμές αντοχής.
+  - Ευχαριστούμε τον Marek για την ιδέα!
 
-**Fixes:**
+**Διορθώσεις:**
 
-- **kernel**: Fixes module crash on Asus laptops
-- **limine**: Limine now has mkinitcpio-limine-hook installed and will automatically create bootloader entries
+- **Πυρήνας:** Διορθώσεις για την αποτροπή κατάρρευσης των αρθρωμάτων σε φορητούς υπολογιστές Asus.
+- **Limine:** Πλέον περιλαμβάνει το mkinitcpio-limine-hook και θα δημιουργεί αυτόματα καταχωρήσεις στον φορτωτή εκκίνησης.
 
-**Changelog for Handheld Edition:**
+**Αρχείο αλλαγών για την έκδοση Handheld:**
 
-- **audio**: Added audio profiles for ROG Ally X and Legion Go
-- **gamescope**: Replaced gamescope-plus with upstream gamescope
+- **Ήχος:** Προσθήκη προφίλ ήχου για τα ROG Ally X και Legion Go.
+- **gamescope:** Αντικατάσταση του gamescope-plus με το πρωτόλειο του gamescope.
 
 25.03
 ----
 
-**Features**:
+**Λειτουργίες:**
 
-- **Bootloader**: Added support for Limine bootloader
-- **Bootloader**: Added support for automatic snapshots for Limine bootloader
-- **Samba**: Added "cachyos-samba-settings" package to easily set up a Samba mount
-- **NVIDIA**: Re-enabled GSP Firmware for the closed source NVIDIA module
-- **Kernel**: Added support for the Asus Armoury driver
-- **Secure Boot**: Improved "sbctl-batch-sign" script to sign only wanted files
-- **udev**: Reverted using ntfs3 as the default driver for NTFS partitions
-  - Info: Using the NTFS3 Kernel driver as default resulted in issues for some users. Therefore, we reverted it again.
-- **wine**: Wine and Wine-Staging defaulting now to WoW64 and NTSync
-- **scx-manager**: Moved out sched-ext GUI manager from Kernel Manager to its own application
-- **Hardware Support**: Added support for RDNA4, RTX 5070 Ti, and 5070.
-- **Settings**: Added DLSS Swapper Support - this is a script, which automatically updates and uses the latest dlss version and preset
-- **Package Updates**: linux-cachyos 6.14.0, NVIDIA 570.133.07, Gnome 48, Plasma 6.3.3, mesa 25.0.2, linux-api-headers 6.14.0, linux-tools 6.14.0
+- **Φορτωτής εκκίνησης:** Προσθήκη υποστήριξης για το Limine.
+- **Φορτωτής εκκίνησης:** Προσθήκη υποστήριξης για αυτόματα στιγμιότυπα στο Limine.
+- **Samba:** Προσθήκη του πακέτου «cachyos-samba-settings» για την εύκολη ρύθμιση μιας προσάρτησης Samba.
+- **NVIDIA:** Επανενεργοποίηση του υλικολογισμικού GSP για το άρθρωμα κλειστού κώδικα της NVIDIA.
+- **Πυρήνας:** Προσθήκη υποστήριξης για τον οδηγό Asus Armoury.
+- **Secure Boot:** Βελτίωση του σεναρίου «sbctl-batch-sign» ώστε να υπογράφει μόνο τα επιθυμητά αρχεία.
+- **udev:** Επιστροφή στη μη χρήση του ntfs3 ως προεπιλεγμένου οδηγού για διαμερίσματα NTFS.
+  - Πληροφορία: Η χρήση του οδηγού NTFS3 ως προεπιλογής προκάλεσε προβλήματα σε ορισμένους χρήστες. Ως εκ τούτου, επαναφέραμε την προηγούμενη διαμόρφωση.
+- **wine:** Το Wine και το Wine-Staging χρησιμοποιούν πλέον από προεπιλογή τα WoW64 και NTSync.
+- **scx-manager:** Ο διαχειριστής γραφικού περιβάλλοντος (GUI) για το sched-ext μεταφέρθηκε από το Kernel Manager σε δική του, ξεχωριστή εφαρμογή.
+- **Υποστήριξη υλικού:** Προσθήκη υποστήριξης για RDNA4, RTX 5070 Ti και 5070.
+- **Ρυθμίσεις:** Προσθήκη υποστήριξης για το DLSS Swapper. Πρόκειται για ένα σενάριο που ενημερώνει αυτόματα και χρησιμοποιεί την πιο πρόσφατη έκδοση και τις προεπιλογές του DLSS.
+- **Ενημερώσεις πακέτων:** linux-cachyos 6.14.0, NVIDIA 570.133.07, Gnome 48, Plasma 6.3.3, mesa 25.0.2, linux-api-headers 6.14.0, linux-tools 6.14.0.
 
-**Fixes**:
+**Διορθώσεις:**
 
-- **initcpiocfg**: Removed "crc32c-intel" module adding to mkinitcpio - This has been deprecated and now defaults to the "crc32c" module
-- **chwd**: T2 MacBook disable offloading the brcmfmac
-- **chwd**: Do not install NVIDIA 390.xx driver for laptops
+- **initcpiocfg:** Αφαίρεση της προσθήκης του αρθρώματος «crc32c-intel» στο mkinitcpio. Έχει καταργηθεί και πλέον χρησιμοποιείται ως προεπιλογή το άρθρωμα «crc32c».
+- **chwd:** Απενεργοποίηση της εκφόρτωσης του brcmfmac σε T2 MacBook.
+- **chwd:** Δεν γίνεται εγκατάσταση του οδηγού NVIDIA 390.xx σε φορητούς υπολογιστές.
 
 25.02
 ----
 
-**Features**:
+**Λειτουργίες:**
 
-- **Kernel**:
-  - Propeller Optimization is now applied to the default **linux-cachyos** kernel for all available architectures.
-    - **Note**: In combination with AutoFDO, this can improve performance by around 10%, depending on the workload.
-- **NVIDIA**: Added support for the Blackwell Architecture.
-- **ISO**: Using the nvidia-open module as the default to provide Blackwell support. Users with GPUs older than Turing should use the first or fallback boot option.
-- **Settings**: Enabled tap-to-click for X11 sessions by default.
-- **udev**: Use ntfs3 as the default driver for NTFS partitions.
-- **game-performance**: Disabled the screensaver while running games.
-- **kernel-manager (sched-ext)**: Added support for server mode.
-- **kernel**: Added fixes for the AMD preferred core feature.
-- **chwd**: Re-added the workaround for RTD3.
-- **Package Updates**: linux-cachyos 6.13.0, NVIDIA 570.86.16, LLVM 19, glibc 2.41, mesa 24.3.4.
+- **Πυρήνας:**
+  - Η βελτιστοποίηση του Propeller εφαρμόζεται πλέον στον προεπιλεγμένο πυρήνα **linux-cachyos** για όλες τις διαθέσιμες αρχιτεκτονικές.
+    - **Σημείωση:** Σε συνδυασμό με το AutoFDO, αυτό μπορεί να βελτιώσει την απόδοση κατά περίπου 10%, ανάλογα με τον φόρτο εργασίας.
+- **NVIDIA:** Προσθήκη υποστήριξης για την αρχιτεκτονική Blackwell.
+- **ISO:** Χρήση του αρθρώματος nvidia-open ως προεπιλογής για την παροχή υποστήριξης για Blackwell. Οι χρήστες με κάρτες γραφικών παλαιότερες από την αρχιτεκτονική Turing θα πρέπει να χρησιμοποιούν την πρώτη επιλογή εκκίνησης ή την επιλογή «fallback».
+- **Ρυθμίσεις:** Ενεργοποίηση της λειτουργίας «Πάτημα για κλικ» για συνεδρίες X11 από προεπιλογή.
+- **udev:** Χρήση του ntfs3 ως προεπιλεγμένου οδηγού για διαμερίσματα NTFS.
+- **game-performance:** Απενεργοποίηση της προστασίας οθόνης κατά την εκτέλεση παιχνιδιών.
+- **kernel-manager (sched-ext):** Προσθήκη υποστήριξης για λειτουργία διακομιστή.
+- **Πυρήνας:** Προσθήκη διορθώσεων για τη λειτουργία προτιμώμενου πυρήνα της AMD (AMD preferred core).
+- **chwd:** Εκ νέου προσθήκη της παράκαμψης για το RTD3.
+- **Ενημερώσεις πακέτων**: linux-cachyos 6.13.0, NVIDIA 570.86.16, LLVM 19, glibc 2.41, mesa 24.3.4.
 
-**Fixes**:
+**Διορθώσεις:**
 
-- **chwd**: Fixed an issue where hybrid laptops with Intel and NVIDIA hardware could not use their GPU in DaVinci Resolve.
-- **glibc**: Added a fix for CVE-2025-0395.
-- **kernel-manager**: Attempted to install the prebuilt NVIDIA module, if available for the default Arch kernel.
-- **kernel-manager**: Added an extra check to avoid overwriting the value in case a module is not available.
+- **chwd:** Διόρθωση προβλήματος όπου υβριδικοί φορητοί υπολογιστές με υλικό Intel και NVIDIA δεν μπορούσαν να χρησιμοποιήσουν την κάρτα γραφικών τους στο DaVinci Resolve.
+- **glibc:** Προσθήκη διόρθωσης για το CVE-2025-0395.
+- **kernel-manager:** Προσπάθεια εγκατάστασης του προκατασκευασμένου αρθρώματος της NVIDIA, εφόσον είναι διαθέσιμο για τον προεπιλεγμένο πυρήνα του Arch.
+- **kernel-manager:** Προσθήκη επιπλέον ελέγχου για την αποφυγή της αντικατάστασης της τιμής σε περίπτωση που ένα άρθρωμα δεν είναι διαθέσιμο.
 
-**Changelog for Handheld Edition:**
+**Αρχείο αλλαγών για την έκδοση Handheld:**
 
-- **hooks**: Allowed the use of natively compiled Proton again.
-- **misc**: Several updates and fixes.
+- **hook:** Επιτράπηκε ξανά η χρήση του εγγενώς μεταγλωττισμένου Proton.
+- **Διάφορα:** Διάφορες ενημερώσεις και διορθώσεις.
 
 24.12
 ----
 
-**Features**:
+**Λειτουργίες:**
 
-- Kernel:
-  - AutoFDO is now applied to the default `linux-cachyos` kernel for all available architectures
-    - **Note**: Performance improvements are minimal for now due to current limitations. Merging profiles requires LLVM 19, and Propeller Optimization depends on it. We anticipate LLVM 19 and more optimized profiles to be available by the end of the year, following Arch Linux's adoption of LLVM 19
-- chwd: Rusticl is now configured correctly
-- chwd: improved error logging during hooks calls
-- chwd: fixed VAAPI drivers selection
-- cachyos-settings: Added a script to facilitate running applications via Zink
-- Sysctl Configuration: Reworked and optimized several settings
-- Kernel Manager: Added support for `scx_loader`, enabling native scheduler switching
-- Installer: Bluetooth service is now enabled by default
-- Netinstall:
-  - Added `wireless-regdb` to the installed packages
-    - This configures the connection to use appropriate channels and unlocks additional channels, potentially improving internet speed
-    - **Note**: A generic region is set by default; customizing it to your region is recommended for optimal performance
-- **Package Updates**: NVIDIA 565.77, linux-cachyos 6.12.6, mesa 24.3.2, scx-scheds 1.0.8, zfs 2.2.7
+- **Πυρήνας:**
+  - Το AutoFDO εφαρμόζεται πλέον στον προεπιλεγμένο πυρήνα `linux-cachyos` για όλες τις διαθέσιμες αρχιτεκτονικές.
+    - **Σημείωση:** Οι βελτιώσεις στην απόδοση είναι επί του παρόντος ελάχιστες λόγω περιορισμών. Η συγχώνευση των προφίλ απαιτεί το LLVM 19, στο οποίο βασίζεται και η βελτιστοποίηση του Propeller. Αναμένουμε το LLVM 19 και πιο βελτιστοποιημένα προφίλ μέχρι το τέλος του έτους, μετά την υιοθέτηση του LLVM 19 από το Arch Linux.
+- **chwd:** Το Rusticl έχει πλέον ρυθμιστεί σωστά.
+- **chwd:** Βελτιωμένη καταγραφή σφαλμάτων κατά τις κλήσεις των hook.
+- **chwd:** Διόρθωση στην επιλογή των οδηγών VAAPI.
+- **cachyos-settings:** Προσθήκη σεναρίου για τη διευκόλυνση της εκτέλεσης εφαρμογών μέσω Zink.
+- **Ρυθμίσεις Sysctl:** Αναθεώρηση και βελτιστοποίηση αρκετών ρυθμίσεων.
+- **Kernel Manager:** Προσθήκη υποστήριξης για το `scx_loader`, επιτρέποντας την εγγενή εναλλαγή χρονοπρογραμματιστών.
+- **Πρόγραμμα εγκατάστασης:** Η υπηρεσία του Bluetooth είναι πλέον ενεργοποιημένη από προεπιλογή.
+- **Netinstall:**
+  - Προσθήκη του `wireless-regdb` στα εγκατεστημένα πακέτα.
+    - Αυτό ρυθμίζει τη σύνδεση ώστε να χρησιμοποιεί τα κατάλληλα κανάλια και ξεκλειδώνει επιπλέον συχνότητες, βελτιώνοντας δυνητικά την ταχύτητα της σύνδεσης διαδικτύου.
+    - **Σημείωση:** Από προεπιλογή, ορίζεται μια γενική περιοχή· συνιστάται η προσαρμογή στη δική σας περιοχή για βέλτιστη απόδοση.
+- **Ενημερώσεις πακέτων:** NVIDIA 565.77, linux-cachyos 6.12.6, mesa 24.3.2, scx-scheds 1.0.8, zfs 2.2.7.
 
-**Bug Fixes**
+**Διορθώσεις σφαλμάτων:**
 
-- Installer: Installation logs no longer spawn debug terminal windows
-- Partition Management:
-  - Proper `umask` settings ensure `/boot` is inaccessible without sufficient permissions
-- Launch Installer: Internet connectivity checks have been fixed
+- **Πρόγραμμα εγκατάστασης:** Τα αρχεία καταγραφής εγκατάστασης δεν ανοίγουν πλέον παράθυρα τερματικού για εντοπισμό σφαλμάτων.
+- **Διαχείριση διαμερισμάτων:**
+  - Οι σωστές ρυθμίσεις `umask` διασφαλίζουν ότι ο κατάλογος `/boot` δεν είναι προσβάσιμος χωρίς τα κατάλληλα δικαιώματα.
+- **Εκκίνηση προγράμματος εγκατάστασης:** Διορθώθηκαν οι έλεγχοι συνδεσιμότητας στο διαδίκτυο.
 
-**Changelog Handheld Edition:**
+**Αρχείο αλλαγών για την έκδοση Handheld:**
 
-- Updated handheld related packages
-- Fixed issue with the power profile handling
-- Added support for WiFi 6
+- Ενημέρωση των πακέτων που σχετίζονται με φορητές συσκευές.
+- Διόρθωση προβλήματος στον χειρισμό των προφίλ ενέργειας.
+- Προσθήκη υποστήριξης για WiFi 6.
 
 24.11
 ----
 
-**Features:**
+**Λειτουργίες:**
 
-- thp-shrinker: Put max_ptes_none value to 80% for zero filled pages. This will reduce the memory usage for when THP always is used, while maintaining the same performance
-- NVIDIA: GSP Firmware gets now automatically disabled, if the users switches on their own to the closed driver
-- chwd: NVIDIA: nvidia-powerd services gets enabled for laptops, to reach the most available tdp
-- proton-cachyos: DLSS Frame Generation is now working. This is also expected to work in the future in the upstream proton
-- kernel: AMD Cache Optimizer is now applied. Users with dual x3d CCD's cpus can now switch between having frequency or cache cores preferred
-- kernel: amd-pstate: Backported amd-pstate performance fixes for Strix Point
-- kernel: Added upstream fixes for the tdp issues on amd rdna2 and rdna3 gpus
-- kernel: Added timing fixes for displays with 5120x1440x240 configuration
-- kernel: Experimental AutoFDO optimized kernel in the repository under "linux-cachyos-autofdo"
-- ISO: Added check, if user running handheld edition and warn then, if they are starting the installation on an unsupported device
-- ISO: Added check, if the user is using the latest ISO, if not warn them
+- **thp-shrinker:** Ορισμός της τιμής `max_ptes_none` στο 80% για σελίδες γεμάτες με μηδενικά. Αυτό θα μειώσει τη χρήση μνήμης όταν χρησιμοποιείται πάντα το THP, διατηρώντας παράλληλα την ίδια απόδοση.
+- **NVIDIA:** Το υλικολογισμικό GSP απενεργοποιείται πλέον αυτόματα αν ο χρήστης επιλέξει χειροκίνητα τη μετάβαση στον κλειστό οδηγό.
+- **chwd:** (NVIDIA) Η υπηρεσία `nvidia-powerd` ενεργοποιείται πλέον σε φορητούς υπολογιστές για την επίτευξη του μέγιστου διαθέσιμου TDP.
+- **proton-cachyos:** Το DLSS Frame Generation λειτουργεί πλέον κανονικά. Η λειτουργία αυτή αναμένεται να ενσωματωθεί μελλοντικά και στο πρωτόλειο έργο του Proton.
+- **Πυρήνας:** Εφαρμογή του AMD Cache Optimizer. Οι χρήστες με επεξεργαστές διπλού x3d CCD μπορούν πλέον να επιλέγουν ανάμεσα σε πυρήνες με προτεραιότητα στη συχνότητα ή στην προσωρινή μνήμη.
+- **Πυρήνας:** (amd-pstate) Ενσωμάτωση διορθώσεων απόδοσης του amd-pstate για Strix Point.
+- **Πυρήνας:** Προσθήκη διορθώσεων από το πρωτόλειο έργο για τα προβλήματα TDP σε κάρτες γραφικών AMD RDNA2 και RDNA3.
+- **Πυρήνας:** Προσθήκη διορθώσεων χρονισμού για οθόνες με ανάλυση 5120x1440 στα 240Hz.
+- **Πυρήνας:** Διατίθεται στο αποθετήριο πειραματικός πυρήνας βελτιστοποιημένος με AutoFDO υπό την ονομασία «linux-cachyos-autofdo».
+- **ISO:** Προσθήκη ελέγχου για την έκδοση Handheld, με προειδοποίηση προς τον χρήστη αν ξεκινήσει την εγκατάσταση σε μη υποστηριζόμενη συσκευή.
+- **ISO:** Προσθήκη ελέγχου για τη χρήση της πιο πρόσφατης έκδοσης του ISO, με σχετική προειδοποίηση σε αντίθετη περίπτωση.
 
-**Bug Fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- refind: partitioning: changed from 3-way partition layout to 2-way
-- netinstall: added kdeplasma-addons to the Plasma installation
-- calamares: Fixed an issue, while partitioning with a swap partition
+- **rEFInd:** (διαμέριση) Αλλαγή από διάταξη 3 διαμερισμάτων σε διάταξη 2 διαμερισμάτων.
+- **Netinstall:** Προσθήκη του `kdeplasma-addons` στην εγκατάσταση του Plasma.
+- **Calamares:** Διόρθωση προβλήματος κατά τη δημιουργία διαμερισμάτων με διαμέρισμα swap.
 
-**Changelog Handheld Edition:**
+**Αρχείο αλλαγών για την έκδοση Handheld:**
 
-- Rog Ally X Support should have been improved
+- Βελτιωμένη υποστήριξη για το ROG Ally X.
 
 24.10
 ----
 
-**Features:**
+**Λειτουργίες:**
 
-- Package Updates: linux-cachyos 6.11.1, mesa 24.2.4, scx-scheds 1.0.5, python 3.12.7
+- **Ενημερώσεις πακέτων:** linux-cachyos 6.11.1, mesa 24.2.4, scx-scheds 1.0.5, python 3.12.7.
 
-**Bug Fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- sddm: Pulled in newer sddm to fix wayland session logins
-- ISO: Added xf86-video-amdgpu to fix graphical session loading on some setups
-- chwd: Fixed reinstallation of profiles
+- **sddm:** Ενσωμάτωση νεότερης έκδοσης του SDDM για τη διόρθωση των συνδέσεων σε συνεδρίες Wayland.
+- **ISO:** Προσθήκη του `xf86-video-amdgpu` για τη διόρθωση της φόρτωσης της γραφικής συνεδρίας σε ορισμένες διαμορφώσεις.
+- **chwd:** Διόρθωση του προβλήματος κατά την επανεγκατάσταση προφίλ.
 
 24.09
 ----
 
-**Features:**
+**Λειτουργίες:**
 
-- Packages: Optimized a bunch of packages with PGO, like LLVM, Clang, svt-av1, and nodejs. This yielded, for example, a 10% faster Clang compiler
-- Repository: The repository is now synced and updated more frequently, meaning there will be even less delay. The sync interval has been decreased from every 3 hours to every hour.
-- Repository: Starting from 27.09.2024, packages compiled with -fpic will automatically enable -fno-semantic-interposition. This can provide a performance improvement for many packages.
-- zlib-ng: Is now used as a replacement for zlib
-- sddm: On the KDE Installation, sddm will now default to Wayland as the compositor. # Provide Migration changes in release post
-- cachyos-settings: NetworkManager now uses systemd-resolved as the backend, which helps with DNS caching
-- cachyos-settings: Use time.google.com as the timesync server to avoid issues with timesync on some setups
-- gcc: Added fixes for the tuning of znver5
-- gcc: Cherry-picked patches and flags from Clear Linux
-- glibc: Added "evex" patches as well as cherry-picks from Clear Linux
-- wiki: The Wiki received many new additions and reworks
-- chwd: Simplified device handling
-- chwd: All profiles are now specifically designed for PCI devices
-- chwd: Add --autoconfigure to automatically handle the driver installation
-- Package Updates: linux-cachyos 6.11.0, mesa 24.2.3, Plasma 6.1.5, NVIDIA 560.35.03, calamares 3.3.10, QT 6.7.3
+- **Πακέτα:** Βελτιστοποίηση πλήθους πακέτων με PGO, όπως τα LLVM, Clang, svt-av1 και nodejs. Αυτό απέφερε, για παράδειγμα, έναν κατά 10% ταχύτερο μεταγλωττιστή Clang.
+- **Αποθετήριο:** Το αποθετήριο συγχρονίζεται και ενημερώνεται πλέον συχνότερα, μειώνοντας περαιτέρω τις καθυστερήσεις. Το διάστημα συγχρονισμού μειώθηκε από τις 3 ώρες σε 1 ώρα.
+- **Αποθετήριο:** Από τις 27.09.2024, τα πακέτα που μεταγλωττίζονται με `-fpic` θα ενεργοποιούν αυτόματα το `-fno-semantic-interposition`. Αυτό μπορεί να προσφέρει βελτίωση της απόδοσης σε πολλά πακέτα.
+- **zlib-ng:** Χρησιμοποιείται πλέον ως αντικατάσταση του zlib.
+- **sddm:** Στην εγκατάσταση του KDE, το sddm θα χρησιμοποιεί πλέον το Wayland ως προεπιλεγμένο στοιχειοθέτη.
+- **cachyos-settings:** Το NetworkManager χρησιμοποιεί πλέον το systemd-resolved ως υπόβαθρο, γεγονός που βοηθά στην προσωρινή αποθήκευση του DNS.
+- **cachyos-settings:** Χρήση του time.google.com ως διακομιστή συγχρονισμού ώρας για την αποφυγή προβλημάτων σε ορισμένες διαμορφώσεις συστημάτων.
+- **gcc:** Προσθήκη διορθώσεων για τη βελτιστοποίηση της αρχιτεκτονικής znver5.
+- **gcc:** Ενσωμάτωση επιλεγμένων διορθώσεων και παραμέτρων από το Clear Linux.
+- **glibc:** Προσθήκη των διορθώσεων «evex» καθώς και επιλεγμένων διορθώσεων από το Clear Linux.
+- **wiki:** Το Wiki δέχτηκε πολλές νέες προσθήκες και αναθεωρήσεις.
+- **chwd:** Απλοποίηση του χειρισμού συσκευών.
+- **chwd:** Όλα τα προφίλ είναι πλέον ειδικά σχεδιασμένα για συσκευές PCI.
+- **chwd:** Προσθήκη της παραμέτρου `--autoconfigure` για τον αυτόματο χειρισμό της εγκατάστασης των οδηγών.
+- **Ενημερώσεις πακέτων:** linux-cachyos 6.11.0, mesa 24.2.3, Plasma 6.1.5, NVIDIA 560.35.03, calamares 3.3.10, QT 6.7.3.
 
-**Bug Fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- Launch-Installer: Added fixes to sync the hardware clock before starting the installation
-- calamares: Added fix for unmounting the filesystem after installation
-- keyring: Clean up the keyring and recreate it before starting installation; this fixes rare keyring issues
-- sysctl: Core dumps have been enabled again
-- chwd: Removed `libva-nvidia-driver` from the PRIME profile to prevent potential conflicts and improve compatibility with software like Spectacle
-- cachyos-settings: Added workaround for GNOME Wayland crashes
-- cachyos-fish/zsh-config: Dropped wayland specific quirks
+- **Εκκίνηση προγράμματος εγκατάστασης:** Προσθήκη διορθώσεων για τον συγχρονισμό του ρολογιού του υλικού πριν από την έναρξη της εγκατάστασης.
+- **Calamares:** Προσθήκη διόρθωσης για την αποπροσάρτηση του συστήματος αρχείων μετά την εγκατάσταση.
+- **Κλειδοθήκη:** Εκκαθάριση και αναδημιουργία της κλειδοθήκης πριν από την έναρξη της εγκατάστασης· αυτό διορθώνει σπάνια προβλήματα της κλειδοθήκης.
+- **sysctl:** Οι αποτυπώσεις πυρήνα (core dumps) έχουν ενεργοποιηθεί ξανά.
+- **chwd:** Αφαίρεση του `libva-nvidia-driver` από το προφίλ PRIME για την αποφυγή πιθανών διενέξεων και τη βελτίωση της συμβατότητας με λογισμικό όπως το Spectacle.
+- **cachyos-settings:** Προσθήκη παράκαμψης για καταρρεύσεις του GNOME σε Wayland.
+- **cachyos-fish/zsh-config:** Αφαίρεση ειδικών ρυθμίσεων που αφορούσαν αποκλειστικά το Wayland.
 
-**Changelog for Handheld Edition:**
+**Αρχείο αλλαγών για την έκδοση Handheld:**
 
-- Ally/Ally X: HHD got replaced with inputplumber, since hhd does not use the kernel driver for it correctly, which results in issues.
-- Handheld related packages updated
+- **Ally/Ally X:** Το HHD αντικαταστάθηκε από το inputplumber, καθώς το hhd δεν χρησιμοποιεί σωστά τον οδηγό του πυρήνα, γεγονός που προκαλούσε προβλήματα.
+- Ενημέρωση των πακέτων που σχετίζονται με φορητές συσκευές.
 
 24.08
 ----
 
-**Features:**
+**Λειτουργίες:**
 
-- chwd: NVIDIA now uses the open module as default for supported cards
-- Desktop: Added Cosmic Desktop Environment to the installation options
-- NVIDIA: Latest 560 Beta driver is now the default; egl-wayland patched to fix crashes in Firefox and other applications
-- mirrors: CDN77 sponsored CachyOS with Object Storage featuring a worldwide cache, significantly improving connection speeds for users
-- mirrors: CachyOS now provides its own Arch Linux mirror to avoid syncing issues, set as default during installation along with fallback mirrors
-- SecureBoot: Introduced script and tutorial in the Wiki for easy Secure Boot support
-- cachy-chroot: Added auto-mount via fstab for simplified chrooting
-- cachy-chroot: Implemented support for LUKS Encryption
-- kernel-manager: Added support for setting sched-ext flags in the sched-ext configuration
-- kernel-manager: Introduced option to build nvidia-open
-- kernel-manager: Added option to remember last used options in configure page
-- Package Updates: linux-cachyos 6.10.5, mesa 24.2.0, Plasma 6.1.4, NVIDIA 560.31.02
+- **chwd:** Η NVIDIA χρησιμοποιεί πλέον το ανοικτό άρθρωμα ως προεπιλογή για τις υποστηριζόμενες κάρτες.
+- **Επιφάνεια εργασίας:** Προσθήκη του περιβάλλοντος εργασίας Cosmic στις επιλογές εγκατάστασης.
+- **NVIDIA:** Ο πιο πρόσφατος οδηγός 560 Beta αποτελεί πλέον προεπιλογή· το egl-wayland έχει τροποποιηθεί για τη διόρθωση καταρρεύσεων στο Firefox και σε άλλες εφαρμογές.
+- **Είδωλα διακομιστών:** Το CDN77 προσέφερε χορηγία στο CachyOS με αρχιτεκτονική Object Storage, που διαθέτει προσωρινή μνήμη παγκοσμίως, βελτιώνοντας σημαντικά τις ταχύτητες σύνδεσης για τους χρήστες.
+- **Είδωλα διακομιστών:** Το CachyOS παρέχει πλέον το δικό του είδωλο διακομιστή για το Arch Linux για την αποφυγή προβλημάτων συγχρονισμού, το οποίο ορίζεται ως προεπιλογή κατά την εγκατάσταση μαζί με εφεδρικά είδωλα.
+- **SecureBoot:** Προσθήκη σεναρίου και οδηγού στο wiki για εύκολη υποστήριξη του Secure Boot.
+- **cachy-chroot:** Προσθήκη αυτόματης προσάρτησης μέσω fstab για απλοποιημένη διαδικασία chroot.
+- **cachy-chroot:** Υλοποίηση υποστήριξης για κρυπτογράφηση LUKS.
+- **kernel-manager:** Προσθήκη υποστήριξης για τον ορισμό παραμέτρων του sched-ext στις ρυθμίσεις του sched-ext.
+- **kernel-manager:** Προσθήκη επιλογής για τη μεταγλώττιση του nvidia-open.
+- **kernel-manager:** Προσθήκη επιλογής για την απομνημόνευση των τελευταίων χρησιμοποιημένων ρυθμίσεων στη σελίδα παραμέτρων.
+- **Ενημερώσεις πακέτων:** linux-cachyos 6.10.5, mesa 24.2.0, Plasma 6.1.4, NVIDIA 560.31.02.
 
-**Bug Fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- chwd: Improved PRIME profile detection based on device name
-- chwd: Removed RTD3 workaround due to issues on some setups
-- cachyos-rate-mirrors: Disabled mirror ranking when running on Live ISO
-- cachy-chroot: Fixes a crash when a partition didn't have a valid fstype or uuid (eg Microsoft Recovery Partition)
-- calamares: Refactored keyring initialization
-- kernel-manager: Fixed support for building custom pkgbase with LTO kernels and modules enabled
-- kernel-manager: Fixed password prompt delay
-- ISO: Replaced radeon.modeset=1 with amdgpu.modeset=1 for modern GPUs
-- game-performance: Prevented failure when profile is unavailable
+- **chwd:** Βελτιωμένος εντοπισμός προφίλ PRIME βάσει του ονόματος της συσκευής.
+- **chwd:** Αφαίρεση της παράκαμψης για το RTD3 λόγω προβλημάτων σε ορισμένες ρυθμίσεις.
+- **cachyos-rate-mirrors:** Απενεργοποίηση της αξιολόγησης ειδώλων διακομιστών κατά την εκτέλεση στο Live ISO.
+- **cachy-chroot:** Διόρθωση κατάρρευσης όταν ένα διαμέρισμα δεν είχε έγκυρο τύπο συστήματος αρχείων ή UUID (π.χ. Microsoft Recovery Partition).
+- **Calamares:** Αναδιοργάνωση της αρχικοποίησης της κλειδοθήκης.
+- **kernel-manager:** Διόρθωση υποστήριξης για τη μεταγλώττιση προσαρμοσμένου pkgbase με ενεργοποιημένους τους πυρήνες LTO και τα αρθρώματα.
+- **kernel-manager:** Διόρθωση της καθυστέρησης στο αίτημα για εισαγωγή κωδικού πρόσβασης.
+- **ISO:** Αντικατάσταση του `radeon.modeset=1` με το `amdgpu.modeset=1` για σύγχρονες κάρτες γραφικών.
+- **game-performance:** Αποτροπή αποτυχίας όταν ένα προφίλ δεν είναι διαθέσιμο.
 
-**Changelog for Handheld Edition:**
+**Αρχείο αλλαγών για την έκδοση Handheld:**
 
-- device support: Added support for Ally X, thanks to Luke Jones
-- libei: Implemented support for libei, replacing libextest
-- packagekit: Blocked packagekit installation to prevent issues with system updates via Discover
-- hook: Added pacman-hook to conflict with natively compiled Proton versions, avoiding potential issues
-- Updated jupiter-fan-control, steamdeck-dsp, and Steam Deck firmware
+- **Υποστήριξη συσκευών:** Προσθήκη υποστήριξης για το Ally X, ευχαριστούμε τον Luke Jones.
+- **libei:** Υλοποίηση υποστήριξης για το libei, αντικαθιστώντας το libextest.
+- **packagekit:** Αποκλεισμός της εγκατάστασης του packagekit για την αποφυγή προβλημάτων με τις ενημερώσεις συστήματος μέσω του Discover.
+- **hook:** Προσθήκη pacman-hook για τη δημιουργία διένεξης με εγγενώς μεταγλωττισμένες εκδόσεις του Proton, προς αποφυγή πιθανών προβλημάτων.
+- Ενημέρωση των jupiter-fan-control, steamdeck-dsp και του υλικολογισμικού του Steam Deck.
 
 24.07
 ----
 
-**Features:**
+**Λειτουργίες:**
 
-- Repository: Introduce Zen 4 optimized repository, this will be used for Zen4 and Zen5 CPU's
-- ISO: Add automatic architecture check for Zen4/Zen5 repository
-- chwd: Added GC support for AMD GPU's, this helps for detecting official ROCm supported GPUs
-- chwd: Use libva-nvidia-driver on supported cards
-- ksmctl: Introduce tool to enable/disable KSM: ksmctl --enable
-- kernel: For the "linux-cachyos" kernel is now a "linux-cachyos-dbg" package available, this contains an unstripped vmlinux for debugging purposes
-- kernel: amd cpb boost is now available and the power-profiles-daemon is patched, if the "powersave" profile is set, it will disable the boost on amd cpus
-- kernel: Added power saving patch for AMD SoCs for video playback
-- kernel-manager: Added support for managing sched-ext schedulers and getting information via GUI
-- steam/proton: There is now a "game-performance" script, which can be added to steam's launch options
-- power-profiles: On AMD Pstate supported CPUs the lowest Linear frequency is now set higher, this can improve latency and 1% lows
-- kwin: Added back-port for tearing, this has been tested. On NVIDIA, it only works on native wayland applications
-- netinstall: Cutefish has been dropped as installable Desktop Environment
-- Mirrors: Added Austria and China Mirror, the China Mirror is hosted by the TUNA University. This should help a lot of users from China
-- Package Updates: linux-cachyos 6.9.9, mesa 24.1.3, NVIDIA 555.58.02, Plasma 6.1.2, LLVM 18.1.8
+- **Αποθετήριο:** Εισαγωγή βελτιστοποιημένου αποθετηρίου για Zen 4, το οποίο θα χρησιμοποιείται για επεξεργαστές Zen 4 και Zen 5.
+- **ISO:** Προσθήκη αυτόματου ελέγχου αρχιτεκτονικής για το αποθετήριο Zen 4/Zen 5.
+- **chwd:** Προσθήκη υποστήριξης GC για κάρτες γραφικών AMD, βοηθώντας στον εντοπισμό καρτών που υποστηρίζονται επίσημα από το ROCm.
+- **chwd:** Χρήση του `libva-nvidia-driver` σε υποστηριζόμενες κάρτες.
+- **ksmctl:** Εισαγωγή εργαλείου για την ενεργοποίηση/απενεργοποίηση του KSM: `ksmctl --enable`.
+- **Πυρήνας:** Για τον πυρήνα «linux-cachyos» διατίθεται πλέον το πακέτο «linux-cachyos-dbg», το οποίο περιέχει ένα μη απογυμνωμένο vmlinux για σκοπούς εντοπισμού σφαλμάτων.
+- **Πυρήνας:** Η λειτουργία «AMD CPB Boost» είναι πλέον διαθέσιμη και το power-profiles-daemon έχει τροποποιηθεί· εάν οριστεί το προφίλ «powersave», θα απενεργοποιείται η λειτουργία σε επεξεργαστές AMD.
+- **Πυρήνας:** Προσθήκη διόρθωσης εξοικονόμησης ενέργειας για SoC της AMD κατά την αναπαραγωγή βίντεο.
+- **Kernel Manager:** Προσθήκη υποστήριξης για τη διαχείριση των χρονοπρογραμματιστών του sched-ext και τη λήψη πληροφοριών μέσω γραφικού περιβάλλοντος (GUI).
+- **Steam/Proton:** Διατίθεται πλέον το σενάριο «game-performance», το οποίο μπορεί να προστεθεί στις επιλογές εκκίνησης του Steam.
+- **Προφίλ ενέργειας:** Σε επεξεργαστές που υποστηρίζουν το AMD P-State, η χαμηλότερη γραμμική συχνότητα ορίζεται πλέον υψηλότερα, γεγονός που μπορεί να βελτιώσει την απόκριση και τα «1% lows».
+- **kwin:** Προσθήκη διόρθωσης από νεότερη έκδοση για το tearing, η οποία έχει δοκιμαστεί. Σε υλικό NVIDIA, λειτουργεί μόνο σε εγγενείς εφαρμογές Wayland.
+- **Netinstall:** Το Cutefish αφαιρέθηκε από τις επιλογές εγκατάστασης περιβάλλοντος εργασίας.
+- **Είδωλα διακομιστών:** Προσθήκη ειδώλων σε Αυστρία και Κίνα. Το είδωλο της Κίνας φιλοξενείται από το Πανεπιστήμιο TUNA, βοηθώντας σημαντικά τους χρήστες από τη συγκεκριμένη χώρα.
+- **Ενημερώσεις πακέτων:** linux-cachyos 6.9.9, mesa 24.1.3, NVIDIA 555.58.02, Plasma 6.1.2, LLVM 18.1.8.
 
-**Bug Fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- ISO: Set copytoram to auto instead of yes
-- ISO: Fixed Sleep on Live ISO for Laptops
-- Launch Installer: Install the latest archlinux-keyring, before the installation starts to avoid issues, when fetching the archlinux-keyring in the chroot
-- Mirrors Ranking: Rank only Tier 1 Mirror's at installation time
-- pacman.conf: Remove not used pacman repository
-- cachy-chroot: Do not show .snapshot subvolumes
-- Calamares: Do not use "Preservefiles" module, since user a reporting issues with it.
+- **ISO:** Ορισμός του `copytoram` σε «auto» αντί για «yes».
+- **ISO:** Διόρθωση της αναστολής λειτουργίας στο Live ISO για φορητούς υπολογιστές.
+- **Εκκίνηση προγράμματος εγκατάστασης:** Εγκατάσταση του πιο πρόσφατου `archlinux-keyring` πριν από την έναρξη της εγκατάστασης για την αποφυγή προβλημάτων κατά τη λήψη της κλειδωθήκης μέσα στο chroot.
+- **Αξιολόγηση ειδώλων διακομιστών:** Αξιολόγηση μόνο των ειδώλων πρώτης τάξης (Tier 1) κατά την εγκατάσταση.
+- **pacman.conf:** Αφαίρεση μη χρησιμοποιούμενου αποθετηρίου του pacman.
+- **cachy-chroot:** Δεν εμφανίζονται πλέον οι υποτόμοι του `.snapshot`.
+- **Calamares:** Κατάργηση χρήσης του αρθρώματος «Preservefiles», λόγω αναφορών για προβλήματα.
 
-**Changelog for Handheld Edition:**
+**Αρχείο αλλαγών για την έκδοση Handheld:**
 
-- Added configuration file to apply different scaling, '/home/$USER/.config/deckscale
-- Make GameMode switching more robust
-- Updated Wifi/Bluetooth Firmware for Steam Deck
-- Implemented Auto Mount for GameMode
-- Added gamescope-session quirks for Wine CPU Topology, HDR, and Backlight
-- Fixed Refresh Rate Selection
-- Updated jupiter-hw-support, steamdeck-dsp, jupiter-fan-control, gamescope-session-git
+- Προσθήκη αρχείου διαμόρφωσης για την εφαρμογή διαφορετικής κλίμακας: `/home/$USER/.config/deckscale`.
+- Πιο σταθερή εναλλαγή της Λειτουργίας παιχνιδιών (GameMode).
+- Ενημέρωση του υλικολογισμικού για τα WiFi/Bluetooth στο Steam Deck.
+- Υλοποίηση αυτόματης προσάρτησης για τη Λειτουργία παιχνιδιών (GameMode).
+- Προσθήκη ειδικών ρυθμίσεων στο gamescope-session για το Wine CPU Topology, το HDR και τον οπίσθιο φωτισμό.
+- Διόρθωση της επιλογής ρυθμού ανανέωσης.
+- Ενημέρωση των jupiter-hw-support, steamdeck-dsp, jupiter-fan-control, gamescope-session-git.
 
 24.06
 ----
 
-**Features:**
+**Λειτουργίες:**
 
-- chwd: Introduce handheld hardware detection
-- chwd: Introduce T2 MacBook support
-- chwd: Add network driver detection
-- Installation: Added MacBook T2 support
-- ISO: Add cachy-chroot. This is a script that helps the user to chroot into the system.
-- ISO: Switch to Microcode Hooks; this requires using the latest Ventoy release (1.0.98)
-- ISO: Enable copytoram; this no longer needs to be disabled because we don't provide the offline installation anymore
-- filesystem: BTRFS is now the default selected file system
-- netinstall: Use ufw instead of firewalld
-- Calamares: Update Branding Slides
-- Slides: Updated for latest changes
-- Package Updates: linux-cachyos 6.9.3, mesa 24.1.1, xwayland 24.1, NVIDIA 555.52.04, Plasma 6.0.5
+- **chwd:** Προσθήκη εντοπισμού υλικού για φορητές συσκευές.
+- **chwd:** Προσθήκη υποστήριξης για MacBook με το chip T2.
+- **chwd:** Προσθήκη εντοπισμού οδηγών δικτύου.
+- **Εγκατάσταση:** Προσθήκη υποστήριξης για MacBook T2.
+- **ISO:** Προσθήκη του `cachy-chroot`. Πρόκειται για ένα σενάριο που βοηθά τον χρήστη να εισέλθει στο σύστημα μέσω chroot.
+- **ISO:** Μετάβαση σε Microcode Hooks· αυτό απαιτεί τη χρήση της πιο πρόσφατης έκδοσης του Ventoy (1.0.98).
+- **ISO:** Ενεργοποίηση του `copytoram`· δεν χρειάζεται πλέον να είναι απενεργοποιημένο καθώς δεν παρέχουμε πια εγκατάσταση εκτός σύνδεσης.
+- **Σύστημα αρχείων:** Το BTRFS είναι πλέον το προεπιλεγμένο σύστημα αρχείων.
+- **Netinstall:** Χρήση του ufw αντί για το firewalld.
+- **Calamares:** Ενημέρωση των διαφανειών επωνυμίας.
+- **Διαφάνειες:** Ενημέρωση για τις τελευταίες αλλαγές.
+- **Ενημερώσεις πακέτων:** linux-cachyos 6.9.3, mesa 24.1.1, xwayland 24.1, NVIDIA 555.52.04, Plasma 6.0.5.
 
-**Bug Fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- Calamares: umount: Enable emergency again
-- Qtile: Multimedia Controls are now working correctly
-- NVIDIA: Enable required services and options for working sleep on Wayland
-- netinstall: Remove b43-fwcutter from installation
-- netinstall: Replace hyprland-git with hyprland
-- netinstall: Drop linux-cachyos-lts from selection to avoid issues with missing modules
-- Calamares: Shellprocess: Move mirror ranking before installing keyring
+- **Calamares:** (umount) Επανενεργοποίηση της λειτουργίας έκτακτης ανάγκης.
+- **Qtile:** Τα πλήκτρα ελέγχου πολυμέσων λειτουργούν πλέον σωστά.
+- **NVIDIA:** Ενεργοποίηση των απαιτούμενων υπηρεσιών και επιλογών για τη σωστή λειτουργία της αναστολής σε περιβάλλον Wayland.
+- **Netinstall:** Αφαίρεση του `b43-fwcutter` από την εγκατάσταση.
+- **Netinstall:** Αντικατάσταση του `hyprland-git` με το `hyprland`.
+- **Netinstall:** Αφαίρεση του `linux-cachyos-lts` από τις επιλογές για την αποφυγή προβλημάτων με αρθρώματα που λείπουν.
+- **Calamares:** (Shellprocess) Μεταφορά της αξιολόγησης των ειδώλων διακομιστών πριν από την εγκατάσταση της κλειδοθήκης.
 
-**Changelog from Experimental Handheld Release:**
+**Αρχείο αλλαγών για την πειραματική έκδοση Handheld:**
 
-- Default to KDE Vapor Theme (SteamOS Theme)
-- Default file system: BTRFS
-- Default kernel: linux-cachyos-deckify
-- SDDM now uses Wayland
-- Environment Flag for HHD to reduce latency
-- Added Kernel Arguments to improve Game Mode Switching behavior
-- The username can now be edited
-- Hardware Detection configures and installs required packages depending on the device used
-- Mallit Keyboard now uses Dark Mode
-- Valve's Powerbuttond for proper sleeping
-- Shortcuts can now be added to Steam
-- Updated scx-scheds to latest git commit, providing the latest enhancements for the LAVD Scheduler
-- Added automount to cachyos-handheld
-- CachyOS can now perform Steam Deck BIOS updates on the Steam Deck
+- Προεπιλεγμένο θέμα: KDE Vapor (το θέμα του SteamOS)
+- Προεπιλεγμένο σύστημα αρχείων: BTRFS
+- Προεπιλεγμένος πυρήνας: linux-cachyos-deckify
+- Το SDDM χρησιμοποιεί πλέον το Wayland.
+- Προσθήκη παραμέτρου περιβάλλοντος για το HHD με σκοπό τη μείωση της καθυστέρησης.
+- Προσθήκη ορισμάτων πυρήνα για τη βελτίωση της συμπεριφοράς εναλλαγής της Λειτουργίας παιχνιδιών (Game Mode).
+- Το όνομα χρήστη μπορεί πλέον να τροποποιηθεί.
+- Ο εντοπισμός υλικού ρυθμίζει και εγκαθιστά τα απαιτούμενα πακέτα ανάλογα με τη συσκευή όπου χρησιμοποιείται.
+- Το πληκτρολόγιο Mallit χρησιμοποιεί πλέον τη σκουρόχρωμη λειτουργία.
+- Χρήση του Powerbuttond της Valve για σωστή αναστολή λειτουργίας.
+- Δυνατότητα προσθήκης συντομεύσεων στο Steam.
+- Ενημέρωση του `scx-scheds` στο τελευταίο git commit, παρέχοντας τις πιο πρόσφατες βελτιώσεις για τον χρονοπρογραμματιστή LAVD.
+- Προσθήκη αυτόματης προσάρτησης στο cachyos-handheld.
+- Το CachyOS μπορεί πλέον να πραγματοποιεί ενημερώσεις BIOS στο Steam Deck.
 
 24.05
 ----
 
-**Features:**
+**Λειτουργίες:**
 
-- Filesystems: Introduce Bcachefs as a filesystem option
-- pacstrap: Add detection if Bcachefs is used and install corresponding Bcachefs-tools
-- CachyOS-AI-SDK: Introduce new install option to provide a OOB NVIDIA SDK Setup
-- CachyOS-Deckify: Provide variant for Handhelds (experimental), see [here](https://discuss.cachyos.org/t/information-experimental-cachyos-deckify/203) for more details
-- BTRFS: Automatic Snapper for snapshots, can be installed from within the CachyOS hello app.
-- ISO: Drop Offline Installer
-- Package Updates: Python 3.12, gcc 14.1.1, mesa 24.0.6, xwayland 24.1rc2, NVIDIA 550.78
+- **Συστήματα αρχείων:** Προσθήκη του Bcachefs ως επιλογής συστήματος αρχείων.
+- **pacstrap:** Προσθήκη εντοπισμού σε περίπτωση χρήσης του Bcachefs και εγκατάσταση των αντίστοιχων εργαλείων Bcachefs-tools.
+- **CachyOS-AI-SDK:** Εισαγωγή νέας επιλογής εγκατάστασης για την παροχή έτοιμης ρύθμισης του NVIDIA SDK.
+- **CachyOS-Deckify:** Παροχή παραλλαγής για φορητές συσκευές (πειραματική), δείτε [εδώ](https://discuss.cachyos.org/t/information-experimental-cachyos-deckify/203) για περισσότερες λεπτομέρειες.
+- **BTRFS:** Εργαλείο αυτόματης δημιουργίας στιγμιότυπων (μπορεί να εγκατασταθεί μέσα από την εφαρμογή CachyOS Hello).
+- **ISO:** Κατάργηση του προγράμματος εγκατάστασης εκτός σύνδεσης.
+- **Ενημερώσεις πακέτων:** Python 3.12, gcc 14.1.1, mesa 24.0.6, xwayland 24.1rc2, NVIDIA 550.78.
 
-**Bug-Fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- settings.conf: Move hardware detection before netinstall
-- pacstrap: Use btrfs-assistant instead of btrfs-assistant-git
-- plymouth: remove plymouth hook on zfs + encryption
-- ISO: Add various config files for KDE, to avoid getting screen locking during installation
-- services-systemd: Properly enable fstrim.timer
-- umount: Disable emergency to avoid issues with the zfs installation
-- shellprocess: Cleanup leftovers from the offline installation
+- **settings.conf:** Μεταφορά του εντοπισμού υλικού πριν από το netinstall.
+- **pacstrap:** Χρήση του `btrfs-assistant` αντί για το `btrfs-assistant-git`.
+- **plymouth:** Αφαίρεση του plymouth hook σε συνδυασμούς ZFS με κρυπτογράφηση.
+- **ISO:** Προσθήκη διαφόρων αρχείων διαμόρφωσης για το KDE, ώστε να αποφεύγεται το κλείδωμα της οθόνης κατά τη διάρκεια της εγκατάστασης.
+- **services-systemd:** Σωστή ενεργοποίηση του `fstrim.timer`.
+- **umount:** Απενεργοποίηση της λειτουργίας έκτακτης ανάγκης για την αποφυγή προβλημάτων με την εγκατάσταση σε ZFS.
+- **shellprocess:** Καθαρισμός υπολειμμάτων από την εγκατάσταση εκτός σύνδεσης.
 
 24.04
 ----
 
-**Features:**
+**Λειτουργίες:**
 
-- Plymouth: Use plymouth to provide a themed boot animation
-- ISO: Switch back to X11 due to issues when setting the keyboard layout in calamares
-- rEFInd: New partitioning layout (separate /boot and /boot/efi)
-- netinstall: KDE: Install xwaylandvideobridge by default
-- netinstall: Use lightdm instead of ly for various Desktop Environments, due to a bug in ly
-- systemd-boot: Use @saved for systemd-boot to allow it to remember the previously selected boot entry
-- cachyos-keyring: Refactor cachyos-keyring package and provide a cachyos-trusted keyring
-- ISO: Use ZSTD 19 Compression for the mkinitcpio image of the ISO
-- Package Updates: xz 5.6.1-3, linux-cachyos 6.8.2, pacman 6.1.0-5, mesa 24.0.4, Plasma 6.0.3, nvidia 550.67 and cachyos-settings 39-2
+- **Plymouth:** Χρήση του plymouth για την παροχή εφέ κίνησης κατά την εκκίνηση.
+- **ISO:** Επιστροφή στο X11 λόγω προβλημάτων κατά τη ρύθμιση της διάταξης πληκτρολογίου στο Calamares.
+- **rEFInd:** Νέα διάταξη διαμερισμάτων (ξεχωριστό /boot και /boot/efi).
+- **Netinstall:** (KDE) Εγκατάσταση του `xwaylandvideobridge` από προεπιλογή.
+- **Netinstall:** Χρήση του lightdm αντί για το ly σε διάφορα περιβάλλοντα εργασίας, λόγω σφάλματος στο ly.
+- **systemd-boot:** Χρήση της παραμέτρου @saved για το systemd-boot ώστε να επιτρέπεται η απομνημόνευση της προηγούμενης καταχώρησης εκκίνησης.
+- **cachyos-keyring:** Αναδιοργάνωση του πακέτου cachyos-keyring και παροχή μιας έμπιστης κλειδοθήκης.
+- **ISO:** Χρήση συμπίεσης ZSTD 19 για το είδωλο mkinitcpio του ISO.
+- **Ενημερώσεις πακέτων:** xz 5.6.1-3, linux-cachyos 6.8.2, pacman 6.1.0-5, mesa 24.0.4, Plasma 6.0.3, nvidia 550.67 και cachyos-settings 39-2.
 
-**Bug-Fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- Autologin: Fixed the autologin option when used together with sddm
-- xz: Provide a patched xz package
-- libarchive: Mitigate commit from malicious xz actor
-- cachyos-settings: udev-rule: don't set watermark_scale_factor to 125, since it significantly increases RAM usage
-- calamares: pacman-keyring: Use simpler method to integrate the keyring into the installation
+- **Αυτόματη σύνδεση:** Διόρθωση της επιλογής αυτόματης σύνδεσης όταν χρησιμοποιείται σε συνδυασμό με το sddm.
+- **xz:** Παροχή τροποποιημένου πακέτου xz.
+- **libarchive:** Αντιμετώπιση του commit από τον κακόβουλο παράγοντα του xz.
+- **cachyos-settings:** (κανόνας udev) Δεν ορίζεται πλέον το watermark_scale_factor στο 125, καθώς αυξάνει σημαντικά τη χρήση της RAM.
+- **Calamares:** (pacman-keyring) Χρήση απλούστερης μεθόδου για την ενσωμάτωση της κλειδοθήκης στην εγκατάσταση.
 
 24.03.1
 ----
 
-**Features:**
+**Λειτουργίες:**
 
-- netinstall: Remove extra kernels in the netinstall selection to avoid confusion by users. Other custom kernels can be installed via Kernel Manager
-- Kernel Manager: NVIDIA Modules are automatically installed when detected, Rebased for QT6, Fixed custom names when using LTO Option
-- Package Installer: Rebased on QT6, updated for pacman 6.1
-- Package Updates: linux-cachyos 6.8.1, pacman 6.1, mesa 24.0.3, Plasma 6.0.2, llvm 17.0.6
+- **Netinstall:** Αφαίρεση των επιπλέον πυρήνων από το netinstall για την αποφυγή σύγχυσης των χρηστών. Η εγκατάσταση άλλων προσαρμοσμένων πυρήνων είναι εφικτή μέσω του Kernel Manager.
+- **Kernel Manager:** Τα αρθρώματα της NVIDIA εγκαθίστανται πλέον αυτόματα όταν εντοπίζονται. Αναβάθμιση σε QT6 και διόρθωση των προσαρμοσμένων ονομάτων κατά τη χρήση της επιλογής LTO.
+- **Πρόγραμμα εγκατάστασης πακέτων:** Αναβάθμιση σε QT6 και ενημέρωση για το pacman 6.1.
+- **Ενημερώσεις πακέτων:** linux-cachyos 6.8.1, pacman 6.1, mesa 24.0.3, Plasma 6.0.2, llvm 17.0.6.
 
-**Bug-Fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- NVIDIA: patched nvidia module to take the ownership of nvidia.drm.modeset earlier to avoid issues on nvidia graphics
-- Refind: Don't install the lts kernel to avoid issues
-- shellprocess: Remove the liveusers directory completely
+- **NVIDIA:** Τροποποίηση του αρθρώματος της NVIDIA ώστε να αναλαμβάνει την κατοχή του `nvidia.drm.modeset` νωρίτερα, προς αποφυγή προβλημάτων σε κάρτες γραφικών NVIDIA.
+- **rEFInd:** Δεν εγκαθίσταται πλέον ο πυρήνας LTS για την αποφυγή προβλημάτων.
+- **shellprocess:** Πλήρης αφαίρεση του καταλόγου liveusers.
 
 24.03
 ----
 
-**Features:**
+**Λειτουργίες:**
 
-- ISO: Plasma 6 is now shipped in the ISO and uses Wayland as default, GNOME ISO got dropped to avoid confusion about netinstall
-- Calamares: Rebased for QT6
-- refind: Add f2fs and zfs as option including luks2 encryption
-- mirrors: We provide now 2 global CDNs. One hosted by Cloudflare R2 and one hosted by Digital Ocean
-- mirrorlist: Fetch the online installer directly from cdn to provide a faster delivery
-- initcpiocfg: Use the new microcode hook for early loading the ucode
-- bootloader: Dont load the microcode with the bootloader anymore
-- Package Updates: linux-cachyos 6.7.9, mesa 24.0.2, zfs-utils 2.2.3
+- **ISO:** Το Plasma 6 περιλαμβάνεται πλέον στο ISO και χρησιμοποιεί το Wayland ως προεπιλογή. Το αυτόνομο ISO του GNOME καταργήθηκε για την αποφυγή σύγχυσης σχετικά με το netinstall.
+- **Calamares:** Αναβάθμιση για το QT6.
+- **rEFInd:** Προσθήκη των επιλογών για f2fs και zfs, συμπεριλαμβανομένης της κρυπτογράφησης luks2.
+- **Είδωλα διακομιστών:** Παρέχουμε πλέον 2 παγκόσμια CDN. Ένα που φιλοξενείται από το Cloudflare R2 και ένα από την Digital Ocean.
+- **Λίστα ειδώλων διακομιστών:** Η λήψη του προγράμματος εγκατάστασης γίνεται απευθείας από το CDN για ταχύτερη παράδοση.
+- **initcpiocfg:** Χρήση του νέου hook μικροκώδικα για την πρώιμη φόρτωση του ucode.
+- **Φορτωτής εκκίνησης:** Ο μικροκώδικας δεν φορτώνεται πλέον μέσω του φορτωτή εκκίνησης.
+- **Ενημερώσεις πακέτων:** linux-cachyos 6.7.9, mesa 24.0.2, zfs-utils 2.2.3.
 
-**Bug-Fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- pacstrap: Do not install config packages to provide the user a more clean selection of the installation
-- shellprocess_pacman: Also copy the ranked cachyos-v4-mirrorlists to the target
+- **pacstrap:** Δεν εγκαθίστανται πλέον πακέτα ρυθμίσεων ώστε να παρέχεται στον χρήστη μια πιο καθαρή επιλογή κατά την εγκατάσταση.
+- **shellprocess_pacman:** Αντιγραφή των αξιολογημένων λιστών `cachyos-v4-mirrorlists` και στο σύστημα προορισμού.
 
 24.02
 -----
 
-**Features:**
+**Λειτουργίες:**
 
-- refind: Change layout from /boot/efi to /boot to provide more options of filesystems and encryption
-- Live-ISO: Cleanup and Sync the Live-ISO
-- Launch Installer: Add recommendation for the online installation
-- shell-configs: Add option to disable fastfetch when starting the terminal and add an "update" alias
-- netinstall: Add phonon-qt5-vlc to kde
-- Package Updates: linux-cachyos 6.7.5, mesa 23.3.5, gcc 13.2.1-12, glibc 2.39, mesa 24.0.1, nvidia 550.54.14
+- **rEFInd:** Αλλαγή διάταξης από /boot/efi σε /boot για την παροχή περισσότερων επιλογών συστημάτων αρχείων και κρυπτογράφησης.
+- **Live ISO:** Εκκαθάριση και συγχρονισμός του Live ISO.
+- **Εκκίνησης προγράμματος εγκατάστασης:** Προσθήκη προτάσεων για τη διαδικτυακή εγκατάσταση.
+- **shell-configs:** Προσθήκη επιλογής για την απενεργοποίηση του fastfetch κατά την εκκίνηση του τερματικού και προσθήκη του ψευδωνύμου «update».
+- **Ενημερώσεις πακέτων:** linux-cachyos 6.7.5, mesa 23.3.5, gcc 13.2.1-12, glibc 2.39, mesa 24.0.1, nvidia 550.54.14.
 
 24.01
 -----
 
-**Features:**
+**Λειτουργίες:**
 
-- x86-64-v4: Autodetection and enabling the repository at installation
-- linux-cachyos: the sched-ext scheduler framework is now provided in the default kernel
-- xwayland: Provide explicit sync patches as default
-- Package Updates: linux-cachyos 6.7, mesa 23.3.3, gcc 13.2.1-8, xorg-xwayland 23.2.4
+- **x86-64-v4:** Αυτόματος εντοπισμός και ενεργοποίηση του αποθετηρίου κατά την εγκατάσταση.
+- **linux-cachyos:** Το πλαίσιο χρονοπρογραμματιστή sched-ext παρέχεται πλέον στον προεπιλεγμένο πυρήνα.
+- **xwayland:** Παροχή των διορθώσεων για ρητό συγχρονισμό ως προεπιλογή.
+- **Ενημερώσεις πακέτων:** linux-cachyos 6.7, mesa 23.3.3, gcc 13.2.1-8, xorg-xwayland 23.2.4.
 
-**Bug Fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- chwd: For Ada Lovelace Nvidia cards the nvidia modules get directly packed into the initramfs to avoid issues with the early kms
+- **chwd:** Για τις κάρτες γραφικών NVIDIA αρχιτεκτονικής Ada Lovelace, τα αρθρώματα της NVIDIA ενσωματώνονται απευθείας στο initramfs για την αποφυγή προβλημάτων με το πρώιμο KMS.
 
 23.12
 -----
 
-**Bug-fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- zfs: Add compatibility=grub to the pool options to ensure the compatibility
-- grub/xfs: Add a patch to grub to have compatibility with the new xfs bigtime default
-- netinstall: xdg-desktop-portal-hyprland instead of xdg-desktop-portal-hyprland-git
+- **ZFS:** Προσθήκη της παραμέτρου `compatibility=grub` στις επιλογές του pool για τη διασφάλιση της συμβατότητας.
+- **GRUB/XFS:** Προσθήκη διόρθωσης στο GRUB για τη συμβατότητα με τη νέα προεπιλογή «bigtime» του XFS.
+- **Netinstall:** Χρήση του `xdg-desktop-portal-hyprland` αντί για το `xdg-desktop-portal-hyprland-git`.
 
 23.11
 -----
 
-**Features:**
+**Λειτουργίες:**
 
-- nvidia: Use nvidia module instead of dkms
-- Calamares synced with upstream
-- Package updates: linux-cachyos 6.6.1, nvidia-utils 545.29.02, mesa 23.2.1, zfs-utils 2.2.0, mkinitcpio 37
+- **NVIDIA:** Χρήση του αρθρώματος της NVIDIA αντί για το dkms.
+- **Calamares:** Συγχρονισμός με το πρωτόλειο έργο.
+- **Ενημερώσεις πακέτων:** linux-cachyos 6.6.1, nvidia-utils 545.29.02, mesa 23.2.1, zfs-utils 2.2.0, mkinitcpio 37.
 
-**Bug-fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- nvidia-hook: Added nvidia-hook back to avoid issues at installation time with the new module
-- netinstall: Packages got renamed due the recent changes at the KF5 packaging
-- netinstall: xdg-desktop-portal-gnome got added to the GNOME Installation
+- **nvidia-hook:** Επαναφορά του `nvidia-hook` για την αποφυγή προβλημάτων κατά την εγκατάσταση με το νέο άρθρωμα.
+- **Netinstall:** Μετονομασία πακέτων λόγω των πρόσφατων αλλαγών στο πακετάρισμα του KF5.
+- **Netinstall:** Προσθήκη του `xdg-desktop-portal-gnome` στην εγκατάσταση του GNOME.
 
 23.09
 -----
 
-**Features:**
+**Λειτουργίες:**
 
-- systemd-boot: Default to luks2
-- netinstall: Provide a own category for CachyOS Packages
-- Calamares synced with upstream
-- Package updates: linux-cachyos 6.5.3, nvidia-utils 535.104.05, mesa 23.2.7
+- **systemd-boot:** Χρήση του luks2 ως προεπιλογής.
+- **Netinstall:** Παροχή ξεχωριστής κατηγορίας για τα πακέτα του CachyOS.
+- **Calamares:** Συγχρονισμός με το πρωτόλειο έργο.
+- **Ενημερώσεις πακέτων:** linux-cachyos 6.5.3, nvidia-utils 535.104.05, mesa 23.2.7.
 
-**Bug-fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- shellprocess_sdboot: Avoid using "sudo", when generating the boot entries at the installation process
+- **shellprocess_sdboot:** Αποφυγή χρήσης του «sudo» κατά τη δημιουργία των καταχωρήσεων εκκίνησης στη διαδικασία εγκατάστασης.
 
 23.08
 -----
 
-**Features:**
+**Λειτουργίες:**
 
-- Calamares synced with upstream
-- Package updates: linux-cachyos 6.4.10, nvidia-utils 535.98
+- **Calamares:** Συγχρονισμός με το πρωτόλειο έργο.
+- **Ενημερώσεις πακέτων:** linux-cachyos 6.4.10, nvidia-utils 535.98.
 
-**Bug-fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- Keyring got updated and works now correctly
+- **Κλειδοθήκη:** Η κλειδοθήκη ενημερώθηκε και πλέον λειτουργεί σωστά.
 
 23.07
 -----
 
-**Features:**
+**Λειτουργίες:**
 
-- CachyOS-Settings includes now "bpftune", which automatically tweaks the network settings depending on the usage
-- CachyOS-Qtile-Settings: Quality of Life changes, better icons, ...
-- Package updates: linux-cachyos 6.4.2, cachy-browser 115.0.1, mesa 23.1.3,
+- **CachyOS-Settings:** Περιλαμβάνει πλέον το «bpftune», το οποίο προσαρμόζει αυτόματα τις ρυθμίσεις δικτύου ανάλογα με τη χρήση.
+- **CachyOS-Qtile-Settings:** Αλλαγές για τη βελτίωση της εμπειρίας, καλύτερα εικονίδια κ.α.
+- **Ενημερώσεις πακέτων:** linux-cachyos 6.4.2, cachy-browser 115.0.1, mesa 23.1.3.
 
-**Bug-fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- rate-mirrors got fixed
-- chwd (Hardware Detection) got multiple fixes
-- fixed installation of nonfree drivers for hybrid setup in the installer
-- fixed Calamares freezes, which happened in some rare configurations, mainly VM
-- Slides: Slide 6 typo fix
+- Διορθώθηκε το εργαλείο rate-mirrors.
+- Το chwd (Εντοπισμός υλικού) δέχθηκε πολλαπλές διορθώσεις.
+- Διορθώθηκε η εγκατάσταση των non-free οδηγών για υβριδικά συστήματα στο πρόγραμμα εγκατάστασης.
+- Διορθώθηκαν τα «παγώματα» του Calamares, τα οποία συνέβαιναν σε ορισμένες σπάνιες διαμορφώσεις, κυρίως σε εικονικές μηχανές.
+- Διορθώθηκε τυπογραφικό λάθος στη διαφάνεια 6 (Slide 6).
 
 23.06
 -----
 
-**Bug-fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- Offline Installation: Fix calamares
+- **Εγκατάσταση εκτός σύνδεσης:** Διόρθωση του Calamares.
 
 23.05
 -----
 
-**Features:**
+**Λειτουργίες:**
 
-- CachyOS Git Migration layout is now reflected in the installation
-- chwd (mhwd) got multiple fixes
-- Pacman: We added a feature, which makes it possible to provide a message to our users before updating
-- Calamares got synced with upstream
-- Package updates: linux-cachyos 6.3.4, cachy-browser 113.0.1, mesa 23.1.1, python 3.11
+- **Μεταφορά CachyOS στο Git:** Η νέα διάταξη αντικατοπτρίζεται πλέον στην εγκατάσταση.
+- **chwd (mhwd):** Δέχθηκε πολλαπλές διορθώσεις.
+- **Pacman:** Προσθέσαμε μια λειτουργία που καθιστά δυνατή την προβολή μηνύματος προς τους χρήστες μας πριν από την ενημέρωση.
+- **Calamares:** Συγχρονίστηκε με το πρωτόλειο έργο.
+- **Ενημερώσεις πακέτων:** linux-cachyos 6.3.4, cachy-browser 113.0.1, mesa 23.1.1, python 3.11.
 
-**Bug-fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- netinstall: minimal fixes due package changes
-- Slides: Slide 6 got updated to reflect the latest changes
+- **Netinstall:** Μικρές διορθώσεις λόγω αλλαγών στα πακέτα.
+- **Διαφάνειες:** Η διαφάνεια 6 ενημερώθηκε για να αντικατοπτρίζει τις τελευταίες αλλαγές.
 
 23.04
 -----
 
-**Features:**
+**Λειτουργίες:**
 
-- Introduce the Qtile desktop environment
-- Reworked mhwd: Rust rewrite; Simplified profiles for GPUs and network cards; Removed bunch of ancient code
-- Package updates: linux-cachyos 6.2.12, cachy-browser 112.0.1, mesa 23.0.3, zfs-utils 2.1.11
+- **Περιβάλλον εργασίας:** Προσθήκη του γραφικού περιβάλλοντος Qtile.
+- **Ανασχεδιασμός του mhwd:** Επαναγραφή σε Rust, απλοποιημένα προφίλ για κάρτες γραφικών και δικτύου και αφαίρεση παρωχημένου κώδικα.
+- **Ενημερώσεις πακέτων:** linux-cachyos 6.2.12, cachy-browser 112.0.1, mesa 23.0.3, zfs-utils 2.1.11.
 
-**Bug-fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- f2fs: Remove "atgc" mount options since it has issues with systemd
+- **f2fs:** Αφαίρεση των επιλογών προσάρτησης «atgc» λόγω προβλημάτων με το systemd.
 
 23.03.1
 -------
 
-**Features:**
+**Λειτουργίες:**
 
-- Package updates: linux-cachyos 6.2.7, cachy-browser 111.0
+- **Ενημερώσεις πακέτων:** linux-cachyos 6.2.7, cachy-browser 111.0.
 
-**Bug-fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- Calamares got fixed with the lightdm displaymanager due faulty calamares upstream commits
-- Offline installation keyring issue got fixed
-- Refind: Use linux-cachyos-lts as default. Current 6.2 seems not to work well together with refind
+- **Calamares:** Διόρθωση προβλήματος με τον διαχειριστή σύνδεσης lightdm που οφειλόταν σε ελαττωματικά commit στο πρωτόλειο έργο του Calamares.
+- Διόρθωση του προβλήματος με την κλειδοθήκη κατά την εγκατάσταση εκτός σύνδεσης.
+- **rEFInd:** Χρήση του linux-cachyos-lts ως προεπιλογής. Η τρέχουσα έκδοση 6.2 φαίνεται να μην λειτουργει σωστά με το rEFInd.
 
 23.03
 -----
 
-**New Features:**
+**Νέες λειτουργίες:**
 
-- Added the refind bootloader
-- Automatic Nvidia driver installation using MHWD
-- Encryption support for ZFS installation
-- Added Hyprland to netinstallation
-- CachyOS-KDE-Settings now uses the KDE default theme, but the CachyOS Themes are still preinstalled and available for use
-- Package updates: linux-cachyos 6.2.2, mesa 23.0.0, cachy-browser 110.0.1, plasma 5.27.2
-- Fully reworked and improved the bootloader calamares module
-- The ISO gets now signed with a GPG key
-- MHWD got improved and updated
-- Synced Calamares with upstream
+- Προσθήκη του φορτωτή εκκίνησης rEFInd.
+- Αυτόματη εγκατάσταση οδηγών NVIDIA με τη χρήση του MHWD.
+- Υποστήριξη κρυπτογράφησης για εγκαταστάσεις στο σύστημα αρχείων ZFS.
+- Προσθήκη του Hyprland στις επιλογές του netinstall.
+- Το CachyOS-KDE-Settings χρησιμοποιεί πλέον το προεπιλεγμένο θέμα του KDE, αλλά τα θέματα του CachyOS Themes παραμένουν προεγκατεστημένα και διαθέσιμα προς χρήση.
+- **Ενημερώσεις πακέτων:** linux-cachyos 6.2.2, mesa 23.0.0, cachy-browser 110.0.1, plasma 5.27.2.
+- Πλήρης ανασχεδιασμός και βελτίωση του αρθρώματος για τον φορτωτή εκκίνησης.
+- Το ISO υπογράφεται πλέον με κλειδί GPG.
+- Βελτιώσεις και ενημερώσεις στο εργαλείο MHWD.
+- Συγχρονισμός του Calamares με το πρωτόλειο έργο.
 
-**Bug-fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- The "replace partition" option now offers a filesystem selection
-- Fixed a typo in slide 3
-- nouveau got fixed and does now proper load the module
-- MHWD: Use modesetting for INTEL/ATI and Nouveau
-- Removed the zfs hook from mkinitcpio on the live iso, which caused issues when booting
-- You can download the update from our mirrors on SourceForge.
+- Η επιλογή «Αντικατάσταση διαμερίσματος» προσφέρει πλέον δυνατότητα επιλογής συστήματος αρχείων.
+- Διόρθωση τυπογραφικού λάθους στη διαφάνεια 3.
+- Διόρθωση του οδηγού nouveau για τη σωστή φόρτωση του αρθρώματος.
+- Χρήση modesetting για κάρτες INTEL/ATI και Nouveau.
+- Αφαίρεση του hook για το zfs από το mkinitcpio στο Live ISO, το οποίο προκαλούσε προβλήματα κατά την εκκίνηση.
+- Μπορείτε να κάνετε λήψη της ενημέρωσης από τα είδωλα διακομιστών μας στο SourceForge.
 
 23.02
 -----
 
-**New Features:**
+**Νέες λειτουργίες:**
 
-- The cachyos-community-v3 repo has been added
-- Budgie, Mate, and LXDE desktop environments have been added to the Netinstallation
-- Bluetooth.service is now enabled by default
-- F2FS and grub are enabled and working again
-- Package Updates: linux-cachyos 6.1.10, mesa 22.3.4, zfs-utils 2.1.9, glibc 2.37, cachy-browser 109.0.1
+- Προσθήκη του αποθετηρίου `cachyos-community-v3`.
+- Προσθήκη των περιβαλλόντων εργασίας Budgie, MATE και LXDE στο netinstall.
+- Η υπηρεσία Bluetooth.service ενεργοποιείται πλέον από προεπιλογή.
+- Το σύστημα αρχείων F2FS και ο φορτωτής εκκίνησης GRUB έχουν ενεργοποιηθεί και λειτουργούν ξανά κανονικά.
+- **Ενημερώσεις πακέτων:** linux-cachyos 6.1.10, mesa 22.3.4, zfs-utils 2.1.9, glibc 2.37, cachy-browser 109.0.1.
 
-**Bug-fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- Rate-mirrors now fall back to unranked mirrors if it fails to rate them
-- cachyos-rate-mirrors has a longer fetch-mirrors-timeout
-- Github has been added to the hosts to avoid mirrorlist issues
-- Boot entries for BIOS have been updated in syslinux
+- Το rate-mirrors πλέον κάνει επαναφορά στα μη αξιολογημένα είδωλα διακομιστών σε περίπτωση αποτυχίας της αξιολόγησης.
+- Το cachyos-rate-mirrors έχει αυξημένο χρονικό όριο για τη λήψη των ειδώλων διακομιστών.
+- Προσθήκη του GitΗub στα hosts για την αποφυγή προβλημάτων με τη λίστα των ειδώλων διακομιστών.
+- Ενημέρωση των καταχωρήσεων εκκίνησης για συστήματα BIOS στο syslinux.
 
 23.01
 -----
 
-**Features:**
+**Λειτουργίες:**
 
-- Calamares Slides got reworked and updated
-- UKUI Desktop Environment got added to the Netinstallation
-- Cinnamon Desktop Environment got added to the Netinstallation
-- Cmdline: zswap is now disabled as default because CachyOS provides zram as default
-- Calamares updated to the latest commit
-- LLVM 15 is now shipped as default
-- Package Updates: linux-cachyos 6.1.7, mesa 22.3.3, Plasma 5.26.5, llvm 15.0.7, gcc 12.1.1, binutils 2.40, zfs-utils 2.1.8, nvidia 525.85.05
-- CLI Installer got updated
+- Οι διαφάνειες του Calamares ανασχεδιάστηκαν και ενημερώθηκαν.
+- Προσθήκη του περιβάλλοντος εργασίας UKUI στις επιλογές του netinstall.
+- Προσθήκη του περιβάλλοντος εργασίας Cinnamon στις επιλογές του netinstall.
+- **Γραμμή εντολών:** Το zswap είναι πλέον απενεργοποιημένο από προεπιλογή, καθώς το CachyOS παρέχει το zram ως προεπιλογή.
+- Το Calamares ενημερώθηκε στην πιο πρόσφατη commit.
+- Το LLVM 15 παρέχεται πλέον ως προεπιλογή.
+- **Ενημερώσεις Πακέτων:** linux-cachyos 6.1.7, mesa 22.3.3, Plasma 5.26.5, llvm 15.0.7, gcc 12.1.1, binutils 2.40, zfs-utils 2.1.8, nvidia 525.85.05.
+- Ενημερώθηκε το πρόγραμμα εγκατάστασης μέσω γραμμής εντολών (CLI).
 
-**Bug-fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- remove-ucode shellprocess does also run now at the offline installation
-- pamac got removed from the netinstall
-- The ranked cachyos mirrors gets now correctly copied to the install target
-- power-profile-daemon don't gets enabled anymore as default
+- Η διεργασία κελύφους του remove-ucode εκτελείται πλέον και κατά την εγκατάσταση εκτός σύνδεσης.
+- Το pamac αφαιρέθηκε από τις επιλογές του netinstall.
+- Τα αξιολογημένα είδωλα διακομιστών του CachyOS αντιγράφονται πλέον σωστά στο σύστημα προορισμού.
+- Το power-profile-daemon δεν ενεργοποιείται πλέον αυτόματα από προεπιλογή.
 
 22.12
 -----
 
-**Features:**
+**Λειτουργίες:**
 
-- New GRUB background at the ISO bootloader
-- memtest is now included for UEFI Systems
-- CachyOS-sddm-theme got added to the KDE Installation
-- Automatic version script added when creating the ISO
-- Calamares updated to the latest commit
-- The mirrors are now ranked with "cachyos-rate-mirros", which ranks our mirrors and the arch ones
-- Packages Update: 6.1.1 Kernel, mesa 22.3.1, plasma 5.26.4,...
-- The Kofuku Desktop Environment got removed
-- extra ISO with llvm 15 included to provide support for newer AMD Cards
+- Νέο φόντο του GRUB στο φορτωτή εκκίνησης ISO,
+- Το memtest συμπεριλαμβάνεται πλέον για συστήματα UEFI.
+- Το CachyOS-sddm-theme προστέθηκε στην εγκατάσταση KDE.
+- Προσθήκη σεναρίου αυτόματης έκδοσης κατά τη δημιουργία του ISO.
+- Ενημέρωση του Calamares στο τελευταίο commit.
+- Τα είδωλα διακομιστών αξιολογούνται πλέον με το «cachyos-rate-mirrors», το οποίο τα κατατάσσει, συμπεριλαμβανομένων των ειδώλων διακομιστών του Arch Linux.
+- **Ενημερώσεις πακέτων:** Πυρήνας 6.1.1, mesa 22.3.1, plasma 5.26.4 κ.α.
+- Αφαιρέθηκε το περιβάλλον εργασίας Kofuku.
+- Παροχή επιπλέον ISO με ενσωματωμένο το LLVM 15 για την υποστήριξη νεότερων καρτών AMD.
 
-**Bug-fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- Calamares got fixed when using GNOME as ISO
-- zfshostid does now work proper for the offline and online installation
-- Add "kms" hook to the initcpiocfg module to follow archlinux defaults
-- And more ISO fixes
+- Το Calamares διορθώθηκε κατά τη χρήση του GNOME στο ISO.
+- Το zfshostid δεν λειτουργεί κανονικά για την εγκατάσταση εντός και εκτός σύνδεσης.
+- Προσθήκη του hook «kms» στο άρθρωμα initcpiocfg για τη χρήση με τις προεπιλογές του archlinux.
+- Περισσότερες διορθώσεις στο ISO.
 
 22.11
 -----
 
-**Features:**
+**Λειτουργίες:**
 
-- Calamares and its config are shipped in one package
-- Complete Cleanup of the packages in the netinstall
-- Add a module which automatically removes the not needed ucode
-- required RAM decreased to 2.5GB
-- Packages which are required for btrfs, are now only installed for btrfs
-- Calamares updated to the latest commit
-- The ISO Bootloader has now a background
-- Common package upgrades (mesa, kernel, ...)
-- Replace systemd-network with networkmanager
+- Το Calamares και οι ρυθμίσεις του παρέχονται σε ένα πακέτο.
+- Πλήρης εκκαθάριση των πακέτων στο netinstall.
+- Προσθήκη αρθρώματος που αφαιρεί αυτόματα τον περιττό κώδικα ucode.
+- Η απαιτούμενη μνήμη RAM μειώθηκε στα 2,5GB.
+- Τα πακέτα που απαιτούνται για το btrfs, πλέον εγκαθίστανται μόνο για το btrfs.
+- Το Calamares ενημερώθηκε στο πιο πρόσφατο commit.
+- Ο φορτωτής εκκίνησης του ISO διαθέτει πλέον φόντο.
+- Συνήθεις αναβαθμίσεις πακέτων (mesa, πυρήνας κ.α.).
+- Αντικαταστάθηκε το systemd-network με το networkmanager.
 
-**Bug-fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- qemu-quest-agent.service got removed from the ISO
-- copytoram got completely disabled, it breaks the offline installation
-- mkinitcpio.conf got updated
-- And more ISO fixes
+- Η υπηρεσία qemu-quest-agent.service αφαιρέθηκε από το ISO.
+- Το copytoram απενεργοποιήθηκε εντελώς, καθώς προκαλεί πρόβλημα στην εγκαταστάση εκτός σύνδεσης.
+- Ενημερώθηκε το mkinitcpio.conf.
+- Περισσότερες διορθώσεις στο ISO.
 
 22.10
 -----
 
-**Features:**
+**Λειτουργίες:**
 
-- Pacman uses now Architecture=auto for x86-64-v3 installation, since we added a patch that pacman does autodetect x86-64-v3
-- Pacman does show now, from which repo a package was installed
-- Bootloader selection auto detect if EFI is present, if not it will default to grub
-- Swap choice has been disabled now as default, since zram gets automatically dynamically generated
-- Calamares updated to the latest commit
-- Minimum RAM requirement has been set to 4GB
-- cachyos-grub-theme got removed
+- Το pacman χρησιμοποιεί πλέον την παράμετρο `Architecture=auto` για εγκαταστάσεις x86-64-v3, καθώς προστέθηκε διόρθωση που επιτρέπει στο pacman να ανιχνεύει αυτόματα την αρχιτεκτονική x86-64-v3.
+- Το pacman εμφανίζει πλέον από ποιο αποθετήριο έχει εγκατασταθεί το κάθε πακέτο.
+- Στο βήμα επιλογής φορτωτή εκκίνησης, γίνεται πλέον αυτόματος εντοπισμός αν υπάρχει EFI· σε αντίθετη περίπτωση, η προεπιλογή είναι το GRUB.
+- Η επιλογή swap απενεργοποιήθηκε ως προεπιλογή, καθώς το zram δημιουργείται πλέον αυτόματα και δυναμικά.
+- Το Calamares ενημερώθηκε στο πιο πρόσφατο commit.
+- Η ελάχιστη απαίτηση μνήμης RAM ορίστηκε στα 4GB.
+- Το cachyos-grub-theme αφαιρέθηκε.
 
-**Bug-fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- SSD and hdd fstab detection has been disabled until there is a upstream fix
-- double BTRFS subvolume has been fixed
-- Added missing microcode to the ISO grub bootloader
-- Added a fallback bootmode, which does not set any modeset (nomodeset)
-- And more ISO fixes
+- Ο εντοπισμός SSD και HDD στο fstab απενεργοποιήθηκε μέχρι να υπάρξει διόρθωση στο πρωτόλειο έργο.
+- Διορθώθηκε το σφάλμα με τους διπλούς υποτόμους στο BTRFS.
+- Προστέθηκε ο μικροκώδικας που έλειπε από τον φορτωτή εκκίνησης GRUB του ISO.
+- Προστέθηκε εφεδρική λειτουργία εκκίνησης, η οποία δεν ορίζει modeset (nomodeset).
+- Περισσότερες διορθώσεις στο ISO.
 
 22.09
 -----
 
-**Features:**
+**Λειτουργίες:**
 
-- Calamares is now on the latest 3.3 branch. Its brings bugfixes and new features to calamares
-- TUI-Installer is now included in the GUI ISO, you can use it with "cachyos-installer"
-- Calamares does now auto detect, if the target filesystem is a ssd or hdd and adjust to it the fstab options
-- Nvidia for latest gpu's (starting at 9xx) has now a own boot entry, to avoid issues with nouveau
-- fstab and zfs mount options got updated
-- FireFox won't be installed as default anymore since cachy-browser is installed as default
+- Το Calamares βρίσκεται πλέον στην πιο πρόσφατη έκδοση 3.3, φέρνοντας διορθώσεις σφαλμάτων και νέες λειτουργίες.
+- Το πρόγραμμα εγκατάστασης TUI περιλαμβάνεται πλέον στο ISO με γραφικό περιβάλλον και μπορείτε να το χρησιμοποιήσετε με την εντολή «cachyos-installer».
+- Το Calamares εντοπίζει πλέον αυτόματα αν το σύστημα αρχείων προορισμού βρίσκεται σε SSD ή HDD και προσαρμόζει ανάλογα τις επιλογές στο fstab.
+- Οι πρόσφατες κάρτες γραφικών NVIDIA (από τη σειρά 9xx και μετά) διαθέτουν πλέον δική τους επιλογή εκκίνησης για την αποφυγή προβλημάτων με τον οδηγό nouveau.
+- Ενημερώθηκαν οι επιλογές προσάρτησης για το fstab και το ZFS.
+- Το Firefox δεν εγκαθίσταται πλέον ως προεπιλογή, καθώς το cachy-browser είναι το προεπιλεγμένο πρόγραμμα περιήγησης.
 
-**Bug-fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- cachyos-gaming-meta has been removed from the netinstall module to avoid issues at the installation process
-- netinstall packages has been updated and got some fixes
-- OpenBox installation has been fixed
-- usual translation fixes
+- Το cachyos-gaming-meta αφαιρέθηκε από το άρθρωμα netinstall για την αποφυγή προβλημάτων κατά τη διαδικασία της εγκατάστασης.
+- Τα πακέτα του netinstall ενημερώθηκαν και δέχθηκαν ορισμένες διορθώσεις.
+- Διορθώθηκε η εγκατάσταση του OpenBox.
+- Έγιναν οι συνήθεις διορθώσεις στις μεταφράσεις.
 
 22.07
 -----
 
-**Features:**
+**Λειτουργίες:**
 
-- Boot-loader selection: User can now choose on the online installation between grub and systemd-boot
-- At online installation will now always the newest calamares installed, which helps to do bug fixes on the "air"
-- Calamares has now a mhwd module which automatically installs the needed drivers (free drivers)
-- Calamares has new picture slides at the installation
-- fstab and zfs mount options got updated
-- HiDPI support
+- **Επιλογή φορτωτή εκκίνησης:** Ο χρήστης μπορεί πλέον να επιλέξει μεταξύ GRUB και systemd-boot κατά τη διαδικτυακή εγκατάσταση.
+- Στη διαδικτυακή εγκατάσταση, εγκαθίσταται πλέον πάντα η νεότερη έκδοση του Calamares, επιτρέποντας την άμεση εφαρμογή διορθώσεων.
+- Το Calamares διαθέτει πλέον ένα άρθρωμα για το mhwd που εγκαθιστά αυτόματα τους απαραίτητους οδηγούς (ελεύθερους οδηγούς).
+- Το Calamares διαθέτει νέες διαφάνειες με εικόνες κατά τη διάρκεια της εγκατάστασης.
+- Ενημερώθηκαν οι επιλογές προσάρτησης για το fstab και το ZFS.
+- Υποστήριξη HiDPI.
 
-**Bug-fixes:**
+**Διορθώσεις σφαλμάτων:**
 
-- The locales bug in calamares got fixed
-- F2FS has been removed for the grub boot loader since it is currently not working (calamares issue), it can be still with systemd-boot used
-- Calamares shows now the correct default filesystem
-- Gnome ISO got fixed
-- Missing packages at the live ISO has been added for the offline installation
-- btrfs swap luksencryption got fixed
-- usual translation fixes
+- Διορθώθηκε το σφάλμα των τοπικών ρυθμίσεων στο Calamares.
+- Αφαιρέθηκε η επιλογή F2FS για το GRUB, καθώς δεν λειτουργεί επί του παρόντος (πρόβλημα του Calamares)· μπορεί να χρησιμοποιηθεί κανονικά με το systemd-boot.
+- Το Calamares εμφανίζει πλέον το σωστό προεπιλεγμένο σύστημα αρχείων.
+- Διορθώθηκε το ISO της έκδοσης GNOME.
+- Προστέθηκαν πακέτα που έλειπαν από το Live ISO για την εγκατάσταση εκτός σύνδεσης.
+- Διορθώθηκε η κρυπτογράφηση LUKS στο swap του btrfs.
+- Έγιναν οι συνήθεις διορθώσεις στις μεταφράσεις.
 
 22.06
 -----
 
-Following known bugs has been fixed:
+Διορθώθηκαν τα εξής γνωστά σφάλματα:
 
-- Install failed when a generic CPU was used
-- KDE did automatically mount zfs partitions which resulted that the auto login into the ISO did not worked anymore
+- Διορθώθηκε η αποτυχία εγκατάστασης όταν χρησιμοποιούνταν ένας γενικός (generic) επεξεργαστής.
+- Διορθώθηκε το ζήτημα όπου το KDE προσαρτούσε αυτόματα διαμερίσματα ZFS, με αποτέλεσμα να μην λειτουργεί πλέον η αυτόματη σύνδεση στο ISO.
 
-**Improvements:**
+**Βελτιώσεις:**
 
-- The firewall from the server has been corrected, cloudflare did blocked users as "bots", which resulted then into a error at installing
-- Added theming support for Gnome, XFCE, OpenBox
-- Updated our wiki
+- Διορθώθηκαν οι ρυθμίσεις τείχους προστασίας του διακομιστή· η Cloudflare απέκλειε χρήστες ως «bot», κάτι που προκαλούσε σφάλμα κατά την εγκατάσταση.
+- Προστέθηκε υποστήριξη θεμάτων για τα GNOME, XFCE και OpenBox.
+- Ενημερώθηκε το wiki μας.
 
-**_CachyOS - Kernel - Manager_**
-Also we are excited to announce our CachyOS-Kernel-Manager.
-Their you have the possibility to install the kernel from the repo and also configure with a GUI your own kernel build which makes is very easy to customize it to his own suits.
+**_CachyOS - Kernel - Manager_:**
+Είμαστε στην ευχάριστη θέση να ανακοινώσουμε το CachyOS-Kernel-Manager.
+Εκεί, έχετε τη δυνατότητα να εγκαταστήσετε τον πυρήνα από το αποθετήριο, καθώς και να διαμορφώσετε σε ένα γραφικό περιβάλλον τη δική σας παραλλαγή του πυρήνα, καθιστώντας την εξατομίκευσή του εξαιρετικά εύκολη.
 
-Following options you can select for a kernel compile:
+Διατίθενται οι εξής επιλογές για τη μεταγλώττιση του πυρήνα:
 
-- Scheduler (BMQ, BORE, cacULE, cfs, PDS, TT)
-- NUMA disabled or enabled
-- KBUILD CFLAGS (-O3 or -O2)
-- Set performance governor as default
-- Enable BBR2
+- Χρονοπρογραμματιστής (BMQ, BORE, cacULE, cfs, PDS, TT)
+- Ενεργοποίηση ή απενεργοποίηση του NUMA
+- KBUILD CFLAGS (-O3 ή -O2)
+- Ορισμός του performance governor ως προεπιλογής
+- Ενεργοποίηση του BBR2
 - Tickrate (500Hz, 600Hz, 750Hz, 1000Hz)
 - tickless (idle, perodic, full)
-- disable MQ-Deadline I/O Scheduler
-- disable Kyber I/O Scheduler
-- Enable or disable MG-LRU
-- Enable or disable DAMON
-- Enable or disable Speculative page fault
-- Enable or disable LRNG (Linux Random Number Generator)
-- Apply Kernel automatic Optimization (Does automatically detect your CPU March)
-- Apply Kernel Optimization selecting (You will see a list of different CPU-Marches and can select with a number yours)
-- Disable debug (it lowers the size of the kernel)
-- Enable or disable nf cone
-- Enable LTO (Full, Thin, No)
+- Απενεργοποίηση χρονοπρογραμματιστή I/O MQ-Deadline
+- Απενεργοποίηση χρονοπρογραμματιστή I/O Kyber
+- Ενεργοποίηση ή απενεργοποίηση του MG-LRU
+- Ενεργοποίηση ή απενεργοποίηση του DAMON
+- Ενεργοποίηση ή απενεργοποίηση του Speculative page fault
+- Ενεργοποίηση ή απενεργοποίηση του LRNG (Linux Random Number Generator)
+- Εφαρμογή αυτόματης βελτιστοποίησης πυρήνα (εντοπίζει αυτόματα την αρχιτεκτονική της CPU σας)
+- Εφαρμογη επιλεγμένης βελτιστοποίησης πυρήνα (θα δείτε μια λίστα με τις διάφορες αρχιτεκτονικές CPU για χειροκίνητη επιλογή)
+- Απενεργοποίηση του εντοπισμού σφαλμάτων (μειώνει το μέγεθος του πυρήνα)
+- Ενεργοποίηση ή απενεργοποίηση του nf cone
+- Ενεργοποίηση του LTO (Full, Thin, No)
 
 22.05
 -----
 
-CachyOS was founded a year ago. After almost one year of development, we are really proud to announce our first Stable Release of GUI Installer.
-We spent a lot of time investigating repo management, kernel development, infrastructure, theming, ... and finally put them all into the CachyOS GUI Installer.
-All the features we worked on and implemented into the Installer are just trying to offer users a completely customizable experience.
+Το CachyOS ιδρύθηκε πριν από έναν χρόνο. Μετά από σχεδόν δώδεκα μήνες ανάπτυξης, είμαστε πραγματικά περήφανοι που ανακοινώνουμε την πρώτη σταθερή έκδοση του **προγράμματος εγκατάστασης με γραφικό περιβάλλον (GUI)**.
+Αφιερώσαμε πολύ χρόνο ερευνώντας τη διαχείριση αποθετηρίων, την ανάπτυξη του πυρήνα, τις υποδομές, τα θέματα κ.α., μέχρι τελικά να τα ενσωματώσαμε όλα αυτά στο πρόγραμμα εγκατάστασης GUI του CachyOS.
+Όλες οι λειτουργίες που αναπτύξαμε και υλοποιήσαμε επιδιώκουν να προσφέρουν στους χρήστες μια πλήρως εξατομικεύσιμη εμπειρία.
 
-The most exciting changes are that we use now for the online install pacstrap which provide then a complete clear installed environment and we do support a complete native support for the zfs filesystem
+Οι πιο συναρπαστικές αλλαγές είναι ότι πλέον χρησιμοποιούμε το pacstrap για τη διαδικτυακή εγκατάσταση, το οποίο παρέχει ένα ολοκληρωμένο και καθαρό εγκατεστημένο περιβάλλον, ενώ υποστηρίζουμε πλήρως και εγγενώς το σύστημα αρχείων ZFS.
 
-Since Discord restrict the length of the messages the full announcement can be found here:
+Επειδή το Discord περιορίζει το μέγεθος των μηνυμάτων, μπορείτε να βρείτε ολόκληρη την ανακοίνωση εδώ:
 
 <https://discuss.cachyos.org/t/cachyos-gui-installer-changelog/>
 
-Download can be found here:
+Μπορείτε να βρείτε τα στοιχεία λήψης εδώ:
 <https://mirror.cachyos.org/ISO/kde/220522/>
 <https://sourceforge.net/projects/cachyos-arch/>

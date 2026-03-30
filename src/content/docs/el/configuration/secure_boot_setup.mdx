@@ -1,39 +1,38 @@
 ---
-title: Secure Boot Setup
-description: Set up secure boot with sbctl after installing CachyOS
+title: Ρύθμιση του Secure Boot
+description: Ρύθμιση του Secure Boot με το sbctl μετά την εγκατάσταση του CachyOS
 ---
 
 import ImageComponent from '~/components/image-component.astro';
 
 # sbctl
 
-[sbctl](https://github.com/Foxboron/sbctl) is a user-friendly secure boot key manager capable of setting up secure boot,
-offering key management capabilities, and keeping track of files that need to be signed in the boot chain.
+Το [sbctl](https://github.com/Foxboron/sbctl) είναι ένας εύχρηστος διαχειριστής κλειδιών για το Secure Boot, ικανός να ρυθμίζει το Secure Boot, προσφέροντας δυνατότητες διαχείρισης κλειδιών και παρακολούθησης των αρχείων που πρέπει να υπογραφούν στην ακολουθία εκκίνησης.
 
-## Installing sbctl
+## Εγκατάσταση του sbctl
 
 ```bash
 sudo pacman -S sbctl
 ```
 
-## Pre-setup
+## Πριν από τη ρύθμιση
 
 ### GRUB Boot Manager
 
-If you are using GRUB, run the following command to enable secure boot support on GRUB using CA Keys.
+Εάν χρησιμοποιείτε το GRUB, εκτελέστε την παρακάτω εντολή για να ενεργοποιήσετε την υποστήριξη για το Secure Boot χρησιμοποιώντας κλειδιά αρχών πιστοποίησης (CA).
 
 ```bash
 sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
 ```
 
 :::note
-Loading unnecessary modules in your boot manager has the potential to present a security risk.
-Only run this command if you actually need secure boot.
+Η φόρτωση περιττών αρθρωμάτων στον διαχειριστή εκκίνησης εγκυμονεί κίνδυνο ασφαλείας.
+Εκτελέστε αυτήν την εντολή μόνο αν χρειάζεστε πραγματικά το Secure Boot.
 :::
 
-### Entering Setup Mode in UEFI
-Firstly, we need to go to firmware settings and set secure boot mode to "Setup Mode". You can reboot from an
-already running system to firmware settings with following command.
+### Είσοδος σε «Setup Mode» για το UEFI
+Αρχικά, θα πρέπει να μεταβείτε στις ρυθμίσεις υλικολογισμικού και να θέσετε τη λειτουργία του Secure Boot σε «Setup Mode». Μπορείτε να κάνετε επανεκκίνηση από
+ένα ήδη εκτελούμενο σύστημα στις ρυθμίσεις υλικολογισμικού με την εξής εντολή:
 
 ```bash
 systemctl reboot --firmware-setup
@@ -42,33 +41,33 @@ systemctl reboot --firmware-setup
 <br />
 <ImageComponent imgsrc={import('~/assets/images/ideapad-bios-secure-boot.jpg')} />
 
-This is how the BIOS looks like on a Lenovo Ideapad 5 Pro. Reset to setup mode or restore factory keys and reboot back
-to the system.
+Έτσι μοιάζει το BIOS σε ένα Lenovo Ideapad 5 Pro. Κάντε επαναφορά σε «Setup Mode» ή επαναφορά των εργοστασιακών κλειδιών (factory keys) και έπειτα, κάντε επανεκκίνηση
+στο σύστημα.
 
-However, some MSI motherboards don't have a setup mode. To achieve the same effect, follow the two steps from the image below:
+Ωστόσο, ορισμένες μητρικές πλακέτες της MSI δεν διαθέτουν «Setup Mode». Για να επιτύχετε το ίδιο αποτέλεσμα, ακολουθήστε τα βήματα της παρακάτω εικόνας:
 <br />
 <ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
 
-## Setting Up sbctl
+## Ρύθμιση του sbctl
 
 ```bash
-sudo sbctl status # If setup mode is enabled we can proceed to the next step
+sudo sbctl status # Εάν το Setup Mode είναι ενεργοποιημένο (enabled), μπορείτε να προχωρήσετε στο επόμενο βήμα
 Installed:      ✘ sbctl is not installed
 Setup Mode:     ✘ Enabled
 Secure Boot     ✘ Disabled
 
-sudo sbctl create-keys # Create your custom secure boot keys
+sudo sbctl create-keys # Δημιουργήστε τα δικά σας προσαρμοσμένα κλειδιά για το Secure Boot
 Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
 Creating secure boot keys...✔
 Secure boot keys created!
 
-# Enroll your keys with Microsoft's and the OEM firmware's built-in keys
+# Καταχωρήστε τα κλειδιά σας μαζί με τα ενσωματωμένα κλειδιά της Microsoft και του υλικολογισμικού του κατασκευαστή
 sudo sbctl enroll-keys --microsoft --firmware-builtin
 Enrolling keys to EFI variables...✔
 Enrolled keys to the EFI variables!
 
 sudo sbctl status
-# sbctl should now be installed, we can proceed to signing the kernel images and boot manager
+# Το sbctl θα πρέπει τώρα να είναι εγκατεστημένο, οπότε μπορείτε να προχωρήσετε στην υπογραφή των ειδώλων του πυρήνα και του διαχειριστή εκκίνησης
 Installed:      ✔ sbctl is installed
 Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
 Setup Mode:     ✔ Disabled
@@ -76,16 +75,13 @@ Secure Boot     ✘ Disabled
 Vendor Keys:    microsoft
 ```
 
-## Signing the Kernel Image and Boot Manager
+## Υπογραφή του ειδώλου του πυρήνα και του διαχειριστή εκκίνησης
 
-CachyOS provides [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign),
-a script that takes the list of files needed to be signed from `sudo sbctl verify` and signs them all.
-Limine users should skip to [Limine](#limine).
+Το CachyOS παρέχει το [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign), ένα σενάριο που λαμβάνει τη λίστα των αρχείων που πρέπει να υπογραφούν από το `sudo sbctl verify` και τα υπογράφει όλα.
+Οι χρήστες του Limine θα πρέπει να μεταβούν απευθείας στην ενότητα [Limine](#limine).
 
 :::caution
-On systems with a separate `/boot` and `/boot/efi` partition layout, `sbctl` may only scan for EFI binaries in `/boot/efi`.
-This causes kernel images that are in `/boot` to not be detected. `sbctl-batch-sign` works around this by **always** scanning
-`/boot` for `vmlinuz-*` files.
+Σε συστήματα με διάταξη ξεχωριστών διαμερισμάτων `/boot` και `/boot/efi`, το `sbctl` ενδέχεται να σαρώνει για δυαδικά αρχεία EFI μόνο στο `/boot/efi`. Αυτό έχει ως αποτέλεσμα να μην εντοπίζονται τα είδωλα του πυρήνα που βρίσκονται στο `/boot`. Το `sbctl-batch-sign` παρακάμπτει αυτό το ζήτημα σαρώνοντας **πάντα** το `/boot` για αρχεία `vmlinuz-*`.
 :::
 
 ```bash
@@ -108,19 +104,19 @@ Verifying file database and EFI images in /boot...
 ✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
 ```
 
-Now that all the files are signed. **Reboot your system and go to your UEFI Settings to enable Secure Boot.**
+Τώρα που όλα τα αρχεία είναι υπογεγραμμένα, **κάντε επανεκκίνηση του συστήματός σας και μεταβείτε στις ρυθμίσεις UEFI για να ενεργοποιήσετε το Secure Boot.**
 
-Note that this is a one-time process as signing files with `-s` flag will save those files to `sbctl`'s database.
+Σημειώστε ότι αυτή είναι μια διαδικασία που χρειάζεται να γίνει μόνο μία φορά, καθώς η υπογραφή των αρχείων με την παράμετρο `-s` θα αποθηκεύσει αυτά τα αρχεία στη βάση δεδομένων του `sbctl`.
 
-:::tip[Reminder]
-`sbctl` ships with a [pacman hook](https://wiki.archlinux.org/title/Pacman_hook) meaning it will automatically
-sign all new files upon a kernel or boot manager update.
+:::tip[Υπενθύμιση]
+Το `sbctl` συνοδεύεται από ένα [pacman hook](https://wiki.archlinux.org/title/Pacman_hook), πράγμα που σημαίνει ότι θα υπογράφει αυτόματα
+όλα τα νέα αρχεία μετά από μια ενημέρωση του πυρήνα ή του διαχειριστή εκκίνησης.
 :::
 
 ### systemd-boot
 
-CachyOS uses `systemd-boot-update.service` provided by systemd to update the boot manager on reboot. This means that the `sbctl`
-pacman hook will **not** sign the updated EFI binaries. As a workaround, we can sign the boot manager directly
+Το CachyOS χρησιμοποιεί το `systemd-boot-update.service` που παρέχεται από το systemd για την ενημέρωση του διαχειριστή εκκίνησης κατά την επανεκκίνηση. Αυτό σημαίνει ότι το pacman hook του `sbctl`
+**δεν** θα υπογράφει τα ενημερωμένα δυαδικά αρχεία EFI. Για να παρακάμψετε αυτό το ζήτημα, μπορείτε να υπογράψετε απευθείας τον διαχειριστή εκκίνησης.
 
 ```sh
 sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
@@ -128,8 +124,8 @@ sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/
 
 ### Limine
 
-Limine is a special boot manager that allows checking the hash of kernel
-images and other files that Limine uses during boot. If this is enabled, any
+Το Limine είναι ένας ειδικός διαχειριστής εκκίνησης που επιτρέπει τον έλεγχο του hash των ειδώλων
+του πυρήνα και των άλλων αρχείων που χρησιμοποιεί το Limine κατά την εκκίνηση. If this is enabled, any
 sort of manual configuration done by the user, e.g. signing the image via
 `sbctl-batch-sign`, will modify the hash of the corresponding files and
 fail Limine's checksum verification.
@@ -139,15 +135,15 @@ boot process that bypasses EFI chainloading and signature checks. The only EFI
 binaries that need to be signed are Limine itself.
 
 ```sh
-# Use limine-enroll-config to sign Limine's EFI binary
-# This uses sbctl under the hood
+# Χρησιμοποιήστε το limine-enroll-config για την υπογραφή του δυαδικού αρχείου EFI του Limine
+# Αυτό χρησιμοποιεί το sbctl στο παρασκήνιο
 sudo limine-enroll-config
 sudo limine-update
 ```
 
-## Verify that Secure Boot is Enabled
+## Επαλήθευση ενεργοποίησης του Secure Boot
 
-To check that secure boot is indeed enabled. You can run one of the following commands
+Για να επαληθεύσετε ότι το Secure Boot έχει ενεργοποιηθεί, μπορείτε να εκτελέσετε μία από τις παρακάτω εντολές:
 
 ```bash
 sudo sbctl status
