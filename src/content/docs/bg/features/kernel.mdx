@@ -1,0 +1,159 @@
+---
+title: CachyOS Kernel
+description: Характеристики и промени в ядрото на CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+Ядрото на CachyOS е персонализирано ядро, което използва подобрения, конфигурации и пачове от upstream.
+
+## Характеристики
+
+### Оптимизации на производителността
+
+- **Разширена компилация**: Силно конфигурируем PKGBUILD с поддръжка както за GCC, така и за Clang компилатори.
+- **Link Time Optimization (LTO)**: Thin LTO е активиран по подразбиране за по-добра производителност.
+- **Profile-Guided Optimization**: AutoFDO + Propeller профилиране за оптимално генериране на код ([Научете повече](https://cachyos.org/blog/2411-kernel-autofdo/)).
+- **Kernel Control Flow Integrity (kCFI)**: Налично при използване на LLVM за подобрена сигурност.
+- **Опции за честота на таймера**: Конфигурируема между 300Hz, 500Hz, 600Hz, 750Hz и 1000Hz (по подразбиране: 1000Hz).
+- **Оптимизации за архитектура**: Поддръжка за специфични компилации за x86-64-v3, x86-64-v4 и AMD Zen4.
+- **Компилаторни оптимизации**: Разширени GCC флагове като `-fivopts` и `-fmodulo-sched`.
+
+### Подобрения на процесора
+
+- **Множество планировчици (schedulers)**: BORE, EEVDF и BMQ планировчици за оптимизация на различни натоварвания.
+- **Подобрения на AMD P-State**: Поддръжка на Preferred Core и най-новите подобрения на amd-pstate от linux-next.
+- **Поддръжка в реално време**: Налични RT компилации на ядрото с интеграция на BORE scheduler.
+- **CachyOS Sauce**: Персонализирана `CONFIG_CACHY` конфигурация с настройки на планировчика и системни туинкове.
+- **Нисколатентни оптимизации**: Пачове за подобрена отзивчивост и намален джитър.
+
+### Файлова система и памет
+
+- **ZFS поддръжка**: Вградена поддръжка на ZFS файлова система с предварително компилирани модули.
+- **NVIDIA интеграция**:
+  - Модули на собствените драйвери на NVIDIA с пачове.
+  - Поддръжка на драйверите с отворен код на NVIDIA.
+  - Готови за използване модули в хранилището.
+- **Подобрения на I/O планировчици**:
+  - Подобрена производителност на BFQ и mq-deadline.
+  - Поддръжка на алтернативен I/O scheduler [ADIOS](https://github.com/firelzrd/adios).
+- **Управление на паметта**:
+  - Пач [le9uo](https://github.com/firelzrd/le9uo) за предотвратяване на page thrashing при натоварване на паметта.
+  - Туинкове за управление на паметта от Zen-kernel (компакция, оптимизация на водния маркер).
+
+### Допълнителни характеристики
+
+#### Хардуерна поддръжка
+- **Игри хардуер**: Пачове за Steam Deck (аудио, HW quirks, HID) и поддръжка на ROG Ally.
+- **Apple хардуер**: Поддръжката за T2 MacBook е включена по подразбиране.
+- **ASUS хардуер**: Разширени пачове за съвместимост с ASUS хардуер.
+- **Графика**: Активирана HDR поддръжка, override на минималната мощност на AMDGPU (`amdgpu_ignore_min_pcap`).
+
+#### Системни подобрения
+- **Мултимедия**: Модулите v4l2loopback са включени по подразбиране.
+- **Виртуализация**: ACS Override поддръжка за VFIO/GPU passthrough.
+- **Интеграция с upstream**: Избрани пачове от Clear Linux и linux-next.
+
+#### Разни
+
+Ядрото на CachyOS има и някои други забележителни характеристики, които са фини, но подобряват потребителското изживяване:
+
+- Включва debug вариант на ядрото, който предоставя unstripped kernel binary за debugging цели. Този пакет е необходим за профилиране на ядрото с AutoFDO.
+- [Binder](https://developer.android.com/reference/android/os/Binder), модулът, необходим за [Waydroid](https://waydro.id/), е активиран по подразбиране в конфигурацията на ядрото и вече е [настроен](https://github.com/CachyOS/linux-cachyos/blob/2f380e2b35c4ad9acda98296f638f93af3742533/linux-cachyos/config#L11037).
+
+## Варианти
+
+CachyOS предлага разнообразие от опции за ядра. Всички ядра, които предоставяме, са с [CachyOS Base Patchset](https://github.com/CachyOS/kernel-patches).
+За всяко от ядрата съществува [съответен -lto вариант](#package-naming-convention), който е компилиран с [clang](https://clang.llvm.org/) вместо с [GCC](https://gcc.gnu.org/).
+
+- **linux-cachyos**
+  - Ядрото по подразбиране. Това е препоръчителното ядро, ако не сте сигурни кое да използвате.
+  - 1000Hz tickrate за подобрена отзивчивост.
+  - Компилирано с Clang и ThinLTO.
+  - Профилирано с наш собствен [AutoFDO](https://cachyos.org/blog/2411-kernel-autofdo/) профил за подобрена производителност. [Скриптът](https://github.com/CachyOS/cachyos-benchmarker/blob/master/kernel-autofdo.sh), използван за профилиране на ядрото.
+- **linux-cachyos-bore**
+  - Използва [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
+- **linux-cachyos-bmq**
+  - Използва BMQ scheduler от [Project C](https://gitlab.com/alfredchen/projectc/) на Alfred Chen.
+    - `Не поддържа sched-ext.`
+- **linux-cachyos-deckify**
+  - Ядрото по подразбиране за преносими устройства. **Не се препоръчва** и **не се поддържа** използването на друго ядро на такива устройства.
+  - Използва [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
+  - Специфични за преносимите устройства пачове върху основния набор от пачове за подобряване на съвместимостта и цялостното изживяване на такива устройства.
+- **linux-cachyos-eevdf**
+  - Настройва планировчика на ядрото по подразбиране за подобрена отзивчивост.
+- **linux-cachyos-lts**
+  - Базирано на най-новото Long Term Support ядро.
+  - Използва [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
+  - Минимално пачвано в сравнение с други ядра, за да се гарантира максимална стабилност.
+- **linux-cachyos-hardened**
+  - Използва [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
+  - Включва [linux-hardened](https://github.com/anthraxx/linux-hardened) набор от пачове.
+  - Конфигурацията на ядрото е базирана на [linux-hardened config](https://gitlab.archlinux.org/archlinux/packaging/packages/linux-hardened/-/blob/main/config).
+    - Съдържа много агресивно засилване на сигурността, което значително потиска производителността и потребителското изживяване.
+    - `Не поддържа sched-ext.`
+- **linux-cachyos-rc**
+  - Базирано на най-новото mainline ядро от [дървото на Linus](https://github.com/torvalds/linux/).
+  - Използва [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
+  - Основното ядро за въвеждане на нови функции в нашия набор от пачове.
+- **linux-cachyos-server**
+  - Настроено за сървърни натоварвания в сравнение с десктоп употреба.
+    - 300Hz tickrate.
+    - Без предимство (no preemption).
+    - Стандартен EEVDF.
+- **linux-cachyos-rt-bore**
+  - Превантивност в реално време (Real-time preemption).
+  - Използва [BORE](https://github.com/firelzrd/bore-scheduler) scheduler.
+
+:::note
+Освен ако не е посочено друго, може да се приеме, че всички други варианти на ядрото имат същата конфигурация като ядрото по подразбиране.
+:::
+
+Моля, отворете проблем в [linux-cachyos GitHub](https://github.com/CachyOS/linux-cachyos) за предложения и подобрения, които могат да бъдат добавени към ядрото по подразбиране.
+
+### Конвенция за именуване на пакети
+
+```sh
+linux-cachyos # Базов пакет на ядрото за ядрото по подразбиране. Компилиран с Clang и ThinLTO
+linux-cachyos-hardened # Базов пакет на ядрото за hardened ядрото. Компилиран с GCC
+linux-cachyos-hardened-lto # clang-компилиран аналог на linux-cachyos-hardened
+linux-cachyos-hardened-{,lto-}headers
+linux-cachyos-hardened-{,lto-}nvidia
+linux-cachyos-hardened-{,lto-}nvidia-open
+linux-cachyos-hardened-{,lto-}zfs
+linux-cachyos-hardened-{,lto-}dbg
+```
+
+## Предварително компилирани модули на ядрото
+
+За да обслужва по-голяма потребителска база, CachyOS предоставя някои добре познати и често използвани модули на ядрото заедно с ядрото. Това означава, че потребителите вече няма да трябва да прекомпилират тези модули след всяка актуализация на ядрото или при всяка нова инсталация на ядро, а просто ще трябва да ги инсталират от хранилището, тъй като те вече са предварително компилирани. Това прави излишни всички `-dkms` пакети, които потребителят може да има и които предоставят същия модул като предварително компилираната версия.
+
+### ZFS
+
+[ZFS](https://openzfs.org/wiki/Main_Page) е една от многото файлови системи, поддържани в CachyOS. Поради лицензирането си под
+[CDDL](https://opensource.org/license/cddl-1-0), тя е несъвместима с лиценза на ядрото на Linux и следователно не може да бъде включена в дървото. Предоставеният модул включва най-новите функции и корекции от upstream, за да осигури съвместимост с най-новото ядро.
+
+### NVIDIA
+
+CachyOS ships both precompiled versions of the close-sourced and [open-sourced](https://github.com/NVIDIA/open-gpu-kernel-modules/) kernel modules. Due to the development
+of NVIDIA's kernel module being out-of-tree and thus does not follow the kernel's release cadence, the stock configuration can sometimes be incompatible with the latest
+kernel. As a workaround, CachyOS patches the modules with community-created patches or patches shared by NVIDIA directly.
+
+## ЧЗВ
+
+### Защо AutoFDO не се използва за всички останали варианти на ядрото?
+
+Тъй като изграждането му е скъпо – то изисква изграждане на ядрото два пъти, което води до повече време и ресурси, посветени на компилацията. Процесът на изграждане на ядро с AutoFDO включва следните стъпки:
+
+1) Изграждане на ядрото с активирани AutoFDO и debugging възможности.
+2) Създаване на профил, което означава изпълнение на работни натоварвания, за да се съберат профилиращи данни за възможните оптимизации.
+3) Преизграждане на ядрото с AutoFDO профила.
+
+Поради това AutoFDO присъства само в [linux-cachyos](/features/kernel#variants) вариант засега.
+
+За повече информация относно AutoFDO, кликнете [тук.](https://cachyos.org/blog/2411-kernel-autofdo/)
+
+### Подобрява ли ядрото в реално време производителността в игрите?
+
+Не, не я подобрява. Ядрото в реално време прави много повече код превантивен в сравнение с нормално превантивно (PREEMPT) ядро. Това означава, че много повече задачи (включително игрови процеси) често биват прекъсвани и принудително отстъпват системни ресурси, което води до по-лоша производителност.

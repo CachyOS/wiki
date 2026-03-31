@@ -1,0 +1,107 @@
+---
+title: Управление на Linux ядра и sched-ext framework с CachyOS Kernel Manager
+description: CachyOS Kernel Manager е мощен инструмент за управление на ядра, който позволява на потребителите лесно да инсталират или изграждат персонализирани ядра.
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+## Инсталиране на ядро от хранилище
+
+CachyOS Kernel Manager прави инсталирането и управлението на ядра от всяко Arch Linux хранилище изключително лесно.
+
+За да инсталирате ядро, стартирайте приложението `CachyOS Kernel Manager` и изберете желаното ядро, като маркирате квадратчето `[]` от списъка с всички налични опции, след което просто натиснете `Execute`, за да започне инсталацията на ядрото.
+
+За да деинсталирате ядро, просто премахнете отметката `[]` от квадратчето до инсталираното ядро, което искате да премахнете, и отново натиснете `Execute`.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km1.png')} />
+
+:::note
+Бутонът `Execute` става недостъпен, когато изберете вече инсталирано ядро.
+:::
+
+## Конфигуриране и изграждане на персонализирано CachyOS ядро
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km2.png')} />
+
+:::note
+CachyOS Kernel Manager е специално проектиран да изгражда персонализирани ядра за **CachyOS варианти** и не поддържа изграждане или конфигуриране на стандартно ядро на Arch Linux или друг вариант.
+:::
+
+*За да започнете, отворете Kernel Manager и кликнете върху бутона `Configure`, за да започнете да настройвате различни параметри, като желания планировчик (scheduler), tick rate и други. След като направите желаните промени, кликнете върху `Build kernel`, за да започнете изграждането на вашето персонализирано CachyOS ядро.*
+
+**Изградените пакети на ядрото и кешът се съхраняват в** `~/.cache/cachyos-km/`
+
+**Налични опции за конфигурация:**
+
+* `Custom package name`: С тази опция можете да наименувате ядрото си както желаете. Например: `linux-custom-cachy`
+* Scheduler (BORE, RC, RT, RT+BORE, EEVDF и BMQ)
+* Enable CachyOS config
+* Tweak Configuration via nconfig, menuconfig, xconfig, или gconfig
+* Enable/Disable NUMA
+* Enable/Disable Modprobed-db
+* KBUILD CFLAGS (-O3 или -O2)
+* Performance governor as default
+* Enable BBR3
+* Tick rate selection (100Hz, 250Hz, 300Hz, 500Hz, 600Hz, 750Hz, 1000Hz)
+* Tickless mode (idle, periodic, full)
+* Preemption (Full, Voluntary или Server)
+* Transparent Hugepages (Always или Madvise)
+* Enable/Disable DAMON
+* Enable/Disable Automatic CPU arch detection
+* Apply kernel optimization for specific CPU architectures
+* Enable LTO (Full, Thin, No)
+* Build ZFS Module
+* Build NVIDIA Closed Module
+* Build NVIDIA Open Module
+* Include vmlinux with debug information/symbols
+* Load/Save Kernel Manager config preset: `(Само пресети от самия мениджър)`
+* Kernel Patches Management (Поддръжка за локални и отдалечени)
+
+*След като ядрото бъде успешно изградено, ще бъдете подканени за вашата sudo парола, за да инсталирате ядрото.*
+
+## Управление на sched-ext framework
+
+:::caution[Изисква функциониращ polkit агент, за да работи правилно.]
+Вижте следната **[страница на Arch Wiki за справка.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+Kernel Manager предоставя графичен интерфейс (GUI) за управление и контрол на sched-ext планировчици. Достъпете GUI като кликнете върху бутона `sched-ext scheduler config` в главния прозорец.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km3.png')} />
+
+Този GUI ви позволява да:
+
+- Превключвате между различни sched-ext (scx) планировчици.
+- Активирате или деактивирате услугата на планировчика.
+- Проверявате кой планировчик работи в момента.
+- Задавате флагове и профили на планировчика.
+
+За да постигне това, Kernel Manager използва `scx_loader` с конфигурация, съхранявана в `/etc/scx_loader.toml`.
+
+За повече информация относно конфигурационния файл на `scx_loader` вижте [тази документация](https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/configuration.md).
+
+- Как работи `scx_loader`?
+    - След като сте избрали планировчика и профила, scx_loader ще стартира планировчика с избрания профил и ще запази тази конфигурация във файла `/etc/scx_loader.toml`, за да се запази след рестартиране. Пример как ще изглежда файлът при избор на `scx_bpfland` с профил `Gaming`:
+        ```toml
+        default_sched = "scx_bpfland"
+        default_mode = "Gaming"
+
+        [scheds.scx_bpfland]
+        auto_mode = []
+        gaming_mode = ["-m", "performance"]
+        lowlatency_mode = ["-k", "-s", "5000", "-l", "5000"]
+        powersave_mode = ["-m", "powersave"]
+        ```
+
+### Профили на планировчика
+
+- Какво представляват "профилите"?
+  - Те са предварително зададени настройки за планировчика, които модифицират флагове въз основа на доказани комбинации, за да повишат ефективността за конкретни случаи на употреба, като например "Gaming".
+
+Вижте всички подробности за профилите в [scheduler guide.](/configuration/sched-ext#scheduler-guide-profiles-and-use-cases)

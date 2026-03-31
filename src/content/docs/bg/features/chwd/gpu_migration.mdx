@@ -1,0 +1,93 @@
+---
+title: Превключване между NVIDIA и AMD графични процесори
+description: Инструкции за миграция от NVIDIA към AMD (и обратно) в CachyOS.
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::note[Това ръководство се прилага, ако сменяте графичния си процесор (NVIDIA ↔ AMD) на съществуваща инсталация на CachyOS.]
+:::
+
+## Предварителни условия
+  - Новият ви графичен процесор е правилно инсталиран и свързан.
+  - Уверете се, че системата ви е напълно актуализирана
+    ```bash
+    sudo pacman -Syu
+    ```
+
+### Стъпки за миграция
+
+<Tabs>
+    <TabItem label='От NVIDIA към AMD'>
+        Драйверите за AMD са включени в Linux Kernel, но може да се наложи да почистите старата конфигурация на NVIDIA и да се уверите, че необходимите пакети за AMD са инсталирани.
+        <Steps>
+            1. Проверете кой профил на драйвера на NVIDIA е инсталиран в момента:
+                ```bash
+                sudo chwd --list-installed
+                ```
+            2. Премахнете конкретния профил с флага `-r`:
+                ```bash
+                sudo chwd -r <profile-name>
+                ```
+            3. Изключете системата и продължете с инсталирането на вашия AMD графичен процесор.
+            4. След зареждане използвайте chwd, за да открие автоматично графичния ви процесор и да инсталира правилните пакети за AMD.
+                ```bash
+                sudo chwd -a
+                ```
+            5. След инсталирането на новите драйвери актуализирайте initramfs и конфигурацията на bootloader-а
+                > CachyOS включва pacman hook, който автоматично преизгражда initramfs при добавяне или премахване на драйвери.
+                > Това гарантира, че правилните драйвери се зареждат при стартиране.
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            6. Рестартирайте, за да приложите промените.
+                ```bash
+                sudo reboot
+                ```
+            7. След рестартиране проверете дали драйверите за AMD са активни.
+                ```bash
+                vulkaninfo | grep "deviceName"
+                ```
+                или
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                Ако видите вашия AMD графичен процесор в списъка, драйверите работят правилно.
+        </Steps>
+    </TabItem>
+    <TabItem label='От AMD към NVIDIA'>
+        <Steps>
+            1. Почистете останалите пакети за AMD.
+                ```bash
+                sudo chwd -r amd
+                ```
+            2. Изключете системата и продължете с инсталирането на вашия NVIDIA графичен процесор.
+            3. След зареждане използвайте chwd, за да открие автоматично графичния ви процесор и да инсталира правилните пакети за NVIDIA.
+                ```bash
+                sudo chwd -a
+                ```
+            4. След инсталирането на новите драйвери актуализирайте initramfs и конфигурацията на bootloader-а
+                > CachyOS включва pacman hook, който автоматично преизгражда initramfs при добавяне или премахване на драйвери.
+                > Това гарантира, че правилните драйвери се зареждат при стартиране.
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            5. Рестартирайте, за да приложите промените.
+                ```bash
+                sudo reboot
+                ```
+            6. След рестартиране проверете дали драйверите за NVIDIA са активни.
+                ```bash
+                nvidia-smi
+                ```
+                или
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                Ако видите вашия NVIDIA графичен процесор в списъка, драйверите работят правилно.
+        </Steps>
+    </TabItem>
+</Tabs>
