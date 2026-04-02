@@ -409,7 +409,7 @@ export default defineConfig({
               translations: {
                 cs: 'Správce jader',
                 de: 'Kernel-Manager',
-                el: 'Διαχειριστής πυρήνας',
+                el: 'Διαχειριστής πυρήνα',
                 es: 'Gestor de núcleos',
                 fr: 'Gestion de Noyaux',
                 ja: 'カーネルマネージャー',
