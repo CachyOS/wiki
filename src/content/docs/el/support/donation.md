@@ -22,10 +22,10 @@ description: Τρόποι για να μας υποστηρίξετε
 
 0xc2dc77327F78A7B85Db3941Eb49e74F41E961649
 
-### BitCoin
+### Bitcoin
 
 bc1qmwglfchlc335du6pcu6w64cexu7cck0mzhyw42
 
-### LiteCoin
+### Litecoin
 
 LgGTwcEBcXqMgNT6XyyNWABMb7dZVtVg9w
