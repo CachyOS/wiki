@@ -7,17 +7,7 @@ tableOfContents:
 ---
 
 import ImageComponent from '~/components/image-component.astro';
-
-# sbctl
-
-[sbctl](https://github.com/Foxboron/sbctl) is a user-friendly secure boot key manager capable of setting up secure boot,
-offering key management capabilities, and keeping track of files that need to be signed in the boot chain.
-
-## Installing sbctl
-
-```bash
-sudo pacman -S sbctl
-```
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
 ## Pre-setup
 
@@ -34,7 +24,8 @@ Loading unnecessary modules in your boot manager has the potential to present a 
 Only run this command if you actually need secure boot.
 :::
 
-### Entering Setup Mode in UEFI
+### Enabling Setup Mode in UEFI
+
 Firstly, we need to go to firmware settings and set secure boot mode to "Setup Mode". You can reboot from an
 already running system to firmware settings with following command.
 
@@ -52,38 +43,81 @@ However, some MSI motherboards don't have a setup mode. To achieve the same effe
 <br />
 <ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
 
-## Setting Up sbctl
+#### systemd-boot: Installing sbctl and Enrolling Keys
 
-```bash
-sudo sbctl status # If setup mode is enabled we can proceed to the next step
-Installed:      ✘ sbctl is not installed
-Setup Mode:     ✘ Enabled
-Secure Boot     ✘ Disabled
+Before proceeding, make sure to check if `sbctl` is installed.
 
-sudo sbctl create-keys # Create your custom secure boot keys
-Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-Creating secure boot keys...✔
-Secure boot keys created!
+[sbctl](https://github.com/Foxboron/sbctl) is a user-friendly secure boot key manager capable of setting up secure boot,
+offering key management capabilities, and keeping track of files that need to be signed in the boot chain.
 
-# Enroll your keys with Microsoft's and the OEM firmware's built-in keys
-sudo sbctl enroll-keys --microsoft --firmware-builtin
-Enrolling keys to EFI variables...✔
-Enrolled keys to the EFI variables!
+<details>
+    <summary>How to install sbctl</summary>
+    ```bash title='Open a terminal and run the following command'
+    sudo pacman -S sbctl
+    ```
+</details>
 
-sudo sbctl status
-# sbctl should now be installed, we can proceed to signing the kernel images and boot manager
-Installed:      ✔ sbctl is installed
-Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-Setup Mode:     ✔ Disabled
-Secure Boot     ✘ Disabled
-Vendor Keys:    microsoft
-```
+Now that `sbctl` is installed, you have to setup sbctl and enroll your keys to the firmware. This process is pretty straightforward, just follow the steps below.
+
+<Steps>
+1. Check if Setup Mode is enabled:
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>Expected Output</summary>
+        ```bash
+        Installed:      ✘ sbctl is not installed
+        Setup Mode:     ✘ Enabled
+        Secure Boot     ✘ Disabled
+        ```
+    </details>
+2. Create your custom Secure Boot keys:
+    ```bash
+    sudo sbctl create-keys
+    ```
+    <details>
+        <summary>Example of a successful key creation</summary>
+        ```bash
+        Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Creating secure boot keys...✔
+        Secure boot keys created!
+        ```
+    </details>
+3. Enroll your keys with Microsoft's and the OEM firmware's built-in keys:
+    ```bash
+    sudo sbctl enroll-keys --microsoft --firmware-builtin
+    ```
+    <details>
+        <summary>Expected output</summary>
+        ```bash
+        Enrolling keys to EFI variables...✔
+        Enrolled keys to the EFI variables!
+        ```
+    </details>
+4. Check the status of sbctl again to make sure that the keys are enrolled and setup mode is disabled:
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>Expected Output</summary>
+        ```bash
+        Installed:      ✔ sbctl is installed
+        Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Setup Mode:     ✔ Disabled
+        Secure Boot     ✘ Disabled
+        Vendor Keys:    microsoft
+        ```
+    </details>
+</Steps>
 
 ## Signing the Kernel Image and Boot Manager
 
+<Tabs>
+<TabItem label='systemd-boot'>
+
 CachyOS provides [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign),
 a script that takes the list of files needed to be signed from `sudo sbctl verify` and signs them all.
-Limine users should skip to [Limine](#limine).
 
 :::caution
 On systems with a separate `/boot` and `/boot/efi` partition layout, `sbctl` may only scan for EFI binaries in `/boot/efi`.
@@ -113,6 +147,8 @@ Verifying file database and EFI images in /boot...
 
 Now that all the files are signed. **Reboot your system and go to your UEFI Settings to enable Secure Boot.**
 
+Check [this part for reference](/configuration/secure_boot_setup#enabling-setup-mode-in-uefi)
+
 Note that this is a one-time process as signing files with `-s` flag will save those files to `sbctl`'s database.
 
 :::tip[Reminder]
@@ -120,17 +156,14 @@ Note that this is a one-time process as signing files with `-s` flag will save t
 sign all new files upon a kernel or boot manager update.
 :::
 
-### systemd-boot
-
 CachyOS uses `systemd-boot-update.service` provided by systemd to update the boot manager on reboot. This means that the `sbctl`
 pacman hook will **not** sign the updated EFI binaries. As a workaround, we can sign the boot manager directly
 
 ```sh
 sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
 ```
-
-### Limine
-
+</TabItem>
+<TabItem label='Limine'>
 Limine is a special boot manager that allows checking the hash of kernel
 images and other files that Limine uses during boot. If this is enabled, any
 sort of manual configuration done by the user, e.g. signing the image via
@@ -161,6 +194,8 @@ Proceed to generate a hash for Limine's splash image:
 :::note[Root permissions are required to perform the following steps, make sure to use sudo or switch to the root user before proceeding.]
 :::
 
+<Steps>
+
 1. Check the current name and path of the splash image in the config file:
     ```sh title="Open a terminal and run the following command:"
     sudo cat /boot/limine.conf
@@ -185,7 +220,9 @@ Proceed to generate a hash for Limine's splash image:
     ```
     As you can see, the hash is appended to the path with a `#` symbol. Save the file after making the change.
 
-After enabling config checksum enrollment and generating the hash for the splash image, run the following command to enroll the config checksum and sign Limine's EFI binary:
+</Steps>
+
+After enabling config checksum enrollment and generating the hash for the splash image, run the following commands to enroll the config checksum and sign Limine's EFI binary:
 
 ```sh
 # Use limine-enroll-config to enroll the config checksum and sign Limine's EFI binary
@@ -193,8 +230,10 @@ After enabling config checksum enrollment and generating the hash for the splash
 sudo limine-enroll-config
 sudo limine-update
 ```
+</TabItem>
+</Tabs>
 
-## Verify that Secure Boot is Enabled
+## Secure Boot Status Check
 
 To check that secure boot is indeed enabled. You can run one of the following commands
 
