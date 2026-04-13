@@ -126,8 +126,25 @@ Limine は特殊なブートマネージャーで、ブート時に使用する�
 
 ただし、Limine は EFI チェーンロードと署名チェックをバイパスする特殊なブートプロセスを持つため、これらのファイルへの署名は必要ありません。署名が必要な EFI バイナリは Limine 自身だけです。
 
+:::caution[Limine 11.2.0 以降について]
+Limine 11.2.0 より、UEFI セキュアブートが有効な場合は、セキュアブートポリシーが**すべてのファイルに対して強制的に適用される**ようになりました。
+
+- 設定ファイルの BLAKE2B チェックサムを Limine EFI バイナリに**かならず登録**する必要があります。登録されていない場合、Limine で `SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED` エラーが発生します。
+- カーネルや initramfs など、`limine.conf` 内のすべてのファイルパスの末尾に、BLAKE2B ハッシュを**かならず書き加える**必要があります。(例: `boot():/vmlinuz-linux#<hash>`)
+- 設定エディターはすべての環境で無効化されます。
+- ハッシュが一致しないときにはかならずエラーが発生します。
+:::
+
+設定ファイルのチェックサムを自動で登録するよう設定するには、`/etc/default/limine` に以下の行を追加してください。
+
 ```sh
-# limine-enroll-config を使って Limine の EFI バイナリに署名する
+ENABLE_ENROLL_LIMINE_CONFIG=yes
+```
+
+その後、以下のコマンドを実行してください。
+
+```sh
+# limine-enroll-config を使って設定ファイルのチェックサムを登録し、Limine の EFI バイナリに署名
 # 内部では sbctl を使用しています
 sudo limine-enroll-config
 sudo limine-update
