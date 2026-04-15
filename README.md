@@ -96,7 +96,7 @@ Next, you can start adding your own translations. To do this, add a subdirectory
 └── tsconfig.json
 ```
 
-Now you can start adding your own translations!.
+Now you can start adding your own translations.
 
 As a final step, you want your translated page to be indexed, this is done again in our `astro.config.mjs`
 
@@ -113,6 +113,12 @@ As a final step, you want your translated page to be indexed, this is done again
 ```
 
 Please refer to our [basic guide](#basic-guide) for committing and pushing changes.
-When you're done, you can open a [pull request](https://github.com/CachyOS/wiki/compare)
+When you're done, you can open a [pull request](https://github.com/CachyOS/wiki/compare).
 
 Happy translating!
+
+### Keeping translations up to date
+
+Lunaria tracks whether a translated page is up to date by comparing the **last git commit date** of the source (English) file against the corresponding translated file. If the source file has been updated more recently than the translation, a "this page is outdated" banner is shown at the top of the translated page.
+
+This means that simply editing a translation file is not enough — the change must be **committed** so git records a new modification date. Likewise, whenever an English source page is updated and committed, any translated versions will start showing the outdated banner until their translations are updated and committed too.
