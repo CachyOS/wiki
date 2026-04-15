@@ -168,6 +168,7 @@ export default defineConfig({
               autogenerate: { directory: 'cachyos_basic/changelogs' },
               translations: {
                 ja: 'ISO 更新ログ',
+		ru: 'Журналы изменений ISO',
                 bg: 'Списък на промените',
               },
             },
@@ -616,6 +617,7 @@ export default defineConfig({
               autogenerate: { directory: 'configuration/desktop_environments' },
               translations: {
                 ja: 'デスクトップ環境',
+                ru: 'Окружения рабочего стола',
                 bg: 'Графични среди',
               },
             },
@@ -626,6 +628,7 @@ export default defineConfig({
           translations: {
             ja: '仮想化',
             pt: 'Virtualização',
+            ru: 'Виртуализация',
             bg: 'Виртуализация',
           },
           items: [
@@ -634,6 +637,7 @@ export default defineConfig({
               translations: {
                 ja: 'QEMU と VMM のセットアップ',
                 pt: 'Configuração do QEMU e VMM',
+                ru: 'Настройка QEMU и VMM',
                 bg: 'Настройка на QEMU и VMM',
               },
               link: 'virtualization/qemu_and_vmm_setup',
@@ -643,6 +647,7 @@ export default defineConfig({
               translations: {
                 ja: 'QEMU ユーザーセッション',
                 pt: 'Sessão de Utilizador QEMU',
+                ru: 'Пользовательская сессия QEMU',
                 bg: 'Потребителска сесия на QEMU',
               },
               link: 'virtualization/qemu_user_session',
@@ -652,6 +657,7 @@ export default defineConfig({
               translations: {
                 ja: 'EGL ヘッドレス',
                 pt: 'EGL Headless',
+                ru: 'Безэкранный EGL',
                 bg: 'EGL Headless',
               },
               link: 'virtualization/egl_headless',
@@ -661,6 +667,7 @@ export default defineConfig({
               translations: {
                 ja: 'Virtio-Venus',
                 pt: 'Virtio-Venus',
+                ru: 'Virtio-Venus',
                 bg: 'Virtio-Venus',
               },
               link: 'virtualization/virtio-venus',
