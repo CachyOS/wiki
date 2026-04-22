@@ -1,27 +1,27 @@
 ---
-title: Automount Additional Drives Through fstab at Boot
-description: Mount additional static drives at boot by utilizing the file found at /etc/fstab
+title: Αυτόματη προσάρτηση πρόσθετων μονάδων μέσω του fstab κατά την εκκίνηση
+description: Προσάρτηση πρόσθετων στατικών μονάδων κατά την εκκίνηση αξιοποιώντας το αρχείο στο /etc/fstab
 ---
 
-This tutorial describes the basics of utilizing the fstab file located in /etc/ in order to mount static drives during boot. It briefly explains how to find a partition or drive's UUID, what some options do, and further reading should the information provided be insufficient.
+Ο παρών οδηγός περιγράφει τα βασικά για τη χρήση του αρχείου fstab που βρίσκεται στο /etc/, με σκοπό την προσάρτηση στατικών μονάδων δίσκου κατά την εκκίνηση. Εξηγεί εν συντομία πώς να βρείτε το UUID ενός διαμερίσματος ή ενός δίσκου, τι κάνουν ορισμένες επιλογές, καθώς και πού μπορείτε να διαβάσετε περισσότερα σε περίπτωση που οι παρεχόμενες πληροφορίες δεν επαρκούν.
 
-## Prerequisites
+## Προαπαιτούμενα
 
-- Root or sudo access
+- Πρόσβαση root ή δικαιώματα sudo
 
-## Adding Entries to /etc/fstab
+## Προσθήκη καταχωρήσεων στο /etc/fstab
 
-:::note[NTFS on Linux]
-The NTFS filesystem can be unstable under Linux, whether using the ntfs3 or ntfs-3g driver. Use it at your own risk. For better stability and performance, consider Linux native filesystems like ext4, xfs, or btrfs.
+:::note[NTFS στο Linux]
+Το σύστημα αρχείων NTFS μπορεί να είναι ασταθές στο Linux, είτε χρησιμοποιείτε τον οδηγό ntfs3 είτε τον οδηγό ntfs-3g. Χρησιμοποιήστε το με δική σας ευθύνη. Για καλύτερη σταθερότητα και επιδόσεις, προτιμήστε τα εγγενή συστήματα αρχείων του Linux, όπως τα ext4, xfs ή btrfs.
 :::
 
-### 1. List the UUIDs of your partitions
+### 1. Παράθεση των UUID των διαμερισμάτων
 
-```sh title="Open a terminal and run the following command"
+```sh title="Ανοίξτε ένα τερματικό και εκτελέστε την εξής εντολή:"
 lsblk -f
 ```
 
-```text title="Example output"
+```text title="Παράδειγμα εξόδου"
 # NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
 # zram0                                                                              [SWAP]
 # nvme0n1
@@ -33,17 +33,17 @@ lsblk -f
 # └─nvme0n1p6 ntfs
 ```
 
-In our example, we know that we want to mount a Windows partition, which is ntfs. We also know that roughly half its space is available. Therefore, we can determine that the partition we want to mount is `nvme0n1p3` and its UUID to be `08A24E90A24E81E4`, with a file system of `ntfs` in this example.
+Σε αυτό το παράδειγμα, γνωρίζουμε ότι θέλουμε να προσαρτήσουμε ένα διαμέρισμα των Windows, το οποίο είναι της μορφής ntfs. Γνωρίζουμε επίσης ότι περίπου ο μισός του χώρος είναι διαθέσιμος. Ως εκ τούτου, μπορούμε να προσδιορίσουμε ότι το διαμέρισμα που θέλουμε να προσαρτήσουμε είναι το `nvme0n1p3` και ότι το UUID του είναι `08A24E90A24E81E4`, με σύστημα αρχείων `ntfs`.
 
-### 2. Identifying your partition
+### 2. Αναγνώριση του διαμερίσματος
 
-Often `lsblk -f` will provide all the information you need to mount your disk through /etc/fstab at this point. If you're still unsure which is the correct partition, you can run the following command:
+Συνήθως, το `lsblk -f` παρέχει όλες τις πληροφορίες που χρειάζεστε για να προσαρτήσετε τον δίσκο σας μέσω του /etc/fstab σε αυτό το σημείο. Εάν ακόμα δεν είστε σίγουροι για το ποιο είναι το σωστό διαμέρισμα, μπορείτε να εκτελέσετε την εξής εντολή:
 
 ```sh
 sudo fdisk -l
 ```
 
-```text title="Example output"
+```text title="Παράδειγμα εξόδου"
 # Device              Start        End    Sectors  Size Type
 # /dev/nvme0n1p1       2048     206847     204800  100M EFI System
 # /dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
@@ -53,91 +53,91 @@ sudo fdisk -l
 # /dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
 ```
 
-We already know our UUID in this example. However, `fdisk -l` can make it a bit more clear to us by showing the exact size of the partition (1.4T) as well as its type (Microsoft basic data).
+Γνωρίζουμε ήδη το UUID μας σε αυτό το παράδειγμα. Ωστόσο, το `fdisk -l` μπορεί να κάνει τα πράγματα λίγο πιο ξεκάθαρα δείχνοντάς μας το ακριβές μέγεθος του διαμερίσματος (1,4T), καθώς και τον τύπο του (Microsoft basic data).
 
-That should make it abundantly clear to us that the partition we want is `nvme0n1p3` with a UUID of `08A24E90A24E81E4` as described earlier. We knew earlier, but now we just know it for sure.
+Αυτό καθιστά απολύτως σαφές ότι το διαμέρισμα που θέλουμε είναι το `nvme0n1p3` με το UUID `08A24E90A24E81E4`, όπως περιγράψαμε προηγουμένως. Το γνωρίζαμε ήδη, αλλά πλέον είμαστε απολύτως σίγουροι.
 
-Once you are confident you've found the correct partition, copy the UUID. Copying from the terminal emulator is typically done with `ctrl+shift+C`.
+Μόλις βεβαιωθείτε ότι βρήκατε το σωστή διαμέρισμα, αντιγράψτε το UUID. Η αντιγραφή από το τερματικό γίνεται συνήθως με τα `Ctrl+Shift+C`.
 
-### 3. Adding an Entry to /etc/fstab
+### 3. Προσθήκη καταχώρησης στο /etc/fstab
 
-Now that we've obtained the UUID of our partition, it's time to open up the fstab file.
+Τώρα που έχουμε εξακριβώσει το UUID του διαμερίσματός μας, ήρθε η ώρα να ανοίξουμε το αρχείο fstab.
 
-Feel free to use your text editor of choice. In this example, we will use nano. In order to edit the fstab file, it must be opened as root:
+Μπορείτε να χρησιμοποιήσετε όποια εφαρμογή επεξεργασίας κειμένου προτιμάτε. Σε αυτό το παράδειγμα, θα χρησιμοποιήσουμε το nano. Για να επεξεργαστείτε το αρχείο fstab, πρέπει να το ανοίξετε ως root:
 
 ```sh
 sudo nano /etc/fstab
 ```
 
-Using the arrow keys, navigate to the bottom of the fstab file, then create our new entry on an empty new line:
+Χρησιμοποιώντας τα πλήκτρα βελών, μεταβείτε στο κάτω μέρος του αρχείου fstab και δημιουργήστε τη νέα καταχώρηση σε μια κενή, νέα γραμμή:
 
 ```sh
 UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000 0 0
 ```
 
 :::note
-`/media/windows` needs to exist on your filesystem. Use `mkdir` to create the directory if it doesn't.
+Το `/media/windows` πρέπει να υπάρχει στο σύστημα αρχείων σας. Χρησιμοποιήστε την εντολή `mkdir` για να δημιουργήσετε τον κατάλογο αν δεν υπάρχει.
 :::
 
-The break down of this entry is as follows:
+Ακολουθεί η ανάλυση αυτής της καταχώρησης:
 
-- `UUID=08A24E90A24E81E4` is the file system we want to mount, identified by its UUID. There are other methods to identify your filesystem, though UUID tends to be safest. Additional methods listed [here](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems).
+- Το `UUID=08A24E90A24E81E4` είναι το σύστημα αρχείων που θέλουμε να προσαρτήσουμε, κάτι που αναγνωρίζουμε με τη βοήθεια του UUID του. Υπάρχουν κι άλλοι τρόποι αναγνώρισης του συστήματος αρχείων σας, αν και το UUID τείνει να είναι ο πιο ασφαλής. Μπορείτε να δείτε επιπλέον μεθόδους [εδώ](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems).
 
-- `/media/windows` is the mount point of our drive. The [Linux Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html) says that `/media/` is the proper location for removable drives to be mounted. `windows` indicates the directory we wish to mount our drive to. Each drive we want to mount will need its own directory.
+- Το `/media/windows` είναι το σημείο προσάρτησης της μονάδας μας. Το [πρότυπο ιεραρχίας των συστημάτων αρχείων του Linux](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html) ορίζει ότι το `/media/` είναι η σωστή τοποθεσία για την προσάρτηση των αφαιρούμενων μονάδων. Το `windows` υποδεικνύει τον κατάλογο στον οποίο επιθυμούμε να προσαρτήσουμε τη μονάδα μας. Κάθε μονάδα που θέλουμε να προσαρτήσουμε θα απαιτεί τον δικό της κατάλογο.
 
-- `ntfs3` is the filesystem type to be used. We are explicitly using the ntfs3 kernel driver in our example. Other examples would be `ext4`, `xfs` or similar. This explicit filesystem type declaration can be replaced with `auto` to allow the mount command to make its best guess.
+- Το `ntfs3` είναι ο τύπος του συστήματος αρχείων που χρησιμοποιείται. Στο παράδειγμά μας, χρησιμοποιούμε ρητά τον οδηγό πυρήνα ntfs3. Άλλα παραδείγματα θα μπορούσαν να είναι τα ext4, xfs ή κάτι παρόμοιο. Αυτή η ρητή δήλωση του τύπου του συστήματος αρχείων μπορεί να αντικατασταθεί με την επιλογή `auto`, ώστε να επιτραπεί στην εντολή mount να κάνει την καλύτερη δυνατή εκτίμηση.
 
-- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000`: These are mount options:
+- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000`: Αυτές είναι οι επιλογές προσάρτησης:
 
-  - `defaults`: a standard set of options including `rw, suid, dev, exec, auto, nouser, and async.`
+  - `defaults`: ένα τυπικό σύνολο επιλογών που περιλαμβάνουν τα `rw, suid, dev, exec, auto, nouser και async.`
 
-  - `nofail`: allows the boot process to continue even if this mount fails.
+  - `nofail`: επιτρέπει στη διαδικασία εκκίνησης να συνεχίσει, ακόμα κι αν αποτύχει αυτή η προσάρτηση.
 
-  - `uid=1000` and `gid=1000`: sets the user and group ownership of the mounted files to the user and group with ID 1000.
+  - `uid=1000` και `gid=1000`: ορίζει την ιδιοκτησία χρήστη και ομάδας για τα προσαρτημένα αρχεία στον χρήστη και την ομάδα με το αναγνωριστικό 1000.
 
-  - `rw`: mounts the filesystem as read-write.
+  - `rw`: προσαρτά το σύστημα αρχείων με δικαιώματα ανάγνωσης και εγγραφής.
 
-  - `user`: allows a non-root user to mount the filesystem.
+  - `user`: επιτρέπει σε έναν χρήστη, εκτός του root, να προσαρτήσει το σύστημα αρχείων.
 
-  - `exec`: allows execution of binaries on the mounted filesystem.
+  - `exec`: επιτρέπει την εκτέλεση δυαδικών αρχείων στο προσαρτημένο σύστημα αρχείων.
 
-  - `umask=000`: sets the file permission mask to allow read, write, and execute permissions for everyone.
+  - `umask=000`: ορίζει τη μάσκα δικαιωμάτων αρχείων ώστε να επιτρέπεται σε όλους η ανάγνωση, η εγγραφή και η εκτέλεση.
+  
+  - `το πρώτο 0` (dump) είναι συνήθως παρωχημένο στα σύγχρονα συστήματα. Εάν αφήσετε αυτήν την παράμετρο στο 0, δεν θα προκληθεί κανένα πρόβλημα. Μπορείτε να διαβάσετε περισσότερα γι' αυτό [εδώ](https://linux.die.net/man/8/dump).
 
-  - `the first 0` dump is typically deprecated in modern systems. Leaving this at 0 won't hurt anything. Feel free to read more about it [here](https://linux.die.net/man/8/dump).
+  - `το δεύτερο 0` ορίζει τη σειρά για τους ελέγχους του συστήματος αρχείων κατά την εκκίνηση. Για ένα διαμέρισμα ρίζας (root), αυτό θα πρέπει να είναι 1, εκτός κι αν το σύστημα αρχείων ρίζας είναι btrfs, οπότε και θα πρέπει να οριστεί σε 0. Όλα τα άλλα συστήματα αρχείων στο αρχείο fstab θα πρέπει να είναι είτε 0 (απενεργοποιημένο) είτε 2. Μπορείτε να βρείτε περισσότερες πληροφορίες [εδώ](https://man.archlinux.org/man/fsck.8).
 
-  - `the second 0` sets the order for file system checks at boot time. For a root partition, this should be 1 unless your root file system is btrfs, which should otherwise be set to 0. All other file systems in your fstab should be either 0 (disabled) or 2. More information [here](https://man.archlinux.org/man/fsck.8).
+Για μια πιο λεπτομερή εξήγηση της κάθε επιλογής, επισκεφθείτε τη [σελίδα εγχειριδίου για το αρχείο fstab](https://man7.org/linux/man-pages/man5/fstab.5.html) και τη [σελίδα εγχειριδίου για την εντολή mount](https://man7.org/linux/man-pages/man8/mount.8.html).
 
-For a more in depth look of each option, visit these two [fstab man page](https://man7.org/linux/man-pages/man5/fstab.5.html) and [mount man page](https://man7.org/linux/man-pages/man8/mount.8.html)
+#### Περισσότερες πληροφορίες
 
-#### More info
+Ας σημειωθεί ότι όλες οι επιλογές μετά τη δήλωση του τύπου του συστήματος αρχείων είναι προαιρετικές αν δεν αλλάξετε τις προεπιλογές.
 
-As an aside, all options after the filesystem type declaration are optional if you do not change them from the default.
+Επομένως, το
 
-Thus
+`UUID=<UUID διαμερίσματος> /media/foo σύστημα_αρχείων`
 
-`UUID=<partition UUID> /media/foo somefs`
+και το
 
-and
+`UUID=<UUID διαμερίσματος> /media/foo σύστημα_αρχείων defaults 0 0`
 
-`UUID=<partition UUID> /media/foo somefs defaults 0 0`
+είναι ισοδύναμα. Όταν το `σύστημα_αρχείων` δεν ακολουθείται από τίποτα, τότε σημαίνει σιωπηλά `σύστημα_αρχείων defaults 0 0`.
 
-are equivalent.  `somefs` followed by nothing is implicitly `somefs defaults 0 0`
+### 4. Ολοκλήρωση
 
-### 4. Finishing Up
-
-If you wish to mount the drive you created an entry for now, you need to run the following:
+Εάν επιθυμείτε να προσαρτήσετε τώρα τη μονάδα για την οποία δημιουργήσατε καταχώρηση, πρέπει να εκτελέσετε την εξής εντολή:
 
 ```sh
 sudo systemctl daemon-reload
 ```
 
-and then:
+και στη συνέχεια:
 
 ```sh
 sudo mount -a
 ```
 
-Your drive should now appear under `/media/windows` and will appear there each time you reboot.
+Η μονάδα σας θα εμφανίζεται πλέον στο `/media/windows` και θα βρίσκεται εκεί κάθε φορά που κάνετε επανεκκίνηση.
 
 ```sh
 ls /media/windows
@@ -153,13 +153,13 @@ ls /media/windows
 # Intel                    'Ship of Harkinian'
  ```
 
- If you wish to create a link to your newly mounted drive in your home directory, you can run the following:
+ Εάν επιθυμείτε να δημιουργήσετε έναν σύνδεσμο προς την πρόσφατα προσαρτημένη μονάδα σας στον προσωπικό σας κατάλογο, μπορείτε να εκτελέσετε την εξής εντολή:
 
  ```sh
  ln -s /media/windows ~/Windows
  ```
 
- To show it worked:
+ Για να βεβαιωθούμε ότι λειτούργησε:
 
  ```sh
  ls ~/Windows
@@ -175,47 +175,47 @@ ls /media/windows
 # Intel                    'Ship of Harkinian'
  ```
 
-## tl;dr
+## Με λίγα λόγια
 
-- Find the **UUID** of your partition
+- Εντοπίστε το **UUID** του διαμερίσματός σας.
 
 ```sh
 lsblk -f
 ```
 
-- Open `/etc/fstab`
+- Ανοίξτε το `/etc/fstab`.
 
 ```sh
 sudo nano /etc/fstab
 ```
 
-- Create an entry in the bottom of the file
+- Δημιουργήστε μια καταχώρηση στο κάτω μέρος του αρχείου.
 
 ```sh
-UUID=<partition UUID> /media/foo somefs defaults 0 0
+UUID=<UUID διαμερίσματος> /media/foo σύστημα_αρχείων defaults 0 0
 ```
 
-Replacing `<partition UUID>`, `foo`, and `somefs` with your UUID, directory, and filesystem. eg., ext4, as well as setting any other options you may want after defaults, such as `_netdev` for a NAS, or `nofail` for any non-critical drive.
+Αντικαταστήστε τα `<UUID διαμερίσματος>`, `foo` και `σύστημα_αρχείων` με το δικό σας UUID, τον κατάλογο και το σύστημα αρχείων (π.χ. ext4). Μπορείτε να ορίσετε οποιεσδήποτε άλλες επιλογές επιθυμείτε μετά το defaults, όπως `_netdev` για NAS ή `nofail` για μη σημαντικές μονάδες.
 
-- Reload your daemon
+- Φορτώστε εκ νέου την υπηρεσία παρασκηνίου (daemon).
 
 ```sh
 sudo systemctl daemon-reload
 ```
 
-- Mount your drive
+- Προσαρτήστε τη μονάδα δίσκου σας.
 
 ```sh
 sudo mount -a
 ```
 
-This drive is now mounted, and will now be mounted on boot moving forward as well.
+Η μονάδα έχει προσαρτηθεί και θα προσαρτάται σε κάθε εκκίνηση από εδώ και στο εξής.
 
-## Additional reading
+## Υλικό για περαιτέρω ανάγνωση
 
-- [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
-- [FHS on /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
-- [Manual for dump](<https://linux.die.net/man/8/dump>)
-- [Manual for fsck](https://man.archlinux.org/man/fsck.8)
-- [Man page for fstab](https://man.archlinux.org/man/fstab.5.en)
-- [Arch Linux Wiki entry for fstab](https://wiki.archlinux.org/title/Fstab)
+- [Πρότυπο ιεραρχίας συστημάτων αρχείων (FHS)](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS για το /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Εγχειρίδιο για το dump](<https://linux.die.net/man/8/dump>)
+- [Εγχειρίδιο για το fsck](https://man.archlinux.org/man/fsck.8)
+- [Σελίδα εγχειριδίου για το fstab](https://man.archlinux.org/man/fstab.5.en)
+- [Λήμμα του Arch Linux Wiki για το fstab](https://wiki.archlinux.org/title/Fstab)
