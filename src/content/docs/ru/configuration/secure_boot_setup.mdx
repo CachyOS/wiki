@@ -1,20 +1,13 @@
 ---
 title: Настройка Secure Boot
 description: Настройте безопасную загрузку с помощью sbctl после установки CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
 ---
 
 import ImageComponent from '~/components/image-component.astro';
-
-# sbctl
-
-[sbctl](https://github.com/Foxboron/sbctl) — это удобный менеджер ключей Secure Boot, способный настраивать безопасную загрузку,
-предоставляющий возможности управления ключами и отслеживающий файлы, которые необходимо подписывать в цепочке загрузки.
-
-## Установка sbctl
-
-```bash
-sudo pacman -S sbctl
-```
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
 ## Предварительная настройка
 
@@ -32,6 +25,7 @@ sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=
 :::
 
 ### Вход в режим настройки (Setup Mode) в UEFI
+
 Сначала нам нужно зайти в настройки прошивки и установить для режима Secure Boot значение "Setup Mode" (Режим настройки). Вы можете перезагрузиться из
 уже запущенной системы в настройки прошивки с помощью следующей команды.
 
@@ -49,37 +43,105 @@ systemctl reboot --firmware-setup
 <br />
 <ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
 
-## Настройка sbctl
+На некоторых материнских платах ASUS поведение аналогично упомянутым выше платам MSI — у них нет выделенного режима настройки.
 
-```bash
-sudo sbctl status # Если режим настройки включен, мы можем перейти к следующему шагу
-Installed:      ✘ sbctl is not installed
-Setup Mode:     ✘ Enabled
-Secure Boot     ✘ Disabled
+Перейдите в Boot → Secure Boot, установите для Secure Boot Mode значение Custom, затем откройте Key Management и выберите «Delete all Secure Boot Variables».
 
-sudo sbctl create-keys # Создание ваших собственных ключей Secure Boot
-Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-Creating secure boot keys...✔
-Secure boot keys created!
+#### Установка sbctl и регистрация ключей
 
-sudo sbctl enroll-keys --microsoft # Регистрация ваших ключей вместе с ключами Microsoft
-Enrolling keys to EFI variables...✔
-Enrolled keys to the EFI variables!
+Прежде чем продолжить, убедитесь, что `sbctl` установлен.
 
-sudo sbctl status
-# sbctl теперь должен быть установлен, мы можем перейти к подписи образов ядра и загрузчика
-Installed:      ✔ sbctl is installed
-Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-Setup Mode:     ✔ Disabled
-Secure Boot     ✘ Disabled
-Vendor Keys:    microsoft
-```
+[sbctl](https://github.com/Foxboron/sbctl) — это удобный менеджер ключей Secure Boot, способный настраивать безопасную загрузку,
+предоставляющий возможности управления ключами и отслеживающий файлы, которые необходимо подписывать в цепочке загрузки.
+
+<details>
+    <summary>Как установить sbctl</summary>
+    ```bash title='Откройте терминал и выполните следующую команду'
+    sudo pacman -S sbctl
+    ```
+</details>
+
+Теперь, когда `sbctl` установлен, необходимо его настроить и зарегистрировать ваши ключи в прошивке. Этот процесс довольно прост — просто следуйте шагам ниже.
+
+<Steps>
+1. Проверьте, включён ли режим настройки:
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>Ожидаемый вывод</summary>
+        ```bash
+        Installed:      ✘ sbctl is not installed
+        Setup Mode:     ✘ Enabled
+        Secure Boot     ✘ Disabled
+        ```
+    </details>
+2. Создайте свои собственные ключи Secure Boot:
+    ```bash
+    sudo sbctl create-keys
+    ```
+    <details>
+        <summary>Пример успешного создания ключей</summary>
+        ```bash
+        Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Creating secure boot keys...✔
+        Secure boot keys created!
+        ```
+    </details>
+3. Зарегистрируйте ваши ключи вместе со встроенными ключами Microsoft и прошивки OEM:
+    ```bash
+    sudo sbctl enroll-keys --microsoft --firmware-builtin
+    ```
+    <details>
+        <summary>Ожидаемый вывод</summary>
+        ```bash
+        Enrolling keys to EFI variables...✔
+        Enrolled keys to the EFI variables!
+        ```
+    </details>
+
+    :::caution[Материнские платы ASUS — не используйте `--firmware-builtin`]
+    На некоторых материнских платах ASUS использование флага `--firmware-builtin` приводит к дублированию записей
+    в переменных EFI-ключей (например, `builtin-db` появляется несколько раз в `Vendor Keys`).
+    При последующей активации Secure Boot в настройках UEFI плата обнаруживает эту
+    несогласованную структуру ключей и выдаёт **Secure Boot Violation** до того, как
+    загрузчик успевает загрузиться.
+
+    На платах ASUS используйте только `--microsoft`:
+
+    ```bash
+    sudo sbctl enroll-keys --microsoft
+    ```
+
+    Если `Vendor Keys` показывает `microsoft builtin-db builtin-db ...`, ключи необходимо
+    перерегистрировать. Повторно войдите в режим Setup Mode в UEFI (удалив все ключи), затем выполните
+    `sbctl enroll-keys --microsoft` снова без `--firmware-builtin`.
+    :::
+
+
+4. Снова проверьте статус sbctl, чтобы убедиться, что ключи зарегистрированы и режим настройки отключён:
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>Ожидаемый вывод</summary>
+        ```bash
+        Installed:      ✔ sbctl is installed
+        Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Setup Mode:     ✔ Disabled
+        Secure Boot     ✘ Disabled
+        Vendor Keys:    microsoft
+        ```
+    </details>
+</Steps>
 
 ## Подпись образа ядра и загрузчика
 
+<Tabs>
+<TabItem label='systemd-boot'>
+
 CachyOS предоставляет [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign),
 скрипт, который берет список файлов, требующих подписи, из вывода `sudo sbctl verify` и подписывает их все.
-Пользователям Limine следует перейти к разделу [Limine](#limine).
 
 :::caution
 В системах с отдельными разделами `/boot` и `/boot/efi` утилита `sbctl` может сканировать исполняемые EFI-файлы только в `/boot/efi`.
@@ -109,6 +171,28 @@ Verifying file database and EFI images in /boot...
 
 Теперь, когда все файлы подписаны. **Перезагрузите систему и зайдите в настройки UEFI, чтобы включить Secure Boot.**
 
+:::caution[Материнские платы ASUS — включение Secure Boot]
+Некоторые материнские платы ASUS ведут себя иначе, чем платы других производителей, при включении Secure Boot:
+
+- **Используйте `Windows UEFI Mode`, а не `Other OS`:**
+  Название вводит в заблуждение — этот параметр просто управляет тем, применяется ли Secure Boot.
+  Установка `OS Type` в `Other OS` **активно отключает** Secure Boot на платах ASUS,
+  независимо от любых других настроек. `sbctl status` продолжит показывать
+  `Secure Boot: Disabled` даже после перезагрузки.
+
+- **На некоторых платах ASUS нет отдельного переключателя Secure Boot.**
+  Secure Boot активируется неявно при выборе `Windows UEFI Mode`.
+
+Правильная конфигурация BIOS ASUS для активации Secure Boot в этом случае:
+```
+Boot → Secure Boot
+  OS Type          → Windows UEFI Mode
+  Secure Boot Mode → Custom
+```
+:::
+
+Обратитесь к [этому разделу для справки](/ru/configuration/secure_boot_setup#вход-в-режим-настройки-setup-mode-в-uefi)
+
 Обратите внимание, что это одноразовый процесс, так как подпись файлов с флагом `-s` сохранит эти файлы в базе данных `sbctl`.
 
 :::tip[Напоминание]
@@ -116,17 +200,14 @@ Verifying file database and EFI images in /boot...
 подписывать все новые файлы при обновлении ядра или загрузчика.
 :::
 
-### systemd-boot
-
 CachyOS использует `systemd-boot-update.service`, предоставляемый systemd, для обновления загрузчика при перезагрузке. Это означает, что хук pacman
 `sbctl` **не** будет подписывать обновленные EFI-файлы. В качестве обходного пути мы можем подписать загрузчик напрямую.
 
 ```sh
 sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
 ```
-
-### Limine
-
+</TabItem>
+<TabItem label='Limine'>
 Limine — это особый загрузчик, который позволяет проверять хеш-суммы образов ядра
 и других файлов, которые Limine использует во время загрузки. Если эта функция включена, любая
 ручная настройка, выполненная пользователем, например, подпись образа через
@@ -152,7 +233,40 @@ Limine — это особый загрузчик, который позволя
 ENABLE_ENROLL_LIMINE_CONFIG=yes
 ```
 
-Затем выполните:
+Далее сгенерируйте хеш для заставки Limine:
+
+:::note[Для выполнения следующих шагов требуются права суперпользователя, убедитесь, что вы используете sudo или переключились на пользователя root перед тем, как продолжить.]
+:::
+
+<Steps>
+
+1. Проверьте текущее имя и путь к изображению заставки в файле конфигурации:
+    ```sh title="Откройте терминал и выполните следующую команду:"
+    sudo cat /boot/limine.conf
+    ```
+    Вы должны увидеть строку вида:
+    ```sh
+    wallpaper: boot():/limine-splash.png
+    ```
+2. Сгенерируйте хеш BLAKE2B для изображения заставки и добавьте его к пути в файле конфигурации:
+    ```sh title="Выполните следующую команду, заменив путь на найденный в предыдущем шаге:"
+    sudo b2sum /boot/limine-splash.png
+    ```
+    Результатом будет хеш, подобный следующему примеру:
+    ```sh
+    75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+3. Скопировав сгенерированный на предыдущем шаге хеш, откройте файл конфигурации в текстовом редакторе и добавьте хеш к пути изображения заставки, как показано ниже:
+    :::note[Не используйте пример хеша из примера выше, убедитесь, что вы используете хеш, сгенерированный на предыдущем шаге.]
+    :::
+    ```sh
+    wallpaper: boot():/limine-splash.png#75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+    Как видите, хеш добавляется к пути с символом `#`. Сохраните файл после внесения изменений.
+
+</Steps>
+
+После включения регистрации контрольной суммы конфигурации и генерации хеша для изображения заставки, выполните следующие команды для регистрации контрольной суммы и подписи EFI-файла Limine:
 
 ```sh
 # Используйте limine-enroll-config для регистрации контрольной суммы конфигурации и подписи EFI-файла Limine
@@ -160,6 +274,8 @@ ENABLE_ENROLL_LIMINE_CONFIG=yes
 sudo limine-enroll-config
 sudo limine-update
 ```
+</TabItem>
+</Tabs>
 
 ## Проверка включения Secure Boot
 

@@ -37,7 +37,7 @@ Users from other distributions are **NOT SUPPORTED** and **HIGHLY DISCOURAGED** 
 - Parabola
 - Users of any other Linux distribution not explicitly mentioned in the "Supported Users" section.
 
-## 5. Redistribution of the Repository
+## 6. Redistribution of the Repository
 
 This policy defines "redistribution" as the behaviors of inclusion of the CachyOS repository (and its mirrors) or packages obtained from the CachyOS repository as a part of the distributed image of the operating system or sysroots.
 Redistribution also includes the behaviors of **Linux distributions** to provide the utilities that enable CachyOS repository by users' choice, or to provide any distributed or official document that guide users to enable CachyOS
@@ -45,7 +45,7 @@ repository (and its mirrors) by their means. End users and third-party mirrors a
 
 Redistribution of CachyOS repository is exclusively authorized to the CachyOS team only.
 
-## 6. Prohibited Redistribution
+## 7. Prohibited Redistribution
 
 Redistribution of the CachyOS repository (and its mirrors) in any unauthorized Linux distribution, including other Arch-based distributions, is **STRICTLY PROHIBITED**. This includes, but is not limited to:
 
@@ -55,29 +55,29 @@ Redistribution of the CachyOS repository (and its mirrors) in any unauthorized L
 - Parabola
 - Any other Linux distribution not explicitly mentioned in the "Redistribution of the Repository" section.
 
-## 7.Mirror
+## 8.Mirror
 
 It is allowed to mirror the repository via rsync and syncthing. Third-party mirrors are permitted to mirror the repository and provide a web server for it, as long as they ensure that the repository data remains unchanged.
 
-## 8. Compliance and Monitoring
+## 9. Compliance and Monitoring
 
 We reserve the right to monitor the usage of our repository to ensure compliance with this policy. Any unauthorized use may result in access being revoked.
 
-## 9. Reporting Violations
+## 10. Reporting Violations
 
 If you suspect that this policy is being violated, please report it to us at [admin@cachyos.org].
 
-## 10. Policy Changes
+## 11. Policy Changes
 
 CachyOS reserves the right to modify this policy at any time. Changes will be communicated through our official channels.
 
-## 11. Contact Information
+## 12. Contact Information
 
 For any questions or concerns regarding this policy, please contact us at:
 
 - Email: <admin@cachyos.org>
 - Website: <https://cachyos.org>
 
-## 12. Acknowledgment
+## 13. Acknowledgment
 
 By using the CachyOS repository (and its mirrors), you acknowledge that you have read, understood, and agree to comply with this policy.

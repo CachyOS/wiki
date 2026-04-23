@@ -43,6 +43,10 @@ However, some MSI motherboards don't have a setup mode. To achieve the same effe
 <br />
 <ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
 
+Some Asus motherboards have a similar behavior to the above mentioned MSI motherboards, as they do not have a dedicated setup mode.
+
+Navigate to Boot → Secure Boot, set Secure Boot Mode to Custom, then open Key Management and select "Delete all Secure Boot Variables". 
+
 #### Installing sbctl and Enrolling Keys
 
 Before proceeding, make sure to check if `sbctl` is installed.
@@ -95,6 +99,26 @@ Now that `sbctl` is installed, you have to setup sbctl and enroll your keys to t
         Enrolled keys to the EFI variables!
         ```
     </details>
+
+    :::caution[ASUS Motherboards — Do not use `--firmware-builtin`]
+    On some ASUS motherboards using the `--firmware-builtin` flag causes duplicate entries
+    in the EFI key variables (e.g. `builtin-db` appearing multiple times in `Vendor Keys`).
+    When activating Secure Boot in the UEFI settings afterwards, the board detects this
+    inconsistent key structure and throws a **Secure Boot Violation** before the boot
+    manager can load.
+
+    Use only `--microsoft` on ASUS boards:
+
+    ```bash
+    sudo sbctl enroll-keys --microsoft
+    ```
+
+    If `Vendor Keys` shows `microsoft builtin-db builtin-db ...`, the keys need to be
+    re-enrolled. Re-enter Setup Mode in the UEFI (using delete all keys), then run
+    `sbctl enroll-keys --microsoft` again without `--firmware-builtin`.
+    :::
+
+
 4. Check the status of sbctl again to make sure that the keys are enrolled and setup mode is disabled:
     ```bash
     sudo sbctl status
@@ -146,6 +170,26 @@ Verifying file database and EFI images in /boot...
 ```
 
 Now that all the files are signed. **Reboot your system and go to your UEFI Settings to enable Secure Boot.**
+
+:::caution[ASUS Motherboards — enabling Secure Boot]
+Some ASUS motherboards behave differently from other vendors when enabling Secure Boot:
+
+- **Use `Windows UEFI Mode`, not `Other OS`:**
+  The name is misleading this setting simply controls whether Secure Boot is enforced.
+  Setting `OS Type` to `Other OS` **actively disables** Secure Boot on ASUS boards,
+  regardless of any other settings. `sbctl status` will continue to show
+  `Secure Boot: Disabled` even after rebooting.
+
+- **There is no separate Secure Boot on/off toggle** on some ASUS boards.
+  Secure Boot is activated implicitly by selecting `Windows UEFI Mode`.
+
+The correct ASUS BIOS configuration to activate Secure Boot in this case is:
+```
+Boot → Secure Boot
+  OS Type          → Windows UEFI Mode
+  Secure Boot Mode → Custom
+```
+:::
 
 Check [this part for reference](/configuration/secure_boot_setup#enabling-setup-mode-in-uefi)
 
