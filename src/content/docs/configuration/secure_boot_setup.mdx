@@ -299,6 +299,68 @@ System:
   Boot into FW: supported
 ```
 
+## Optional: Auto-Unlock
+
+:::note[Auto-Unlock is now available as a single, streamlined command beginning with the CachyOS March 2026 Release.]
+:::
+
+You can configure your system to automatically unlock at boot for convenience. Please read the <b>Important Notes</b> before enabling Auto-Unlock.
+
+<details>
+  <summary>Important Notes</summary>
+    1. **Your password will always work** - TPM is a convenience, not a replacement, for your password.
+    2. **Your Snapshots will remain bootable** - With `limine-snapper-sync`, btrfs snapshots work with TPM.
+    3. **PCR selection trade-offs:**
+       - PCR 0+7 (recommended): Survives most updates, secure.
+       - PCR 0+2+7: More secure, may break on boot config changes.
+       - PCR 7 only: Most flexible, least secure.
+    4. **Secure Boot is required** - PCR 7 measures Secure Boot state.
+    5. **Recovery is safe** - Password fallback is always available.
+</details>
+
+### Enable Auto-Unlock
+
+<steps>
+
+1. Verify the encrypted device:
+    ```sh title="Open a terminal and run the following command:"
+    lsblk --fs
+    ```
+    <details>
+        <summary>Expected Output</summary>
+        ```sh
+        NAME            FSTYPE FSVER LABEL   UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+        zram0           swap   1     zram0   4c8d6803-ab50-44f3-b78a-b15e9c10dc69                [SWAP]
+        nvme0n1
+        ├─nvme0n1p1     vfat   FAT32         8CA8-F9C9                               3.7G     7% /boot
+        └─nvme0n1p2     crypto 2             5d14ade7-bb63-4dc8-a071-a3c676f039f8
+          └─luks-5d14ade7-bb63-4dc8-a071-a3c676f039f8
+                        ext4   1.0           0cbf141f-88d8-4fe5-98cf-d9cc06b33942  559.9G    34% /
+        ```
+    </details>
+
+2. Enable Auto Unlock:
+
+  ```sh
+  sudo systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=0+7 /dev/nvme0n1p2
+  ```
+
+3.  Reboot
+
+  ```sh
+  systemctl reboot
+  ```
+
+</steps>
+
+### Disable Auto-Unlock
+
+Auto-Unlock can be disabled at any time by performing the following:
+
+```sh title="Open a terminal and run the following command:"
+sudo systemd-cryptenroll --wipe-slot=tpm2 /dev/nvme0n1p2
+```
+
 ## Links and Credits
 
 - [The Arch Wiki](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
@@ -307,3 +369,4 @@ laid the groundwork for this guide. Most of the stuff here was taken from there.
 for the amazing work done to create this piece of software.
 - [Improving the Secure Boot Experience by Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) - Blog post by Morten
 "Foxboron" Linderud on how the secure boot experience was complicated before `sbctl`.
+- [Limine + LUKS2 + TPM2 Auto-Unlock Guide for CachyOS/Arch Linux](https://gist.github.com/zerofltexx/d75168b7d2a0b146a5a6e13a397acf07) - The complete guide for enabling Auto Unlock using Limine, LUKS2, and TPM2 by "zerofltexx".
