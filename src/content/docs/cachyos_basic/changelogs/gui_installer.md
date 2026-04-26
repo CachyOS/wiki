@@ -17,17 +17,23 @@ sidebar:
   * Dropped the UKUI desktop
   * AMD GPUs now use a different Plymouth theme, as the amdgpu driver is unable to render the previous theme reliably on laptops with a secondary monitor attached
   * Cleaned up and modernised the GNOME package selection
-  * Added option to install `MangoWM` with `DMS` shell.
+  * Added option to install `MangoWM` with `DMS` shell
 * **CachyOS-Welcome:**
-  * Added support for DNS-over-HTTPS via blocky
-  * The DNS page now supports latency testing of individual servers and allows adding custom ones
-  * Added a toggle for improved VRAM management on AMD and Intel dGPUs (only effective under gamescope or KDE)
-  * Added full keyboard navigation support
+  * Added DNS-over-HTTPS (DoH) support via `blocky`
+  * Added custom DNS server support and DHCP automatic indicator/reset
+  * DNS servers now display metadata (region, homepage, filtering) and support individual latency testing
+  * Added VRAM management toggle `dmemcg-booster` (additionally installs `plasma-foreground-booster` on KDE)
+  * Added full keyboard navigation support for accessibility
+  * Replaced PNG social icons with crisp, HiDPI-aware SVGs
+  * Added `wezterm` to the terminal helper
 * **chwd:**
-  * Added support for enabling fingerprint-based sudo on supported devices
-  * Added support for `intel-lpmd` on supported devices, using an in-house fork with improved configuration
-  * Added chassis type detection to profiles
-  * Added the Xbox ROG Ally pattern to the chwd profile
+  * Added native USB device detection (via libusb/sysfs) and chassis type detection
+  * Added support for fingerprint (`fprint`) sudo integration
+  * Added CPU family/model detection to support `intel-lpmd`
+  * **Handhelds:** Added exact patterns for Xbox ROG Ally; conditionally install `fwupd` on Lenovo Legion Go devices for Steam UI updates
+  * **Network:** Added Marvell AVASTAR 88W8897 Wi-Fi profile (Surface Pro 4)
+  * Split NVIDIA profiles for laptops and desktop environments
+  * Split and updated profiles for Virtual Machines
 * **cachyos-settings:** Switched the default NVMe I/O scheduler from `none` to `kyber`
 
 **Fixes:**
@@ -35,10 +41,17 @@ sidebar:
 * **Installer:**
   * The partition method is now printed to the debug log
   * Old microcode packages are now removed when reusing an existing boot partition
+* **CachyOS-Welcome:**
+  * Fixed connectivity checks incorrectly returning true when ping fails
+  * Ensured external link icons are visible in dark themes
+  * Prevented multiple instances of the welcome app from launching simultaneously
+  * Added `StartupWMClass` for improved `.desktop` window matching
 * **chwd:**
-  * Kernel search is now more accurate in the NVIDIA profiles
-  * Removed the forced Xorg session from the 470xx profiles
-  * Improved matching of handheld product names
+  * Removed the `kms` hook from `mkinitcpio.conf` on non-portable desktops to fix NVIDIA driver conflicts
+  * Made the installed kernel search in NVIDIA profiles more accurate
+  * Removed forced Xorg session from the NVIDIA 470xx profiles (fixes compatibility with `plasma-login-manager`)
+  * Removed outdated `WaylandEnable=false` for GDM in Virtual Machine profiles
+  * Fixed false-positive handheld detections (e.g., specific MSI laptops being mistaken for the MSI Claw)
 * **cachyos-settings:**
   * Dropped `S01x` power management due to issues with the NVIDIA 595 driver
   * Disabled `AggressiveVblank` due to VR-related issues with the NVIDIA driver
