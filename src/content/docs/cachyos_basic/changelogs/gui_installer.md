@@ -30,7 +30,7 @@ sidebar:
   * Added native USB device detection (via libusb/sysfs) and chassis type detection
   * Added support for fingerprint (`fprint`) sudo integration
   * Added CPU family/model detection to support `intel-lpmd`
-  * **Handhelds:** Added exact patterns for Xbox ROG Ally; conditionally install `fwupd` on Lenovo Legion Go devices for Steam UI updates
+  * **Handhelds:** Added exact patterns for Xbox ROG Ally
   * **Network:** Added Marvell AVASTAR 88W8897 Wi-Fi profile (Surface Pro 4)
   * Split NVIDIA profiles for laptops and desktop environments
   * Split and updated profiles for Virtual Machines
