@@ -4,6 +4,45 @@ description: Changelogs of Calamares and the GUI Live ISO
 sidebar:
   order: 1
 ---
+26.04
+----
+
+**Features:**
+
+* **Installer:**
+  * Shelly now replaced Octopi as the GUI package manager
+  * A clean snapshot is now created immediately after installation and retained permanently, providing a baseline restore point
+  * GRUB `os-prober` is now enabled by default
+  * Added MangoWM as Desktop Option with dotfiles
+  * Dropped the UKUI desktop
+  * AMD GPUs now use a different Plymouth theme, as the amdgpu driver is unable to render the previous theme reliably on laptops with a secondary monitor attached
+  * Cleaned up and modernised the GNOME package selection
+  * Added option to install `MangoWM` with `DMS` shell.
+* **CachyOS-Welcome:**
+  * Added support for DNS-over-HTTPS via blocky
+  * The DNS page now supports latency testing of individual servers and allows adding custom ones
+  * Added a toggle for improved VRAM management on AMD and Intel dGPUs (only effective under gamescope or KDE)
+  * Added full keyboard navigation support
+* **chwd:**
+  * Added support for enabling fingerprint-based sudo on supported devices
+  * Added support for `intel-lpmd` on supported devices, using an in-house fork with improved configuration
+  * Added chassis type detection to profiles
+  * Added the Xbox ROG Ally pattern to the chwd profile
+* **cachyos-settings:** Switched the default NVMe I/O scheduler from `none` to `kyber`
+
+**Fixes:**
+
+* **Installer:**
+  * The partition method is now printed to the debug log
+  * Old microcode packages are now removed when reusing an existing boot partition
+* **chwd:**
+  * Kernel search is now more accurate in the NVIDIA profiles
+  * Removed the forced Xorg session from the 470xx profiles
+  * Improved matching of handheld product names
+* **cachyos-settings:**
+  * Dropped `S01x` power management due to issues with the NVIDIA 595 driver
+  * Disabled `AggressiveVblank` due to VR-related issues with the NVIDIA driver
+
 26.03
 ----
 
