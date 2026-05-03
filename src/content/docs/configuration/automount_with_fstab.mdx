@@ -1,19 +1,211 @@
 ---
-title: Automount Additional Drives Through fstab at Boot
-description: Mount additional static drives at boot by utilizing the file found at /etc/fstab
+title: Automount Additional Drives at Boot
+description: Mount additional static drives at boot by utilizing either systemd mounts or the file found at /etc/fstab
 ---
 
-This tutorial describes the basics of utilizing the fstab file located in /etc/ in order to mount static drives during boot. It briefly explains how to find a partition or drive's UUID, what some options do, and further reading should the information provided be insufficient.
+This tutorial describes the basics of utilizing both systemd mount files and the fstab file located in /etc/ in order to mount static drives during boot. It briefly explains how to find a partition or drive's UUID, what some options do, and further reading should the information provided be insufficient.
 
 ## Prerequisites
 
 - Root or sudo access
 
-## Adding Entries to /etc/fstab
-
 :::note[NTFS on Linux]
-The NTFS filesystem can be unstable under Linux, whether using the ntfs3 or ntfs-3g driver. Use it at your own risk. For better stability and performance, consider Linux native filesystems like ext4, xfs, or btrfs.
+The NTFS filesystem can be unstable under Linux, whether using the ntfs, ntfs3 or ntfs-3g driver. Use it at your own risk. For better stability and performance, consider Linux native filesystems like ext4, xfs, or btrfs.
 :::
+
+## Mounting Drives with Systemd Mount Files
+
+The benefit of mounting via systemd is that even if you get something wrong in your mount file, your system will still boot. Whereas a mistake in the fstab can render your system unbootable.
+
+### 1. List the UUIDs of your partitions
+
+```sh title="Open a terminal and run the following command"
+lsblk -f
+```
+
+```text title="Example output"
+NAME          FSTYPE FSVER LABEL UUID                                 FSAVAIL   FSUSE% MOUNTPOINTS
+zram0                                                                              [SWAP]
+nvme0n1
+├─nvme0n1p1   vfat   FAT32       E04D-9F05
+├─nvme0n1p2
+├─nvme0n1p3   ntfs               08A24E90A24E81E4                      715.4G   50%
+├─nvme0n1p4   vfat   FAT32       E09C-D4DA                             628.1M   39% /boot
+├─nvme0n1p5   ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G   47% /
+└─nvme0n1p6   ntfs
+nvme1n1
+└─nvme1n1p1   ext4               4e55896f-3f1f-4bc5-aa8a-fec099689cd9  931.5G   0%
+
+```
+
+In this example, we want to mount an extra drive freshly formatted as ext4. We know it's a 1TB drive, and know that nothing has been stored on it yet. Therefore, we can determine the partition to be mounted is `nvme1n1p1` that has a UUID of `4e55896f-3f1f-4bc5-aa8a-fec099689cd9`.
+
+### 2. Identifying your partition
+
+Often `lsblk -f` will provide all the information you need to mount your disk with systemd at this point. If you're still unsure which is the correct partition, you can run the following command:
+
+```sh
+sudo fdisk -l
+```
+
+```text title="Example output"
+Device          Start       End         Sectors     Size    Type
+/dev/nvme0n1p1  2048        206847      204800      100M    EFI System
+/dev/nvme0n1p2  206848      239615      32768       16M     Microsoft reserved
+/dev/nvme0n1p3  239616      2997384182  2997144567  1.4T    Microsoft basic data
+/dev/nvme0n1p4  2997385216  2999482367  2097152     1G      EFI System
+/dev/nvme0n1p5  2999482368  3905454079  905971712   432G    Linux root (x86-64)
+/dev/nvme0n1p6  3905454080  3907026943  1572864     768M    Windows recovery environment
+/dev/nvme1n1p1  2048        1953523711  1953521664  931.5G  Linux filesystem
+
+```
+
+We already know our UUID in this example. However, `fdisk -l` can make it a bit more clear to us by showing the exact size of the partition (931.5G) as well as its type (Linux filesystem).
+
+That should make it abundantly clear to us that the partition we want is `nvme1n1p1` with a UUID of `4e55896f-3f1f-4bc5-aa8a-fec099689cd9` as described earlier. We knew earlier, but now we just know it for sure.
+
+Once you are confident you've found the correct partition, copy the UUID. Copying from the terminal emulator is typically done with `ctrl+shift+C`.
+
+### 3. Creating the Systemd Mount File
+Let us say we want to use this drive primarily for games, a good place to mount that is in your user home. It can be anywhere you want, but for simplicity's sake we're going with in /home/user (replace user with your linux username). This matters because the mounting path dictates the name of the systemd mount file. Because this drive is intended for games, we'll mount it to the games folder in user home, `/home/user/games`.
+
+For a systemd mount file, that translates to home-user-games.mount (forward slashes `/` get replaced with hypens `-`) and systemd mount files go in /etc/systemd/system.
+
+Feel free to use your text editor of choice, in this example we'll be using `micro`.
+
+```sh
+micro /etc/systemd/system/home-user-games.mount
+```
+
+Paste this template into the empty file:
+```
+[Unit]
+Description=
+
+[Mount]
+What=
+Where=
+Type=
+Options=
+
+[Install]
+WantedBy=multi-user.target
+```
+
+<Tabs>
+  <TabItem label='Description'>
+  Description can be anything you want, it's for your own recognition.
+  </TabItem>
+  <TabItem label= 'What'>
+  Put in the UUID you copied earlier. Here it will be `UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9`
+  </TabItem>
+  <TabItem label= 'Where'>
+  This is the mount point. A folder will be created if it doesn't exist. Here, it will be `/home/user/games`.
+  </TabItem>
+  <TabItem label= 'Type'>
+  Filesystem type, here it will be `ext4`
+  </TabItem>
+  <TabItem label= 'Options'>
+  Any mounting options you want. Here, we'll use `defaults,exec,rw,noatime`. No spaces is important here.
+  </TabItem>
+</Tabs>
+
+Following the example, the filled out mount file should look like this:
+```
+[Unit]
+Description=Mount games drive (/home/user/games)
+
+[Mount]
+What=UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9
+Where=/home/user/games
+Type=ext4
+Options=defaults,exec,rw,noatime
+
+[Install]
+WantedBy=multi-user.target
+```
+
+#### 4. Finishing Up
+To mount the drive we just created an entry for, run the following:
+
+```
+1. sudo systemctl daemon-reload
+2. sudo systemctl enable --now home-user-games.mount
+```
+
+You should see the folder you chose for the mount point, and can check the status of the mount with `systemctl status home-user-games.mount`:
+
+```
+● home-user-games.mount - Mount games drive (/home/user/games)
+     Loaded: loaded (/proc/self/mountinfo; enabled; preset: disabled)
+     Active: active (mounted) since Sat 2026-05-02 13:02:31 CDT; 23h ago
+ Invocation: e52ef8fe3d754c64a3825bc1ee89e7da
+      Where: /home/user/games
+       What: /dev/nvme1n1p1
+      Tasks: 0 (limit: 74118)
+     Memory: 316K (peak: 3.9M)
+        CPU: 5ms
+     CGroup: /system.slice/home-user-games.mount
+
+May 02 13:02:31 cachyos systemd[1]: Mounting Mount games drive (/home/user/games)...
+May 02 13:02:31 cachyos systemd[1]: Mounted Mount games drive (/home/user/games).
+```
+
+## tl;dr
+
+- Find the **UUID** of your partition
+
+```sh
+lsblk -f
+```
+
+- Create the mount file
+
+```sh
+micro /etc/systemd/system/mnt-foo.mount
+```
+
+Replacing `mnt-foo` with the full path of where you want to mount, swapping the `/` for `-`.
+
+- Fill out the mount file
+
+```sh
+[Unit]
+Description=Mount drive
+
+[Mount]
+What=UUID=<partition UUID>
+Where=/mnt/foo
+Type=somefs
+Options=defaults
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Replacing `<partition UUID>`, `/mnt/foo`, and `somefs` with your UUID, directory, and filesystem. eg., ext4, as well as setting any other options you may want after defaults, such as `_netdev` for a NAS, or `nofail` for any non-critical drive.
+
+- Reload your daemon
+
+```sh
+sudo systemctl daemon-reload
+```
+
+- Mount your drive and set it to mount on boot
+
+```sh
+sudo systemctl enable --now mnt-foo.mount
+```
+
+## Additional reading
+
+- [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS on /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Manual for dump](<https://linux.die.net/man/8/dump>)
+- [Manual for fsck](https://man.archlinux.org/man/fsck.8)
+- [systemd-mount](https://manual.siduction.org/systemd-mount_en.html)
+
+## Adding Entries to /etc/fstab
 
 ### 1. List the UUIDs of your partitions
 
