@@ -1,0 +1,478 @@
+---
+title: Btrfs Snapshots
+description: Managing Btrfs snapshots in CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 5
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+import MultipleImageComponent from '~/components/multiple-images-component.astro';
+
+## Introduction
+
+:::caution
+Don't consider Btrfs snapshots as a replacement for regular backups. Always ensure you have proper backups of your important data.
+:::
+
+### What is a Btrfs snapshot?
+
+Let's start with the basics:
+
+Btrfs snapshots come from the feature of subvolume. What is a subvolume you might ask?. Think of a subvolume as a separate filesystem within the Btrfs filesystem. Allowing you to segment your data in different parts. That's why for example in CachyOS we have different subvolumes for:
+
+- Root filesystem: (`/`)
+- Root directory: (`/root`)
+- Home directory: (`/home`)
+- Var directories: (`/var/cache`, `/var/tmp`, `/var/log`)
+- Srv directory: (`/srv`)
+
+By having different subvolumes for these directories, we can manage them independently, apply different settings and most importantly create snapshots for them.
+
+This is where a snapshot is born. A snapshot is essentially a read-only or read-write (**default**) copy of a subvolume at a specific point in time. This means you can capture the state of your filesystem, including all files and directories, at that moment.
+
+Therefore snapshots become a point-in-time reference meaning when the target file diverges from the snapshot data, the snapshot will keep the original file and the target will create a new file with the changes and the snapshot remains the same forever, that's why some users refer to a snapshot as "data frozen in time".
+
+Imagine taking a photograph of your filesystem at a specific moment, and you can always go back to that photograph whenever you need to.
+
+One of the key advantages of snapshots is that they are very space-efficient because it's just a reference to the original data until changes are made.
+
+But this is where a snapshot diverges from a traditional backup. Let's say your disk crashes, if you had a traditional backup, you could restore your data from that backup. However, if you only had snapshots on the crashed disk, you would lose access to those snapshots since they are stored on the same disk.
+
+### Recovery Cases where snapshots are useful and not useful
+
+They're useful recovering from:
+
+- Broken or corruption after system updates.
+- Misconfigurations that prevent the system from booting.
+- Accidental file deletions or modifications.
+
+They're not useful recovering from:
+
+- Bootloader issues.
+- Hardware failures (e.g., failing hard drives).
+
+## Managing snapshots (GUI & CLI)
+
+:::tip
+Because CachyOS includes `snap-pac` by default, Snapper will automatically create snapshots before and after any package installation, upgrade, or removal using `pacman`. This means you don't have to manually create snapshots for these operations, as Snapper handles it for you.
+:::
+
+:::note
+If you're using the GRUB bootloader, ensure you have `grub-btrfs-support` to have all the necessary scripts and hooks to automatically detect BTRFS snapshots and add them to the GRUB menu.
+```bash
+sudo pacman -Syu grub-btrfs-support
+```
+:::
+
+A few things to consider before managing snapshots. **Applies to both CLI and GUI methods.**
+
+- A maximum of 10 snapshots are recommended to be kept. Beyond that, snapshots become too old and less useful. In a worst case scenario, reverting to an old snapshot may introduce compatibility issues with newer software versions.
+- Snapshots ideally are meant to be used to recover purposes. Although you can use them to undo changes to files without restoring the entire snapshot.
+- Add a meaningful description when creating snapshots. This will help you identify the purpose of each snapshot later on.
+
+### Btrfs Assistant (GUI)
+
+Before proceeding, ensure you have `btrfsmaintenance` installed to take advantage of automatic snapshot management features.
+
+For those who prefer managing Btrfs, snapshots, and more through a GUI. [Btrfs Assistant](https://gitlab.com/btrfs-assistant/btrfs-assistant) is  an awesome project for beginners.
+
+#### Automatic Snapshots Cleanup Setup
+
+We're going to set up automatic snapshot cleanup using Btrfs Assistant. This will help manage your snapshots effectively without manual intervention.
+
+Follow these steps:
+
+<Steps>
+
+    1. Launch Btrfs Assistant by opening a terminal and running:
+        ```bash
+        btrfs-assistant-launcher
+        ```
+
+        Alternatively:
+
+        ```bash
+        sudo -E btrfs-assistant
+        ```
+
+  2. Navigate to the Snapper Settings tab:
+
+      <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperSettingsTab.png')} />
+      Modify the **Snapshot Retention** settings as follows:
+      - Ensure the `root` config is selected
+      - Enter a value of `0` for Hourly, Daily, Weekly, Monthly and Yearly.
+      - Untick `Enable timeline snapshots`.
+      - Enter a value of `10` to `Number`.
+      - Add a ✅ to `Snapper cleanup enabled`.
+      - Click on the `Save` button on the top right and `Apply systemd changes` on the bottom right.
+      **snapper-cleanup.timer will now be enabled to automatically clean up old snapshots based on your configuration.**
+      :::caution
+      Verify the adjustments you just made have been applied correctly by checking the Snapper configuration:
+      ```bash
+      sudo nano /etc/snapper/configs/root
+      ```
+      Expected output snippet:
+      ```text
+      # limit for number cleanup
+      NUMBER_MIN_AGE="3600"
+      NUMBER_LIMIT="10"
+      NUMBER_LIMIT_IMPORTANT="10"
+      ```
+      If `NUMBER_LIMIT` and `NUMBER_LIMIT_IMPORTANT` don't contain the value of `10`. Update them accordingly.
+      Save the file and exit by pressing `CTRL + O`, `Enter` and `CTRL + X`.
+      :::
+</Steps>
+
+#### Removing Snapshots using Btrfs Assistant
+
+<Steps>
+    1. Open Btrfs Assistant:
+        ```bash
+        btrfs-assistant-launcher
+        ```
+
+        Alternatively:
+
+        ```bash
+        sudo -E btrfs-assistant
+        ```
+    2. Go to the Snapper Settings tab:
+        <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperTab.png')} />
+    3. Select the snapshot(s) you want to delete from the list.
+        :::tip
+        - Hold `CTRL` to select multiple snapshots.
+        - Hold `SHIFT` to select a range of snapshots.
+        :::
+    4. Click on the `Delete` button located at the top of the window.
+    5. Regenerate your bootloader entires to reflect the changes:
+        <details>
+            <summary>systemd-boot</summary>
+            ```bash
+            sudo sdboot-manage gen
+            ```
+        </details>
+        <details>
+            <summary>GRUB</summary>
+            ```bash
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+        </details>
+        <details>
+            <summary>Limine</summary>
+            ```bash
+            sudo limine-mkinitcpio
+            ```
+        </details>
+</Steps>
+
+Check out their [Official Wiki](https://gitlab.com/btrfs-assistant/wiki) for a more in depth look about what can be done.
+
+### Snapper (CLI)
+
+Now that we covered what a Btrfs snapshot is and its use cases, let's talk about how to manage them using a tool called [Snapper](http://snapper.io/) created by [Arvin Schnell](https://github.com/aschnell) from [openSUSE](https://www.opensuse.org/).
+
+<details>
+<summary>CachyOS uses the following Snapper configuration by default:</summary>
+
+```text
+# subvolume to snapshot
+SUBVOLUME="/"
+
+# filesystem type
+FSTYPE="btrfs"
+
+# btrfs qgroup for space aware cleanup algorithms
+QGROUP=""
+
+# fraction or absolute size of the filesystems space the snapshots may use
+SPACE_LIMIT="0.5"
+
+# fraction or absolute size of the filesystems space that should be free
+FREE_LIMIT="0.2"
+
+# users and groups allowed to work with config
+ALLOW_USERS=""
+ALLOW_GROUPS=""
+
+# sync users and groups from ALLOW_USERS and ALLOW_GROUPS to .snapshots
+# directory
+SYNC_ACL="no"
+
+# start comparing pre- and post-snapshot in background after creating
+# post-snapshot
+BACKGROUND_COMPARISON="yes"
+
+# run daily number cleanup
+NUMBER_CLEANUP="yes"
+
+# limit for number cleanup
+NUMBER_MIN_AGE="1800"
+NUMBER_LIMIT="50"
+NUMBER_LIMIT_IMPORTANT="15"
+
+# create hourly snapshots
+TIMELINE_CREATE="no"
+
+# cleanup hourly snapshots after some time
+TIMELINE_CLEANUP="yes"
+
+# limits for timeline cleanup
+TIMELINE_MIN_AGE="1800"
+TIMELINE_LIMIT_HOURLY="5"
+TIMELINE_LIMIT_DAILY="7"
+TIMELINE_LIMIT_WEEKLY="0"
+TIMELINE_LIMIT_MONTHLY="0"
+TIMELINE_LIMIT_YEARLY="0"
+
+# cleanup empty pre-post-pairs
+EMPTY_PRE_POST_CLEANUP="yes"
+
+# limits for empty pre-post-pair cleanup
+EMPTY_PRE_POST_MIN_AGE="1800"
+```
+
+</details>
+
+:::caution
+CachyOS's default Snapper configuration only covers the root subvolume (`/`). If you have other subvolumes that you want to manage with Snapper, you'll need to create separate configurations for each of them.
+
+This configuration requires a revision to increase it's effectiveness.
+:::
+
+Here is a list of the most common Snapper commands.
+
+:::note
+`< >` indicates a placeholder that you should replace with the appropriate value.
+:::
+
+<details>
+    <summary>Get current configuration:</summary>
+    ```bash
+    sudo snapper get-config
+    ```
+    <details>
+        <summary>Output Example:</summary>
+        ```bash
+        ❯ snapper list-configs
+        Config │ Subvolume
+        ───────┼──────────
+        root   │ /
+        ```
+    </details>
+</details>
+
+<details>
+    <summary>List available snapshots + details:</summary>
+    ```bash
+    sudo snapper list
+    ```
+    <details>
+        <summary>Output Example:</summary>
+        ```bash
+          # │ Type   │ Pre # │ Date                     │ User │ Cleanup │ Description                                                              │ Userdata
+        ────┼────────┼───────┼──────────────────────────┼──────┼─────────┼──────────────────────────────────────────────────────────────────────────┼─────────
+        0   │ single │       │                          │ root │         │ current                                                                  │
+        715 │ pre    │       │ Thu 22 Jan 2026 16:14:07 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        716 │ post   │   715 │ Thu 22 Jan 2026 16:14:25 │ root │ number  │ docker-buildx lilv sof-firmware zed                                      │
+        717 │ pre    │       │ Sat 24 Jan 2026 11:19:48 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        718 │ post   │   717 │ Sat 24 Jan 2026 11:20:19 │ root │ number  │ bpf cachyos-hello cachyos-wallpapers cpupower jdk-openjdk ldb less libev │
+        719 │ pre    │       │ Sat 24 Jan 2026 11:20:31 │ root │ number  │ pacman -U --config /etc/pacman.conf -- /home/mario/.cache/yay/visual-s   │
+        720 │ post   │   719 │ Sat 24 Jan 2026 11:20:36 │ root │ number  │ visual-studio-code-bin                                                   │
+        721 │ pre    │       │ Sat 24 Jan 2026 20:46:40 │ root │ number  │ pacman -Syu plasma-login-manager                                         │
+        722 │ post   │   721 │ Sat 24 Jan 2026 20:46:48 │ root │ number  │ cmake fastfetch harfbuzz harfbuzz-icu jdk21-openjdk lib32-harfbuzz lib32 │
+        723 │ pre    │       │ Sat 24 Jan 2026 20:46:53 │ root │ number  │ pacman -R sddm-kcm cachyos-themes-sddm sddm                              │
+        724 │ post   │   723 │ Sat 24 Jan 2026 20:46:56 │ root │ number  │ cachyos-themes-sddm sddm sddm-kcm                                        │
+        725 │ pre    │       │ Sun 25 Jan 2026 08:05:05 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        726 │ post   │   725 │ Sun 25 Jan 2026 08:05:11 │ root │ number  │ plasma-login-manager                                                     │
+        727 │ pre    │       │ Sun 25 Jan 2026 15:55:28 │ root │ number  │ pacman -S --config /etc/pacman.conf -- cachyos-extra-znver4/caligula     │
+        728 │ post   │   727 │ Sun 25 Jan 2026 15:55:30 │ root │ number  │ caligula                                                                 │
+      ```
+      - Here is a summary of the columns:
+        - `#`: Indicates the snapshot number which is used in other commands.
+        - `Type`: Indicates whether the snapshot is a single snapshot or part of a pre/post pair.
+            - `single`: These snapshots have no special relationship to other snapshots.
+            - `pre`: These snapshots are meant to be taken before any kind of system change (like editing a file or installing a package).
+            - `post`: As the name implies, these snapshots refer to snapshots taken after a system change has occurred. They are linked to their corresponding `pre` snapshot.
+        - `Pre #`: For `post` snapshots, this column indicates the snapshot number of the corresponding `pre` snapshot.
+        - `Date`: The date and time when the snapshot was created.
+        - `User`: The user who created the snapshot.
+        - `Cleanup`: Indicates the cleanup algorithm applied to the snapshot.
+            - There are several cleanup algorithms available in Snapper, such as `number`, `timeline`, and empty-pre-post. In this example, the `number` algorithm is used, which means that older snapshots will be deleted based on a predefined limit.
+            - timeline: Snapshots are cleaned up based on their age and frequency.
+            - empty-pre-post: Deletes pre/post snapshot pairs with empty diffs.
+        - `Description`: A brief description of the snapshot, often indicating the reason for its creation.
+        - `Userdata`: Additional user-defined data associated with the snapshot.
+        For more details about the output columns
+    </details>
+</details>
+
+<details>
+    <summary>Create a new snapshot:</summary>
+    ```bash
+    sudo snapper create --type single --description "My Snapshot Description"
+    ```
+</details>
+
+<details>
+    <summary>Modify a snapshot:</summary>
+    ```bash
+    sudo snapper modify <option> <snapshot_number>
+    ```
+    <details>
+        <summary>Available options:</summary>
+        ```bash
+        Options for 'modify' command:
+            --description, -d <description>  Description for snapshot.
+            --cleanup-algorithm, -c <algo>   Cleanup algorithm for snapshot.
+            --userdata, -u <userdata>        Userdata for snapshot.
+            --read-only                      Set snapshot read-only.
+            --read-write                     Set snapshot read-write.
+            --default                        Set snapshot as default snapshot.
+        ```
+        <details>
+            <summary>Example: Modifying snapshot 729 description:</summary>
+            ```bash
+            sudo snapper modify 729 --description 'My New Snapshot Description'
+            ```
+        </details>
+    </details>
+</details>
+
+<details>
+<summary>Deletion of snapshots:</summary>
+:::note
+Snapshot 0 cannot be deleted as it represents the current state of the filesystem.
+:::
+    <details>
+    <summary>Delete a single snapshot:</summary>
+    ```bash
+    sudo snapper delete <snapshot_number>
+    ```
+    </details>
+    <details>
+    <summary>Delete a range of snapshots:</summary>
+    ```bash
+    sudo snapper delete 718-721
+    ```
+    Snapshot 718, 719, 720, and 721 will be deleted.
+    </details>
+</details>
+
+#### Snapper Documentation
+
+[Official Snapper's command man page:](http://snapper.io/manpages/snapper.html#global_options)
+
+[Snapper Configuration File guide:](http://snapper.io/manpages/snapper-configs.html)
+
+[Arch Wiki guide:](https://wiki.archlinux.org/title/Snapper)
+
+### Limine  Recommendations & Tips
+
+#### Tweak Limine bootloader Snapshots Display Settings
+
+- Limit the number of snapshots shown in the Limine bootloader menu to avoid clutter:
+
+<Steps>
+    1. Create a backup of the limine-snapper-sync configuration file:
+        ```bash
+        sudo cp /etc/limine-snapper-sync.conf /etc/limine-snapper-sync.conf.orig
+        ```
+    2. Edit the limine-snapper-sync configuration file:
+        ```bash
+        sudo nano /etc/limine-snapper-sync.conf
+        ```
+        Expected output snippet:
+        ```bash
+        ### Max Snapshot Entries
+        ### Sets the limit for how many snapshot entries show up in the boot menu.
+        ### This depends on the size of your FAT32 boot partition and how many different kernel and module versions you want to keep.
+        ### A larger FAT32 boot partition allows more snapshot entries.
+        MAX_SNAPSHOT_ENTRIES=10
+        ```
+        Optionally, adjust the Snapshot Name Format:
+        ```bash
+        ### Snapshot Name Format
+        ### Choose a format for how snapshot entries look in the Limine bootloader:
+        ### 0. ID=111 2023-12-20 10:59:59 (default)
+        ### 1. 111│2023-12-20 10:59:59
+        ### 2. 111 │ 2023-12-20 10:59:59
+        ### 3. 2023-12-20 10:59:59│111
+        ### 4. 2023-12-20 10:59:59 │ 111
+        ### 5. 2023-12-20 10:59:59
+        ### 6. 111
+        ### 7. 111│snapshot description
+        ### 8. 2023-12-20 10:59:59│snapshot description
+        ### 9. │snapshot description
+        SNAPSHOT_FORMAT_CHOICE=8
+        ```
+        `8` is a good choice as it shows the date and time along with the snapshot description.
+    3. Save the file and exit by pressing `CTRL+O` `Enter` `CTRL+X`
+</Steps>
+
+### Restoring from a Snapshot
+
+:::caution
+If the snapshot you want to restore from involved a kernel update, you won't be able to rollback.
+:::
+
+<details>
+    <summary>Limine</summary>
+    <Steps>
+        1. From the Limine bootloader menu, navigate to the Snapshots menu:
+            <ImageComponent imgsrc={import('~/assets/images/limine-snapshotMenu-1.jpg')} />
+        2. Select the snapshot & kernel you want to restore from:
+            <MultipleImageComponent
+                images={[
+                import('~/assets/images/limine-snapshotMenu-2.jpg'),
+                import('~/assets/images/limine-snapshotMenu-1.jpg')]}
+            />
+        3. Your system is now in `read-only mode`. A pop up notification should appear indicating that a snapshot was detected asking to restore from it:
+            <ImageComponent imgsrc={import('~/assets/images/kde-snapshot-popup.png')} />
+        4. Click on `Restore now`. A terminal window will open with a prompt and ask for some confirmations:
+            ```bash title="Example Restore Prompt"
+            Snapshot ID    : 2
+            Date           : 2026-01-26 11:19:14
+            Description    : nc-git
+            Restore method : replace
+
+            Confirm restore of snapshot 2 using the "replace" method?
+            Type [y]es to restore, [l]ist to display all snapshots, or [c]ancel to abort.
+
+            Your input: yes
+
+            Enter a description for the "backup" of the subvolume: @
+
+            Your input: @
+            ```
+          5. Type `yes` and optionally add a description for the backup snapshot.
+          6. The restoration process will begin. Once completed, Type yes once again in the new prompt to reboot your system:
+              ```bash
+              The restore is complete. Please reboot now:
+              Type [y]es to reboot, [n]o or [c]ancel to abort rebooting.
+
+              Your input: yes
+              ```
+    </Steps>
+</details>
+
+<details>
+    <summary>GRUB</summary>
+    <Steps>
+        1. From the GRUB bootloader menu. Boot into the desired snapshot & kernel you want to restore from.
+        2. Once booted. Open Btrfs Assistant:
+            ```bash
+            btrfs-assistant-launcher
+            ```
+
+            Alternatively:
+
+            ```bash
+            sudo -E btrfs-assistant
+            ```
+        3. Go to the Snapper tab → “Browse/Restore” tab and select the snapshot you booted from:
+            <ImageComponent imgsrc={import('~/assets/images/btrfs-assistant-example.png')} />
+        4. Click on `Restore` button and reboot your system to apply the changes.
+    </Steps>
+</details>
