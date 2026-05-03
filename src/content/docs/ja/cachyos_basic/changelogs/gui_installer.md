@@ -4,6 +4,105 @@ description: Calamares と GUI ライブ ISO の更新ログ
 sidebar:
   order: 1
 ---
+26.04
+----
+
+**機能**
+
+* **インストーラー**
+  * GUI パッケージマネージャーを Octopi から Shelly に変更
+  * インストール直後に初期状態への復元ポイントとなるスナップショットを作成し、恒久的に保存されるように
+  * GRUB の `os-prober` をデフォルトで有効化
+  * デスクトップ環境の MangoWM にドットファイルつきで対応
+  * UKUI デスクトップへの対応を終了
+  * AMD GPU において、Plymouth テーマが外部モニターを接続したノート PC で正しく表示されない問題があったため別のテーマに変更
+  * GNOME のパッケージ一覧の内容を整理・更新
+  * DMS シェルを搭載した `MangoWM` のインストールオプションを追加
+* **CachyOS-Welcome**
+  * blocky による DNS-over-HTTPS に対応
+  * DNS ページに個々のサーバーのレイテンシ計測機能を追加、カスタムサーバーの追加も可能に
+  * AMD および Intel dGPU における VRAM 管理の改善を有効化する設定を追加 (gamescope または KDE 環境でのみ有効)
+  * キーボードナビゲーションに完全対応
+* **chwd**
+  * 対応デバイスにおいて、指紋認証ベースの sudo の有効化に対応
+  * 対応デバイスにおいて `intel-lpmd` に対応、設定を改善した独自フォーク版を使用
+  * プロファイルに PC ケースの種類を識別する機能を追加
+  * Xbox ROG Ally を chwd プロファイルに追加
+* **cachyos-settings**
+  * デフォルトの NVMe I/O スケジューラを `none` から `kyber` へ変更
+
+**修正**
+
+* **インストーラー**
+  * パーティション方式をデバッグログに出力するように
+  * 既存のブートパーティションを再利用する際、古いマイクロコードパッケージを削除するように
+* **chwd**
+  * NVIDIA プロファイルにおけるカーネル検索の精度を向上
+  * 470xx プロファイルから強制的な Xorg セッションを削除
+  * ハンドヘルド製品名の識別を改善
+* **cachyos-settings**
+  * NVIDIA 595 ドライバーにおける問題のため、S01x 電源管理を廃止
+  * NVIDIA ドライバーの VR 関連の問題のため、`AggressiveVblank` を無効化
+
+---
+
+## 26.03
+
+**機能**
+
+* **インストーラー**
+  * デスクトップ環境の選択画面で、デスクトップの見た目を GIF / WebP 動画で確認できるように (Plasma, GNOME, Niri, COSMIC で対応)
+  * 画像サイズ削減のため、デスクトップ環境の選択画面で JPEG XL に対応
+  * GNOME および KDE 環境をインストール際、デフォルトで Cachy-Update を有効化するように
+  * マイクロコードのインストールロジックを改善し、ハードウェアを識別して適切なマイクロコードのみをインストールするよう変更
+  * EFI パーティションが小さすぎる際のエラーメッセージを改善
+  * デスクトップ環境の一覧を、セットアップの難易度順に並び替え (上から順にかんたん -> WM など上級者向け)
+* **CachyOS-Welcome**
+  * かんたんに Windows Docker 仮想マシンを構築できる "Winboat" をインストール・有効化するボタンを追加
+  * DNS の選択肢に FFMUC DNS サーバーを追加
+  * ウクライナ語の翻訳を追加
+* **chwd**
+  * NVIDIA dGPU 構成において initramfs のサイズを大幅に削減
+* **linux-cachyos**
+  * `0001-cachyos-base-all.patch` を生成する代わりに、リリース毎に Linux リポジトリ内で CachyOS のパッチ済みカーネルを生成するよう変更
+* **cachyos-rate-mirrors**
+  * 中国およびロシアのユーザー向けに、ミラーの評価前に適切なチェックを行うよう改善
+* **cachyos-settings**
+  * タイムゾーンに基づいてワイヤレスの規制区域を自動設定する機能を追加
+* **ウェブサイト**
+  * ウェブサイトのデザインをよりモダンに刷新・改善
+* **GitHub**
+  * バグレポートの品質向上とユーザーへのヘルプを目的として、重要な GitHub リポジトリに Issue テンプレートを追加
+* **ミラー**
+  * ロシア (jura12, cachy-arch.ru)、スウェーデン (Zyner)、カナダ (All Things Linux) に新しいミラーを追加
+
+**修正**
+
+* **インストーラー**
+  * bcachefs-dkms が必要となるため、ファイルシステム選択から bcachefs を削除
+  * 特定のデバイスで LUKS2 を使用した際の暗号化を修正
+  * ディスプレイマネージャー "ly" の有効化に関する問題を修正
+* **cachyos-settings**
+  * `cachyos-bugreport.sh` が IP アドレス、ユーザー名、ホスト名、MAC アドレスを伏せ字にするように
+* **chwd**
+  * 汎用的なハンドヘルドプロファイルの追加と、ハンドヘルド用 GPU 対応の改善
+  * Lenovo 製ハンドヘルドデバイスで fwupd を有効化
+
+
+**ハンドヘルド版の変更履歴**
+
+* **gamescope-session**
+  * gamescope-session-plus を、Valve の gamescope-session からフォークした gamescope-session-cachyos へ置き換え
+  * Steam Deck および Lenovo Legion Go デバイスのファームウェアアップデートに対応
+* **plasma-login-manager**
+  * ログインマネージャーを SDDM から plasma-login-manager へ置き換え
+* **ブートローダー**
+  * Limine を自動スナップショット付きのデフォルトとして選択するように変更、systemd-boot も引き続き選択可能
+* **インストーラー**
+  * Handheld 版 Calamares とデスクトップ版 Calamares を統合
+* **ISO**
+  * ISO が X11 に代わり Wayland を使用するように変更
+
 26.01
 ----
 
