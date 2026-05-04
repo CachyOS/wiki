@@ -62,7 +62,7 @@ export default defineConfig({
         themes: ['ayu-dark', 'light-plus'],
         styleOverrides: {
           frames: {
-            terminalTitlebarForeground: '#00FFFF',
+            terminalTitlebarForeground: 'var(--sl-color-text-accent)',
           },
         },
       },
