@@ -60,6 +60,11 @@ export default defineConfig({
       },
       expressiveCode: {
         themes: ['ayu-dark', 'light-plus'],
+        styleOverrides: {
+          frames: {
+            terminalTitlebarForeground: '#00FFFF',
+          },
+        },
       },
       social: [
         {
@@ -173,7 +178,7 @@ export default defineConfig({
               translations: {
                 el: 'Αρχεία αλλαγών ISO',
                 ja: 'ISO 更新ログ',
-		ru: 'Журналы изменений ISO',
+                ru: 'Журналы изменений ISO',
                 bg: 'Списък на промените',
               },
             },
