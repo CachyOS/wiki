@@ -1,0 +1,560 @@
+---
+title: Μετά την εγκατάσταση
+description: Βήματα παραμετροποίησης μετά την εγκατάσταση του CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+## Προτεινόμενα βήματα μετά την εγκατάσταση
+
+### Ενημέρωση του συστήματος
+
+:::tip
+Make sure to check our [Security & Best Practices](/cachyos_basic/faq#security--best-practices) to avoid common pitfalls and keep your system secure.
+:::
+
+<Tabs>
+
+<TabItem label="Με το Shelly (GUI και CLI)">
+
+    Το [Shelly](https://github.com/Seafoam-Labs/Shelly-ALPM) is a modern reimagination of the Arch Linux package manager, designed to be a more intuitive and user-friendly alternative to pacman and octopi.
+
+    Developed by: [Seafoam-Labs](https://github.com/Seafoam-Labs)
+
+    Allowing users to manage their packages without needing to use the terminal.
+
+    Some of the features of Shelly include:
+
+    Install/Uninstall packages from the AUR, official repositories, AppImages, Flatpaks and local packages, view package details, manage package groups, and more.
+
+    Check out the [Shelly's README for more details](https://github.com/Seafoam-Labs/Shelly-ALPM?tab=readme-ov-file#features)
+
+    Γιατί να προτιμήσετε το Shelly αντί του Octopi;
+    - Διαθέτει πιο σύγχρονο και εύχρηστο περιβάλλον.
+    - Συνεχής ανάπτυξη και ενημερώσεις με νέες δυνατότητες και βελτιώσεις.
+    - Υποστηρίζει περισσότερες μορφές πακέτων (AUR, AppImage, Flatpak κ.α.).
+
+    <details>
+        <summary>Στιγμιότυπο αρχικής σελίδας του Shelly</summary>
+        <ImageComponent imgsrc={import('~/assets/images/shelly-homepage.png')} />
+    </details>
+    <details>
+        <summary>Καρτέλα διαχείρισης πακέτων</summary>
+        <ImageComponent imgsrc={import('~/assets/images/shelly-package-management.png')} />
+    </details>
+</TabItem>
+
+<TabItem label="Με το Octopi (GUI)">
+
+Octopi is a graphical package manager for Arch-based distributions that provides a convenient way to manage packages and updates.
+To update your system with Octopi, follow these steps:
+
+<Steps>
+
+1. Launch **Octopi** from the application menu.
+2. In the main window, click on the **Check updates** button (Top left), now next to it **System upgrade.**
+3. Octopi will now check for available updates and prompt you to either install them on Octopi itself or in a terminal.
+4. To proceed with the update, click the **Apply** button.
+5. Octopi will download and install the updates.
+6. It is advised to reboot your computer after a big update **(especially if the kernel got an update)**.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Με το pacman">
+
+<Steps>
+
+1. Open a terminal emulator (or press `ctrl + alt + t` - `mod + return` in a WM e.G Qtile).
+2. Run the following command to update the system:
+
+   ```sh
+   sudo pacman -Syu
+   ```
+3. It is advised to reboot your computer after a big update **(especially if the kernel got an update)**.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Ενημέρωση εκτός σύνδεσης">
+
+*CachyOS supports offline system upgrades using the [`pacman-offline`](https://github.com/eworm-de/pacman-offline) script. This allows your system to download package updates and apply them on the next reboot. (Yes like on Windows)*
+
+:::note
+The `pacman-offline` tool integrates with systemd's offline updates feature. It automatically handles kernel updates and module loading.
+
+The `/etc/pacman.d/offline.conf` file is crucial for managing which packages are updated during regular and offline updates. Ensure it's configured correctly for your desired kernel or add the packages you want so they only get updated during the pacman-offline execution and get ignored in a regular update. Example: `pacman -Syu`.
+
+**If you enable the automatic update timer, you no longer need to manually update your system.**
+:::
+
+<Steps>
+
+1. **Install the pacman-offline package**
+
+   ```bash
+   sudo pacman -S pacman-offline
+   ```
+
+2. **Telling Pacman to read from the separate package ignore list.**
+
+   :::note[Add the line after the [options] section. Check the example below for reference.]
+   :::
+
+   ```bash title='Add the following line to the /etc/pacman.conf file'
+   Include = /etc/pacman.d/offline.conf
+   ```
+   *Example*
+   ```bash
+   # /etc/pacman.conf
+   # REPOSITORIES
+   #   - can be defined here or included from another file
+   #   - pacman will search repositories in the order defined here
+   #   - local/custom mirrors can be added here or in separate files
+   #   - repositories listed first will take precedence when packages
+   #     have identical names, regardless of version number
+   #   - URLs will have $repo replaced by the name of the current repo
+   #   - URLs will have $arch replaced by the name of the architecture
+   #
+   # Repository entries are of the format:
+   #       [repo-name]
+   #       Server = ServerName
+   #       Include = IncludePath
+   #
+   # The header [repo-name] is crucial - it must be present and
+   # uncommented to enable the repo.
+   #
+   # GENERAL OPTIONS
+   [options]
+   # other options like 'Color', 'CheckSpace', etc. can be here
+   Include = /etc/pacman.d/offline.conf
+   ```
+3. **Adding the CachyOS kernels in order to make pacman ignore them during regular updates**
+
+   The `pacman-offline` tool uses this file to determine which packages to ignore during the traditional pacman updates.
+
+   Example: when you run `sudo pacman -Syu`
+
+   *Replace the contents of the `/etc/pacman.d/offline.conf` file with the following:*
+
+   ```text
+   # Arch Linux kernels
+   IgnorePkg = linux linux-headers linux-docs
+   IgnorePkg = linux-lts linux-lts-headers linux-lts-docs
+   IgnorePkg = linux-zen linux-zen-headers linux-zen-docs
+   IgnorePkg = linux-hardened linux-hardened-headers linux-hardened-docs
+
+   # CachyOS kernels
+   IgnorePkg = linux-cachyos linux-cachyos-headers linux-cachyos-nvidia-open linux-cachyos-zfs
+   IgnorePkg = linux-cachyos-bmq linux-cachyos-bmq-headers linux-cachyos-bmq-nvidia-open linux-cachyos-bmq-zfs
+   IgnorePkg = linux-cachyos-bore linux-cachyos-bore-headers linux-cachyos-bore-nvidia-open linux-cachyos-bore-zfs
+   IgnorePkg = linux-cachyos-deckify linux-cachyos-deckify-headers linux-cachyos-deckify-nvidia-open linux-cachyos-deckify-zfs
+   IgnorePkg = linux-cachyos-eevdf linux-cachyos-eevdf-headers linux-cachyos-eevdf-nvidia-open linux-cachyos-eevdf-zfs
+   IgnorePkg = linux-cachyos-gcc linux-cachyos-gcc-headers linux-cachyos-gcc-nvidia-open linux-cachyos-gcc-zfs
+   IgnorePkg = linux-cachyos-hardened linux-cachyos-hardened-headers linux-cachyos-hardened-nvidia-open linux-cachyos-nvidia-hardened-zfs
+   IgnorePkg = linux-cachyos-lts linux-cachyos-lts-headers linux-cachyos-lts-nvidia-open linux-cachyos-lts-zfs
+   IgnorePkg = linux-cachyos-rc linux-cachyos-rc-headers linux-cachyos-rc-nvidia-open linux-cachyos-rc-nvidia-open linux-cachyos-rc-zfs
+   IgnorePkg = linux-cachyos-rt-bore linux-cachyos-rt-bore-headers linux-cachyos-rt-bore-nvidia-open
+   IgnorePkg = linux-cachyos-server linux-cachyos-server-headers linux-cachyos-server-nvidia-open linux-cachyos-server-zfs
+   ```
+
+   *Now all of those packages are going to get ignored in the regular updates but checked during the offline preparation.*
+
+3. **Start the preparation for the offline update only once**
+
+   ```bash title='Run the following command'
+   sudo systemctl start pacman-offline-prepare.service
+   ```
+   This command will then make pacman-offline to execute once and synchronize the package databases and proceed to download updates but doesn't install them.
+
+</Steps>
+
+*If you want this script to be automated. Follow the following steps:*
+
+<Steps>
+
+1. **Enable the preparation timer**
+
+   The `pacman-offline-prepare.timer` being enabled will allow systemd to trigger this script to download updates in a daily basis after a few minutes of every system startup.
+
+   ```bash
+   sudo systemctl enable pacman-offline-prepare.timer
+   ```
+
+2. **Reboot your system:**
+
+   The updates will be installed during the next system reboot.
+
+3. **(Optional) Automatic System Reboots:**
+
+    Enable the `pacman-offline-reboot.timer` to automatically reboot your system by default at **3am** (Your timezone) if they're pending updates. Be aware that its not always at the same time schedule due to the inclusion of `RandomizedDelaySec` which is set to 2 hours by default.
+
+    ```bash
+    sudo systemctl enable pacman-offline-reboot.timer
+    ```
+
+    :::tip
+    You can edit the `pacman-offline-reboot.timer` file to either modify at what time you want your system to reboot if they're is any pending update or disable the randomized schedule.
+    :::
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Cachy-Update">
+
+Fork of [Arch-Update](https://github.com/Antiz96/arch-update)
+
+An update notifier & applier for Arch Linux that assists you with important pre / post update tasks.
+Includes a dynamic & clickeable systray applet for an easy integration with any Desktop Environment / Window Manager.
+
+<details>
+    <summary>How to enable Cachy-Update</summary>
+    Enable Cachy-Update in `CachyOS Hello > Apps/Tweaks > Cachy Update enabled`
+</details>
+<details>
+    <summary>How to disable Cachy-Update</summary>
+        Open a terminal and run the following commands:
+            ```bash
+            sudo systemctl --global disable arch-update-tray.service
+            sudo systemctl --global disable arch-update.timer
+            ```
+            :::tip
+            If you want to keep the system tray applet enabled but just disable the automatic update check, you can simply disable the timer without disabling the service.
+            :::
+</details>
+
+- Features:
+  - Automatic check and listing of available updates.
+  - Check for recent Arch Linux news (and offers to display them if there are).
+  - Check for orphan packages (and offers to remove them if there are).
+  - Check for old & uninstalled packages in cache (and offers to remove them if there are).
+  - Check for pending kernel update requiring a reboot (and offers to do so if there's one).
+  - Check for services requiring a post upgrade restart (and offers to do so if there are).
+  - Support for `sudo`, `sudo-rs`, `doas` & `run0`.
+
+**Update check interval:** `Once 15 seconds after boot and then every hour.`
+
+- How to change the update check interval:
+
+```sh title='Run the following command'
+systemctl --user edit --full arch-update.timer
+# Tip: You can also use any text editor of your choice instead of `nano`
+# e.g EDITOR=micro systemctl --user edit --full arch-update.timer
+```
+
+<details>
+<summary>Default contents of the file:</summary>
+    ```systemd
+    [Timer]
+    OnStartupSec=15 # Check for updates 15 seconds after boot
+    OnUnitActiveSec=1h # Check for updates every hour
+    ```
+</details>
+Basically you can change the `OnUnitActiveSec` value to whatever you want. For example, if you want to check for updates every 30 minutes, change it to `30m`. or every 6 hours, change it to `6h`. Check this [document](https://www.freedesktop.org/software/systemd/man/latest/systemd.time.html#Parsing%20Time%20Spans) for more details on how to set the time interval.
+
+In case you want Cachy-Update to check for new updates only once at boot, you can simply delete the `OnUnitActiveSec` line completely.
+
+Thanks to [Antiz](https://github.com/Antiz96) for maintaining the upstream Arch-Update project and for the implementation of Cachy-Update
+
+</TabItem>
+
+</Tabs>
+
+### Configuring Firewall (ufw)
+:::note
+UFW is enabled by default after installation.
+:::
+To configure ufw, follow these steps:
+
+<Tabs>
+
+<TabItem label="Enable">
+
+```bash
+sudo ufw enable
+```
+
+</TabItem>
+
+<TabItem label="Disable">
+
+```bash
+sudo ufw disable
+```
+
+</TabItem>
+
+<TabItem label="Allow">
+
+By default, ufw ignores incoming, and allows outgoing traffic; you can add specific rules to the firewall to block or allow specific connections.
+
+```bash
+# For example:
+sudo ufw allow ssh
+```
+
+</TabItem>
+
+<TabItem label="Deny">
+
+```bash
+# To deny a specific port, check the following example:
+sudo ufw deny 80
+```
+
+</TabItem>
+
+<TabItem label="Status">
+
+```bash
+sudo ufw status verbose
+```
+
+</TabItem>
+
+</Tabs>
+
+:::note
+Be careful when configuring firewall rules, as improperly configured rules can lock you out of your own system.
+:::
+
+:::note
+You can also configure it graphically using "Firewall" section in the KDE Plasma settings.
+:::
+
+### Configure Wi-Fi Regulatory Domain
+
+The `wireless-regdb` package includes a database of wireless rules (allowed frequencies, channels, power limits) for various countries. Setting the right region for your location can unlock specific Wi-Fi channels (such as channels 12/13 or 5GHz/6GHz bands) that may be limited by default, helping to improve your Wi-Fi performance and connection quality.
+
+**Configuration:**
+
+1. Edit the configuration:
+   Open `/etc/conf.d/wireless-regdom` with root privileges.
+   ```bash
+   sudo micro /etc/conf.d/wireless-regdom
+   ```
+2. Set your country:
+   Uncomment the line with your two-letter [ISO country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Officially_assigned_code_elements) (e.g., `WIRELESS_REGDOM="US"`). Ensure only one country is uncommented.
+3. Reboot:
+   A reboot is typically required for the change to take effect.
+
+**Verification:**
+
+To check the currently applied regulatory domain, use this command:
+
+```bash
+iw reg get
+global
+country 00: DFS-UNSET # Country 00 uses global defaults
+	(755 - 928 @ 2), (N/A, 20), (N/A), PASSIVE-SCAN
+	(2402 - 2472 @ 40), (N/A, 20), (N/A)
+	(2457 - 2482 @ 20), (N/A, 20), (N/A), AUTO-BW, PASSIVE-SCAN
+	(2474 - 2494 @ 20), (N/A, 20), (N/A), NO-OFDM, PASSIVE-SCAN
+	(5170 - 5250 @ 80), (N/A, 20), (N/A), AUTO-BW, PASSIVE-SCAN
+	(5250 - 5330 @ 80), (N/A, 20), (0 ms), DFS, AUTO-BW, PASSIVE-SCAN
+	(5490 - 5730 @ 160), (N/A, 20), (0 ms), DFS, PASSIVE-SCAN
+	(5735 - 5835 @ 80), (N/A, 20), (N/A), PASSIVE-SCAN
+	(57240 - 63720 @ 2160), (N/A, 0), (N/A)
+```
+
+Look for the `country XX:` line, where `XX` should match the code you set. If it shows `country 00:`, the system might be using default restrictions or hasn't yet determined the region.
+
+```bash
+iw reg get
+global
+country US: DFS-FCC # Country correctly shows as US
+	(902 - 904 @ 2), (N/A, 30), (N/A)
+	(904 - 920 @ 16), (N/A, 30), (N/A)
+	(920 - 928 @ 8), (N/A, 30), (N/A)
+	(2400 - 2472 @ 40), (N/A, 30), (N/A)
+	(5150 - 5250 @ 80), (N/A, 23), (N/A), AUTO-BW
+	(5250 - 5350 @ 80), (N/A, 24), (0 ms), DFS, AUTO-BW
+	(5470 - 5730 @ 160), (N/A, 24), (0 ms), DFS
+	(5730 - 5850 @ 80), (N/A, 30), (N/A), AUTO-BW
+	(5850 - 5895 @ 40), (N/A, 27), (N/A), NO-OUTDOOR, AUTO-BW, PASSIVE-SCAN
+	(5925 - 7125 @ 320), (N/A, 12), (N/A), NO-OUTDOOR, PASSIVE-SCAN
+	(57240 - 71000 @ 2160), (N/A, 40), (N/A)
+```
+
+### Enabling Global Menu
+For some apps like Visual Studio Code, the global menu may not work or may be attached to the parent app instead of the panel.
+
+```sh
+# To enable global menu support, run the command and restart the app.
+sudo pacman -S appmenu-gtk-module libdbusmenu-glib
+```
+
+## Optional Configurations
+
+### Changing the Default Shell
+
+Currently, CachyOS uses [fish](https://fishshell.com/) as the user's default login shell. However, you can change
+the default shell to whatever you like.
+
+<Tabs>
+   <TabItem label='bash'>
+
+      This is the default shell on almost every Linux distribution. It is also still used as the root user's login shell. bash
+      has basic autocomplete functionality and easy history management. It differs from zsh and fish in that it doesn't have
+      the fancy customization and plugin ecosystem that both fish and zsh have.
+
+
+      ```sh title='Changing your default shell to bash'
+      chsh -s /usr/bin/bash
+      ```
+
+   </TabItem>
+
+   <TabItem label='zsh'>
+
+      We provide a [zsh config](https://github.com/CachyOS/cachyos-zsh-config) with commonly used plugins and configurations.
+      It aims to have 1:1 functionality with our [fish config](https://github.com/CachyOS/cachyos-fish-config).
+      This is also the default shell used in MacOS.
+
+      ```sh title='Changing the default shell to zsh'
+      chsh -s /usr/bin/zsh
+      ```
+
+   </TabItem>
+</Tabs>
+
+### Updating/using [tldr](https://github.com/tldr-pages/tldr)
+
+:::note
+CachyOS uses [tealdeer](https://github.com/tealdeer-rs/tealdeer) which is a faster Rust based implementation of the original tldr
+:::
+
+This tool is extremely useful for those who don't want to read much or waste time reading a help/man page.
+
+<Steps>
+
+1. ```sh title="Open a terminal and run the following command"
+   tldr --update
+   ```
+2. Example of using tldr:
+   ```sh
+   tldr java
+     Execute a `.jar` program:
+
+      java -jar filename.jar
+
+   # As you can see, it's really useful, and new tools/pages get added over time.
+   ```
+
+</Steps>
+
+### Managing Appimages
+
+Appimages are portable applications that run on most Linux distributions without needing installation or root permissions.
+
+:::note[All AppImages require executable permissions to run.]
+You can set the executable permission using the following command:
+```sh
+chmod +x /path/to/your/appimage
+```
+Or right click the AppImage file, go to `Properties` > `Permissions`, and check the box that says `Allow executing file as program.`
+:::
+
+:::note[Before running AppImages, ensure that FUSE (Filesystem in Userspace) is installed on your system.]
+```sh
+sudo pacman -S fuse2
+```
+:::
+
+To manage AppImages, you can use [gearlever](https://github.com/mijorus/gearlever), which provides an easy way to integrate AppImages into your system.
+
+`gearlever` is a graphical tool that simplifies the management of AppImages on your system. It integrates with your desktop environment, making it easy to run and manage AppImages.
+
+To install gearlever, follow these steps:
+
+<Steps>
+    1. Install flatpak if you haven't already:
+        ```sh
+        sudo pacman -S flatpak
+        ```
+    2. Restart your system.
+    3. Install gearlever using flatpak:
+        ```sh
+        flatpak install flathub it.mijorus.gearlever
+        ```
+    4. After installation. Log out and log back in to see gearlever in your application menu.
+</Steps>
+
+### Configuring Access to Samba Shares
+
+Samba is a free software re-implementation of the SMB networking protocol. To connect to your samba server, a useful config has been made available to CachyOS users, but it requires changing the configuration of your samba server.
+
+#### Installing and using the CachyOS smb.conf file
+
+To use the convenient smb.conf file, first install a specific package that provides the required smb.conf file. Then, replace your server's existing smb.conf with this file and reconfigure your shared volumes.
+
+:::note[This guide assumes you already have a working Samba server]
+:::
+
+<Steps>
+    1. Create a backup of your original `smb.conf` file, typically located at `/etc/samba/smb.conf` on Linux systems.
+    2. Install the CachyOS Samba settings package on your client machine:
+        ```sh
+        sudo pacman -S cachyos-samba-settings
+        ```
+    3. Copy the `smb.conf` from your client machine to the Samba server.
+    4. Open and edit the file to add your shared directories, printers, etc.
+    5. Restart the Samba service on your server:
+        ```sh
+        sudo systemctl restart --now samba
+        ```
+    6. On the client machine, access your shared resources through your file manager (e.g., `smb://<your_server_ip>/<share_name>`).
+
+        If configured correctly, you'll be prompted for login credentials. Remember to select the option to save your login information if desired.
+</Steps>
+
+### AppArmor support using AppArmor.d profiles
+
+Παράθεση από τη Βικιπαίδεια:
+
+*AppArmor ("Application Armor") is a Linux kernel security module that allows the system administrator to restrict programs' capabilities with per-program profiles. Profiles can allow capabilities like network access, raw socket access, and the permission to read, write, or execute files on matching paths.*
+
+This is only an introduction on how to install a basic AppArmor setup, if you're not familiar with AppArmor. Please do not proceed without understanding the implications.
+
+For more detailed information about AppArmor.d and how to create your own profiles, check the [AppArmor.d documentation](https://github.com/roddhjav/apparmor.d?tab=readme-ov-file#configuration).
+
+:::caution[Proceed with caution. A poorly configured AppArmor setup can cause issues.]
+:::
+
+<Steps>
+
+1. Add the following kernel parameters to your Boot Manager, see [Boot Manager Configuration](/configuration/boot_manager_configuration) for reference
+
+   ```text
+   lsm=landlock,lockdown,yama,integrity,apparmor,bpf
+   ```
+
+2. Install apparmor and apparmord **(Set of over +1500 profiles)** packages
+   ```bash
+   sudo pacman -S apparmor apparmor.d
+   ```
+
+3. Enable/Start AppArmor service
+
+   ```bash
+   systemctl enable --now apparmor.service
+   ```
+
+4. Enable caching for AppArmor profiles
+
+   ```shell
+   # /etc/apparmor/parser.conf
+   ## Προσθέστε τις εξής γραμμές:
+   write-cache
+   Optimize=compress-fast
+   cache-loc /etc/apparmor/earlypolicy/
+   ```
+   Αποθηκεύστε το αρχείο και κάντε επανεκκίνηση.
+</Steps>
