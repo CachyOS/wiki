@@ -1,6 +1,6 @@
 ---
-title: Btrfs Snapshots
-description: Managing Btrfs snapshots in CachyOS
+title: Στιγμιότυπα Btrfs
+description: Διαχείριση των στιγμιότυπων Btrfs στο CachyOS
 tableOfContents:
   minHeadingLevel: 1
   maxHeadingLevel: 5
@@ -10,143 +10,143 @@ import { Steps } from '@astrojs/starlight/components';
 import ImageComponent from '~/components/image-component.astro';
 import MultipleImageComponent from '~/components/multiple-images-component.astro';
 
-## Introduction
+## Εισαγωγή
 
 :::caution
-Don't consider Btrfs snapshots as a replacement for regular backups. Always ensure you have proper backups of your important data.
+Μην θεωρείτε τα στιγμιότυπα Btrfs ως υποκατάστατο των τακτικών αντιγράφων ασφαλείας. Θα πρέπει πάντα να φροντίζετε να έχετε κατάλληλα αντίγραφα ασφαλείας για τα σημαντικά δεδομένα σας.
 :::
 
-### What is a Btrfs snapshot?
+### Τι είναι ένα στιγμιότυπο Btrfs;
 
-Let's start with the basics:
+Ας ξεκινήσουμε με τα βασικά:
 
-Btrfs snapshots come from the feature of subvolume. What is a subvolume you might ask?. Think of a subvolume as a separate filesystem within the Btrfs filesystem. Allowing you to segment your data in different parts. That's why for example in CachyOS we have different subvolumes for:
+Τα στιγμιότυπα Btrfs προέρχονται από τη λειτουργία των υποτόμων. Τι είναι ένας υποτόμος; Σκεφτείτε έναν υποτόμο ως ένα ξεχωριστό σύστημα αρχείων εντός του συστήματος αρχείων Btrfs, που σας επιτρέπει να χωρίσετε τα δεδομένα σας σε διαφορετικά τμήματα. Γι' αυτό, για παράδειγμα, στο CachyOS έχουμε διαφορετικούς υποτόμους για:
 
-- Root filesystem: (`/`)
-- Root directory: (`/root`)
-- Home directory: (`/home`)
-- Var directories: (`/var/cache`, `/var/tmp`, `/var/log`)
-- Srv directory: (`/srv`)
+- Το ριζικό σύστημα αρχείων: (`/`)
+- Τον κατάλογο ρίζας (root): (`/root`)
+- Τον προσωπικό κατάλογο (home): (`/home`)
+- Τους καταλόγους var: (`/var/cache`, `/var/tmp`, `/var/log`)
+- Τον κατάλογο srv: (`/srv`)
 
-By having different subvolumes for these directories, we can manage them independently, apply different settings and most importantly create snapshots for them.
+Έχοντας διαφορετικούς υποτόμους για αυτούς τους καταλόγους, μπορούμε να τους διαχειριζόμαστε ανεξάρτητα, να εφαρμόζουμε διαφορετικές ρυθμίσεις και, το πιο σημαντικό, να δημιουργούμε στιγμιότυπά τους.
 
-This is where a snapshot is born. A snapshot is essentially a read-only or read-write (**default**) copy of a subvolume at a specific point in time. This means you can capture the state of your filesystem, including all files and directories, at that moment.
+Εδώ είναι που γεννιέται ένα στιγμιότυπο. Αυτό είναι ουσιαστικά το αντίγραφο ενός υποτόμου για μια συγκεκριμένη χρονική στιγμή, το οποίο μπορεί να είναι μόνο για ανάγνωση ή για ανάγνωση και εγγραφή (**προεπιλογή**). Αυτό σημαίνει ότι μπορείτε να «απαθανατίσετε» την κατάσταση του συστήματος αρχείων σας, συμπεριλαμβανομένων όλων των αρχείων και των καταλόγων, εκείνη ακριβώς τη στιγμή.
 
-Therefore snapshots become a point-in-time reference meaning when the target file diverges from the snapshot data, the snapshot will keep the original file and the target will create a new file with the changes and the snapshot remains the same forever, that's why some users refer to a snapshot as "data frozen in time".
+Επομένως, τα στιγμιότυπα αποτελούν σημεία αναφοράς για μια συγκεκριμένη χρονική στιγμή. Αυτό σημαίνει ότι όταν το αρχείο στο σύστημα προορισμού αρχίσει να διαφέρει από τα δεδομένα του στιγμιότυπου, το στιγμιότυπο διατηρεί το αρχικό αρχείο, ενώ το σύστημα προορισμού δημιουργεί ένα νέο αρχείο με τις αλλαγές. Το στιγμιότυπο παραμένει αμετάβλητο για πάντα, γι' αυτό και ορισμένοι χρήστες αναφέρονται σε αυτό ως «δεδομένα παγωμένα στον χρόνο».
 
-Imagine taking a photograph of your filesystem at a specific moment, and you can always go back to that photograph whenever you need to.
+Φανταστείτε ότι τραβάτε μια φωτογραφία του συστήματος αρχείων σας σε μια συγκεκριμένη στιγμή και μπορείτε πάντα να επιστρέψετε σε αυτήν τη φωτογραφία όποτε το χρειαστείτε.
 
-One of the key advantages of snapshots is that they are very space-efficient because it's just a reference to the original data until changes are made.
+Ένα από τα βασικά πλεονεκτήματα των στιγμιότυπων είναι ότι είναι πολύ αποδοτικά ως προς τη χρήση του χώρου, επειδή αποτελούν απλώς μια αναφορά στα αρχικά δεδομένα μέχρι να γίνουν αλλαγές.
 
-But this is where a snapshot diverges from a traditional backup. Let's say your disk crashes, if you had a traditional backup, you could restore your data from that backup. However, if you only had snapshots on the crashed disk, you would lose access to those snapshots since they are stored on the same disk.
+Εδώ όμως είναι που ένα στιγμιότυπο διαφέρει από ένα παραδοσιακό αντίγραφο ασφαλείας. Ας υποθέσουμε ότι ο δίσκος σας καταρρέει: αν είχατε ένα παραδοσιακό αντίγραφο ασφαλείας, θα μπορούσατε να ανακτήσετε τα δεδομένα σας από αυτό. Ωστόσο, αν είχατε μόνο στιγμιότυπα στον δίσκο που κατέρρευσε, θα χάνατε την πρόσβαση σε αυτά, καθώς είναι αποθηκευμένα στον ίδιο ακριβώς δίσκο.
 
-### Recovery Cases where snapshots are useful and not useful
+### Περιπτώσεις όπου τα στιγμιότυπα (δεν) είναι χρήσιμα
 
-They're useful recovering from:
+Είναι χρήσιμα για την ανάκαμψη από:
 
-- Broken or corruption after system updates.
-- Misconfigurations that prevent the system from booting.
-- Accidental file deletions or modifications.
+- Ελαττωματικά ή κατεστραμμένα αρχεία μετά από ενημερώσεις συστήματος.
+- Εσφαλμένες ρυθμίσεις που εμποδίζουν την εκκίνηση του συστήματος.
+- Ακούσια διαγραφή ή τροποποίηση αρχείων.
 
-They're not useful recovering from:
+Δεν είναι χρήσιμα για την ανάκαμψη από:
 
-- Bootloader issues.
-- Hardware failures (e.g., failing hard drives).
+- Προβλήματα με τον φορτωτή εκκίνησης.
+- Αστοχίες υλικού (π.χ. αστοχία σκληρών δίσκων).
 
-## Managing snapshots (GUI & CLI)
+## Διαχείριση στιγμιότυπων (GUI και CLI)
 
 :::tip
-Because CachyOS includes `snap-pac` by default, Snapper will automatically create snapshots before and after any package installation, upgrade, or removal using `pacman`. This means you don't have to manually create snapshots for these operations, as Snapper handles it for you.
+Επειδή το CachyOS περιλαμβάνει το `snap-pac` από προεπιλογή, το Snapper θα δημιουργεί αυτόματα στιγμιότυπα πριν και μετά από κάθε εγκατάσταση, αναβάθμιση ή αφαίρεση πακέτου μέσω του `pacman`. Αυτό σημαίνει ότι δεν χρειάζεται να δημιουργείτε χειροκίνητα στιγμιότυπα για αυτές τις διεργασίες, καθώς το Snapper το αναλαμβάνει για εσάς.
 :::
 
 :::note
-If you're using the GRUB bootloader, ensure you have `grub-btrfs-support` to have all the necessary scripts and hooks to automatically detect BTRFS snapshots and add them to the GRUB menu.
+Εάν χρησιμοποιείτε τον φορτωτή εκκίνησης GRUB, βεβαιωθείτε ότι διαθέτετε το `grub-btrfs-support` για να έχετε όλες τις δέσμες ενεργειών και τα hook, ώστε να εντοπίζονται αυτόματα τα στιγμιότυπα Btrfs και να προστίθενται στο μενού του GRUB.
 ```bash
 sudo pacman -Syu grub-btrfs-support
 ```
 :::
 
-A few things to consider before managing snapshots. **Applies to both CLI and GUI methods.**
+Μερικά πράγματα που πρέπει να λάβετε υπόψη πριν από τη διαχείριση των στιγμιότυπων. **Ισχύουν τόσο για τη μέθοδο μέσω CLI όσο και για τη μέθοδο μέσω GUI.**
 
-- A maximum of 10 snapshots are recommended to be kept. Beyond that, snapshots become too old and less useful. In a worst case scenario, reverting to an old snapshot may introduce compatibility issues with newer software versions.
-- Snapshots ideally are meant to be used to recover purposes. Although you can use them to undo changes to files without restoring the entire snapshot.
-- Add a meaningful description when creating snapshots. This will help you identify the purpose of each snapshot later on.
+- Συνιστάται να διατηρείτε το πολύ 10 στιγμιότυπα. Πέραν αυτού του αριθμού, τα στιγμιότυπα είναι πολύ παλιά και λιγότερο χρήσιμα. Στη χειρότερη περίπτωση, η επαναφορά σε ένα πολύ παλιό στιγμιότυπο μπορεί να προκαλέσει προβλήματα συμβατότητας με νεότερες εκδόσεις λογισμικού.
+- Τα στιγμιότυπα προορίζονται ιδανικά για σκοπούς αποκατάστασης. Παρόλα αυτά, μπορείτε να τα χρησιμοποιήσετε για να αναιρέσετε αλλαγές σε αρχεία χωρίς να επαναφέρετε ολόκληρο το στιγμιότυπο.
+- Προσθέστε μια περιγραφική ονομασία κατά τη δημιουργία των στιγμιότυπων. Αυτό θα σας βοηθήσει να αναγνωρίσετε τον σκοπό του κάθε στιγμιότυπου αργότερα.
 
 ### Btrfs Assistant (GUI)
 
-Before proceeding, ensure you have `btrfsmaintenance` installed to take advantage of automatic snapshot management features.
+Πριν προχωρήσετε, βεβαιωθείτε ότι έχετε εγκαταστήσει το `btrfsmaintenance` για να επωφεληθείτε από τις λειτουργίες αυτόματης διαχείρισης στιγμιότυπων.
 
-For those who prefer managing Btrfs, snapshots, and more through a GUI. [Btrfs Assistant](https://gitlab.com/btrfs-assistant/btrfs-assistant) is  an awesome project for beginners.
+Για τους χρήστες που προτιμούν να διαχειρίζονται το Btrfs, τα στιγμιότυπα και περισσότερες λειτουργίες μέσω γραφικού περιβάλλοντος (GUI), το [Btrfs Assistant](https://gitlab.com/btrfs-assistant/btrfs-assistant) είναι ένα εξαιρετικό έργο για αρχάριους.
 
-#### Automatic Snapshots Cleanup Setup
+#### Ρύθμιση της αυτόματης εκκαθάρισης στιγμιότυπων
 
-We're going to set up automatic snapshot cleanup using Btrfs Assistant. This will help manage your snapshots effectively without manual intervention.
+Σε αυτήν την ενότητα, θα ρυθμίσουμε την αυτόματη εκκαθάριση στιγμιότυπων με το Btrfs Assistant. Αυτό θα βοηθήσει στην αποτελεσματική διαχείριση των στιγμιότυπών σας χωρίς χειροκίνητη παρέμβαση.
 
-Follow these steps:
+Ακολουθήστε τα εξής βήματα:
 
 <Steps>
 
-    1. Launch Btrfs Assistant by opening a terminal and running:
+    1. Εκκινήστε το Btrfs Assistant ανοίγοντας ένα τερματικό και εκτελώντας την εξής εντολή:
         ```bash
         btrfs-assistant-launcher
         ```
 
-        Alternatively:
+        Εναλλακτικά:
 
         ```bash
         sudo -E btrfs-assistant
         ```
 
-  2. Navigate to the Snapper Settings tab:
+  2. Μεταβείτε στην καρτέλα «Snapper Settings»:
 
       <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperSettingsTab.png')} />
-      Modify the **Snapshot Retention** settings as follows:
-      - Ensure the `root` config is selected
-      - Enter a value of `0` for Hourly, Daily, Weekly, Monthly and Yearly.
-      - Untick `Enable timeline snapshots`.
-      - Enter a value of `10` to `Number`.
-      - Add a ✅ to `Snapper cleanup enabled`.
-      - Click on the `Save` button on the top right and `Apply systemd changes` on the bottom right.
-      **snapper-cleanup.timer will now be enabled to automatically clean up old snapshots based on your configuration.**
+      Τροποποιήστε τις ρυθμίσεις **Snapshot Retention** ως εξής:
+      - Βεβαιωθείτε ότι η επιλογή «Select config» έχει οριστεί σε `root`.
+      - Εισαγάγετε την τιμή `0` για τις επιλογές «Hourly», «Daily», «Weekly», «Monthly» και «Yearly».
+      - Απενεργοποιήστε την επιλογή `Enable timeline snapshots`.
+      - Εισαγάγετε την τιμή `10` για την επιλογή `Number`.
+      - Ενεργοποιήστε την επιλογή `Snapper cleanup enabled`.
+      - Κάντε κλικ στο κουμπί `Save` στην πάνω δεξιά γωνία και επιλέξτε `Apply systemd changes` στην κάτω δεξιά γωνία.
+      **Το snapper-cleanup.timer είναι πλέον ενεργοποιημένο και θα εκκαθαρίζει τα παλιά στιγμιότυπα με βάση τις ρυθμίσεις σας.**
       :::caution
-      Verify the adjustments you just made have been applied correctly by checking the Snapper configuration:
+      Επαληθεύστε ότι οι προσαρμογές που μόλις πραγματοποιήσατε έχουν εφαρμοστεί σωστά ελέγχοντας τη διαμόρφωση του Snapper:
       ```bash
       sudo nano /etc/snapper/configs/root
       ```
-      Expected output snippet:
+      Απόσπασμα αναμενόμενης εξόδου:
       ```text
       # limit for number cleanup
       NUMBER_MIN_AGE="3600"
       NUMBER_LIMIT="10"
       NUMBER_LIMIT_IMPORTANT="10"
       ```
-      If `NUMBER_LIMIT` and `NUMBER_LIMIT_IMPORTANT` don't contain the value of `10`. Update them accordingly.
-      Save the file and exit by pressing `CTRL + O`, `Enter` and `CTRL + X`.
+      Εάν τα `NUMBER_LIMIT` και `NUMBER_LIMIT_IMPORTANT` δεν έχουν την τιμή `10`, ενημερώστε τα κατάλληλα.
+      Αποθηκεύστε το αρχείο πατώντας `CTRL + O`, `Enter` και `CTRL + X`.
       :::
 </Steps>
 
-#### Removing Snapshots using Btrfs Assistant
+#### Αφαίρεση στιγμιότυπων με το Btrfs Assistant
 
 <Steps>
-    1. Open Btrfs Assistant:
+    1. Ανοίξτε το Btrfs Assistant:
         ```bash
         btrfs-assistant-launcher
         ```
 
-        Alternatively:
+        Εναλλακτικά:
 
         ```bash
         sudo -E btrfs-assistant
         ```
-    2. Go to the Snapper Settings tab:
+    2. Μεταβείτε στην καρτέλα «Snapper Settings»:
         <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperTab.png')} />
-    3. Select the snapshot(s) you want to delete from the list.
+    3. Επιλέξτε τα στιγμιότυπα που θέλετε να διαγράψετε από τη λίστα.
         :::tip
-        - Hold `CTRL` to select multiple snapshots.
-        - Hold `SHIFT` to select a range of snapshots.
+        - Κρατήστε πατημένο το `Ctrl` για να επιλέξετε πολλαπλά στιγμιότυπα.
+        - Κρατήστε πατημένο το `Shift` για να επιλέξετε ένα εύρος στιγμιότυπων.
         :::
-    4. Click on the `Delete` button located at the top of the window.
-    5. Regenerate your bootloader entires to reflect the changes:
+    4. Κάντε κλικ στο κουμπί `Delete` που βρίσκεται στο πάνω μέρος του παραθύρου.
+    5. Δημιουργήστε εκ νέου τις καταχωρήσεις του φορτωτή εκκίνησης για να εφαρμοστούν οι αλλαγές:
         <details>
             <summary>systemd-boot</summary>
             ```bash
@@ -167,14 +167,14 @@ Follow these steps:
         </details>
 </Steps>
 
-Check out their [Official Wiki](https://gitlab.com/btrfs-assistant/wiki) for a more in depth look about what can be done.
+Δείτε το [επίσημο wiki](https://gitlab.com/btrfs-assistant/wiki) του εργαλείου για περισσότερες λεπτομέρειες σχετικά με τις δυνατότητές του.
 
 ### Snapper (CLI)
 
-Now that we covered what a Btrfs snapshot is and its use cases, let's talk about how to manage them using a tool called [Snapper](http://snapper.io/) created by [Arvin Schnell](https://github.com/aschnell) from [openSUSE](https://www.opensuse.org/).
+Τώρα που καλύψαμε τι είναι τα στιγμιότυπα Btrfs και τις περιπτώσεις χρήσης τους, ας μιλήσουμε για το πώς μπορούμε να τα διαχειριζόμαστε μέσω ενός εργαλείου, του [Snapper](http://snapper.io/), που έχει δημιουργηθεί από τον [Arvin Schnell](https://github.com/aschnell) του [openSUSE](https://www.opensuse.org/).
 
 <details>
-<summary>CachyOS uses the following Snapper configuration by default:</summary>
+<summary>Το CachyOS χρησιμοποιεί την εξής διαμόρφωση για το Snapper από προεπιλογή:</summary>
 
 ```text
 # subvolume to snapshot
@@ -236,24 +236,24 @@ EMPTY_PRE_POST_MIN_AGE="1800"
 </details>
 
 :::caution
-CachyOS's default Snapper configuration only covers the root subvolume (`/`). If you have other subvolumes that you want to manage with Snapper, you'll need to create separate configurations for each of them.
+Η προεπιλεγμένη διαμόρφωση του CachyOS για το Snapper καλύπτει μόνο τον υποτόμο ρίζας (`/`). Εάν έχετε άλλους υποτόμους που θέλετε να διαχειριστείτε με το Snapper, θα χρειαστεί να δημιουργήσετε ξεχωριστές διαμορφώσεις για καθέναν από αυτούς.
 
-This configuration requires a revision to increase it's effectiveness.
+Η παρούσα διαμόρφωση απαιτεί αναθεώρηση για να αυξηθεί η αποδοτικότητά της.
 :::
 
-Here is a list of the most common Snapper commands.
+Ακολουθεί μια λίστα με τις πιο συνήθεις εντολές του Snapper.
 
 :::note
-`< >` indicates a placeholder that you should replace with the appropriate value.
+Τα `< >` υποδεικνύουν μια παράμετρο που θα πρέπει να αντικαταστήσετε με την κατάλληλη τιμή.
 :::
 
 <details>
-    <summary>Get current configuration:</summary>
+    <summary>Λήψη τρέχουσας διαμόρφωσης:</summary>
     ```bash
     sudo snapper get-config
     ```
     <details>
-        <summary>Output Example:</summary>
+        <summary>Παράδειγμα εξόδου:</summary>
         ```bash
         ❯ snapper list-configs
         Config │ Subvolume
@@ -264,12 +264,12 @@ Here is a list of the most common Snapper commands.
 </details>
 
 <details>
-    <summary>List available snapshots + details:</summary>
+    <summary>Λίστα διαθέσιμων στιγμιότυπων και λεπτομέρειες:</summary>
     ```bash
     sudo snapper list
     ```
     <details>
-        <summary>Output Example:</summary>
+        <summary>Παράδειγμα εξόδου:</summary>
         ```bash
           # │ Type   │ Pre # │ Date                     │ User │ Cleanup │ Description                                                              │ Userdata
         ────┼────────┼───────┼──────────────────────────┼──────┼─────────┼──────────────────────────────────────────────────────────────────────────┼─────────
@@ -289,101 +289,100 @@ Here is a list of the most common Snapper commands.
         727 │ pre    │       │ Sun 25 Jan 2026 15:55:28 │ root │ number  │ pacman -S --config /etc/pacman.conf -- cachyos-extra-znver4/caligula     │
         728 │ post   │   727 │ Sun 25 Jan 2026 15:55:30 │ root │ number  │ caligula                                                                 │
       ```
-      - Here is a summary of the columns:
-        - `#`: Indicates the snapshot number which is used in other commands.
-        - `Type`: Indicates whether the snapshot is a single snapshot or part of a pre/post pair.
-            - `single`: These snapshots have no special relationship to other snapshots.
-            - `pre`: These snapshots are meant to be taken before any kind of system change (like editing a file or installing a package).
-            - `post`: As the name implies, these snapshots refer to snapshots taken after a system change has occurred. They are linked to their corresponding `pre` snapshot.
-        - `Pre #`: For `post` snapshots, this column indicates the snapshot number of the corresponding `pre` snapshot.
-        - `Date`: The date and time when the snapshot was created.
-        - `User`: The user who created the snapshot.
-        - `Cleanup`: Indicates the cleanup algorithm applied to the snapshot.
-            - There are several cleanup algorithms available in Snapper, such as `number`, `timeline`, and empty-pre-post. In this example, the `number` algorithm is used, which means that older snapshots will be deleted based on a predefined limit.
-            - timeline: Snapshots are cleaned up based on their age and frequency.
-            - empty-pre-post: Deletes pre/post snapshot pairs with empty diffs.
-        - `Description`: A brief description of the snapshot, often indicating the reason for its creation.
-        - `Userdata`: Additional user-defined data associated with the snapshot.
-        For more details about the output columns
+      - Ακολουθεί μια περίληψη των στηλών:
+        - `#`: Ο αριθμός που αντιστοιχεί σε ένα στιγμιότυπο και χρησιμοποιείται σε άλλες εντολές.
+        - `Type`: Υποδεικνύει εάν το στιγμιότυπο είναι απομονωμένο (single) ή μέρος ενός ζεύγους pre/post.
+            - `single`: Αυτά τα στιγμιότυπα δεν έχουν καμία ιδιαίτερη σχέση με άλλα στιγμιότυπα.
+            - `pre`: Αυτά τα στιγμιότυπα δημιουργούνται πριν από κάθε είδους αλλαγή του συστήματος (π.χ. επεξεργασία αρχείου ή εγκατάσταση πακέτου).
+            - `post`: Όπως υποδηλώνει το όνομα, αυτά τα στιγμιότυπα δημιουργούνται αφού συμβεί μια αλλαγή του συστήματος. Συνδέονται με τα αντίστοιχα στιγμιότυπα τύπου `pre`.
+        - `Pre #`: Για στιγμιότυπα τύπου `post`, αυτή η στήλη αναγράφει τον αριθμό του αντίστοιχου στιγμιότυπου τύπου `pre`.
+        - `Date`: Η ημερομηνία και ώρα δημιουργίας του στιγμιότυπου.
+        - `User`: Ο χρήστης που δημιούργησε το στιγμιότυπο.
+        - `Cleanup`: Αναφέρει τον αλγόριθμο εκκαθάρισης που ισχύει για το στιγμιότυπο.
+            - Διατίθενται διάφοροι αλγόριθμοι εκκαθάρισης στο Snapper, όπως οι `number`, `timeline` και `empty-pre-post`. Σε αυτό το παράδειγμα, χρησιμοποιείται ο αλγόριθμος `number`, πράγμα που σημαίνει ότι τα παλαιότερα στιγμιότυπα θα διαγράφονται με βάση ένα προκαθορισμένο όριο.
+            - timeline: Τα στιγμιότυπα εκκαθαρίζονται ανάλογα με την ηλικία και τη συχνότητά τους.
+            - empty-pre-post: Διαγράφει ζεύγη στιγμιότυπων τύπου pre/post που δεν περιέχουν διαφορές.
+        - `Description`: Μια σύντομη περιγραφή του στιγμιότυπου που συχνά υποδεικνύει τον λόγο της δημιουργίας του.
+        - `Userdata`: Περισσότερα δεδομένα, καθορισμένα από τον χρήστη, που σχετίζονται με το στιγμιότυπο.
     </details>
 </details>
 
 <details>
-    <summary>Create a new snapshot:</summary>
+    <summary>Δημιουργία νέου στιγμιότυπου:</summary>
     ```bash
-    sudo snapper create --type single --description "My Snapshot Description"
+    sudo snapper create --type single --description "Περιγραφή για το στιγμιότυπο"
     ```
 </details>
 
 <details>
-    <summary>Modify a snapshot:</summary>
+    <summary>Τροποποίηση στιγμιότυπου:</summary>
     ```bash
-    sudo snapper modify <option> <snapshot_number>
+    sudo snapper modify <επιλογή> <αριθμός_στιγμιότυπου>
     ```
     <details>
-        <summary>Available options:</summary>
+        <summary>Διαθέσιμες επιλογές:</summary>
         ```bash
-        Options for 'modify' command:
-            --description, -d <description>  Description for snapshot.
-            --cleanup-algorithm, -c <algo>   Cleanup algorithm for snapshot.
-            --userdata, -u <userdata>        Userdata for snapshot.
-            --read-only                      Set snapshot read-only.
-            --read-write                     Set snapshot read-write.
-            --default                        Set snapshot as default snapshot.
+        Επιλογές για την εντολή 'modify':
+            --description, -d <description>  Περιγραφή για το στιγμιότυπο.
+            --cleanup-algorithm, -c <algo>   Αλγόριθμος εκκαθάρισης για το στιγμιότυπο.
+            --userdata, -u <userdata>        Δεδομένα χρήστη για το στιγμιότυπο.
+            --read-only                      Ρύθμιση του στιγμιότυπου μόνο για ανάγνωση.
+            --read-write                     Ρύθμιση του στιγμιότυπου για ανάγνωση και εγγραφή.
+            --default                        Ορισμός του στιγμιότυπου ως προεπιλεγμένου.
         ```
         <details>
-            <summary>Example: Modifying snapshot 729 description:</summary>
+            <summary>Παράδειγμα (τροποποίηση της περιγραφής για το στιγμιότυπο 729):</summary>
             ```bash
-            sudo snapper modify 729 --description 'My New Snapshot Description'
+            sudo snapper modify 729 --description 'Νέα περιγραφή για το στιγμιότυπο'
             ```
         </details>
     </details>
 </details>
 
 <details>
-<summary>Deletion of snapshots:</summary>
+<summary>Διαγραφή στιγμιότυπων:</summary>
 :::note
-Snapshot 0 cannot be deleted as it represents the current state of the filesystem.
+Δεν είναι δυνατή η διαγραφή του στιγμιότυπου 0, καθώς αντιπροσωπεύει την τρέχουσα κατάσταση του συστήματος αρχείων.
 :::
     <details>
-    <summary>Delete a single snapshot:</summary>
+    <summary>Διαγραφή μεμονωμένου στιγμιότυπου:</summary>
     ```bash
-    sudo snapper delete <snapshot_number>
+    sudo snapper delete <αριθμός_στιγμιότυπου>
     ```
     </details>
     <details>
-    <summary>Delete a range of snapshots:</summary>
+    <summary>Διαγραφή εύρους στιγμιότυπων:</summary>
     ```bash
     sudo snapper delete 718-721
     ```
-    Snapshot 718, 719, 720, and 721 will be deleted.
+    Θα διαγραφούν τα στιγμιότυπα 718, 719, 720 και 721.
     </details>
 </details>
 
-#### Snapper Documentation
+#### Τεκμηρίωση του Snapper
 
-[Official Snapper's command man page:](http://snapper.io/manpages/snapper.html#global_options)
+[Επίσημη σελίδα από το εγχειρίδιο του Snapper για τις εντολές](http://snapper.io/manpages/snapper.html#global_options)
 
-[Snapper Configuration File guide:](http://snapper.io/manpages/snapper-configs.html)
+[Οδηγός για το αρχείο διαμόρφωσης του Snapper](http://snapper.io/manpages/snapper-configs.html)
 
-[Arch Wiki guide:](https://wiki.archlinux.org/title/Snapper)
+[Οδηγός από το Arch Wiki](https://wiki.archlinux.org/title/Snapper)
 
-### Limine  Recommendations & Tips
+### Προτάσεις και συμβουλές για το Limine
 
-#### Tweak Limine bootloader Snapshots Display Settings
+#### Προσαρμογή των ρυθμίσεων εμφάνισης για τα στιγμιότυπα στο Limine
 
-- Limit the number of snapshots shown in the Limine bootloader menu to avoid clutter:
+- Περιορίστε τον αριθμό των στιγμιότυπων που εμφανίζονται στο μενού του φορτωτή εκκίνησης Limine, ώστε να αποφύγετε την ακαταστασία:
 
 <Steps>
-    1. Create a backup of the limine-snapper-sync configuration file:
+    1. Δημιουργήστε ένα αντίγραφο ασφαλείας για το αρχείο διαμόρφωσης του limine-snapper-sync:
         ```bash
         sudo cp /etc/limine-snapper-sync.conf /etc/limine-snapper-sync.conf.orig
         ```
-    2. Edit the limine-snapper-sync configuration file:
+    2. Επεξεργαστείτε το αρχείο διαμόρφωσης του limine-snapper-sync:
         ```bash
         sudo nano /etc/limine-snapper-sync.conf
         ```
-        Expected output snippet:
+        Απόσπασμα αναμενόμενης εξόδου:
         ```bash
         ### Max Snapshot Entries
         ### Sets the limit for how many snapshot entries show up in the boot menu.
@@ -391,7 +390,7 @@ Snapshot 0 cannot be deleted as it represents the current state of the filesyste
         ### A larger FAT32 boot partition allows more snapshot entries.
         MAX_SNAPSHOT_ENTRIES=10
         ```
-        Optionally, adjust the Snapshot Name Format:
+        Προαιρετικά, προσαρμόστε τη μορφή ονομασίας των στιγμιότυπων:
         ```bash
         ### Snapshot Name Format
         ### Choose a format for how snapshot entries look in the Limine bootloader:
@@ -407,31 +406,31 @@ Snapshot 0 cannot be deleted as it represents the current state of the filesyste
         ### 9. │snapshot description
         SNAPSHOT_FORMAT_CHOICE=8
         ```
-        `8` is a good choice as it shows the date and time along with the snapshot description.
-    3. Save the file and exit by pressing `CTRL+O` `Enter` `CTRL+X`
+        Προτείνεται η επιλογή `8` επειδή εμφανίζει την ημερομηνία και την ώρα μαζί με την περιγραφή του στιγμιότυπου.
+    3. Αποθηκεύστε το αρχείο και κάντε έξοδο πατώντας τα `CTRL+O` `Enter` και `CTRL+X`.
 </Steps>
 
-### Restoring from a Snapshot
+### Επαναφορά από στιγμιότυπο
 
 :::caution
-If the snapshot you want to restore from involved a kernel update, you won't be able to rollback.
+Εάν το στιγμιότυπο που θέλετε να επαναφέρετε περιλαμβάνει μια ενημέρωση του πυρήνα, δεν θα είναι δυνατή η επιστροφή σε προηγούμενη έκδοση.
 :::
 
 <details>
     <summary>Limine</summary>
     <Steps>
-        1. From the Limine bootloader menu, navigate to the Snapshots menu:
+        1. Από το μενού του Limine, μεταβείτε στο μενού «Snapshots»:
             <ImageComponent imgsrc={import('~/assets/images/limine-snapshotMenu-1.jpg')} />
-        2. Select the snapshot & kernel you want to restore from:
+        2. Επιλέξτε το στιγμιότυπο και τον πυρήνα που θέλετε να επαναφέρετε:
             <MultipleImageComponent
                 images={[
                 import('~/assets/images/limine-snapshotMenu-2.jpg'),
-                import('~/assets/images/limine-snapshotMenu-1.jpg')]}
+                import('~/assets/images/limine-snapshotMenu-3.jpg')]}
             />
-        3. Your system is now in `read-only mode`. A pop up notification should appear indicating that a snapshot was detected asking to restore from it:
+        3. Το σύστημά σας βρίσκεται τώρα σε `κατάσταση μόνο για ανάγνωση`. Θα εμφανιστεί μια αναδυόμενη ειδοποίηση που θα δηλώνει ότι εντοπίστηκε στιγμιότυπο και θα σας ζητά να κάνετε ανάκτηση:
             <ImageComponent imgsrc={import('~/assets/images/kde-snapshot-popup.png')} />
-        4. Click on `Restore now`. A terminal window will open with a prompt and ask for some confirmations:
-            ```bash title="Example Restore Prompt"
+        4. Κάντε κλικ στο `Επαναφορά τώρα` (Restore now). Θα ανοίξει ένα παράθυρο τερματικού, όπου θα σας ζητηθεί να επιβεβαιώσετε την ενέργεια:
+            ```bash title="Παράδειγμα προτροπής επαναφοράς"
             Snapshot ID    : 2
             Date           : 2026-01-26 11:19:14
             Description    : nc-git
@@ -446,8 +445,8 @@ If the snapshot you want to restore from involved a kernel update, you won't be 
 
             Your input: @
             ```
-          5. Type `yes` and optionally add a description for the backup snapshot.
-          6. The restoration process will begin. Once completed, Type yes once again in the new prompt to reboot your system:
+          5. Πληκτρολογήστε `yes` και προσθέστε προαιρετικά μια περιγραφή για το εφεδρικό στιγμιότυπο.
+          6. Θα ξεκινήσει η διαδικασία επαναφοράς. Μόλις ολοκληρωθεί, πληκτρολογήστε άλλη μία φορά `yes` για να επανεκκινήσετε το σύστημά σας:
               ```bash
               The restore is complete. Please reboot now:
               Type [y]es to reboot, [n]o or [c]ancel to abort rebooting.
@@ -460,19 +459,19 @@ If the snapshot you want to restore from involved a kernel update, you won't be 
 <details>
     <summary>GRUB</summary>
     <Steps>
-        1. From the GRUB bootloader menu. Boot into the desired snapshot & kernel you want to restore from.
-        2. Once booted. Open Btrfs Assistant:
+        1. Από το μενού του GRUB, εκκινήστε το επιθυμητό στιγμιότυπο και πυρήνα που θέλετε να επαναφέρετε.
+        2. Μόλις γίνει εκκίνηση, ανοίξτε το Btrfs Assistant:
             ```bash
             btrfs-assistant-launcher
             ```
 
-            Alternatively:
+            Εναλλακτικά:
 
             ```bash
             sudo -E btrfs-assistant
             ```
-        3. Go to the Snapper tab → “Browse/Restore” tab and select the snapshot you booted from:
+        3. Μεταβείτε στην καρτέλα «Snapper» → «Browse/Restore» και επιλέξτε το στιγμιότυπο από το οποίο εκτελέσατε εκκίνηση:
             <ImageComponent imgsrc={import('~/assets/images/btrfs-assistant-example.png')} />
-        4. Click on `Restore` button and reboot your system to apply the changes.
+        4. Κάντε κλικ στο κουμπί `Restore` και επανεκκινήστε το σύστημά σας για να εφαρμοστούν οι αλλαγές.
     </Steps>
 </details>
