@@ -170,3 +170,53 @@ For GNOME this has been fixed in version 46.2. For Plasma 6 it will probably be
 fixed with 6.1 although some users report normal performance already on 6.0.
 Other environments/window managers still have this issue, so you need to switch
 to the latest version of GNOME or Plasma to fix it.
+
+## Suspend/Resume on AMD + NVIDIA Laptops (s2idle)
+
+Modern AMD laptops only support the `s2idle` sleep state (AMD Modern Standby) —
+you can verify this with:
+
+```bash
+cat /sys/power/mem_sleep
+```
+
+If the output shows only `s2idle` with no `deep` option, your system requires
+the NVIDIA driver to explicitly manage its power state during sleep. Without
+configuration, the GPU enters suspend without saving its state, and the screen
+stays black on wake.
+
+### Symptoms
+
+- Screen does not turn on after suspending the laptop
+- Reproducible even from a TTY session (not a compositor issue)
+- `cat /proc/driver/nvidia/gpus/.../power` shows `S0ix Status: Disabled`
+
+### Fix
+
+Create the modprobe config:
+
+```bash
+sudo tee /etc/modprobe.d/nvidia-power.conf << 'EOF'
+options nvidia NVreg_EnableS0ixPowerManagement=1
+options nvidia NVreg_PreserveVideoMemoryAllocations=1
+EOF
+```
+
+Rebuild your initramfs:
+
+```bash
+sudo mkinitcpio -P
+```
+
+Ensure the NVIDIA systemd hooks are enabled:
+
+```bash
+sudo systemctl enable nvidia-suspend.service nvidia-resume.service nvidia-hibernate.service
+```
+
+Reboot and verify the fix took effect:
+
+```bash
+cat /proc/driver/nvidia/gpus/0000:01:00.0/power
+# Should now show: S0ix Power Management → Status: Enabled
+```
