@@ -1,19 +1,13 @@
 ---
 title: Ρύθμιση του Secure Boot
 description: Ρύθμιση του Secure Boot με το sbctl μετά την εγκατάσταση του CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
 ---
 
 import ImageComponent from '~/components/image-component.astro';
-
-# sbctl
-
-Το [sbctl](https://github.com/Foxboron/sbctl) είναι ένας εύχρηστος διαχειριστής κλειδιών για το Secure Boot, ικανός να ρυθμίζει το Secure Boot, προσφέροντας δυνατότητες διαχείρισης κλειδιών και παρακολούθησης των αρχείων που πρέπει να υπογραφούν στην ακολουθία εκκίνησης.
-
-## Εγκατάσταση του sbctl
-
-```bash
-sudo pacman -S sbctl
-```
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
 ## Πριν από τη ρύθμιση
 
@@ -30,9 +24,10 @@ sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=
 Εκτελέστε αυτήν την εντολή μόνο αν χρειάζεστε πραγματικά το Secure Boot.
 :::
 
-### Είσοδος σε «Setup Mode» για το UEFI
-Αρχικά, θα πρέπει να μεταβείτε στις ρυθμίσεις υλικολογισμικού και να θέσετε τη λειτουργία του Secure Boot σε «Setup Mode». Μπορείτε να κάνετε επανεκκίνηση από
-ένα ήδη εκτελούμενο σύστημα στις ρυθμίσεις υλικολογισμικού με την εξής εντολή:
+### Ενεργοποίηση της λειτουργίας «Setup Mode» στο UEFI
+
+Αρχικά, θα πρέπει να μεταβείτε στις ρυθμίσεις υλικολογισμικού και να θέσετε τη λειτουργία του Secure Boot σε «Setup Mode».
+Μπορείτε να κάνετε επανεκκίνηση από ένα ήδη εκτελούμενο σύστημα στις ρυθμίσεις υλικολογισμικού με την εξής εντολή:
 
 ```bash
 systemctl reboot --firmware-setup
@@ -41,47 +36,117 @@ systemctl reboot --firmware-setup
 <br />
 <ImageComponent imgsrc={import('~/assets/images/ideapad-bios-secure-boot.jpg')} />
 
-Έτσι μοιάζει το BIOS σε ένα Lenovo Ideapad 5 Pro. Κάντε επαναφορά σε «Setup Mode» ή επαναφορά των εργοστασιακών κλειδιών (factory keys) και έπειτα, κάντε επανεκκίνηση
-στο σύστημα.
+Έτσι μοιάζει το BIOS σε ένα Lenovo Ideapad 5 Pro. Κάντε επαναφορά σε «Setup Mode» ή ανάκτηση των εργοστασιακών κλειδιών 
+(factory keys) και έπειτα, κάντε επανεκκίνηση στο σύστημα.
 
 Ωστόσο, ορισμένες μητρικές πλακέτες της MSI δεν διαθέτουν «Setup Mode». Για να επιτύχετε το ίδιο αποτέλεσμα, ακολουθήστε τα βήματα της παρακάτω εικόνας:
 <br />
 <ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
 
-## Ρύθμιση του sbctl
+Ορισμένες μητρικές πλακέτες της ASUS παρουσιάζουν παρόμοια συμπεριφορά με την παραπάνω, καθώς δεν διαθέτουν ειδική λειτουργία «Setup Mode».
 
-```bash
-sudo sbctl status # Εάν το Setup Mode είναι ενεργοποιημένο (enabled), μπορείτε να προχωρήσετε στο επόμενο βήμα
-Installed:      ✘ sbctl is not installed
-Setup Mode:     ✘ Enabled
-Secure Boot     ✘ Disabled
+Μεταβείτε στο μενού «Boot» → «Secure Boot», ορίστε την επιλογή «Secure Boot Mode» σε «Custom» και έπειτα, ανοίξτε το «Key Management» και επιλέξτε «Delete all Secure Boot Variables».
 
-sudo sbctl create-keys # Δημιουργήστε τα δικά σας προσαρμοσμένα κλειδιά για το Secure Boot
-Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-Creating secure boot keys...✔
-Secure boot keys created!
+#### Εγκατάσταση του sbctl και εγγραφή των κλειδιών
 
-# Καταχωρήστε τα κλειδιά σας μαζί με τα ενσωματωμένα κλειδιά της Microsoft και του υλικολογισμικού του κατασκευαστή
-sudo sbctl enroll-keys --microsoft --firmware-builtin
-Enrolling keys to EFI variables...✔
-Enrolled keys to the EFI variables!
+Πριν προχωρήσετε, ελέγξτε αν το `sbctl` είναι εγκατεστημένο.
 
-sudo sbctl status
-# Το sbctl θα πρέπει τώρα να είναι εγκατεστημένο, οπότε μπορείτε να προχωρήσετε στην υπογραφή των ειδώλων του πυρήνα και του διαχειριστή εκκίνησης
-Installed:      ✔ sbctl is installed
-Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-Setup Mode:     ✔ Disabled
-Secure Boot     ✘ Disabled
-Vendor Keys:    microsoft
-```
+Το [sbctl](https://github.com/Foxboron/sbctl) είναι ένας εύχρηστος διαχειριστής κλειδιών για το Secure Boot, ικανός να ρυθμίζει το Secure Boot,
+προσφέροντας δυνατότητες διαχείρισης κλειδιών και παρακολούθησης των αρχείων που πρέπει να υπογραφούν στην ακολουθία εκκίνησης.
+
+<details>
+    <summary>Εγκατάσταση του sbctl</summary>
+    ```bash title='Ανοίξτε ένα τερματικό και εκτελέστε την εξής εντολή:'
+    sudo pacman -S sbctl
+    ```
+</details>
+
+Τώρα που το `sbctl` είναι εγκατεστημένο, πρέπει να το ρυθμίσετε και να καταχωρήσετε τα κλειδιά στο υλικολογισμικό. Αυτή η διαδικασία είναι πολύ απλή· ακολουθήστε απλώς τα παρακάτω βήματα.
+
+<Steps>
+1. Ελέγξτε αν η λειτουργία «Setup Mode» είναι ενεργοποιημένη:
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>Αναμενόμενη έξοδος</summary>
+        ```bash
+        Installed:      ✘ sbctl is not installed
+        Setup Mode:     ✘ Enabled
+        Secure Boot     ✘ Disabled
+        ```
+    </details>
+2. Δημιουργήστε τα δικά σας προσαρμοσμένα κλειδιά για το Secure Boot:
+    ```bash
+    sudo sbctl create-keys
+    ```
+    <details>
+        <summary>Παράδειγμα επιτυχούς δημιουργίας κλειδιών</summary>
+        ```bash
+        Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Creating secure boot keys...✔
+        Secure boot keys created!
+        ```
+    </details>
+3. Καταχωρήστε τα κλειδιά σας μαζί με τα ενσωματωμένα κλειδιά της Microsoft και του υλικολογισμικού του κατασκευαστή:
+    ```bash
+    sudo sbctl enroll-keys --microsoft --firmware-builtin
+    ```
+    <details>
+        <summary>Αναμενόμενη έξοδος</summary>
+        ```bash
+        Enrolling keys to EFI variables...✔
+        Enrolled keys to the EFI variables!
+        ```
+    </details>
+
+    :::caution[Μητρικές ASUS: Μην χρησιμοποιείτε το `--firmware-builtin`]
+    Σε ορισμένες μητρικές πλακέτες της ASUS, η χρήση της σημαίας `--firmware-builtin` προκαλεί διπλές καταχωρήσεις
+    στις μεταβλητές κλειδιών του EFI (π.χ. το `builtin-db` εμφανίζεται πολλαπλές φορές στο `Vendor Keys`).
+    Κατά τη μετέπειτα ενεργοποίηση του Secure Boot στις ρυθμίσεις UEFI, η πλακέτα εντοπίζει αυτήν την ασυνέπεια
+    στη δομή των κλειδιών και εμφανίζει το σφάλμα **Secure Boot Violation** πριν από τη φόρτωση
+    του διαχειριστή εκκίνησης.
+
+    Χρησιμοποιήστε μόνο το `--microsoft` στις πλακέτες της ASUS:
+
+    ```bash
+    sudo sbctl enroll-keys --microsoft
+    ```
+
+    Εάν το `Vendor Keys` εμφανίζει το `microsoft builtin-db builtin-db ...`, τα κλειδιά πρέπει να καταχωρηθούν
+    εκ νέου. Εισέλθετε ξανά στη λειτουργία «Setup Mode» του UEFI (κάνοντας διαγραφή όλων των κλειδιών) και εκτελέστε
+    ξανά την εντολή `sbctl enroll-keys --microsoft` χωρίς τη σημαία `--firmware-builtin`.
+    :::
+
+
+4. Ελέγξτε ξανά την κατάσταση του sbctl για να βεβαιωθείτε ότι τα κλειδιά είναι εγγεγραμμένα και ότι η λειτουργία «Setup Mode» έχει απενεργοποιηθεί:
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>Αναμενόμενη έξοδος</summary>
+        ```bash
+        Installed:      ✔ sbctl is installed
+        Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Setup Mode:     ✔ Disabled
+        Secure Boot     ✘ Disabled
+        Vendor Keys:    microsoft
+        ```
+    </details>
+</Steps>
 
 ## Υπογραφή του ειδώλου του πυρήνα και του διαχειριστή εκκίνησης
 
-Το CachyOS παρέχει το [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign), ένα σενάριο που λαμβάνει τη λίστα των αρχείων που πρέπει να υπογραφούν από το `sudo sbctl verify` και τα υπογράφει όλα.
-Οι χρήστες του Limine θα πρέπει να μεταβούν απευθείας στην ενότητα [Limine](#limine).
+<Tabs>
+<TabItem label='systemd-boot'>
+
+Το CachyOS παρέχει το [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign),
+μια δέσμη ενεργειών που λαμβάνει τη λίστα των αρχείων που πρέπει να υπογραφούν από το `sudo sbctl verify` και τα υπογράφει όλα.
 
 :::caution
-Σε συστήματα με διάταξη ξεχωριστών διαμερισμάτων `/boot` και `/boot/efi`, το `sbctl` ενδέχεται να σαρώνει για δυαδικά αρχεία EFI μόνο στο `/boot/efi`. Αυτό έχει ως αποτέλεσμα να μην εντοπίζονται τα είδωλα του πυρήνα που βρίσκονται στο `/boot`. Το `sbctl-batch-sign` παρακάμπτει αυτό το ζήτημα σαρώνοντας **πάντα** το `/boot` για αρχεία `vmlinuz-*`.
+Σε συστήματα με διάταξη ξεχωριστών διαμερισμάτων `/boot` και `/boot/efi`, το `sbctl` ενδέχεται να σαρώνει για δυαδικά αρχεία EFI μόνο στο `/boot/efi`.
+Αυτό έχει ως αποτέλεσμα να μην εντοπίζονται τα είδωλα του πυρήνα που βρίσκονται στο `/boot`. Το `sbctl-batch-sign` παρακάμπτει αυτό το ζήτημα σαρώνοντας **πάντα** το
+`/boot` για αρχεία `vmlinuz-*`.
 :::
 
 ```bash
@@ -106,6 +171,28 @@ Verifying file database and EFI images in /boot...
 
 Τώρα που όλα τα αρχεία είναι υπογεγραμμένα, **κάντε επανεκκίνηση του συστήματός σας και μεταβείτε στις ρυθμίσεις UEFI για να ενεργοποιήσετε το Secure Boot.**
 
+:::caution[Μητρικές ASUS: ενεργοποίηση του Secure Boot]
+Ορισμένες μητρικές πλακέτες της ASUS συμπεριφέρονται διαφορετικά από τις πλακέτες άλλων κατασκευαστών κατά την ενεργοποίηση του Secure Boot:
+
+- **Χρησιμοποιήστε την επιλογή `Windows UEFI Mode`, όχι το `Other OS`:**
+  Το όνομα είναι παραπλανητικό. Αυτή η ρύθμιση ελέγχει απλώς εάν επιβάλλεται το Secure Boot.
+  Η ρύθμιση του `OS Type` σε `Other OS` **απενεργοποιεί** το Secure Boot στις πλακέτες της ASUS,
+  ανεξάρτητα από οποιαδήποτε άλλη ρύθμιση. Το `sbctl status` θα συνεχίσει να εμφανίζει
+  `Secure Boot: Disabled` ακόμα και μετά την επανεκκίνηση.
+
+- **Δεν υπάρχει ξεχωριστός διακόπτης για το Secure Boot** σε ορισμένες πλακέτες της ASUS.
+  Το Secure Boot ενεργοποιείται σιωπηλά επιλέγοντας `Windows UEFI Mode`.
+
+Σε αυτήν την περίπτωση, η σωστή διαμόρφωση για την ενεργοποίηση του Secure Boot στο BIOS της ASUS είναι η εξής:
+```
+Boot → Secure Boot
+  OS Type          → Windows UEFI Mode
+  Secure Boot Mode → Custom
+```
+:::
+
+Δείτε [αυτήν την ενότητα ως σημείο αναφοράς](/el/configuration/secure_boot_setup#ενεργοποίηση-της-λειτουργίας-setup-mode-στο-uefi).
+
 Σημειώστε ότι αυτή είναι μια διαδικασία που χρειάζεται να γίνει μόνο μία φορά, καθώς η υπογραφή των αρχείων με την παράμετρο `-s` θα αποθηκεύσει αυτά τα αρχεία στη βάση δεδομένων του `sbctl`.
 
 :::tip[Υπενθύμιση]
@@ -113,35 +200,84 @@ Verifying file database and EFI images in /boot...
 όλα τα νέα αρχεία μετά από μια ενημέρωση του πυρήνα ή του διαχειριστή εκκίνησης.
 :::
 
-### systemd-boot
-
-Το CachyOS χρησιμοποιεί το `systemd-boot-update.service` που παρέχεται από το systemd για την ενημέρωση του διαχειριστή εκκίνησης κατά την επανεκκίνηση. Αυτό σημαίνει ότι το pacman hook του `sbctl`
-**δεν** θα υπογράφει τα ενημερωμένα δυαδικά αρχεία EFI. Για να παρακάμψετε αυτό το ζήτημα, μπορείτε να υπογράψετε απευθείας τον διαχειριστή εκκίνησης.
+Το CachyOS χρησιμοποιεί το `systemd-boot-update.service` που παρέχεται από το systemd για την ενημέρωση του διαχειριστή εκκίνησης κατά την επανεκκίνηση. Αυτό σημαίνει ότι το pacman hook
+του `sbctl` **δεν** θα υπογράφει τα ενημερωμένα δυαδικά αρχεία EFI. Για να παρακάμψετε αυτό το ζήτημα, μπορείτε να υπογράψετε απευθείας τον διαχειριστή εκκίνησης.
 
 ```sh
 sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
 ```
+</TabItem>
+<TabItem label='Limine'>
+Το Limine είναι ένας ειδικός διαχειριστής εκκίνησης που επιτρέπει τον έλεγχο του hash
+των ειδώλων του πυρήνα και άλλων αρχείων που χρησιμοποιεί το Limine κατά την εκκίνηση.
+Εάν αυτή η λειτουργία είναι ενεργοποιημένη, οποιοδήποτε είδος χειροκίνητης διαμόρφωσης από τον
+χρήστη, π.χ. υπογραφή του ειδώλου μέσω του `sbctl-batch-sign`, θα τροποποιήσει το hash των
+αντίστοιχων αρχείων και θα προκαλέσει αποτυχία στην επαλήθευση του αθροίσματος ελέγχου του Limine.
 
-### Limine
+Ωστόσο, η υπογραφή αυτών των αρχείων δεν είναι απαραίτητη στο Limine επειδή διαθέτει μια ειδική
+διαδικασία εκκίνησης που παρακάμπτει την ακολουθία φόρτωσης του EFI και τους ελέγχους υπογραφών.
+Τα μόνα δυαδικά αρχεία EFI που χρειάζεται να υπογραφούν είναι το ίδιο το Limine.
 
-Το Limine είναι ένας ειδικός διαχειριστής εκκίνησης που επιτρέπει τον έλεγχο του hash των ειδώλων
-του πυρήνα και των άλλων αρχείων που χρησιμοποιεί το Limine κατά την εκκίνηση. If this is enabled, any
-sort of manual configuration done by the user, e.g. signing the image via
-`sbctl-batch-sign`, will modify the hash of the corresponding files and
-fail Limine's checksum verification.
+:::caution[Limine >= 11.2.0]
+Ξεκινώντας από την έκδοση 11.2.0 του Limine, οι πολιτικές του Secure Boot **επιβάλλονται αυστηρά** όταν το UEFI Secure Boot είναι ενεργό:
 
-However, signing these files isn't necessary on Limine because it has a special
-boot process that bypasses EFI chainloading and signature checks. The only EFI
-binaries that need to be signed are Limine itself.
+- Ένα άθροισμα ελέγχου BLAKE2B της διαμόρφωσης **πρέπει** να καταχωρηθεί στο δυαδικό αρχείο EFI του Limine, διαφορετικά το Limine θα εμφανίσει σφάλμα (panic) με το μήνυμα: `SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED`.
+- Σε όλες τις διαδρομές αρχείων στο `limine.conf` (πυρήνας, initramfs κ.λπ.) **πρέπει** να προσαρτηθούν hash BLAKE2B (π.χ. `boot():/vmlinuz-linux#<hash>`).
+- Ο επεξεργαστής ρυθμίσεων είναι καθολικά απενεργοποιημένος.
+- Οι ασυμφωνίες των hash προκαλούν πάντα σφάλμα (panic).
+:::
+
+Για να ενεργοποιήσετε την αυτόματη καταχώρηση του αθροίσματος ελέγχου της διαμόρφωσης, ορίστε το εξής στο `/etc/default/limine`:
 
 ```sh
-# Χρησιμοποιήστε το limine-enroll-config για την υπογραφή του δυαδικού αρχείου EFI του Limine
+ENABLE_ENROLL_LIMINE_CONFIG=yes
+```
+
+Προχωρήστε στη δημιουργία ενός hash για την εικόνα εκκίνησης (splash image) του Limine:
+
+:::note[Απαιτούνται δικαιώματα root για την εκτέλεση των παρακάτω βημάτων. Φροντίστε να χρησιμοποιήσετε το sudo ή να συνδεθείτε ως χρήστης root πριν προχωρήσετε.]
+:::
+
+<Steps>
+
+1. Ελέγξτε το τρέχον όνομα και τη διαδρομή της εικόνας εκκίνησης στο αρχείο διαμόρφωσης:
+    ```sh title="Ανοίξτε ένα τερματικό και εκτελέστε την εξής εντολή:"
+    sudo cat /boot/limine.conf
+    ```
+    Θα εντοπίσετε μια γραμμή όπως αυτή:
+    ```sh
+    wallpaper: boot():/limine-splash.png
+    ```
+2. Δημιουργήστε ένα hash BLAKE2B για την εικόνα εκκίνησης και προσθέστε το στη διαδρομή στο αρχείο διαμόρφωσης:
+    ```sh title="Εκτελέστε την εξής εντολή, αντικαθιστώντας τη διαδρομή με αυτή που βρήκατε στο προηγούμενο βήμα:"
+    sudo b2sum /boot/limine-splash.png
+    ```
+    Αυτή η εντολή θα δημιουργήσει ένα hash όπως το παρακάτω παράδειγμα:
+    ```sh
+    75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+3. Αφού αντιγράψετε το νέο hash από το προηγούμενο βήμα, ανοίξτε το αρχείο διαμόρφωσης με ένα πρόγραμμα επεξεργασίας κειμένου και προσθέστε το hash στη διαδρομή της εικόνας εκκίνησης, ως εξής:
+    :::note[Μην χρησιμοποιήσετε το παραπάνω ενδεικτικό hash, αλλά αυτό που δημιουργήσατε στο προηγούμενο βήμα.]
+    :::
+    ```sh
+    wallpaper: boot():/limine-splash.png#75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+    Όπως μπορείτε να δείτε, το hash προστίθεται στη διαδρομή με το σύμβολο `#`. Αποθηκεύστε το αρχείο αφού πραγματοποιήσετε την αλλαγή.
+
+</Steps>
+
+Αφού ενεργοποιήσετε την καταχώρηση του αθροίσματος ελέγχου της διαμόρφωσης και δημιουργήσετε το hash για την εικόνα εκκίνησης, εκτελέστε τις εξής εντολές για να καταχωρήσετε το άθροισμα ελέγχου της διαμόρφωσης και να υπογράψετε το δυαδικό αρχείο EFI του Limine:
+
+```sh
+# Χρησιμοποιήστε το limine-enroll-config για την εγγραφή του αθροίσματος ελέγχου της διαμόρφωσης και την υπογραφή του δυαδικού αρχείου EFI του Limine
 # Αυτό χρησιμοποιεί το sbctl στο παρασκήνιο
 sudo limine-enroll-config
 sudo limine-update
 ```
+</TabItem>
+</Tabs>
 
-## Επαλήθευση ενεργοποίησης του Secure Boot
+## Έλεγχος της κατάστασης του Secure Boot
 
 Για να επαληθεύσετε ότι το Secure Boot έχει ενεργοποιηθεί, μπορείτε να εκτελέσετε μία από τις παρακάτω εντολές:
 
@@ -163,11 +299,11 @@ System:
   Boot into FW: supported
 ```
 
-## Links and Credits
+## Σύνδεσμοι και ευχαριστίες
 
-- [The Arch Wiki](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
-laid the groundwork for this guide. Most of the stuff here was taken from there.
-- [sbctl](https://github.com/Foxboron/sbctl) - This easy guide to enable secure boot support wouldn't have been possible if it weren't
-for the amazing work done to create this piece of software.
-- [Improving the Secure Boot Experience by Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) - Blog post by Morten
-"Foxboron" Linderud on how the secure boot experience was complicated before `sbctl`.
+- Το [Arch Wiki](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
+έθεσε τις βάσεις για αυτόν τον οδηγό. Το μεγαλύτερο μέρος αυτού του περιεχομένου προέρχεται από εκεί.
+- [sbctl](https://github.com/Foxboron/sbctl): αυτός ο απλός οδηγός ενεργοποίησης της υποστήριξης για το Secure Boot δεν θα ήταν εφικτός χωρίς
+την καταπληκτική δουλειά πίσω από τη δημιουργία αυτού του λογισμικού.
+- [Improving the Secure Boot Experience by Morten Linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/): ανάρτηση από τον Morten
+«Foxboron» Linderud σχετικά με το πόσο περίπλοκη ήταν η εμπειρία με το Secure Boot πριν από το `sbctl`.
