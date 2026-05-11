@@ -174,7 +174,7 @@ export default defineConfig({
             },
             {
               label: 'ISO Changelogs',
-              autogenerate: { directory: 'cachyos_basic/changelogs' },
+              items: [{ autogenerate: { directory: 'cachyos_basic/changelogs' } }],
               translations: {
                 el: 'Αρχεία αλλαγών ISO',
                 ja: 'ISO 更新ログ',
@@ -378,7 +378,7 @@ export default defineConfig({
             },
             {
               label: 'CachyOS Hardware Detection (chwd)',
-              autogenerate: { directory: 'features/chwd' },
+              items: [{ autogenerate: { directory: 'features/chwd' } }],
               translations: {
                 cs: 'Detekce hardwaru CachyOS (chwd)',
                 de: 'CachyOS Hardware-Erkennung (chwd)',
@@ -651,7 +651,7 @@ export default defineConfig({
             },
             {
               label: 'Desktop Environments',
-              autogenerate: { directory: 'configuration/desktop_environments' },
+              items: [{ autogenerate: { directory: 'configuration/desktop_environments' } }],
               translations: {
                 el: 'Επιφάνειες εργασίας',
                 ja: 'デスクトップ環境',
