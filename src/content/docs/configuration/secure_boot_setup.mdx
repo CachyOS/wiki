@@ -138,6 +138,74 @@ Now that `sbctl` is installed, you have to setup sbctl and enroll your keys to t
 ## Signing the Kernel Image and Boot Manager
 
 <Tabs>
+<TabItem label='Limine'>
+Limine is a special boot manager that allows checking the hash of kernel
+images and other files that Limine uses during boot. If this is enabled, any
+sort of manual configuration done by the user, e.g. signing the image via
+`sbctl-batch-sign`, will modify the hash of the corresponding files and
+fail Limine's checksum verification.
+
+However, signing these files isn't necessary on Limine because it has a special
+boot process that bypasses EFI chainloading and signature checks. The only EFI
+binaries that need to be signed are Limine itself.
+
+:::caution[Limine >= 11.2.0]
+Starting with Limine 11.2.0, Secure Boot policies are **strictly enforced** when UEFI Secure Boot is active:
+
+- A BLAKE2B config checksum **must** be enrolled in the Limine EFI binary, otherwise Limine will panic with: `SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED`
+- All file paths in `limine.conf` (kernel, initramfs, etc.) **must** have BLAKE2B hashes appended (e.g. `boot():/vmlinuz-linux#<hash>`)
+- The config editor is unconditionally disabled
+- Hash mismatches always cause a panic
+:::
+
+To enable automatic config checksum enrollment, set the following in `/etc/default/limine`:
+
+```sh
+ENABLE_ENROLL_LIMINE_CONFIG=yes
+```
+
+Proceed to generate a hash for Limine's splash image:
+
+:::note[Root permissions are required to perform the following steps, make sure to use sudo or switch to the root user before proceeding.]
+:::
+
+<Steps>
+
+1. Check the current name and path of the splash image in the config file:
+    ```sh title="Open a terminal and run the following command:"
+    sudo cat /boot/limine.conf
+    ```
+    You should be able to spot a line like this:
+    ```sh
+    wallpaper: boot():/limine-splash.png
+    ```
+2. Generate a BLAKE2B hash for the splash image and append it to the path in the config file:
+    ```sh title="Run the following command, replacing the path with the one you found in the previous step:"
+    sudo b2sum /boot/limine-splash.png
+    ```
+    This will output a hash like this example:
+    ```sh
+    75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+3. Afer copying the newly generated hash from the previous step. Open the config file with a text editor and append the hash to the path of the splash image, like this:
+    :::note[Do not use the example hash from above, make sure to use the one you generated in the previous step.]
+    :::
+    ```sh
+    wallpaper: boot():/limine-splash.png#75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+    As you can see, the hash is appended to the path with a `#` symbol. Save the file after making the change.
+
+</Steps>
+
+After enabling config checksum enrollment and generating the hash for the splash image, run the following commands to enroll the config checksum and sign Limine's EFI binary:
+
+```sh
+# Use limine-enroll-config to enroll the config checksum and sign Limine's EFI binary
+# This uses sbctl under the hood
+sudo limine-enroll-config
+sudo limine-update
+```
+</TabItem>
 <TabItem label='systemd-boot'>
 
 CachyOS provides [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign),
@@ -205,74 +273,6 @@ pacman hook will **not** sign the updated EFI binaries. As a workaround, we can 
 
 ```sh
 sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
-```
-</TabItem>
-<TabItem label='Limine'>
-Limine is a special boot manager that allows checking the hash of kernel
-images and other files that Limine uses during boot. If this is enabled, any
-sort of manual configuration done by the user, e.g. signing the image via
-`sbctl-batch-sign`, will modify the hash of the corresponding files and
-fail Limine's checksum verification.
-
-However, signing these files isn't necessary on Limine because it has a special
-boot process that bypasses EFI chainloading and signature checks. The only EFI
-binaries that need to be signed are Limine itself.
-
-:::caution[Limine >= 11.2.0]
-Starting with Limine 11.2.0, Secure Boot policies are **strictly enforced** when UEFI Secure Boot is active:
-
-- A BLAKE2B config checksum **must** be enrolled in the Limine EFI binary, otherwise Limine will panic with: `SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED`
-- All file paths in `limine.conf` (kernel, initramfs, etc.) **must** have BLAKE2B hashes appended (e.g. `boot():/vmlinuz-linux#<hash>`)
-- The config editor is unconditionally disabled
-- Hash mismatches always cause a panic
-:::
-
-To enable automatic config checksum enrollment, set the following in `/etc/default/limine`:
-
-```sh
-ENABLE_ENROLL_LIMINE_CONFIG=yes
-```
-
-Proceed to generate a hash for Limine's splash image:
-
-:::note[Root permissions are required to perform the following steps, make sure to use sudo or switch to the root user before proceeding.]
-:::
-
-<Steps>
-
-1. Check the current name and path of the splash image in the config file:
-    ```sh title="Open a terminal and run the following command:"
-    sudo cat /boot/limine.conf
-    ```
-    You should be able to spot a line like this:
-    ```sh
-    wallpaper: boot():/limine-splash.png
-    ```
-2. Generate a BLAKE2B hash for the splash image and append it to the path in the config file:
-    ```sh title="Run the following command, replacing the path with the one you found in the previous step:"
-    sudo b2sum /boot/limine-splash.png
-    ```
-    This will output a hash like this example:
-    ```sh
-    75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
-    ```
-3. Afer copying the newly generated hash from the previous step. Open the config file with a text editor and append the hash to the path of the splash image, like this:
-    :::note[Do not use the example hash from above, make sure to use the one you generated in the previous step.]
-    :::
-    ```sh
-    wallpaper: boot():/limine-splash.png#75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
-    ```
-    As you can see, the hash is appended to the path with a `#` symbol. Save the file after making the change.
-
-</Steps>
-
-After enabling config checksum enrollment and generating the hash for the splash image, run the following commands to enroll the config checksum and sign Limine's EFI binary:
-
-```sh
-# Use limine-enroll-config to enroll the config checksum and sign Limine's EFI binary
-# This uses sbctl under the hood
-sudo limine-enroll-config
-sudo limine-update
 ```
 </TabItem>
 </Tabs>
