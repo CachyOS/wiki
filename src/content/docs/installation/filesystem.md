@@ -155,10 +155,6 @@ The main utility for f2fs is `f2fs-tools`
 
 Bcachefs is an advanced new filesystem for Linux, with an emphasis on reliability and robustness and the complete set of features one would expect from a modern filesystem.
 
-:::caution[ATTENTION]
-Bcachefs is still considered as experimental and may have issues.
-:::
-
 ### Pros
 
 - Copy on write (CoW) - like BTRFS or ZFS
