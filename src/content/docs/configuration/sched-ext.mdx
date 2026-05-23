@@ -400,28 +400,28 @@ When the system is not saturated, the scheduler prioritizes keeping tasks on the
 
 ##### Auto
 
-* **Command-line Flags:** `-s 20000 -d -c 0 -p 0`
-* **Description:** Sacrifices cache locality and power efficiency for even distribution across all CPUs. Leaning more over to interactive workloads.
+* **Command-line Flags:** None.
+* **Description:**
 
 ##### Gaming
 
-* **Command-line Flags:** `-c 0 -p 0`
-* **Description:** Disable CPU load tracking and always enforce deadline-based scheduling to improve responsiveness.
+* **Command-line Flags:** `-s 700 -S`
+* **Description:** Sacrifices throughput for better consistency in Gaming performance by reducing contention on shared SMT cores.
 
 ##### Power Save
 
-* **Command-line Flags:** `-m powersave -d -p 5000`
-* **Description:** Prioritizes power efficiency. Favor less performant cores (e.g., E-cores on Intel) and disables deferred wakeups, reducing throughput while increasing power efficiency. CPU load polling increased to 5ms.
+* **Command-line Flags:** `-m powersave`
+* **Description:** Prioritizes power efficiency. Favor less performant cores (e.g., E-cores on Intel).
 
 ##### Low Latency
 
-* **Command-line Flags:** `-m performance -c 0 -p 0 -w`
-* **Description:** Meant to lower latency at the cost of throughput. Suitable for soft real-time applications like Audio Processing and Multimedia. Always enforce deadline-based scheduling and synchronous wake up optimizations to improve performance predictability.
+* **Command-line Flags:** `-s 700 -S -m performance -w`
+* **Description:** Meant to lower latency at the cost of throughput. Suitable for soft real-time applications like Audio Processing and Multimedia. Grants a more uniform load distribution across available cores sacrificing efficiency.
 
 ##### Server
 
-* **Command-line Flags:** `-s 20000`
-* **Description:** Enable address space affinity to improve locality and performance in certain cache-sensitive workloads. Polling increased to 20ms.
+* **Command-line Flags:** `-s 20000 -c 75 -p 250`
+* **Description:** Enable address space affinity to improve locality and performance in certain cache-sensitive workloads. Slice duration is set to 20ms and the polling which monitors how often the scheduler compares CPU utilization with the CPU busy threshold to decide when the system is busy.
 
 ### [scx_flash](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_flash>)
 
@@ -503,34 +503,29 @@ One of the main and awesome capabilities that LAVD includes is **Core Compaction
 
 **Developed by: Will Clingan (willclngn [GitHub](https://github.com/wllclngn/))**
 
-A behavioral classification scheduler that uses EWMA-driven scoring (wakeup frequency, context switch rate, runtime variance) to sort tasks into three dispatch tiers — LAT_CRITICAL, INTERACTIVE, and BATCH — each with its own time slice, preemption rules, and DSQ routing. A CoDel-inspired sojourn rescue mechanism tracks batch queue wait times and rescues aging tasks before they stall, with thresholds that adapt to dispatch rate and core count. Dual burst detection (CUSUM change-point + wakeup rate counter) handles fork storms, and a Rust adaptive control loop adjusts scheduling knobs once per second based on workload regime detection and BPF histogram telemetry.
+*A behavioral-classification scheduler with topology-aware placement. EWMA-driven scoring (wakeup frequency, context-switch rate, runtime variance) sorts tasks into three tiers — LAT_CRITICAL, INTERACTIVE, BATCH — each with its own slice, preemption rules, and DSQ routing. Placement is driven by effective resistance (R_eff) on the CPU topology graph, derived from a Laplacian pseudoinverse; per-CPU DSQs are work-stolen in R_eff order to keep cache-hot work cache-hot. Every timing constant — sojourn rescue, CoDel target, vtime ceiling, longrun threshold — derives from a single tau value (the Fiedler eigenvalue's reciprocal), so the scheduler self-calibrates from 2C laptops to 32C+ servers without tuning. A damped harmonic oscillator adapts the CoDel stall target from rescue pressure each tick. A 1Hz Rust adaptive control loop (multiplicative weights update over six expert profiles) tunes scheduling knobs from BPF histogram telemetry, synced to the BPF oscillator's state to avoid double-correction. A persistent process database learns task classifications across reboots. NUMA-aware, hotplug-correct.*
 
-Compositors (KWin, GNOME Shell, Hyprland, Sway, and others) are automatically boosted to LAT_CRITICAL. A persistent process database learns task classifications across reboots.
+- Use cases:
+    - Gaming
+    - Desktop usage
+    - Multimedia/audio production
+    - Codebase compilation
+    - ZFS / storage-heavy workloads
+    - Mixed workloads
+    - Interactivity under sustained CPU saturation
 
-*   Use cases:
-    *   Gaming
-    *   Desktop usage
-    *   Multimedia/Audio production
-    *   Codebase compilation
-    *   Interactivity under intensive workloads
-    *   Mixed workloads
+##### Scheduler Modes
+Default (Adaptive)
+- **Command-line Flags:** (none — runs adaptive by default)
+- **Description:** Full adaptive mode. The Rust control loop detects workload regime (LIGHT / MIXED / HEAVY) and adjusts scheduling parameters in real-time. Best for general desktop use and gaming.
 
-#### Scheduler Modes
+###### BPF Only
+- **Command-line Flags:** `--no-adaptive`
+- **Description:** Disables the Rust adaptive control loop. The BPF scheduler runs with static tuning knobs. Lower overhead, useful for benchmarking or if the adaptive layer is overcorrecting on your workload.
 
-##### Default (Adaptive)
-
-*   **Command-line Flags:** *(none — runs adaptive by default)*
-*   **Description:** Full adaptive mode. The Rust control loop detects workload regime (LIGHT / MIXED / HEAVY) and adjusts scheduling parameters in real-time. Best for general desktop use and gaming.
-
-##### BPF Only
-
-*   **Command-line Flags:** `--no-adaptive`
-*   **Description:** Disables the Rust adaptive control loop. The BPF scheduler runs with static tuning knobs. Lower overhead, useful for benchmarking or if the adaptive layer is overcorrecting on your workload.
-
-##### Verbose / Debug
-
-*   **Command-line Flags:** `-v` or `--verbose`
-*   **Description:** Enables detailed telemetry output including per-tier dispatch counts, sojourn times, and behavioral classification stats. Useful for diagnosing scheduling behavior.
+###### Verbose / Debug
+- **Command-line Flags:** `-v` or `--verbose`
+- **Description:** Enables detailed telemetry output including per-tier dispatch counts, sojourn times, and behavioral classification stats. Useful for diagnosing scheduling behavior.
 
 
 ### [scx_p2dq](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_p2dq>)
