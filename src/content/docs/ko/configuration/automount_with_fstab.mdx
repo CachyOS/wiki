@@ -1,0 +1,432 @@
+---
+title: 부팅 시 추가 드라이브 자동 마운트
+description: systemd 마운트 또는 /etc/fstab 파일을 사용해 부팅 시 추가 고정 드라이브를 마운트합니다
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+이 튜토리얼은 부팅 중 고정 드라이브를 마운트하기 위해 systemd 마운트 파일과 /etc/에 있는 fstab 파일을 사용하는 기본 방법을 설명합니다. 파티션 또는 드라이브의 UUID를 찾는 방법, 일부 옵션의 역할, 그리고 제공된 정보가 충분하지 않을 때 참고할 추가 자료를 간단히 다룹니다.
+
+## 사전 요구 사항
+
+- root 또는 sudo 접근 권한
+
+:::note[Linux에서 NTFS 사용]
+Linux에서 NTFS 파일시스템은 ntfs, ntfs3, ntfs-3g 드라이버 중 무엇을 사용하든 불안정할 수 있습니다. 사용은 본인 책임입니다. 더 나은 안정성과 성능을 원한다면 ext4, xfs, btrfs 같은 Linux 네이티브 파일시스템을 고려하세요.
+:::
+
+## 더 안전하고 초보자에게 친화적인 방법: Systemd 마운트 파일로 드라이브 마운트하기
+
+systemd를 통해 마운트하는 장점은 마운트 파일에 실수가 있더라도 시스템이 계속 부팅된다는 점입니다. 반면 fstab에 실수가 있으면 시스템이 부팅 불가능한 상태가 될 수 있습니다.
+
+### 1. 파티션의 UUID 목록 확인
+
+```sh title="터미널을 열고 다음 명령을 실행하세요"
+lsblk -f
+```
+
+```sh title="출력 예시"
+NAME          FSTYPE FSVER LABEL UUID                                 FSAVAIL   FSUSE% MOUNTPOINTS
+zram0                                                                              [SWAP]
+nvme0n1
+├─nvme0n1p1   vfat   FAT32       E04D-9F05
+├─nvme0n1p2
+├─nvme0n1p3   ntfs               08A24E90A24E81E4                      715.4G   50%
+├─nvme0n1p4   vfat   FAT32       E09C-D4DA                             628.1M   39% /boot
+├─nvme0n1p5   ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G   47% /
+└─nvme0n1p6   ntfs
+nvme1n1
+└─nvme1n1p1   ext4               4e55896f-3f1f-4bc5-aa8a-fec099689cd9  931.5G   0%
+
+```
+
+이 예시에서는 ext4로 새로 포맷한 추가 드라이브를 마운트하려고 합니다. 이 드라이브가 1TB 드라이브이고 아직 아무것도 저장되지 않았다는 것을 알고 있습니다. 따라서 마운트할 파티션은 `nvme1n1p1`이고, UUID는 `4e55896f-3f1f-4bc5-aa8a-fec099689cd9`라고 판단할 수 있습니다.
+
+### 2. 파티션 식별하기
+
+대부분의 경우 이 시점에서 `lsblk -f`는 systemd로 디스크를 마운트하는 데 필요한 모든 정보를 제공합니다. 그래도 어떤 파티션이 올바른지 확실하지 않다면 다음 명령을 실행할 수 있습니다.
+
+```sh
+sudo fdisk -l
+```
+
+```sh title="출력 예시"
+Device          Start       End         Sectors     Size    Type
+/dev/nvme0n1p1  2048        206847      204800      100M    EFI System
+/dev/nvme0n1p2  206848      239615      32768       16M     Microsoft reserved
+/dev/nvme0n1p3  239616      2997384182  2997144567  1.4T    Microsoft basic data
+/dev/nvme0n1p4  2997385216  2999482367  2097152     1G      EFI System
+/dev/nvme0n1p5  2999482368  3905454079  905971712   432G    Linux root (x86-64)
+/dev/nvme0n1p6  3905454080  3907026943  1572864     768M    Windows recovery environment
+/dev/nvme1n1p1  2048        1953523711  1953521664  931.5G  Linux filesystem
+
+```
+
+이 예시에서는 이미 UUID를 알고 있습니다. 하지만 `fdisk -l`은 파티션의 정확한 크기(931.5G)와 유형(Linux filesystem)을 보여주므로 더 명확히 확인할 수 있습니다.
+
+이를 통해 원하는 파티션이 앞서 설명한 UUID `4e55896f-3f1f-4bc5-aa8a-fec099689cd9`를 가진 `nvme1n1p1`임을 충분히 명확하게 알 수 있습니다. 앞에서도 알고 있었지만, 이제 확실히 확인한 것입니다.
+
+올바른 파티션을 찾았다고 확신하면 UUID를 복사하세요. 터미널 에뮬레이터에서 복사는 일반적으로 `ctrl+shift+C`로 합니다.
+
+### 3. Systemd 마운트 파일 만들기
+이 드라이브를 주로 게임용으로 사용한다고 가정해 보겠습니다. 이를 마운트하기에 좋은 위치는 사용자 홈 디렉터리입니다. 원하는 위치라면 어디든 가능하지만, 단순화를 위해 /home/user 안에 두겠습니다(user는 자신의 Linux 사용자 이름으로 바꾸세요). 이 위치가 중요한 이유는 마운트 경로가 systemd 마운트 파일 이름을 결정하기 때문입니다. 이 드라이브는 게임용이므로 사용자 홈의 games 폴더인 `/home/user/games`에 마운트하겠습니다.
+
+systemd 마운트 파일에서는 이것이 home-$USER-games.mount로 변환됩니다(슬래시 `/`는 하이픈 `-`으로 대체됨). systemd 마운트 파일은 /etc/systemd/system에 둡니다.
+
+:::tip
+마운트 폴더 이름에 공백, 하이픈 또는 악센트 문자를 사용하려면 다른 형식으로 변환해야 합니다. 예를 들어 `/home/grzegorz/brzęczyszczykiewicz` 폴더 경로를 사용하려면, 파일에 사용할 이름을 얻기 위해 다음 명령을 실행하세요.
+```bash
+systemd-escape -p --suffix=mount "/home/grzegorz/brzęczyszczykiewicz"
+```
+파일의 전체 경로는 `/etc/systemd/system/home-grzegorz-brz\xc4\x99czyszczykiewicz.mount`가 됩니다.
+:::
+
+원하는 텍스트 편집기를 자유롭게 사용하세요. 이 예시에서는 `micro`를 사용합니다.
+
+```sh
+micro /etc/systemd/system/home-$USER-games.mount
+```
+:::note
+사용자 홈에 마운트하는 경우 위 파일 이름의 $USER를 그대로 두어도 됩니다. 사용자 이름이 자동으로 그 자리를 대체합니다.
+:::
+
+빈 파일에 이 템플릿을 붙여 넣으세요.
+```ini
+[Unit]
+Description=
+
+[Mount]
+What=
+Where=
+Type=
+Options=
+
+[Install]
+WantedBy=multi-user.target
+```
+아래는 파일의 각 필드에 대한 설명입니다.
+
+<Tabs>
+  <TabItem label='설명'>
+  Description은 원하는 내용이면 무엇이든 됩니다. 사용자가 알아보기 위한 항목입니다.
+  </TabItem>
+  <TabItem label= '대상'>
+  앞서 복사한 UUID를 입력합니다. 여기서는 `UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9`입니다.
+  </TabItem>
+  <TabItem label= '위치'>
+  이것은 마운트 지점입니다. 폴더가 없으면 생성됩니다. 여기서는 `/home/user/games`입니다. 홈 폴더에 마운트하는 경우 "user"를 자신의 사용자 이름으로 바꾸세요.
+  </TabItem>
+  <TabItem label= '유형'>
+  파일시스템 유형입니다. 여기서는 `ext4`입니다.
+  </TabItem>
+  <TabItem label= '옵션'>
+  원하는 마운트 옵션입니다. 여기서는 `defaults,exec,rw,noatime`을 사용합니다. 여기서는 공백을 넣지 않는 것이 중요합니다.
+  </TabItem>
+</Tabs>
+---
+
+예시를 따르면, 작성 완료된 마운트 파일은 다음과 같아야 합니다.
+```ini
+[Unit]
+Description=Mount games drive (/home/user/games)
+
+[Mount]
+What=UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9
+Where=/home/user/games
+Type=ext4
+Options=defaults,exec,rw,noatime
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 4. 마무리
+방금 항목을 만든 드라이브를 마운트하려면 다음을 실행하세요.
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now home-$USER-games.mount
+```
+
+마운트 지점으로 선택한 폴더가 보일 것입니다. `systemctl status home-$USER-games.mount`로 마운트 상태를 확인할 수 있습니다.
+
+```sh
+● home-user-games.mount - Mount games drive (/home/user/games)
+     Loaded: loaded (/proc/self/mountinfo; enabled; preset: disabled)
+     Active: active (mounted) since Sat 2026-05-02 13:02:31 CDT; 23h ago
+ Invocation: e52ef8fe3d754c64a3825bc1ee89e7da
+      Where: /home/user/games
+       What: /dev/nvme1n1p1
+      Tasks: 0 (limit: 74118)
+     Memory: 316K (peak: 3.9M)
+        CPU: 5ms
+     CGroup: /system.slice/home-user-games.mount
+
+May 02 13:02:31 cachyos systemd[1]: Mounting Mount games drive (/home/user/games)...
+May 02 13:02:31 cachyos systemd[1]: Mounted Mount games drive (/home/user/games).
+```
+
+### tl;dr
+
+- 파티션의 **UUID**를 찾습니다
+
+```sh
+lsblk -f
+```
+
+- 마운트 파일을 만듭니다
+
+```sh
+micro /etc/systemd/system/mnt-foo.mount
+```
+
+`mnt-foo`를 마운트하려는 전체 경로로 바꾸되, `/`는 `-`로 바꿉니다.
+
+- 마운트 파일을 작성합니다
+
+```sh
+[Unit]
+Description=Mount drive
+
+[Mount]
+What=UUID=<partition UUID>
+Where=/mnt/foo
+Type=somefs
+Options=defaults
+
+[Install]
+WantedBy=multi-user.target
+```
+
+`<partition UUID>`, `/mnt/foo`, `somefs`를 각각 자신의 UUID, 디렉터리, 파일시스템으로 바꿉니다. 예를 들면 ext4입니다. 또한 defaults 뒤에 원하는 다른 옵션을 설정할 수 있습니다. 예를 들어 NAS에는 `_netdev`, 중요하지 않은 드라이브에는 `nofail`을 사용할 수 있습니다.
+
+- 데몬을 다시 로드합니다
+
+```sh
+sudo systemctl daemon-reload
+```
+
+- 드라이브를 마운트하고 부팅 시 마운트되도록 설정합니다
+
+```sh
+sudo systemctl enable --now mnt-foo.mount
+```
+
+### 추가 읽을거리
+
+- [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS on /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Manual for dump](<https://linux.die.net/man/8/dump>)
+- [Manual for fsck](https://man.archlinux.org/man/fsck.8)
+- [systemd-mount](https://manual.siduction.org/systemd-mount_en.html)
+
+## 고급 방법: /etc/fstab에 항목 추가하기
+
+:::danger
+fstab 파일은 부팅 중 읽히며, 파일에 오류가 있으면 시스템 부팅에 실패할 수 있습니다. 재부팅하기 전에 항목에 오타가 없는지 반드시 다시 확인하세요. 실수한 경우에는 일반적으로 라이브 환경으로 부팅한 뒤 [설치된 시스템에 chroot](/features/cachy_chroot)하여 파일을 수정하면 해결할 수 있습니다.
+:::
+
+### 1. 파티션의 UUID 목록 확인
+
+```sh title="터미널을 열고 다음 명령을 실행하세요"
+lsblk -f
+```
+
+```sh title="출력 예시"
+NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+zram0                                                                              [SWAP]
+nvme0n1
+├─nvme0n1p1 vfat   FAT32       E04D-9F05
+├─nvme0n1p2
+├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
+├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
+├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
+└─nvme0n1p6 ntfs
+```
+
+이 예시에서는 Windows 파티션을 마운트하려고 하며, 해당 파티션은 ntfs입니다. 또한 대략 절반 정도의 공간이 사용 가능하다는 것도 알고 있습니다. 따라서 마운트하려는 파티션은 `nvme0n1p3`이고, 이 예시에서 UUID는 `08A24E90A24E81E4`, 파일시스템은 `ntfs`라고 판단할 수 있습니다.
+
+### 2. 파티션 식별하기
+
+대부분의 경우 이 시점에서 `lsblk -f`는 /etc/fstab을 통해 디스크를 마운트하는 데 필요한 모든 정보를 제공합니다. 그래도 어떤 파티션이 올바른지 확실하지 않다면 다음 명령을 실행할 수 있습니다.
+
+```sh
+sudo fdisk -l
+```
+
+```sh title="출력 예시"
+Device              Start        End    Sectors  Size Type
+/dev/nvme0n1p1       2048     206847     204800  100M EFI System
+/dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
+/dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
+/dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
+/dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
+/dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
+```
+
+이 예시에서는 이미 UUID를 알고 있습니다. 하지만 `fdisk -l`은 파티션의 정확한 크기(1.4T)와 유형(Microsoft basic data)을 보여주므로 더 명확히 확인할 수 있습니다.
+
+이를 통해 원하는 파티션이 앞서 설명한 UUID `08A24E90A24E81E4`를 가진 `nvme0n1p3`임을 충분히 명확하게 알 수 있습니다. 앞에서도 알고 있었지만, 이제 확실히 확인한 것입니다.
+
+올바른 파티션을 찾았다고 확신하면 UUID를 복사하세요. 터미널 에뮬레이터에서 복사는 일반적으로 `ctrl+shift+C`로 합니다.
+
+### 3. /etc/fstab에 항목 추가하기
+
+이제 파티션의 UUID를 얻었으므로 fstab 파일을 열 차례입니다.
+
+원하는 텍스트 편집기를 자유롭게 사용하세요. 이 예시에서는 nano를 사용합니다. fstab 파일을 편집하려면 root 권한으로 열어야 합니다.
+
+```sh
+sudo nano /etc/fstab
+```
+
+화살표 키를 사용해 fstab 파일의 맨 아래로 이동한 다음, 비어 있는 새 줄에 새 항목을 만듭니다.
+
+```sh
+UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000 0 0
+```
+
+:::note
+`/media/windows`는 파일시스템에 존재해야 합니다. 없다면 `mkdir`을 사용해 디렉터리를 만드세요.
+:::
+
+이 항목을 분해하면 다음과 같습니다.
+
+- `UUID=08A24E90A24E81E4`는 마운트하려는 파일시스템이며 UUID로 식별됩니다. 파일시스템을 식별하는 다른 방법도 있지만, UUID가 가장 안전한 편입니다. 추가 방법은 [여기](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems)에 나와 있습니다.
+
+- `/media/windows`는 드라이브의 마운트 지점입니다. [Linux Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)는 이동식 드라이브를 마운트하기에 적절한 위치가 `/media/`라고 설명합니다. `windows`는 드라이브를 마운트하려는 디렉터리를 나타냅니다. 마운트하려는 각 드라이브에는 별도의 디렉터리가 필요합니다.
+
+- `ntfs3`는 사용할 파일시스템 유형입니다. 이 예시에서는 ntfs3 커널 드라이버를 명시적으로 사용합니다. 다른 예로는 `ext4`, `xfs` 등이 있습니다. 이렇게 파일시스템 유형을 명시하는 대신 `auto`로 바꾸면 mount 명령이 가장 적절하다고 판단한 유형을 사용하게 할 수 있습니다.
+
+- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000`: 이것들은 마운트 옵션입니다.
+
+  - `defaults`: `rw, suid, dev, exec, auto, nouser, and async.`를 포함하는 표준 옵션 집합입니다.
+
+  - `nofail`: 이 마운트가 실패하더라도 부팅 과정을 계속할 수 있게 합니다.
+
+  - `uid=1000` 및 `gid=1000`: 마운트된 파일의 사용자 및 그룹 소유권을 ID 1000인 사용자와 그룹으로 설정합니다.
+
+  - `rw`: 파일시스템을 읽기-쓰기 모드로 마운트합니다.
+
+  - `user`: root가 아닌 사용자가 파일시스템을 마운트할 수 있게 합니다.
+
+  - `exec`: 마운트된 파일시스템에서 바이너리 실행을 허용합니다.
+
+  - `umask=000`: 모든 사용자에게 읽기, 쓰기, 실행 권한을 허용하도록 파일 권한 마스크를 설정합니다.
+
+  - `첫 번째 0`인 dump는 최신 시스템에서는 일반적으로 더 이상 사용되지 않습니다. 이 값을 0으로 두어도 문제가 되지 않습니다. 자세한 내용은 [여기](https://linux.die.net/man/8/dump)를 참고하세요.
+
+  - `두 번째 0`은 부팅 시 파일시스템 검사 순서를 설정합니다. root 파티션의 경우 root 파일시스템이 btrfs가 아니라면 1이어야 하며, btrfs인 경우에는 0으로 설정해야 합니다. fstab의 다른 모든 파일시스템은 0(비활성화) 또는 2여야 합니다. 자세한 정보는 [여기](https://man.archlinux.org/man/fsck.8)에 있습니다.
+
+각 옵션을 더 자세히 보려면 [fstab man page](https://man7.org/linux/man-pages/man5/fstab.5.html)와 [mount man page](https://man7.org/linux/man-pages/man8/mount.8.html)를 참고하세요.
+
+#### 추가 정보
+
+참고로 파일시스템 유형 선언 뒤의 모든 옵션은 기본값에서 변경하지 않는다면 선택 사항입니다.
+
+따라서
+
+`UUID=<partition UUID> /media/foo somefs`
+
+및
+
+`UUID=<partition UUID> /media/foo somefs defaults 0 0`
+
+은 동일합니다. `somefs` 뒤에 아무것도 붙이지 않으면 암시적으로 `somefs defaults 0 0`으로 처리됩니다.
+
+### 4. 마무리
+
+방금 항목을 만든 드라이브를 지금 마운트하려면 다음을 실행해야 합니다.
+
+```sh
+sudo systemctl daemon-reload
+```
+
+그다음 다음을 실행합니다.
+
+```sh
+sudo mount -a
+```
+
+이제 드라이브가 `/media/windows` 아래에 나타나며, 재부팅할 때마다 그 위치에 나타납니다.
+
+```sh
+ls /media/windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+# 'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
+ ```
+
+ 새로 마운트한 드라이브에 대한 링크를 홈 디렉터리에 만들고 싶다면 다음을 실행할 수 있습니다.
+
+ ```sh
+ ln -s /media/windows ~/Windows
+ ```
+
+ 제대로 동작했는지 확인하려면 다음을 실행하세요.
+
+ ```sh
+ ls ~/Windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+#'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
+ ```
+
+### tl;dr
+
+- 파티션의 **UUID**를 찾습니다
+
+```sh
+lsblk -f
+```
+
+- `/etc/fstab`을 엽니다
+
+```sh
+sudo nano /etc/fstab
+```
+
+- 파일 맨 아래에 항목을 만듭니다
+
+```sh
+UUID=<partition UUID> /media/foo somefs defaults 0 0
+```
+
+`<partition UUID>`, `foo`, `somefs`를 각각 자신의 UUID, 디렉터리, 파일시스템으로 바꿉니다. 예를 들면 ext4입니다. 또한 defaults 뒤에 원하는 다른 옵션을 설정할 수 있습니다. 예를 들어 NAS에는 `_netdev`, 중요하지 않은 드라이브에는 `nofail`을 사용할 수 있습니다.
+
+- 데몬을 다시 로드합니다
+
+```sh
+sudo systemctl daemon-reload
+```
+
+- 드라이브를 마운트합니다
+
+```sh
+sudo mount -a
+```
+
+이제 이 드라이브는 마운트되었으며, 앞으로 부팅할 때도 자동으로 마운트됩니다.
+
+### 추가 읽을거리
+
+- [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS on /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Manual for dump](<https://linux.die.net/man/8/dump>)
+- [Manual for fsck](https://man.archlinux.org/man/fsck.8)
+- [Man page for fstab](https://man.archlinux.org/man/fstab.5.en)
+- [Arch Linux Wiki entry for fstab](https://wiki.archlinux.org/title/Fstab)
