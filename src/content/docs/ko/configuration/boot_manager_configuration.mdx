@@ -1,0 +1,230 @@
+---
+title: 부트 매니저 설정
+description: 부트 매니저 설정을 구성하고 커널 매개변수를 명령줄에 전달합니다
+---
+
+## systemd-boot
+
+systemd-boot에는 두 종류의 설정 파일이 있습니다. 하나는 systemd-boot 자체를 위한 `/boot/loader/loader.conf`이고, 다른 하나는
+각 개별 커널 항목을 위한 `/boot/loader/entry`입니다.
+
+### 로더 설정
+
+이 설정 파일에서는 systemd-boot의 기본 항목과 대기 시간을 변경할 수 있습니다.
+
+```shell
+# /boot/loader/loader.conf
+
+default @saved
+timeout 5
+#console-mode keep # This option configures the resolution of the console.
+```
+
+### 커널 명령줄 설정
+
+systemd-boot를 더 쉽게 설정할 수 있도록 [`sdboot-manage`](https://github.com/CachyOS/CachyOS-PKGBUILDS/tree/master/systemd-boot-manager) 도구를 제공합니다.
+이 도구의 장점 중 하나는 전역 커널 명령줄 설정입니다. `sdboot-manage`의 설정 파일은 `/etc/sdboot-manage.conf`에 있습니다.
+
+커널 매개변수를 변경하려면 `/etc/sdboot-manage.conf`에서 `LINUX_OPTIONS=` 줄을 편집하세요.
+
+```shell
+# /etc/sdboot-manage.conf
+LINUX_OPTIONS="zswap.enabled=0 nowatchdog quiet splash"
+```
+
+변경 후에는 다음 명령으로 모든 systemd-boot 항목을 다시 생성하세요.
+
+```shell
+sudo sdboot-manage gen
+```
+
+## rEFInd
+
+[systemd-boot](/configuration/boot_manager_configuration#systemd-boot)와 마찬가지로 rEFInd에도 두 개의 설정 파일이 있습니다. `boot/efi/EFI/refind`에 있는 `refind.conf`는
+주로 rEFInd의 동작 방식을 변경하는 데 사용되며, `/boot/refind_linux.conf`는 부팅 옵션을 관리하는 데 사용됩니다.
+`refind.conf`에는 모든 옵션을 설명하는 자세한 주석이 포함되어 있습니다.
+
+### 커널 명령줄 설정
+
+커널 매개변수를 명령줄에 전달하려면 `/boot/refind_linux.conf`에서 "Boot using default options"를 수정하세요.
+
+```shell
+# /boot/refind_linux.conf
+
+"Boot using default options"     "root=PARTUUID=1cb353ec-7f03-4820-8b4b-03baf53a208f rw zswap.enabled=0 nowatchdog quiet splash"
+```
+
+두 설정 파일의 변경 사항은 즉시 적용됩니다. 변경 사항을 "저장"하기 위해 별도 명령을 실행할 필요는 없습니다.
+
+## GRUB
+
+[systemd-boot](/configuration/boot_manager_configuration#systemd-boot) 및 [rEFInd](/configuration/boot_manager_configuration#refind)와 달리,
+GRUB에는 `/etc/default/grub`에 있는 설정 파일 하나만 있습니다. 이 파일에는 각 옵션이 수행하는 작업을 설명하는 꽤 좋은 문서화가 포함되어 있습니다.
+
+### GRUB 부트 메뉴 숨기기
+
+GRUB 메뉴를 숨기려면 다음 옵션을 알맞게 설정하면 됩니다.
+
+```shell
+# /etc/default/grub
+
+GRUB_TIMEOUT='0'
+GRUB_TIMEOUT_STYLE=hidden
+```
+
+GRUB 프롬프트에 접근하려면 ESC를 누르세요. 여기에서 `normal` 또는 `exit`를 실행하면 익숙한 GRUB 부트 메뉴로 돌아갈 수 있습니다.
+
+### 커널 명령줄 설정
+
+GRUB에서 커널 매개변수를 명령줄에 전달하려면 `/etc/default/grub` 안의 `GRUB_CMDLINE_LINUX_DEFAULT`를 편집해야 합니다.
+
+```shell
+# /etc/default/grub
+
+GRUB_CMDLINE_LINUX_DEFAULT='nowatchdog zswap.enabled=0 quiet splash'
+```
+
+GRUB 설정 파일을 수정할 때마다 다음 명령으로 설정을 다시 만들어야 합니다.
+
+```shell
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+```
+
+### 부팅 가능한 BTRFS 스냅샷
+
+:::note
+CachyOS 설치가 8월 릴리스 이전에 이루어진 경우, 부팅 가능한 BTRFS 스냅샷 기능을 수동으로 활성화해야 할 수 있습니다.
+
+그렇지 않다면 이 섹션은 건너뛰어도 됩니다. 이 기능은 8월 릴리스부터 기본적으로 활성화되어 있습니다.
+:::
+
+이 기능을 활성화하려면 grub-btrfs-support 패키지를 설치하세요.
+
+```sh
+sudo pacman -S grub-btrfs-support
+```
+
+이 패키지는 BTRFS 스냅샷을 자동으로 감지하고 GRUB 메뉴에 추가하는 데 필요한 스크립트와 훅을 설치합니다.
+
+설치가 완료되면 Limine의 동작과 비슷하게 스냅샷이 GRUB 메뉴에 표시됩니다.
+
+
+## Limine
+
+Limine은 단순한 설정으로 알려진 현대적인 부트로더입니다. 이 가이드는 시작에 필요한 기본 내용을 다룹니다.
+
+설정은 주로 메뉴 설정을 위한 `/boot/limine.conf`(또는 경우에 따라 EFI 시스템 파티션)와 커널 매개변수를 위한 `/etc/default/limine`에서 이루어집니다.
+
+### 부트 메뉴 설정
+
+이 파일은 부트 메뉴의 동작과 모양을 제어합니다. 여기에서 변경한 내용은 저장 후 즉시 적용되며, 추가 명령은 필요하지 않습니다.
+
+* **대기 시간:** 기본 항목으로 자동 부팅하기 전에 Limine이 기다리는 시간을 초 단위로 설정합니다.
+
+  ```shell
+  # /boot/limine.conf
+
+  timeout: 5
+  ```
+
+* **기본 항목:** 기본으로 부팅할 메뉴 항목을 지정합니다. 항목 번호는 1부터 시작합니다. 설정하지 않으면 기본값은 1입니다.
+
+  ```shell
+  # /boot/limine.conf
+
+  default_entry: 2 # Boot the second entry by default
+  ```
+
+  :::tip
+   `default_entry`가 디렉터리(예: `/+CachyOS`)를 가리키면 자동 부팅이 비활성화됩니다. 디렉터리 안의 항목으로 자동 부팅하려면 `default_entry`가 해당 특정 항목 번호를 직접 가리켜야 합니다.
+  :::
+
+예시(`/boot/limine.conf`):
+
+```shell
+# /boot/limine.conf
+
+timeout: 5
+default_entry: 2 # Points directly to the 'linux-cachyos' entry below
+
+/+CachyOS        # Entry 1: A directory (use /+ to expand by default)
+//linux-cachyos  # Entry 2: The actual bootable entry
+    protocol: linux
+    kernel_path: boot():/vmlinuz-linux-cachyos
+    cmdline: quiet splash root=UUID=... rw # Basic kernel parameters
+    module_path: boot():/initramfs-linux-cachyos.img
+```
+
+:::note
+`boot():/`는 부트 드라이브의 루트를 의미합니다.
+:::
+
+### 테마 설정
+
+Limine 부트 메뉴의 시각적 모양을 사용자 지정할 수 있습니다.
+
+* **배경화면:** 배경 이미지를 설정합니다. 지원되는 형식에는 BMP, PNG, JPEG가 있습니다.
+
+  ```shell
+  # /boot/limine.conf
+
+  wallpaper: boot():/splash.png
+  wallpaper_style: stretched # Options: 'stretched', 'tiled', 'centered'
+  backdrop: 000000           # Background color (RRGGBB hex) if style is 'centered'
+  ```
+
+* **글꼴:** [사용자 지정 글꼴 파일](https://github.com/viler-int10h/vga-text-mode-fonts)을 사용하고 크기를 조정합니다.
+
+  ```shell
+  # /boot/limine.conf
+
+  term_font: boot():/custom_font.F16
+  term_font_scale: 2x2 # Scales font size, useful for high-resolution displays
+  ```
+
+* **색상:** 터미널 텍스트와 배경 색상을 수정합니다.
+
+  ```shell
+  # /boot/limine.conf
+
+  term_background: 80000000 # Example: Semi-transparent black (AARRGGBB)
+  # Other color options like term_foreground, etc., are available.
+  ```
+
+### 커널 명령 설정
+
+CachyOS에서는 Limine 부트 메뉴의 커널 항목이 **자동으로 관리**됩니다. 커널을 설치하거나 제거하면 `limine-mkinitcpio-hook`이 백그라운드에서 `limine-entry-tool` 유틸리티를 사용해 부팅 항목을 업데이트합니다.
+
+항목은 자동으로 처리되지만, 커널이 부팅될 때 전달되는 **커널 매개변수**(커널 명령줄이라고도 함)는 설정할 수 있습니다.
+
+1. **설정 파일 편집:** `/etc/default/limine`에서 `KERNEL_CMDLINE` 변수를 수정하세요. 모든 커널에 적용할 기본 매개변수나 특정 커널 이름(예: `linux-cachyos`)에 대한 전용 매개변수를 설정할 수 있습니다.
+
+   ```shell
+   # /etc/default/limine
+
+   # Default parameters for most kernels
+   KERNEL_CMDLINE[default]="quiet splash rd.udev.log_priority=3"
+
+   # Specific parameters for the 'linux-cachyos' kernel
+   KERNEL_CMDLINE["linux-cachyos"]="quiet splash mitigations=off"
+
+   # Parameters for fallback entries (if generated)
+   # KERNEL_CMDLINE[fallback]="..."
+   ```
+
+2. **변경 사항 적용:** `/etc/default/limine`을 저장한 뒤, 새 커널 매개변수를 적용하려면 initramfs 이미지를 다시 생성하고 Limine 항목을 업데이트해야 합니다. 다음 명령을 실행하세요.
+
+   ```bash
+   sudo limine-mkinitcpio
+   ```
+
+   이 명령은 `mkinitcpio` 프로세스를 실행하며, 여기에 `limine-mkinitcpio-hook`이 포함됩니다. 이를 통해 `/etc/default/limine`의 변경 사항이 `/boot/limine.conf`의 부팅 항목에 반영됩니다.
+
+## 더 알아보기
+
+* [loader.conf 매뉴얼 페이지](https://man.archlinux.org/man/loader.conf.5)
+* [rEFInd: 부트 매니저 설정](https://www.rodsbooks.com/refind/configfile.html)
+* [GRUB 매뉴얼: 설정](https://www.gnu.org/software/grub/manual/grub/grub.html#Configuration)
+* [공식 Limine 설정 문서](https://github.com/limine-bootloader/limine/blob/v12.x/CONFIG.md)
+* [limine-entry-tool 프로젝트](https://gitlab.com/Zesko/limine-entry-tool)
+
