@@ -1,0 +1,315 @@
+---
+title: Chromium 기반 브라우저 하드웨어 가속
+description: CachyOS에서 Chromium 기반 브라우저의 비디오 디코드/인코드 하드웨어 가속을 설정합니다. AMD GPU 설정과 다른 GPU/브라우저를 위한 템플릿을 포함합니다.
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+이 가이드는 CachyOS에서 Chromium 기반 브라우저의 하드웨어 가속을 활성화하는 방법을 설명합니다. 비디오/그래픽 작업을 GPU로 오프로딩하여 성능을 향상시킬 수 있습니다.
+
+## 사전 요구 사항
+
+**필수:**
+* **Chromium 기반 브라우저:** (예: Chrome, Brave, Ungoogled Chromium, Edge)
+* **GPU 드라이버/API:** 최신 Mesa(AMD/Intel) 또는 NVIDIA 드라이버가 필요하며, Vulkan/VA-API/VDPAU가 설정되어 있어야 합니다.
+
+**선택:**
+
+* **amdgpu_top:** 터미널에서 AMD GPU 활동을 모니터링하려면 패키지 관리자를 통해 저장소에서 `amdgpu_top`을 설치하세요.
+* **nvtop:** (Intel GPU 전용) 터미널에서 Intel GPU 활동을 모니터링하려면 Shelly 패키지 관리자를 통해 `nvtop`(Lunar Lake) 및 `intel-gpu-tools`(Pre-Lunar Lake)를 설치하세요.
+
+## 기여
+
+이 가이드는 확장할 수 있습니다. 특정 GPU와 Chromium 기반 브라우저에서 작동하는 하드웨어 가속 설정을 가지고 있다면, "GPU 및 브라우저 구성" 아래에 새 섹션을 추가해 기여해 주세요. 다음 내용을 포함하세요.
+
+* **브라우저 이름**
+* **GPU 모델**
+* **플래그:** `~/.config/[browser]-flags.conf` 내용.
+* **파일 경로:** 플래그 파일의 전체 경로.
+* **참고 사항(선택):** 주요 드라이버, 패키지 또는 설정 관련 세부 사항.
+
+## 설정 단계
+
+<Steps>
+
+1. 플래그 파일 식별: "GPU 및 브라우저 구성"에서 브라우저의 플래그 파일 경로를 확인합니다.
+2. 플래그 파일 편집: `nano` 또는 `micro`, `vim` 같은 원하는 텍스트 편집기를 사용해 파일을 열거나 생성합니다.
+
+    ```bash
+    nano [PATH_TO_YOUR_BROWSER_FLAGS_FILE]
+    # Example: nano ~/.config/chrome-flags.conf
+    ```
+
+3. 플래그 추가: 해당 GPU/브라우저 플래그를 파일에 붙여넣습니다.
+4. 저장 후 닫습니다.
+5. 브라우저 재시작: 모든 브라우저 인스턴스를 닫고 다시 실행합니다.
+6. 확인: `chrome://gpu` 또는 `brave://gpu`, `edge://gpu` 등으로 이동합니다. "Video Acceleration Information" 및 "Graphics Feature Status" 아래에서 "Hardware accelerated" 상태를 확인합니다.
+
+</Steps>
+
+## 비디오 하드웨어 가속 확인 방법
+
+<Tabs>
+
+<TabItem label='AMD GPU (amdgpu_top)'>
+
+<Steps>
+
+1. 터미널을 열고 다음 명령을 실행합니다.
+    ```bash
+    amdgpu_top
+    ```
+2. 브라우저에서 동영상 재생을 시작합니다(예: YouTube).
+3. `amdgpu_top`의 `media` 섹션을 확인합니다. 여기에서 어느 정도 사용률이 표시되면 GPU의 미디어 엔진이 활성 상태라는 뜻입니다. 동영상 재생 중에도 0%로 유지된다면 디코딩에 하드웨어 가속이 완전히 적용되지 않았을 수 있습니다.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='Intel GPU (nvtop)'>
+
+<Steps>
+
+1. 터미널을 열고 다음 명령을 실행합니다.
+    ```bash
+    sudo nvtop
+    ```
+2. 브라우저에서 동영상 재생을 시작합니다(예: YouTube).
+3. `nvtop`의 `ENC/DEC` 백분율을 확인합니다. 비디오 디코딩이 하드웨어에서 작동 중이라면 이 백분율이 증가해야 합니다.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='Intel GPU (intel_gpu_tools)'>
+
+<Steps>
+
+1. 터미널을 열고 다음 명령을 실행합니다.
+
+    ```bash
+    sudo intel_gpu_top
+    ```
+
+    참고: Lunar Lake GPU 같은 일부 최신 Intel GPU는 더 이상 `intel_gpu_top`으로 GPU 성능 카운터를 노출하지 않습니다. 이러한 시스템에서는 `nvtop`을 사용하세요.
+
+2. 브라우저에서 동영상 재생을 시작합니다(예: YouTube).
+3. intel_gpu_top에서 `Video` 및 `VideoEnhance` 백분율을 확인합니다. 비디오 디코딩이 하드웨어에서 작동 중이라면 이 백분율이 증가해야 합니다.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='브라우저 개발자 도구'>
+
+<Steps>
+
+1. Chromium 기반 브라우저를 엽니다.
+
+2. 동영상 재생을 시작합니다(예: YouTube 또는 로컬 파일).
+
+3. 개발자 도구 열기: `F12` 또는 `Ctrl+Shift+I`를 누릅니다.
+
+4. **Media** 탭으로 이동합니다. 보이지 않는 경우, 개발자 도구 도구 모음에서 점 세 개(`...`) 또는 `>>`(더 많은 탭)를 클릭한 다음 `Media`를 선택합니다.
+
+5. 왼쪽의 "Players" 섹션에서 동영상에 해당하는 항목을 클릭합니다.
+
+6. 기본 패널에서 **Video Decoder** 섹션까지 아래로 스크롤합니다.
+
+7. `Hardware decoder` 레이블을 찾습니다. 값은 `true`여야 합니다. `false`라고 표시되거나 소프트웨어 디코더 이름(예: `FFmpegVideoDecoder`, `VpxVideoDecoder`, `Dav1dVideoDecoder`)이 표시된다면 해당 동영상에는 하드웨어 가속이 활성화되지 않은 것입니다.
+
+</Steps>
+
+</TabItem>
+
+</Tabs>
+
+## GPU 및 브라우저 구성
+
+### AMD Radeon RX 6900 XT (Google Chrome)
+
+* **브라우저:** Google Chrome
+
+* **GPU:** AMD Radeon RX 6900 XT
+
+* **플래그 파일:** `~/.config/chrome-flags.conf`
+
+```bash
+--use-gl=angle
+--use-angle=vulkan
+--enable-features=Vulkan,VulkanFromANGLE,DefaultANGLEVulkan,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
+--ozone-platform-hint=x11
+```
+
+**참고:** Vulkan(ANGLE 경유)과 VA-API를 활용합니다. `--ozone-platform-hint=x11`은 특정 가속 경로에서는 Wayland에서도 유용할 수 있습니다.
+
+### Nvidia RTX 4090 (Vivaldi)
+
+* **브라우저:** Vivaldi
+
+* **GPU:** Nvidia RTX 4090
+
+* **플래그 파일:** `~/.config/vivaldi-stable.conf`
+
+```bash
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL
+```
+
+* **플래그 파일:** `/usr/share/applications/vivaldi-stable.desktop`
+
+```bash
+# Keep all other lines the same
+# You should only change this Exec= entry under the '[Desktop Entry]' section
+Exec=/usr/bin/vivaldi-stable --enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL %U
+```
+
+**참고:**
+
+이 conf 파일 변경 중 하나만 적용하면 충분하지만, 두 곳 모두 적용해도 문제가 발생하지는 않습니다.
+
+또는 KDE에서는 다음과 같이 할 수 있습니다.
+1. Vivaldi의 작업 관리자/작업 표시줄 바로가기를 모두 삭제합니다.
+2. 애플리케이션 실행기 목록에서 `Vivaldi`를 검색합니다.
+3. 애플리케이션 실행기에서 항목을 오른쪽 클릭하고 `Edit Application...`을 선택합니다.
+4. `Command-line arguments` 섹션에서 마지막 인수 `%U` 앞에 다음 인수를 추가합니다.
+```
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL
+```
+5. Vivaldi를 실행하고 해당 프로세스를 작업 관리자/작업 표시줄에 고정합니다.
+
+### AMD Radeon RX 550 (UnGoogled Chromium)
+
+* **브라우저:** UnGoogled Chromium
+
+* **GPU:** AMD Radeon RX 550
+
+* **플래그 파일:** `~/.config/chromium-flags.conf`
+
+```bash
+--enable-wayland-ime
+--ozone-platform=wayland
+--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,WaylandSessionManagement,WaylandTextInputV3,WaylandUiScale,WaylandWindowDecorations
+```
+
+**참고:**
+
+X11을 사용 중이라면 다음을 사용하세요.
+```bash
+--ozone-platform=x11
+--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder
+```
+
+### Nvidia RTX 5070 TI (Brave)
+
+* **브라우저:** Brave
+
+* **GPU:** Nvidia RTX 5070 TI
+
+* **플래그 파일:** `~/.config/brave-flags.conf`
+
+```bash
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks
+```
+
+**참고:**
+- `brave://gpu`에서 비디오 디코딩 **및** 인코딩이 `Hardware accelerated`로 표시됩니다.
+- YouTube 동영상에서 `media` 탭을 검사하면 하드웨어 가속으로 표시될 때도 있고 그렇지 않을 때도 있습니다.
+
+
+
+### Brave - 7700xt (DaJRJesus 기여)
+
+* **브라우저:** Brave
+
+* **GPU:** AMD Radeon RX 7700 XT
+
+* **플래그 파일 경로:** `~/.config/brave-flags.conf`
+
+```bash
+--ignore-gpu-blocklist
+--enable-gpu-rasterization
+--enable-zero-copy
+--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,CanvasOopRasterization,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
+--ozone-platform-hint=auto
+```
+
+**참고:**
+Wayland에서 작동합니다. UI 지연을 방지하려면 YouTube 설정에서 "Ambient Mode"를 비활성화해야 합니다.
+
+### Vivaldi - AMD Radeon RX 9070 XT (tTrmc 기여)
+
+* **브라우저:** Vivaldi
+
+* **GPU:** AMD Radeon RX 9070 XT (RDNA 4 / gfx1201)
+
+* **플래그 파일 경로:** `~/.config/vivaldi-stable.conf`
+
+```bash
+--ignore-gpu-blocklist
+--enable-gpu-rasterization
+--enable-zero-copy
+--ozone-platform=wayland
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
+```
+
+**참고:**
+- CachyOS, 커널 6.19.11-1-cachyos, Mesa 26.0.3, GNOME(Wayland), 디스플레이 2560x1440 환경에서 테스트되었습니다.
+- 작동 확인: `vivaldi://gpu`에서 Video Decode와 Video Encode가 "Hardware accelerated"로 표시됩니다. H264, VP9, HEVC, AV1 디코딩 및 H264, AV1 인코딩에 대한 전체 코덱 지원. DevTools Media 탭에는 활성 디코더로 `VaapiVideoDecoder`가 표시됩니다.
+- RX 9070 XT(RDNA 4)는 Chromium의 GPU 차단 목록에 포함되어 있을 수 있으므로 `--ignore-gpu-blocklist`가 필요합니다.
+- 로그에 `'--ozone-platform=wayland' is not compatible with Vulkan` 경고가 표시될 수 있습니다. 이 경고는 하드웨어 가속 작동을 막지 않습니다. 원한다면 대신 `--ozone-platform-hint=auto`를 사용할 수 있습니다.
+### Google Chrome - AMD Radeon RX 9070 XT (naknak 기여)
+
+* **브라우저:** Google Chrome
+
+* **GPU:** AMD Radeon RX 9070 XT (RDNA 4 / gfx1201)
+
+* **플래그 파일 경로:** `~/.config/chrome-flags.conf`
+
+```bash
+--ignore-gpu-blocklist
+--enable-gpu-rasterization
+--enable-zero-copy
+--ozone-platform-hint=auto
+--use-gl=angle
+--use-angle=vulkan
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo,Vulkan,VulkanFromANGLE,DefaultANGLEVulkan
+```
+
+**참고:**
+- `chrome://gpu`에서 비디오 디코딩 **및** 인코딩이 `Hardware accelerated`로 표시됩니다.
+- YouTube 동영상에서 `media` 탭을 검사하면 하드웨어 가속으로 표시될 때도 있고 그렇지 않을 때도 있습니다.
+
+---
+
+### 기여용 템플릿
+
+### [브라우저] - [GPU 모델] ([이름/핸들] 기여)
+
+* **브라우저:** [예: Brave, Ungoogled Chromium, Microsoft Edge, Vivaldi, Opera, Chromium]
+
+* **GPU:** [예: NVIDIA GeForce RTX 3080, Intel Iris Xe]
+
+* **플래그 파일 경로:** (중요, 브라우저마다 다릅니다!)
+
+  * 일반적인 `.conf` 경로:
+
+    * Chromium: `~/.config/chromium-flags.conf`
+
+    * Brave Browser: `~/.config/brave-flags.conf`
+
+    * Ungoogled Chromium: `~/.config/ungoogled-chromium-flags.conf`
+
+  * `.desktop` 파일 수정: 일부 브라우저(Brave, Edge, Vivaldi, Opera)는 `.desktop` 파일의 `Exec=` 줄을 편집해야 할 수 있습니다. 먼저 `/usr/share/applications/`에서 `~/.local/share/applications/`로 복사하세요.
+
+Flags Content (`.conf` 파일 또는 `Exec=` 줄용):
+
+```bash
+# Paste your flags here.
+# For .desktop files, flags are space-separated after the executable.
+```
+
+**참고 사항(선택):**
+
+* 필요한 드라이버(예: `nvidia-dkms`, `intel-media-driver`).
+
+* 특정 설정 고려 사항 또는 `.desktop` 파일 수정 지침.
