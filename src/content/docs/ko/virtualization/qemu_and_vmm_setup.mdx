@@ -1,0 +1,68 @@
+---
+title: QEMU와 VMM 설정
+description: CachyOS에서 두 프로그램을 모두 작동시키는 데 필요한 단계
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import { Steps } from '@astrojs/starlight/components';
+
+## 설치
+**CachyOS**에서 **VMM**(Virtual Machine Manager)과 **QEMU**를 설치하고 실행하는
+절차는 다음과 같습니다.
+
+```sh
+# This will install the needed packages (note the "Windows 11" note below):
+sudo pacman -S qemu-full virt-manager swtpm
+# Force libvirt to use iptables
+echo 'firewall_backend = "iptables"' | sudo tee -a /etc/libvirt/network.conf
+# This will add the user to the "libvirt" group so they can use it:
+sudo usermod -aG libvirt $USER
+# LXC backend (optional, for linux containers, enabling both backends does not conflict):
+systemctl enable --now libvirtd.service
+# QEMU backend (for VMs):
+systemctl enable --now libvirtd.socket
+# This will bring Internet up in a VM whenever one starts:
+sudo virsh net-autostart default
+# And to enable the entire VM network to have unfettered transit: (You should consider if you need more granular firewall rules based on your use case and security posture)
+sudo ufw route allow from 192.168.122.0/24
+```
+
+:::note[Windows 11]
+가상 머신에 **Windows 11**을 설치하는 경우, 이후 설정 단계에서 호환되는 TPM 모듈을 패스스루하거나, TPM 모듈이 없다면 `swtpm`을 설치해야 합니다.
+:::
+
+## VM 생성 기본 사항
+:::note[사용자 세션]
+진행하기 전에 [QEMU User Session](/virtualization/qemu_user_session)을 잠시 참고하는 것이 좋습니다.
+:::
+
+<Steps>
+
+1. 먼저 **VMM**을 실행합니다. 처음 보게 되는 화면은 다음과 같은 연결 항목입니다. <ImageComponent imgsrc={import('~/assets/images/vmmstart.png')} />
+2. 다음으로 `Edit -> Preferences -> ✅ Enable XML editing`을 클릭한 뒤 해당 하위 메뉴를 닫습니다.
+3. 이제 **별과 재생 아이콘이 있는 화면**을 클릭하거나 `File -> New Virtual Machine`을 선택해 새 가상 머신을 만들 수 있습니다.
+4. VM 생성 화면이 나타납니다. `Connection:` 옆에 드롭다운 메뉴가 보이면 클릭하여 적절한 항목을 선택한 뒤 `Forward`로 진행합니다. <ImageComponent imgsrc={import('~/assets/images/vmmcreatestep1.png')} />
+5. 다운로드한 OS의 `.iso` 이미지를 지정하라는 메시지가 표시됩니다. `Browse...`를 클릭해 위치를 지정합니다. ISO 파일을 저장할 전용 디렉터리를 추가하거나 만들고 싶다면 `+ (Add Pool)` 버튼을 클릭하면 됩니다. 이 용도로 `User Session` 경로를 재사용하려면 해당 경로는 `~/.config/libvirt/`에 있습니다. <ImageComponent imgsrc={import('~/assets/images/vmmcreatestep2browse.png')} />
+**OS가 자동 감지되지 않는 경우**, 자동 감지를 해제하고 가장 가까운 항목을 수동으로 선택하면 됩니다. `example: CachyOS = Arch Linux`.
+
+6. 3단계는 간단합니다. 원하는 만큼 VM에 RAM과 CPU 코어를 지정하면 됩니다. 이 설정은 고정된 것이 아니며 나중에 쉽게 변경할 수 있습니다.
+7. 4단계에서는 가상 저장 공간을 만들거나(이 경우 **.qcow2** 파일이 생성됨), VM이 사용할 경로를 선택할 수 있습니다.
+8. 5단계에서는 `Customize configuration before install -> Finish`를 체크합니다.
+9. 그러면 다음 화면으로 이동합니다. <ImageComponent imgsrc={import('~/assets/images/vmmprevminstall.png')} />
+Linux VM을 설치하는 경우 여기에서 몇 가지를 확인해야 합니다. `Overview`에서 칩셋이 **Q35**이고 펌웨어가 **UEFI**인지 확인합니다. 아주 오래된 것을 설치하거나 특수한 작업을 하는 경우가 아니라면, 여기에서 다른 변형을 선택할 필요는 없습니다. Windows 11 VM을 만드는 경우 TPM 모듈이 추가되었는지 확인하고, 없다면 Add Hardware -> TPM으로 이동한 뒤 Emulated 또는 Passthrough 중 하나를 선택하고(위의 참고 참고) Finish를 눌러 하위 메뉴를 닫습니다.
+
+10. 이제 `Begin Installation`을 클릭합니다.
+11. **Linux** VM이거나 OpenGL을 사용하거나 libvulkan을 포함하는 다른 OS라면, 각각 [EGL Headless](/virtualization/egl_headless) 및/또는 [Virtio-Venus](/virtualization/virtio-venus)를 참고합니다.
+
+</Steps>
+
+### 마지막 참고 사항
+`Windows 11` VM에서 성능을 향상하려면 다음을 수행할 수 있습니다.
+- 게스트에 RedHat의 **Virtio-Win** 드라이버를 설치합니다.
+- Intel iGPU가 있다면 대신 **GVT-g**와 **MDEV**를 살펴볼 수 있습니다.
+- Intel iGPU와 dGPU가 있다면 대신 **GVT-d**를 살펴볼 수 있습니다.
+- iGPU와 dGPU가 있거나 2개 이상의 dGPU가 있고 dGPU를 대신 패스스루하려는 경우,
+**VFIO**를 살펴볼 수 있습니다.
