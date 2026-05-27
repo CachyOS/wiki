@@ -324,8 +324,9 @@ Designed for gaming workloads on modern AMD and Intel hardware.
 | **T2** | Frame       | < 8ms       | Game render threads, video encoding                    | 4.0ms   | 40ms       |
 | **T3** | Bulk        | ≥ 8ms       | Compilation, background indexing, batch jobs           | 8.0ms   | 100ms      |
 
-> [!TIP]
-> **No game task should be in T3**. Game render threads run 2-8ms per frame → T2. Physics/AI run 0.5-2ms → T1. Input handlers run < 100µs → T0. Only tasks doing 8ms+ uninterrupted CPU work (shader compilation, loading screens) land in T3.
+:::tip
+**No game task should be in T3**. Game render threads run 2-8ms per frame → T2. Physics/AI run 0.5-2ms → T1. Input handlers run < 100µs → T0. Only tasks doing 8ms+ uninterrupted CPU work (shader compilation, loading screens) land in T3.
+:::
 
 ##### How Classification Works
 
@@ -463,6 +464,101 @@ Tasks that release the CPU early are given a higher latency weight, prioritizing
 
 * **Command-line Flags:** `-m all -s 20000 -S 1000 -I -1 -D -L`
 * **Description:** Tuned for server workloads. Trades responsiveness for throughput.
+
+### [scx_flow](https://github.com/sched-ext/scx/tree/main/scheds/experimental/scx_flow)
+
+**Developed by: Galih Tama (galpt [GitHub](https://github.com/galpt))**
+
+Production Ready? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+scx_flow is a budget-based scheduler that organizes tasks into a small number of priority lanes. Instead of using fixed profiles, it continuously observes how your system behaves and adjusts its tuning automatically.
+
+**How it works — the wakeup budget:**
+
+Think of every task as having a "responsiveness budget." While a task is sleeping (waiting for something to do), it accumulates budget. When it wakes up and runs, it spends that budget. Tasks that still have budget when they wake up get to skip the queue — they're dispatched through a fast reserved lane. Once a task exhausts its budget, it falls back to the general shared lane.
+
+This means interactive tasks (which sleep often and run briefly) almost always wake up with budget, while CPU-hogging batch tasks naturally drain theirs and get moved aside. The result is that short interactive bursts — keyboard input, UI updates, game logic ticks — stay responsive without needing manual tuning.
+
+**Service lanes (priority system):**
+
+The scheduler has five internal dispatch lanes, ordered from most to least urgent:
+
+| Lane | What it handles |
+|---|---|
+| **Urgent Latency** | Tasks that repeatedly exhausted their budget while being interactive — the scheduler "remembers" they need fast service and gives them an express pass. |
+| **Reserved (Positive Budget)** | The default fast path. Tasks waking up with remaining budget get dispatched here, ideally on the same CPU they last ran on (cache warm). |
+| **Dedicated Latency** | Interactive wakeups that didn't get the reserved lane for some reason but still need responsive handling. |
+| **Shared (Fallback)** | The general-purpose lane. Tasks without budget, or that couldn't fit in higher lanes, land here. |
+| **Contained (Background)** | Long-running CPU hogs and batch work. A fairness floor prevents them from being completely starved. |
+
+Each lane has **bounded burst limits** — the scheduler won't let any single lane run too many tasks in a row before giving the next lane a turn. This prevents high-priority traffic from completely shutting out everything else.
+
+**Adaptive auto-tuning (no profiles needed):**
+
+Unlike many other schedulers, scx_flow does **not** have Gaming, Power Save, or Low Latency modes. Instead, a 1Hz control loop evaluates what your system is doing and gradually shifts between three behavioral regimes:
+
+- **Balanced:** Default parameters suitable for most situations.
+- **Latency:** Tighter time slices and more aggressive interactive dispatch — activated when the scheduler detects high wakeup pressure (lots of short-running tasks competing for CPU).
+- **Throughput:** Longer slices and more relaxed starvation floors — activated when sustained CPU work with measurable background load is detected.
+
+Transitions are gradual (parameters step toward their targets) and hysteresis prevents oscillation. A latency cooldown prevents the scheduler from flipping in and out of latency mode too quickly.
+
+**What this means in practice:**
+
+On a typical desktop — gaming with Discord, a browser, and a launcher open — interactive tasks (audio, input, network) almost always wake up with budget and get the fast path. Game render threads (which run for 2-8ms per frame) consume their budget but at a measured pace. Background downloads and shader compilation fall into the contained lane without disrupting foreground responsiveness.
+
+- Use cases:
+  - General-purpose desktop and workstation multitasking
+  - Gaming with background applications open
+  - Development work with builds, tests, or containers running
+  - Any scenario where interactive responsiveness under mixed load matters
+
+#### Benchmark Highlights
+
+The following results compare scx_flow v2.2.4 against the default EEVDF scheduler and other sched_ext schedulers on a Ryzen 7 6800H system (CachyOS kernel 7.0.3-1-cachyos):
+
+| Metric | baseline (EEVDF) | scx_cosmos | scx_bpfland | **scx_flow** |
+|---|---|---|---|---|
+| **Cyclictest max latency** | 1106µs | 852µs | 2724µs | **142µs** |
+| **Latency spikes >100µs** | 304 | 821 | 222 | **2** |
+| **Hackbench mean time** | 0.69s | 0.65s | 0.96s | **0.66s** |
+| **Stress-ng bogo ops/s** | 6673 | 6596 | 6611 | **6596** |
+
+scx_flow achieves a **7.8x reduction in worst-case latency** compared to the default kernel scheduler, with only **2 latency spikes over 100µs** across the entire test (vs 304 for the baseline). This comes at a minimal **~1.1% throughput trade-off**.
+
+:::tip[Benchmark context]
+These results are a snapshot of scx_flow's behavior on a specific CPU microarchitecture and workload mix. Each scheduler in the sched-ext ecosystem targets different design goals and use cases — what works well on one system or workload may differ on another. Take these numbers as a reference point rather than a ranking; scx_flow is one option among many, and the right choice depends on your hardware and what you're doing with it.
+:::
+
+Full benchmark report: [testing-scx_flow benchmark archives](https://github.com/galpt/testing-scx_flow/tree/benchmark-archives/20260409_scx_flow_v2.2.0_release/mini/v2.2.4/100us_max_latency_spikes)
+
+#### CLI Arguments
+
+| Argument | Description |
+|---|---|
+| `--stats <interval>` | Enable live metrics display with the specified interval in seconds |
+| `--monitor <interval>` | Monitor mode — display metrics without starting the scheduler |
+| `-d, --debug` | Enable debug-level logging |
+| `-V, --version` | Print scheduler version and exit |
+| `--no-autotune` | Disable adaptive tuning and use fixed default parameters |
+
+:::note
+scx_flow does **not** have scx_loader profile modes (Gaming, Power Save, Low Latency, Server). It always runs with adaptive auto-tuning enabled by default. Use `--no-autotune` if you want fixed behavior.
+:::
+
+#### Monitoring live stats
+
+You can observe what the scheduler is doing in real-time:
+
+```sh
+# Start the scheduler with stats display (updates every 2 seconds)
+sudo scx_flow --stats 2
+
+# Or monitor a running scx_flow instance without starting another:
+sudo scx_flow --monitor 2
+```
+
+The stats output includes dispatch counts per lane, budget refill/exhaust events, the current auto-tune mode (balanced/latency/throughput), and the active tuning parameter values.
 
 ### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>)
 
