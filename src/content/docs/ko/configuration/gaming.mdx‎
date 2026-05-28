@@ -1,0 +1,735 @@
+---
+title: CachyOS 게임 가이드
+description: '필수 패키지 설치, Proton을 이용한 Steam 게임, 다양한 Proton 버전 옵션, 모든 게임의 중앙 허브 역할을 하는 Lutris, 인기 게임용 스크립트 설치 도구를 다룹니다.'
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import MultipleImageComponent from '~/components/multiple-images-component.astro';
+import { Tabs, TabItem, Steps, LinkButton, Icons } from '@astrojs/starlight/components';
+
+CachyOS에서 게임을 즐기기 위한 가이드에 오신 것을 환영합니다. 이 문서는 게임용 환경을 설정하는 데 필요한 핵심 내용을 안내합니다.
+
+먼저 알아둘 점이 있습니다.
+
+*기억하세요. FPS가 두 자릿수로 향상되는 것은 항상 가능한 일이 아니며, 아예 불가능한 경우도 있습니다. 최적화는 게임과 하드웨어 구성에 따라 작은 개선만 가져오거나, 전혀 차이가 없을 수도 있습니다.*
+
+*소프트웨어 최적화가 무료 하드웨어 업그레이드처럼 동작한다고 기대할 수는 없습니다.*
+
+<ImageComponent imgsrc={import('~/assets/images/gaming-meme.jpeg')} />
+
+## 사전 준비
+
+:::caution
+진행하기 전에 그래픽 카드 드라이버가 설치되어 있고 정상적으로 작동하는지 확인하세요. 그렇지 않으면 게임 실행 중 문제가 발생할 수 있습니다.
+:::
+
+### 필수 패키지
+
+CachyOS를 게임용으로 더 쉽게 설정할 수 있도록, Linux에서 게임을 실행하는 데 필요한 의존성과 라이브러리를 포함한 필수 게임 패키지들은 하나의 메타 패키지로 묶여 있습니다. 도구와 런처/스토어용 메타 패키지도 별도로 제공됩니다.
+
+*누락된 패키지가 있다고 생각되면 CachyOS 팀에 알려 주세요.*
+
+게임 설정을 시작하려면 아래 단계를 따르세요.
+<Tabs>
+    <TabItem label= 'CachyOS Hello'>
+    - CachyOS Hello를 엽니다. **Apps/Tweaks**로 이동한 뒤 `Install Gaming packages`를 클릭합니다.
+        <ImageComponent imgsrc={import('~/assets/images/cachyos_hello-gaming.png')} />
+    *CachyOS Hello는 `cachyos-gaming-meta`와 `cachyos-gaming-applications`를 모두 설치합니다.*
+    </TabItem>
+    <TabItem label='메타 패키지'>
+        `cachyos-gaming-meta` 메타 패키지에는 여러 게임 관련 라이브러리가 포함되어 있습니다.
+        ```sh
+        sudo pacman -S cachyos-gaming-meta
+        ```
+    </TabItem>
+    <TabItem label='도구 및 스토어'>
+        `cachyos-gaming-applications` 메타 패키지에는 다음 항목이 포함되어 있습니다.
+          - 도구
+            - Gamescope, Goverlay, MangoHud
+          - 런처
+            - Steam, Heroic Games Launcher, Lutris
+        ```sh
+        sudo pacman -S cachyos-gaming-applications
+        ```
+    </TabItem>
+</Tabs>
+
+## Proton-CachyOS
+
+Proton-CachyOS는 Proton의 `bleeding-edge` 브랜치를 기반으로 하며, 그 위에 여러 수정 사항을 적용합니다.
+- **Wine-staging 패치**
+- **Wine Fullscreen FSR**
+- **게임 컷신용 비디오 및 오디오 코덱 포함**
+- **UMU-Protonfixes를 포함한 umu-launcher 지원**
+- **게임용 초기 핫픽스/우회책 추가**
+
+:::note[NTSync는 기본적으로 활성화되어 있습니다]
+환경 변수 `PROTON_NO_NTSYNC=1`을 설정해 비활성화할 수 있습니다.
+:::
+
+### 여러 실행 옵션을 올바르게 설정하는 방법
+
+Steam의 실행 옵션은 다음 패턴으로 구성됩니다.
+
+```bash
+<env variables> <wrappers> %command% <application arguments>
+```
+
+- **`<env variables>`**: `VARIABLE=value` 형식의 옵션입니다.
+  ```bash title="Examples"
+  PROTON_DXVK_D3D8=1
+  # Or
+  DXVK_HUD="fps,memory,version,api"
+  ```
+
+- **`<wrappers>`**: 실제 애플리케이션 실행 방식을 변경하는 애플리케이션과 스크립트입니다. wrapper에 전달하는 인수는 보통 wrapper 실행 파일 뒤에 둡니다.
+  ```bash title="Examples"
+  mangohud --dlsym
+  # Or
+  gamescope -W 1680 -H 1050 -w 1280 -h 720 -S fit -F fsr --mangoapp --
+  ```
+
+- **`%command%`**: 실제 애플리케이션입니다. 반드시 이 형식 그대로 지정해야 하며, Steam은 애플리케이션 실행 시 이를 올바른 명령으로 대체합니다.
+
+- **`<application arguments>`**: 실제 애플리케이션에 전달되는 다양한 인수이며, 애플리케이션마다 다릅니다.
+  ```bash title="Example"
+  %command% -dx11
+  ```
+
+**모든 요소를 조합한 완전한 실행 옵션 예시:**
+
+  ```bash
+  __GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1 prime-run game-performance %command% -dx11
+  ```
+
+:::caution
+여러 실행 옵션을 구분하는 용도로 `%command%`를 여러 번 추가하지 마세요.
+
+예: `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1 %command% game-performance %command% prime-run %command%`
+
+이 경우 첫 번째 `%command%` 뒤의 모든 내용은 게임 인수로 처리되어 무시됩니다. 따라서 실행 옵션으로 인식되는 것은 `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1`뿐입니다.
+:::
+
+#### 환경 변수
+:::note
+Custom Proton은 특성상 설정 옵션이 불안정할 수 있습니다. 각 구성 옵션에 대한 최신 정보는 해당 문서를 참고하세요.
+
+Proton-CachyOS 문서 링크:
+
+<LinkButton icon="external" href="https://github.com/CachyOS/proton-cachyos/blob/cachyos_main/README.md#proton-cachyos-config-options">README</LinkButton>
+<LinkButton icon="external" href="https://github.com/CachyOS/proton-cachyos/blob/cachyos_main/CHANGELOG.md">변경 로그</LinkButton>
+
+Proton-EM 문서 링크:
+
+<LinkButton icon="external" href="https://github.com/Etaash-mathamsetty/Proton/blob/em-11-hdr/README.md">README</LinkButton>
+<LinkButton icon="external" href="https://github.com/Etaash-mathamsetty/Proton/blob/em-10-hdrtest/docs/EM-ADDITIONS.md">EM-ADDITIONS</LinkButton>
+<LinkButton icon="external" href="https://github.com/Etaash-mathamsetty/Proton/blob/em-10-hdrtest/docs/FSR4.md">FSR4</LinkButton>
+<LinkButton icon="external" href="https://github.com/Etaash-mathamsetty/Proton/blob/em-10-hdrtest/docs/CHANGES.md">Winewayland</LinkButton>
+
+:::
+
+<Tabs>
+<TabItem label="그래픽 및 업스케일링">
+
+- DLSS 및 Nvidia 기능
+    - `PROTON_DLSS_UPGRADE=1`: DLSS를 최신 버전으로 자동 업그레이드합니다.
+    - `PROTON_DLSS_INDICATOR=1`: 게임 내에 DLSS 상태 표시기를 표시합니다.
+    - `PROTON_NVIDIA_LIBS=1`: Nvidia 라이브러리(PhysX, CUDA)를 활성화합니다. DLSS/레이 트레이싱에는 필요하지 않습니다.
+
+<details>
+<summary>고급 Nvidia 제어</summary>
+
+- `PROTON_NVIDIA_NVCUDA=1`: CUDA 지원만 활성화합니다.
+- `PROTON_NVIDIA_NVENC=1`: NVENC 인코딩만 활성화합니다.
+- `PROTON_NVIDIA_NVML=1`: NVML 모니터링을 활성화합니다.
+- `PROTON_NVIDIA_NVOPTIX=1`: OptiX 레이 트레이싱을 활성화합니다.
+- `PROTON_NVIDIA_LIBS_NO_32BIT=1`: 라이브러리를 64비트로만 제한합니다. RTX 4000+ 성능 문제를 해결합니다.
+</details>
+
+- AMD 및 Intel 업스케일링
+    - `PROTON_FSR4_UPGRADE=1`: FSR을 최신 버전으로 자동 업그레이드합니다.
+    - `PROTON_FSR4_RDNA3_UPGRADE=1`: RDNA3에 최적화된 FSR4 DLL을 사용합니다.
+    - `PROTON_XESS_UPGRADE=1`: XeSS를 최신 버전으로 자동 업그레이드합니다.
+
+</TabItem>
+
+<TabItem label="디스플레이 및 HDR">
+
+- Wayland 및 디스플레이
+    - `PROTON_ENABLE_WAYLAND=1`: 네이티브 Wayland 지원을 활성화합니다.
+      - **장점**: Gamescope 없이 HDR을 사용할 수 있으며, 지연 시간/프레임 페이싱이 개선됩니다.
+      - **주의사항**: Steam Overlay와 Steam Input이 작동하지 않으며, 현재 실험적 기능입니다. 자세한 내용은 다음 문서를 확인하세요.
+      **[Proton wayland quirks](https://github.com/CachyOS/proton-cachyos?tab=readme-ov-file#proton-wayland-quirks)**
+    - `PROTON_NO_WM_DECORATION=1`: 창 관리자 장식을 비활성화합니다.
+      - **해결되는 문제**: 테두리 없는 전체 화면 문제, 창을 통과해 마우스 클릭이 전달되는 문제
+
+- HDR 지원
+    - `DXVK_HDR=1`: HDR 출력 지원을 활성화합니다.
+      - NVIDIA 드라이버 **595.58.03 이전** 버전 사용자는 [`vk-hdr-layer-kwin6-git`](https://packages.cachyos.org/package/cachyos/x86_64/vk-hdr-layer-kwin6-git)를 `pacman -S vk-hdr-layer-kwin6-git`로 설치하고 `ENABLE_HDR_WSI=1`을 설정해야 합니다.
+      - **요구 사항**: `--hdr-enabled`를 사용하는 Gamescope 또는 `PROTON_ENABLE_WAYLAND=1`
+      - **설정**: [추가 설정 필요](https://wiki.archlinux.org/title/HDR_monitor_support)
+
+</TabItem>
+
+<TabItem label="성능 및 캐싱">
+
+- CPU 및 동기화 성능
+    - `PROTON_NO_NTSYNC=1`: NTSync 대신 FSync를 사용합니다.
+        - **장점**: NTSync와 잘 맞지 않는 일부 게임의 문제를 해결할 가능성이 있습니다.
+
+- 셰이더 및 캐시 관리
+    - `PROTON_LOCAL_SHADER_CACHE=1`: Steam의 “Shader Pre-Caching”과 비슷한 게임별 셰이더 캐시를 활성화합니다.
+        - **참고**: 이 기능은 셰이더를 미리 컴파일하지 않습니다. 각 게임의 셰이더 캐시를 분리할 뿐입니다. 셰이더는 여전히 게임 플레이 중 컴파일됩니다.
+    - `PROTON_ENABLE_MEDIACONV=1`: Proton Media Converter를 활성화합니다.
+        - **참고**: 테스트 용도 전용
+
+- AMD Anti-Lag
+    - `ENABLE_LAYER_MESA_ANTI_LAG=1`: 입력 지연을 줄이기 위해 AMD Anti-Lag를 활성화합니다.
+
+</TabItem>
+
+<TabItem label="입력 및 호환성">
+
+- 컨트롤러 및 입력
+    - `PROTON_PREFER_SDL=1`: 컨트롤러 감지 문제를 우회합니다.
+    - `PROTON_NO_STEAMINPUT=1`: Steam Input 지원을 비활성화합니다.
+        - **해결되는 문제**: Wayland 컨트롤러/게임패드 문제
+
+</TabItem>
+</Tabs>
+
+### Lutris 및 Heroic에서 Proton-CachyOS 설정하기
+
+:::note
+다음 설정은 proton-cachyos에만 적용됩니다. proton-cachyos-slr, -GE 또는 -EM을 사용하는 경우 이 섹션은 건너뛰어도 됩니다.
+:::
+
+시스템에 CachyOS의 umu-launcher가 설치되어 있는지 확인하세요. 다음 명령으로 설치합니다.
+```sh
+sudo pacman -S cachyos/umu-launcher
+```
+
+<Tabs>
+    <TabItem label='Lutris 전역'>
+    <Steps>
+    1. Lutris 메인 화면에서 Wine 옆의 톱니바퀴 아이콘을 클릭합니다.
+    2. **Runner Options** 탭으로 이동해 설정이 다음과 일치하는지 확인합니다.
+        - **Wine version** = `proton-cachyos`
+        - **Use System winetricks** = *Disabled*
+        - **Graphics**
+            - **Enable DXVK** = `Enabled`
+              - 참고: `umu-launcher`를 사용할 때는 사용자가 지정한 **DXVK**, **VKD3D**, **DXVK-NVAPI** 버전이 적용되지 않습니다.
+    3. **System Options** 탭으로 이동합니다.
+        - **Lutris**
+            - **Disable Lutris Runtime** = `Enabled`
+            - **Prefer system libraries** = `Enabled`
+    4. 아래로 계속 스크롤하여 **Game execution** 섹션으로 이동한 뒤 **Environment variables** 표를 찾습니다.
+    5. 다음 환경 변수를 추가합니다.
+        - **Key**: `UMU_RUNTIME_UPDATE` *선택 사항*
+            - **Value**: `0`
+            - *이 설정은 proton-cachyos의 Steam Linux Runtime 업데이트를 건너뜁니다. proton-cachyos-slr, -GE, -EM처럼 Steam Linux Runtime을 사용하는 Proton에는 이 값을 사용하지 마세요.*
+        - **Key**: `PROTON_VERB` *선택 사항*
+            - **Value**: `waitforexitandrun`
+            - *이 설정은 protonfixes가 해당 GAMEID와 함께 동작하도록 합니다.*
+    6. **Save**를 클릭해 변경 사항을 적용합니다.
+    </Steps>
+    </TabItem>
+    <TabItem label='Lutris 게임별'>
+    <Steps>
+    1. 설정하려는 게임을 마우스 오른쪽 버튼으로 클릭한 다음 **Configure**를 클릭합니다.
+    2. **Runner Options** 탭으로 이동해 설정이 다음과 일치하는지 확인합니다.
+        - **Wine version** = `proton-cachyos`
+        - **Use System winetricks** = *Disabled*
+        - **Graphics**
+            - **Enable DXVK** = `Enabled`
+              - 참고: `umu-launcher`를 사용할 때는 사용자가 지정한 **DXVK**, **VKD3D**, **DXVK-NVAPI** 버전이 적용되지 않습니다.
+    3. **System Options** 탭으로 이동합니다.
+        - **Lutris**
+            - **Disable Lutris Runtime** = `Enabled`
+            - **Prefer system libraries** = `Enabled`
+    4. 아래로 계속 스크롤하여 **Game execution** 섹션으로 이동한 뒤 **Environment variables** 표를 찾습니다.
+    5. 다음 환경 변수를 추가합니다.
+        - **Key**: `UMU_RUNTIME_UPDATE` *선택 사항*
+            - **Value**: `0`
+            - *이 설정은 proton-cachyos의 Steam Linux Runtime 업데이트를 건너뜁니다. proton-cachyos-slr, -GE, -EM처럼 Steam Linux Runtime을 사용하는 Proton에는 이 값을 사용하지 마세요.*
+        - **Key**: `PROTON_VERB` *선택 사항*
+            - **Value**: `waitforexitandrun`
+            - *이 설정은 protonfixes가 해당 GAMEID와 함께 동작하도록 합니다.*
+    6. **Save**를 클릭해 변경 사항을 적용합니다.
+    </Steps>
+    </TabItem>
+    <TabItem label='Heroic Games Launcher'>
+        <Steps>
+            1. 실행하려는 게임에서 `Play Now` 버튼 옆의 `Configure` 버튼을 클릭합니다.
+            2. `WINE` 탭에서 Wine Version을 `Proton - proton-cachyos`로 설정합니다.
+        </Steps>
+    </TabItem>
+</Tabs>
+
+### Anti-Cheat 지원
+
+:::caution[중요]
+**Easy Anti-Cheat**(EAC) 또는 **BattlEye**(BE)를 사용하는 게임에서 게임 서버 로그인을 거부하는 등의 문제가 발생하면, **proton-cachyos-slr**라고도 불리는 [Steam Linux Runtime으로 빌드된 Proton-CachyOS 버전](https://github.com/CachyOS/proton-cachyos/releases)을 사용할 수 있습니다.
+:::
+
+### proton-cachyos-slr 설치 방법
+
+:::note[이 단계는 cachyos-gaming-meta 패키지가 설치되지 않은 경우에만 필요합니다. 이미 설치했다면 이 부분은 건너뛰세요.]
+:::
+
+<Tabs>
+
+<TabItem label='pacman'>
+```sh title='Run the following command'
+sudo pacman -S proton-cachyos-slr
+```
+</TabItem>
+
+<TabItem label='protonup'>
+
+<Steps>
+    1. 터미널을 열고 `protonup`을 설치합니다.
+        ```sh
+        sudo pacman -S protonup-qt
+        ```
+    2. **protonup-qt**를 열고 스크린샷을 따라 진행합니다.
+        <ImageComponent imgsrc={import('~/assets/images/steam-protonup.png')} />
+        :::note
+        CPU가 **[AVX2](/installation/installation_prepare#x86_64-microarchitecture-level-support)**를 지원한다면 `x86-64_v3` 버전을 선택하세요.
+
+        그렇지 않다면 `x86-64`로 끝나는 버전을 다운로드하세요.
+        :::
+    3. Steam이 열려 있었다면 다시 시작합니다.
+    </Steps>
+</TabItem>
+
+</Tabs>
+
+<details>
+<summary>수동 설치(고급)</summary>
+
+<Steps>
+1. 최신 버전을 [여기](https://github.com/CachyOS/proton-cachyos/releases)에서 다운로드합니다. **Assets**까지 아래로 스크롤하세요.
+    :::note
+    CPU가 **[AVX2](/installation/installation_prepare#x86_64-microarchitecture-level-support)**를 지원한다면 `x86-64_v3`로 끝나는 파일을 선택하세요.
+    그렇지 않다면 `x86-64`로 끝나는 파일을 다운로드하세요.
+    :::
+2. 파일 압축을 풀고 폴더를 `~/.steam/steam/compatibilitytools.d/`로 이동합니다.
+3. Steam이 열려 있었다면 다시 시작합니다.
+</Steps>
+
+</details>
+
+## Wine-CachyOS
+
+이는 `proton-cachyos`의 핵심에 있는 동일한 `wine`이지만, 독립형 패키지로 제공됩니다. Lutris, Heroic, Bottles 등에서 사용할 수 있습니다.
+
+- **Proton-CachyOS에 포함된 모든 Wine 수정 사항**
+- **게임용 초기 핫픽스/우회책 추가**
+
+:::note
+CachyOS 저장소에서 **Wine-CachyOS**는 두 가지 패키지로 제공됩니다. `wine-cachyos`는 이를 기본 시스템 Wine으로 설치하며 `wine` 또는 `wine-staging`을 대체합니다. `wine-cachyos-opt`는 다른 위치에 설치되어 여러 Wine 버전이 한 시스템에 공존할 수 있게 합니다.
+:::
+
+:::caution
+**Wine-CachyOS**의 주된 용도는 **게임**입니다. 데스크톱 애플리케이션용 시스템 Wine으로도 사용할 수 있지만, 게임 중심 수정 사항 때문에 예상치 못한 동작이나 문제가 발생할 수 있음을 알아두세요.
+
+데스크톱 애플리케이션을 사용하려면 `wine` 또는 `wine-staging`을 시스템 Wine으로 사용하고, 게임용으로 `wine-cachyos-opt`를 설치하는 것을 권장합니다.
+:::
+
+**추가 설정 옵션**
+
+- `WINE_WMCLASS="<name>"`: 모든 Wine 창의 `WM_CLASS`를 설정하여 창 관리자가 규칙을 통해 Wine 창을 제어할 수 있게 합니다.
+- `WINEUSERSANDBOX=1`: Wine 사용자 폴더(예: Documents, Pictures)에서 사용자의 `HOME` 디렉터리에 있는 대응 폴더로 symlink가 생성되는 것을 비활성화합니다.
+- `WINE_NO_WM_DECORATION=1`: 창 장식을 비활성화합니다. **테두리 없는 전체 화면** 문제와 창을 통과해 마우스 클릭이 전달되는 문제를 해결할 수 있습니다.
+- `WINE_PREFER_SDL_INPUT=1`: 컨트롤러 감지 문제를 우회합니다.
+
+### wine-cachyos-opt 사용 방법
+
+<Tabs>
+    <TabItem label='독립 실행'>
+    일반적으로 애플리케이션을 `wine` 대신 `/opt/wine-cachyos/bin/wine`으로 실행하면 `wine-cachyos-opt`를 사용해 실행하기에 충분합니다.
+
+    더 엄격한 설정이 필요하다면 다음과 같이 구성할 수 있습니다.
+    ```shell
+    export PATH="/opt/wine-cachyos/bin/:$PATH"
+    export WINEDLLPATH="/opt/wine-cachyos/lib/wine:/opt/wine-cachyos/lib32/wine:$WINEDLLPATH"
+    export LD_LIBRARY_PATH="/opt/wine-cachyos/lib/:/opt/wine-cachyos/lib32/:$LD_LIBRARY_PATH"
+    ```
+
+    `wine-cachyos-opt`와 함께 `winetricks`를 사용하려면 다음과 같이 호출할 수 있습니다.
+    ```shell
+    WINE=/opt/wine-cachyos/bin/wine WINEPREFIX=<your prefix> winetricks <verb>
+    ```
+    </TabItem>
+    <TabItem label='Lutris'>
+      :::note
+      두 번째 이미지는 게임별 설정에도 적용됩니다.
+      :::
+      <MultipleImageComponent
+      images={[
+      import('~/assets/images/lutris-guide-1.png'),
+      import('~/assets/images/lutris-guide-2.png')]}
+      />
+    </TabItem>
+    <TabItem label='Heroic Games Launcher'>
+      <MultipleImageComponent
+      images={[
+      import('~/assets/images/heroic-wine.png'),
+      import('~/assets/images/heroic-wine-2.png'),
+      import('~/assets/images/heroic-wine-3.png')]}
+      />
+    </TabItem>
+</Tabs>
+
+## Steam FAQ 및 팁
+
+:::note
+개별 Nvidia GPU가 탑재된 노트북 사용자는 [듀얼 GPU 노트북 가이드](/configuration/dual_gpu/)를 참고하세요.
+:::
+
+:::tip
+CachyOS는 추가 성능 향상을 위해 빌드되고 유지 관리되는 다양한 Proton 버전을 제공합니다.
+- `proton-cachyos`(`cachyos-gaming-meta` 패키지에 포함)는 QoL 변경 사항과 선별 적용된 패치를 추가해 개발됩니다.
+:::
+
+:::tip
+게임이 Linux와 호환되는지, 또는 Linux에서 어떻게 실행되는지 확인하려면 다음 사이트를 방문하세요.
+**[ProtonDB](https://www.protondb.com/)**,
+**[Are We Anti-Cheat Yet?](https://areweanticheatyet.com/)**
+또는 **[Gaming On Linux Anti Cheat Section](https://www.gamingonlinux.com/anticheat/)**
+:::
+
+### Steam에서 사용자 지정 Proton 버전을 설정하는 방법
+:::note
+Valve의 Proton을 전역 기본값으로 유지하는 것을 **강력히 권장합니다**.
+:::
+- 특정 게임에 사용자 지정 Proton을 설정하려면 Library로 이동해 게임을 마우스 오른쪽 버튼으로 클릭한 뒤
+Properties > Compatibility로 들어가고,
+`Force the use of a specific Steam Play compatibility tool` 체크박스를 선택한 다음
+원하는 Proton 버전을 선택합니다.
+
+- Valve의 Proton을 전역 기본값으로 설정하려면 Settings > Compatibility > Default Compatibility tool로 이동해
+  Valve Proton의 최신 안정 릴리스 또는 Proton Experimental을 설정합니다.
+
+### Steam에서 어떤 Proton 버전을 사용해야 하나요?
+
+:::note
+**Reddit**에서 혼동이 있는 것 같지만, `steam-native-runtime`이 deprecated되었다고 해서 `Proton-CachyOS`의 네이티브 버전이 deprecated되는 것은 아닙니다.
+
+둘은 서로 관련이 없으며 별개의 문제입니다. 최근에는 CachyOS와 Linux에 처음 입문하는 사용자의 혼동과 문제를 줄이기 위해 SLR을 권장하고 있으며, **기본적으로도 설치합니다**. 네이티브 버전이 마음에 들고 잘 작동한다면 계속 사용해도 됩니다.
+:::
+
+- `Proton 10.0`은 `Valve`의 안정 릴리스입니다. 플레이하려는 게임이 이 버전에서 잘 작동하는 것으로 알려져 있다면 사용하세요.
+- `Proton Experimental`은 `Valve`의 bleeding edge 릴리스입니다. 플레이하려는 게임이 비교적 최신 게임이거나, 현재 Proton 안정 릴리스에서 잘 작동하지 않거나, **[ProtonDB](https://www.protondb.com/)**에서 사람들이 추천하는 경우 사용하세요.
+- `proton-cachyos-slr`은 CachyOS 유지 관리자가 빌드하고 유지 관리하는 버전입니다. 다양한 QoL 기능, 수정 사항, 최적화가 있으므로 사용을 적극 권장합니다. **BattlEye** 또는 **Easy Anti-Cheat** 같은 안티치트나 사용자 지정 런처를 사용하는 게임에는 `proton-cachyos-slr`을 선호합니다.
+- `proton-cachyos`는 `proton-cachyos-slr`과 같은 버전이지만 Steam Linux Runtime에 의존하지 않도록 빌드된 것입니다. 이 차이의 의미를 이해하는 경우에만 사용하고, 문제가 발생하면 `proton-cachyos-slr`로 되돌리세요.
+- `Proton-GE`는 [GloriousEggroll](https://github.com/GloriousEggroll/proton-ge-custom)이 만든 커스텀 빌드입니다. 여러 수정 사항이 포함되어 있으며, 특정 상황에서 유용할 수 있습니다.
+- `Proton 9.0.4 or lower`는 `Valve`의 이전 안정 릴리스입니다. 플레이하려는 게임이 이전 Proton 릴리스에서만 작동하는 경우 사용하세요.
+
+### Valve Proton에서 H264 영상이 재생되지 않거나 게임 내 색상 막대가 표시되는 문제 해결
+:::caution
+이 작업은 선택 사항입니다. 해당 문제가 발생하는 경우에만 사용하세요.
+:::
+다음 명령으로 Steam을 시작합니다. 로드될 때까지 기다린 뒤 Steam을 종료하고 정상적으로 다시 시작하세요.
+
+```sh
+ steam steam://unlockh264/
+```
+
+### Steam Game Recorder 기능으로 인한 끊김 문제 해결
+
+:::caution
+이 환경 변수를 추가하면 **Steam Overlay**가 작동하지 않게 됩니다.
+:::
+
+게임에 다음 실행 옵션을 추가하세요.
+
+```sh
+LD_PRELOAD="" %command%
+```
+
+### Proton 로그 캡처 및 공유
+
+:::note
+CachyOS에 로그를 공유할 때는 직접 게시하지 말고 **[paste-cachyos](https://paste.cachyos.org/)**에 업로드해 주세요.
+
+로그 파일을 웹사이트로 끌어다 놓기만 하면 생성된 링크를 공유할 수 있습니다.
+:::
+
+게임의 Proton 로깅을 활성화하려면 다음을 수행합니다.
+
+<Steps>
+    1. Steam에서 게임을 마우스 오른쪽 버튼으로 클릭하고 **Properties**를 선택합니다.
+    2. **Launch Options** 아래에서 `PROTON_LOG` 환경 변수를 설정합니다.
+        ```sh
+        PROTON_LOG=1 %command%
+        ```
+        이 설정은 홈 디렉터리에 `steam-<AppID>.log`라는 로그 파일을 생성합니다. 예를 들어 Counter Strike 2는 AppID **730**을 사용하므로 파일 이름은 `steam-730.log`가 됩니다.
+</Steps>
+
+<details>
+<summary>사용자 지정 로그 디렉터리</summary>
+
+사용자 지정 로그 디렉터리를 설정하려면 `PROTON_LOG_DIR`을 사용합니다.
+
+```bash title='Example'
+PROTON_LOG=1 PROTON_LOG_DIR=/home/cachyos/steam-logs %command%
+```
+</details>
+
+### Proton-CachyOS, -GE, -EM에서 셰이더 사전 캐싱
+
+:::note
+Proton-CachyOS, Proton-GE 또는 Proton-EM을 사용할 때는 Steam의 셰이더 사전 캐싱 기능을 비활성화하는 것이 좋습니다. 이 버전들은 이미 게임 내 영상을 재생하는 데 필요한 모든 코덱을 포함하고 있으며, 요즘의 비교적 최신 GPU-CPU 조합은 게임 내 셰이더 컴파일을 충분히 처리할 수 있습니다.
+
+그래도 시간이 충분하다면 이 팁을 무시하고 Steam이 게임용 셰이더 일부를 미리 컴파일하도록 두어도 됩니다.
+
+**이 과정에서 모든 것이 캐시되는 것은 아니며, 셰이더를 컴파일하는 데 사용한 Proton 버전을 업데이트하면 전체 셰이더 재컴파일이 필요할 수 있다는 점을 기억하세요.**
+:::
+
+#### Steam에서 이 기능을 비활성화하는 방법
+
+Steam에서 `Steam`->`Settings`를 클릭하고 `Downloads`로 이동한 뒤 다음 설정의 체크를 해제합니다.
+- **Allow background processing of Vulkan shaders**
+- **Enable Shader Pre-caching**
+
+:::note
+Steam에서 셰이더 사전 캐싱을 비활성화한 뒤에는 [최대 셰이더 캐시 크기 늘리기](#increase-maximum-shader-cache-size)를 적용하는 것을 강력히 권장합니다.
+:::
+
+### Windows NTFS 게임 파티션 재활용하기
+
+:::caution
+NTFS 드라이브에서 Proton을 사용하는 것은 피하세요. Valve는 이 구성을 지원하지 않으며, 게임이 예측할 수 없게 동작할 수 있습니다.
+
+그래도 진행하려면 Valve의 **[비공식 가이드](<https://github.com/ValveSoftware/Proton/wiki/Using-a-NTFS-disk-with-Linux-and-Windows>)**를 따르세요.
+:::
+
+## [Lutris](<https://lutris.net/>)
+
+Lutris는 CachyOS의 게임 런처입니다. Lutris를 사용하면 Wine, Proton, 에뮬레이터를 포함한 게임 runner를 쉽게 관리할 수 있습니다.
+
+- **Play** 버튼을 클릭하기만 하면 Lutris를 통해 게임을 실행할 수 있습니다.
+- 왼쪽 위의 **+**를 클릭해 원하는 게임을 추가할 수 있습니다.
+- 왼쪽 패널의 Sources에서 스토어를 설정하고 계정을 연결할 수 있습니다. 그러면 해당 스토어를 설치하고, Windows에서처럼 스토어 안에서 게임을 실행할 수 있습니다.
+- 그 외에도 다양한 기능이 있습니다!
+
+*Lutris에서 지원되는 게임 스토어:*
+
+- [EA App](https://lutris.net/games/ea-app/)
+- [Epic Games Store](https://lutris.net/games/epic-games-store/)
+- [GOG Galaxy](https://lutris.net/games/gog-galaxy/)
+- [Steam](https://lutris.net/games/steam/)
+- [Ubisoft Connect](https://lutris.net/games/ubisoft-connect/)
+
+### Lutris에서 여러 실행 옵션과 환경 변수를 올바르게 설정하는 방법
+
+- `-dx11` 또는 `-fullscreen` 같은 실행 옵션은 **Game options** 탭의 **Arguments** 필드에 공백으로 구분해 추가해야 합니다.
+- 예를 들어 `mangohud --dlsym` 또는 `game-performance` 같은 명령 wrapper는 **System options** 탭의 **Command prefix** 필드에 공백으로 구분해 추가해야 합니다.
+- `DXVK_HDR=1` 같은 환경 변수는 **System options** 탭의 **Environment variables** 표에서 `+` 버튼을 사용해 새 항목으로 추가해야 합니다.
+:::note
+Key 필드에는 `=`를 포함하지 마세요. 변수 이름만 입력해야 합니다.
+:::
+
+### Lutris에서 로그를 올바르게 생성하는 방법
+ - Output debugging info를 `Inherit from environment`로 설정합니다.
+ - Environment variables에 `PROTON_LOG`를 추가하고 값을 `1`로 설정합니다.
+
+
+## 성능 및 기타 팁
+
+### gamemode와 ananicy-cpp를 함께 사용하지 마세요
+
+`gamemode`와 `ananicy-cpp`가 동시에 프로세스 niceness를 변경하려고 하기 때문에 충돌과 예상치 못한 동작이 발생할 수 있습니다. ananicy-cpp 없이 gamemode를 사용하는 것을 권장합니다.
+
+ananicy-cpp를 중지하려면 다음 명령을 실행하세요.
+
+```sh
+systemctl stop ananicy-cpp
+```
+
+### 필요할 때 전원 프로필 전환하기
+
+:::note
+이 동작은 `intel_pstate`에서 약간 다릅니다. Intel에서는 governor가 powersave로 유지되지만, EPP/EPB 값이 성능 위주로 조정됩니다.
+:::
+
+:::caution[오래된 CPU에서는 game-performance가 이점을 제공하지 않을 수 있습니다.]
+:::
+
+CachyOS에는 `power-profiles-daemon`을 사용해 전원 프로필을 일시적으로 `performance`로 전환하는 wrapper 스크립트 [game-performance](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/game-performance)가 포함되어 있습니다.
+이 프로필은 시스템 전력 수준을 높이고 CPU governor를 `performance`로 설정하며, 활성화된 scx 스케줄러가 있다면 게임 프로필로도 전환합니다(사용 가능한 경우).
+
+게임 실행에 사용하면 게임이 종료될 때까지 시스템이 **performance mode**로 유지되고, 게임이 종료되면 이전 프로필로 복원됩니다.
+
+[Feral의 GameMode](https://github.com/FeralInteractive/gamemode)도 비슷한 기능을 제공합니다.
+
+### Steam, Lutris, Heroic Games Launcher에 game-performance를 추가하는 방법
+
+<Tabs>
+
+<TabItem label='Steam'>
+
+<Steps>
+1. `Steam Library`를 엽니다.
+2. 게임 제목을 마우스 오른쪽 버튼으로 클릭하고 `Properties`를 선택합니다.
+3. `General` 탭에서 `Launch Options` 섹션을 찾습니다.
+4. 다음 실행 옵션을 추가합니다.
+    ```sh
+    game-performance %command%
+    ```
+</Steps>
+
+</TabItem>
+
+<TabItem label='Heroic Games Launcher'>
+
+<Steps>
+1. 왼쪽 패널에서 `Settings`를 엽니다.
+2. `Game defaults`로 이동한 뒤 `Advanced`를 클릭합니다.
+3. `wrapper` command 섹션에 인수 없이 다음 줄을 추가합니다.
+   ```sh
+   game-performance
+   ```
+4. `+` 기호를 클릭해 변경 사항을 저장합니다.
+</Steps>
+
+</TabItem>
+
+<TabItem label='Lutris'>
+
+<Steps>
+1. 오른쪽 위에서 `hamburger menu`를 엽니다.
+2. `Preferences/Global options`로 이동합니다.
+3. 오른쪽 위에서 `Advanced Mode`를 활성화합니다.
+4. 아래로 스크롤해 `Command prefix`를 찾고 다음 줄을 추가합니다.
+   ```sh
+   game-performance
+   ```
+5. 변경 사항을 저장합니다.
+</Steps>
+
+</TabItem>
+
+</Tabs>
+
+### 최대 셰이더 캐시 크기 늘리기
+
+게임 셰이더는 플레이 중 자동으로 컴파일되며, 처음 마주칠 때 긴 로딩 시간과 끊김을 유발할 수 있습니다. 이러한 셰이더는 필요할 때 재사용할 수 있도록 시스템에 저장됩니다.
+
+하지만 셰이더 캐시의 파일 크기에는 최대 제한이 있어 기본 크기를 초과하면 오래된 셰이더가 잊혀집니다. 대형 게임은 셰이더 크기가 1GB를 넘을 수 있으므로, 실행할 때마다 셰이더를 다시 컴파일하게 되어 문제가 될 수 있습니다.
+
+긴 로딩 시간과 끊김을 피하기 위해 전역 셰이더 캐시 크기를 늘릴 수 있습니다.
+
+<Steps>
+
+1. 터미널을 엽니다.
+2. config 폴더에 `environment.d` 디렉터리가 없다면 생성합니다.
+	```sh
+	mkdir -p ~/.config/environment.d
+    ```
+3. 새 설정 파일을 만듭니다.
+    ```sh
+    touch ~/.config/environment.d/gaming.conf
+    ```
+4. **Micro**(텍스트 편집기)로 파일을 엽니다.
+    ```sh
+    micro ~/.config/environment.d/gaming.conf
+    ```
+    그리고 GPU 제조사에 따라 다음 내용을 붙여 넣습니다.
+   <details>
+       <summary>AMD</summary>
+            ```sh
+            # Increase AMD's shader cache size to 12GB
+            MESA_SHADER_CACHE_MAX_SIZE=12G
+            ```
+   </details>
+   <details>
+       <summary>NVIDIA</summary>
+           ```sh
+           # Increase Nvidia's shader cache size to 12GB
+           __GL_SHADER_DISK_CACHE_SIZE=12000000000
+           ```
+   </details>
+5. `CTRL+S`를 눌러 파일을 저장하고 `CTRL+Q`를 눌러 Micro를 종료합니다. 시스템을 다시 시작합니다.
+
+</Steps>
+
+재시작 후에는 최대 셰이더 캐시 크기가 영구적으로 증가해 있어야 합니다. 이 가이드를 작성하는 데 도움을 준 [psygreg의 shader booster](https://github.com/psygreg/shader-booster/)에 감사드립니다.
+
+### 최신 DLSS 프리셋 강제 적용
+
+#### Steam, Lutris, Heroic Games Launcher에 dlss-swapper를 추가하는 방법
+
+<Tabs>
+
+<TabItem label='Steam'>
+
+<Steps>
+1. `Steam Library`를 엽니다.
+2. 게임 제목을 마우스 오른쪽 버튼으로 클릭하고 `Properties`를 선택합니다.
+3. `General` 탭에서 `Launch Options` 섹션을 찾습니다.
+4. 다음 실행 옵션을 추가합니다.
+    ```sh
+    dlss-swapper %command%
+    ```
+</Steps>
+
+</TabItem>
+
+<TabItem label='Heroic Games Launcher'>
+
+<Steps>
+1. 왼쪽 패널에서 `Settings`를 엽니다.
+2. `Game defaults`로 이동한 뒤 `Advanced`를 클릭합니다.
+3. `wrapper` command 섹션에 인수 없이 다음 줄을 추가합니다.
+   ```sh
+   dlss-swapper
+   ```
+4. `+` 기호를 클릭해 변경 사항을 저장합니다.
+</Steps>
+
+</TabItem>
+
+<TabItem label='Lutris'>
+
+<Steps>
+1. 오른쪽 위에서 `hamburger menu`를 엽니다.
+2. `Preferences/Global options`로 이동합니다.
+3. 오른쪽 위에서 `Advanced Mode`를 활성화합니다.
+4. 아래로 스크롤해 `Command prefix`를 찾고 다음 줄을 추가합니다.
+   ```sh
+   dlss-swapper
+   ```
+5. 변경 사항을 저장합니다.
+</Steps>
+
+</TabItem>
+
+</Tabs>
+
+<details>
+<summary>수동 DLL 교체 방법</summary>
+
+`dlss-swapper`가 작동하지 않거나 문제를 일으킨다면, `nvngx_dlss.dll`을 최신 버전으로 교체하고 대신 `dlss-swapper-dll` wrapper 스크립트를 사용해 게임의 DLSS 구현을 수동으로 업데이트해 보세요.
+</details>
+
+### Ray Tracing 지원
+Arch Wiki에는 다양한 하드웨어 플랫폼에서 [ray tracing](https://wiki.archlinux.org/title/Hardware_raytracing)을 활성화하는 방법에 대한 포괄적인 지침이 이미 제공되어 있습니다.
+- [Nvidia에서 Ray tracing](https://wiki.archlinux.org/title/Hardware_raytracing#NVIDIA)
+- [AMD에서 Ray tracing](https://wiki.archlinux.org/title/Hardware_raytracing#AMD)
+- [Intel에서 Ray tracing](https://wiki.archlinux.org/title/Hardware_raytracing#Intel)
+
+### DirectX12 게임에서 Nvidia 성능 저하
+
+일부 사용자는 이 문제가 Nvidia의 Linux 드라이버가 GPU 스케줄링을 처리하는 방식과 관련이 있다고 보고합니다. 적절한 스케줄링이 강제되는 Windows와 다르다는 것입니다. 이 문제에 대한 Nvidia의 공식 입장은 아직 없습니다. 현재 알려진 우회 방법도 없습니다. Nvidia가 수정 작업 중인 것으로 보이지만 언제 출시될지는 분명하지 않습니다.
+
+**이는 CachyOS와 관련이 없습니다.**
+
+일부 타이틀에서는 성능 저하가 다른 타이틀보다 덜 눈에 띕니다. 참고용으로 이 [벤치마크 비교 영상](https://www.youtube.com/watch?v=SU2mFqCOh5A)을 확인하세요.
+
+이 문제에 대해 자세히 알아보려면 [Nvidia thread](https://forums.developer.nvidia.com/t/directx12-performance-is-terrible-on-linux/303207/488)를 팔로우하세요.
