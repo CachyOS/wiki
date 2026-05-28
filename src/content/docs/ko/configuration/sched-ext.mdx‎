@@ -1,0 +1,1151 @@
+---
+title: sched-ext 튜토리얼
+description: 프레임워크 사용 방법과 기타 정보를 다루는 튜토리얼
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 5
+---
+
+import { Steps, Tabs, TabItem, Icon } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+Extensible Scheduler Class, 더 잘 알려진 이름인 `sched-ext`는 Linux 커널 기능으로, 커널 스레드 스케줄러를
+BPF(Berkeley Packet Filter)로 구현하고 동적으로 로드할 수 있게 해줍니다. 본질적으로 이는 최종 사용자가 다른 스케줄러를 사용하기 위해
+새 커널을 빌드할 필요 없이 사용자 공간에서 스케줄러를 변경할 수 있게 해줍니다.
+
+:::tip[개발자와 연락하려면 [Discord 서버](https://discord.gg/b2J8DrWa7t)를 이용하세요]
+:::
+
+- *스케줄러는 `scx-scheds` 및 `scx-scheds-git` 패키지에서 찾을 수 있습니다.*
+  ```sh
+  # Stable branch + scx_loader and scxctl tools.
+  sudo pacman -S scx-scheds scx-tools
+
+  # Bleeding edge branch (This branch includes the latest changes from the master branch.) + scx_loader and scxctl tools.
+  sudo pacman -S scx-scheds-git scx-tools-git
+  ```
+
+  :::note
+  `scx-scheds-git` 패키지에는 모든 실험적 스케줄러가 포함되지 않을 수 있습니다. 일부 스케줄러는 아직 master 브랜치에 병합되지 않은 별도 기능 브랜치에서 개발되기 때문입니다.
+  :::
+
+## 스케줄러 실행 및 관리 방법
+
+:::note
+`scxctl`과 `scx_loader`는 스케줄러를 시작/중지/전환하기 위해 관리자 권한이 필요합니다.
+
+따라서 `sudo`로 실행하거나 필요한 권한을 부여하는 polkit 에이전트를 사용해야 합니다.
+
+`sudo` 없이 실행하면 scxctl/scx_loader가 polkit 에이전트를 통해 인증을 요청합니다.
+:::
+
+<Tabs>
+
+<TabItem label='터미널'>
+
+- *스케줄러를 시작하려면 터미널을 열고 다음 명령을 입력하세요:*
+  ```sh title='Example of starting rusty'
+  sudo scx_rusty
+  ```
+
+*이 명령은 rusty 스케줄러를 실행하고 기본 스케줄러를 분리합니다.*
+
+스케줄러를 중지하려면 `CTRL + C`를 누르세요. 그러면 스케줄러가 중지되고 기본 커널 스케줄러가 다시 이어받습니다.
+
+</TabItem>
+
+<TabItem label='scxctl'>
+
+:::note[`scx-tools` 및 `scx-tools-git` 패키지에 포함됨]
+:::
+
+:::caution[제대로 작동하려면 기능하는 polkit 에이전트가 필요합니다.]
+참고용으로 다음 **[Arch Wiki 페이지](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**를 확인하세요.
+:::
+
+`scxctl`은 `scx_loader`와 상호작용하기 위한 CLI DBUS 클라이언트입니다.
+
+- 기능:
+  - 현재 스케줄러와 모드 확인
+  - 사용 가능한 모든 스케줄러 나열
+  - 지정한 모드 또는 지정한 인수로 스케줄러 시작
+  - 스케줄러와 모드 전환
+  - 실행 중인 스케줄러 중지
+  - 실행 중인 스케줄러 재시작
+
+<Tabs>
+    <TabItem label='스케줄러 시작'>
+          ```sh title='Starting scx_flash in Gaming mode'
+          scxctl start --sched flash --mode gaming
+          ```
+    </TabItem>
+    <TabItem label='스케줄러 중지'>
+          ```sh title='Stopping the currently running scheduler'
+          scxctl stop
+          ```
+    </TabItem>
+    <TabItem label='기본 스케줄러 복원'>
+          ```sh title='Restores the default scheduler set in the scx_loader config file'
+          scxctl restore
+          ```
+    </TabItem>
+    <TabItem label='스케줄러 전환'>
+          ```sh title='Switching to scx_bpfland in Gaming mode'
+          scxctl switch --sched bpfland --mode gaming
+          ```
+    </TabItem>
+    <TabItem label='사용자 지정 인수로 시작 및 전환'>
+          :::note[각 인수 사이에 쉼표를 추가하세요]
+          예: `--args="-c,75,-m,0-15"` = 인수, 값
+          :::
+          ```sh title='Starting scx_cosmos with custom arguments'
+          scxctl start --sched cosmos --args="-c,75,-m,0-15"
+          ```
+          ```sh title='Switching to scx_flash with custom arguments'
+          scxctl switch --sched flash --args="-s,20000"
+          ```
+    </TabItem>
+</Tabs>
+
+```sh
+$ scxctl --help
+Usage: scxctl <COMMAND>
+
+Commands:
+  get      Get the info on the running scheduler
+  list     List all supported schedulers
+  start    Start a scheduler in a mode or with arguments
+  switch   Switch schedulers or modes, optionally with arguments
+  stop     Stop the current scheduler
+  restart  Restart the current scheduler with original configuration
+  restore  Restore the default scheduler from configuration
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
+```
+
+</TabItem>
+
+<TabItem label='scx_loader (DBus)'>
+
+:::caution[제대로 작동하려면 기능하는 polkit 에이전트가 필요합니다.]
+참고용으로 다음 **[Arch Wiki 페이지](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**를 확인하세요.
+:::
+
+*이름에서 알 수 있듯이, 이는 D-Bus 인터페이스를 사용해 sched-ext 프레임워크의 로더이자 관리자로 동작하는 유틸리티입니다.*
+
+*systemd가 필요하지는 않지만, systemd와 함께 사용할 수도 있습니다.* [참고용 전환 가이드를 확인하세요](/configuration/sched-ext#transitioning-from-scxservice-to-scx_loader-a-comprehensive-guide).
+
+- scx 스케줄러에 대한 중지, 시작, 재시작, 정보 읽기 등 다양한 작업을 수행할 수 있습니다.
+  - *`dbus-send` 또는 `gdbus` 같은 도구를 사용해 통신할 수 있습니다.*
+- 이 가이드는 dbus-send 명령으로 scx_loader를 사용하는 방법을 설명합니다.
+  - ```sh title='Starting scx_rusty with its default arguments'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartScheduler string:scx_rusty uint32:0
+    ```
+  - ```sh title='Starting a scheduler with arguments'
+    # This example starts scx_bpfland with the following flags: -k -c 0
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title='Stopping the currently running scheduler'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StopScheduler
+    ```
+  - ```sh title='Switch to the default scheduler'
+    # scx_loader will switch to the default scheduler set in the scx_loader config file
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.RestoreDefault
+    ```
+  - ```sh title='Switching to another scheduler in Mode 2'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchScheduler string:scx_lavd uint32:2
+    # This switches to scx_lavd with the scheduler mode 2 meaning it starts LAVD in powersaving
+    ```
+  - ```sh title='Switching to another scheduler with arguments'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title='Getting the currently running scheduler'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:CurrentScheduler
+    ```
+  - ```sh title='Getting a list of the supported schedulers'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:SupportedSchedulers
+    ```
+:::tip
+scx_loader의 각 모드가 의미하는 내용은 다음과 같습니다.
+
+- Mode 0 = `Default scheduler flags`
+- Mode 1 = `Gaming`
+- Mode 2 = `Power Saving`
+- Mode 3 = `Low Latency`
+- Mode 4 = `Server`
+
+예: Mode 1에서 실행되는 LAVD는 `scx_lavd --performance`와 같습니다.
+
+*요약: 각 모드는 의도한 사용 사례를 개선하기 위한 서로 다른 플래그 모음입니다.*
+
+[각 스케줄러에서 이 모드들이 무엇을 바꾸는지 더 자세히 보려면](<https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/src/config.rs#L193>)
+:::
+
+</TabItem>
+
+<TabItem label='CachyOS Kernel Manager'>
+
+:::caution[제대로 작동하려면 기능하는 polkit 에이전트가 필요합니다.]
+참고용으로 다음 **[Arch Wiki 페이지](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**를 확인하세요.
+:::
+
+`sched-ext scheduler config` 버튼을 통해 접근하고 설정할 수 있습니다.
+
+</TabItem>
+
+<TabItem label='SCX Manager'>
+
+:::caution[제대로 작동하려면 기능하는 polkit 에이전트가 필요합니다.]
+참고용으로 다음 **[Arch Wiki 페이지](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**를 확인하세요.
+:::
+
+SCX Manager는 CachyOS Kernel Manager에서 파생된 독립형 GUI 도구입니다. 사용자는 `scx_loader`를 통해 sched-ext 프레임워크와 해당 스케줄러를 관리할 수 있습니다.
+
+기능:
+- 현재 활성화된 스케줄러 확인
+- 스케줄러 또는 프로필 선택: (Auto, Gaming, Power save, Low Latency 또는 Server)
+- 추가 플래그 설정
+- 현재 스케줄러 비활성화
+
+<details>
+<summary>스크린샷</summary>
+
+<ImageComponent imgsrc={import('~/assets/images/scx-manager-main.png')} />
+
+</details>
+
+</TabItem>
+
+</Tabs>
+
+## 스케줄러 가이드: 프로필과 사용 사례
+
+선택할 수 있는 스케줄러가 많기 때문에, 현재 다루는 스케줄러에 대해 간단히 소개합니다.
+
+:::note
+이 스케줄러들은 테스트와 함께 지속적으로 개발되고 있으므로 일부 기능/플래그가 변경될 수 있습니다.
+:::
+
+문제나 피드백이 있으면 해당 스케줄러 저장소에 자유롭게 보고하세요.
+
+사용 가능한 플래그와 간단한 설명을 보려면 `scx_schedulername --help`를 사용하세요.
+
+```sh title='Example of getting help for scx_rusty'
+scx_rusty --help
+```
+
+### [scx_beerland](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_beerland)
+
+**개발자: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+프로덕션 준비 여부? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+scx_beerland는 지역성과 확장성을 우선하도록 설계된 스케줄러입니다.
+
+작업을 동일한 CPU에 유지해 캐시 지역성을 보존하는 것을 우선하면서도, 시스템이 포화 상태가 아닐 때 local DSQ(CPU별 runqueue)를 사용해 많은 CPU 전반에서 좋은 확장성을 보장합니다.
+
+- 사용 사례:
+  - 캐시 집약적 워크로드
+  - CPU 수가 많은 시스템
+  - 게임: 일부 게임에서 의외로 잘 작동하는 것으로 알려져 있지만, 결과는 환경에 따라 달라질 수 있습니다
+  - 서버: 확장성과 지역성 최적화 덕분에 범용 서버 워크로드에 적합합니다.
+  - 데스크톱 사용에도 사용할 수 있습니다.
+
+#### 스케줄러 모드
+
+현재는 없습니다.
+
+### [scx_bpfland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_bpfland>)
+
+**개발자: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+프로덕션 준비 여부? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+상호작용형 워크로드를 우선하는 vruntime 기반 sched_ext 스케줄러입니다. 매우 유연하고 조정하기 쉽습니다.
+
+Bpfland는 어떤 코어를 사용할지 결정할 때 캐시 레이아웃과 어떤 코어가 동일한 L2/L3 캐시를 공유하는지를 고려하여 캐시 미스를 줄이고 성능을 높입니다.
+
+- 사용 사례:
+  - 게임
+  - 데스크톱 사용
+  - 멀티미디어/오디오 제작
+  - 집중적인 워크로드에서도 뛰어난 상호작용성
+  - 전력 절약
+  - 서버
+
+#### 스케줄러 모드
+
+##### 낮은 지연 시간
+
+* **명령줄 플래그:** `-m performance -w`
+* **설명:** 처리량을 희생해 지연 시간을 낮추는 용도입니다. 오디오 처리 및 멀티미디어 같은 소프트 실시간 애플리케이션에 적합합니다.
+
+##### 전력 절약
+
+* **명령줄 플래그:** `-s 20000 -m powersave -I 100 -t 100`
+* **설명:** 전력 효율을 우선합니다. 성능이 낮은 코어(예: Intel의 E-core)를 선호합니다.
+
+##### 서버
+
+* **명령줄 플래그:** `-s 20000 -S`
+* **설명:** 엄격한 affinity가 있는 작업을 우선합니다. 이 옵션은 지연 시간을 희생해 처리량을 늘릴 수 있으며 서버 워크로드에 더 적합합니다.
+
+### [scx_cake](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cake)
+
+**개발자: RitzDaCat (RitzDaCat [GitHub](<https://github.com/RitzDaCat>))**
+
+- 프로덕션 준비 여부? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+
+`scx_cake`는 네트워크 [CAKE](https://www.bufferbloat.net/projects/codel/wiki/Cake/) 알고리즘의 DRR++(Deficit Round Robin++)를 CPU 스케줄링에 맞게 적용한 실험적 BPF CPU 스케줄러입니다.
+- 4단계 분류 — 작업을 EWMA avg_runtime 기준으로 Critical / Interactive / Frame / Bulk로 정렬
+- 전역 원자 연산 없음 — MESI 보호 쓰기가 적용된 CPU별 BSS 배열로 버스 잠금을 제거
+- 커널 위임 유휴 선택 — 신뢰할 수 있고 최신 상태가 보장되는 CPU 선택을 위해 scx_bpf_select_cpu_dfl() 사용
+- LLC별 DSQ 샤딩 — 멀티 칩렛 CPU에서 CCD 간 잠금 경합 제거
+- DRR++ deficit 추적 — 네트워크 CAKE의 flow fairness 알고리즘을 CPU 작업 스케줄링에 맞게 적용
+
+최신 AMD 및 Intel 하드웨어의 게임 워크로드를 위해 설계되었습니다.
+
+- 사용 사례:
+  - 게임
+
+#### 4단계 시스템
+
+`scx_cake`는 모든 작업을 **EWMA**(Exponential Weighted Moving Average) 런타임을 기준으로 네 단계 중 하나로 분류합니다. 분류는 자동이며 지속적으로 이루어지고, 작업의 동작이 바뀌면 계층 사이를 이동합니다.
+
+##### 계층 게이트
+
+| 계층   | 이름        | avg_runtime | 일반적인 워크로드                                      | Quantum | Starvation |
+| :----- | :---------- | :---------- | :----------------------------------------------------- | :------ | :--------- |
+| **T0** | Critical    | < 100µs     | IRQ 핸들러, 입력 드라이버, 오디오(PipeWire), 네트워크 | 0.5ms   | 3ms        |
+| **T1** | Interactive | < 2ms       | 컴포지터, 게임 물리, 게임 AI, 짧은 작업자             | 2.0ms   | 8ms        |
+| **T2** | Frame       | < 8ms       | 게임 렌더 스레드, 비디오 인코딩                       | 4.0ms   | 40ms       |
+| **T3** | Bulk        | ≥ 8ms       | 컴파일, 백그라운드 인덱싱, 배치 작업                  | 8.0ms   | 100ms      |
+
+> [!TIP]
+> **게임 작업은 T3에 들어가면 안 됩니다**. 게임 렌더 스레드는 프레임당 2~8ms 실행 → T2. 물리/AI는 0.5~2ms 실행 → T1. 입력 핸들러는 < 100µs 실행 → T0. 중단 없이 8ms 이상 CPU 작업을 수행하는 작업(셰이더 컴파일, 로딩 화면)만 T3에 들어갑니다.
+
+##### 분류 방식
+
+1. **초기 배치**: `nice` 값 기준 — `nice < 0` → T0, `nice 0-10` → T1, `nice > 10` → T3
+2. **런타임 기준 확정**: 약 3회 중지 후 EWMA avg_runtime이 기준이 됩니다. 50ms 버스트로 실행되는 nice -5 작업은 nice 값과 관계없이 T3로 재분류됩니다.
+3. **히스테리시스**: 10% deadband가 계층 경계에서 진동을 방지합니다. 승격은 avg_runtime이 게이트보다 명확히 낮아야 하며, 강등은 즉시 이루어집니다.
+4. **단계적 백오프**: 한 계층이 3회 이상 연속 중지 동안 안정적이면 재분류 빈도가 계층별로 줄어듭니다. T0는 1024번째 중지마다, T3는 16번째 중지마다 재확인합니다. 불안정해지면 전체 빈도 확인으로 재설정됩니다.
+
+##### DRR++ deficit 추적
+
+네트워크 CAKE의 flow fairness에서 가져온 방식입니다.
+
+- 각 작업은 **deficit**(quantum + new-flow bonus ≈ 10ms credit)으로 시작합니다
+- 각 실행 구간은 런타임에 비례해 deficit을 소비합니다
+- deficit이 소진되면 → new-flow bonus가 제거되고 → 작업은 정상적으로 경쟁합니다
+- 이를 통해 새로 생성된 스레드(게임이 작업자 스레드를 실행하는 경우)에 즉각적인 반응성을 제공하며, 이 효과는 자연스럽게 감소합니다
+
+##### DVFS (CPU 주파수 스케일링)
+
+각 계층은 RODATA 조회 테이블을 통해 CPU 성능 목표에 매핑됩니다.
+
+| 계층  | 목표                 | 근거                                                   |
+| :---- | :------------------- | :---------------------------------------------------- |
+| T0-T2 | 100% (최대 주파수)   | 게임 워크로드에는 최대 성능이 필요합니다              |
+| T3    | 75%                  | 백그라운드 작업은 전력 절약을 위해 약간 느리게 실행 가능 |
+
+Intel 하이브리드 CPU(`has_hybrid = true`)에서는 E-core에서 과도한 주파수 요청을 방지하기 위해 각 코어의 `cpuperf_cap`에 따라 목표가 조정됩니다.
+
+#### 프로필 (`--profile, -p`)
+
+| 프로필       | Quantum | Starvation | 사용 사례                            |
+| :---------- | :------ | :--------- | :------------------------------------ |
+| **gaming**  | 2ms     | 100ms      | **(기본값)** 대부분의 게임에 균형적 |
+| **esports** | 1ms     | 50ms       | 경쟁 FPS, 초저지연                   |
+| **legacy**  | 4ms     | 200ms      | 구형 CPU, 배터리 절약                |
+| **default** | 2ms     | 100ms      | gaming의 별칭                        |
+
+#### CLI 인수
+
+| 인수                      | 기본값    | 설명                                  |
+| :------------------------ | :------- | :------------------------------------ |
+| `--profile, -p <PROFILE>` | `gaming` | 사전 설정 프로필 선택                 |
+| `--quantum <µs>`          | profile  | 마이크로초 단위 기본 타임 슬라이스    |
+| `--new-flow-bonus <µs>`   | profile  | 새로 깨어난 작업에 대한 추가 deficit  |
+| `--starvation <µs>`       | profile  | 강제 선점 전 최대 실행 시간           |
+| `--verbose, -v`           | `false`  | 실시간 TUI 통계 표시 활성화           |
+| `--interval <secs>`       | `1`      | TUI 새로고침 간격                     |
+
+#### 계층별 튜닝 (Gaming 프로필)
+
+| 계층           | Quantum 배수 | 유효 슬라이스 | Starvation 제한 |
+| :------------- | :----------- | :------------ | :-------------- |
+| T0 Critical    | 0.75x        | 1.5ms         | 3ms             |
+| T1 Interactive | 1.0x         | 2.0ms         | 8ms             |
+| T2 Frame       | 1.2x         | 2.4ms         | 40ms            |
+| T3 Bulk        | 1.4x         | 2.8ms         | 100ms           |
+
+### [scx_cosmos](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cosmos)
+
+**개발자: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+- 프로덕션 준비 여부? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+작업과 CPU의 지역성 보존에 최적화된 경량 스케줄러입니다.
+
+시스템이 포화 상태가 아닐 때 이 스케줄러는 local DSQ를 사용해 작업을 동일한 CPU에 유지하는 것을 우선합니다. 이는 지역성을 유지할 뿐 아니라 공유 DSQ에 비해 잠금 경합을 줄여 많은 CPU 전반에서 좋은 확장성을 가능하게 합니다.
+
+- 사용 사례:
+  - 범용 스케줄러: 서버 워크로드와 데스크톱 워크로드 모두에 스스로 적응해야 하는 스케줄러입니다.
+
+#### 스케줄러 모드
+
+##### Auto
+
+* **명령줄 플래그:** 없음.
+* **설명:**
+
+##### Gaming
+
+* **명령줄 플래그:** `-s 700 -S`
+* **설명:** 공유 SMT 코어의 경합을 줄여 게임 성능의 일관성을 높이는 대신 처리량을 희생합니다.
+
+##### Power Save
+
+* **명령줄 플래그:** `-m powersave`
+* **설명:** 전력 효율을 우선합니다. 성능이 낮은 코어(예: Intel의 E-core)를 선호합니다.
+
+##### Low Latency
+
+* **명령줄 플래그:** `-s 700 -S -m performance -w`
+* **설명:** 처리량을 희생해 지연 시간을 낮추는 용도입니다. 오디오 처리 및 멀티미디어 같은 소프트 실시간 애플리케이션에 적합합니다. 효율을 희생하면서 사용 가능한 코어 전체에 더 균일한 부하 분산을 제공합니다.
+
+##### Server
+
+* **명령줄 플래그:** `-s 20000 -c 75 -p 250`
+* **설명:** 특정 캐시 민감 워크로드에서 지역성과 성능을 개선하기 위해 주소 공간 affinity를 활성화합니다. 슬라이스 지속 시간은 20ms로 설정되며, polling은 스케줄러가 시스템이 바쁜지 판단하기 위해 CPU 사용률과 CPU busy threshold를 얼마나 자주 비교할지 감시합니다.
+
+### [scx_flash](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_flash>)
+
+**개발자: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+프로덕션 준비 여부? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+작업 간 공정성과 성능 예측 가능성을 보장하는 데 초점을 맞춘 스케줄러입니다.
+
+[earliest deadline first (EDF) 정책](https://www.geeksforgeeks.org/operating-systems/earliest-deadline-first-edf-cpu-scheduling-algorithm/)을 사용해 동작하며, 각 작업에는 "latency" 가중치가 할당됩니다. 이 가중치는 작업이 전체 타임 슬라이스를 사용하기 전에 CPU를 얼마나 자주 반환하는지에 따라 동적으로 조정됩니다.
+
+CPU를 일찍 반환하는 작업에는 더 높은 latency 가중치가 부여되어, 타임 슬라이스를 완전히 소비하는 작업보다 우선됩니다.
+
+- 사용 사례:
+  - 게임
+  - 멀티미디어 또는 실시간 오디오 처리 같은 지연 시간 민감 워크로드
+  - 과도한 부하 상황에서의 반응성 필요
+  - 성능 일관성
+  - 서버
+
+#### 스케줄러 모드
+
+##### Low Latency
+
+* **명령줄 플래그:** `-m performance -w -C 0`
+* **설명:** 처리량을 희생해 지연 시간을 낮추는 용도입니다. 오디오 처리 및 멀티미디어 같은 소프트 실시간 애플리케이션에 적합합니다.
+
+##### Gaming
+
+* **명령줄 플래그:** `-m all`
+* **설명:** 게임에서 높은 성능에 맞게 최적화합니다.
+
+##### Power Save
+
+* **명령줄 플래그:** `-m powersave -I 10000 -t 10000 -s 10000 -S 1000`
+* **설명:** 전력 효율을 우선합니다. 성능이 낮은 코어(예: Intel의 E-core)를 선호하며, 전력 절약을 늘리기 위해 10ms마다 강제 유휴 사이클을 도입합니다.
+
+##### Server
+
+* **명령줄 플래그:** `-m all -s 20000 -S 1000 -I -1 -D -L`
+* **설명:** 서버 워크로드에 맞춰 조정되었습니다. 반응성을 희생해 처리량을 얻습니다.
+
+### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>)
+
+**개발자: Changwoo Min (multics69 [GitHub](<https://github.com/multics69>)).**
+
+- 프로덕션 준비 여부? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Changwoo의 LAVD 간단 소개:
+
+*LAVD는 아직 개발 중인 새로운 스케줄링 알고리즘입니다. 이는
+지연 시간이 중요하고 통신이 많은 게임 워크로드에서 동기를 얻었습니다.
+작업 간 CPU 시간의 공정한 사용과 전반적으로 좋은 처리량을 유지하면서
+지연 시간 스파이크를 최소화하는 것을 목표로 합니다.*
+
+- 사용 사례:
+  - 게임
+  - 오디오 제작
+  - 지연 시간 민감 워크로드
+  - 데스크톱 사용
+  - 집중적인 워크로드에서도 뛰어난 상호작용성
+  - 전력 절약
+
+LAVD가 포함하는 주요하고 뛰어난 기능 중 하나는 **Core Compaction**입니다. 기술적인 세부 사항을 생략하면, CPU 사용률이 50% 미만일 때 현재 활성 코어는 더 오래, 더 높은 주파수로 실행됩니다. 반면 유휴 코어는 C-State(절전)에 훨씬 더 오래 머물러 전체 전력 사용량을 줄입니다.
+
+##### 스케줄러 모드
+
+##### Gaming & Low Latency
+
+* **명령줄 플래그:** `--performance`
+* **설명:** 사용 가능한 모든 코어를 사용하고 물리 코어를 우선하여 성능을 극대화합니다.
+
+##### Power Save
+
+* **명령줄 플래그:** `--powersave`
+* **설명:** 합리적인 성능을 유지하면서 전력 소비를 최소화합니다. 물리 코어보다 효율 코어와 스레드를 우선합니다.
+
+### [scx_pandemonium](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_pandemonium)
+
+**개발자: Will Clingan (willclngn [GitHub](https://github.com/wllclngn/))**
+
+*토폴로지 인식 배치를 갖춘 동작 분류 스케줄러입니다. EWMA 기반 점수(깨어남 빈도, 컨텍스트 스위치 비율, 런타임 분산)는 작업을 세 계층 — LAT_CRITICAL, INTERACTIVE, BATCH — 으로 분류하며, 각 계층은 자체 슬라이스, 선점 규칙, DSQ 라우팅을 갖습니다. 배치는 CPU 토폴로지 그래프의 effective resistance(R_eff)에 의해 구동되며, 이는 Laplacian pseudo-inverse에서 파생됩니다. CPU별 DSQ는 R_eff 순서로 work-steal되어 캐시에 뜨거운 작업을 캐시에 뜨겁게 유지합니다. 모든 타이밍 상수 — sojourn rescue, CoDel target, vtime ceiling, longrun threshold — 는 단일 tau 값(Fiedler eigenvalue의 역수)에서 파생되므로, 스케줄러는 조정 없이 2C 노트북부터 32C+ 서버까지 자체 보정합니다. 감쇠 조화 진동자는 각 tick마다 rescue pressure에서 CoDel stall target을 적응시킵니다. 1Hz Rust adaptive control loop(여섯 expert profile에 대한 multiplicative weights update)는 BPF 히스토그램 텔레메트리에서 스케줄링 노브를 조정하며, 이중 보정을 피하기 위해 BPF oscillator 상태와 동기화됩니다. 영구 프로세스 데이터베이스는 재부팅 사이에도 작업 분류를 학습합니다. NUMA 인식, hotplug 정확성 지원.*
+
+- 사용 사례:
+    - 게임
+    - 데스크톱 사용
+    - 멀티미디어/오디오 제작
+    - 코드베이스 컴파일
+    - ZFS / 스토리지 중심 워크로드
+    - 혼합 워크로드
+    - 지속적인 CPU 포화 상태에서의 상호작용성
+
+##### 스케줄러 모드
+Default (Adaptive)
+- **명령줄 플래그:** (없음 — 기본적으로 adaptive로 실행)
+- **설명:** 전체 adaptive 모드입니다. Rust control loop가 워크로드 상태(LIGHT / MIXED / HEAVY)를 감지하고 실시간으로 스케줄링 매개변수를 조정합니다. 일반 데스크톱 사용과 게임에 가장 적합합니다.
+
+###### BPF Only
+- **명령줄 플래그:** `--no-adaptive`
+- **설명:** Rust adaptive control loop를 비활성화합니다. BPF 스케줄러는 정적 튜닝 노브로 실행됩니다. 오버헤드가 낮으며, 벤치마킹 또는 adaptive 계층이 워크로드에서 과도하게 보정하는 경우에 유용합니다.
+
+###### Verbose / Debug
+- **명령줄 플래그:** `-v` 또는 `--verbose`
+- **설명:** 계층별 dispatch 수, sojourn time, 동작 분류 통계 등 자세한 텔레메트리 출력을 활성화합니다. 스케줄링 동작 진단에 유용합니다.
+
+
+### [scx_p2dq](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_p2dq>)
+
+- 프로덕션 준비 여부? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+  - 예. 특정 워크로드와 하드웨어에 맞게 올바르게 튜닝된 경우입니다.
+
+**개발자: Daniel Hodges (hodgesds [GitHub](<https://github.com/hodgesds>))**
+
+LLC 간 pick two 로드 밸런싱에 초점을 맞춘 범용 스케줄러입니다.
+높은 캐시 지역성과 작업 보존성을 유지하면서
+합리적인 지연 시간을 제공합니다.
+
+- 사용 사례:
+  - 서버
+  - 데스크톱 환경
+  - 게임(일부 수동 튜닝 필요)
+
+#### 스케줄러 모드
+
+##### Gaming
+
+* **명령줄 플래그:** `--task-slice true -f --sched-mode performance`
+* **설명:** 게임 성능의 일관성을 높이고 더 높은 성능의 코어에 스케줄링하려는 편향을 증가시킵니다.
+
+##### Low Latency
+
+* **명령줄 플래그:** `-y -f --task-slice true`
+* **설명:** 상호작용형 작업이 할당된 CPU에 더 오래 붙어 있도록 하고 슬라이스 시간 안정성을 높여 지연 시간을 낮춥니다.
+
+##### Power Save
+
+* **명령줄 플래그:** `--sched-mode efficiency`
+* **설명:** 전력 효율 코어를 우선하여 전력 효율을 높입니다.
+
+##### Server
+
+* **명령줄 플래그:** `--keep-running`
+* **설명:** CPU가 유휴 상태이면 작업이 슬라이스를 넘어 계속 실행될 수 있게 하여 서버 워크로드를 개선합니다.
+
+### [scx_tickless](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_tickless>)
+
+**개발자: Andrea Righi (arighi [Github](<https://github.com/arighi>))**
+
+- 프로덕션 준비 여부? <Icon name="close" color="var(--sl-color-text-accent)" size="2rem" />
+  - 이 스케줄러는 아직 실험적이며 프로덕션 사용은 권장되지 않습니다.
+
+:::note
+"tickless" CPU에서 tick을 효과적으로 비활성화하려면 커널을 `nohz_full`로 부팅해야 합니다. `nohz_full`은 syscall 오버헤드를 도입하므로 지연 시간에 민감한 워크로드에서 성능이 저하될 수 있다는 점을 기억하세요.
+:::
+
+scx_tickless는 클라우드 컴퓨팅, 가상화, 고성능 컴퓨팅 워크로드를 위해 설계된 서버 지향 스케줄러입니다.
+
+이 스케줄러는 모든 스케줄링 이벤트를 이러한 이벤트를 처리하도록 지정된 주 CPU 풀을 통해 라우팅하는 방식으로 동작합니다. 이를 통해 다른 CPU에서 스케줄러 tick을 비활성화하여 OS noise를 줄일 수 있습니다.
+
+- 사용 사례:
+  - 클라우드 컴퓨팅
+  - 가상화
+  - 고성능 컴퓨팅 워크로드
+  - 서버
+
+#### 스케줄러 모드
+
+##### Gaming
+
+* **명령줄 플래그:** `-f 5000 -s 5000`
+* **설명:** 스케줄러가 CPU 경합을 감지하고 더 짧은 타임 슬라이스로 컨텍스트 스위치를 트리거하는 빈도를 높여 게임 성능을 향상합니다.
+
+##### Power Save
+
+* **명령줄 플래그:** `-f 50`
+* **설명:** 경합 확인 빈도를 낮춰 전력 효율을 높입니다.
+
+##### Low Latency
+* **명령줄 플래그:** `-f 5000 -s 1000`
+* **설명:** gaming 프로필과 비슷하지만 슬라이스가 더 줄어듭니다.
+
+##### Server
+
+* **명령줄 플래그:** `-f 100`
+* **설명:** 반응성을 희생해 처리량을 높이기 위해 스케줄러가 CPU 경합을 확인하는 빈도를 줄입니다.
+
+### [scx_rustland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland>)
+
+**개발자: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+프로덕션 준비 여부? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+
+성능이 중요한 프로덕션 시나리오에서는 모든 스케줄링 결정을 사용자 공간으로 오프로드하는 데 일정한 비용이 따르므로, 다른 스케줄러가 더 나은 성능을 보일 가능성이 큽니다(그 비용이 작더라도).
+
+그러나 완전히 사용자 공간에서 구현된 스케줄러는 정교한 라이브러리, 추적 도구, 외부 서비스(예: AI) 등과 원활하게 통합될 가능성을 갖습니다.
+
+따라서 이점이 오버헤드를 능가하는 상황에서는 프로덕션 환경에서 이 스케줄러를 사용하는 것이 정당화될 수 있습니다.
+
+bpfland와 유사한 점을 공유하며, 사용자 공간 구현 덕분에 동작 방식을 쉽게 읽고 이해할 수 있도록 만들었습니다.
+
+사용자 공간 스케줄러를 사용할 때 약간의 처리량 불리함이 있다는 점을 기억하세요.
+
+- 사용 사례:
+  - 낮은 지연 시간 워크로드(게임, 화상 회의, 라이브 스트리밍)
+  - 데스크톱 사용
+
+### [scx_rusty](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rusty>)
+
+**개발자: David Vernet (Byte-Lab [GitHub](<https://github.com/Byte-Lab>))**
+
+- 프로덕션 준비 여부? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+  - 예. 올바르게 튜닝된 경우입니다,
+
+Rusty는 기능을 강화하는 다양한 기능을 제공하여 여러 사용 사례에 대해 더 큰 유연성을 제공합니다.
+이러한 기능 중 하나는 조정 가능성으로, 사용자의 선호와 특정 요구 사항에 맞게 Rusty를 사용자 지정할 수 있습니다.
+
+- 사용 사례:
+  - 게임
+  - 지연 시간 민감 워크로드
+  - 데스크톱 사용
+  - 멀티미디어/오디오 제작
+  - 집중적인 워크로드에서도 뛰어난 상호작용성
+  - 전력 절약
+
+## 설정 및 성능 테스트
+
+### LAVD Autopilot & Autopower
+
+*Changwoo Min의 인용:*
+- autopilot 모드에서 스케줄러는 시스템 부하, 특히 CPU 사용률을 기준으로 전원 모드 `Powersave, Balanced, or Performance`를 조정합니다
+
+- Autopower: 시스템의 에너지 프로필, 즉 EPP(Energy Performance Preference)를 기준으로 스케줄러의 전원 모드를 자동 결정합니다.
+
+```sh
+# Autopower can be activated by the following flag:
+--autopower
+# e.g:
+scx_lavd --autopower
+```
+
+### ananicy-cpp & sched-ext
+
+:::note[ananicy-cpp와 sched-ext에 대한 업데이트]
+스케줄러가 추가로 개발된 후에는 보통 ananicy-cpp를 함께 사용해도 괜찮습니다. 그러나 멈춤이나 불안정성을 경험한다면 문제 해결 단계로 비활성화를 고려하세요.
+:::
+
+ananicy-cpp를 비활성화/중지하려면 다음 명령을 실행하세요.
+
+```sh
+systemctl disable --now ananicy-cpp
+```
+
+### scx_loader 전원 프로필 전환
+
+CachyOS에서 제공하는 `power-profiles-daemon` 패키지에 구현되어 있으며, `scx_loader` 전원 프로필 전환을 지원하기 위한 [사용자 지정 패치](https://github.com/CachyOS/CachyOS-PKGBUILDS/blob/master/power-profiles-daemon/0001-Add-support-for-scx_loader-modes-switching.patch)가 포함되어 있습니다.
+
+- `scx_loader`가 현재 실행 중인 경우 [game-performance](/configuration/gaming#power-profile-switching-on-demand)를 사용하면, 게임 실행 시 활성 스케줄러가 자동으로 `Gaming` 프로필로 전환되고 게임 종료 시 기본 프로필로 되돌아갑니다.
+- KDE Plasma 또는 GNOME의 전원 프로필 전환기 등에서 전원 프로필을 변경하면 `scx_loader`가 자동으로 해당 스케줄러 프로필로 전환됩니다.
+
+| 전원 프로필        | 스케줄러 프로필 |
+| ------------------- | ------------------ |
+| Power Saver         | Power Save         |
+| Balanced            | Auto               |
+| Performance         | Gaming             |
+
+### cachyos-benchmarker로 스케줄러 벤치마크 및 비교
+
+[cachyos-benchmarker](https://github.com/CachyOS/cachyos-benchmarker) 도구는 서로 다른 CPU 스케줄러의 성능을 평가하고 비교하는 쉬운 방법을 제공합니다.
+
+다양한 워크로드에서 CPU, 메모리, 전체 시스템 성능을 측정하기 위해 포괄적인 벤치마크 모음을 실행합니다.
+
+다음 벤치마크가 포함됩니다.
+
+| 테스트                      | 측정 항목                                | 도구         |
+| --------------------------- | ---------------------------------------- | ------------ |
+| **stress-ng cpu-cache-mem** | CPU, 캐시, 메모리 성능                   | `stress-ng`  |
+| **FFmpeg compilation**      | 병렬 빌드 성능                           | `make`       |
+| **x265 encoding**           | 비디오 인코딩 처리량                     | `x265`       |
+| **argon2 hashing**          | 멀티스레드 비밀번호 해싱                 | `argon2`     |
+| **perf sched msg**          | 컨텍스트 스위칭 및 IPC 성능              | `perf`       |
+| **perf memcpy**             | 메모리 처리량 `memcpy()`                 | `perf`       |
+| **prime calculation**       | 정수 연산 및 병렬성                      | `primesieve` |
+| **NAMD**                    | 분자 동역학(과학 워크로드)               | `namd3`      |
+| **Blender render**          | CPU 전용 3D 렌더링                       | `blender`    |
+| **xz compression**          | 압축 처리량                              | `xz`         |
+| **Kernel defconfig build**  | 커널 컴파일 성능                         | `make`       |
+| **y-cruncher**              | 수학 정밀도 및 메모리 스트레스           | `y-cruncher` |
+
+`cachyos-benchmarker`는 다음을 포함한 여러 목적으로 사용할 수 있습니다.
+
+- **스케줄러 안정성 테스트**
+  전체 벤치마크 모음을 실행하여 스케줄러 변경으로 인한 멈춤, 충돌 또는 회귀를 감지합니다.
+  `scx_loader`를 사용하는 경우 멈춤이나 충돌 발생 시 다음 명령으로 로그를 수집할 수 있습니다.
+  ```bash
+  journalctl --unit scx_loader.service --boot 0 > crash.log
+  ```
+  이 명령은 현재 디렉터리에 `crash.log`라는 파일을 생성합니다.
+- **스케줄러 성능 비교**
+  - 스케줄러 간 성능 차이를 평가합니다. 예: `BPFLAND vs LAVD`
+- **커널 또는 스케줄러 업데이트 효과 측정**
+  - 패치나 버전 변경 전후 실행 결과를 비교하여 성능 회귀 또는 개선을 확인합니다.
+- **설정 조정 테스트**
+  - CPU governor 설정, SMT 전환, 수정된 스케줄러 플래그 같은 변경의 영향을 평가합니다.
+
+#### 요구 사항
+- RAM 4GB 이상
+- 최소 8GB의 여유 저장 공간
+- 시간과 인내심 - **느린 시스템에서는 전체 벤치마크가 1시간 이상 걸릴 수 있습니다**
+
+#### 설치
+
+`cachyos-benchmarker`를 설치하려면 다음 명령을 실행하세요.
+```bash
+sudo pacman -S cachyos-benchmarker
+```
+
+#### 벤치마크 실행
+
+<Steps>
+    1. `cachyos-benchmarker:`를 실행합니다.
+        ```bash
+        cachyos-benchmarker ~/cachyos-benchmarker/
+        # You can replace ~/cachyos-benchmarker/ with any directory you want the logs to be saved in.
+        ```
+    2. 준비 단계가 끝날 때까지 기다립니다.
+    3. 프롬프트를 따릅니다.
+        - `Do you want to drop page cache now? Root privileges needed! (y/N) y`
+        - `Please enter a name for this run, or leave empty for default:`
+    4. 테스트가 끝날 때까지 기다립니다.
+    5. 완료되면 다음이 발생합니다.
+        - 벤치마크 실행에 대한 자세한 정보를 포함하는 `benchie_<name>_<DATE>.log` 같은 이름의 로그 파일 생성.
+          - 예: `benchie_p2dq_2025-09-29-2115.log`
+          - `benchmark_scraper.py` 스크립트가 자동으로 실행되어 HTML 형식의 요약 보고서를 생성합니다.
+          - 이 스크립트가 하는 일:
+            - 지정한 디렉터리의 모든 `benchie_*.log` 파일을 읽습니다.
+            - 벤치마크 이름, 시간, 점수를 추출합니다.
+            - 정렬하거나 집계합니다.
+            - 결과의 깔끔한 요약을 터미널에 출력하고 브라우저에서 열 수 있는 HTML 파일을 생성합니다.
+                <details>
+                <summary>터미널 출력 예시:</summary>
+                ```text
+                stress-ng cpu-cache-mem: 15.26
+                y-cruncher pi 1b: 31.23
+                perf sched msg fork thread: 8.892
+                perf memcpy: 13.53
+                namd 92K atoms: 53.54
+                calculating prime numbers: 11.126
+                argon2 hashing: 6.62
+                ffmpeg compilation: 53.38
+                xz compression: 61.13
+                kernel defconfig: 130.73
+                blender render: 96.29
+                x265 encoding: 24.99
+
+                Total time (s): 506.72
+                Total score: 70.71
+
+                Name: p2dq
+                Date: 2025-09-29-2115
+
+                System:    Kernel: 6.17.0-1.1-cachyos-p2dq arch: x86_64 bits: 64
+                           Desktop: KDE Plasma v: 6.4.5 Distro: CachyOS
+                Memory:    System RAM: total: 32 GiB available: 30.61 GiB used: 7.54 GiB (24.6%)
+                           Device-1: Channel-A DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                           Device-2: Channel-B DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                           Device-3: Channel-C DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                           Device-4: Channel-D DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                CPU:       Info: 8-core model: AMD Ryzen 7 8845HS w/ Radeon 780M Graphics bits: 64 type: MT MCP cache: L2: 8 MiB
+                           Speed (MHz): avg: 3366 min/max: 419/5138 cores: 1: 3366 2: 3366 3: 3366 4: 3366 5: 3366 6: 3366 7: 3366 8: 3366 9: 3366 10: 3366 11: 3366 12: 3366 13: 3366 14: 3366 15: 3366 16: 3366
+
+                SCX Scheduler: p2dq_1.0.21_gf90c2aa1_dirty_x86_64_unknown_linux_gnu
+
+                SCX Version: p2dq_1.0.21_gf90c2aa1_dirty_x86_64_unknown_linux_gnu
+
+                 Version         : 0.5.1-1
+                ```
+                </details>
+                <details>
+                <summary>동일 스케줄러의 서로 다른 두 브랜치를 비교한 테스트 결과 HTML 예시:</summary>
+                <ImageComponent imgsrc={import('~/assets/images/cachyos-benchmarker-example.png')} />
+                </details>
+    6. 두 개 이상의 실행 결과를 비교하려면 `benchmark_scraper.py`를 실행하기 전에 `.log` 파일들을 같은 디렉터리에 넣으세요. 도구가 자동으로 이를 감지하고 HTML 보고서에서 비교합니다.
+</Steps>
+
+### schbench로 스케줄러 지연 시간 테스트
+
+schbench는 시뮬레이션된 서버 스타일 워크로드에서 스케줄러 지연 시간을 측정하도록 설계된 스케줄러 벤치마크입니다. 설정 가능한 수의 "worker" 및 "message" 스레드를 생성하며, message가 반복적으로 worker를 깨웁니다. 이러한 worker 스레드가 깨어난 시점부터 실행될 때까지의 지연 시간 분포를 측정해, 특히 부하 상황에서 커널이 스레드 wakeup, balancing, CPU contention을 처리하는 능력에 대한 중요한 통찰을 제공합니다.
+
+#### 사용 사례
+
+`schbench`를 사용해 다음을 수행할 수 있습니다.
+
+- **스케줄러 지연 시간 평가:** 스레드가 깨어난 뒤 얼마나 빠르게 스케줄링되는지 확인합니다.
+- **스케줄러 간 wakeup 성능 비교:** 컨텍스트 스위칭과 wakeup 지연 시간의 개선 또는 회귀를 감지합니다.
+- **커널 또는 스케줄러 패치 효과 테스트:** 튜닝이나 업데이트가 스케줄링 공정성과 반응성에 영향을 주는지 평가합니다.
+
+#### 설치
+
+`schbench`는 CachyOS 저장소에서 사용할 수 있습니다.
+```bash
+sudo pacman -S schbench
+```
+
+#### 벤치마크 실행
+
+일반적인 지연 시간 테스트를 위해 `schbench`를 실행하는 간단한 방법은 다음과 같습니다.
+```bash
+schbench -m 2 -t 8 -r 60
+```
+
+이 예시는 다음을 실행합니다.
+- message 스레드 2개(`-m 2`)
+- message 스레드당 worker 스레드 8개(`-t 8`)
+- 총 실행 시간 60초(`-r 60`)
+
+CPU 코어 수와 원하는 부하 수준에 따라 이 값을 조정할 수 있습니다.
+
+주요 옵션 일부를 설명하는 표는 다음과 같습니다.
+
+| 옵션                         | 설명                                                            |
+| ---------------------------- | --------------------------------------------------------------- |
+| `-C, --calibrate`            | 보정 실행 및 타이밍 보고(벤치마크 없음).                        |
+| `-L, --no-locking`           | CPU 작업 중 spinlock 비활성화(기본값: locking 활성화).          |
+| `-m, --message-threads <n>`  | message 스레드 수(기본값: 1).                                  |
+| `-t, --threads <n>`          | message 스레드당 worker 스레드 수(기본값: CPU 수).              |
+| `-r, --runtime <sec>`        | 벤치마크 지속 시간(기본값: 30).                                 |
+| `-F, --cache_footprint <KB>` | 캐시 footprint 크기(기본값: 256).                               |
+| `-n, --operations <count>`   | 수행할 "think time" 작업 수(기본값: 5).                        |
+| `-A, --auto-rps`             | CPU 사용률 목표에 도달할 때까지 RPS를 자동으로 증가시킵니다.     |
+| `-R, --rps <count>`          | 초당 요청 수 모드.                                             |
+| `-p, --pipe <bytes>`         | pipe 전송 테스트를 시뮬레이션합니다.                            |
+| `-w, --warmuptime <sec>`     | 통계 수집 전 워밍업 시간(기본값: 0).                            |
+| `-i, --intervaltime <sec>`   | 지연 시간 출력 간격(기본값: 10).                                |
+| `-z, --zerotime <sec>`       | 지연 시간 통계를 0으로 초기화하는 간격(기본값: 없음).           |
+
+#### 출력 이해하기
+
+각 실행 후 `schbench`는 다음과 같은 지연 시간 백분위수를 출력합니다.
+
+<details>
+    <summary>출력 예시</summary>
+    ```bash
+    Wakeup Latencies percentiles (usec) runtime 10 (s) (2406 total samples)
+	  50.0th: 60         (648 samples)
+	  90.0th: 2034       (968 samples)
+	* 99.0th: 4104       (211 samples)
+	  99.9th: 10128      (22 samples)
+	  min=1, max=10308
+    Request Latencies percentiles (usec) runtime 10 (s) (2394 total samples)
+	  50.0th: 49216      (726 samples)
+	  90.0th: 69760      (954 samples)
+	* 99.0th: 166656     (212 samples)
+	  99.9th: 273920     (21 samples)
+	  min=11770, max=334247
+    RPS percentiles (requests) runtime 10 (s) (11 total samples)
+	  20.0th: 234        (3 samples)
+	* 50.0th: 238        (3 samples)
+	  90.0th: 241        (4 samples)
+	  min=230, max=248
+    current rps: 230.99
+    Wakeup Latencies percentiles (usec) runtime 10 (s) (2406 total samples)
+	  50.0th: 60         (648 samples)
+	  90.0th: 2034       (968 samples)
+	* 99.0th: 4104       (211 samples)
+	  99.9th: 10128      (22 samples)
+	  min=1, max=10308
+    Request Latencies percentiles (usec) runtime 10 (s) (2406 total samples)
+	  50.0th: 49216      (729 samples)
+	  90.0th: 69760      (956 samples)
+	* 99.0th: 165632     (212 samples)
+	  99.9th: 273920     (22 samples)
+	  min=11770, max=334247
+    RPS percentiles (requests) runtime 10 (s) (11 total samples)
+	  20.0th: 234        (3 samples)
+	* 50.0th: 238        (3 samples)
+	  90.0th: 241        (4 samples)
+	  min=230, max=248
+    average rps: 240.60
+    ```
+</details>
+
+##### 결과 해석 방법
+
+- **Wakeup Latencies:**
+  - 스레드가 신호를 받은 뒤 얼마나 빨리 깨어나는지 측정합니다.
+    - 여기서 값이 낮을수록(특히 **99번째 백분위수**) 스케줄러의 반응성이 더 좋다는 의미입니다.
+- **Request Latencies:**
+  - 스레드 간 요청 완료에 걸린 시간을 나타냅니다.
+    - 지연 시간이 낮을수록 스레드 간 통신과 스케줄링 효율이 더 좋다는 뜻입니다.
+- **RPS (Requests Per Second):**
+  - 지속 처리량을 보여줍니다.
+    - **평균 RPS**가 높을수록 해당 설정에서 스케줄러가 초당 더 많은 작업을 처리할 수 있음을 의미합니다.
+
+결론적으로:
+- **좋은 스케줄러**는 **낮은 wakeup 및 request 지연 시간**과 **일관된 RPS**를 보여줍니다.
+- **효율이 낮은 스케줄러**는 시간이 지남에 따라 **높은 지연 시간 스파이크** 또는 **불안정한 RPS 값**을 보일 수 있습니다.
+
+:::note
+이 결과는 CPU, 코어 수, 시스템 부하, 그리고 스케줄러가 사용자의 CPU 아키텍처를 효율적으로 처리할 수 있는지에 따라 달라질 수 있습니다.
+:::
+
+### 게임 벤치마킹 권장 사항
+
+서로 다른 스케줄러의 게임 성능을 비교하기 위해 게임을 벤치마크하려는 경우, 가장 정확한 결과를 얻기 위한 몇 가지 팁은 다음과 같습니다.
+
+- **내장 벤치마크 사용:** 많은 최신 게임에는 내장 벤치마킹 도구가 포함되어 있습니다. 이 도구들은 매번 동일한 이벤트 순서를 실행하여 일관된 결과를 제공하도록 설계되었습니다.
+  - 내장 벤치마크가 포함된 게임 목록은 이 [웹사이트](https://www.pcgamingwiki.com/wiki/List_of_games_with_built-in_benchmarks)를 확인하세요.
+- **일관된 설정:** 각 테스트 실행에서 게임 설정(해상도, 그래픽 품질 등)이 동일한지 확인하세요.
+- **백그라운드 애플리케이션 종료:** 백그라운드에서 실행 중인 다른 애플리케이션은 성능에 영향을 줄 수 있습니다. 영향을 최소화하려면 불필요한 프로그램을 종료하세요.
+- 내장 벤치마크를 사용하지 않는다면, 각 테스트 실행에서 게임 내에서 같은 동작을 수행해 보세요. 예를 들어 같은 경로를 따라가거나, 비슷한 전투 상황에 참여하거나, 같은 작업을 수행할 수 있습니다.
+  - 같은 지점을 조준하지 않는 것만으로도 성능 결과가 달라질 수 있습니다.
+- **여러 번 실행:** 변동성을 고려하기 위해 벤치마크를 여러 번 실행하고 평균을 사용하세요.
+- **성능 모니터링 도구 사용:** MangoHud나 GOverlay 같은 도구는 FPS, 프레임 시간, CPU/GPU 사용률 같은 실시간 성능 지표를 제공할 수 있습니다.
+- **키보드 단축키 또는 매크로 활용:**
+  - 한 가지 예시는 게임 중 즉시 서로 다른 스케줄러로 전환하거나 모드를 변경할 수 있는 키 바인딩을 만드는 것입니다.
+    - 이는 [scxctl](/configuration/sched-ext#how-to-launch-and-manage-the-scheduler) 같은 도구를 사용하거나 활성 스케줄러와 해당 모드를 변경하는 사용자 지정 스크립트를 만들어 수행할 수 있습니다.
+
+#### 벤치마크 업로드 및 공유
+
+이 [웹사이트](https://flightlesssomething.ambrosia.one/benchmarks)에는 커뮤니티가 서로 다른 스케줄러를 사용하거나 다양한 설정을 테스트해 수행한 벤치마크 목록이 포함되어 있습니다.
+
+자신의 벤치마크를 업로드하려면 Discord 계정을 웹사이트에 연결한 다음 벤치마크를 제출할 수 있습니다.
+
+그런 다음 `New benchmark` 버튼을 클릭하고 필요한 정보를 입력하세요.
+
+- 서로 다른 스케줄러 또는 설정을 사용해 같은 게임의 여러 결과를 업로드할 수 있습니다.
+- MangoHud 및 Afterburner 로그를 모두 허용합니다.
+- 제목 또는 설명으로 검색할 수 있습니다.
+
+## scx_loader 설정
+
+### 스케줄러를 기본값으로 설정하기(부팅 시)
+
+`scx_loader`가 시작될 때(예: 부팅 시) 스케줄러가 자동으로 시작되도록 설정하려면 다음 단계를 따르세요.
+
+<Steps>
+1. **예제 설정 파일을** 설정 디렉터리로 복사합니다.
+   ```sh
+   sudo mkdir -p /etc/scx_loader
+   sudo cp /usr/share/scx_loader/config.toml /etc/scx_loader/config.toml
+   ```
+
+2. **원하는 편집기로 설정 파일을 편집합니다.**
+   ```sh
+   sudo nano /etc/scx_loader/config.toml
+   ```
+
+3. **기본 스케줄러와 모드를 설정합니다**. 예를 들어 `Auto` 모드에서 `scx_pandemonium`을 설정하려면:
+   ```toml
+   # This field specifies the scheduler that will be started automatically when scx_loader starts (e.g., on boot).
+   default_sched = "scx_pandemonium"
+
+   # This field specifies the mode which will be used when scx_loader starts (e.g., on boot).
+   default_mode = "Auto"
+   ```
+
+4. **서비스를 활성화하고 시작합니다**:
+   ```sh
+   sudo systemctl enable --now scx_loader.service
+   ```
+</Steps>
+
+#### 설정 조회 순서
+
+`scx_loader`는 다음 순서로 설정 파일을 검색합니다.
+
+1. `/etc/scx_loader/config.toml` (권장)
+2. `/etc/scx_loader.toml`
+3. `/usr/share/scx_loader/config.toml` (기본 템플릿)
+4. `/usr/share/scx_loader.toml`
+
+### 스케줄러 인수 사용자 지정
+
+설정 파일에 `[scheds.scx_name]` 섹션을 추가하여 각 스케줄러에 서로 다른 모드별로 전달되는 인수를 사용자 지정할 수 있습니다.
+
+스케줄러별 인수를 구성하는 방법에 대한 자세한 정보와 예시는 [scx_loader 설정 문서](https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/configuration.md)를 참조하세요.
+
+## scx.service에서 scx_loader로 전환하기: 종합 가이드
+
+:::caution
+scx_loader.service를 scx.service와 함께 실행하려고 하지 마세요. 그렇지 않으면 loader 서비스는 시작되지만 아무 작업도 하지 않습니다.
+
+이 충돌은 두 서비스가 서로를 인식하지 못하기 때문에 발생하며, 특히 어떤 서비스가 스케줄러를 관리하는지에 관한 부분에서 문제가 됩니다.
+:::
+
+:::tip
+CachyOS Kernel Manager에는 이미 [scx_loader를 관리하기 위한 GUI](/features/kernel_manager#sched-ext-framework-management)가 포함되어 있습니다.
+:::
+
+먼저 scx.service 파일 구조와 scx_loader 설정 파일 구조를 가까이 비교해 보겠습니다.
+
+*이전 scx.service로 아래 예시처럼 LAVD를 실행하고 있었다면:*
+
+```sh title='scx.service file structure'
+# List of scx_schedulers: scx_bpfland scx_central scx_flash scx_lavd scx_layered scx_nest scx_qmap scx_rlfifo scx_rustland scx_rusty scx_simple scx_userland
+SCX_SCHEDULER=scx_lavd
+
+# Set custom flags for the scheduler
+SCX_FLAGS='--performance'
+```
+
+scx_loader 설정 파일에서의 동등한 설정은 다음과 같습니다.
+
+```sh title='scx_loader file structure'
+default_sched = "scx_lavd"
+default_mode = "Auto"
+
+[scheds.scx_lavd]
+auto_mode = ["--performance"]
+```
+
+[scx_loader 파일 설정 방법에 대한 자세한 정보](https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/configuration.md#scx_loader-configuration-file)
+
+  `scx systemd service`에서 새로운 `scx_loader` 유틸리티로 쉽게 전환하려면 아래 가이드를 따르세요.
+  <Steps>
+  1. ```sh title='Disabling scx.service in favor of the scx_loader.service'
+      systemctl disable --now scx.service && systemctl enable --now scx_loader.service
+      ```
+  2. ```sh title='Creating the configuration file for the scx_loader and adding the default structure'
+     # Micro editor is going to create a new file.
+     sudo micro /etc/scx_loader.toml
+     # Add the following lines:
+
+     default_sched = "scx_bpfland" # Edit this line to the scheduler you want scx_loader to start at boot
+     default_mode = "Auto" # Possible values: "Auto", "Gaming", "LowLatency", "PowerSave".
+
+     # Press CTRL + S to save changes and CTRL + Q to exit Micro.
+     ```
+  3. ```sh title='Restarting the scx_loader'
+     systemctl restart scx_loader.service
+     ```
+     - 완료되었습니다. 이제 scx_loader가 원하는 스케줄러를 로드하고 시작합니다.
+
+  </Steps>
+
+### scx_loader에서 디버깅
+
+<Tabs>
+<TabItem label='간단한 로깅'>
+
+  - ```sh title='Checking the service status'
+    systemctl status scx_loader.service
+    ```
+  - ```sh title='Viewing all the service log entries'
+    journalctl -u scx_loader.service
+    ```
+  - ```sh title='Viewing only the logs of the current session.'
+    journalctl -u scx_loader.service -b 0
+    ```
+</TabItem>
+<TabItem label='확장 로깅'>
+
+*더 자세한 로그를 얻으려면 다음 단계를 따르세요.*
+  - ```sh title='Edit the service file'
+     sudo systemctl edit scx_loader.service
+     ```
+  - ```sh title='Add the following line under the [Service] section'
+     Environment=RUST_LOG=trace
+     ```
+  - ```sh title='Restart the service'
+     sudo systemctl restart scx_loader.service
+     ```
+  - 더 자세한 디버깅 정보를 보려면 로그를 다시 확인하세요.
+</TabItem>
+
+</Tabs>
+
+## FAQ
+
+### 옵션이 너무 많은데... 모든 것에 좋은 하나의 스케줄러만 만들면 안 되나요?
+
+주된 이유는 CPU 스케줄링에 관해서는 모든 상황에 맞는 단일 해법이 없기 때문입니다. 서로 다른 워크로드는 서로 다른 요구 사항과 우선순위를 가지며, 한 종류의 워크로드에 최적화된 스케줄러가 다른 워크로드에서는 잘 동작하지 않을 수 있습니다.
+
+CPU 스케줄러를 특정 활동에 맞게 설계된 서로 다른 신발 한 켤레처럼 볼 수 있습니다. 예를 들어 서버 워크로드에 최적화된 스케줄러에서 게임을 실행하면 최적이 아닌 성능과 증가한 지연 시간이 발생할 수 있고, 게임용으로 설계된 스케줄러를 서버에서 사용하면 비효율적인 리소스 사용과 처리량 감소가 발생할 수 있습니다.
+
+이것이 sched-ext의 마법입니다. 제한이 더 이상 문제가 되지 않습니다.
+
+### 왜 X 스케줄러가 다른 스케줄러보다 성능이 나쁜가요?
+
+- 비교할 때 고려해야 할 변수가 많습니다. 예를 들어 작업의 가중치를 어떻게 측정하는지, 상호작용형 작업을 비상호작용형 작업보다 우선하는지 등이 있습니다.
+  결국 설계 선택에 따라 달라집니다.
+
+### 왜 모두가 X 스케줄러가 X 상황에 가장 좋다고 하는데 제 환경에서는 그렇게 잘 동작하지 않나요?
+
+- 이전 답변과 마찬가지로, CPU 선택과 그 설계(코어 레이아웃, 코어 간 캐시 공유 방식 및 기타 관련 요소)가 스케줄러가 덜 효율적으로 동작하게 만들 수 있습니다.
+- 그렇기 때문에 선택지가 있다는 것이 sched-ext 프레임워크의 장점 중 하나입니다. 두려워하지 말고 하나씩 시도해 본 뒤 자신의 사용 사례에 가장 잘 맞는 것을 확인하세요. `예: fps 안정성, 최대 성능, 집중적인 워크로드에서의 반응성 등.`
+
+### 이 스케줄러들의 사용 사례가 꽤 비슷한데... 왜 그런가요?
+
+주된 이유는 이들이 다목적 스케줄러이기 때문입니다. 즉, 모든 영역에서 뛰어나지는 않을 수 있어도 다양한 워크로드를 수용할 수 있습니다.
+
+- 어떤 스케줄러가 자신에게 가장 적합한지 판단하려면 직접 시도해 보는 것보다 더 좋은 조언은 없습니다.
+
+### 왜 CachyOS Discord 서버에서 일부 사용자가 언급하거나 테스트하는 스케줄러가 제게는 없나요?
+`scx-scheds-git`이라는 이름의 scx-scheds 패키지 bleeding edge 버전을 사용하고 있는지 확인하세요.
+
+- 한 가지 이유는 해당 스케줄러가 매우 새롭고 현재 사용자들에 의해 테스트 중이라 아직 `scx-scheds-git` 패키지에 추가되지 않았기 때문일 수 있습니다.
+
+### 왜 스케줄러가 갑자기 충돌했나요? 불안정한가요?
+
+- *이 일이 발생한 데에는 몇 가지 이유가 있을 수 있습니다:*
+  - 가장 흔한 이유 중 하나는 스케줄러와 함께 ananicy-cpp를 사용하고 있었기 때문입니다. 그래서 이 [경고](/configuration/sched-ext#ananicy-cpp--sched-ext)를 추가했습니다
+  - 또 다른 이유는 실행 중인 워크로드가 스케줄러의 한계와 용량을 초과하여 멈춤을 유발했기 때문일 수 있습니다.
+    - 비합리적인 워크로드 예: `hackbench`
+  - 또는 더 명백하게는 스케줄러에서 버그를 발견한 것입니다. 그렇다면 해당 [GitHub](https://github.com/sched-ext/scx/issues)에 issue로 보고하거나 CachyOS Discord 채널 `sched-ext`에서 알려주세요.
+
+### 이전에 Kernel Manager GUI에서 scx_loader를 사용한 적이 있습니다. 그래도 전환 단계를 따라야 하나요?
+
+- 이 특정한 경우에는 필요하지 않습니다. Kernel Manager가 이미 전환 과정을 처리하기 때문입니다.
+  - *단, 이전에 `/etc/default/scx`에 사용자 지정 플래그를 추가했고 여전히 이를 사용하고 싶다면 예외입니다.*
+
+## 더 알아보기
+
+:::note[크레딧]
+아래 링크 중 일부는 원래 [sched-ext GitHub 저장소](https://github.com/sched-ext/scx?tab=readme-ov-file#sched_ext-schedulers-and-tools)에서 참조된 것입니다.
+sched-ext 관리자와 기여자들이 이 훌륭한 자료를 정리하고 공유한 데 대해 모든 공로를 돌립니다.
+:::
+
+- [Sched_ext YT playlist](https://youtube.com/playlist?list=PLLLT4NxU7U1TnhgFH6k57iKjRu6CXJ3yB&si=DETiqpfwMoj8Anvl)
+- [LWN: The extensible scheduler class (February, 2023)](https://lwn.net/Articles/922405/)
+- [arighi's blog: Implement your own kernel CPU scheduler in Ubuntu with sched_ext (July, 2023)](https://arighi.blogspot.com/2023/07/implement-your-own-cpu-scheduler-in.html)
+- [David Vernet's talk : Kernel Recipes 2023 - sched_ext: pluggable scheduling in the Linux kernel (September, 2023)](https://youtu.be/8kAcnNVSAdI?si=F5Q-dkSS_sG9BTXA)
+- [Changwoo's blog: sched_ext: a BPF-extensible scheduler class (Part 1) (December, 2023)](https://blogs.igalia.com/changwoo/sched-ext-a-bpf-extensible-scheduler-class-part-1/)
+- [arighi's blog: Getting started with sched_ext development (April, 2024)](https://arighi.blogspot.com/2024/04/getting-started-with-sched-ext.html)
+- [Changwoo's blog: sched_ext: scheduler architecture and interfaces (Part 2) (June, 2024)](https://blogs.igalia.com/changwoo/sched-ext-scheduler-architecture-and-interfaces-part-2/)
+- [arighi's YT channel: scx_bpfland Linux scheduler demo: topology awareness (August, 2024)](https://youtu.be/R-FEZOveG-I)
+- [David Vernet's talk: Kernel Recipes 2024 - Scheduling with superpowers: Using sched_ext to get big perf gains (September, 2024)](https://youtu.be/Cy7-oqdcUCs?si=bjKu3uidOdIzzAWv)
