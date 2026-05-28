@@ -1,0 +1,140 @@
+---
+title: CachyOS chroot 도우미
+description: 시스템에 더 쉽게 chroot할 수 있도록 도와주는 보조 도구
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import {Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+[cachy-chroot](https://github.com/CachyOS/cachy-chroot)는 기존 CachyOS 또는 Arch 기반 설치 환경에 더 쉽게 chroot할 수 있도록 도와주는 간단한 보조 프로그램입니다.
+이 도구는 시스템에서 발견된 모든 파티션을 나열하며, BTRFS 서브볼륨 나열도 지원합니다.
+또한 `cachy-chroot`는 LUKS를 통한 암호화 시스템도 지원합니다. 각 `fstab` 항목을 지정된 `crypttab`
+항목에 매핑하며, chroot를 종료할 때 모든 LUKS 볼륨을 안전하게 닫습니다.
+
+:::caution[cachy-chroot는 라이브 CachyOS 환경에서 실행하도록 설계되었습니다.]
+:::
+
+:::note
+cachy-chroot는 ZFS를 제외하고 Linux 커널이 지원하는 거의 모든 파일시스템의 마운트를 지원합니다.
+:::
+
+## 사용법
+
+:::tip
+옵션 사이를 이동하려면 방향키를 사용하고, 선택하려면 `ENTER`를 누르세요.
+
+**❯** 기호는 현재 선택된 옵션을 나타냅니다.
+
+**?**는 사용자 입력이 필요한 프롬프트를 나타냅니다.
+:::
+
+<Steps>
+1. CachyOS 라이브 ISO로 부팅합니다.
+2. 터미널을 열고 `sudo su`로 root 사용자로 전환합니다.
+3. 다음 명령을 실행하여 최신 `cachy-chroot`가 설치되어 있는지 확인합니다.
+    ```bash
+    pacman -Sy cachy-chroot
+    ```
+4. 다음을 입력하여 `cachy-chroot`를 실행합니다.
+    ```bash
+    cachy-chroot
+    ```
+    `cachy-chroot`가 사용 가능한 모든 파티션을 스캔하고 나열합니다.
+    <details>
+    <summary>CachyOS BTRFS 설치 환경의 출력 예시</summary>
+        ```bash
+        Info: Found 3 block devices
+        Info: Found partition: Partition: /dev/nvme0n1p1: FS: vfat UUID: EDA6-ED98
+        Info: Found partition: Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+        Info: Found partition: Partition: /dev/nvme0n1p4: FS: btrfs UUID: 66e84339-8c77-4131-afce-50ec2cf67a80
+        ? Select the block device for the root partition (use arrow keys):  ›
+        Partition: /dev/nvme0n1p1: FS: vfat UUID: EDA6-ED98
+        ❯ Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+        ```
+    </details>
+    <details>
+    <summary>EXT4 환경의 출력 예시</summary>
+        ```bash
+        Info: Found 8 block devices
+        Info: Found partition: Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+        Info: Found partition: Partition: /dev/sda2: FS: vfat UUID: CA0D-2D5A
+        Info: Found partition: Partition: /dev/sdb1: FS: ntfs UUID: A4763F77763F48F6
+        Info: Found partition: Partition: /dev/sdc1: FS: ntfs UUID: C4CA216BCA215B46
+        Info: Found partition: Partition: /dev/sdc2: FS: ntfs UUID: 060C28590C284651
+        Info: Found partition: Partition: /dev/sdc3: FS: ntfs UUID: 3A3CF8B13CF86971
+        Info: Found partition: Partition: /dev/sdd1: FS: exfat UUID: 4FDC-0AAB
+        Info: Found partition: Partition: /dev/sdd2: FS: vfat UUID: 3105-B091
+        ? Select the block device for the root partition (use arrow keys):  ›
+        ❯ Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+        Partition: /dev/sda2: FS: vfat UUID: CA0D-2D5A
+        Partition: /dev/sdb1: FS: ntfs UUID: A4763F77763F48F6
+        Partition: /dev/sdc1: FS: ntfs UUID: C4CA216BCA215B46
+        Partition: /dev/sdc2: FS: ntfs UUID: 060C28590C284651
+        Partition: /dev/sdc3: FS: ntfs UUID: 3A3CF8B13CF86971
+        Partition: /dev/sdd1: FS: exfat UUID: 4FDC-0AAB
+        Partition: /dev/sdd2: FS: vfat UUID: 3105-B091
+        ```
+        이 예시에서 root 파티션은 `ext4` 파일시스템을 사용하는 `/dev/sda1`입니다. 다른 파티션은 chroot와 관련이 없습니다.
+    </details>
+5. root 파일시스템이 들어 있는 파티션을 선택합니다.
+    <details>
+    <summary>CachyOS BTRFS 예시</summary>
+        ```bash title="Selecting root partition"
+        ✔ Select the block device for the root partition (use arrow keys):  · Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+        Info: Selected BTRFS partition, mounting and listing subvolumes...
+        Info: Mounting partition /dev/nvme0n1p2 at /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-858f-2e02be61b342-hwAeIm with options: []
+        Info: Unmounting partition at /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-858f-2e02be61b342-hwAeIm
+        ? Do you want to use CachyOS BTRFS preset to auto mount root subvolume? (y/n) › # Enter yes if on CachyOS
+        ```
+        **CachyOS를 BTRFS로 사용 중이라면**, CachyOS BTRFS 프리셋을 사용하기 위해 `y`를 입력하세요. 그러면 root 서브볼륨과 `/home`, `/var`, `/tmp`, `/srv` 같은 다른 중요 서브볼륨이 자동으로 마운트됩니다. 사용자 지정 BTRFS 레이아웃이나 CachyOS가 아닌 시스템을 사용 중이라면, 서브볼륨을 수동으로 선택하기 위해 `n`을 입력하세요.
+    </details>
+    <details>
+    <summary>EXT4 예시</summary>
+            ```bash title="Selecting root partition"
+            ✔ Select the block device for the root partition (use arrow keys):  · Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+            Info: Mounting partition /dev/sda1 at /tmp/cachyos-chroot-root-mount-b7fef200-fbb8-4783-9fad-46c5e8b7ca0e-LtsXXC with options: []
+            Info: Mounting additional partitions based on /etc/fstab...
+            Info: Found 3 entries in /etc/fstab
+            Warning: Partition UUID=b7fef200-fbb8-4783-9fad-46c5e8b7ca0e already mounted, skipping...
+            Info: Mounting partition /dev/sda2 at /tmp/cachyos-chroot-root-mount-b7fef200-fbb8-4783-9fad-46c5e8b7ca0e-LtsXXC/boot with options: []
+            Info: Finished mounting additional partitions
+            ✔ Do you want to mount additional partitions? · no
+            Info: Chrooting into the configured root partition...
+            Info: To exit the chroot, type 'exit' or press Ctrl+D
+            ```
+    </details>
+6. `cachy-chroot`는 root 장치의 `/etc/fstab`에 나열된 모든 파티션과 서브볼륨을 자동으로 마운트하려고 시도합니다. 어떤 파티션의 마운트에 실패하면 알림을 표시하고, 필요한 경우 수동으로 마운트할 수 있는 선택지를 제공합니다. 추가 파티션 마운트를 건너뛰려면 `no`를 선택할 수 있습니다.
+7. **이제 chroot 환경에 들어왔습니다**.
+    ```bash
+    [root@CachyOS /]#
+    ```
+    이제 설치된 시스템으로 부팅한 것처럼 명령을 실행할 수 있습니다. 예를 들어 다음 명령으로 시스템을 업데이트할 수 있습니다.
+    ```bash title="Updating system in chroot"
+    pacman -Syu
+    ```
+    또는 필요에 따라 다른 유지보수 작업을 수행할 수 있습니다.
+8. 작업을 마치면 프롬프트에 `exit`를 입력하거나 키보드에서 `CTRL+D`를 눌러 chroot 환경을 종료합니다.
+    ```bash title="Exiting chroot"
+    exit
+    ```
+9. 종료 후 `cachy-chroot`는 마운트된 파티션을 자동으로 정리하고 모든 LUKS 컨테이너를 닫습니다. 이후 라이브 환경 셸로 돌아갑니다.
+</Steps>
+
+### 문제 해결
+
+- **파티션을 찾을 수 없음:** 설치 환경이 들어 있는 디스크가 연결되어 있고 라이브 시스템에서 인식되는지 확인하세요. `lsblk` 또는 `fdisk -l`로 확인할 수 있습니다.
+- **일부 파티션의 자동 마운트 실패:** chroot 환경 안에서 해당 파티션을 수동으로 마운트해볼 수 있습니다. `cachy-chroot`는 실패를 무시하고 계속 진행합니다.
+
+### FAQ
+
+- **Q: 추가 파티션을 마운트하는 용도는 무엇인가요?**
+  - A: 추가 파티션을 수동으로 마운트해야 하는 사용 사례는 여러 가지가 있습니다.
+    - **fstab 파일이 손상되었거나 없는 경우:** 복구 또는 데이터 복구를 수행하기 위해 `/boot` 또는 `/home` 같은 필요한 파티션을 수동으로 마운트할 수 있습니다.
+    - **파티션 UUID가 변경된 경우:** 파티션의 UUID를 변경해서 시스템이 부팅되지 않는다면, `cachy-chroot`로 파티션을 마운트한 뒤 그에 맞게 fstab을 업데이트할 수 있습니다.
+
+### 더 알아보기
+
+- [Arch Wiki - chroot](https://wiki.archlinux.org/title/Chroot)
+- [cachy-chroot 동영상 시연](https://github.com/user-attachments/assets/29360aaf-b775-4cfa-9051-465ad5360ae8)
