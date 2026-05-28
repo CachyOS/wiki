@@ -1,0 +1,221 @@
+---
+title: 제공되는 부트 매니저
+description: 현재 제공되는 부트 매니저의 설명과 권장 사항
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+---
+
+다양한 장치에서 최상의 경험을 제공하기 위해 CachyOS는 현재 다음 부트 매니저를 제공합니다: **systemd-boot, rEFInd, GRUB, Limine**.
+
+이 위키 문서는 각 부트 매니저의 기능 구성을 설명하고, 어떤 경우에 선택하면 좋은지에 대한 권장 사항을 포함합니다.
+설정 방법은 [부트 매니저 설정](/configuration/boot_manager_configuration)을 참조하세요.
+
+:::caution
+**중요 참고:** 일부 MSI 메인보드는 UEFI 사양을 완전히 준수하지 않는 UEFI 펌웨어를 사용합니다. 이로 인해 GRUB 및 rEFInd를 포함한 특정 부트 매니저에서 호환성 문제가 발생할 수 있습니다.
+
+이러한 문제가 발생한다면 `systemd-boot` 또는 `Limine` 사용을 고려하세요.
+:::
+
+---
+
+## 빠른 기능 비교
+
+<style>{`
+  .bm-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .bm-table th, .bm-table td {
+    padding: 8px 10px;
+    vertical-align: top;
+    word-break: break-word;
+  }
+  /* vertical separators between boot-manager columns */
+  .bm-table th:not(:first-child),
+  .bm-table td:not(:first-child) {
+    border-left: 2px solid var(--ifm-table-border-color, #e5e7eb);
+  }
+  /* bottom rule under header */
+  .bm-table thead th {
+    border-bottom: 2px solid var(--ifm-table-border-color, #e5e7eb);
+  }
+`}</style>
+
+<table className="bm-table">
+  <thead>
+    <tr>
+      <th>기능</th>
+      <th><strong>systemd-boot</strong></th>
+      <th><strong>rEFInd</strong></th>
+      <th><strong>GRUB</strong></th>
+      <th><strong>Limine</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>펌웨어 지원</strong></td>
+      <td>UEFI 전용(BIOS/MBR 미지원)</td>
+      <td>UEFI 전용</td>
+      <td>UEFI &amp; BIOS</td>
+      <td>UEFI &amp; BIOS</td>
+    </tr>
+    <tr>
+      <td><strong><code>/boot</code> 파일시스템 지원</strong></td>
+      <td>펌웨어 지원 범위에 따름(일반적으로 FAT12/16/32); EFI 드라이버 사용 시 추가 지원 가능</td>
+      <td>펌웨어 지원 파일시스템, ext2, ext3, ext4, btrfs, ISO-9660, HFS+, NTFS; EFI 드라이버 사용 시 추가 지원 가능</td>
+      <td>폭넓은 파일시스템 지원(ext*, Btrfs, XFS 등)</td>
+      <td><code>/boot</code>용 FAT12/16/32, ISO9660</td>
+    </tr>
+    <tr>
+      <td><strong>Windows 듀얼 부팅</strong></td>
+      <td>동일한 ESP에 있는 Windows Boot Manager 자동 감지</td>
+      <td>EFI 로더와 커널 자동 감지</td>
+      <td><code>os-prober</code> 또는 수동 설정으로 지원</td>
+      <td>지원됨; Windows Boot Manager 항목은 <code>limine-scan</code>으로 추가 가능</td>
+    </tr>
+    <tr>
+      <td><strong>Btrfs 스냅샷 통합</strong></td>
+      <td>사용자 지정 설정으로 가능(CachyOS에서 제공하지 않음)</td>
+      <td>사용자 지정 설정으로 가능(CachyOS에서 제공하지 않음)</td>
+      <td><code>grub-btrfs-support</code>를 통해 <strong>CachyOS에서 지원</strong></td>
+      <td><code>limine-snapper-sync</code>를 통해 <strong>CachyOS에서 지원</strong></td>
+    </tr>
+    <tr>
+      <td><strong>전체 디스크 암호화(FDE)</strong></td>
+      <td>가능(root 암호화; <code>/boot</code>는 암호화되지 않은 상태로 유지해야 함)</td>
+      <td>가능(root 암호화; <code>/boot</code>는 암호화되지 않은 상태로 유지해야 함)</td>
+      <td><code>cryptodisk</code>를 통한 암호화된 <code>/boot</code> 포함 전체 지원(LUKS1/PBKDF2만 해당; LUKS2 지원은 제한적이며 우회 방법 필요)</td>
+      <td>가능(root 암호화; <code>/boot</code>는 암호화되지 않은 상태로 유지해야 함)</td>
+    </tr>
+    <tr>
+      <td><strong>테마 / UI</strong></td>
+      <td>최소 구성, 테마 없음</td>
+      <td>그래픽 기반, 테마 적용 가능한 UI</td>
+      <td>테마 적용 가능, 클래식 UI</td>
+      <td>테마 적용 가능한 메뉴(스킨)</td>
+    </tr>
+    <tr>
+      <td><strong>CachyOS에서 설정 난이도</strong></td>
+      <td>매우 간단함(CachyOS가 기본적으로 자동 설정)</td>
+      <td>OS 및 커널 자동 감지를 통한 쉬운 설정</td>
+      <td>CachyOS 훅/스크립트로 단순화됨(메뉴에 Btrfs 스냅샷 포함)</td>
+      <td>CachyOS 도구로 단순화됨(항목 도우미 + 스냅샷 메뉴 통합)</td>
+    </tr>
+    <tr>
+      <td><strong>MSI UEFI 특이 사항</strong></td>
+      <td>안정적으로 작동</td>
+      <td>문제가 있을 수 있음(우회 방법 필요)</td>
+      <td>문제가 있을 수 있음</td>
+      <td>안정적으로 작동</td>
+    </tr>
+    <tr>
+      <td><strong>TPM PCR 측정 부팅</strong></td>
+      <td>예, <a href="https://systemd.io/TPM2_PCR_MEASUREMENTS/" target="_blank">내장됨</a></td>
+      <td>systemd-ukify를 사용하면 가능</td>
+      <td>예, <a href="https://www.gnu.org/software/grub/manual/grub/html_node/Measured-Boot.html" target="_blank">내장됨</a></td>
+      <td><a href="https://github.com/fwupd/fwupd/discussions/9568" target="_blank">systemd-ukify를 사용하면 가능</a></td>
+    </tr>
+    <tr>
+      <td><strong>가장 적합한 사용 사례</strong></td>
+      <td>빠르고 단순한 UEFI 구성; MSI 특이 사항에 대한 대체 선택지</td>
+      <td>깔끔한 UI가 있는 멀티 부팅</td>
+      <td>암호화된 <strong>/boot</strong>, BIOS, 또는 가장 넓은 파일시스템 지원이 필요한 경우</td>
+      <td>스냅샷 부팅 + BIOS &amp; UEFI + 체인로딩을 원하는 현대적인 구성</td>
+    </tr>
+  </tbody>
+</table>
+
+## 부트 매니저 세부 정보
+
+### systemd-boot
+
+systemd 계열의 일부인 systemd-boot는 최대한 단순하도록 만들어졌습니다. 따라서 UEFI 기반 시스템만 지원합니다. 이 단순하면서도 효율적인 설계 덕분에 안정적이고 빠르지만, 다른 부트 매니저가 지원하는 고급 기능은 일부 포기해야 합니다.
+
+#### 장점
+- 설정이 매우 간단합니다.
+- 부트 항목이 여러 파일로 분리되어 있어 관리하기 쉽습니다.
+- 다른 부트 매니저 사용 시 UEFI 문제가 발생하는 일부 MSI 보드와의 호환성을 보장합니다.
+- CachyOS에서는 설정이 기본적으로 자동 생성됩니다.
+- 부팅 중 TPM PCR이 측정됩니다.
+
+#### 단점
+- BIOS/MBR을 지원하지 않습니다.
+- 매우 기본적인 구성입니다: 테마나 사용자 지정 기능이 없습니다.
+- 펌웨어의 기본 파일시스템(FAT12/16/32)을 넘어서는 부트 파일시스템을 사용하는 경우, 별도의 ESP 및 [XBOOTLDR](https://wiki.archlinux.org/title/Systemd-boot#Installation_using_XBOOTLDR) 파티션과 EFI 드라이버를 수동으로 추가해야 합니다.
+- 자체 ESP 또는 XBOOTLDR 파티션 이외의 파티션에서는 부트 이미지를 찾을 수 없습니다.
+- 그렇게 하도록 설정하지 않으면 설정이 자동 생성되지 않습니다.
+- 커널 이미지를 root가 아닌 부트 파티션에 저장해야 하는 요구 사항 때문에 Btrfs 스냅샷 롤백을 기본적으로 지원하지 않습니다.
+  - 스냅샷 부팅은 사용자 지정 설정에서만 가능합니다(CachyOS에서 제공하지 않음).
+
+---
+
+### rEFInd
+
+rEFIt의 포크인 rEFInd는 원래 MacOS 사용자가 더 쉽게 멀티 부팅할 수 있도록 만들어졌습니다. 그러나 rEFInd는 하드웨어에 구애받지 않는 방식으로 발전했으며, 어떤 시스템에서든 멀티 부팅을 위한 훌륭한 선택지가 되었습니다. rEFInd의 핵심 장점은 부팅 시 모든 저장 장치를 스캔하고, 발견된 각 OS/커널에 해당하는 항목을 표시할 수 있다는 점입니다.
+
+#### 장점
+- 저장 장치의 모든 운영체제와 커널을 자동 감지합니다.
+- 수동 설정이 거의 또는 전혀 필요하지 않습니다.
+- MacOS 부트 선택기를 연상시키는 그래픽 UI를 제공합니다.
+- 선택적 터치스크린 지원을 포함해 테마 지원이 뛰어납니다.
+- EFI 파일시스템(FAT12/16/32)은 물론 EXT4 및 BTRFS에서도 부트 이미지를 읽을 수 있습니다. `efifs` 패키지의 EFI 드라이버를 설치하면 추가 파일시스템 지원을 활성화할 수 있습니다.
+
+#### 단점
+- BIOS 시스템을 지원하지 않습니다.
+- 일부 MSI 보드와 호환되지 않습니다(UEFI 사양 위반 때문).
+  - 우회 방법으로 수정할 수 있지만 추가 단계가 필요합니다.
+- TPM PCR이 측정되지 않습니다. <a href="https://github.com/fwupd/fwupd/wiki/TPM-PCR0-differs-from-reconstruction">TPM PCR0 재구성 테스트에 실패합니다</a>.
+  - UEFI stub으로 systemd-stub을 사용하는 UKI로 부팅하면 수정할 수 있습니다. systemd-ukify로 이를 만들 수 있습니다.
+  - 또 다른 우회 방법은 TPM PCR을 측정하는 다른 부트로더(예: systemd-boot, GRUB)를 체인로딩하는 것입니다.
+---
+
+### GRUB
+
+GRUB은 제공되는 부트 매니저 중 가장 오래된 것입니다. 매우 큰 기능 세트를 갖추고 있으며, 거의 모든 시스템에서 작동하고, 여전히 가장 널리 사용되는 Linux 부트 매니저입니다.
+
+#### 장점
+- 거의 모든 Linux 파일시스템을 지원합니다.
+- 널리 사용됩니다 — 문서와 커뮤니티 도움을 풍부하게 찾을 수 있습니다.
+- 암호화된 `/boot` 파티션을 지원합니다.
+- Btrfs 스냅샷 부팅을 지원합니다(CachyOS에서는 `grub-btrfs-support` 사용).
+- BIOS 및 UEFI 시스템을 지원합니다.
+- UI가 다소 오래되어 보이지만 테마 지원을 사용할 수 있습니다.
+- 부팅 중 TPM PCR이 측정됩니다.
+
+#### 단점
+- 크고 복잡하며, 많은 파일시스템 드라이버를 포함합니다.
+- systemd-boot, rEFInd, Limine보다 눈에 띄게 느립니다.
+- 일부 MSI 보드와 호환되지 않습니다(UEFI 사양 위반).
+
+---
+
+### Limine
+
+Limine은 현대적이고 고급 기능을 갖춘 이식성 높은 멀티프로토콜 부트로더입니다. Limine 부트 프로토콜의 참조 구현 역할을 하며, Linux는 물론 다른 로더의 체인로딩도 지원합니다.
+
+#### 장점
+- Multiboot2와 Linux 부트 프로토콜을 포함한 여러 부트 프로토콜을 지원합니다.
+- UEFI와 BIOS 시스템 모두에서 부팅할 수 있습니다.
+- GRUB과 유사한 테마 기능을 제공합니다.
+- `limine-snapper-sync`를 통해 Btrfs 스냅샷을 지원하며, CachyOS에서 Btrfs 사용 시 기본적으로 활성화됩니다.
+
+#### 단점
+- `/boot`는 FAT12/16/32 또는 ISO9660을 사용해야 합니다. 다른 파일시스템은 추가 설정이 필요합니다.
+- UEFI NVRAM에 항목을 자동으로 추가하지 않습니다. 이는 `efibootmgr`로 수동 수행하거나, CachyOS에 사전 설치된 `limine-entry-tool`로 자동 처리해야 합니다.
+- 일부 Chromebook 등에서 사용되는 UFS(Universal Flash Storage)에서는 작동하지 않습니다.
+- TPM PCR이 측정되지 않습니다. <a href="https://github.com/fwupd/fwupd/wiki/TPM-PCR0-differs-from-reconstruction">TPM PCR0 재구성 테스트에 실패합니다</a>.
+  - UEFI stub으로 systemd-stub을 사용하는 UKI로 부팅하면 수정할 수 있습니다. systemd-ukify로 이를 만들 수 있습니다(<a href="https://github.com/fwupd/fwupd/discussions/9568" target="_blank">여기 참조</a>).
+  - 또 다른 우회 방법은 TPM PCR을 측정하는 다른 부트로더(예: systemd-boot, GRUB)를 체인로딩하는 것입니다.
+
+---
+
+## 요약
+
+- 암호화된 `/boot`, BIOS 호환성, 또는 안정적이고 성숙한 부트 매니저에서 Btrfs 스냅샷을 원한다면 GRUB을 선택하세요.
+
+- Btrfs 스냅샷 통합이 기본 제공되는 현대적인 부트로더와 BIOS/UEFI 동시 지원, Windows 듀얼 부팅(**limine-scan** 사용)을 원한다면 Limine을 선택하세요.
+
+- 깔끔한 그래픽 인터페이스와 UEFI 시스템에서의 자동 멀티 부팅 감지를 원한다면 rEFInd를 선택하세요.
+
+- 가장 단순한 구성을 선호하고 스냅샷이나 고급 기능이 필요하지 않다면 systemd-boot를 선택하세요. UEFI 문제가 있는 MSI 메인보드에서 가장 신뢰할 수 있는 대체 선택지이기도 합니다.
