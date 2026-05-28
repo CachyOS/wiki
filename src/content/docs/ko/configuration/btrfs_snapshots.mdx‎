@@ -1,0 +1,478 @@
+---
+title: Btrfs 스냅샷
+description: CachyOS에서 Btrfs 스냅샷 관리하기
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 5
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+import MultipleImageComponent from '~/components/multiple-images-component.astro';
+
+## 소개
+
+:::caution
+Btrfs 스냅샷을 정기 백업의 대체 수단으로 생각하지 마세요. 중요한 데이터는 항상 별도의 적절한 백업을 준비해 두어야 합니다.
+:::
+
+### Btrfs 스냅샷이란?
+
+기본부터 시작해 보겠습니다.
+
+Btrfs 스냅샷은 서브볼륨 기능에서 비롯됩니다. 서브볼륨이 무엇인지 궁금할 수 있습니다. 서브볼륨은 Btrfs 파일 시스템 안에 있는 별도의 파일 시스템처럼 생각하면 됩니다. 이를 통해 데이터를 여러 부분으로 나누어 관리할 수 있습니다. 그래서 CachyOS에서는 예를 들어 다음과 같은 디렉터리에 서로 다른 서브볼륨을 사용합니다.
+
+- 루트 파일 시스템: (`/`)
+- 루트 디렉터리: (`/root`)
+- 홈 디렉터리: (`/home`)
+- Var 디렉터리: (`/var/cache`, `/var/tmp`, `/var/log`)
+- Srv 디렉터리: (`/srv`)
+
+이 디렉터리들을 서로 다른 서브볼륨으로 구성하면 각각을 독립적으로 관리하고, 서로 다른 설정을 적용하며, 무엇보다도 각 서브볼륨의 스냅샷을 만들 수 있습니다.
+
+여기서 스냅샷이 만들어집니다. 스냅샷은 본질적으로 특정 시점의 서브볼륨을 읽기 전용 또는 읽기-쓰기(**기본값**) 형태로 복사한 것입니다. 즉, 그 순간의 파일 시스템 상태와 모든 파일 및 디렉터리를 캡처할 수 있습니다.
+
+따라서 스냅샷은 특정 시점의 기준점이 됩니다. 대상 파일이 스냅샷 데이터와 달라지면 스냅샷은 원래 파일을 유지하고, 대상 쪽에는 변경 사항이 반영된 새 파일이 만들어지며, 스냅샷은 계속 동일하게 남습니다. 그래서 일부 사용자는 스냅샷을 “시간 속에 얼려 둔 데이터”라고 부르기도 합니다.
+
+파일 시스템의 특정 순간을 사진으로 찍어 두고, 필요할 때 언제든 그 사진으로 돌아갈 수 있다고 생각하면 됩니다.
+
+스냅샷의 핵심 장점 중 하나는 변경이 발생하기 전까지 원본 데이터를 참조만 하므로 공간 효율이 매우 뛰어나다는 점입니다.
+
+하지만 이 지점에서 스냅샷은 전통적인 백업과 달라집니다. 예를 들어 디스크가 고장 났다고 가정해 보겠습니다. 전통적인 백업이 있다면 해당 백업에서 데이터를 복원할 수 있습니다. 하지만 고장 난 디스크 안에 스냅샷만 있었다면, 스냅샷도 같은 디스크에 저장되어 있으므로 더 이상 접근할 수 없습니다.
+
+### 스냅샷이 유용한 복구 상황과 유용하지 않은 상황
+
+다음 상황에서 복구에 유용합니다.
+
+- 시스템 업데이트 이후 손상되었거나 문제가 생긴 경우.
+- 시스템 부팅을 막는 잘못된 설정.
+- 실수로 파일을 삭제하거나 수정한 경우.
+
+다음 상황에서는 복구에 유용하지 않습니다.
+
+- 부트로더 문제.
+- 하드웨어 고장(예: 고장 난 하드 드라이브).
+
+## 스냅샷 관리하기(GUI 및 CLI)
+
+:::tip
+CachyOS에는 기본적으로 `snap-pac`이 포함되어 있으므로, `pacman`을 사용해 패키지를 설치, 업그레이드 또는 제거할 때 Snapper가 작업 전후로 스냅샷을 자동 생성합니다. 즉, 이러한 작업에 대해 수동으로 스냅샷을 만들 필요가 없으며 Snapper가 대신 처리합니다.
+:::
+
+:::note
+GRUB 부트로더를 사용한다면, BTRFS 스냅샷을 자동으로 감지하고 GRUB 메뉴에 추가하는 데 필요한 모든 스크립트와 훅을 사용하기 위해 `grub-btrfs-support`가 설치되어 있는지 확인하세요.
+```bash
+sudo pacman -Syu grub-btrfs-support
+```
+:::
+
+스냅샷을 관리하기 전에 고려할 몇 가지 사항입니다. **CLI와 GUI 방식 모두에 적용됩니다.**
+
+- 보관할 스냅샷은 최대 10개를 권장합니다. 그 이상은 스냅샷이 너무 오래되어 유용성이 떨어집니다. 최악의 경우 오래된 스냅샷으로 되돌리면 최신 소프트웨어 버전과의 호환성 문제가 생길 수 있습니다.
+- 스냅샷은 기본적으로 복구 목적으로 사용하는 것이 가장 적합합니다. 다만 전체 스냅샷을 복원하지 않고 파일 변경을 되돌리는 용도로도 사용할 수 있습니다.
+- 스냅샷을 만들 때 의미 있는 설명을 추가하세요. 나중에 각 스냅샷의 목적을 식별하는 데 도움이 됩니다.
+
+### Btrfs Assistant(GUI)
+
+진행하기 전에 자동 스냅샷 관리 기능을 활용할 수 있도록 `btrfsmaintenance`가 설치되어 있는지 확인하세요.
+
+GUI를 통해 Btrfs, 스냅샷 등을 관리하고 싶은 사용자에게 [Btrfs Assistant](https://gitlab.com/btrfs-assistant/btrfs-assistant)는 초보자에게도 훌륭한 프로젝트입니다.
+
+#### 자동 스냅샷 정리 설정
+
+Btrfs Assistant를 사용해 자동 스냅샷 정리를 설정하겠습니다. 이렇게 하면 수동 개입 없이 스냅샷을 효과적으로 관리할 수 있습니다.
+
+다음 단계를 따르세요.
+
+<Steps>
+
+    1. 터미널을 열고 다음 명령을 실행하여 Btrfs Assistant를 시작합니다.
+        ```bash
+        btrfs-assistant-launcher
+        ```
+
+        또는:
+
+        ```bash
+        sudo -E btrfs-assistant
+        ```
+
+  2. Snapper Settings 탭으로 이동합니다.
+
+      <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperSettingsTab.png')} />
+      **Snapshot Retention** 설정을 다음과 같이 수정합니다.
+      - `root` 구성이 선택되어 있는지 확인합니다.
+      - Hourly, Daily, Weekly, Monthly, Yearly에 `0` 값을 입력합니다.
+      - `Enable timeline snapshots` 선택을 해제합니다.
+      - `Number`에 `10` 값을 입력합니다.
+      - `Snapper cleanup enabled`에 ✅를 추가합니다.
+      - 오른쪽 위의 `Save` 버튼과 오른쪽 아래의 `Apply systemd changes`를 클릭합니다.
+      **이제 snapper-cleanup.timer가 활성화되어 설정에 따라 오래된 스냅샷을 자동으로 정리합니다.**
+      :::caution
+      방금 적용한 조정이 올바르게 반영되었는지 Snapper 설정을 확인하세요.
+      ```bash
+      sudo nano /etc/snapper/configs/root
+      ```
+      예상 출력 일부:
+      ```text
+      # limit for number cleanup
+      NUMBER_MIN_AGE="3600"
+      NUMBER_LIMIT="10"
+      NUMBER_LIMIT_IMPORTANT="10"
+      ```
+      `NUMBER_LIMIT`와 `NUMBER_LIMIT_IMPORTANT`에 `10` 값이 들어 있지 않다면 그에 맞게 수정하세요.
+      `CTRL + O`, `Enter`, `CTRL + X`를 눌러 파일을 저장하고 종료합니다.
+      :::
+</Steps>
+
+#### Btrfs Assistant로 스냅샷 제거하기
+
+<Steps>
+    1. Btrfs Assistant를 엽니다.
+        ```bash
+        btrfs-assistant-launcher
+        ```
+
+        또는:
+
+        ```bash
+        sudo -E btrfs-assistant
+        ```
+    2. Snapper Settings 탭으로 이동합니다.
+        <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperTab.png')} />
+    3. 목록에서 삭제하려는 스냅샷을 선택합니다.
+        :::tip
+        - 여러 스냅샷을 선택하려면 `CTRL`을 누른 상태로 선택합니다.
+        - 일정 범위의 스냅샷을 선택하려면 `SHIFT`를 누른 상태로 선택합니다.
+        :::
+    4. 창 상단에 있는 `Delete` 버튼을 클릭합니다.
+    5. 변경 사항이 반영되도록 부트로더 항목을 다시 생성합니다.
+        <details>
+            <summary>systemd-boot</summary>
+            ```bash
+            sudo sdboot-manage gen
+            ```
+        </details>
+        <details>
+            <summary>GRUB</summary>
+            ```bash
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+        </details>
+        <details>
+            <summary>Limine</summary>
+            ```bash
+            sudo limine-mkinitcpio
+            ```
+        </details>
+</Steps>
+
+무엇을 할 수 있는지 더 자세히 알아보려면 [공식 Wiki](https://gitlab.com/btrfs-assistant/wiki)를 확인하세요.
+
+### Snapper(CLI)
+
+이제 Btrfs 스냅샷이 무엇이고 어떤 경우에 사용하는지 살펴보았으니, [openSUSE](https://www.opensuse.org/)의 [Arvin Schnell](https://github.com/aschnell)이 만든 [Snapper](http://snapper.io/)라는 도구로 스냅샷을 관리하는 방법을 살펴보겠습니다.
+
+<details>
+<summary>CachyOS는 기본적으로 다음 Snapper 설정을 사용합니다.</summary>
+
+```text
+# subvolume to snapshot
+SUBVOLUME="/"
+
+# filesystem type
+FSTYPE="btrfs"
+
+# btrfs qgroup for space aware cleanup algorithms
+QGROUP=""
+
+# fraction or absolute size of the filesystems space the snapshots may use
+SPACE_LIMIT="0.5"
+
+# fraction or absolute size of the filesystems space that should be free
+FREE_LIMIT="0.2"
+
+# users and groups allowed to work with config
+ALLOW_USERS=""
+ALLOW_GROUPS=""
+
+# sync users and groups from ALLOW_USERS and ALLOW_GROUPS to .snapshots
+# directory
+SYNC_ACL="no"
+
+# start comparing pre- and post-snapshot in background after creating
+# post-snapshot
+BACKGROUND_COMPARISON="yes"
+
+# run daily number cleanup
+NUMBER_CLEANUP="yes"
+
+# limit for number cleanup
+NUMBER_MIN_AGE="1800"
+NUMBER_LIMIT="50"
+NUMBER_LIMIT_IMPORTANT="15"
+
+# create hourly snapshots
+TIMELINE_CREATE="no"
+
+# cleanup hourly snapshots after some time
+TIMELINE_CLEANUP="yes"
+
+# limits for timeline cleanup
+TIMELINE_MIN_AGE="1800"
+TIMELINE_LIMIT_HOURLY="5"
+TIMELINE_LIMIT_DAILY="7"
+TIMELINE_LIMIT_WEEKLY="0"
+TIMELINE_LIMIT_MONTHLY="0"
+TIMELINE_LIMIT_YEARLY="0"
+
+# cleanup empty pre-post-pairs
+EMPTY_PRE_POST_CLEANUP="yes"
+
+# limits for empty pre-post-pair cleanup
+EMPTY_PRE_POST_MIN_AGE="1800"
+```
+
+</details>
+
+:::caution
+CachyOS의 기본 Snapper 설정은 루트 서브볼륨(`/`)만 다룹니다. Snapper로 관리하고 싶은 다른 서브볼륨이 있다면 각 서브볼륨에 대해 별도의 설정을 만들어야 합니다.
+
+이 설정은 효과를 높이기 위해 조정이 필요합니다.
+:::
+
+다음은 가장 자주 사용하는 Snapper 명령 목록입니다.
+
+:::note
+`< >`는 적절한 값으로 바꾸어야 하는 자리 표시자를 의미합니다.
+:::
+
+<details>
+    <summary>현재 설정 가져오기:</summary>
+    ```bash
+    sudo snapper get-config
+    ```
+    <details>
+        <summary>출력 예시:</summary>
+        ```bash
+        ❯ snapper list-configs
+        Config │ Subvolume
+        ───────┼──────────
+        root   │ /
+        ```
+    </details>
+</details>
+
+<details>
+    <summary>사용 가능한 스냅샷과 세부 정보 나열:</summary>
+    ```bash
+    sudo snapper list
+    ```
+    <details>
+        <summary>출력 예시:</summary>
+        ```bash
+          # │ Type   │ Pre # │ Date                     │ User │ Cleanup │ Description                                                              │ Userdata
+        ────┼────────┼───────┼──────────────────────────┼──────┼─────────┼──────────────────────────────────────────────────────────────────────────┼─────────
+        0   │ single │       │                          │ root │         │ current                                                                  │
+        715 │ pre    │       │ Thu 22 Jan 2026 16:14:07 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        716 │ post   │   715 │ Thu 22 Jan 2026 16:14:25 │ root │ number  │ docker-buildx lilv sof-firmware zed                                      │
+        717 │ pre    │       │ Sat 24 Jan 2026 11:19:48 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        718 │ post   │   717 │ Sat 24 Jan 2026 11:20:19 │ root │ number  │ bpf cachyos-hello cachyos-wallpapers cpupower jdk-openjdk ldb less libev │
+        719 │ pre    │       │ Sat 24 Jan 2026 11:20:31 │ root │ number  │ pacman -U --config /etc/pacman.conf -- /home/mario/.cache/yay/visual-s   │
+        720 │ post   │   719 │ Sat 24 Jan 2026 11:20:36 │ root │ number  │ visual-studio-code-bin                                                   │
+        721 │ pre    │       │ Sat 24 Jan 2026 20:46:40 │ root │ number  │ pacman -Syu plasma-login-manager                                         │
+        722 │ post   │   721 │ Sat 24 Jan 2026 20:46:48 │ root │ number  │ cmake fastfetch harfbuzz harfbuzz-icu jdk21-openjdk lib32-harfbuzz lib32 │
+        723 │ pre    │       │ Sat 24 Jan 2026 20:46:53 │ root │ number  │ pacman -R sddm-kcm cachyos-themes-sddm sddm                              │
+        724 │ post   │   723 │ Sat 24 Jan 2026 20:46:56 │ root │ number  │ cachyos-themes-sddm sddm sddm-kcm                                        │
+        725 │ pre    │       │ Sun 25 Jan 2026 08:05:05 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        726 │ post   │   725 │ Sun 25 Jan 2026 08:05:11 │ root │ number  │ plasma-login-manager                                                     │
+        727 │ pre    │       │ Sun 25 Jan 2026 15:55:28 │ root │ number  │ pacman -S --config /etc/pacman.conf -- cachyos-extra-znver4/caligula     │
+        728 │ post   │   727 │ Sun 25 Jan 2026 15:55:30 │ root │ number  │ caligula                                                                 │
+      ```
+      - 열 요약은 다음과 같습니다.
+        - `#`: 다른 명령에서 사용하는 스냅샷 번호를 나타냅니다.
+        - `Type`: 스냅샷이 단일 스냅샷인지, pre/post 쌍의 일부인지 나타냅니다.
+            - `single`: 다른 스냅샷과 특별한 관계가 없는 스냅샷입니다.
+            - `pre`: 파일 편집이나 패키지 설치 같은 시스템 변경 전에 만들어지는 스냅샷입니다.
+            - `post`: 이름 그대로 시스템 변경이 발생한 뒤에 만들어지는 스냅샷입니다. 해당하는 `pre` 스냅샷과 연결됩니다.
+        - `Pre #`: `post` 스냅샷의 경우, 이 열은 대응하는 `pre` 스냅샷 번호를 나타냅니다.
+        - `Date`: 스냅샷이 생성된 날짜와 시간입니다.
+        - `User`: 스냅샷을 생성한 사용자입니다.
+        - `Cleanup`: 스냅샷에 적용된 정리 알고리즘을 나타냅니다.
+            - Snapper에는 `number`, `timeline`, empty-pre-post 같은 여러 정리 알고리즘이 있습니다. 이 예시에서는 `number` 알고리즘이 사용되며, 이는 미리 정의된 제한에 따라 오래된 스냅샷이 삭제된다는 의미입니다.
+            - timeline: 스냅샷은 나이와 빈도에 따라 정리됩니다.
+            - empty-pre-post: 차이가 비어 있는 pre/post 스냅샷 쌍을 삭제합니다.
+        - `Description`: 스냅샷에 대한 짧은 설명으로, 보통 생성 이유를 나타냅니다.
+        - `Userdata`: 스냅샷과 연결된 추가 사용자 정의 데이터입니다.
+        출력 열에 대한 자세한 내용
+    </details>
+</details>
+
+<details>
+    <summary>새 스냅샷 만들기:</summary>
+    ```bash
+    sudo snapper create --type single --description "My Snapshot Description"
+    ```
+</details>
+
+<details>
+    <summary>스냅샷 수정하기:</summary>
+    ```bash
+    sudo snapper modify <option> <snapshot_number>
+    ```
+    <details>
+        <summary>사용 가능한 옵션:</summary>
+        ```bash
+        Options for 'modify' command:
+            --description, -d <description>  Description for snapshot.
+            --cleanup-algorithm, -c <algo>   Cleanup algorithm for snapshot.
+            --userdata, -u <userdata>        Userdata for snapshot.
+            --read-only                      Set snapshot read-only.
+            --read-write                     Set snapshot read-write.
+            --default                        Set snapshot as default snapshot.
+        ```
+        <details>
+            <summary>예시: 스냅샷 729의 설명 수정:</summary>
+            ```bash
+            sudo snapper modify 729 --description 'My New Snapshot Description'
+            ```
+        </details>
+    </details>
+</details>
+
+<details>
+<summary>스냅샷 삭제:</summary>
+:::note
+스냅샷 0은 파일 시스템의 현재 상태를 나타내므로 삭제할 수 없습니다.
+:::
+    <details>
+    <summary>단일 스냅샷 삭제:</summary>
+    ```bash
+    sudo snapper delete <snapshot_number>
+    ```
+    </details>
+    <details>
+    <summary>스냅샷 범위 삭제:</summary>
+    ```bash
+    sudo snapper delete 718-721
+    ```
+    스냅샷 718, 719, 720, 721이 삭제됩니다.
+    </details>
+</details>
+
+#### Snapper 문서
+
+[공식 Snapper 명령 man 페이지:](http://snapper.io/manpages/snapper.html#global_options)
+
+[Snapper 설정 파일 가이드:](http://snapper.io/manpages/snapper-configs.html)
+
+[Arch Wiki 가이드:](https://wiki.archlinux.org/title/Snapper)
+
+### Limine 권장 사항 및 팁
+
+#### Limine 부트로더 스냅샷 표시 설정 조정
+
+- Limine 부트로더 메뉴에 표시되는 스냅샷 수를 제한하여 메뉴가 복잡해지지 않도록 합니다.
+
+<Steps>
+    1. limine-snapper-sync 설정 파일을 백업합니다.
+        ```bash
+        sudo cp /etc/limine-snapper-sync.conf /etc/limine-snapper-sync.conf.orig
+        ```
+    2. limine-snapper-sync 설정 파일을 편집합니다.
+        ```bash
+        sudo nano /etc/limine-snapper-sync.conf
+        ```
+        예상 출력 일부:
+        ```bash
+        ### Max Snapshot Entries
+        ### Sets the limit for how many snapshot entries show up in the boot menu.
+        ### This depends on the size of your FAT32 boot partition and how many different kernel and module versions you want to keep.
+        ### A larger FAT32 boot partition allows more snapshot entries.
+        MAX_SNAPSHOT_ENTRIES=10
+        ```
+        선택적으로 Snapshot Name Format을 조정합니다.
+        ```bash
+        ### Snapshot Name Format
+        ### Choose a format for how snapshot entries look in the Limine bootloader:
+        ### 0. ID=111 2023-12-20 10:59:59 (default)
+        ### 1. 111│2023-12-20 10:59:59
+        ### 2. 111 │ 2023-12-20 10:59:59
+        ### 3. 2023-12-20 10:59:59│111
+        ### 4. 2023-12-20 10:59:59 │ 111
+        ### 5. 2023-12-20 10:59:59
+        ### 6. 111
+        ### 7. 111│snapshot description
+        ### 8. 2023-12-20 10:59:59│snapshot description
+        ### 9. │snapshot description
+        SNAPSHOT_FORMAT_CHOICE=8
+        ```
+        `8`은 스냅샷 설명과 함께 날짜 및 시간을 표시하므로 좋은 선택입니다.
+    3. `CTRL+O`, `Enter`, `CTRL+X`를 눌러 파일을 저장하고 종료합니다.
+</Steps>
+
+### 스냅샷에서 복원하기
+
+:::caution
+복원하려는 스냅샷에 커널 업데이트가 포함되어 있다면 롤백할 수 없습니다.
+:::
+
+<details>
+    <summary>Limine</summary>
+    <Steps>
+        1. Limine 부트로더 메뉴에서 Snapshots 메뉴로 이동합니다.
+            <ImageComponent imgsrc={import('~/assets/images/limine-snapshotMenu-1.jpg')} />
+        2. 복원하려는 스냅샷과 커널을 선택합니다.
+            <MultipleImageComponent
+                images={[
+                import('~/assets/images/limine-snapshotMenu-2.jpg'),
+                import('~/assets/images/limine-snapshotMenu-3.jpg')]}
+            />
+        3. 이제 시스템은 `read-only mode` 상태입니다. 스냅샷이 감지되었으며 해당 스냅샷에서 복원할지 묻는 팝업 알림이 나타납니다.
+            <ImageComponent imgsrc={import('~/assets/images/kde-snapshot-popup.png')} />
+        4. `Restore now`를 클릭합니다. 프롬프트가 표시된 터미널 창이 열리고 몇 가지 확인을 요청합니다.
+            ```bash title="Example Restore Prompt"
+            Snapshot ID    : 2
+            Date           : 2026-01-26 11:19:14
+            Description    : nc-git
+            Restore method : replace
+
+            Confirm restore of snapshot 2 using the "replace" method?
+            Type [y]es to restore, [l]ist to display all snapshots, or [c]ancel to abort.
+
+            Your input: yes
+
+            Enter a description for the "backup" of the subvolume: @
+
+            Your input: @
+            ```
+          5. `yes`를 입력하고, 선택적으로 백업 스냅샷에 대한 설명을 추가합니다.
+          6. 복원 과정이 시작됩니다. 완료되면 새 프롬프트에서 다시 yes를 입력하여 시스템을 재부팅합니다.
+              ```bash
+              The restore is complete. Please reboot now:
+              Type [y]es to reboot, [n]o or [c]ancel to abort rebooting.
+
+              Your input: yes
+              ```
+    </Steps>
+</details>
+
+<details>
+    <summary>GRUB</summary>
+    <Steps>
+        1. GRUB 부트로더 메뉴에서 복원하려는 스냅샷과 커널로 부팅합니다.
+        2. 부팅이 완료되면 Btrfs Assistant를 엽니다.
+            ```bash
+            btrfs-assistant-launcher
+            ```
+
+            또는:
+
+            ```bash
+            sudo -E btrfs-assistant
+            ```
+        3. Snapper 탭 → “Browse/Restore” 탭으로 이동한 뒤, 부팅한 스냅샷을 선택합니다.
+            <ImageComponent imgsrc={import('~/assets/images/btrfs-assistant-example.png')} />
+        4. `Restore` 버튼을 클릭하고 변경 사항을 적용하기 위해 시스템을 재부팅합니다.
+    </Steps>
+</details>
