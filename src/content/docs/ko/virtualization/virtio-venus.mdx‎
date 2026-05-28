@@ -1,0 +1,61 @@
+---
+title: Virtio-Venus
+description: Vulkan을 통한 3D 가속
+---
+
+## 사용 사례:
+- **네이티브에 가까운 3D 가속**
+
+**Linux**, **BSD** 계열, **Android**처럼 `libvulkan`을 사용하는 운영체제에서는 VM의 호출을 Vulkan으로 변환한 뒤,
+이를 GPU로 직접 전달하고 다시 되돌려 받는 방식으로, GPU를 VM에 직접 패스스루하지 않고도 네이티브에 가까운
+성능을 얻을 수 있습니다.
+
+아쉽게도 **Virtio-Venus**는 **VMM**에 포함되어 있지 않으므로 **qemu-cli**를 사용해야 합니다.
+사용자는 VM에 지정한 이름과 VM의 위치를 확인해 두어야 합니다.
+
+## qemu-cli에서 Virtio-Venus 사용하기:
+사용 가능한 VM을 설치한 뒤에는 터미널을 열고 가상 머신용 qemu-cli 명령을 만들 수 있습니다.
+아래는 제 CachyOS VM 예시입니다.
+
+```sh
+qemu-system-x86_64                                                                             \
+    -enable-kvm                                                                                \
+    -M q35                                                                                     \
+    -smp 6                                                                                     \
+    -m 12G                                                                                     \
+    -cpu host                                                                                  \
+    -net nic,model=virtio                                                                      \
+    -net user,hostfwd=tcp::2222-:22                                                            \
+    -device virtio-sound-pci,audiodev=my_audiodev -audiodev pipewire,id=my_audiodev            \
+    -device virtio-vga-gl,hostmem=4G,blob=true,venus=true                                      \
+    -vga none                                                                                  \
+    -display gtk,gl=on,show-cursor=on                                                          \
+    -usb -device usb-tablet                                                                    \
+    -object memory-backend-memfd,id=mem1,size=12G                                              \
+    -machine memory-backend=mem1                                                               \
+    -drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd   \
+    -drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd              \
+    -drive file=.local/share/libvirt/images/archlinux.qcow2
+```
+
+## 설명:
+
+- `-smp 6`은 CPU 코어 6개를 의미합니다.
+- `-m 12G`는 RAM 12GB를 의미합니다.
+- `-net user,hostfwd=tcp::2222-:22`는 호스트의 포트 2222가 VM의 포트 22로 전달된다는 뜻입니다.
+따라서 어떤 장치에서 VM으로 SSH 연결을 하려면 다음과 같이 실행하면 됩니다.
+
+```sh
+ssh -p 2222 vmusername@vmipaddress
+```
+
+- `-device virtio-vga-gl,hostmem=4G,blob=true,venus=true`는 Venus 드라이버입니다. 아쉽게도 아직
+virt-manager에는 포함되어 있지 않습니다. 향후 포함되면 사용자 모드 관련 내용을 제외하고 이 섹션 전체가 대체될 것입니다.
+- `-hostmem=4G`는 VM이 GPU의 VRAM을 최대 4GB까지 사용할 수 있도록 허용한다는 의미입니다.
+- `-object memory-backend-memfd,id=mem1,size=12G`에서 size 값은 VM에 할당한 RAM 용량입니다. 제 경우에는 12GB입니다.
+- `-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd`는 VM의 펌웨어
+파일이며, 여기에 적힌 것은 해당 파일의 경로입니다.
+- `-drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd`는 VM의 NVRAM입니다. 이 항목이 없거나
+읽기 전용으로 설정되어 있으면 VM이 실행되지 않습니다.
+- `-drive file=.local/share/libvirt/images/archlinux.qcow2`는 .qcow2 파일, 즉 VM 저장소의 경로입니다.\
+(이 경우 제 오디오 장치는 `ich9`가 아니라 `pipewire`이지만, 이 부분은 중요하지 않습니다.)
