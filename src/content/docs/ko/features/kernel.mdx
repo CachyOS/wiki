@@ -1,0 +1,165 @@
+---
+title: CachyOS 커널
+description: CachyOS 커널의 기능과 변경 사항
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+CachyOS 커널은 업스트림의 개선 사항, 구성, 패치를 활용하는 맞춤형 커널입니다.
+
+## 기능
+
+### 성능 최적화
+
+- **고급 컴파일**: GCC와 Clang 컴파일러를 모두 지원하는, 높은 수준으로 사용자 지정 가능한 PKGBUILD
+- **링크 타임 최적화(LTO)**: 더 나은 성능을 위해 Thin LTO가 기본으로 활성화됨
+- **프로파일 기반 최적화**: 최적의 코드 생성을 위한 AutoFDO + Propeller 프로파일링([자세히 알아보기](https://cachyos.org/blog/2411-kernel-autofdo/))
+- **커널 제어 흐름 무결성(kCFI)**: 향상된 보안을 위해 LLVM 사용 시 이용 가능
+- **타이머 주파수 옵션**: 300Hz, 500Hz, 600Hz, 750Hz, 1000Hz 사이에서 구성 가능(기본값: 1000Hz)
+- **아키텍처 최적화**: x86-64-v3, x86-64-v4, AMD Zen4 전용 빌드 지원
+- **컴파일러 최적화**: `-fivopts`, `-fmodulo-sched`를 포함한 고급 GCC 플래그
+
+### CPU 개선 사항
+
+- **다중 스케줄러**: 다양한 워크로드 최적화를 위한 BORE, EEVDF, BMQ 스케줄러
+- **AMD P-State 개선**: Preferred Core 지원과 linux-next의 최신 amd-pstate 개선 사항
+- **실시간 지원**: BORE 스케줄러 통합이 포함된 RT 커널 빌드 제공
+- **CachyOS Sauce**: 스케줄러 및 시스템 조정이 포함된 사용자 지정 `CONFIG_CACHY` 구성
+- **저지연 최적화**: 응답성을 높이고 지터를 줄이기 위한 패치
+
+### 파일시스템 및 메모리
+
+- **ZFS 지원**: 사전 컴파일된 모듈을 포함한 내장 ZFS 파일시스템 지원
+- **NVIDIA 통합**:
+  - 패치가 적용된 독점 NVIDIA 드라이버 모듈
+  - 오픈 소스 NVIDIA 드라이버 지원
+  - 저장소에서 바로 사용할 수 있는 모듈 제공
+- **I/O 스케줄러 개선**:
+  - 향상된 BFQ 및 mq-deadline 성능
+  - 대체 [ADIOS](https://github.com/firelzrd/adios) I/O 스케줄러 지원
+- **메모리 관리**:
+  - 메모리 압박 상황에서 페이지 스래싱을 방지하기 위한 [le9uo](https://github.com/firelzrd/le9uo) 패치
+  - Zen-kernel 메모리 관리 조정(컴팩션, 워터마크 최적화)
+
+### 추가 기능
+
+#### 하드웨어 지원
+- **게임용 하드웨어**: Steam Deck 패치(Audio, HW Quirks, HID)와 ROG Ally 지원
+- **Apple 하드웨어**: T2 MacBook 지원이 기본 포함됨
+- **ASUS 하드웨어**: 확장된 ASUS 하드웨어 호환성 패치
+- **그래픽**: HDR 지원 활성화, AMDGPU min_powercap 오버라이드(`amdgpu_ignore_min_pcap`)
+
+#### 시스템 개선 사항
+- **멀티미디어**: v4l2loopback 모듈이 기본 포함됨
+- **가상화**: VFIO/GPU 패스스루를 위한 ACS Override 지원
+- **업스트림 통합**: Clear Linux 및 linux-next에서 선별 적용한 패치
+
+#### 기타
+
+CachyOS 커널에는 눈에 잘 띄지는 않지만 사용자 경험을 개선하는 몇 가지 주목할 만한 기능도 있습니다.
+
+- 디버깅 목적을 위해 심볼이 제거되지 않은 커널 바이너리를 제공하는 커널 디버그 변형이 포함되어 있습니다. 이 패키지는 AutoFDO로 커널을 프로파일링하는 데 필요합니다.
+- [Binder](https://developer.android.com/reference/android/os/Binder)는 [Waydroid](https://waydro.id/)에 필요한 모듈이며, 커널 구성에서 기본으로 활성화되어 있고
+이미 [설정되어](https://github.com/CachyOS/linux-cachyos/blob/2f380e2b35c4ad9acda98296f638f93af3742533/linux-cachyos/config#L11037) 있습니다.
+
+## 변형
+
+CachyOS는 다양한 커널 옵션을 제공합니다. 제공되는 모든 커널은 [CachyOS Base Patchset](https://github.com/CachyOS/kernel-patches)과 함께 배포됩니다.
+각 커널에는 [대응되는 -lto 변형](#package-naming-convention)이 있으며,
+[clang](https://clang.llvm.org/)으로 빌드됩니다. 이는 [GCC](https://gcc.gnu.org/) 대신 사용됩니다.
+
+- **linux-cachyos**
+  - 기본 커널입니다. 어떤 커널을 사용해야 할지 확실하지 않다면 이 커널을 권장합니다.
+  - 향상된 응답성을 위한 1000Hz tickrate.
+  - Clang 및 ThinLTO로 빌드됨.
+  - 성능 향상을 위해 자체 [AutoFDO](https://cachyos.org/blog/2411-kernel-autofdo/) 프로파일로 프로파일링됨. 커널 프로파일링에 사용된 [스크립트](https://github.com/CachyOS/cachyos-benchmarker/blob/master/kernel-autofdo.sh).
+- **linux-cachyos-bore**
+  - [BORE](https://github.com/firelzrd/bore-scheduler) 스케줄러를 사용합니다.
+- **linux-cachyos-bmq**
+  - Alfred Chen의 [Project C](https://gitlab.com/alfredchen/projectc/)에서 제공하는 BMQ 스케줄러를 사용합니다.
+    - `sched-ext를 지원하지 않습니다.`
+- **linux-cachyos-deckify**
+  - 핸드헬드용 기본 커널입니다. 핸드헬드에서 다른 커널을 사용하는 것은 **권장되지 않으며** **지원되지 않습니다**.
+  - [BORE](https://github.com/firelzrd/bore-scheduler) 스케줄러를 사용합니다.
+  - 핸드헬드 장치의 호환성과 전반적인 사용 경험을 개선하기 위해 기본 패치셋 위에 핸드헬드 전용 패치를 적용합니다.
+- **linux-cachyos-eevdf**
+  - 향상된 응답성을 위해 기본 커널 스케줄러를 조정합니다.
+- **linux-cachyos-lts**
+  - 최신 장기 지원(Long Term Support) 커널을 기반으로 합니다.
+  - [BORE](https://github.com/firelzrd/bore-scheduler) 스케줄러를 사용합니다.
+  - 최대 안정성을 보장하기 위해 다른 커널에 비해 최소한의 패치만 적용합니다.
+- **linux-cachyos-hardened**
+  - [BORE](https://github.com/firelzrd/bore-scheduler) 스케줄러를 사용합니다.
+  - [linux-hardened](https://github.com/anthraxx/linux-hardened) 패치셋을 포함합니다.
+  - [linux-hardened config](https://gitlab.archlinux.org/archlinux/packaging/packages/linux-hardened/-/blob/main/config)를 기반으로 한 커널 구성입니다.
+    - 성능과 사용자 경험을 크게 저해하는 매우 공격적인 하드닝이 포함되어 있습니다.
+    - `sched-ext를 지원하지 않습니다.`
+- **linux-cachyos-rc**
+  - [Linus의 트리](https://github.com/torvalds/linux/)에서 가져온 최신 mainline 커널을 기반으로 합니다.
+  - 자체 패치셋에 새 기능을 도입하기 위한 주 커널입니다.
+- **linux-cachyos-server**
+  - 데스크톱 사용보다 서버 워크로드에 맞게 조정되어 있습니다.
+    - 300Hz tickrate.
+    - 선점 없음.
+    - 기본 EEVDF.
+- **linux-cachyos-rt-bore**
+  - 실시간 선점.
+  - [BORE](https://github.com/firelzrd/bore-scheduler) 스케줄러를 사용합니다.
+
+:::note
+달리 명시되지 않은 경우, 다른 모든 커널 변형은
+기본 커널과 동일한 구성을 가진다고 보아도 됩니다.
+:::
+
+기본 커널에 추가할 수 있는 제안이나 개선 사항은 [linux-cachyos GitHub](https://github.com/CachyOS/linux-cachyos)에 이슈를 열어 주세요.
+
+### 패키지 이름 지정 규칙
+
+```sh
+linux-cachyos # Base kernel package for the default kernel. Compiled with Clang and ThinLTO
+linux-cachyos-hardened # Base kernel package for the hardened kernel. Compiled with GCC
+linux-cachyos-hardened-lto # clang-compiled counterpart for linux-cachyos-hardened
+linux-cachyos-hardened-{,lto-}headers
+linux-cachyos-hardened-{,lto-}nvidia
+linux-cachyos-hardened-{,lto-}nvidia-open
+linux-cachyos-hardened-{,lto-}zfs
+linux-cachyos-hardened-{,lto-}dbg
+```
+
+## 사전 빌드된 커널 모듈
+
+더 많은 사용자층을 지원하기 위해 CachyOS는 잘 알려져 있고 널리 사용되는 일부 커널 모듈을 커널과 함께 제공합니다. 즉 사용자는 매번 커널을 업데이트하거나 새 커널을 설치할 때마다
+해당 모듈을 다시 컴파일할 필요가 없으며, 이미 사전 컴파일되어 있으므로 저장소에서 설치하기만 하면 됩니다. 따라서 사용자가 보유한 `-dkms` 패키지 중 사전 컴파일된 버전과
+동일한 모듈을 제공하는 패키지는 사실상 더 이상 필요하지 않게 됩니다.
+
+### ZFS
+
+[ZFS](https://openzfs.org/wiki/Main_Page)는 CachyOS에서 지원되는 여러 파일시스템 중 하나입니다. [CDDL](https://opensource.org/license/cddl-1-0) 라이선스가 적용되어 있어
+Linux 커널의 라이선스와 호환되지 않으므로 커널 트리에 병합될 수 없습니다. 제공되는 모듈에는 최신 커널과의 호환성을 보장하기 위한
+최신 업스트림 기능과 수정 사항이 포함됩니다.
+
+### NVIDIA
+
+CachyOS는 폐쇄 소스 및 [오픈 소스](https://github.com/NVIDIA/open-gpu-kernel-modules/) 커널 모듈의 사전 컴파일된 버전을 모두 제공합니다. NVIDIA의 커널 모듈은
+out-of-tree 방식으로 개발되며 커널의 릴리스 주기를 따르지 않기 때문에, 기본 구성이 최신 커널과 호환되지 않는 경우가 있습니다.
+이에 대한 우회 방법으로 CachyOS는 커뮤니티에서 만든 패치나 NVIDIA가 직접 공유한 패치를 모듈에 적용합니다.
+
+## FAQ
+
+### AutoFDO가 다른 모든 커널 변형에 사용되지 않는 이유는 무엇인가요?
+
+기본적으로 커널을 두 번 빌드해야 하므로 빌드 비용이 크고, 그만큼 컴파일에 더 많은 시간과 리소스가 필요하기 때문입니다. AutoFDO를 사용해 커널을 빌드하는 과정은 다음 단계로 이루어집니다.
+
+1) AutoFDO와 디버깅 기능을 활성화한 상태로 커널을 빌드합니다.
+2) 가능한 최적화를 위한 프로파일링 데이터를 수집하기 위해 워크로드를 실행하여 프로파일을 생성합니다.
+3) AutoFDO 프로파일을 사용해 커널을 다시 빌드합니다.
+
+따라서 현재는 [linux-cachyos](/features/kernel#variants) 변형에만 포함되어 있습니다.
+
+AutoFDO에 대한 자세한 정보는 [여기](https://cachyos.org/blog/2411-kernel-autofdo/)를 클릭하세요.
+
+### 실시간 커널이 게임 성능을 향상시키나요?
+
+아니요, 그렇지 않습니다. 실시간 커널은 일반적인 선점형(PREEMPT) 커널에 비해 훨씬 더 많은 코드를 선점 가능하게 만듭니다. 이는 훨씬 더 많은 작업(게임 프로세스
+포함)이 자주 선점되고 시스템 리소스를 강제로 양보하게 되어, 결과적으로 성능이 더 나빠질 수 있음을 의미합니다.
