@@ -1,0 +1,406 @@
+---
+title: CachyOS 설정
+---
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+
+최적화된 커널과 저장소와 함께, 데스크톱 사용 경험을 더 개선하는 설정과 QoL 개선을 위한
+몇 가지 도우미 스크립트도 제공합니다. 이러한 모든 구성과 스크립트는 `cachyos-settings` 패키지에 포함되어 있습니다.
+
+제공되는 모든 구성과 스크립트에 대해 더 자세히 알아보려면 [CachyOS Settings 저장소](https://github.com/CachyOS/CachyOS-Settings?tab=readme-ov-file#cachyos-settings)를 확인하세요.
+
+## 스크립트와 도구
+
+### [cachyos-bugreport.sh](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/cachyos-bugreport.sh)
+
+`cachyos-bugreport.sh` 스크립트를 사용해 버그 리포트를 생성하는 방법은 다음과 같습니다.
+<Steps>
+1. 터미널을 열고 다음 명령을 실행합니다.
+    ```sh
+    sudo cachyos-bugreport.sh
+    ```
+    <details>
+        <summary>출력 예시</summary>
+        ```sh
+        sudo cachyos-bugreport.sh
+        [sudo] password for array:
+        Starting with bugreport
+        Redacting personal information...
+        Do you want to upload this log to https://paste.cachyos.org? [Y]es/[N]o: Y
+        Uploading Log
+          % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                         Dload  Upload  Total   Spent   Left   Speed
+        100 130.3k 100     10 100 130.3k      7  96934   00:01   00:01         117.7k
+        # A URL will be provided here after the upload is complete.
+        ```
+    </details>
+2. 이 스크립트는 디버깅에 유용할 수 있는 시스템 정보와 로그가 포함된 로그 파일을 홈 디렉터리에 생성합니다. 또한 버그를 보고할 때 도움이 되도록 해당 로그를 pastebin 서비스에 업로드할지 묻습니다.
+</Steps>
+
+### DLSS Swapper
+
+일부 상황에서 유용할 수 있습니다. 특히 Valve에서 제공하는 Proton 버전에서 그렇습니다.
+
+:::note
+Proton-CachyOS는 이미 내장 업그레이드 기능을 제공합니다.
+:::
+
+:::caution
+`PROTON_DLSS_UPGRADE=1`과 `dlss-swapper`를 동시에 조합해 사용하지 마세요. 둘 다 같은 작업을 수행하므로 충돌이 발생할 수 있습니다.
+:::
+
+이 도구는 DLSS DLL과 프리셋을 사용 가능한 최신 버전으로 업데이트하려고 시도합니다. 특정 DLSS 버전이 있어야 제대로 동작하는 일부 게임에서 유용할 수 있습니다.
+
+어떻게 동작하나요? 게임 프로세스에 환경 변수를 주입하는 방식입니다.
+
+<details>
+    <summary>dlss-swapper 환경 변수</summary>
+    ```sh
+    export PROTON_ENABLE_NGX_UPDATER=1
+    export DXVK_NVAPI_DRS_NGX_DLSS_RR_OVERRIDE=on
+    export DXVK_NVAPI_DRS_NGX_DLSS_SR_OVERRIDE=on
+    export DXVK_NVAPI_DRS_NGX_DLSS_FG_OVERRIDE=on
+    export DXVK_NVAPI_DRS_NGX_DLSS_RR_OVERRIDE_RENDER_PRESET_SELECTION=render_preset_latest
+    export DXVK_NVAPI_DRS_NGX_DLSS_SR_OVERRIDE_RENDER_PRESET_SELECTION=render_preset_latest
+    ```
+</details>
+<details>
+    <summary>dlss-swapper-dll 환경 변수</summary>
+    ```sh
+    export DXVK_NVAPI_DRS_NGX_DLSS_RR_OVERRIDE=on
+    export DXVK_NVAPI_DRS_NGX_DLSS_SR_OVERRIDE=on
+    export DXVK_NVAPI_DRS_NGX_DLSS_FG_OVERRIDE=on
+    export DXVK_NVAPI_DRS_NGX_DLSS_RR_OVERRIDE_RENDER_PRESET_SELECTION=render_preset_latest
+    export DXVK_NVAPI_DRS_NGX_DLSS_SR_OVERRIDE_RENDER_PRESET_SELECTION=render_preset_latest
+    ```
+</details>
+
+- `dlss-swapper`와 `dlss-swapper-dll`의 차이는 무엇인가요?
+    - `dlss-swapper`는 NGX Updater가 제공하는 DLSS DLL과 프리셋을 사용 가능한 최신 버전으로 업데이트하며, `dlss-swapper-dll`은 게임 디렉터리에 이미 존재하는 DLL에 의존합니다.
+
+
+### [game-performance](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/game-performance)
+
+대상 프로세스에 대해 `powerprofilesctl`의 성능 프로필을 활성화하고, 해당 프로세스가 실행되는 동안 화면 보호기를 비활성화하는 작은 스크립트입니다. 게임이나 기타 프로세스에 사용할 수 있습니다.
+
+Q&A:
+
+<details>
+    <summary>사용 방법</summary>
+    Steam 게임에 `game-performance`를 사용하고 싶다고 가정해 보겠습니다. Steam에서 해당 게임의 실행 옵션에 `game-performance` 명령을 추가하면 됩니다.
+        <Steps>
+            1. Steam을 열고 라이브러리로 이동합니다.
+            2. `game-performance`를 사용하려는 게임을 마우스 오른쪽 버튼으로 클릭하고 "속성"을 선택합니다.
+            3. "일반" 탭에서 "실행 옵션" 섹션을 찾아 다음 명령을 추가합니다.
+                ```sh
+                game-performance %command%
+                ```
+                :::tip[Steam에서 실행 옵션을 관리하는 방법 안내]
+                CachyOS Wiki - [여러 실행 옵션을 올바르게 설정하는 방법](/configuration/gaming#how-to-properly-set-multiple-launch-options)
+                :::
+            4. 속성 탭을 닫고 게임을 실행합니다.
+        </Steps>
+        <details>
+            <summary>Steam 외부에서 사용하기</summary>
+            `game-performance`는 단순한 래퍼 스크립트이므로, 성능 프로필을 활성화한 상태로 어떤 프로세스든 실행하는 데 사용할 수 있습니다. 터미널에서 다음 명령을 실행하면 됩니다.
+            ```sh
+            game-performance <command>
+            ```
+        </details>
+</details>
+
+<details>
+    <summary>game-performance가 오래된 CPU에도 이점을 제공하나요?</summary>
+    일반적으로는 아닙니다. 오래된 CPU에서는 이득보다 문제가 더 커질 수 있으므로 피하는 것이 좋습니다.
+</details>
+
+<details>
+    <summary>왜 기본적으로 활성화되어 있지 않나요?</summary>
+    성능 프로필을 활성화하는 것이 모든 사용자에게 이상적인 것은 아니며, 전력 소비와 발열이 증가할 수 있습니다. 기본적으로 활성화하지 않음으로써, 모든 사용자에게 강제하지 않고 필요할 때 사용자가 직접 활성화할 수 있도록 합니다.
+</details>
+
+### [kerver](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/kerver)
+
+kerver는 다음 항목의 간략한 요약을 보여주는 스크립트입니다.
+
+- 현재 커널 버전
+    - x86_64 지원과 CPU 컴파일러 최적화를 확인합니다.
+- 현재 I/O 스케줄러
+- CPU, I/O, sched-ext 스케줄러 요약(활성화된 경우)
+
+<details>
+    <summary>사용법</summary>
+    ```sh title='터미널을 열고 다음 명령을 실행하세요:'
+    kerver
+    ```
+    <details>
+        <summary>출력 예시</summary>
+        ```sh
+        kerver
+
+        Check kernel version:
+
+        Linux version 6.19.8-1-hC (linux-hC@hC) (clang version 22.1.1, LLD 22.1.1) #1 SMP PREEMPT_DYNAMIC Sun, 15 Mar 2026 16:27:53 +0000
+        Linux CatchyOS 6.19.8-1-hC #1 SMP PREEMPT_DYNAMIC Sun, 15 Mar 2026 16:27:53 +0000 x86_64 GNU/Linux
+
+
+        Check x86_64 support:
+
+          x86-64-v3 (supported, searched)
+          x86-64-v2 (supported, searched)
+
+
+        Check CPU config:
+
+        CONFIG_X86_NATIVE_CPU=y
+        # CONFIG_GENERIC_CPU is not set
+        # CONFIG_MZEN4 is not set
+
+
+        Current disk schedulers:
+
+        sda: none mq-deadline kyber [adios] bfq
+        sdb: none mq-deadline kyber [adios] bfq
+
+        Check available schedulers:
+
+        BORE CPU Scheduler modification 6.6.2 by Masahito Suzuki
+        rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.
+        io scheduler mq-deadline registered
+        io scheduler kyber registered
+        Adaptive Deadline I/O Scheduler 3.2.0 by Masahito Suzuki
+        io scheduler adios registered
+        io scheduler bfq registered
+        sched_ext: BPF scheduler "bpfland_1.1.0_gc505008f_x86_64_unknown_linux_gnu" enabled with options scx_bpfland
+        ```
+    </details>
+</details>
+
+### [paste-cachyos](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/paste-cachyos)
+
+텍스트를 [pastebin 서비스](https://paste.cachyos.org)에 업로드할 수 있는 간단한 CLI 도구입니다. 버그를 보고하거나 도움을 요청할 때 로그와 기타 텍스트 내용을 공유하는 데 유용할 수 있습니다.
+
+:::note
+`paste-cachyos`를 사용하려면 업로드하려는 내용을 명령에 파이프 `|`로 전달해야 합니다.
+
+예시:
+```sh
+<command> | paste-cachyos
+```
+:::
+
+다음은 `paste-cachyos` 사용 예시입니다.
+
+<details>
+    <summary>pacman 업데이트 출력 공유하기</summary>
+    ```sh
+    sudo pacman -Syu | paste-cachyos
+    ```
+    [예시](https://paste.cachyos.org/p/079e1cc)
+</details>
+
+<details>
+    <summary>systemd-resolved의 journalctl 로그</summary>
+    ```sh
+    journalctl -u systemd-resolved.service | paste-cachyos
+    ```
+</details>
+
+### [pci-latency](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/pci-latency)
+
+PCI 지연 시간 타이머를 변경하여 PCI 사운드 카드의 지연 시간을 줄이고 성능을 개선하려는 간단한 스크립트입니다.
+
+바이너리와 systemd 서비스 형식 모두로 제공됩니다. systemd 서비스는 부팅 시 변경 사항을 자동으로 적용하며, 바이너리는 필요할 때 변경 사항을 적용하는 데 사용할 수 있습니다.
+
+<details>
+    <summary>현재 세션에서 한 번만 사용</summary>
+    ```sh
+    sudo pci-latency
+    ```
+</details>
+<details>
+    <summary>systemd 서비스 활성화</summary>
+    ```sh
+    systemctl enable pci-latency.service
+    ```
+</details>
+<details>
+    <summary>systemd 서비스 비활성화</summary>
+    ```sh
+    systemctl disable pci-latency.service
+    ```
+</details>
+
+### [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign)
+
+:::note
+Limine과 호환되지 않습니다.
+:::
+
+`sbctl-batch-sign`은 보안 부팅 지원에 필요한 파일 서명을 더 쉽게 할 수 있도록 설계된 도우미 스크립트입니다.
+
+이 스크립트가 특히 큰 도움이 되는 대표적인 경우는 Windows와 듀얼 부팅할 때입니다. EFI에는 서명해야 하는 Windows 관련 파일이 많이 있기 때문입니다.
+
+스크립트를 실행했을 때의 간단한 요약은 다음과 같습니다.
+
+- `sbctl verify`를 사용해 서명되지 않은 파일을 검색합니다.
+    - 필요한 경우, 발견된 파일을 `sbctl sign`으로 서명합니다.
+- Windows, GRUB에 속한 파일이나 파일 확장자가 `.mui`, `.dll`인 파일은 피합니다.
+
+자세한 내용은 [보안 부팅 설정](/configuration/secure_boot_setup#signing-the-kernel-image-and-boot-manager) 섹션을 확인하세요.
+
+### [topmem](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/topmem)
+
+RAM 사용량, SWAP, KSM(Kernel Same-page Merging) 공유량을 기준으로 메모리를 가장 많이 사용하는 프로세스를 보여주는 Lua 스크립트입니다.
+
+<details>
+    <summary>사용 전</summary>
+    ```sh
+    # Install lua-luv to run the script:
+    sudo pacman -S lua-luv
+    ```
+</details>
+<details>
+    <summary>사용법</summary>
+    ```sh
+    topmem
+    ```
+    <details>
+        <summary>출력 예시</summary>
+        ```sh
+        topmem
+
+        MEMORY                Top 10 processes        SWAP      KSM
+        1333M     node                                0M        0M
+        811M      exe                                 0M        0M
+        759M      VQ6B1EUZqoCU04zoRU= --cha...        0M        0M
+        681M      node                                0M        0M
+        531M      zed-editor                          0M        0M
+        484M      brave                               0M        0M
+        424M      qs                                  0M        0M
+        408M      mdx-language-server                 0M        0M
+        395M      Telegram                            0M        0M
+        365M      VQ6B1EUZqoCU04zoRU= --cha...        0M        0M
+        ```
+    </details>
+</details>
+
+### [zink-run](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/zink-run)
+
+적절한 환경 변수를 설정하여 대상 프로세스가 Zink(Vulkan 위에서 동작하는 OpenGL)를 사용하도록 강제합니다.
+
+<details>
+    <summary>사용되는 환경 변수</summary>
+    ```sh
+    MESA_LOADER_DRIVER_OVERRIDE=zink
+    GALLIUM_DRIVER=zink
+    __GLX_VENDOR_LIBRARY_NAME=mesa
+    __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
+    ```
+</details>
+
+Zink에서 성능이나 호환성이 더 좋은 일부 게임의 경우 Steam에서 유용할 수 있습니다.
+
+<details>
+    <summary>사용법</summary>
+    ```sh
+    zink-run <command>
+    ```
+</details>
+
+## 오버라이드 생성
+
+오버라이드란 무엇인가요?
+
+오버라이드는 `cachyos-settings`가 제공하는 기본 설정을 변경하기 위해 사용자가 직접 만드는 구성 파일입니다. 이를 통해 원본 파일을 수정하지 않고도 시스템을 사용자화할 수 있으며, 향후 `cachyos-settings` 업데이트와의 호환성을 유지하는 데 유용할 수 있습니다.
+
+### sysctl
+
+전체 데스크톱 성능 개선을 목표로 하는 다양한 sysctl 조정을 제공합니다. 각 sysctl 항목은
+[70-cachyos-settings.conf](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/sysctl.d/70-cachyos-settings.conf) 파일에 잘 문서화되어 있습니다.
+
+이 값 중 하나를 변경하려면 원본 항목을 복사한 뒤, 수정한 값을 포함하는 새 파일을 `/etc/sysctl.d/` 아래에 만드세요.
+
+<details>
+    <summary>sysctl 오버라이드 예시</summary>
+    <Steps>
+
+    1. `cachyos-settings`의 원래 값을 확인합니다.
+
+        ```sh
+        cat /usr/lib/sysctl.d/70-cachyos-settings.conf
+        # Only experimental!
+        # Let Realtime tasks run as long they need
+        # sched: RT throttling activated
+        kernel.sched_rt_runtime_us=-1
+        ```
+    2. sysctl 설정을 변경하려면 `/etc/sysctl.d`에 새 파일을 만듭니다.
+
+        ```sh title="Reverting kernel.sched_rt_runtime_us= to its default value"
+        sudo micro /etc/sysctl.d/99-kernel-sched-rt.conf # If the file doesn't exist, this command creates and lets you edit the file
+        kernel.sched_rt_runtime_us=950000
+        ```
+    3. `CTRL + S`를 눌러 파일을 저장하고, `CTRL + Q`를 눌러 편집기를 종료합니다.
+    4. sysctl 설정을 변경한 뒤에는 변경 사항을 반드시 적용하세요.
+        ```sh
+        sudo sysctl --system
+        ```
+    </Steps>
+</details>
+
+### udev 규칙
+
+udev 규칙도 마찬가지입니다. 원본 파일과 같은 이름의 새 파일을 `/etc/udev/rules.d/` 아래에 만들어 직접 오버라이드할 수 있습니다.
+
+:::tip[원본 파일을 찾으려면 다음 명령을 사용하세요]
+```sh
+pacman -Ql cachyos-settings | grep udev
+```
+:::
+
+<details>
+    <summary>udev 규칙 오버라이드 예시</summary>
+    1. 원래 CachyOS udev 규칙을 확인합니다.
+        ```sh
+        cat /usr/lib/udev/rules.d/60-ioschedulers.rules
+        ```
+        <details>
+            <summary>출력:</summary>
+                ```sh
+                # HDD
+                ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", \
+                    ATTR{queue/scheduler}="bfq"
+
+                # SSD
+                ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="mq-deadline"
+
+                # NVMe SSD
+                ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="none"
+                ```
+        </details>
+        이제 SSD와 NVMe의 I/O 스케줄러를 각각 `mq-deadline`과 `none` 대신 `kyber`로 변경하고 싶다고 가정해 보겠습니다. 오버라이드 파일을 만들어 이를 수행할 수 있습니다.
+    2. 원래 규칙을 오버라이드하려면 `/etc/udev/rules.d`에 새 파일을 만듭니다.
+        ```sh
+        sudo micro /etc/udev/rules.d/60-ioschedulers.rules # If the file doesn't exist, this command creates and lets you edit the file
+        # HDD
+        ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", \
+            ATTR{queue/scheduler}="bfq"
+
+        # SSD
+        ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", \
+            ATTR{queue/scheduler}="kyber"
+
+        # NVMe SSD
+        ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", \
+            ATTR{queue/scheduler}="kyber"
+        ```
+    3. `CTRL + S`를 눌러 파일을 저장하고, `CTRL + Q`를 눌러 편집기를 종료합니다.
+    4. udev 규칙을 변경한 뒤에는 규칙을 다시 로드하고 트리거해야 합니다.
+
+        ```sh
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger
+        ```
+</details>

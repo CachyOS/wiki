@@ -1,0 +1,138 @@
+---
+title: T2 MacBook
+description: T2 MacBook에 CachyOS를 설치하는 방법
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+CachyOS는 제공되는 모든 커널에 필요한 커널 패치를 포함하여 T2 MacBook을 바로 지원합니다. 다만 성공적으로 설정하려면 반드시 필요한 몇 가지 중요한 단계가 있습니다.
+
+:::caution[잠재적 위험]
+macOS를 완전히 제거하면 데이터 손실이나 장치를 사용할 수 없게 되는 등의 위험이 있습니다. 펌웨어 업데이트와 복구를 위해 macOS 파티션을 유지하는 것을 **강력히 권장**합니다. 자세한 내용은 [T2 Linux Roadmap](https://wiki.t2linux.org/roadmap/#can-i-completely-remove-macos)을 참고하세요.
+
+그래도 macOS를 제거하기로 결정했다면, 사전에 전체 백업을 준비하고 [부팅 가능한 macOS 설치 프로그램](https://support.apple.com/en-us/101578)을 만들어 두세요.
+:::
+
+## 설치 전 준비
+
+부팅 가능한 macOS 설치 프로그램을 만드는 것은 선택 사항이지만, 파티션을 수정하거나 macOS를 제거할 계획이라면 권장됩니다. 펌웨어 업데이트, 문제 해결, 시스템 복원에 유용할 수 있습니다. 자세한 지침은 [Apple 가이드](https://support.apple.com/en-us/101578)를 참고하세요.
+
+CachyOS 설치 프로그램으로 부팅하기 **전에** macOS 안에서 아래 단계를 수행하세요.
+
+### CachyOS 부팅 USB 준비
+
+[CachyOS ISO](/cachyos_basic/download)를 다운로드하고 [부팅 가능한 CachyOS USB 드라이브 만들기](/installation/installation_prepare#creating-a-bootable-cachyos-usb-drive)의 지침에 따라 설치 미디어를 만드세요.
+
+### (선택 사항) Wi-Fi 펌웨어 추출
+
+:::note
+필요한 펌웨어가 독점 소프트웨어라 CachyOS에서 재배포할 수 없기 때문에, 설치 중이나 설치 후에 Wi-Fi가 기본 상태로는 **작동하지 않습니다**. 아래 단계에 따라 미리 Wi-Fi 펌웨어를 준비하고 설치 중 활성화하지 않는 한, 설치 과정에는 인터넷 연결(예: 이더넷, USB 테더링)이 필요합니다.
+:::
+
+macOS에서 Terminal을 열고 다음 명령을 실행합니다. 이 명령은 필요한 Wi-Fi 펌웨어 파일을 EFI 파티션으로 복사하여, 나중에 CachyOS 설치 중 접근할 수 있게 합니다.
+```sh
+curl -sL https://wiki.t2linux.org/tools/firmware.sh | bash -s copy_to_efi
+```
+
+### 디스크 준비
+
+macOS와 듀얼 부팅할 계획이라면(권장), CachyOS를 위한 공간을 만들어야 합니다. macOS의 Disk Utility 앱을 사용하여 기존 macOS 파티션의 크기를 조정하세요.
+
+<Steps>
+
+1.  **Disk Utility**를 엽니다.
+2.  Disk Utility 사이드바에서 크기를 조정할 **볼륨**을 선택합니다. 보통 이름은 "Macintosh HD" 또는 이와 비슷합니다.
+3.  도구 막대에서 **"Partition"** 버튼을 클릭합니다.
+4.  디스크 사용량을 나타내는 원형 차트 아래의 **"+"(플러스)** 버튼을 클릭합니다.
+5.  **중요:** 메시지가 표시되면 "Add Volume"이 아니라 **"Add Partition"**을 선택합니다. Linux용 별도 파티션을 만들어야 합니다.
+6.  **Name:** 새 파티션을 설명하는 이름을 입력합니다. 예: "CachyOS" 또는 "Linux".
+7.  **Format:** 사용 가능한 아무 형식이나 선택합니다. 예: APFS 또는 Mac OS Extended. 이 파티션은 나중에 CachyOS 설치 프로그램이 다시 포맷하므로 초기 선택은 중요하지 않습니다.
+8.  **Size:** CachyOS에 할당할 원하는 저장 공간 크기를 지정합니다. **나중에 파티션 크기를 조정하는 것은 어렵거나 불가능할 수 있다는 점을 유의**하고, 필요에 맞는 크기를 선택하세요.
+10. **"Apply"**를 클릭하여 새 파티션을 만듭니다. Disk Utility가 macOS 파티션의 크기를 조정하고 새 빈 공간을 만듭니다.
+
+</Steps>
+
+
+### Secure Boot 비활성화
+
+<Steps>
+
+1. Mac을 재부팅하고 전원을 켠 직후 `Command (⌘) + R`을 길게 눌러 Recovery Mode로 들어갑니다.
+2. Utilities > Startup Security Utility로 이동합니다.
+3. **Secure Boot**에서 "No Security"를 선택하고, **Allowed Boot Media**에서 "Allow booting from external or removable media"를 선택합니다.
+
+</Steps>
+
+자세한 내용은 [Startup Security Utility에 대한 Apple 가이드](https://support.apple.com/en-in/102522)를 참고하세요.
+
+---
+
+Linux용 T2 Mac 준비에 대한 추가 개요는 [t2linux Preinstall guide](https://wiki.t2linux.org/guides/preinstall/)를 참고하세요.
+
+## 설치 과정
+
+<Steps>
+
+1.  **CachyOS USB에서 부팅:**
+    *   Mac을 재시동하고 전원을 켠 직후 `Option (⌥)` 키를 길게 누릅니다.
+    *   CachyOS USB 드라이브를 선택합니다. 보통 "EFI Boot"로 표시됩니다.
+2.  **(선택 사항) Live 환경에서 Wi-Fi 활성화:**
+    *   설치 중 Wi-Fi가 필요하지만 이더넷/테더링이 없다면, CachyOS Live 환경이 로드된 후 터미널을 엽니다.
+    *   다음 명령을 실행하여 ([Wi-Fi 펌웨어 추출](#optional-extract-wi-fi-firmware)에서 만든) EFI 파티션에서 펌웨어를 복사하고 NetworkManager를 구성합니다.
+        ```sh
+        # Mount the EFI partition (usually nvme0n1p1 on T2 Macs)
+        sudo mkdir -p /tmp/apple-wifi-efi
+        sudo mount /dev/nvme0n1p1 /tmp/apple-wifi-efi
+
+        # Copy firmware from EFI to the live environment
+        bash /tmp/apple-wifi-efi/firmware.sh get_from_efi
+        sudo umount /tmp/apple-wifi-efi
+
+        # Configure NetworkManager to use iwd backend
+        cat <<EOF | sudo tee /etc/NetworkManager/conf.d/wifi_backend.conf
+        [device]
+        wifi.backend=iwd
+        EOF
+        sudo systemctl restart NetworkManager
+        ```
+    *   이제 시스템 트레이의 네트워크 애플릿을 사용하여 Wi-Fi 네트워크에 연결할 수 있습니다.
+3.  **CachyOS 설치 프로그램 실행:**
+    *   데스크톱 또는 애플리케이션 메뉴에서 CachyOS 설치 프로그램을 실행합니다.
+    *   표준 설치 절차를 따르고, [데스크톱 에디션 설치 가이드](/installation/installation_on_root)를 참고하세요.
+    *   파티션 설정 단계에서 앞서 만든 빈 공간을 선택합니다. 포맷은 설치 프로그램이 처리하도록 둡니다.
+        :::caution[파티션 설정 주의]
+        설치 프로그램의 파티션 설정 단계에서는 **매우 주의**하세요. 준비해 둔 올바른 빈 공간을 선택했는지 확인하고, 특히 듀얼 부팅을 의도한다면 기존 macOS 파티션을 실수로 삭제하거나 포맷하지 **마세요**. 진행하기 전에 선택 사항을 다시 확인하세요.
+        :::
+    *   CachyOS Hardware Detection([chwd](/features/chwd/chwd))은 설치 중 필요한 T2 전용 부팅 매개변수와 구성을 자동으로 적용해야 합니다.
+
+</Steps>
+
+## 설치 후 단계
+
+설치가 완료되고 새 CachyOS 시스템으로 재부팅한 뒤, 모든 것이 원활하게 작동하도록 몇 가지 추가 단계를 수행해야 할 수 있습니다.
+
+### Wi-Fi 펌웨어 영구 설치
+
+Live ISO에서 펌웨어를 가져오기 위해 선택 사항인 [Live 환경에서 Wi-Fi 활성화](#installation-process) 단계를 따랐다면, Wi-Fi를 활성화하기 위해 같은 절차를 다시 따르면 됩니다. 그렇지 않다면 인터넷(예: 이더넷, USB 테더링)에 연결한 뒤 아래 단계를 따르세요.
+
+<Steps>
+1. 터미널을 열고 Arch Linux T2 미러에서 펌웨어 패키지를 다운로드합니다.
+   ```sh
+   curl https://mirror.funami.tech/arch-mact2/os/x86_64/apple-bcm-firmware-14.0-1-any.pkg.tar.zst -o apple-bcm-firmware-14.0-1-any.pkg.tar.zst
+   ```
+2. 다운로드한 패키지를 설치합니다.
+   ```sh
+   sudo pacman -U apple-bcm-firmware-14.0-1-any.pkg.tar.zst
+   ```
+3. Wi-Fi 커널 모듈을 다시 로드합니다.
+   ```bash
+   sudo modprobe -r brcmfmac_wcc
+   sudo modprobe -r brcmfmac
+   sudo modprobe brcmfmac
+   ```
+</Steps>
+
+이제 재부팅 후에도 Wi-Fi가 안정적으로 작동해야 합니다. 다운로드한 `.pkg.tar.zst` 파일은 삭제해도 됩니다.
+
+###  추가 구성
+오디오, 웹캠, Touch Bar 등 다른 하드웨어 구성 요소를 설정하려면 [t2linux Wiki](https://wiki.t2linux.org/roadmap/#configuring-the-installation)의 여러 가이드를 참고하세요.

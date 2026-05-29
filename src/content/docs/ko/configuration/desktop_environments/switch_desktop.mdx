@@ -1,0 +1,119 @@
+---
+title: CachyOS Settings를 사용해 다른 DE/WM 설치하기
+description: 제공되는 설정을 사용하면서 기존 CachyOS 설치에 다른 DE/WM을 설치하는 방법 안내
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+## 다른 데스크톱 환경을 설치하기 전에 고려할 점
+
+- 여러 DE/WM을 설치하면 충돌이 발생할 수 있습니다. 특히 설정 관리자, 기본 애플리케이션, GTK 또는 QT 앱의 테마와 아이콘 같은 외형 설정에서 문제가 생기기 쉽습니다.
+- 충돌을 가장 많이 일으키는 두 환경은 GNOME과 KDE Plasma입니다. 두 환경은 완전히 다른 툴킷을 사용하며, 각각 GTK와 QT를 사용합니다. 또한 다른 DE/WM과 간섭할 수 있는 백그라운드 서비스도 많이 실행됩니다.
+  - 그렇다고 해서 두 환경을 함께 설치할 수 없다는 뜻은 아닙니다. 다만 몇 가지 문제가 생길 수 있다는 점을 알고 있어야 합니다.
+- 패키지 증가: GNOME과 KDE Plasma 같은 주류 DE는 필요하지 않거나 원하지 않는 수백 개의 패키지를 함께 가져올 수 있습니다.
+- 많은 Window Manager는 서로 다른 DE와 큰 문제 없이 함께 사용할 수 있습니다. 예를 들어 KDE Plasma와 Hyprland를 함께 설치하고, 로그인할 때 사용할 환경을 선택할 수 있습니다.
+- CachyOS에서 제공하는 DE/WM에는 각각 해당되는 `-settings` 패키지가 포함되어 있습니다. 예: `cachyos-i3wm-settings`
+  - 이것이 의미하는 것은 무엇인가요? 다른 DE/WM을 설치하면서 CachyOS가 제공하는 것과 같은 외형 또는 변경 사항 세트를 적용하고 싶다면, 해당 `-settings` 패키지를 설치해야 합니다.
+  - 이 패키지들은 새 사용자 계정의 템플릿 역할을 하는 `/etc/skel/`에 설정 파일을 배치합니다.
+  - 중요: 기존 사용자의 경우 개인 설정을 덮어쓰지 않도록 이 설정이 **자동으로 적용되지 않습니다**.
+
+## CachyOS 설정과 함께 다른 DE/WM을 설치하는 방법
+
+:::note
+다른 DE 또는 WM을 설치할 때는 두 가지 선택지가 있습니다.
+1. **현재 설정 파일을 유지**하고 필요에 따라 `/etc/skel`에서 파일을 수동으로 조정하거나 복사합니다.
+  - 예: 현재 GTK 테마는 유지하면서 i3wm 설정 파일만 원한다면, `/etc/skel/.config/i3`에서 i3wm 관련 파일만 홈 디렉터리로 복사하면 됩니다.
+2. `/etc/skel/`의 새 파일로 **현재 설정 파일을 덮어씁니다**.
+  - 이렇게 하면 완전한 CachyOS 경험을 얻을 수 있지만, 현재 설정이 대체됩니다.
+:::
+
+:::tip
+각 DE 또는 WM에 대한 더 자세한 정보는 해당 Arch Wiki를 활용하세요.
+:::
+
+<Steps>
+1. 홈 디렉터리에 현재 설정 파일의 백업을 만듭니다.
+    ```bash
+    mkdir -p ~/config-backup
+    cp -r ~/.config ~/config-backup/
+    cp -r ~/.local ~/config-backup/
+    ```
+2. 현재 설치되어 있는 `-settings` 패키지가 있다면 제거합니다. 예를 들어 KDE를 사용 중이라면 다음을 실행합니다.
+    ```bash
+    sudo pacman -R cachyos-kde-settings
+    ```
+    :::note
+    이 패키지를 제거해도 현재 DE/WM 설정은 삭제되지 않습니다. `/etc/skel`에 저장된 파일만 제거합니다.
+    :::
+3. 새 DE/WM과 그에 해당하는 `-settings` 패키지를 함께 설치합니다. 예를 들어 i3wm을 설치하려면 다음을 실행합니다.
+    ```bash
+    sudo pacman -Syu i3-wm cachyos-i3wm-settings
+    ```
+    :::tip
+    사용 가능한 DE/WM과 해당 `-settings` 패키지 목록은 [CachyOS PKGBUILDs GitHub 저장소](https://github.com/CachyOS/CachyOS-PKGBUILDS)에서 확인할 수 있습니다.
+    :::
+    또는 원하는 파일 관리자를 사용해 확인할 수도 있습니다.
+4. `/etc/skel`의 새 설정 파일을 홈 디렉터리로 복사합니다.
+    - 예: `cachyos-i3wm-settings` 패키지에는 Kvantum, dunst, GTK, i3, polybar, QT5, rofi 설정이 포함되어 있습니다.
+    - 파일 관리자를 사용해 진행하는 방법은 다음과 같습니다.
+        <Steps>
+        1. 파일 관리자를 엽니다. Dolphin, Nautilus, Thunar 등
+        2. 숨김 파일 보기를 활성화합니다.
+            - **대부분의 파일 관리자**: `Ctrl+H` 또는 메뉴에서 `View` → `Show Hidden Files`
+        3. 파일 관리자에서 `/etc/skel`로 이동합니다.
+        4. 모든 파일과 폴더를 선택합니다. (`Ctrl+A`)
+        5. 복사합니다. (`Ctrl+C`)
+        6. 홈 디렉터리로 이동합니다.
+        7. 파일을 붙여넣습니다. (`Ctrl+V`)
+        8. 덮어쓰기 여부를 묻는 메시지가 나오면 다음을 선택합니다.
+            - 폴더는 **"Merge"** 또는 **"Apply to All"**
+            - 업데이트하려는 개별 파일은 **"Replace"**
+            :::caution
+            파일을 교체할 때는 주의하세요. 현재 설정을 덮어쓰게 됩니다!
+            :::
+        </Steps>
+        - 터미널 사용에 익숙하다면 터미널을 사용해도 됩니다.
+</Steps>
+
+새 DE/WM을 설치하고 설정 파일을 복사한 뒤에는 현재 세션에서 로그아웃하세요. 다시 로그인하기 전에 로그인 화면의 세션 옵션에서 새로 설치한 DE/WM을 선택합니다.
+
+### FAQ
+
+#### 이전 DE/WM 설정으로 되돌리려면 어떻게 하나요?
+
+- 만들어 둔 백업에서 복원합니다.
+  ```bash
+  cp -r ~/config-backup/.config/* ~/.config/
+  cp -r ~/config-backup/.local/* ~/.local/
+  ```
+  또는 파일 관리자를 사용해 복원할 수도 있습니다.
+
+#### `-settings` 패키지의 새 업데이트는 어떻게 적용하나요?
+
+- `-settings` 패키지가 업데이트되면 새 파일은 `/etc/skel/`에 배치되지만, `/home/`의 사용자 설정은 변경되지 않습니다. 업데이트를 적용하려면 갱신된 파일을 `/etc/skel/`에서 다시 수동으로 복사해야 합니다.
+
+각 DE/WM의 GitHub 저장소를 확인하면서 변경 사항을 살펴봐야 합니다.
+
+다음은 CachyOS에서 유지 관리하는 여러 DE와 WM 저장소 목록입니다.
+- [KDE Plasma](https://github.com/CachyOS/cachyos-kde-settings)
+- [GNOME](https://github.com/CachyOS/cachyos-gnome-settings)
+- [Niri](https://github.com/cachyos/cachyos-niri-noctalia)
+- [MangoWM](https://github.com/CachyOS/cachyos-mangowc-dms)
+- [i3](https://github.com/CachyOS/cachyos-i3wm-settings)
+- [Qtile](https://github.com/CachyOS/cachyos-qtile-settings)
+- [Wayfire](https://github.com/CachyOS/cachyos-wayfire-settings)
+
+CachyOS 설치 시 제공되는 다른 모든 DE와 WM은 현재 자체 `-settings` 패키지가 없습니다. 즉, 기본 vanilla 버전입니다.
+
+#### 여러 DE/WM 설정 패키지를 함께 설치해도 되나요?
+
+- 예이기도 하고 아니기도 합니다. 여러 DE/WM을 설치할 수는 있지만, `/etc/skel/`에서 충돌을 피하려면 한 번에 하나의 `-settings` 패키지만 설치하는 것이 권장됩니다. 그렇지 않으면 다른 `-settings` 패키지를 설치하려 할 때 pacman이 파일 충돌을 보고할 수 있습니다.
+
+#### "CachyOS Settings"란 무엇인가요?
+
+"CachyOS Settings"는 여러 데스크톱 환경과 창 관리자용 편의 설정 패키지입니다. 선택한 DE/WM에 따라 미리 구성된 설정, 테마, 조정 사항을 제공합니다.
+
+이 패키지 중 하나를 설치하면 vanilla DE/WM에는 포함되지 않는 추가 의존성도 자동으로 설치됩니다. 예를 들어 테마, 아이콘, 배경화면, 추가 애플리케이션이 포함될 수 있습니다. `cachyos-i3wm-settings`의 경우 `rofi`, `dunst`, `picom`, `lxappearance` 등을 설치합니다.
