@@ -14,9 +14,7 @@ Here a list of the current costs per months:
 - Mailserver/mirror 17 €
 - Forum Server (Netcup VPS) 7 Euro
 
-### Patreon
-
-[Patreon](<https://www.patreon.com/CachyOS>)
+### [Patreon](<https://www.patreon.com/CachyOS>)
 
 ### Ethereum
 
