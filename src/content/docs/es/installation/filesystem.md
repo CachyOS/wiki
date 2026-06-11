@@ -151,32 +151,6 @@ La utilidad principal para f2fs es `f2fs-tools`.
 - Se recomienda F2FS para usuarios que desean maximizar la vida útil de sus dispositivos de memoria flash NAND.
 - Limine es el gestor de arranque recomendado para usuarios de F2FS en sistemas MBR/BIOS, ya que no requiere una solución alternativa como lo hace GRUB.
 
-## BcacheFS
-
-Bcachefs es un nuevo sistema de archivos avanzado para Linux, con énfasis en la fiabilidad y robustez y el conjunto completo de características que uno esperaría de un sistema de archivos moderno.
-
-:::caution[ATENCIÓN]
-Bcachefs todavía se considera experimental y puede tener problemas.
-:::
-
-### Ventajas
-
-- Copia en escritura (CoW) - como BTRFS o ZFS
-- Compresión
-- Almacenamiento en caché, Colocación de datos
-- Replicación
-- Escalable
-
-### Desventajas
-
-- Experimental
-- La configuración puede ser complicada
-
-### Herramientas requeridas
-
-`bcachefs-dkms` proporciona soporte para módulos de kernel fuera del árbol (out-of-tree).
-`bcachefs-tools` para las utilidades de espacio de usuario.
-
 ## TL:DR
 
 Usa el sistema de archivos predeterminado **BTRFS**, ya que se considera estable y tiene muchas características interesantes (instantáneas, compresión, etc). Usa **XFS** o **EXT4** para un sistema de archivos simple
