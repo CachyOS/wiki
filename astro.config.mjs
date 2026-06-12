@@ -73,14 +73,19 @@ export default defineConfig({
           href: 'https://github.com/cachyos',
         },
         {
-          icon: 'twitter',
-          label: 'Twitter',
-          href: 'https://twitter.com/cachyos',
-        },
-        {
           icon: 'discord',
           label: 'Discord',
           href: 'https://discord.gg/cachyos-862292009423470592',
+        },
+        {
+          icon: 'discourse',
+          label: 'Forum',
+          href: 'https://discuss.cachyos.org/',
+        },
+        {
+          icon: 'twitter',
+          label: 'Twitter',
+          href: 'https://twitter.com/cachyos',
         },
         {
           icon: 'mastodon',
