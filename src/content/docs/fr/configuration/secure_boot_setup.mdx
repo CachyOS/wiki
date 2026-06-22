@@ -53,7 +53,7 @@ sudo pacman -S sbctl
 ### Configuration de sbctl
 <Steps>
 
-1. Vérifiez si le mode de configuration est activé:
+1. Vérifiez si le mode de configuration est activé :
     ```bash
     sudo sbctl status
     Installed:      ✘ sbctl is not installed
@@ -61,7 +61,7 @@ sudo pacman -S sbctl
     Secure Boot     ✘ Disabled
     ```
 
-2. Créez vos clés de démarrage sécurisé personnalisées:
+2. Créez vos clés de démarrage sécurisé personnalisées :
     ```bash
     sudo sbctl create-keys
     Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
@@ -69,23 +69,29 @@ sudo pacman -S sbctl
     Secure boot keys created!
     ```
 
-3. Enregistrez vos clés avec les clés de Microsoft et micrologiciel FOE (OEM):
+3. Enregistrez vos clés avec les clés de Microsoft et micrologiciel FOE (OEM) :
     ```bash
-    sudo sbctl enroll-keys --microsoft
+    sudo sbctl enroll-keys --microsoft --firmware-builtin
     Enrolling keys to EFI variables...✔
     Enrolled keys to the EFI variables!
     ```
-    :::caution[Cartes mères ASUS — Ne pas utiliser `--firmware-builtin`]
-    Sur certaines cartes mères ASUS, l'utilisation de la commande `--firmware-builtin` entraîne
-    la création de doublons dans les variables de clés EFI (p.e `builtin-db` apparaît plusieurs
+    :::caution[Cartes mères ASUS / Gigabyte — Ne pas utiliser `--firmware-builtin`]
+    Sur certaines cartes mères ASUS et Gigabyte, l'utilisation de la commande `--firmware-builtin` entraîne
+    la création de doublons dans les variables de clés EFI (p. ex. `builtin-db` apparaît plusieurs
     fois dans `Vendor Keys`).
     Lorsque vous activez ensuite le démarrage sécurisé dans les paramètres UEFI, la carte détecte
     cette structure de clés incohérente et indique une **Violation** avant que le gestionnaire
     de démarrage ne puisse se charger.
 
-    Si « Vendor Keys » affiche « microsoft builtin-db builtin-db ... », les clés doivent être
+    Utilisez uniquement `--microsoft` sur les cartes mères ASUS / Gigabyte :
+
+    ```bash
+    sudo sbctl enroll-keys --microsoft
+    ```
+
+    Si `Vendor Keys` affiche `icrosoft builtin-db builtin-db ...`, les clés doivent être
     réenregistrées. Repassez en mode configuration dans l'UEFI (en supprimant toutes les clés), puis exécutez
-    à nouveau « sbctl enroll-keys --microsoft » sans « --firmware-builtin ».
+    à nouveau `sbctl enroll-keys --microsoft` sans `--firmware-builtin`.
     :::
 
 4. Vérifiez à nouveau l'état de sbctl pour vous assurer que les clés ont bien été enregistrées et que le mode de configuration est désactivé:
@@ -104,7 +110,7 @@ sudo pacman -S sbctl
 <TabItem label='Limine'>
 Limine est un gestionnaire de démarrage spécial qui permet de vérifier le hachage des images du noyau
 et d'autres fichiers que Limine utilise au démarrage. Si cette option est activée, toute
-sorte de configuration manuelle effectuée par l'utilisateur, par ex. la signature de l'image via
+sorte de configuration manuelle effectuée par l'utilisateur, p. ex. la signature de l'image via
 `sbctl-batch-sign`, modifiera le hachage des fichiers correspondants et
 fera échouer la vérification de la somme de contrôle de Limine.
 
@@ -116,7 +122,7 @@ EFI qui doivent être signés sont ceux de Limine lui-même.
 À partir de Limine 11.2.0, les politiques Secure Boot sont **strictement appliquées** lorsque l'UEFI Secure Boot est actif :
 
 - Une somme de contrôle de configuration BLAKE2B **doit** être enregistrée dans le binaire EFI de Limine, sinon Limine entre en panique avec : `SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED`
-- Tous les chemins de fichiers dans `limine.conf` (noyau, initramfs, etc.) **doivent** avoir des hachages BLAKE2B ajoutés (ex. `boot():/vmlinuz-linux#<hash>`)
+- Tous les chemins de fichiers dans `limine.conf` (noyau, initramfs, etc.) **doivent** avoir des hachages BLAKE2B ajoutés (p. ex. `boot():/vmlinuz-linux#<hash>`)
 - L'éditeur de configuration est inconditionnellement désactivé
 - Les incompatibilités de hachage provoquent toujours une panique
 :::
@@ -137,7 +143,7 @@ Généreration d'un hachage pour l'image d'accueil de Limine:
     ```sh title="Ouvrez un terminal et exécutez la commande suivante:"
     sudo cat /boot/limine.conf
     ```
-    Vous devriez voir apparaître une ligne comme celle-ci:
+    Vous devriez voir apparaître une ligne comme celle-ci :
     ```sh
     wallpaper: boot():/limine-splash.png
     ```
@@ -145,7 +151,7 @@ Généreration d'un hachage pour l'image d'accueil de Limine:
     ```sh title="Exécutez la commande suivante en remplaçant le chemin d'accès par celui que vous avez trouvé à l'étape précédente :"
     sudo b2sum /boot/limine-splash.png
     ```
-    Cela produira un hachage similaire à celui de l'exemple ci-dessous:
+    Cela produira un hachage similaire à celui de l'exemple ci-dessous :
     ```sh
     # Le code suivant est un exemple
     75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
@@ -168,7 +174,7 @@ Après avoir activé l'enregistrement de la somme de contrôle de configuration 
 sudo limine-enroll-config
 sudo limine-update
 
-# Malgré le fait que Limine possède un processus de démarrage différent, dans certains cas l'erreur "Secure Boot Violation - Invalid signature detected" peut survenir. Cela est possiblement dû à BOOTX64.EFI qui n'est pas signé :
+# En cas de problème et malgré le fait que Limine possède un processus de démarrage différent, dans certains cas l'erreur "Secure Boot Violation - Invalid signature detected" peut survenir. Cela est possiblement dû à BOOTX64.EFI qui n'est pas signé :
 sudo sbctl verify # Pour vérifier
 sudo sbctl sign -s /boot/EFI/BOOT/BOOTX64.EFI # Pour signer BOOTX64.EFI
 ```
