@@ -113,23 +113,6 @@ Hlavným nástrojom pre f2fs je `f2fs-tools`
 ### Odporúčanie:
 F2FS sa odporúča iba pre používateľov, ktorí chcú maximalizovať životnosť svojej NAND flash.
 
-## BcacheFS
-Bcachefs je pokročilý nový súborový systém pre Linux s dôrazom na spoľahlivosť a robustnosť a kompletnou sadou funkcií, ktoré by ste očakávali od moderného súborového systému.
-
-:::caution[POZOR]
-Bcachefs sa stále považuje za experimentálny a môže mať problémy.
-:::
-
-### Výhody
-- Copy on write (CoW) - ako BTRFS alebo ZFS
-- Kompresia
-- Caching, Umiestňovanie dát
-- Replika
-- Škálovateľný
-### Nevýhody
-- Experimentálny
-- Nastavenie môže byť komplikované
-
 ## TL:DR
 Použite predvolený súborový systém **BTRFS**, pretože sa považuje za stabilný a má veľa užitočných funkcií (snímky, kompresia atď.). Použite **XFS** alebo **EXT4** pre jednoduchý
 a rýchly súborový systém.

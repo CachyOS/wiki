@@ -152,32 +152,6 @@ Das Haupt-Dienstprogramm für f2fs ist `f2fs-tools`.
 - F2FS wird für Leute empfohlen, die die Lebensdauer ihrer NAND-Flash-Geräte maximieren wollen.
 - Limine ist der empfohlene Bootloader für F2FS-Nutzer auf MBR/BIOS-Systemen, da er keinen Workaround wie GRUB benötigt.
 
-## BcacheFS
-
-Bcachefs ist ein fortschrittliches neues Dateisystem für Linux, mit einem Schwerpunkt auf Zuverlässigkeit und Robustheit und dem kompletten Satz an Funktionen, die man von einem modernen Dateisystem erwarten würde.
-
-:::caution[ACHTUNG]
-Bcachefs gilt noch als experimentell und kann Probleme haben.
-:::
-
-### Vorteile
-
-- Copy-on-Write (CoW) - wie BTRFS oder ZFS
-- Komprimierung
-- Caching, Datenplatzierung
-- Replikation
-- Skalierbar
-
-### Nachteile
-
-- Experimentell
-- Die Einrichtung kann kompliziert sein
-
-### Erforderliche Tools
-
-`bcachefs-dkms` bietet Unterstützung für Out-of-Tree-Kernelmodule.
-`bcachefs-tools` für die Userspace-Dienstprogramme.
-
 ## TL;DR
 
 Nutze das Standard-Dateisystem **BTRFS**, da es als stabil gilt und eine Menge cooler Features hat (Snapshots, Komprimierung, etc.). Nimm **XFS** oder **EXT4** für ein einfaches

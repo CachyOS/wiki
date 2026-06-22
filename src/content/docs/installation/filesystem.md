@@ -1,6 +1,6 @@
 ---
 title: Filesystems
-description: Description and recommendations for the available filesystems. (ext4, f2fs, btrfs, xfs, zfs, bcachefs)
+description: Description and recommendations for the available filesystems. (ext4, f2fs, btrfs, xfs, zfs)
 ---
 
 CachyOS offers 5 different filesystems to allow the user to choose what best fits their needs. The following will go over advantages, disadvantages, and recommendations for each filesystem. Each filesystem comes with its requirements/utilities preinstalled on CachyOS.
@@ -150,28 +150,6 @@ The main utility for f2fs is `f2fs-tools`
 
 - F2FS is recommended for users who want to maximize the lifespan of their NAND flash devices.
 - Limine is the recommended bootloader for F2FS users on MBR/BIOS systems since it does not require a workaround like GRUB does.
-
-## BcacheFS
-
-Bcachefs is an advanced new filesystem for Linux, with an emphasis on reliability and robustness and the complete set of features one would expect from a modern filesystem.
-
-### Pros
-
-- Copy on write (CoW) - like BTRFS or ZFS
-- Compression
-- Caching, Data Placement
-- Replication
-- Scalable
-
-### Cons
-
-- Experimental
-- Setup can be complicated
-
-### Required tools
-
-`bcachefs-dkms` provides out-of-tree kernel module support.
-`bcachefs-tools` for the userspace utilities.
 
 ## TL:DR
 

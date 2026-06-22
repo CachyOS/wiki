@@ -75,8 +75,8 @@ CachyOS reserves the right to modify this policy at any time. Changes will be co
 
 For any questions or concerns regarding this policy, please contact us at:
 
-- Email: <admin@cachyos.org>
-- Website: <https://cachyos.org>
+- Email: [admin@cachyos.org](mailto:admin@cachyos.org)
+- Website: [https://cachyos.org](https://cachyos.org)
 
 ## 13. Acknowledgment
 
