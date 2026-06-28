@@ -4,6 +4,55 @@ description: Changelogs of Calamares and the GUI Live ISO
 sidebar:
   order: 1
 ---
+26.06
+----
+
+**Features:**
+
+* **Packages:**
+  * Python now uses extended PGO to improve performance
+  * Added a [GCC patch](https://www.phoronix.com/news/GCC-x86-Generic-Mispredict) for generic x86 branch misprediction tuning, improving how GCC accounts for branch misprediction costs on modern Intel and AMD CPUs
+  * Fixed a regression found in Phoronix Benchmarks when OpenBLAS was used on high core count CPUs
+  * Renamed `proton-cachyos` to `proton-cachyos-native`
+* **pacman:** Added [network isolation for scriptlets and hooks](https://github.com/CachyOS/pacman/commit/4056cd687f6379e61e7decb9b66e9b57cb3949a9)
+* **Installer:**
+  * Added CachyOS Hyprland Noctalia desktop option and preview video
+  * Removed `paru` from the installation; users are recommended to use [Shelly](https://wiki.cachyos.org/configuration/post_install_setup/#updating-the-system), either through its GUI or CLI, as an alternative
+  * Added SDDM as the display manager for MangoWM
+  * Replaced GNOME System Monitor with Resources
+  * Added `realtime-privileges` to the audio package group
+  * Improved live-session keyboard layout and variant detection
+* **CachyOS-Welcome:**
+  * Added DNS over QUIC (DoQ) support through `blocky`
+  * Added a dedicated Troubleshooting page
+  * Added Ptyxis terminal support
+  * Added Azerbaijani and Greek localizations
+  * Added French readme and involvement pages
+  * Updated Italian, German, French, Japanese, and Bulgarian translations
+* **chwd:**
+  * Added Turkish localization
+  * Removed `cachyos-handheld` from handheld package lists
+  * Resolves driver conflicts on multi-GPU systems requiring incompatible driver branches (e.g. mixed NVIDIA generations), installing the best common driver or falling back to the primary GPU
+  * Added the 32-bit Vulkan driver for virtual machines
+* **cachyos-settings:** Applied 15-second startup and 10-second shutdown timeouts to user services, preventing 90-second shutdown delays
+
+**Fixes:**
+
+* **Installer:**
+  * Fixed keyboard layout ordering and `locale1` configuration handling
+  * Fixed copying the correct pacman configuration into the installed system
+  * Removed leftover `/etc/calamares` directories after installation
+  * Moved Calamares cleanup after all installation scripts
+  * Removed the redundant Limine post-install step
+* **CachyOS-Welcome:**
+  * Prevented a crash when selecting "Install Apps" without `cachyos-pi` installed; the button is now hidden when unavailable
+  * Fixed a crash when the saved settings file could not be read or parsed; settings now reset to defaults on failure
+  * Corrected tweak detection (including `graphical-session.target.wants`) and global user-service tweak disabling via polkit
+* **chwd:**
+  * Corrected virtual-machine vendor IDs
+  * Removed unnecessary `fprintd` service activation
+  * Fixed the Mesa removal guard
+
 26.04
 ----
 
