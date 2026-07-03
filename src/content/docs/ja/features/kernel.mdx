@@ -10,45 +10,59 @@ CachyOS カーネルは、アップストリームの機能強化、設定、パ
 
 ## 機能
 
+
 ### パフォーマンス最適化
 
 - **高度なコンパイル**: GCC と Clang の両コンパイラーに対応した高度にカスタマイズ可能な PKGBUILD
-- **リンク時最適化 (LTO)**: パフォーマンス向上のためデフォルトで Thin LTO を有効化
-- **プロファイルガイド最適化**: 最適なコード生成のための AutoFDO + Propeller プロファイリング ([詳細はこちら](https://cachyos.org/blog/2411-kernel-autofdo/))
+- **リンク時最適化 (LTO)**: メインの `linux-cachyos` パッケージでは、パフォーマンス向上のためデフォルトで Clang Thin LTO を有効化
+- **Distributed ThinLTO**: Distributed Clang ThinLTO ビルドに対応しカーネルのコンパイル速度を向上
+- **プロファイルガイド最適化**: デフォルトのカーネル用に AutoFDO + Propeller プロファイリングで最適なコード生成を実現 ([詳細はこちら](https://cachyos.org/blog/2411-kernel-autofdo/))
 - **カーネル制御フロー整合性 (kCFI)**: LLVM 使用時にセキュリティ機能として利用可能
-- **タイマー周波数オプション**: 300Hz, 500Hz, 600Hz, 750Hz, 1000Hz から設定可能 (デフォルト: 1000Hz)
+- **タイマー周波数オプション**: 100Hz, 250Hz, 300Hz, 500Hz, 600Hz, 750Hz, 1000Hz から設定可能 (デフォルト: 1000Hz)
 - **アーキテクチャ最適化**: x86-64-v3, x86-64-v4, AMD Zen4 向け専用ビルドに対応
 - **コンパイラ最適化**: `-fivopts` や `-fmodulo-sched` を含む高度な GCC フラグ
+- **PREEMPT_DYNAMIC**: プリエンプションモードを実行中でも選択できるように (full, lazy, voluntary, none)
 
 ### CPU の強化
 
-- **複数のスケジューラ**: ワークロードに応じて BORE, EEVDF, BMQ スケジューラを選択可能
+- **複数のスケジューラ**: 処理内容や用途に応じて BORE, EEVDF, BMQ スケジューラを選択可能
+- **[POC Selector](https://github.com/masahitoS/scx_cake)**: scx_cake から着想を得た高速なアイドル CPU 選択を行う Piece-Of-Cake セレクタで、ウェイクアップレイテンシを削減
+- **CachyOS Sauce**: スケジューラとシステムのチューニング向けの独自の `CONFIG_CACHY` 設定
 - **AMD P-State の強化**: Preferred Core 対応と linux-next からの最新の amd-pstate の改善パッチ
 - **リアルタイム対応**: BORE スケジューラを統合した RT カーネルビルドを提供
-- **CachyOS Sauce**: スケジューラとシステムのチューニングを含むカスタム `CONFIG_CACHY` 設定
 - **低レイテンシ最適化**: 応答性の向上とジッター低減のためのパッチ
+- **sched/wait LIFO accept()**: accept() ソケットを LIFO 順で処理し、キャッシュ効率を向上
+
+### ネットワーク
+
+- **[BBR3 TCP](https://github.com/google/bbr)**: 別モジュールで BBRv3 輻輳制御に対応 (BBRv1 も使用可)
 
 ### ファイルシステムとメモリ
 
-- **ZFS 対応**: コンパイル済みモジュールによる組み込み ZFS ファイルシステムサポート
-- **NVIDIA 統合**:
+- **ZFS 対応**: コンパイル済みモジュールにより ZFS ファイルシステムに組み込みで対応
+- **NTFS の改善**: MFT ミラーの検証、属性の境界チェック、ログファイルの処理に対応する上流の NTFS ドライバの修正
+- **MGLRU の強化**: ダーティページのライトバック処理の改善、vmscan の reclaim 統計の簡略化、Cachy Sauce MM チューニング (LRU-gen のワーキングセット保護、コンパクション・ウォーターマークの調整、ヒュージページの reclaim) を実施
+- **NVIDIA への対応**:
   - パッチ済みのプロプライエタリ版 NVIDIA ドライバモジュール
-  - オープンソース版 NVIDIA ドライバのサポート
+  - オープンソース版 NVIDIA ドライバに対応
   - すぐに使えるモジュールをリポジトリ内で提供
 - **I/O スケジューラの改善**:
   - BFQ と mq-deadline のパフォーマンス強化
-  - 代替 [ADIOS](https://github.com/firelzrd/adios) I/O スケジューラのサポート
-- **メモリ管理**:
-  - メモリ圧迫時のページスラッシングを防ぐ [le9uo](https://github.com/firelzrd/le9uo) パッチ
-  - Zen カーネルのメモリ管理チューニング (コンパクション、ウォーターマーク最適化)
+  - [ADIOS](https://github.com/firelzrd/adios) v3.2.0 マルチキュー I/O スケジューラに対応
+- **VRAM Cgroup (DMEM)**: DRM サブシステムにおいて、cgroup ごとに GPU の VRAM 使用量を制限するデバイスメモリコントローラ
 
 ### そのほかの機能
 
 #### ハードウェアサポート
-- **ゲーミングハードウェア**: Steam Deck パッチ (オーディオ, HW Quirks, HID) と ROG Ally 対応
-- **Apple ハードウェア**: T2 MacBook にデフォルトで対応
-- **ASUS ハードウェア**: ASUS ハードウェアの互換性を向上するパッチ
+- **AMD ISP4**: 対応するプラットフォーム向けの新しい AMD ISP 4 カメラドライバ
+- **ゲーミングハードウェア**: Steam Deck パッチ (オーディオ, HW Quirks, HID), ROG Ally, MSI Claw HID ドライバ (deckify) 対応
+- **Apple 製ハードウェア**: ステージング段階の apple-bce ドライバによる T2 MacBook への対応
+- **ASUS 製ハードウェア**: ASUS ハードウェアの互換性を向上するパッチ
+- **Lenovo 製ハードウェア**: WMI バッテリー充電制限、GPU/CPU tunable 属性, capdata debugfs
+- **HP 製ハードウェア**: OMEN Slim と OMEN MAX ノート PC に hp-wmi で対応
 - **グラフィックス**: HDR サポートを有効化、AMDGPU の min_powercap オーバーライド (`amdgpu_ignore_min_pcap`)
+- **ディスプレイ**: AMD 環境での HDMI VRR, ALLM と passive VRR のコネクタプロパティ、EDID からの VESA DSC bits-per-pixel 解析
+- **オーディオコーデック**: AW88399 と MAX98390 HDA サイドコーデックに対応
 
 #### システムの強化
 - **マルチメディア**: v4l2loopback モジュールをデフォルトで内蔵
@@ -57,9 +71,9 @@ CachyOS カーネルは、アップストリームの機能強化、設定、パ
 
 #### その他
 
-CachyOS カーネルには、ユーザー体験を向上させる、目立たないながらも重要な機能がほかにもあります。
+CachyOS カーネルには、ユーザー体験を向上させる、細かいながらも重要な機能がほかにもあります。
 
-- ストリップなしのカーネルバイナリをもつ、デバッグバリアントのカーネルを内蔵しています。これは AutoFDO でカーネルをプロファイリングするために必要です。
+- ストリップなしのカーネルバイナリをもつ、デバッグ向けバージョンのカーネルを内蔵しています。これは AutoFDO でカーネルをプロファイリングするために必要です。
 - [Waydroid](https://waydro.id/) に必要なモジュールである [Binder](https://developer.android.com/reference/android/os/Binder) がカーネル設定で標準で有効になっており、すでに[設定済み](https://github.com/CachyOS/linux-cachyos/blob/2f380e2b35c4ad9acda98296f638f93af3742533/linux-cachyos/config#L11037)です。
 
 ## バリアント
@@ -78,8 +92,8 @@ CachyOS は幅広いカーネルに対応しています。対応するすべて
   - Alfred Chen による [Project C](https://gitlab.com/alfredchen/projectc/) の BMQ スケジューラを採用
     - `sched-ext には非対応です。`
 - **linux-cachyos-deckify**
-  - ハンドヘルドデバイス向けのデフォルトカーネル
-    - ハンドヘルドデバイスでほかのカーネルを使用することは**非推奨で**、**サポート対象外**です。
+  - ハンドヘルドデバイス向けの標準のカーネル
+    - ハンドヘルドデバイスでほかのカーネルを使用することは**おすすめせず**、**サポート対象外**です。
   - [BORE](https://github.com/firelzrd/bore-scheduler) スケジューラを採用
   - ベースパッチセットに加え、ハンドヘルドデバイスでの互換性と全体的な体験を向上させるハンドヘルド専用パッチを適用
 - **linux-cachyos-eevdf**
@@ -96,7 +110,6 @@ CachyOS は幅広いカーネルに対応しています。対応するすべて
     - `sched-ext には非対応です。`
 - **linux-cachyos-rc**
   - [Linus のツリー](https://github.com/torvalds/linux/)からの最新メインラインカーネルをベースに構築
-  - [BORE](https://github.com/firelzrd/bore-scheduler) スケジューラを採用
   - パッチセットに新機能を導入するメインカーネル
 - **linux-cachyos-server**
   - デスクトップではなくサーバーワークロード向けにチューニング
@@ -108,10 +121,10 @@ CachyOS は幅広いカーネルに対応しています。対応するすべて
   - [BORE](https://github.com/firelzrd/bore-scheduler) スケジューラを採用
 
 :::note
-特に記載がない限り、ほかのカーネルバリアントはデフォルトカーネルと同じ設定と考えて問題ありません。
+特に記載がない限り、ほかのカーネルバリアントは標準のカーネルと同じ設定と考えて問題ありません。
 :::
 
-標準カーネルへの提案や改善がある場合は [linux-cachyos GitHub](https://github.com/CachyOS/linux-cachyos) で Issue の投稿をお願いします。
+標準のカーネルに関する提案や改善がある場合は [linux-cachyos GitHub](https://github.com/CachyOS/linux-cachyos) で Issue の投稿をお願いします。
 
 ### パッケージ命名規則
 
@@ -128,7 +141,7 @@ linux-cachyos-hardened-{,lto-}dbg
 
 ## プリビルドカーネルモジュール
 
-より多くのユーザーに対応するために、CachyOS はよく使われる主要なカーネルモジュールをカーネルとともに提供しています。これにより、カーネルのアップデートや新しいカーネルのインストールごとにモジュールを再コンパイルする必要がなくなり、リポジトリからインストールするだけで使えます。これにより、同じモジュールをプリコンパイル版として提供している `-dkms` パッケージは実質的に不要になります。
+より多くのユーザーに対応するために、CachyOS はよく使われる主要なカーネルモジュールをカーネルに搭載した状態で用意しています。これにより、カーネルのアップデートや新しいカーネルのインストールをするごとにモジュールを再コンパイルする必要がなくなり、リポジトリからインストールするだけで使えます。そのため、同じモジュールをプリコンパイル版として提供している `-dkms` パッケージは実質的に不要になります。
 
 ### ZFS
 
@@ -136,7 +149,7 @@ linux-cachyos-hardened-{,lto-}dbg
 
 ### NVIDIA
 
-CachyOS はクローズドソースと[オープンソース](https://github.com/NVIDIA/open-gpu-kernel-modules/)の両方のカーネルモジュールのプリコンパイル版を提供しています。NVIDIA のカーネルモジュール開発はツリー外で行われるため、カーネルのリリースサイクルとは一致せず、標準の設定が最新カーネルと互換性がないことがあります。回避策として、CachyOS はコミュニティが作成したパッチや NVIDIA から直接提供されたパッチをモジュールに適用しています。
+CachyOS はクローズドソースと[オープンソース](https://github.com/NVIDIA/open-gpu-kernel-modules/)の両方のカーネルモジュールのプリコンパイル版を提供しています。NVIDIA のカーネルモジュール開発はツリー外で行われるため、カーネルのリリースサイクルとは一致せず、デフォルトの設定が最新カーネルと互換性がないことがあります。回避策として、CachyOS はコミュニティが作成したパッチや NVIDIA から直接提供されたパッチをモジュールに適用しています。
 
 ## よくある質問
 
@@ -145,13 +158,13 @@ CachyOS はクローズドソースと[オープンソース](https://github.com
 カーネルを実質的に2回ビルドする必要があるため、コンパイルに多くの時間とリソースがかかるからです。AutoFDO を使ったカーネルビルドは以下の手順で行われます。
 
 1) AutoFDO とデバッグ機能を有効にしてカーネルをビルド
-2) プロファイルを作成、つまり最適化に必要なプロファイリングデータを収集するためのワークロードを実行
+2) プロファイルを作成 (最適化に必要なプロファイリングデータを収集するためのワークロードを実行)
 3) AutoFDO プロファイルを使ってカーネルを再ビルド
 
-こうした事情により現時点では [linux-cachyos](/ja/features/kernel#variants) バリアントのみに適用されています。
+こうした事情により、現時点では [linux-cachyos](/ja/features/kernel#variants) バリアントのみに適用されています。
 
 AutoFDO の詳細については[こちら](https://cachyos.org/blog/2411-kernel-autofdo/)をご覧ください。
 
 ### リアルタイムカーネルでゲームのパフォーマンスを改善できる？
 
-改善できません。リアルタイムカーネルは通常のプリエンプティブ (PREEMPT) カーネルと比べてはるかに多くのコードのプリエンプトを許容するようになります。これによりゲームプロセスを含む多くのタスクが頻繁にプリエンプトされてシステムリソースが強制的に解放されることにつながり、パフォーマンスを低下させます。
+リアルタイムカーネルでは改善できません。リアルタイムカーネルは通常のプリエンプティブ (PREEMPT) カーネルと比べて多くのコードのプリエンプトを許容するため、ゲームプロセスなどのたくさんのタスクが頻繁にプリエンプトされ、システムリソースが強制的に奪われることによりパフォーマンスを低下させます。

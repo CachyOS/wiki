@@ -1,13 +1,13 @@
 ---
 title: 寄付
-description: CachyOS をサポートする方法
+description: CachyOS を支援する方法について
 ---
 
 CachyOS の活動を支援していただける場合は、寄付をお願いいたします。いただいた寄付はビルドサーバーの費用に充てられます。
 
 寄付いただいた方には、Discord で寄付者ランクを付与いたします。
 
-現在の月額費用は以下のとおりです。
+現在の月額運用費は以下のとおりです。
 
 - ビルドサーバー 127€ (Hetzner 7950X3D)
 - セカンドビルドサーバー 70€ (Hetzner 7700X)
@@ -15,9 +15,7 @@ CachyOS の活動を支援していただける場合は、寄付をお願いい
 - メールサーバー/ミラー 17€
 - フォーラムサーバー (Netcup VPS) 7€
 
-### Patreon
-
-<https://www.patreon.com/CachyOS>
+### [Patreon](<https://www.patreon.com/CachyOS>)
 
 ### イーサリアム
 
