@@ -1,18 +1,229 @@
 ---
-title: fstab を使ったドライブの自動マウント
-description: /etc/fstab を使って追加のドライブをブート時に自動マウントする方法
+title: 追加ドライブの自動マウント
+description: /etc/fstab や systemd のマウント機能使って追加のドライブをブート時に自動マウントする方法
 ---
 
-このガイドでは `/etc/` にある fstab ファイルを使ってブート時に追加のドライブをマウントする基本的な方法を説明します。パーティションや UUID の調べ方、各オプションの意味、さらに詳しく知りたい場合の参考資料についても紹介しています。
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+このガイドでは、systemd マウントファイルや `/etc/` にある fstab ファイルを使って、ブート時に追加のドライブをマウントする基本的な方法を説明します。パーティションや UUID の調べ方、各オプションの意味、さらに詳しく知りたい場合の参考資料についても紹介しています。
 
 ## 要件
 
 - ルートまたは sudo 権限
 
-## /etc/fstab へのエントリの追加
-
 :::note[Linux での NTFS について]
-NTFS ファイルシステムは、ntfs3 ドライバや ntfs-3g ドライバを使用する場合でも Linux では不安定になることがあります。自己責任で使用してください。安定性とパフォーマンスを重視するなら、ext4, xfs, btrfs などの Linux ネイティブなファイルシステムをおすすめします。
+NTFS ファイルシステムは、ntfs や ntfs3, ntfs-3g ドライバを使っても Linux では不安定になることがあるため、自己責任で使用してください。安定性とパフォーマンスを重視するなら、ext4, xfs, btrfs などの Linux ネイティブなファイルシステムをおすすめします。
+:::
+
+## (安全&初心者向け) systemd マウントファイルでドライブをマウントする
+
+fstab にはないメリットとして、systemd ならマウントファイルに不具合があっても、起動不能になりません。fstab では一歩間違えると、システムが起動しなくなるおそれがあります。
+
+### 1. パーティション UUID の確認
+
+```sh title="ターミナルで以下のコマンドを実行"
+lsblk -f
+```
+
+```sh title="出力例"
+NAME          FSTYPE FSVER LABEL UUID                                 FSAVAIL   FSUSE% MOUNTPOINTS
+zram0                                                                              [SWAP]
+nvme0n1
+├─nvme0n1p1   vfat   FAT32       E04D-9F05
+├─nvme0n1p2
+├─nvme0n1p3   ntfs               08A24E90A24E81E4                      715.4G   50%
+├─nvme0n1p4   vfat   FAT32       E09C-D4DA                             628.1M   39% /boot
+├─nvme0n1p5   ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G   47% /
+└─nvme0n1p6   ntfs
+nvme1n1
+└─nvme1n1p1   ext4               4e55896f-3f1f-4bc5-aa8a-fec099689cd9  931.5G   0%
+
+```
+
+今回の例では、マウントしたいのは ext4 で新しくフォーマットされた 1TB のドライブで、まだなにもデータが入っていない状態であるとします。このとき出力内容から、マウントするパーティションは `nvme1n1p1`、UUID は `4e55896f-3f1f-4bc5-aa8a-fec099689cd9` であると判断できます。
+
+### 2. パーティションを特定する
+
+通常は lsblk -f の出力を見ればマウントするための情報は十分ですが、正しいパーティションかどうか確信が持てない場合は、以下のコマンドを実行してください。
+
+```sh
+sudo fdisk -l
+```
+
+```sh title="出力例"
+デバイス        開始位置    終了位置    セクタ      サイズ  タイプ
+/dev/nvme0n1p1  2048        206847      204800      100M    EFI システム
+/dev/nvme0n1p2  206848      239615      32768       16M     Microsoft 予約領域
+/dev/nvme0n1p3  239616      2997384182  2997144567  1.4T    Microsoft 基本データ
+/dev/nvme0n1p4  2997385216  2999482367  2097152     1G      EFI システム
+/dev/nvme0n1p5  2999482368  3905454079  905971712   432G    Linux root (x86-64)
+/dev/nvme0n1p6  3905454080  3907026943  1572864     768M    Windows リカバリ環境
+/dev/nvme1n1p1  2048        1953523711  1953521664  931.5G  Linux ファイルシステム
+
+```
+
+今回の例ではすでに UUID を把握していますが、`fdisk -l` を使うとパーティションの正確なサイズ (931.5G) と種類 (Linux ファイルシステム) が表示されるため、より確実に把握することができます。
+
+これにより、マウントしたいパーティションが先ほど確認した、UUID が `08A24E90A24E81E4` の `nvme0n1p3` であることが正確にわかりました。本来はここまでする必要はありませんが、念の為確認してミスを防ぐことができます。
+
+正しいパーティションを特定できたら UUID をコピーしてください。ターミナルでのコピーは通常 `Ctrl+Shift+C` で行うことができます。
+
+### 3. systemd マウントファイルを作成する
+このドライブをゲーム目的に使用したいとします。systemd マウントファイルの名前がマウントパスによって決まるため、マウントする場所はホームディレクトリ内がおすすめです。お好みの場所に自由に設定することができますが、今回はわかりやすいよう /home/user を例とします (user を Linux のユーザーネームに置き換えてください)。このドライブはゲーム用なので、ユーザーホームディレクトリ内のゲームフォルダ `/home/user/games` にマウントしたいとします。
+
+この場合、systemd マウントファイルの名前は home-$USER-games.mount (スラッシュ `/` をハイフン `-` に置き換えてください) となります。配置先は /etc/systemd/system です。
+
+:::tip
+マウントフォルダの名前にスペースやハイフン、CJK (日中韓) 文字やアクセント文字を使用したい場合は、特別な書き方が必要です。たとえばフォルダパスが `/home/user/Aaあア` の場合、作成するマウントファイルの名前を以下のコマンドで生成する必要があります。
+```bash
+systemd-escape -p --suffix=mount "/home/user/Aaあア"
+```
+このとき、マウントファイルの完全パスは `/etc/systemd/system/home-user-Aa\xe3\x81\x82\xe3\x82\xa2.mount` になります。
+:::
+
+お好きなテキストエディタを使用してください。ここでは `micro` を例として使用します。
+
+```sh
+micro /etc/systemd/system/home-$USER-games.mount
+```
+:::note
+ホームフォルダ内でマウントする場合、上記の $USER をそのままにしても、自動的にユーザーネームに置き換えられるため問題ありません。
+:::
+
+以下のテンプレートを貼り付けてください。
+```ini
+[Unit]
+Description=
+
+[Mount]
+What=
+Where=
+Type=
+Options=
+
+[Install]
+WantedBy=multi-user.target
+```
+以下はそれぞれの項目の説明です。
+
+<Tabs>
+  <TabItem label='Description'>
+  説明を自由に書いて、わかりやすくしておくことができます。
+  </TabItem>
+  <TabItem label= 'What'>
+  先ほどコピーした UUID を指定してください。今回の例では `UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9` になります。
+  </TabItem>
+  <TabItem label= 'Where'>
+  マウント場所を指定する部分です。存在しないフォルダが指定された場合は自動で作成されます。今回の例では `/home/user/games`になります。ホームフォルダ内でマウントする場合は、"user" をユーザーネームに置き換えてください。
+  </TabItem>
+  <TabItem label= 'Type'>
+  ファイルシステムのタイプを指定する部分です。今回は `ext4` です。
+  </TabItem>
+  <TabItem label= 'Options'>
+  マウントオプションを指定する部分です。必要に応じたオプションを記入してください。今回の例では `defaults,exec,rw,noatime` になります。スペースの有無は影響しません。
+  </TabItem>
+</Tabs>
+---
+
+今回の例にしたがって記入すると、マウントファイルは以下の通りです。
+```ini
+[Unit]
+Description=ゲーム用ドライブ (/home/user/games)
+
+[Mount]
+What=UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9
+Where=/home/user/games
+Type=ext4
+Options=defaults,exec,rw,noatime
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 4. 仕上げ
+エントリを作成したドライブを今すぐマウントするには、以下のコマンドを実行してください。
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now home-$USER-games.mount
+```
+
+これで、マウントする場所としてえらんだフォルダにマウントされているはずです。`systemctl status home-$USER-games.mount` でマウントの状態を確認することができます。
+
+```sh
+● home-user-games.mount - ゲーム用ドライブ (/home/user/games)
+     Loaded: loaded (/proc/self/mountinfo; enabled; preset: disabled)
+     Active: active (mounted) since Sat 2026-05-02 13:02:31 CDT; 23h ago
+ Invocation: e52ef8fe3d754c64a3825bc1ee89e7da
+      Where: /home/user/games
+       What: /dev/nvme1n1p1
+      Tasks: 0 (limit: 74118)
+     Memory: 316K (peak: 3.9M)
+        CPU: 5ms
+     CGroup: /system.slice/home-user-games.mount
+
+May 02 13:02:31 cachyos systemd[1]: Mounting ゲーム用ドライブ (/home/user/games)...
+May 02 13:02:31 cachyos systemd[1]: Mounted ゲーム用ドライブ (/home/user/games).
+```
+
+### まとめ
+
+- パーティションの **UUID** を確認
+
+```sh
+lsblk -f
+```
+
+- マウントファイルを作成
+
+```sh
+micro /etc/systemd/system/mnt-foo.mount
+```
+
+`mnt-foo` の部分にマウントする場所の完全パスを、`/` を `-` に置き換えて記入してください。
+
+- マウントファイルを書く
+
+```sh
+[Unit]
+Description=ドライブ
+
+[Mount]
+What=UUID=<パーティション UUID>
+Where=/mnt/foo
+Type=somefs
+Options=defaults
+
+[Install]
+WantedBy=multi-user.target
+```
+
+`<パーティション UUID>`, `/mnt/foo`, `somefs` をそれぞれ UUID、ディレクトリ名、ファイルシステム (例: ext4) に置き換えてください。NAS には `_netdev`、重要でないドライブには `nofail` など、必要に応じてオプションを追加してください。
+
+- デーモンをリロード
+
+```sh
+sudo systemctl daemon-reload
+```
+
+- ドライブをマウント&起動時に自動でマウントするように設定
+
+```sh
+sudo systemctl enable --now mnt-foo.mount
+```
+
+### 参考リンク
+
+- [ファイルシステム階層規格](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS の /media/ について](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [dump のマニュアル](<https://linux.die.net/man/8/dump>)
+- [fsck のマニュアル](https://man.archlinux.org/man/fsck.8)
+- [systemd-mount](https://manual.siduction.org/systemd-mount_en.html)
+
+## (上級者向け) /etc/fstab にエントリを追加する
+
+:::danger
+fstab ファイルはブート中に読み込まれるため、ファイルに間違いがあるとシステムの起動に失敗するおそれがあります。再起動を行う前に、追加したエントリに誤字脱字がないか再確認してください。もし失敗した場合は、ライブ環境で起動し[インストール済みのシステムに chroot](/ja/features/cachy_chroot) してファイルを編集することで修復できます。
 :::
 
 ### 1. パーティション UUID の確認
@@ -21,41 +232,41 @@ NTFS ファイルシステムは、ntfs3 ドライバや ntfs-3g ドライバを
 lsblk -f
 ```
 
-```text title="出力例"
-# NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
-# zram0                                                                              [SWAP]
-# nvme0n1
-# ├─nvme0n1p1 vfat   FAT32       E04D-9F05
-# ├─nvme0n1p2
-# ├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
-# ├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
-# ├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
-# └─nvme0n1p6 ntfs
+```sh title="出力例"
+NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+zram0                                                                              [SWAP]
+nvme0n1
+├─nvme0n1p1 vfat   FAT32       E04D-9F05
+├─nvme0n1p2
+├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
+├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
+├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
+└─nvme0n1p6 ntfs
 ```
 
-今回の例では、マウントしたいのは Windows パーティション (ntfs 形式)で、空き容量がおよそ半分あることがわかっています。この条件から、マウントしたいパーティションは `nvme0n1p3`、UUID は `08A24E90A24E81E4`、ファイルシステムは `ntfs` であると判断できます。
+今回の例では、マウントしたいのは Windows パーティション (ntfs 形式)で、空き容量がおよそ半分ある状態だとします。このとき出力内容から、マウントするパーティションは `nvme0n1p3`、UUID は `08A24E90A24E81E4`、ファイルシステムは `ntfs` であると判断できます。
 
 ### 2. パーティションを特定する
 
-多くの場合、`lsblk -f` の出力だけで `/etc/fstab` にマウントするための情報は十分です。それでも正しいパーティションかどうか確信が持てない場合は、以下のコマンドを実行してください。
+通常は `lsblk -f` の出力を見れば `/etc/fstab` にマウントするための情報は十分ですが、正しいパーティションかどうか確信が持てない場合は、以下のコマンドを実行してください。
 
 ```sh
 sudo fdisk -l
 ```
 
-```text title="出力例"
-# Device              Start        End    Sectors  Size Type
-# /dev/nvme0n1p1       2048     206847     204800  100M EFI System
-# /dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
-# /dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
-# /dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
-# /dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
-# /dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
+```sh title="出力例"
+デバイス         開始位置   終了位置     セクタ サイズ タイプ
+/dev/nvme0n1p1       2048     206847     204800   100M EFI システム
+/dev/nvme0n1p2     206848     239615      32768    16M Microsoft 予約領域
+/dev/nvme0n1p3     239616 2997384182 2997144567   1.4T Microsoft 基本データ
+/dev/nvme0n1p4 2997385216 2999482367    2097152     1G EFI システム
+/dev/nvme0n1p5 2999482368 3905454079  905971712   432G Linux root (x86-64)
+/dev/nvme0n1p6 3905454080 3907026943    1572864   768M Windows リカバリ環境
 ```
 
-この例では UUID はすでに把握しています。ただし `fdisk -l` を使うとパーティションの正確なサイズ (1.4T) と種類 (Microsoft basic data) が表示されるため、さらに明確になります。
+今回の例ではすでに UUID を把握していますが、`fdisk -l` を使うとパーティションの正確なサイズ (1.4T) と種類 (Microsoft 基本データ) が表示されるため、より確実に把握することができます。
 
-これにより、マウントしたいパーティションが先ほど確認した UUID `08A24E90A24E81E4` の `nvme0n1p3` であることが正確にわかります。本来はここまでする必要はありませんが、念の為確認することでミスを防げます。
+これにより、マウントしたいパーティションが先ほど確認した、UUID が `08A24E90A24E81E4` の `nvme0n1p3` であることが正確にわかりました。本来はここまでする必要はありませんが、念の為確認してミスを防ぐことができます。
 
 正しいパーティションを特定できたら UUID をコピーしてください。ターミナルでのコピーは通常 `Ctrl+Shift+C` で行うことができます。
 
@@ -63,7 +274,7 @@ sudo fdisk -l
 
 UUID を取得できたので、fstab ファイルを開きましょう。
 
-好みのテキストエディターを使ってください。この例では nano を使います。fstab ファイルを編集するにはルートとして開く必要があります。
+この例では nano を使いますが、お好みのテキストエディターを使ってもかまいません。fstab ファイルを編集するには、ルートとして開く必要があります。
 
 ```sh
 sudo nano /etc/fstab
@@ -82,9 +293,9 @@ UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail,uid=1000,gid=1000,rw,
 各項目の説明は以下のとおりです。
 
 - `UUID=08A24E90A24E81E4` はマウントしたいファイルシステムを UUID で指定しています。ファイルシステムを識別する方法はほかにもありますが、UUID が最も安全です。その他の方法は[こちら](https://wiki.archlinux.jp/index.php/Fstab#%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E3%81%AE%E8%AD%98%E5%88%A5)をご覧ください。
-- `/media/windows` はドライブのマウントポイントです。[Linux ファイルシステム階層標準](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)では `/media/` がリムーバブルドライブのマウント先として適切とされています。`windows` はマウント先のディレクトリ名です。マウントしたいドライブごとに専用のディレクトリが必要です。
+- `/media/windows` はドライブのマウントポイントです。[Linux ファイルシステム階層規格](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)では `/media/` がリムーバブルドライブのマウント先として適切とされています。`windows` はマウント先のディレクトリ名です。マウントしたいドライブごとに専用のディレクトリが必要です。
 
-- `ntfs3` は使用するファイルシステムの種類です。この例では明示的に ntfs3 カーネルドライバを使用しています。ほかには `ext4`、`xfs` などがあります。`auto` に置き換えると mount コマンドが自動で判断するようになります。
+- `ntfs3` は使用するファイルシステムの種類です。この例では明示的に ntfs3 カーネルドライバを使用しています。ほかには `ext4`, `xfs` などがあります。`auto` に置き換えると mount コマンドが自動で判断するようになります。
 
 - `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000` はマウントオプションです。
 
@@ -109,9 +320,7 @@ UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail,uid=1000,gid=1000,rw,
 各オプションの詳細は [fstab のマニュアルページ](https://man7.org/linux/man-pages/man5/fstab.5.html)と [mount のマニュアルページ](https://man7.org/linux/man-pages/man8/mount.8.html)をご覧ください。
 #### 補足
 
-ファイルシステムの種類以降のオプションはすべて省略可能で、デフォルト値から変更しない場合は省略できます。
-
-つまり
+ファイルシステムの種類以降のオプションはすべて、デフォルト値から変更しない場合は省略できます。つまり、
 
 `UUID=<パーティション UUID> /media/foo somefs`
 
@@ -119,11 +328,11 @@ UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail,uid=1000,gid=1000,rw,
 
 `UUID=<パーティション UUID> /media/foo somefs defaults 0 0`
 
-は同等です。`somefs` の後に何も指定しない場合、暗黙的に `somefs defaults 0 0` として扱われます。
+の2つは同じ意味を表します。`somefs` の後に何も指定しない場合、自動的に `somefs defaults 0 0` として扱われます。
 
 ### 4. 仕上げ
 
-エントリを追加したドライブを今すぐマウントするには、以下の2つのコマンドを実行してください。
+エントリを作成したドライブを今すぐマウントするには、以下の2つのコマンドを実行してください。
 
 ```sh
 sudo systemctl daemon-reload
@@ -133,7 +342,7 @@ sudo systemctl daemon-reload
 sudo mount -a
 ```
 
-ドライブが `/media/windows` に表示されるようになり、再起動後も自動的にマウントされます。
+ドライブが `/media/windows` に表示され、再起動後も自動的にマウントされるようになります。
 
 ```sh
 ls /media/windows
@@ -149,7 +358,7 @@ ls /media/windows
 # Intel                    'Ship of Harkinian'
  ```
 
-ホームディレクトリに新しくマウントしたドライブへのリンクを作成したい場合は以下を実行してください。
+ホームディレクトリに新しくマウントしたドライブへのリンクを作成したい場合は、以下を実行してください。
 
  ```sh
  ln -s /media/windows ~/Windows
@@ -171,7 +380,7 @@ ls /media/windows
 # Intel                    'Ship of Harkinian'
  ```
 
-## まとめ
+### まとめ
 
 - パーティションの **UUID** の確認
 
@@ -191,7 +400,7 @@ sudo nano /etc/fstab
 UUID=<パーティション UUID> /media/foo somefs defaults 0 0
 ```
 
-`<パーティション UUID>`、`foo`、`somefs` をそれぞれの UUID、ディレクトリ名、ファイルシステム (例: ext4) に置き換えてください。NAS には `_netdev`、重要でないドライブには `nofail` など、必要に応じてオプションを追加してください。
+`<パーティション UUID>`, `foo`, `somefs` をそれぞれの UUID、ディレクトリ名、ファイルシステム (例: ext4) に置き換えてください。NAS には `_netdev`、重要でないドライブには `nofail` など、必要に応じてオプションを追加してください。
 
 - デーモンをリロードする
 
@@ -207,9 +416,9 @@ sudo mount -a
 
 ドライブがマウントされ、以降のブート時にも自動的にマウントされます。
 
-## 参考リンク
+### 参考リンク
 
-- [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [ファイルシステム階層規格](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
 - [FHS の /media/ について](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
 - [dump のマニュアル](<https://linux.die.net/man/8/dump>)
 - [fsck のマニュアル](https://man.archlinux.org/man/fsck.8)

@@ -73,10 +73,10 @@ title: 行動規範
 
 ## 帰属
 
-この行動規範は、<https://www.contributor-covenant.org/version/2/0/code_of_conduct.html> で利用可能な [Contributor Covenant][homepage] バージョン2.0 を基に作成されています。
+この行動規範は、[https://www.contributor-covenant.org/version/2/0/code_of_conduct.html](<https://www.contributor-covenant.org/version/2/0/code_of_conduct.html>) で利用可能な [Contributor Covenant][homepage] バージョン2.0 を基に作成されています。
 
-コミュニティへの影響ガイドラインは[Mozilla's code of conduct enforcement ladder](https://github.com/mozilla/diversity)に適合しています。
+コミュニティへの影響ガイドラインは [Mozilla's code of conduct enforcement ladder](https://github.com/mozilla/diversity) に適合しています。
 
-[homepage]: https://www.contributor-covenant.org
+[homepage](https://www.contributor-covenant.org)
 
-この行動規範に関する一般的な質問への回答については、<https://www.contributor-covenant.org/faq> のFAQを参照してください。翻訳は<https://www.contributor-covenant.org/translations> で入手できます。
+この行動規範に関する一般的な質問への回答については、[FAQ](<https://www.contributor-covenant.org/faq>) をご覧ください。翻訳は [https://www.contributor-covenant.org/translations](<https://www.contributor-covenant.org/translations>) で入手できます。

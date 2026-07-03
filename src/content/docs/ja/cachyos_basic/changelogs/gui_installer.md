@@ -4,6 +4,55 @@ description: Calamares と GUI ライブ ISO の更新ログ
 sidebar:
   order: 1
 ---
+26.06
+----
+
+**新機能**
+
+* **パッケージ**
+  * Python のパフォーマンス向上のため、拡張 PGO を使用するように
+  * 汎用 x86 の分岐予測ミス調整のための [GCC パッチ](https://www.phoronix.com/news/GCC-x86-Generic-Mispredict)を追加、最新の Intel/AMD CPU における分岐予測ミスコストの算出方法を改善
+  * 高コア CPU で OpenBLAS を使用する際に Phoronix Benchmarks で見つかったリグレッションを修正
+  * `proton-cachyos` を `proton-cachyos-native` にリネーム
+* **pacman** スクリプトレットおよびフックに[ネットワーク分離機能](https://github.com/CachyOS/pacman/commit/4056cd687f6379e61e7decb9b66e9b57cb3949a9)を追加
+* **インストーラー**
+  * デスクトップ環境の選択画面に CachyOS Hyprland Noctalia とプレビュー動画を追加
+  * 標準アプリから `paru` を削除 (かわりに GUI や CLI を問わず [Shelly](https://wiki.cachyos.org/configuration/post_install_setup/#updating-the-system) の使用をおすすめします)
+  * MangoWM 用のディスプレイマネージャーとして SDDM を追加
+  * GNOME システムモニターを Resources に置き換え
+  * オーディオパッケージグループに `realtime-privileges` を追加
+  * ライブセッションにおけるキーボードレイアウトとバリアントの検出を改善
+* **CachyOS-Welcome**
+  * `blocky` 経由の DNS over QUIC (DoQ) に対応
+  * 専用のトラブルシューティングページを追加
+  * Ptyxis ターミナルに対応
+  * アゼルバイジャン語とギリシャ語に対応
+  * README と「貢献する」ページがフランス語に対応
+  * イタリア語、ドイツ語、フランス語、日本語、ブルガリア語の翻訳を更新
+* **chwd**
+  * トルコ語に対応
+  * ハンドヘルド用パッケージリストから `cachyos-handheld` を削除
+  * 互換性のないドライバブランチが必要なマルチ GPU 環境 (異なる世代の NVIDIA GPU が混在する場合など) でのドライバ競合を、最適な共通ドライバをインストールして解決し、失敗したときはプライマリ GPU へフォールバックするように
+  * 仮想マシン用に 32-bit Vulkan ドライバを追加
+* **cachyos-settings:** ユーザーサービスに 15 秒の起動タイムアウトと 10 秒のシャットダウンタイムアウトを適用し、90 秒のシャットダウン遅延を防止するように
+
+**修正**
+
+* **インストーラー**
+  * キーボードレイアウトの順序と `locale1` 設定の処理を修正
+  * インストール先システムへの正しい pacman 設定のコピーを修正
+  * インストール後に残っていた `/etc/calamares` ディレクトリを削除
+  * Calamares のクリーンアップ処理を、全インストールスクリプトの実行後に行うように
+  * 冗長な Limine のポストインストール手順を削除
+* **CachyOS-Welcome**
+  * `cachyos-pi` がインストールされていない状態で「アプリのインストール」を選択した際のクラッシュを防止、利用できない場合はボタンを非表示に
+  * 保存された設定ファイルの読み込みまたは解析に失敗した際のクラッシュを修正、失敗時には設定をデフォルトにリセットするように
+  * チューニングの検出処理 (`graphical-session.target.wants` を含む) と polkit 経由でのユーザーサービス系チューニングの一括無効化機能を修正
+* **chwd**
+  * 仮想マシンのベンダー ID を修正
+  * 不要な `fprintd` サービスの有効化処理を削除
+  * Mesa の削除ガードを修正
+  
 26.04
 ----
 
@@ -41,8 +90,8 @@ sidebar:
   * 470xx プロファイルから強制的な Xorg セッションを削除
   * ハンドヘルド製品名の識別を改善
 * **cachyos-settings**
-  * NVIDIA 595 ドライバーにおける問題のため、S01x 電源管理を廃止
-  * NVIDIA ドライバーの VR 関連の問題のため、`AggressiveVblank` を無効化
+  * NVIDIA 595 ドライバにおける問題のため、S01x 電源管理を廃止
+  * NVIDIA ドライバの VR 関連の問題のため、`AggressiveVblank` を無効化
 
 ---
 
