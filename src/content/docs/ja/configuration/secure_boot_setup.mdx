@@ -13,7 +13,7 @@ import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
 ### GRUB ブートマネージャー
 
-GRUB を使用している場合は、以下のコマンドを実行して CA キーを使った GRUB のセキュアブートサポートを有効にしてください。
+GRUB を使用している場合は、以下のコマンドを実行して CA キーを使用する GRUB のセキュアブートに対応する設定を有効にしてください。
 
 ```bash
 sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
@@ -37,7 +37,7 @@ systemctl reboot --firmware-setup
 
 これは Lenovo Ideapad 5 Pro の BIOS の画面です。セットアップモードにリセットするかファクトリーキーを復元し、システムに再起動してください。
 
-一部の MSI 製マザーボードにはセットアップモードがありません。同様の操作を行うには、以下の手順にしたがってください。
+一部の MSI 製マザーボードにはセットアップモードがありません。同様の操作を行うには、セキュアブートモードを "custom" に設定し、互換性オプションを "maximum security" に指定してください (デフォルトモードのままだと、ブートローダーから CachyOS を起動することができなくなります)。その後、"key management" 画面で以下の画像にしたがって操作を行ってください。
 <br />
 <ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
 
@@ -97,11 +97,11 @@ Boot → Secure Boot に移動し、セキュアブートモードを Custom に
         ```
     </details>
 
-    :::caution[ASUS 製マザーボードで `--firmware-builtin` は使用しないでください]
-    一部の ASUS 製マザーボードでは `--firmware-builtin` フラグを使用すると、EFI キー変数に重複エントリが発生します。(例: `Vendor Keys` に `builtin-db` が複数回表示される) \
-    その後 UEFI 設定からセキュアブートを有効化すると、マザーボードが不適切なキーを検知しブートマネージャーが読み込まれる前に **Secure Boot Violation** エラーが発生します。
+    :::caution[ASUS 製や Gigabyte 製マザーボードで `--firmware-builtin` は使用しないでください]
+    一部の ASUS 製や Gigabyte 製マザーボードでは `--firmware-builtin` フラグを使用すると、EFI キー変数に重複エントリが発生します。(例: `Vendor Keys` に `builtin-db` が複数回表示される) \
+    その後 UEFI 設定からセキュアブートを有効化すると、マザーボードが不適切なキーを検知し、ブートマネージャーが読み込まれる前に **Secure Boot Violation** エラーが発生します。
 
-    ASUS 製マザーボードでは `--microsoft` を使用してください。
+    ASUS 製や Gigabyte 製マザーボードでは `--microsoft` を使用してください。
 
     ```bash
     sudo sbctl enroll-keys --microsoft
@@ -125,75 +125,17 @@ Boot → Secure Boot に移動し、セキュアブートモードを Custom に
         Vendor Keys:    microsoft
         ```
     </details>
+
+    :::note[セットアップモードが Enabled と表示されるときは]
+    `Setup Mode` が **Enabled** と表示されている場合は、ファームウェア設定で**一時的にセキュアブートを無効化してください**。
+    その後システムを再起動し、sbctl のステータスをもう一度確認したら、以下の[カーネルイメージとブートマネージャーへの署名](#カーネルイメージとブートマネージャーへの署名)に進んでください。作業が終わって再起動したら、ファームウェア設定でセキュアブートを再度有効化してください。
+    :::
+
 </Steps>
 
 ## カーネルイメージとブートマネージャーへの署名
 
 <Tabs>
-<TabItem label='systemd-boot'>
-
-CachyOS は [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign) を提供しています。これは `sudo sbctl verify` から署名が必要なファイルの一覧を取得し、一括で署名するスクリプトです。
-
-:::caution
-`/boot` と `/boot/efi` を別々のパーティションに分けているシステムでは、`sbctl` が `/boot/efi` の EFI バイナリしかスキャンしないことがあります。
-これが原因で `/boot` にあるカーネルイメージが検出されなくなります。`sbctl-batch-sign` はこの問題を回避するために `vmlinuz-*` ファイルを `/boot` で**常に**スキャンしています。
-:::
-
-```bash
-sudo sbctl verify
-Verifying file database and EFI images in /boot...
-✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is not signed
-✘ /boot/EFI/BOOT/BOOTX64.EFI is not signed
-✘ /boot/EFI/systemd/systemd-bootx64.efi is not signed
-✘ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is not signed
-✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is not signed
-
-sudo sbctl-batch-sign
-
-sudo sbctl verify
-Verifying file database and EFI images in /boot...
-✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is signed
-✔ /boot/EFI/BOOT/BOOTX64.EFI is signed
-✔ /boot/EFI/systemd/systemd-bootx64.efi is signed
-✔ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is signed
-✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
-```
-
-これにてすべてのファイルへの署名が完了しました。**システムを再起動して UEFI 設定でセキュアブートを有効にしてください。**
-
-:::caution[ASUS 製マザーボードでセキュアブートを有効にするときは]
-一部の ASUS 製マザーボードでは、セキュアブートを有効化する際にほかのメーカーとは異なる動作をします。
-
-- **`Other OS` ではなく `Windows UEFI Mode` を使用してください。**
-  名前が悪くまぎらわしいですが、この設定はセキュアブートの強制を制御するものです。
-  `OS Type` を `Other OS` に設定すると、ASUS 製マザーボードではほかの設定にかかわらず、セキュアブートが**無効化されます**。
-  そのため、再起動後も `sbctl status` では `Secure Boot: Disabled` と表示され続けます。
-
-- **一部の ASUS 製マザーボードにはセキュアブートのオン/オフを独立して切り替えられる設定はありません。**
-  セキュアブートは `Windows UEFI Mode` を選択することで暗黙的に有効化されるようになっています。
-
-この場合、ASUS BIOS でセキュアブートを有効化するための正しい設定は以下のとおりです。
-```
-Boot → Secure Boot
-  OS Type          → Windows UEFI Mode
-  Secure Boot Mode → Custom
-```
-:::
-
-参考として[こちら](/ja/configuration/secure_boot_setup#uefi-でセットアップモードを有効化)も確認してください。
-
-`-s` フラグで署名されたファイルは `sbctl` のデータベースに保存されるため、これ以降同じ手順を行う必要はありません。
-
-:::tip[補足]
-`sbctl` には [pacman フック](https://wiki.archlinux.jp/index.php/Pacman_%E3%83%95%E3%83%83%E3%82%AF)が付属しているため、カーネルやブートマネージャーのアップデート時に新しいファイルに自動で署名を行います。
-:::
-
-CachyOS は systemd の `systemd-boot-update.service` を使って再起動時にブートマネージャーを更新します。そのため `sbctl` の pacman フックは更新された EFI バイナリに**署名しません**。回避策として、ブートマネージャーに直接署名することができます。
-
-```sh
-sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
-```
-</TabItem>
 <TabItem label='Limine'>
 Limine は特殊なブートマネージャーで、ブート時に使用するカーネルイメージやその他のファイルのハッシュを検証できます。この機能が有効な場合、`sbctl-batch-sign` による署名など、ユーザーが手動で行った変更はファイルのハッシュを変更するため、Limine のチェックサム検証の失敗につながります。
 
@@ -256,6 +198,69 @@ sudo limine-enroll-config
 sudo limine-update
 ```
 </TabItem>
+<TabItem label='systemd-boot'>
+
+CachyOS では `sudo sbctl verify` から署名が必要なファイルの一覧を取得し、一括で署名するスクリプトの [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign) を用意しています。
+
+:::caution
+`/boot` と `/boot/efi` を別々のパーティションに分けているシステムでは、`sbctl` が `/boot/efi` 内の EFI バイナリしかスキャンせず、`/boot` にあるカーネルイメージが検出されない可能性があります。`sbctl-batch-sign` ではこの問題を回避するために、`vmlinuz-*` ファイルを検出する際は**常に** `/boot` をスキャンしています。
+:::
+
+```bash
+sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is not signed
+✘ /boot/EFI/BOOT/BOOTX64.EFI is not signed
+✘ /boot/EFI/systemd/systemd-bootx64.efi is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is not signed
+
+sudo sbctl-batch-sign
+
+sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is signed
+✔ /boot/EFI/BOOT/BOOTX64.EFI is signed
+✔ /boot/EFI/systemd/systemd-bootx64.efi is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
+```
+
+これにてすべてのファイルへの署名が完了しました。**システムを再起動して UEFI 設定でセキュアブートを有効にしてください。**
+
+:::caution[ASUS 製マザーボードでセキュアブートを有効にするときは]
+一部の ASUS 製マザーボードでは、セキュアブートを有効化する際にほかのメーカーとは異なる動作をします。
+
+- **`Other OS` ではなく `Windows UEFI Mode` を使用してください。**
+  名前が悪くまぎらわしいですが、この設定はセキュアブートの強制を制御するものです。
+  `OS Type` を `Other OS` に設定すると、ASUS 製マザーボードではほかの設定にかかわらず、セキュアブートが**無効化されます**。
+  そのため、再起動後も `sbctl status` では `Secure Boot: Disabled` と表示され続けます。
+
+- **一部の ASUS 製マザーボードにはセキュアブートのオン/オフを独立して切り替えられる設定はありません。**
+  セキュアブートは `Windows UEFI Mode` を選択することで暗黙的に有効化されるようになっています。
+
+この場合、ASUS BIOS でセキュアブートを有効化するための正しい設定は以下のとおりです。
+```
+Boot → Secure Boot
+  OS Type          → Windows UEFI Mode
+  Secure Boot Mode → Custom
+```
+:::
+
+参考として[こちら](/ja/configuration/secure_boot_setup#uefi-でセットアップモードを有効化)も確認してください。
+
+`-s` フラグで署名されたファイルは `sbctl` のデータベースに保存されるため、これ以降同じ手順を行う必要はありません。
+
+:::tip[補足]
+`sbctl` には [pacman フック](https://wiki.archlinux.jp/index.php/Pacman_%E3%83%95%E3%83%83%E3%82%AF)が付属しているため、カーネルやブートマネージャーのアップデート時に新しいファイルに自動で署名を行います。
+:::
+
+CachyOS は systemd の `systemd-boot-update.service` を使って再起動時にブートマネージャーを更新します。そのため `sbctl` の pacman フックは更新された EFI バイナリに**署名しません**。回避策として、ブートマネージャーに直接署名することができます。
+
+```sh
+sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+```
+</TabItem>
 </Tabs>
 
 ## セキュアブート状態の確認方法
@@ -283,5 +288,5 @@ System:
 ## リンクとクレジット
 
 - このガイドの基礎となった [Arch Wiki (クリックすると日本語版に飛びます)](https://wiki.archlinux.jp/index.php/Unified_Extensible_Firmware_Interface/%E3%82%BB%E3%82%AD%E3%83%A5%E3%82%A2%E3%83%96%E3%83%BC%E3%83%88#sbctl_%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%97%E3%81%9F%E3%82%A2%E3%82%B7%E3%82%B9%E3%83%88%E3%83%97%E3%83%AD%E3%82%BB%E3%82%B9) — ここに記載された内容の多くはここから引用しています。
-- [sbctl](https://github.com/Foxboron/sbctl) — このようなわかりやすいセキュアブート設定ガイドは、このソフトウェアの素晴らしい開発があってこそ実現しました。
+- [sbctl](https://github.com/Foxboron/sbctl) — このセキュアブート設定ガイドは、このソフトウェアの素晴らしい開発があってこそ実現しました。
 - [Improving the Secure Boot Experience by Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) — `sbctl` が開発される以前のセキュアブート設定の複雑さについて書かれた Morten "Foxboron" Linderud のブログ記事です。
