@@ -1,6 +1,6 @@
 ---
-title: Configuration du Secure Boot
-description: Configurer le secure boot avec sbctl après avoir installé CachyOS
+title: Configuration du démarrage sécurisé
+description: Configurer le démarrage sécurisé avec sbctl après avoir installé CachyOS
 ---
 
 import ImageComponent from '~/components/image-component.astro';
@@ -10,7 +10,7 @@ import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ### Gestionnaire de démarrage GRUB
 
-Si vous utilisez GRUB, exécutez la commande suivante pour activer la prise en charge du Secure Boot sur GRUB en utilisant les clés CA.
+Si vous utilisez GRUB, exécutez la commande suivante pour activer la prise en charge du **démarrage sécurisé** (Secure Boot) sur GRUB en utilisant les clés CA.
 
 ```bash
 sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
@@ -18,12 +18,12 @@ sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=
 
 :::note
 Charger des modules inutiles dans votre gestionnaire de démarrage peut présenter un risque de sécurité.
-N'exécutez cette commande que si vous avez réellement besoin du Secure Boot.
+N'exécutez cette commande que si vous avez réellement besoin du démarrage sécurisé.
 :::
 
 ### Accéder au mode de configuration (Setup Mode) dans l'UEFI
-Tout d'abord, nous devons aller dans les paramètres du firmware et régler le mode Secure Boot sur "Setup Mode". Vous pouvez redémarrer
-depuis un système déjà en cours d'exécution vers les paramètres du firmware avec la commande suivante.
+Tout d'abord, nous devons aller dans les paramètres du microprogramme (firmware) et régler le mode de démarrage sur « Setup Mode ». Vous pouvez redémarrer
+depuis un système déjà en cours d'exécution vers les paramètres du microprogramme avec la commande suivante.
 
 ```bash
 systemctl reboot --firmware-setup
@@ -34,7 +34,7 @@ systemctl reboot --firmware-setup
 
 Voici à quoi ressemble le BIOS sur un Lenovo Ideapad 5 Pro. Réinitialisez en mode configuration et redémarrez dans le système.
 
-Cependant, certaines cartes mères MSI n'ont pas de mode de configuration. Pour obtenir le même effet, réglez le mode de démarrage (secure boot mode) sur « custom » (ceci est important car avec le mode par défaut vous risquez de ne pas pouvoir démarrer CachyOS via le chargeur d'amorçage !). Ensuite, accédez à la section « gestion des clés » et suivez les deux étapes illustrées dans l'image ci-dessous :
+Cependant, certaines cartes mères MSI n'ont pas de mode de configuration. Pour obtenir le même effet, réglez le mode de démarrage sécurisé (Secure Boot Mode) sur « custom » (ceci est important car avec le mode par défaut vous risquez de ne pas pouvoir démarrer CachyOS via le chargeur d'amorçage !). Ensuite, accédez à la section « gestion des clés » et suivez les deux étapes illustrées dans l'image ci-dessous :
 <br />
 <ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
 
@@ -103,6 +103,12 @@ sudo pacman -S sbctl
     Secure Boot     ✘ Disabled
     Vendor Keys:    microsoft
     ```
+
+    :::note[Le mode de configuration indique Activé ?]
+    Si le `mode de configuration` (Setup Mode) montre qu'il est **Activé** (Enabled), accédez aux paramètres du microprogramme et **désactivez temporairement le démarrage sécurisé**. 
+    Redémarrez le système, vérifiez à nouveau l'état de sbctl, continuez avec la [Signature de l'image du noyau et du gestionnaire de démarrage](#signature-de-limage-du-noyau-et-du-gestionnaire-de-démarrage) 
+    (voir ci-dessous), puis redémarrez et réactivez le démarrage sécurisé dans les paramètres du microprogramme.
+    :::
 </Steps>
 
 ## Signature de l'image du noyau et du gestionnaire de démarrage
@@ -119,7 +125,7 @@ processus de démarrage spécial qui contourne le chaînage EFI et les vérifica
 EFI qui doivent être signés sont ceux de Limine lui-même.
 
 :::caution[Limine >= 11.2.0]
-À partir de Limine 11.2.0, les politiques Secure Boot sont **strictement appliquées** lorsque l'UEFI Secure Boot est actif :
+À partir de Limine 11.2.0, les règles de démarrage sécurisé sont **strictement appliquées** lorsque le démarrage sécurisé UEFI est actif :
 
 - Une somme de contrôle de configuration BLAKE2B **doit** être enregistrée dans le binaire EFI de Limine, sinon Limine entre en panique avec : `SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED`
 - Tous les chemins de fichiers dans `limine.conf` (noyau, initramfs, etc.) **doivent** avoir des hachages BLAKE2B ajoutés (p. ex. `boot():/vmlinuz-linux#<hash>`)
@@ -179,7 +185,7 @@ sudo sbctl verify # Pour vérifier
 sudo sbctl sign -s /boot/EFI/BOOT/BOOTX64.EFI # Pour signer BOOTX64.EFI
 ```
 
-Maintenant que tous les fichiers sont signés. **Redémarrez votre système et allez dans vos paramètres UEFI pour activer le Secure Boot.**
+Maintenant que tous les fichiers sont signés. **Redémarrez votre système et allez dans vos paramètres UEFI pour activer le démarrage sécurisé.**
 
 </TabItem>
 <TabItem label='systemd-boot'>
@@ -213,7 +219,7 @@ Verifying file database and EFI images in /boot...
 ✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
 ```
 
-Maintenant que tous les fichiers sont signés. **Redémarrez votre système et allez dans vos paramètres UEFI pour activer le Secure Boot.**
+Maintenant que tous les fichiers sont signés. **Redémarrez votre système et allez dans vos paramètres UEFI pour activer le démarrage sécurisé.**
 
 :::caution[Cartes mères ASUS — Activaction du démarrage sécurisé]
 Certaines cartes mères ASUS se comportent différemment de celles d'autres fabricants lors de l'activation du démarrage sécurisé :
@@ -254,9 +260,9 @@ sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/
 </TabItem>
 </Tabs>
 
-## Vérifier que le Secure Boot est activé
+## Vérifier que le démarrage sécurisé est activé
 
-Pour vérifier que le Secure Boot est bien activé, vous pouvez exécuter l'une des commandes suivantes :
+Pour vérifier que le démarrage sécurisé est bien activé, vous pouvez exécuter l'une des commandes suivantes :
 
 ```bash
 sudo sbctl status
@@ -280,7 +286,7 @@ System:
 
 - [Le Wiki Arch](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
 a servi de base à ce guide. La plupart des informations ici en ont été tirées.
-- [sbctl](https://github.com/Foxboron/sbctl) - Ce guide facile pour activer le support du Secure Boot n'aurait pas été possible sans
+- [sbctl](https://github.com/Foxboron/sbctl) - Ce guide facile pour activer le support du démarrage sécurisé n'aurait pas été possible sans
 le travail incroyable accompli pour créer ce logiciel.
 - [Improving the Secure Boot Experience by Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) - Article de blog par Morten
-"Foxboron" Linderud sur la complexité de l'expérience Secure Boot avant `sbctl`.
+"Foxboron" Linderud sur la complexité de l'expérience du démarrage sécurisé avant `sbctl`.
