@@ -333,3 +333,26 @@ Works on Wayland. Disabling "Ambient Mode" in YouTube settings is required to pr
 **Notes:**
 - Tested on CachyOS with kernel 7.0.10-2-cachyos, Mesa 26.1.1, GNOME (Wayland), display 5120x1440.
 - Confirmed working: `vivaldi://gpu` shows Canvas, Compositing, Rasterization, Video Decode, Video Encode, WebGL, WebGPU, and WebGPU interop as "Hardware accelerated". Full codec support for H264, H265, VP9, AV1 decoding and H264, H265 and AV1 encoding.
+
+### Vivaldi - NVIDIA RTX 5090 (Contributed by icetea)
+
+* **Browser:** Vivaldi (8.1)
+
+* **GPU:** NVIDIA GeForce RTX 5090 (Blackwell)
+
+* **Flags File Path:** `~/.config/vivaldi-stable.conf`
+
+```bash
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,VaapiOnNvidiaGPUs,VaapiIgnoreDriverChecks
+--use-gl=angle
+--use-angle=gl
+--disable-features=Vulkan
+--ignore-gpu-blocklist
+--ozone-platform=wayland
+```
+
+**Notes:**
+- Requires `libva-nvidia-driver`. Tested July 2026: driver 610.43.03, KDE Plasma (Wayland), Vivaldi 8.1.
+- `VaapiIgnoreDriverChecks` is the key flag on NVIDIA — without it decode initializes and `vivaldi://gpu` claims "Hardware accelerated", but runtime decode fails (`vaEndPicture failed, VA error: internal decoding error`) and silently falls back to software.
+- Verify with DevTools → Media tab (`VaapiVideoDecoder` as decoder name) and `nvidia-smi dmon -s u` (DEC column > 0 during playback). Do not rely on `vivaldi://gpu` alone.
+- AV1 decode is broken in `libva-nvidia-driver` 0.0.17 (fix on upstream master, unreleased — see [elFarto/nvidia-vaapi-driver#419](https://github.com/elFarto/nvidia-vaapi-driver/issues/419)). Block AV1 (e.g. enhanced-h264ify) so YouTube serves VP9.
