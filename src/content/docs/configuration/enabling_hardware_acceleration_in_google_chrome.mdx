@@ -356,3 +356,25 @@ Works on Wayland. Disabling "Ambient Mode" in YouTube settings is required to pr
 - `VaapiIgnoreDriverChecks` is the key flag on NVIDIA — without it decode initializes and `vivaldi://gpu` claims "Hardware accelerated", but runtime decode fails (`vaEndPicture failed, VA error: internal decoding error`) and silently falls back to software.
 - Verify with DevTools → Media tab (`VaapiVideoDecoder` as decoder name) and `nvidia-smi dmon -s u` (DEC column > 0 during playback). Do not rely on `vivaldi://gpu` alone.
 - AV1 decode is broken in `libva-nvidia-driver` 0.0.17 (fix on upstream master, unreleased — see [elFarto/nvidia-vaapi-driver#419](https://github.com/elFarto/nvidia-vaapi-driver/issues/419)). Block AV1 (e.g. enhanced-h264ify) so YouTube serves VP9.
+
+### Google Chrome - NVIDIA RTX 5070 (Contributed by pisyukaev)
+
+* **Browser:** Google Chrome
+
+* **GPU:** NVIDIA GeForce RTX 5070 (Blackwell / GB205)
+
+* **Flags File Path:** `~/.config/chrome-flags.conf`
+
+```bash
+--enable-features=AcceleratedVideoDecodeLinuxGL,VaapiVideoDecoder,VaapiIgnoreDriverChecks,VaapiOnNvidiaGPUs
+--ignore-gpu-blocklist
+```
+
+**Notes:**
+- Requires `libva-nvidia-driver` and `nvidia-utils` (tested with driver 610.43.03).
+- **Critical flag:** `VaapiOnNvidiaGPUs` — this is the key flag that enables VA-API on NVIDIA GPUs in Chrome/Chromium. Without it, Chrome hardcodes a block on NVIDIA devices in `vaapi_wrapper.cc` and silently falls back to software decoding.
+- `VaapiIgnoreDriverChecks` is also recommended to prevent runtime decode failures.
+- `AcceleratedVideoDecodeLinuxGL` enables hardware-accelerated video decode through ANGLE's OpenGL backend.
+- Verified working: `chrome://gpu` → Video Acceleration Information shows decode support for H264 (baseline, main, high), VP8, VP9 (profile0, profile2), HEVC (main, main 10, main still-picture), and AV1.
+- To verify: Open `chrome://gpu` and confirm that "Video Acceleration Information" lists decode codecs. Play an HEVC video and check DevTools → Media tab for `VaapiVideoDecoder` as the active decoder.
+- The `--ozone-platform=wayland` flag is not needed — Chrome auto-detects Wayland on CachyOS. If you experience issues, you can add `--ozone-platform=wayland` explicitly.
