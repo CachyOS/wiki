@@ -162,6 +162,44 @@ functionality.
 
 ## Troubleshooting
 
+### AMD Dual-Monitor Setup (AMD iGPU + AMD dGPU)
+
+If you have an AMD CPU with integrated graphics (e.g., Ryzen 9 9950X3D with RDNA3 iGPU) and a dedicated AMD GPU (e.g., Radeon RX 9070 XT), with monitors connected to both GPUs, there are some important considerations:
+
+**You cannot disable the iGPU** if a monitor is connected to it (e.g., via the motherboard's HDMI port). The iGPU must remain active to drive that display.
+
+#### Identifying Render Nodes
+
+Each GPU has its own render device under `/dev/dri/`:
+
+```bash
+ls -la /dev/dri/renderD*
+```
+
+Typically:
+- `/dev/dri/renderD128` — iGPU (first AMD GPU enumerated)
+- `/dev/dri/renderD129` — dGPU (second AMD GPU)
+
+You can verify which GPU owns which render node:
+
+```bash
+for f in /dev/dri/renderD*; do echo "$f: $(cat /sys/class/drm/$(basename $f)/device/vendor 2>/dev/null)"; done
+```
+
+#### Forcing Applications to Use the dGPU
+
+On AMD+AMD setups, use `DRI_PRIME=1` to run applications on the discrete GPU:
+
+```bash
+DRI_PRIME=1 <program>
+```
+
+Or use the graphical methods described above (KDE Plasma, GNOME, etc.) with `switcheroo-control`.
+
+#### Chromium-Based Browsers
+
+Chrome and Chromium-based browsers may default to the iGPU. To force them to use the dGPU, configure the flags file. See the [Chrome Hardware Acceleration guide](/configuration/enabling_hardware_acceleration_in_google_chrome/) for details on configuring the correct GPU and enabling hardware acceleration.
+
 ### "My external monitor is very laggy on PRIME"
 
 This is a known NVIDIA driver issue. You should have the latest NVIDIA
