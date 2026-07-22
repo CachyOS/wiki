@@ -1,6 +1,6 @@
 ---
 title: Dateisysteme
-description: Beschreibung und Empfehlungen für die verfügbaren Dateisysteme. (ext4, f2fs, btrfs, xfs, zfs, bcachefs)
+description: Beschreibung und Empfehlungen für die verfügbaren Dateisysteme. (ext4, f2fs, btrfs, xfs, zfs)
 ---
 
 CachyOS bietet 5 verschiedene Dateisysteme an, damit du das auswählen kannst, was am besten zu deinen Bedürfnissen passt. Im Folgenden werden die Vor- und Nachteile sowie Empfehlungen für jedes Dateisystem erläutert. Jedes Dateisystem wird mit den erforderlichen Anforderungen/Dienstprogrammen auf CachyOS vorinstalliert geliefert.
