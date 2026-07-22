@@ -16,7 +16,7 @@ Hier ist eine Liste der aktuellen monatlichen Kosten:
 
 ### Patreon
 
-<https://www.patreon.com/CachyOS>
+[Patreon](<https://www.patreon.com/CachyOS>)
 
 ### Ethereum
 
