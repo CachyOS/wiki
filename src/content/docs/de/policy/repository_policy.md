@@ -36,7 +36,7 @@ Benutzer anderer Distributionen werden **NICHT UNTERSTÜTZT** und es wird **DRIN
 - Parabola
 - Benutzer jeder anderen Linux-Distribution, die nicht explizit im Abschnitt „Unterstützte Benutzer“ aufgeführt ist.
 
-## 5. Weiterverteilung des Repositorys
+## 6. Weiterverteilung des Repositorys
 
 Diese Richtlinie definiert „Weiterverteilung“ als das Einbeziehen des CachyOS-Repositorys (und seiner Spiegel) oder von Paketen, die aus dem CachyOS-Repository bezogen wurden, als Teil des verteilten Abbilds des Betriebssystems oder der Sysroots.
 Weiterverteilung umfasst auch das Verhalten von **Linux-Distributionen**, die Dienstprogramme zur Verfügung stellen, die das CachyOS-Repository durch Wahl des Benutzers aktivieren, oder die verteilte oder offizielle Dokumente bereitstellen, die Benutzer anleiten, das CachyOS-Repository
@@ -44,7 +44,7 @@ Weiterverteilung umfasst auch das Verhalten von **Linux-Distributionen**, die Di
 
 Die Weiterverteilung des CachyOS-Repositorys ist ausschließlich dem CachyOS-Team gestattet.
 
-## 6. Verbotene Weiterverteilung
+## 7. Verbotene Weiterverteilung
 
 Die Weiterverteilung des CachyOS-Repositorys (und seiner Spiegel) in jeder nicht autorisierten Linux-Distribution, einschließlich anderer Arch-basierter Distributionen, ist **STRENGSTENS VERBOTEN**. Dies schließt unter anderem ein:
 
@@ -54,29 +54,29 @@ Die Weiterverteilung des CachyOS-Repositorys (und seiner Spiegel) in jeder nicht
 - Parabola
 - Jede andere Linux-Distribution, die nicht explizit im Abschnitt „Weiterverteilung des Repositorys“ erwähnt ist.
 
-## 7. Spiegelung (Mirror)
+## 8. Spiegelung (Mirror)
 
 Es ist erlaubt, das Repository über rsync und syncthing zu spiegeln. Drittanbieter-Spiegeln ist es gestattet, das Repository zu spiegeln und einen Webserver dafür bereitzustellen, solange sie sicherstellen, dass die Repository-Daten unverändert bleiben.
 
-## 8. Einhaltung und Überwachung
+## 9. Einhaltung und Überwachung
 
 Wir behalten uns das Recht vor, die Nutzung unseres Repositorys zu überwachen, um die Einhaltung dieser Richtlinie sicherzustellen. Jede nicht autorisierte Nutzung kann zum Entzug des Zugriffs führen.
 
-## 9. Meldung von Verstößen
+## 10. Meldung von Verstößen
 
 Wenn Sie vermuten, dass gegen diese Richtlinie verstoßen wird, melden Sie dies bitte an [admin@cachyos.org].
 
-## 10. Änderungen der Richtlinie
+## 11. Änderungen der Richtlinie
 
 CachyOS behält sich das Recht vor, diese Richtlinie jederzeit zu ändern. Änderungen werden über unsere offiziellen Kanäle kommuniziert.
 
-## 11. Kontaktinformationen
+## 12. Kontaktinformationen
 
 Bei Fragen oder Bedenken bezüglich dieser Richtlinie kontaktieren Sie uns bitte unter:
 
-- E-Mail: <admin@cachyos.org>
-- Webseite: <https://cachyos.org>
+- E-Mail: [admin@cachyos.org](mailto:admin@cachyos.org)
+- Webseite: [https://cachyos.org](https://cachyos.org)
 
-## 12. Anerkennung
+## 13. Anerkennung
 
 Durch die Nutzung des CachyOS-Repositorys (und seiner Spiegel) bestätigen Sie, dass Sie diese Richtlinie gelesen, verstanden haben und sich damit einverstanden erklären, sie einzuhalten.
