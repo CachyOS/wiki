@@ -74,8 +74,10 @@ Die Gemeinschaftsleitung wird sich bei der Bestimmung der Konsequenzen für jede
 
 ## Bezug
 
-Dieser Verhaltenskodex basiert auf dem [Contributor Covenant][homepage], Version 2.0, verfügbar unter <https://www.contributor-covenant.org/de/version/2/0/code_of_conduct>
+Dieser Verhaltenskodex basiert auf dem [Contributor Covenant][homepage], Version 2.0, verfügbar unter [https://www.contributor-covenant.org/version/2/0/code_of_conduct.html](<https://www.contributor-covenant.org/version/2/0/code_of_conduct.html>).
 
-Community Impact Guidelines wurden von [Mozillas Code of Conduct Enforcement Ladder][mozilla] inspiriert.
+Community Impact Guidelines wurden von [Mozilla's code of conduct enforcement ladder](https://github.com/mozilla/diversity) inspiriert.
 
-Antworten auf häufig gestellte Fragen zu diesem Verhaltenskodex finden Sie in den häufig gestellten Fragen unter <https://www.contributor-covenant.org/faq> (in Englisch). Andere Übersetzungen sind verfügbar unter <https://www.contributor-covenant.org/translations>.
+[homepage](https://www.contributor-covenant.org)
+
+Antworten auf häufig gestellte Fragen zu diesem Verhaltenskodex finden Sie in den häufig gestellten Fragen unter [FAQ](<https://www.contributor-covenant.org/faq>). Andere Übersetzungen sind verfügbar unter [https://www.contributor-covenant.org/translations](<https://www.contributor-covenant.org/translations>).
