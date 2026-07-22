@@ -74,8 +74,8 @@ CachyOS behält sich das Recht vor, diese Richtlinie jederzeit zu ändern. Ände
 
 Bei Fragen oder Bedenken bezüglich dieser Richtlinie kontaktieren Sie uns bitte unter:
 
-- E-Mail: <admin@cachyos.org>
-- Webseite: <https://cachyos.org>
+- E-Mail: [admin@cachyos.org](mailto:admin@cachyos.org)
+- Webseite: [https://cachyos.org](https://cachyos.org)
 
 ## 13. Anerkennung
 
