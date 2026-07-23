@@ -10,12 +10,14 @@ import ImageComponent from '~/components/image-component.astro';
 import { Steps } from '@astrojs/starlight/components';
 
 ## Installation
-Um **VMM** (Virtual Machine Manager) und **QEMU** auf 
+Um **VMM** (Virtual Machine Manager) und **QEMU** auf
 **CachyOS** zu installieren und zum Laufen zu bringen, gehst du so vor:
 
 ```sh
 # Hiermit werden die benötigten Pakete installiert (beachte den Hinweis zu "Windows 11" unten):
 sudo pacman -S qemu-full virt-manager swtpm
+# libvirt dazu zwingen, iptables zu benutzen
+echo 'firewall_backend = "iptables"' | sudo tee -a /etc/libvirt/network.conf
 # Hiermit wird der Benutzer zur Gruppe "libvirt" hinzugefügt, damit er sie nutzen kann:
 sudo usermod -aG libvirt $USER
 # LXC-Backend (optional, für Linux-Container, die Aktivierung beider Backends führt zu keinen Konflikten):
@@ -24,6 +26,8 @@ systemctl enable --now libvirtd.service
 systemctl enable --now libvirtd.socket
 # Hiermit wird das Internet in einer VM hochgefahren, sobald eine startet:
 sudo virsh net-autostart default
+# Und um dem gesamten VM-Netzwerk einen uneingeschränkten Transit zu ermöglichen: (Du solltest überlegen, ob du, basierend auf deinem Anwendungsfall und deiner Sicherheitslage, detailliertere Firewall-Regeln benötigst.)
+sudo ufw route allow from 192.168.122.0/24
 ```
 
 :::note[Windows 11]
@@ -48,7 +52,7 @@ Bevor du weitermachst, möchtest du vielleicht kurz bei [QEMU User Session](/de/
 7. In Schritt 4 kannst du wählen, ob du einen virtuellen Speicherplatz erstellen (dies erzeugt eine **.qcow2**-Datei) oder einen Pfad für die VM zur Nutzung angeben möchtest.
 8. In Schritt 5 setze ein Häkchen bei `Konfiguration vor der Installation anpassen -> Fertigstellen`.
 9. Du landest nun hier: <ImageComponent imgsrc={import('~/assets/images/vmmprevminstall.png')} />
-Hier gibt es ein paar Dinge, die du überprüfen solltest, wenn du eine Linux-VM installierst. Unter `Übersicht` solltest du sicherstellen, dass der Chipsatz **Q35** und die Firmware **UEFI** ist. Wenn du nicht gerade etwas Uraltes installierst oder etwas Verrücktes machst, willst du hier nie eine andere Variante. Wenn du eine `Windows 11`-VM erstellst, gehe zu `Hardware hinzufügen -> TPM`, wähle dann entweder Emulated oder Passthrough (siehe den Hinweis oben) und klicke auf `Fertigstellen`, um das Untermenü zu schließen.
+Hier gibt es ein paar Dinge, die du überprüfen solltest, wenn du eine Linux-VM installierst. Unter `Übersicht` solltest du sicherstellen, dass der Chipsatz **Q35** und die Firmware **UEFI** ist. Wenn du nicht gerade etwas Uraltes installierst oder etwas Verrücktes machst, willst du hier nie eine andere Variante. Wenn du eine Windows 11-VM erstellst, überprüfe, ob das TPM-Modul hinzugefügt wurde, ansonsten gehe zu Hardware hinzufügen -> TPM, wähle dann entweder Emulated oder Passthrough (siehe den Hinweis oben) und klicke auf Fertigstellen, um das Untermenü zu schließen.
 
 10. Klicke jetzt auf `Installation beginnen`.
 11. Wenn du in einer **Linux**-VM bist (oder einem anderen Betriebssystem, das OpenGL und/oder libvulkan mitliefert), schau dir [EGL Headless](/de/virtualization/egl_headless) bzw. [Virtio-Venus](/de/virtualization/virtio-venus) an.
@@ -60,5 +64,5 @@ In einer `Windows 11`-VM kannst du zur Verbesserung der Leistung:
 - **Virtio-Win**-Treiber von RedHat im Gastsystem installieren
 - wenn du eine Intel-iGPU hast, kannst du dir stattdessen **GVT-g** und **MDEV** ansehen
 - wenn du eine Intel-iGPU und eine dGPU hast, kannst du dir stattdessen **GVT-d** ansehen
-- wenn du eine iGPU und eine dGPU oder 2+ dGPUs hast und stattdessen eine dGPU durchreichen möchtest, 
+- wenn du eine iGPU und eine dGPU oder 2+ dGPUs hast und stattdessen eine dGPU durchreichen möchtest,
 kannst du dir **VFIO** ansehen
