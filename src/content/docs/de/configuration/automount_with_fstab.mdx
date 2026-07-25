@@ -1,18 +1,229 @@
 ---
-title: Zusätzliche Laufwerke beim Start über fstab automatisch einbinden
-description: Binde zusätzliche statische Laufwerke beim Start ein, indem du die Datei unter /etc/fstab verwendest
+title: Zusätzliche Laufwerke beim Start automatisch einbinden
+description: Binde zusätzliche statische Laufwerke beim Start ein, indem du entweder Systemd-Mounts oder die Datei unter /etc/fstab verwendest
 ---
 
-Diese Anleitung beschreibt die Grundlagen der Verwendung der fstab-Datei in /etc/, um statische Laufwerke beim Hochfahren einzubinden. Sie erklärt kurz, wie du die UUID einer Partition oder eines Laufwerks findest, was einige Optionen bewirken und wo du weiterlesen kannst, falls die bereitgestellten Informationen nicht ausreichen.
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+Diese Anleitung beschreibt die Grundlagen der Verwendung von sowohl Systemd Mount-Dateien, als auch der fstab-Datei in /etc/, um statische Laufwerke beim Hochfahren einzubinden. Sie erklärt kurz, wie du die UUID einer Partition oder eines Laufwerks findest, was einige Optionen bewirken und wo du weiterlesen kannst, falls die bereitgestellten Informationen nicht ausreichen.
 
 ## Voraussetzungen
 
 - Root- oder Sudo-Zugriff
 
-## Einträge zu /etc/fstab hinzufügen
-
 :::note[NTFS unter Linux]
-Das NTFS-Dateisystem kann unter Linux instabil sein, egal ob du den ntfs3- oder ntfs-3g-Treiber verwendest. Die Nutzung erfolgt auf eigene Gefahr. Für bessere Stabilität und Leistung solltest du native Linux-Dateisysteme wie ext4, xfs oder btrfs in Betracht ziehen.
+Das NTFS-Dateisystem kann unter Linux instabil sein, egal ob du den ntfs-, ntfs3- oder ntfs-3g-Treiber verwendest. Die Nutzung erfolgt auf eigene Gefahr. Für bessere Stabilität und Leistung solltest du native Linux-Dateisysteme wie ext4, xfs oder btrfs in Betracht ziehen.
+:::
+
+## 1. Die sicherere und einsteigerfreundlichere Methode: Laufwerke mit Systemd Mount-Dateien einbinden
+
+Der Vorteil des Einbindens über Systemd ist, dass selbst wenn du etwas falsch in deiner Mount-Datei machst, dein System trotzdem startet. Ein Fehler in der fstab-Datei hingegen kann dein System unstartbar machen.
+
+### 1. Die UUIDs deiner Partitionen auflisten
+
+```sh title="Öffne ein Terminal und führe das folgende Kommando aus"
+lsblk -f
+```
+
+```sh title="Ausgabebeispiel"
+NAME          FSTYPE FSVER LABEL UUID                                 FSAVAIL   FSUSE% MOUNTPOINTS
+zram0                                                                              [SWAP]
+nvme0n1
+├─nvme0n1p1   vfat   FAT32       E04D-9F05
+├─nvme0n1p2
+├─nvme0n1p3   ntfs               08A24E90A24E81E4                      715.4G   50%
+├─nvme0n1p4   vfat   FAT32       E09C-D4DA                             628.1M   39% /boot
+├─nvme0n1p5   ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G   47% /
+└─nvme0n1p6   ntfs
+nvme1n1
+└─nvme1n1p1   ext4               4e55896f-3f1f-4bc5-aa8a-fec099689cd9  931.5G   0%
+
+```
+
+In diesem Beispiel wollen wir eine zusätzliche Festplatte einhängen, die frisch als ext4 formatiert wurde. Wir wissen, dass es eine 1TB Festplatte ist und dass noch nichts auf ihr gespeichert wurde. Daraus können wir schließen, dass die einzuhängende Partition `nvme1n1p1` ist und dass sie die UUID `4e55896f-3f1f-4bc5-aa8a-fec099689cd9` hat.
+
+### 2. Die Partition identifizieren
+
+Oft gibt dir `lsblk -f` alle notwendigen Informationen, um deine Festplatte mit Systemd einzuhängen. Wenn du dir immer noch unsicher bist, was die richtige Partition ist, kannst du folgendes Kommando ausführen:
+
+```sh
+sudo fdisk -l
+```
+
+```sh title="Beispielausgabe"
+Device          Start       End         Sectors     Size    Type
+/dev/nvme0n1p1  2048        206847      204800      100M    EFI System
+/dev/nvme0n1p2  206848      239615      32768       16M     Microsoft reserved
+/dev/nvme0n1p3  239616      2997384182  2997144567  1.4T    Microsoft basic data
+/dev/nvme0n1p4  2997385216  2999482367  2097152     1G      EFI System
+/dev/nvme0n1p5  2999482368  3905454079  905971712   432G    Linux root (x86-64)
+/dev/nvme0n1p6  3905454080  3907026943  1572864     768M    Windows recovery environment
+/dev/nvme1n1p1  2048        1953523711  1953521664  931.5G  Linux filesystem
+
+```
+
+In diesem Beispiel kennen wir die UUID bereits. Der Befehl `fdisk -l` schafft jedoch zusätzliche Klarheit, indem er sowohl die genaue Größe der Partition (931,5 GB) als auch deren Typ (Linux-Dateisystem) anzeigt.
+
+Damit sollte eindeutig feststehen, dass es sich bei der gesuchten Partition um `nvme1n1p1` mit der UUID `4e55896f-3f1f-4bc5-aa8a-fec099689cd9` handelt, genau wie zuvor beschrieben. Wir hatten diese Information zwar schon, aber nun können wir uns sicher sein.
+
+Sobald du dir sicher bist, die richtige Partition gefunden zu haben, kopiere die UUID. Das Kopieren aus dem Terminal-Emulator erfolgt üblicherweise mit der Tastenkombination `Strg+Umschalt+C`.
+
+### 3. Erstellen der Systemd Mount-Datei
+Angenommen, wir möchten dieses Laufwerk hauptsächlich für Spiele nutzen, wäre ein geeigneter Einhängepunkt dafür das Home-Verzeichnis des Benutzers. Der Ort ist zwar frei wählbar, aber der Einfachheit halber entscheiden wir uns für `/home/user` (ersetze dabei `user` durch deinen Linux-Benutzernamen). Dies ist wichtig, da der Pfad des Einhängepunkts den Namen der Systemd Mount-Datei bestimmt. Da das Laufwerk für Spiele gedacht ist, binden wir es in den Ordner `games` im Home-Verzeichnis ein: `/home/user/games`.
+
+Für Systemd bedeutet dies, dass die Mount-Datei `home-user-games.mount` heißen muss (Schrägstriche `/` werden durch Bindestriche `-` ersetzt). Systemd Mount-Dateien werden immer im Verzeichnis `/etc/systemd/system` abgelegt.
+
+:::tip
+Wenn du im Namen deines Mount-Ordners ein Leerzeichen, einen Bindestrich, ein CJK-Zeichen oder ein Zeichen mit Akzent verwenden möchten, muss dieser anders formatiert werden. Angenommen du möchtest den Ordnerpfad `/home/grzegorz/brzęczyszczykiewicz` verwenden, führe das folgende Kommando aus, um den Namen zu erhalten, den du für die Datei benötigst:
+```bash
+systemd-escape -p --suffix=mount "/home/grzegorz/brzęczyszczykiewicz"
+```
+Da du alle `\`-Zeichen maskieren musst, würdest du die Mount-Datei als `/etc/systemd/system/home-grzegorz-brz\\xc4\\x99czyszczykiewicz.mount` anlegen.
+:::
+
+Du kannst einen Texteditor deiner Wahl verwenden, in diesem Beispiel nutzen wir `micro`.
+
+```sh
+micro /etc/systemd/system/home-$USER-games.mount
+```
+:::note
+Wenn du das Verzeichnis in deinem Benutzer-Home-Verzeichnis einbindest, kannst du die Variable im Dateinamen beibehalten, da `$USER` automatisch durch deinen Benutzernamen ersetzt wird.
+:::
+
+Kopiere diese Vorlage in die leere Datei:
+```
+[Unit]
+Description=
+
+[Mount]
+What=
+Where=
+Type=
+Options=
+
+[Install]
+WantedBy=multi-user.target
+```
+Unten findest du Beschreibungen für jedes Feld in der Datei:
+
+<Tabs>
+  <TabItem label='Description'>
+  Die Beschreibung kannst du frei wählen, sie dient lediglich deiner eigenen Orientierung.
+  </TabItem>
+  <TabItem label= 'What'>
+  Füge die zuvor kopierte UUID ein. Hier lautet sie `UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9`.
+  </TabItem>
+  <TabItem label= 'Where'>
+  Dies ist der Einhängepunkt. Falls der Ordner noch nicht existiert, wird er erstellt. In diesem Fall lautet der Pfad `/home/user/games`. Ersetze "user" mit deinem Benutzernamen, wenn dein Home Ordner der Einhängepunkt ist.
+  </TabItem>
+  <TabItem label= 'Type'>
+  Typ des Dateisystems, in diesem Fall `ext4`.
+  </TabItem>
+  <TabItem label= 'Options'>
+  Beliebige Mount-Optionen nach Wahl. Hier verwenden wir `defaults,exec,rw,noatime`. Wichtig ist dabei, keine Leerzeichen zu verwenden.
+  </TabItem>
+</Tabs>
+---
+
+Wenn wir dem Beispiel folgen, sollte die ausgefüllte Mount-Datei wie folgt aussehen:
+```
+[Unit]
+Description="games" Festplatte einhängen (/home/user/games)
+
+[Mount]
+What=UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9
+Where=/home/user/games
+Type=ext4
+Options=defaults,exec,rw,noatime
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 4. Fertigstellung
+Um die Festplatte, für die wir gerade den Eintrag erstellt haben, einzuhängen, führe die folgenden Kommandos aus:
+
+```
+1. sudo systemctl daemon-reload
+2. sudo systemctl enable --now home-§USER-games.mount
+```
+
+Du solltest den Ordner sehen, den Du als Einhängepunkt gewählt hast und kannst den Status des Einhängepunkts mit `systemctl status home-$USER-games.mount` überprüfen:
+
+```
+● home-user-games.mount - Mount games drive (/home/user/games)
+     Loaded: loaded (/proc/self/mountinfo; enabled; preset: disabled)
+     Active: active (mounted) since Sat 2026-05-02 13:02:31 CDT; 23h ago
+ Invocation: e52ef8fe3d754c64a3825bc1ee89e7da
+      Where: /home/user/games
+       What: /dev/nvme1n1p1
+      Tasks: 0 (limit: 74118)
+     Memory: 316K (peak: 3.9M)
+        CPU: 5ms
+     CGroup: /system.slice/home-user-games.mount
+
+May 02 13:02:31 cachyos systemd[1]: Mounting Mount games drive (/home/user/games)...
+May 02 13:02:31 cachyos systemd[1]: Mounted Mount games drive (/home/user/games).
+```
+
+### tl;dr
+
+- Finde die **UUID** deiner Partition
+
+```sh
+lsblk -f
+```
+
+- Erstelle die Mount-File
+
+```sh
+micro /etc/systemd/system/mnt-foo.mount
+```
+
+Ersetze `mnt-foo` durch den vollständigen Pfad des Einhängepunkts, wobei du den Schrägstrich `/` durch einen Bindestrich `-` ersetzen musst.
+
+- Fülle die Mount-File aus
+
+```sh
+[Unit]
+Description=Mount-Drive
+
+[Mount]
+What=UUID=<partition UUID>
+Where=/mnt/foo
+Type=somefs
+Options=defaults
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Ersetze `<partition UUID>`, `/mnt/foo` und `somefs` durch deine UUID, dein Verzeichnis und dein Dateisystem (z. B. ext4) und füge nach `defaults` bei Bedarf weitere Optionen hinzu, wie etwa `_netdev` für ein NAS oder `nofail` für nicht kritische Laufwerke.
+
+- Starte den daemon neu
+
+```sh
+sudo systemctl daemon-reload
+```
+
+- Hänge dein Laufwerk ein und konfiguriere es so, dass es beim Systemstart automatisch eingebunden wird.
+
+```sh
+sudo systemctl enable --now mnt-foo.mount
+```
+
+### Zusätzliche Lektüre
+
+- [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS on /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Manual for dump](<https://linux.die.net/man/8/dump>)
+- [Manual for fsck](https://man.archlinux.org/man/fsck.8)
+- [systemd-mount](https://manual.siduction.org/systemd-mount_en.html)
+
+## Methode für Fortgeschrittene: Einträge zu /etc/fstab hinzufügen
+
+:::danger
+Die Datei „fstab“ wird beim Systemstart eingelesen; enthält sie Fehler, kann dies dazu führen, dass das System nicht mehr startet. Überprüfe den Eintrag daher unbedingt sorgfältig auf Tippfehler, bevor du das System neustartest. Sollte dir dennoch ein Fehler unterlaufen, lässt sich dieser normalerweise beheben, indem du eine Live-Umgebung startest und per [chroot auf deine Installation zugreifst](/features/cachy_chroot), um die Datei zu bearbeiten.
 :::
 
 ### 1. Liste die UUIDs deiner Partitionen auf
@@ -21,16 +232,16 @@ Das NTFS-Dateisystem kann unter Linux instabil sein, egal ob du den ntfs3- oder 
 lsblk -f
 ```
 
-```text title="Beispielausgabe"
-# NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
-# zram0                                                                              [SWAP]
-# nvme0n1
-# ├─nvme0n1p1 vfat   FAT32       E04D-9F05
-# ├─nvme0n1p2
-# ├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
-# ├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
-# ├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
-# └─nvme0n1p6 ntfs
+```sh title="Beispielausgabe"
+NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+zram0                                                                              [SWAP]
+nvme0n1
+├─nvme0n1p1 vfat   FAT32       E04D-9F05
+├─nvme0n1p2
+├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
+├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
+├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
+└─nvme0n1p6 ntfs
 ```
 
 In unserem Beispiel wissen wir, dass wir eine Windows-Partition einbinden wollen, die ntfs ist. Wir wissen auch, dass etwa die Hälfte ihres Speichers frei ist. Daher können wir feststellen, dass die Partition, die wir einbinden wollen, `nvme0n1p3` ist und ihre UUID `08A24E90A24E81E4` lautet, mit dem Dateisystem `ntfs` in diesem Beispiel.
@@ -43,14 +254,14 @@ Oft liefert `lsblk -f` an dieser Stelle bereits alle Informationen, die du brauc
 sudo fdisk -l
 ```
 
-```text title="Beispielausgabe"
-# Device              Start        End    Sectors  Size Type
-# /dev/nvme0n1p1       2048     206847     204800  100M EFI System
-# /dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
-# /dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
-# /dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
-# /dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
-# /dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
+```sh title="Beispielausgabe"
+Device              Start        End    Sectors  Size Type
+/dev/nvme0n1p1       2048     206847     204800  100M EFI System
+/dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
+/dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
+/dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
+/dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
+/dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
 ```
 
 Wir kennen unsere UUID in diesem Beispiel bereits. `fdisk -l` kann es uns aber noch etwas deutlicher machen, indem es die genaue Größe der Partition (1.4T) sowie ihren Typ (Microsoft basic data) anzeigt.
@@ -123,7 +334,7 @@ und
 
 gleichwertig. `somefs`, gefolgt von nichts, bedeutet implizit `somefs defaults 0 0`
 
-### 4. Abschluss
+### 4. Fertigstellung
 
 Wenn du das Laufwerk, für das du einen Eintrag erstellt hast, jetzt einbinden möchtest, musst du Folgendes ausführen:
 
@@ -175,7 +386,7 @@ ls /media/windows
 # Intel                    'Ship of Harkinian'
  ```
 
-## tl;dr
+### tl;dr
 
 - Finde die **UUID** deiner Partition
 
@@ -211,7 +422,7 @@ sudo mount -a
 
 Dieses Laufwerk ist jetzt eingebunden und wird von nun an auch beim Start eingebunden.
 
-## Zusätzliche Lektüre
+### Zusätzliche Lektüre
 
 - [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
 - [FHS zu /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
