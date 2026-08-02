@@ -1,20 +1,13 @@
 ---
 title: Secure Boot einrichten
 description: Richte Secure Boot mit sbctl nach der Installation von CachyOS ein
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
 ---
 
 import ImageComponent from '~/components/image-component.astro';
-
-# sbctl
-
-[sbctl](https://github.com/Foxboron/sbctl) ist ein benutzerfreundlicher Schlüsselmanager für Secure Boot, mit dem du Secure Boot einrichten,
-Schlüssel verwalten und den Überblick über Dateien behalten kannst, die in der Boot-Kette signiert werden müssen.
-
-## sbctl installieren
-
-```bash
-sudo pacman -S sbctl
-```
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
 ## Vor der Einrichtung
 
@@ -32,6 +25,7 @@ Führe diesen Befehl nur aus, wenn du Secure Boot wirklich brauchst.
 :::
 
 ### In den Setup-Modus im UEFI wechseln
+
 Zuerst müssen wir in die Firmware-Einstellungen gehen und den Secure-Boot-Modus auf „Setup-Modus“ stellen. Du kannst von einem
 laufenden System mit dem folgenden Befehl in die Firmware-Einstellungen neustarten.
 
@@ -45,45 +39,184 @@ systemctl reboot --firmware-setup
 So sieht das BIOS auf einem Lenovo Ideapad 5 Pro aus. Setze es in den Setup-Modus zurück oder stelle die Werksschlüssel wieder her und starte das
 System neu.
 
-Manche MSI-Motherboards haben jedoch keinen Setup-Modus. Um den gleichen Effekt zu erzielen, folge den beiden Schritten aus dem Bild unten:
+Allerdings haben einige MSI-Mainboards keinen Setup-Modus. Um den gleichen Effekt zu erzielen, stelle den Secure Boot Mode auf „custom“ und wähle die Kompatibilitätsoption „maximum security“ (das ist wichtig: Im Standardmodus kannst du möglicherweise nicht von deinem Bootloader in CachyOS booten!). Gehe dann in „key management“ und folge den beiden im Bild unten gezeigten Schritten:
 <br />
 <ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
 
 Manche ASUS Mainboards verhalten sich ähnlich wie die gerade genannten MSI Mainboards, da sie keinen dedizierten Setup Mode haben.
 
-Unter Boot → Secure Boot den Secure Boot Mode auf Custom stellen, anschließend unter Key Management die Option "Delete all Secure Boot Variables" auswählen.
+Unter Boot → Secure Boot den Secure Boot Mode auf Custom stellen, anschließend unter Key Management die Option „Delete all Secure Boot Variables“ auswählen. 
 
-## sbctl einrichten
+#### sbctl installieren und Schlüssel registrieren
 
-```bash
-sudo sbctl status # Wenn der Setup-Modus aktiviert ist, können wir mit dem nächsten Schritt fortfahren
-Installed:      ✘ sbctl is not installed
-Setup Mode:     ✘ Enabled
-Secure Boot     ✘ Disabled
+Stelle vor dem Fortfahren sicher, dass `sbctl` installiert ist.
 
-sudo sbctl create-keys # Erstelle deine eigenen Secure-Boot-Schlüssel
-Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-Creating secure boot keys...✔
-Secure boot keys created!
+[sbctl](https://github.com/Foxboron/sbctl) ist ein benutzerfreundlicher Schlüsselmanager für Secure Boot, mit dem du Secure Boot einrichten,
+Schlüssel verwalten und den Überblick über Dateien behalten kannst, die in der Boot-Kette signiert werden müssen.
 
-sudo sbctl enroll-keys --microsoft # Registriere deine Schlüssel zusammen mit den Schlüsseln von Microsoft
-Enrolling keys to EFI variables...✔
-Enrolled keys to the EFI variables!
+<details>
+    <summary>sbctl installieren</summary>
+    ```bash title='Öffne ein Terminal und führe den folgenden Befehl aus'
+    sudo pacman -S sbctl
+    ```
+</details>
 
-sudo sbctl status
-# sbctl sollte jetzt installiert sein, wir können mit dem Signieren der Kernel-Images und des Boot-Managers fortfahren
-Installed:      ✔ sbctl is installed
-Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-Setup Mode:     ✔ Disabled
-Secure Boot     ✘ Disabled
-Vendor Keys:    microsoft
-```
+Jetzt, da `sbctl` installiert ist, musst du sbctl einrichten und deine Schlüssel in der Firmware registrieren. Dieser Vorgang ist ziemlich einfach, folge einfach den Schritten unten.
+
+<Steps>
+1. Prüfe, ob der Setup-Modus aktiviert ist:
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>Erwartete Ausgabe</summary>
+        ```bash
+        Installed:      ✘ sbctl is not installed
+        Setup Mode:     ✘ Enabled
+        Secure Boot     ✘ Disabled
+        ```
+    </details>
+2. Erstelle deine eigenen Secure-Boot-Schlüssel:
+    ```bash
+    sudo sbctl create-keys
+    ```
+    <details>
+        <summary>Beispiel einer erfolgreichen Schlüsselerstellung</summary>
+        ```bash
+        Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Creating secure boot keys...✔
+        Secure boot keys created!
+        ```
+    </details>
+3. Registriere deine Schlüssel zusammen mit den integrierten Schlüsseln von Microsoft und der OEM-Firmware:
+    ```bash
+    sudo sbctl enroll-keys --microsoft --firmware-builtin
+    ```
+    <details>
+        <summary>Erwartete Ausgabe</summary>
+        ```bash
+        Enrolling keys to EFI variables...✔
+        Enrolled keys to the EFI variables!
+        ```
+    </details>
+
+    :::caution[ASUS / Gigabyte Mainboards — Verwende `--firmware-builtin` nicht]
+    Auf einigen ASUS- und Gigabyte-Mainboards führt die Verwendung des `--firmware-builtin`-Flags zu doppelten Einträgen
+    in den EFI-Schlüsselvariablen (z. B. erscheint `builtin-db` mehrfach unter `Vendor Keys`).
+    Beim Aktivieren von Secure Boot in den UEFI-Einstellungen erkennt das Board diese
+    inkonsistente Schlüsselstruktur und wirft eine **Secure Boot Violation**, bevor der Boot
+    Manager geladen werden kann.
+
+    Verwende auf ASUS / Gigabyte Boards nur `--microsoft`:
+
+    ```bash
+    sudo sbctl enroll-keys --microsoft
+    ```
+
+    Wenn unter `Vendor Keys` `microsoft builtin-db builtin-db ...` angezeigt wird, müssen die Schlüssel
+    neu registriert werden. Gehe erneut in den Setup-Modus im UEFI (alle Schlüssel löschen) und führe
+    `sbctl enroll-keys --microsoft` erneut ohne `--firmware-builtin` aus.
+    :::
+
+
+4. Prüfe den Status von sbctl erneut, um sicherzustellen, dass die Schlüssel registriert und der Setup-Modus deaktiviert ist:
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>Erwartete Ausgabe</summary>
+        ```bash
+        Installed:      ✔ sbctl is installed
+        Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Setup Mode:     ✔ Disabled
+        Secure Boot     ✘ Disabled
+        Vendor Keys:    microsoft
+        ```
+    </details>
+
+    :::note[Setup-Modus zeigt „Enabled“?]
+    Wenn unter `Setup Mode` **Enabled** angezeigt wird, gehe in die Firmware-Einstellungen und **deaktiviere Secure Boot vorübergehend**. 
+    Starte das System neu, überprüfe den sbctl-Status erneut, Fahre mit [Kernel-Image und Boot-Manager signieren](#kernel-image-und-boot-manager-signieren) 
+    unten fort, starte dann neu und aktiviere Secure Boot erneut in den Firmware-Einstellungen.
+    :::
+    
+</Steps>
 
 ## Kernel-Image und Boot-Manager signieren
 
+<Tabs>
+<TabItem label='Limine'>
+Limine ist ein spezieller Boot-Manager, der es ermöglicht, den Hash von Kernel-
+Images und anderen Dateien, die Limine beim Booten verwendet, zu überprüfen. Wenn dies aktiviert ist, wird jede
+manuelle Konfiguration durch den Benutzer, z. B. das Signieren des Images über
+`sbctl-batch-sign`, den Hash der entsprechenden Dateien ändern und
+die Prüfsummenverifizierung von Limine fehlschlagen lassen.
+
+Das Signieren dieser Dateien ist bei Limine jedoch nicht notwendig, da es einen speziellen
+Boot-Prozess hat, der das EFI-Chainloading und die Signaturprüfungen umgeht. Die einzigen EFI-
+Binärdateien, die signiert werden müssen, ist Limine selbst.
+
+:::caution[Limine >= 11.2.0]
+Ab Limine 11.2.0 werden Secure-Boot-Richtlinien **streng durchgesetzt**, wenn UEFI Secure Boot aktiv ist:
+
+- Eine BLAKE2B-Konfigurationsprüfsumme **muss** in der EFI-Binärdatei von Limine eingetragen sein, sonst bricht Limine mit folgender Meldung ab: `SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED`
+- Alle Dateipfade in `limine.conf` (Kernel, initramfs usw.) **müssen** BLAKE2B-Hashes angehängt haben (z. B. `boot():/vmlinuz-linux#<hash>`)
+- Der Konfigurationseditor ist bedingungslos deaktiviert
+- Hash-Abweichungen führen immer zu einem Absturz
+:::
+
+Um die automatische Registrierung der Konfigurationsprüfsumme zu aktivieren, setze folgendes in `/etc/default/limine`:
+
+```sh
+ENABLE_ENROLL_LIMINE_CONFIG=yes
+```
+
+Fahre fort, um einen Hash für das Splash-Image von Limine zu generieren:
+
+:::note[Für die folgenden Schritte sind Root-Rechte erforderlich, stelle sicher, dass du sudo verwendest oder zum Root-Benutzer wechselst.]
+:::
+
+<Steps>
+
+1. Prüfe den aktuellen Namen und Pfad des Splash-Images in der Konfigurationsdatei:
+    ```sh title="Öffne ein Terminal und führe den folgenden Befehl aus:"
+    sudo cat /boot/limine.conf
+    ```
+    Du solltest eine Zeile wie diese finden:
+    ```sh
+    wallpaper: boot():/limine-splash.png
+    ```
+2. Generiere einen BLAKE2B-Hash für das Splash-Image und hänge ihn an den Pfad in der Konfigurationsdatei an:
+    ```sh title="Führe den folgenden Befehl aus und ersetze den Pfad durch den aus dem vorherigen Schritt:"
+    sudo b2sum /boot/limine-splash.png
+    ```
+    Dies gibt einen Hash wie im folgenden Beispiel aus:
+    ```sh
+    75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+3. Nachdem du den neu generierten Hash aus dem vorherigen Schritt kopiert hast, öffne die Konfigurationsdatei mit einem Texteditor und hänge den Hash an den Pfad des Splash-Images an, wie hier:
+    :::note[Verwende nicht den Beispiel-Hash von oben, stelle sicher, dass du den im vorherigen Schritt generierten Hash verwendest.]
+    :::
+    ```sh
+    wallpaper: boot():/limine-splash.png#75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+    Wie du siehst, wird der Hash mit einem `#`-Symbol an den Pfad angehängt. Speichere die Datei nach der Änderung.
+
+</Steps>
+
+Nachdem du die Registrierung der Konfigurationsprüfsumme aktiviert und den Hash für das Splash-Image generiert hast, führe die folgenden Befehle aus, um die Konfigurationsprüfsumme einzutragen und die EFI-Binärdatei von Limine zu signieren:
+
+```sh
+# Verwende limine-enroll-config, um die Konfigurationsprüfsumme einzutragen und die EFI-Binärdatei von Limine zu signieren
+# Dies verwendet sbctl im Hintergrund
+sudo limine-enroll-config
+sudo limine-update
+```
+</TabItem>
+<TabItem label='systemd-boot'>
+
 CachyOS stellt [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign) bereit,
 ein Skript, das die Liste der zu signierenden Dateien von `sudo sbctl verify` entgegennimmt und sie alle signiert.
-Limine-Benutzer sollten zu [Limine](#Limine) springen.
 
 :::caution
 Auf Systemen mit getrennten Partitionen für `/boot` und `/boot/efi` kann es sein, dass `sbctl` nur in `/boot/efi` nach EFI-Binärdateien sucht.
@@ -113,7 +246,6 @@ Verifying file database and EFI images in /boot...
 
 Jetzt, da alle Dateien signiert sind. **Starte dein System neu und geh in deine UEFI-Einstellungen, um Secure Boot zu aktivieren.**
 
-
 :::caution[ASUS Mainboards — Aktivieren von Secure Boot]
 Manche ASUS Mainboards verhalten sich beim Aktivieren von Secure Boot anders als andere Hersteller:
 
@@ -133,6 +265,8 @@ Boot → Secure Boot
 ```
 :::
 
+Siehe [diesen Abschnitt zur Referenz](/de/configuration/secure_boot_setup#in-den-setup-modus-im-uefi-wechseln)
+
 Beachte, dass dies ein einmaliger Vorgang ist, da das Signieren von Dateien mit dem `-s`-Flag diese Dateien in der Datenbank von `sbctl` speichert.
 
 :::tip[Zur Erinnerung]
@@ -140,52 +274,16 @@ Beachte, dass dies ein einmaliger Vorgang ist, da das Signieren von Dateien mit 
 alle neuen Dateien, wenn der Kernel oder der Bootmanager aktualisiert werden.
 :::
 
-### systemd-boot
-
 CachyOS verwendet den `systemd-boot-update.service`, der von systemd bereitgestellt wird, um den Boot-Manager beim Neustart zu aktualisieren. Das bedeutet, dass der `sbctl`-
 Pacman-Hook die aktualisierten EFI-Binärdateien **nicht** signieren wird. Als Workaround können wir den Boot-Manager direkt signieren.
 
 ```sh
 sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
 ```
+</TabItem>
+</Tabs>
 
-### Limine
-
-Limine ist ein spezieller Boot-Manager, der es ermöglicht, den Hash von Kernel-
-Images und anderen Dateien, die Limine beim Booten verwendet, zu überprüfen. Wenn dies aktiviert ist, wird jede
-manuelle Konfiguration durch den Benutzer, z. B. das Signieren des Images über
-`sbctl-batch-sign`, den Hash der entsprechenden Dateien ändern und
-die Prüfsummenverifizierung von Limine fehlschlagen lassen.
-
-Das Signieren dieser Dateien ist bei Limine jedoch nicht notwendig, da es einen speziellen
-Boot-Prozess hat, der das EFI-Chainloading und die Signaturprüfungen umgeht. Die einzigen EFI-
-Binärdateien, die signiert werden müssen, ist Limine selbst.
-
-:::caution[Limine >= 11.2.0]
-Ab Limine 11.2.0 werden Secure-Boot-Richtlinien **streng durchgesetzt**, wenn UEFI Secure Boot aktiv ist:
-
-- Eine BLAKE2B-Konfigurationsprüfsumme **muss** in der EFI-Binärdatei von Limine eingetragen sein, sonst bricht Limine mit folgender Meldung ab: `SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED`
-- Alle Dateipfade in `limine.conf` (Kernel, initramfs usw.) **müssen** BLAKE2B-Hashes angehängt haben (z. B. `boot():/vmlinuz-linux#<hash>`)
-- Der Konfigurationseditor ist bedingungslos deaktiviert
-- Hash-Abweichungen führen immer zu einem Absturz
-:::
-
-Um die automatische Registrierung der Konfigurationsprüfsumme zu aktivieren, setze folgendes in `/etc/default/limine`:
-
-```sh
-ENABLE_ENROLL_LIMINE_CONFIG=yes
-```
-
-Führe dann aus:
-
-```sh
-# Verwende limine-enroll-config, um die Konfigurationsprüfsumme einzutragen und die EFI-Binärdatei von Limine zu signieren
-# Dies verwendet sbctl im Hintergrund
-sudo limine-enroll-config
-sudo limine-update
-```
-
-## Überprüfen, ob Secure Boot aktiviert ist
+## Secure Boot Status prüfen
 
 Um zu überprüfen, ob Secure Boot tatsächlich aktiviert ist, kannst du einen der folgenden Befehle ausführen
 
