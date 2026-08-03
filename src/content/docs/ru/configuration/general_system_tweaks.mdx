@@ -6,7 +6,7 @@ tableOfContents:
   maxHeadingLevel: 4
 ---
 
-import { Tabs, TabItem, Steps, LinkButton } from '@astrojs/starlight/components';
+import { Tabs, TabItem, Steps, LinkButton, Icon } from '@astrojs/starlight/components';
 import ImageComponent from '~/components/image-component.astro';
 
 ## Настройки производительности AMD
@@ -74,8 +74,9 @@ AMD опубликовала патч для оптимизации планир
 Вам нужно установить в BIOS в опции CPPC значение "Driver". Это позволит переопределить используемый режим через sysfs.
 
 Существует два режима:
-1. Frequency (Частота)
-2. Cache (Кэш)
+
+1. Frequency
+2. Cache
 
 Если установлен режим `cache`, драйвер будет пытаться размещать задачи в первую очередь на CCD с большим объёмом кэша, что в основном выгодно в играх.
 Опция `frequency` будет пытаться размещать задачи на втором CCD, у которого более высокая частота, чем у CCD с 3D V-Cache.
@@ -194,7 +195,7 @@ FAQ:
 ### NVIDIA Smooth Motion (серии RTX 40xx и 50xx)
 
 :::note[Совместимость с играми.]
-Игры, работающие на DX11, DX12 и Vulkan.
+Игры, работающие на DX11, DX12 и Vulkan. См. FAQ для обходного пути для OpenGL.
 
 И DXVK, и VKD3D работают исправно.
 
@@ -212,7 +213,7 @@ FAQ:
     NVPRESENT_ENABLE_SMOOTH_MOTION=1
     ```
 
-Часто задаваемые вопросы:
+FAQ:
 
 - Зачем использовать Smooth Motion вместо DLSS Frame Generation?
   - Когда в игре отсутствует поддержка DLSS Frame Generation, Smooth Motion служит альтернативой благодаря своей ИИ-модели на уровне драйвера.
@@ -233,8 +234,43 @@ FAQ:
   - Нет. Внутриигровой ограничитель должен работать нормально.
 - Можно ли использовать Smooth Motion вместе с DLSS Frame Generation?
   - Нет. Одновременно может быть активен только один метод генерации кадров.
+- Можно ли использовать Smooth Motion с приложениями OpenGL?
+  - Не напрямую, поскольку она реализована как слой Vulkan, но это возможно с помощью [Zink](https://docs.mesa3d.org/drivers/zink.html) для перевода вызовов OpenGL в Vulkan:
+    ```text
+    NVPRESENT_ENABLE_SMOOTH_MOTION=1 zink-run <command>
+    ```
+    :::note
+    Использование Zink, вероятно, повлияет на производительность и может вызвать графические сбои в некоторых играх.
+
+    Пользователям с двумя GPU необходимо установить `DRI_PRIME=1`, чтобы использовать дискретную GPU Nvidia вместо более типичных методов выбора GPU.
+    :::
 
 ## Настройки энергосбережения
+
+### thermald
+
+`thermald` — это демон управления тепловым режимом для систем Intel. Он отслеживает датчики температуры и применяет охлаждающие действия, такие как ограничения мощности ЦП или изменения состояний производительности, до того, как прошивке потребуется использовать более агрессивное троттлинг.
+
+Он в основном полезен на ноутбуках Intel, трансформерах, планшетах, портативных устройствах и ПК малого форм-фактора, которые предоставляют элементы управления температурой Intel через `/sys/class/thermal`. Поддерживаемые системы обычно используют датчики температуры CPU Intel, Intel P-state, Intel power clamp, RAPL, `INT340X` или ACPI DPTF/adaptive thermal tables. Процессоры AMD не поддерживаются `thermald`.
+
+Установите и включите его с помощью:
+
+```sh
+sudo pacman -S thermald
+sudo systemctl enable --now thermald.service
+```
+
+Проверьте, запустился ли он корректно:
+
+```sh
+systemctl status thermald.service
+journalctl -u thermald.service -b
+```
+
+Дополнительная информация:
+
+<LinkButton icon="external" href="https://github.com/intel/thermal_daemon">upstream-репозиторий thermald</LinkButton>
+<LinkButton icon="external" href="https://man.archlinux.org/man/thermald.8">man-страница thermald</LinkButton>
 
 ### Включить RCU Lazy
 
@@ -248,19 +284,6 @@ rcutree.enable_rcu_lazy=1
 ```
 
 ## Устранение неполадок с NVIDIA
-
-### Отключение бэкенда SDDM Wayland
-
-:::note
-Начиная с cachyos-kde-settings 4.3, SDDM по умолчанию использует KWin в качестве своего Wayland-композитора.
-:::
-
-Хотя это хороший шаг вперед, он может вызывать некоторые неудобства, такие как нарушение поддержки разгона с помощью nvidia-settings или несовместимость со старыми видеокартами, которые с трудом работают под Wayland.
-
-Чтобы отменить это изменение, удалите пакет cachyos-kde-settings:
-```sh
-sudo pacman -R cachyos-kde-settings
-```
 
 ### Прошивка NVIDIA GSP
 
