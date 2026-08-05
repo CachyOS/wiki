@@ -14,9 +14,7 @@ description: Способы нас поддержать
 - Почтовый сервер/зеркало: 17 €
 - Сервер форума (Netcup VPS): 7 евро
 
-### Patreon
-
-<https://www.patreon.com/CachyOS>
+### [Patreon](<https://www.patreon.com/CachyOS>)
 
 ### Ethereum
 
