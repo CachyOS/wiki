@@ -1,315 +1,979 @@
 ---
-title: Secure Boot einrichten
-description: Richte Secure Boot mit sbctl nach der Installation von CachyOS ein
+title: sched-ext Tutorial
+description: Tutorial zur Verwendung des Frameworks und sonstige Informationen
 tableOfContents:
   minHeadingLevel: 1
-  maxHeadingLevel: 4
+  maxHeadingLevel: 5
 ---
 
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Icon } from '@astrojs/starlight/components';
 import ImageComponent from '~/components/image-component.astro';
-import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
-## Vor der Einrichtung
+Extensible Scheduler Class (besser bekannt als `sched-ext`) ist ein Linux-Kernel-Feature, das es ermöglicht, Kernel-Thread-Scheduler in
+BPF (Berkeley Packet Filter) zu implementieren und dynamisch zu laden. Im Wesentlichen erlaubt dies Endbenutzern, ihre Scheduler im Userspace zu ändern, ohne
+einen neuen Kernel kompilieren zu müssen, nur um einen anderen Scheduler zu haben.
 
-### GRUB Boot Manager
-
-Wenn du GRUB verwendest, führe den folgenden Befehl aus, um die Secure-Boot-Unterstützung für GRUB mit CA-Schlüsseln zu aktivieren.
-
-```bash
-sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
-```
-
-:::note
-Das Laden unnötiger Module in deinem Boot-Manager kann ein Sicherheitsrisiko darstellen.
-Führe diesen Befehl nur aus, wenn du Secure Boot wirklich brauchst.
+:::tip[Tritt mit den Entwicklern auf ihrem [Discord-Server](https://discord.gg/b2J8DrWa7t) in Kontakt]
 :::
 
-### In den Setup-Modus im UEFI wechseln
+- *Die Scheduler findest du in den Paketen `scx-scheds` und `scx-scheds-git`.*
+  ```sh
+  # Stabiler Branch + scx_loader und scxctl-Tools.
+  sudo pacman -S scx-scheds scx-tools
 
-Zuerst müssen wir in die Firmware-Einstellungen gehen und den Secure-Boot-Modus auf „Setup-Modus“ stellen. Du kannst von einem
-laufenden System mit dem folgenden Befehl in die Firmware-Einstellungen neustarten.
+  # Bleeding-Edge-Branch (Dieser Branch enthält die neuesten Änderungen aus dem Master-Branch.) + scx_loader und scxctl-Tools.
+  sudo pacman -S scx-scheds-git scx-tools-git
+  ```
 
-```bash
-systemctl reboot --firmware-setup
+  :::note
+  Das `scx-scheds-git`-Paket enthält möglicherweise nicht jeden experimentellen Scheduler, da einige in separaten Feature-Branches entwickelt werden, die noch nicht in den Master-Branch gemerged wurden.
+  :::
+
+## Wie man den Scheduler startet und verwaltet
+
+:::note
+Sowohl `scxctl` als auch `scx_loader` benötigen Administratorrechte, um Scheduler zu starten/stoppen/wechseln.
+
+Daher musst du sie mit `sudo` ausführen oder einen Polkit-Agenten verwenden, der die notwendigen Berechtigungen erteilt.
+
+Ohne `sudo` wird scxctl/scx_loader nach einer Authentifizierung über einen Polkit-Agenten fragen.
+:::
+
+<Tabs>
+
+<TabItem label='Terminal'>
+
+- *Um den Scheduler zu starten, öffne dein Terminal und gib den folgenden Befehl ein:*
+  ```sh title='Beispiel für den Start von rusty'
+  sudo scx_rusty
+  ```
+
+*Dadurch wird der Rusty-Scheduler gestartet und der Standard-Scheduler getrennt.*
+
+Um den Scheduler zu stoppen, drücke `STRG + C`. Der Scheduler wird dann gestoppt und der Standard-Kernel-Scheduler übernimmt wieder.
+
+</TabItem>
+
+<TabItem label='scxctl'>
+
+:::note[In den Paketen `scx-tools` und `scx-tools-git` enthalten]
+:::
+
+
+:::caution[Benötigt einen funktionierenden Polkit-Agenten, um korrekt zu funktionieren.]
+Siehe die folgende **[Arch-Wiki-Seite als Referenz.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+`scxctl` ist ein CLI-DBUS-Client zur Interaktion mit `scx_loader`.
+
+- Features:
+  - Den aktuellen Scheduler und Modus abrufen
+  - Alle verfügbaren Scheduler auflisten
+  - Einen Scheduler in einem bestimmten Modus oder mit bestimmten Argumenten starten
+  - Zwischen Schedulern und Modi wechseln
+  - Den laufenden Scheduler stoppen
+  - Den laufenden Scheduler neu starten
+
+<Tabs>
+    <TabItem label='Einen Scheduler starten'>
+          ```sh title='scx_flash im Gaming-Modus starten'
+          scxctl start --sched flash --mode gaming
+          ```
+    </TabItem>
+    <TabItem label='Einen Scheduler stoppen'>
+          ```sh title='Den aktuell laufenden Scheduler stoppen'
+          scxctl stop
+          ```
+    </TabItem>
+    <TabItem label='Standard-Scheduler wiederherstellen'>
+          ```sh title='Stellt den in der scx_loader-Konfigurationsdatei festgelegten Standard-Scheduler wieder her'
+          scxctl restore
+          ```
+    </TabItem>
+    <TabItem label='Scheduler wechseln'>
+          ```sh title='Wechsel zu scx_bpfland im Gaming-Modus'
+          scxctl switch --sched bpfland --mode gaming
+          ```
+    </TabItem>
+    <TabItem label='Starten & Wechseln mit benutzerdefinierten Argumenten'>
+          :::note[Füge ein Komma zwischen jedem Argument hinzu]
+          Beispiel: `--args="-c,75,-m,0-15"` = Argument, Wert
+          :::
+          ```sh title='scx_cosmos mit benutzerdefinierten Argumenten starten'
+          scxctl start --sched cosmos --args="-c,75,-m,0-15"
+          ```
+          ```sh title='Wechsel zu scx_flash mit benutzerdefinierten Argumenten'
+          scxctl switch --sched flash --args="-s,20000"
+          ```
+    </TabItem>
+</Tabs>
+
+```sh
+$ scxctl --help
+Usage: scxctl <COMMAND>
+
+Commands:
+  get      Get the info on the running scheduler
+  list     List all supported schedulers
+  start    Start a scheduler in a mode or with arguments
+  switch   Switch schedulers or modes, optionally with arguments
+  stop     Stop the current scheduler
+  restart  Restart the current scheduler with original configuration
+  restore  Restore the default scheduler from configuration
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
 ```
 
-<br />
-<ImageComponent imgsrc={import('~/assets/images/ideapad-bios-secure-boot.jpg')} />
+</TabItem>
 
-So sieht das BIOS auf einem Lenovo Ideapad 5 Pro aus. Setze es in den Setup-Modus zurück oder stelle die Werksschlüssel wieder her und starte das
-System neu.
+<TabItem label='scx_loader (DBus)'>
 
-Allerdings haben einige MSI-Mainboards keinen Setup-Modus. Um den gleichen Effekt zu erzielen, stelle den Secure Boot Mode auf „custom“ und wähle die Kompatibilitätsoption „maximum security“ (das ist wichtig: Im Standardmodus kannst du möglicherweise nicht von deinem Bootloader in CachyOS booten!). Gehe dann in „key management“ und folge den beiden im Bild unten gezeigten Schritten:
-<br />
-<ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
+:::caution[Benötigt einen funktionierenden Polkit-Agenten, um korrekt zu funktionieren.]
+Siehe die folgende **[Arch-Wiki-Seite als Referenz.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
 
-Manche ASUS Mainboards verhalten sich ähnlich wie die gerade genannten MSI Mainboards, da sie keinen dedizierten Setup Mode haben.
+*Wie der Name schon sagt, ist es ein Dienstprogramm, das als Lader und Manager für das sched-ext-Framework über die D-Bus-Schnittstelle fungiert.*
 
-Unter Boot → Secure Boot den Secure Boot Mode auf Custom stellen, anschließend unter Key Management die Option „Delete all Secure Boot Variables“ auswählen. 
+*Obwohl es systemd nicht erfordert, kann es dennoch in Verbindung damit verwendet werden.* [Schau dir die Übergangsanleitung als Referenz an](/de/configuration/sched-ext#umstieg-von-scxservice-auf-scx_loader-eine-umfassende-anleitung).
 
-#### sbctl installieren und Schlüssel registrieren
+- Hat die Fähigkeit, einen scx-Scheduler zu stoppen, zu starten, neu zu starten, Informationen darüber zu lesen und mehr.
+  - *Du kannst Tools wie `dbus-send` oder `gdbus` verwenden, um damit zu kommunizieren.*
+- Diese Anleitung erklärt, wie man scx_loader mit dem Befehl dbus-send verwendet.
+  - ```sh title='scx_rusty mit seinen Standardargumenten starten'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartScheduler string:scx_rusty uint32:0
+    ```
+  - ```sh title='Einen Scheduler mit Argumenten starten'
+    # Dieses Beispiel startet scx_bpfland mit den folgenden Flags: -k -c 0
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title='Den aktuell laufenden Scheduler stoppen'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StopScheduler
+    ```
+  - ```sh title='Zum Standard-Scheduler wechseln'
+    # scx_loader wechselt zum Standard-Scheduler, der in der scx_loader-Konfigurationsdatei festgelegt ist
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.RestoreDefault
+    ```
+  - ```sh title='Zu einem anderen Scheduler im Modus 2 wechseln'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchScheduler string:scx_lavd uint32:2
+    # Dies wechselt zu scx_lavd mit dem Scheduler-Modus 2, was bedeutet, dass LAVD im Energiesparmodus gestartet wird
+    ```
+  - ```sh title='Zu einem anderen Scheduler mit Argumenten wechseln'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title='Den aktuell laufenden Scheduler abrufen'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:CurrentScheduler
+    ```
+  - ```sh title='Eine Liste der unterstützten Scheduler abrufen'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:SupportedSchedulers
+    ```
+:::tip
+Hier ist eine Erklärung, was jeder Modus in scx_loader bedeutet:
 
-Stelle vor dem Fortfahren sicher, dass `sbctl` installiert ist.
+- Modus 0 = `Standard-Scheduler-Flags`
+- Modus 1 = `Gaming`
+- Modus 2 = `Energiesparen`
+- Modus 3 = `Niedrige Latenz`
+- Modus 4 = `Server`
 
-[sbctl](https://github.com/Foxboron/sbctl) ist ein benutzerfreundlicher Schlüsselmanager für Secure Boot, mit dem du Secure Boot einrichten,
-Schlüssel verwalten und den Überblick über Dateien behalten kannst, die in der Boot-Kette signiert werden müssen.
+Beispiel: LAVD im Modus 1 ist das Äquivalent zu `scx_lavd --performance`
+
+*TLDR: Jeder Modus ist ein Satz verschiedener Flags, die den beabsichtigten Anwendungsfall verbessern sollen.*
+
+[Für einen genaueren Blick darauf, was diese Modi bei jedem Scheduler ändern](<https://github.com/sched-ext/scx-loader/blob/122cdb289d09fc960ba7e24dc6bec10326b424e9/crates/scx_loader/src/config.rs#L193>)
+:::
+
+</TabItem>
+
+<TabItem label='CachyOS Kernel Manager'>
+
+:::caution[Benötigt einen funktionierenden Polkit-Agenten, um korrekt zu funktionieren.]
+Siehe die folgende **[Arch-Wiki-Seite als Referenz.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+Du kannst darauf zugreifen und sie über den Button `sched-ext scheduler config` konfigurieren.
+
+</TabItem>
+
+<TabItem label='SCX Manager'>
+
+:::caution[Benötigt einen funktionierenden Polkit-Agenten, um korrekt zu funktionieren.]
+Siehe die folgende **[Arch-Wiki-Seite als Referenz.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+SCX Manager ist ein eigenständiges GUI-Tool, das vom CachyOS Kernel Manager abgeleitet ist. Es ermöglicht Benutzern, das sched-ext-Framework und seine Scheduler über `scx_loader` zu verwalten.
+
+Features:
+- Überprüfen, welcher Scheduler gerade aktiv ist
+- Einen Scheduler oder ein Profil auswählen: (Auto, Gaming, Energiesparen, Niedrige Latenz oder Server)
+- Zusätzliche Flags setzen
+- Den aktuellen Scheduler deaktivieren
 
 <details>
-    <summary>sbctl installieren</summary>
-    ```bash title='Öffne ein Terminal und führe den folgenden Befehl aus'
-    sudo pacman -S sbctl
+<summary>Screenshot</summary>
+
+<ImageComponent imgsrc={import('~/assets/images/scx-manager-main.png')} />
+
+</details>
+
+</TabItem>
+
+</Tabs>
+
+## Scheduler-Anleitung: Profile und Anwendungsfälle
+
+Da es viele Scheduler zur Auswahl gibt, wollen wir eine kleine Einführung zu den verfügbaren Schedulern geben.
+
+:::note
+Diese Scheduler befinden sich in ständiger Entwicklung und werden getestet, erwarte also, dass sich einige ihrer Funktionen/Flags ändern können.
+:::
+
+Melde gerne jedes Problem oder Feedback in ihrem Scheduler-Repository.
+
+Verwende `scx_schedulername --help`, um die verfügbaren Flags und eine kurze Beschreibung ihrer Funktion zu sehen.
+
+```sh title='Beispiel für Hilfe zu scx_rusty'
+scx_rusty --help
+```
+
+### [scx_bpfland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_bpfland>)
+
+**Entwickelt von: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Produktionsreif? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Ein vruntime-basierter sched_ext-Scheduler, der interaktive Workloads priorisiert. Sehr flexibel und einfach anzupassen.
+
+Wenn Bpfland Entscheidungen darüber trifft, welche Kerne verwendet werden sollen, berücksichtigt es deren Cache-Layout und welche Kerne denselben L2/L3-Cache teilen, was zu weniger Cache-Misses = mehr Leistung führt.
+
+- Anwendungsfälle:
+  - Gaming
+  - Desktop-Nutzung
+  - Multimedia-/Audioproduktion
+  - Hervorragende Interaktivität unter intensiven Workloads
+  - Energiesparen
+  - Server
+
+#### Scheduler-Modi
+
+##### Niedrige Latenz
+
+* **Kommandozeilen-Flags:** `-m performance -w`
+* **Beschreibung:** Soll die Latenz auf Kosten des Durchsatzes verringern. Geeignet für Soft-Echtzeitanwendungen wie Audioverarbeitung und Multimedia.
+
+##### Energiesparen
+
+* **Kommandozeilen-Flags:** `-s 20000 -m powersave -I 100 -t 100`
+* **Beschreibung:** Priorisiert die Energieeffizienz. Bevorzugt weniger leistungsstarke Kerne (z. B. E-Kerne bei Intel).
+
+##### Server
+
+* **Kommandozeilen-Flags:** `-s 20000 -S`
+* **Beschreibung:** Priorisiert Aufgaben mit strikter Affinität. Diese Option kann den Durchsatz auf Kosten der Latenz erhöhen und ist besser für Server-Workloads geeignet.
+
+### [scx_beerland](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_beerland)
+
+**Entwickelt von: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Produktionsreif? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+scx_beerland ist ein Scheduler, der darauf ausgelegt ist, Lokalität und Skalierbarkeit zu priorisieren.
+
+Priorisiert das Halten von Aufgaben auf derselben CPU, um die Cache-Lokalität zu wahren, und stellt gleichzeitig eine gute Skalierbarkeit über viele CPUs sicher, indem lokale DSQs (per-CPU-Runqueues) verwendet werden, wenn das System nicht ausgelastet ist.
+
+- Anwendungsfälle:
+  - Cache-intensive Workloads
+  - Systeme mit einer großen Anzahl von CPUs
+  - Gaming: Es ist bekannt, dass es in bestimmten Spielen überraschend gut funktioniert, obwohl deine Ergebnisse variieren können
+  - Server: Gut für allgemeine Server-Workloads aufgrund seiner Skalierbarkeits- und Lokalitätsoptimierungen.
+  - Kann auch für die Desktop-Nutzung verwendet werden.
+
+#### Scheduler-Modi
+
+Momentan keine.
+
+### [scx_rustland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland>)
+
+**Entwickelt von: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Produktionsreif? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+
+Für leistungskritische Produktionsszenarien werden andere Scheduler wahrscheinlich eine bessere Leistung zeigen, da das Auslagern aller Scheduling-Entscheidungen in den User-Space mit einem gewissen Preis verbunden ist (auch wenn dieser minimal ist).
+
+Ein vollständig im User-Space implementierter Scheduler birgt jedoch das Potenzial für eine nahtlose Integration mit anspruchsvollen Bibliotheken, Tracing-Tools, externen Diensten (z. B. KI) usw.
+
+Daher kann es Situationen geben, in denen die Vorteile den Overhead überwiegen und die Verwendung dieses Schedulers in einer Produktionsumgebung rechtfertigen.
+
+Teilt Ähnlichkeiten mit bpfland, wurde mit der Absicht erstellt, leicht lesbar und verständlich zu sein, wie er aufgrund seiner Implementierung im Userspace funktioniert.
+
+Denk daran, dass es einen leichten Durchsatznachteil gibt, wenn ein Userspace-Scheduler verwendet wird.
+
+- Anwendungsfälle:
+  - Workloads mit geringer Latenz (Gaming, Videokonferenzen und Live-Streaming)
+  - Desktop-Nutzung
+
+### [scx_flash](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_flash>)
+
+**Entwickelt von: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Produktionsreif? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Ein Scheduler, der sich darauf konzentriert, Fairness zwischen Aufgaben und Leistungsvorhersehbarkeit zu gewährleisten.
+
+Er arbeitet nach einer [Earliest Deadline First (EDF) Richtlinie](https://www.geeksforgeeks.org/operating-systems/earliest-deadline-first-edf-cpu-scheduling-algorithm/), bei der jeder Aufgabe ein "Latenz"-Gewicht zugewiesen wird. Dieses Gewicht wird dynamisch angepasst, je nachdem, wie oft eine Aufgabe die CPU freigibt, bevor ihre volle Zeitscheibe aufgebraucht ist.
+
+Aufgaben, die die CPU frühzeitig freigeben, erhalten ein höheres Latenzgewicht und werden gegenüber Aufgaben priorisiert, die ihre Zeitscheibe vollständig verbrauchen.
+
+- Anwendungsfälle:
+  - Gaming
+  - Latenzempfindliche Workloads wie Multimedia- oder Echtzeit-Audioverarbeitung
+  - Bedarf an Reaktionsfähigkeit in überlasteten Situationen
+  - Konsistenz in der Leistung
+  - Server
+
+#### Scheduler-Modi
+
+##### Niedrige Latenz
+
+* **Kommandozeilen-Flags:** `-m performance -w -C 0`
+* **Beschreibung:** Soll die Latenz auf Kosten des Durchsatzes verringern. Geeignet für Soft-Echtzeitanwendungen wie Audioverarbeitung und Multimedia.
+
+##### Gaming
+
+* **Kommandozeilen-Flags:** `-m all`
+* **Beschreibung:** Optimiert für hohe Leistung in Spielen.
+
+##### Energiesparen
+
+* **Kommandozeilen-Flags:** `-m powersave -I 10000 -t 10000 -s 10000 -S 1000`
+* **Beschreibung:** Priorisiert die Energieeffizienz. Bevorzugt weniger leistungsstarke Kerne (z. B. E-Kerne bei Intel) und führt alle 10 ms einen erzwungenen Leerlaufzyklus ein, um die Energieeinsparung zu erhöhen.
+
+##### Server
+
+* **Kommandozeilen-Flags:** `-m all -s 20000 -S 1000 -I -1 -D -L`
+* **Beschreibung:** Für Server-Workloads optimiert. Tauscht Reaktionsfähigkeit gegen Durchsatz.
+
+### [scx_cosmos](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cosmos)
+
+**Entwickelt von: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+- Produktionsreif? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Leichter Scheduler, optimiert für die Beibehaltung der Task-zu-CPU-Lokalität.
+
+Wenn das System nicht ausgelastet ist, priorisiert der Scheduler das Halten von Aufgaben auf derselben CPU mithilfe lokaler DSQs. Dies erhält nicht nur die Lokalität, sondern reduziert auch die Sperrkonflikte im Vergleich zu gemeinsamen DSQs, was eine gute Skalierbarkeit über viele CPUs ermöglicht.
+
+- Anwendungsfälle:
+  - Allzweck-Scheduler: Der Scheduler sollte sich sowohl für Server-Workloads als auch für Desktop-Workloads anpassen.
+
+#### Scheduler-Modi
+
+##### Auto
+
+* **Kommandozeilen-Flags:** `-d`
+* **Beschreibung:** Deaktiviert verzögerte Wakeups. Reduziert den Durchsatz und die Leistung für bestimmte Workloads und verringert gleichzeitig den Stromverbrauch.
+
+##### Gaming
+
+* **Kommandozeilen-Flags:** `-c 0 -p 0`
+* **Beschreibung:** Deaktiviert die CPU-Lastverfolgung und erzwingt immer ein Deadline-basiertes Scheduling, um die Reaktionsfähigkeit zu verbessern.
+
+##### Energiesparen
+
+* **Kommandozeilen-Flags:** `-m powersave -d -p 5000`
+* **Beschreibung:** Priorisiert die Energieeffizienz. Bevorzugt weniger leistungsstarke Kerne (z. B. E-Kerne bei Intel) und deaktiviert verzögerte Wakeups, was den Durchsatz reduziert und die Energieeffizienz erhöht. Die CPU-Lastabfrage wird auf 5 ms erhöht.
+
+##### Niedrige Latenz
+
+* **Kommandozeilen-Flags:** `-m performance -c 0 -p 0 -w`
+* **Beschreibung:** Soll die Latenz auf Kosten des Durchsatzes verringern. Geeignet für Soft-Echtzeitanwendungen wie Audioverarbeitung und Multimedia. Erzwingt immer Deadline-basiertes Scheduling und synchrone Wake-up-Optimierungen, um die Leistungsvorhersehbarkeit zu verbessern.
+
+##### Server
+
+* **Kommandozeilen-Flags:** `-s 20000`
+* **Beschreibung:** Aktiviert die Adressraumaffinität, um die Lokalität und Leistung bei bestimmten cache-sensitiven Workloads zu verbessern. Die Abfrage wird auf 20 ms erhöht.
+
+### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>)
+
+**Entwickelt von: Changwoo Min (multics69 [GitHub](<https://github.com/multics69>)).**
+
+- Produktionsreif? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Kurze Einführung in LAVD von Changwoo:
+
+*LAVD ist ein neuer Scheduling-Algorithmus, der sich noch in der Entwicklung befindet. Er ist
+motiviert durch Gaming-Workloads, die latenzkritisch und
+kommunikationsintensiv sind. Er zielt darauf ab, Latenzspitzen zu minimieren, während
+ein insgesamt guter Durchsatz und eine faire Nutzung der CPU-Zeit unter den Aufgaben beibehalten werden.*
+
+- Anwendungsfälle:
+  - Gaming
+  - Audioproduktion
+  - Latenzempfindliche Workloads
+  - Desktop-Nutzung
+  - Hervorragende Interaktivität unter intensiven Workloads
+  - Energiesparen
+
+Eine der wichtigsten und genialsten Fähigkeiten, die LAVD beinhaltet, ist die **Core Compaction.** die ohne auf technische Details einzugehen: Wenn die CPU-Auslastung < 50% ist, laufen die derzeit aktiven Kerne länger und mit einer höheren Frequenz. In der Zwischenzeit bleiben die inaktiven Kerne für eine viel längere Dauer im C-State (Ruhezustand), was zu einem geringeren Gesamtstromverbrauch führt.
+
+##### Scheduler-Modi
+
+##### Gaming & Niedrige Latenz
+
+* **Kommandozeilen-Flags:** `--performance`
+* **Beschreibung:** Maximiert die Leistung durch die Nutzung aller verfügbaren Kerne und priorisiert physische Kerne.
+
+##### Energiesparen
+
+* **Kommandozeilen-Flags:** `--powersave`
+* **Beschreibung:** Minimiert den Stromverbrauch bei angemessener Leistung. Priorisiert effiziente Kerne und Threads gegenüber physischen Kernen.
+
+### [scx_rusty](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rusty>)
+
+**Entwickelt von: David Vernet (Byte-Lab [GitHub](<https://github.com/Byte-Lab>))**
+
+- Produktionsreif? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+  - Ja. Wenn er richtig eingestellt ist.
+
+Rusty bietet eine breite Palette von Funktionen, die seine Fähigkeiten erweitern und eine größere Flexibilität für verschiedene Anwendungsfälle bieten.
+Eine dieser Funktionen ist die Einstellbarkeit, die es dir ermöglicht, Rusty an deine Vorlieben und spezifischen Anforderungen anzupassen.
+
+- Anwendungsfälle:
+  - Gaming
+  - Latenzempfindliche Workloads
+  - Desktop-Nutzung
+  - Multimedia-/Audioproduktion
+  - Hervorragende Interaktivität unter intensiven Workloads
+  - Energiesparen
+
+### [scx_p2dq](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_p2dq>)
+
+- Produktionsreif? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+  - Ja. Wenn er für deinen spezifischen Workload und deine Hardware richtig eingestellt ist.
+
+**Entwickelt von: Daniel Hodges (hodgesds [GitHub](<https://github.com/hodgesds>))**
+
+Ein Allzweck-Scheduler, der sich auf "Pick Two"-Lastausgleich zwischen
+LLCs konzentriert. Erhält eine hohe Cache-Lokalität und Work Conservation bei
+angemessener Latenz.
+
+- Anwendungsfälle:
+  - Server
+  - Desktop-Umgebungen
+  - Gaming (mit etwas manuellem Tuning)
+
+#### Scheduler-Modi
+
+##### Gaming
+
+* **Kommandozeilen-Flags:** `--task-slice true -f --sched-mode performance`
+* **Beschreibung:** Sorgt für eine gleichmäßigere Leistung beim Zocken und bevorzugt die leistungsstärkeren Kerne für die Aufgabenplanung.
+
+##### Low Latency (Geringe Latenz)
+
+* **Kommandozeilen-Flags:** `-y -f --task-slice true`
+* **Beschreibung:** Verringert die Latenz, indem interaktive Aufgaben stärker an die CPU gebunden werden, der sie zugewiesen wurden, und erhöht die Stabilität der "Slice Time".
+
+##### Power Save (Energiesparmodus)
+
+* **Kommandozeilen-Flags:** `--sched-mode efficiency`
+* **Beschreibung:** Verbessert die Energieeffizienz, indem energieeffiziente Kerne bevorzugt werden.
+
+##### Server
+
+* **Kommandozeilen-Flags:** `--keep-running`
+* **Beschreibung:** Verbessert Server-Workloads, indem Aufgaben auch über ihre zugewiesene Zeit hinaus laufen dürfen, wenn die CPU im Leerlauf ist.
+
+### [scx_tickless](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_tickless>)
+
+**Entwickelt von: Andrea Righi (arighi [Github](<https://github.com/arighi>))**
+
+- Für den Produktionseinsatz bereit? <Icon name="close" color="var(--sl-color-text-accent)" size="2rem" />
+  - Dieser Scheduler ist noch experimentell und wird nicht für den produktiven Einsatz empfohlen.
+
+:::note
+Um die "Ticks" auf den "tickless"-CPUs effektiv zu deaktivieren, muss der Kernel mit `nohz_full` gebootet werden. Denk dran, dass `nohz_full` einen Mehraufwand bei Systemaufrufen (Syscalls) verursacht, was bei latenzempfindlichen Workloads zu Leistungseinbußen führen kann.
+:::
+
+scx_tickless ist ein serverorientierter Scheduler, der für Cloud Computing, Virtualisierung und High-Performance-Computing-Workloads entwickelt wurde.
+
+Der Scheduler leitet alle Planungsereignisse durch einen Pool von primären CPUs, die für diese Aufgaben zuständig sind. Das ermöglicht es, den "Tick" des Schedulers auf anderen CPUs zu deaktivieren, was das "OS-Rauschen" reduziert.
+
+- Anwendungsfälle:
+  - Cloud Computing
+  - Virtualisierung
+  - High-Performance-Computing-Workloads
+  - Server
+
+#### Scheduler-Modi
+
+##### Gaming
+
+* **Kommandozeilen-Flags:** `-f 5000 -s 5000`
+* **Beschreibung:** Verbessert die Gaming-Leistung, indem der Scheduler häufiger CPU-Konflikte erkennt und Kontextwechsel mit einer kürzeren "Time Slice" auslöst.
+
+##### Power Save (Energiesparmodus)
+
+* **Kommandozeilen-Flags:** `-f 50`
+* **Beschreibung:** Verbessert die Energieeffizienz, indem die Überprüfung auf Konflikte seltener stattfindet.
+
+##### Low Latency (Geringe Latenz)
+* **Kommandozeilen-Flags:** `-f 5000 -s 1000`
+* **Beschreibung:** Ähnlich wie das Gaming-Profil, aber mit einer noch kürzeren "Slice".
+
+##### Server
+
+* **Kommandozeilen-Flags:** `-f 100`
+* **Beschreibung:** Reduziert, wie oft der Scheduler nach CPU-Konflikten sucht, um den Durchsatz auf Kosten der Reaktionsfähigkeit zu verbessern.
+
+## Konfiguration und Leistungstests
+
+### LAVD Autopilot & Autopower
+
+*Zitate von Changwoo Min:*
+- Im Autopilot-Modus passt der Scheduler seinen Energiemodus (`Powersave, Balanced oder Performance`) an die Systemlast an, insbesondere an die CPU-Auslastung.
+
+- Autopower: Entscheidet automatisch über den Energiemodus des Schedulers basierend auf dem Energieprofil des Systems, auch bekannt als EPP (Energy Performance Preference).
+
+```sh
+# Autopower kann mit dem folgenden Flag aktiviert werden:
+--autopower
+# z.B.:
+scx_lavd --autopower
+```
+
+### ananicy-cpp & sched-ext
+
+:::note[Update zu ananicy-cpp und sched-ext]
+Nach weiterer Entwicklung der Scheduler ist es normalerweise in Ordnung, ananicy-cpp zusammen mit ihnen zu verwenden. Wenn du jedoch Hänger oder Instabilität feststellst, solltest du es als einen Schritt zur Fehlerbehebung deaktivieren.
+:::
+
+Um ananicy-cpp zu deaktivieren/stoppen, führe den folgenden Befehl aus:
+
+```sh
+systemctl disable --now ananicy-cpp
+```
+
+### Umschalten der Energieprofile mit scx_loader
+
+Das Ganze ist im Paket `power-profiles-daemon` von CachyOS drin, das einen [eigenen Patch](https://github.com/CachyOS/CachyOS-PKGBUILDS/blob/master/power-profiles-daemon/0001-Add-support-for-scx_loader-modes-switching.patch) mitbringt, um das Umschalten der `scx_loader`-Energieprofile zu ermöglichen.
+
+- Wenn `scx_loader` gerade läuft und du [game-performance](/de/configuration/gaming#wechsel-des-leistungsprofils-bei-bedarf) nutzt, wird der aktive Scheduler automatisch auf das „Gaming“-Profil umgeschaltet, sobald du ein Spiel startest. Wenn du das Spiel wieder schließt, geht's zurück zum Standardprofil.
+- Wenn du zwischen den Energieprofilen wechselst, zum Beispiel in KDE Plasma oder GNOME über den Umschalter für Energieprofile, schaltet `scx_loader` automatisch zum passenden Scheduler-Profil um:
+
+| Power Profile       | Scheduler Profile  |
+| ------------------- | ------------------ |
+| Power Saver         | Power Save         |
+| Balanced            | Auto               |
+| Performance         | Gaming             |
+
+### Benchmarking und Vergleich von Schedulern mit dem cachyos-benchmarker
+
+Das Tool [cachyos-benchmarker](https://github.com/CachyOS/cachyos-benchmarker) bietet eine einfache Möglichkeit, die Leistung verschiedener CPU-Scheduler zu bewerten und zu vergleichen.
+
+Es führt eine umfassende Suite von Benchmarks durch, um die CPU-, Speicher- und Gesamtsystemleistung unter verschiedenen Arbeitslasten zu messen.
+
+Die folgenden Benchmarks sind enthalten:
+
+| Test | Misst | Tool |
+| --------------------------- | ---------------------------------------- | ------------ |
+| **stress-ng cpu-cache-mem** | CPU-, Cache- und Speicherleistung | `stress-ng` |
+| **FFmpeg-Kompilierung** | Parallele Build-Leistung | `make` |
+| **x265-Kodierung** | Videokodierungs-Durchsatz | `x265` |
+| **argon2-Hashing** | Multithreaded-Passwort-Hashing | `argon2` |
+| **perf sched msg** | Kontextwechsel- und IPC-Leistung | `perf` |
+| **perf memcpy** | Speicherdurchsatz `memcpy()` | `perf` |
+| **Primzahlberechnung** | Ganzzahl-Arithmetik und Parallelität | `primesieve` |
+| **NAMD** | Molekulardynamik (wissenschaftliche Arbeitslast) | `namd3` |
+| **Blender-Render** | reines CPU-3D-Rendering | `blender` |
+| **xz-Kompression** | Kompressionsdurchsatz | `xz` |
+| **Kernel-defconfig-Build** | Kernel-Kompilierungsleistung | `make` |
+| **y-cruncher** | Mathematische Präzision und Speicherbelastung | `y-cruncher` |
+
+`cachyos-benchmarker` kann für verschiedene Zwecke verwendet werden, darunter:
+
+- **Testen der Scheduler-Stabilität**
+  Führe die gesamte Benchmark-Suite aus, um Hänger, Abstürze oder Regressionen zu erkennen, die durch Scheduler-Änderungen eingeführt wurden.
+  Wenn du `scx_loader` verwendest, kannst du im Falle eines Hängers oder Absturzes Protokolle mit folgendem Befehl sammeln:
+  ```bash
+  journalctl --unit scx_loader.service --boot 0 > crash.log
+  ```
+  Dadurch wird eine Datei namens `crash.log` in deinem aktuellen Verzeichnis erstellt.
+- **Vergleich der Scheduler-Leistung**
+  - Bewerte Leistungsunterschiede zwischen Schedulern. z.B. `BPFLAND vs. LAVD`
+- **Messen des Effekts von Kernel- oder Scheduler-Updates**
+  - Vergleiche Durchläufe vor und nach dem Anwenden von Patches oder Versionsänderungen, um Leistungsregressionen oder -verbesserungen zu prüfen.
+- **Testen von Konfigurationsanpassungen**
+  - Bewerte die Auswirkungen von Änderungen wie CPU-Governor-Einstellungen, SMT-Umschaltung oder modifizierten Scheduler-Flags.
+
+#### Anforderungen
+- 4 GB RAM oder mehr
+- Mindestens 8 GB freier Speicherplatz
+- Zeit und Geduld – **der vollständige Benchmark kann auf langsameren Systemen über eine Stunde dauern**
+
+#### Installation
+
+Um `cachyos-benchmarker` zu installieren, führe den folgenden Befehl aus:
+```bash
+sudo pacman -S cachyos-benchmarker
+```
+
+#### Ausführen des Benchmarks
+
+<Steps>
+    1. Führe `cachyos-benchmarker` aus:
+        ```bash
+        cachyos-benchmarker ~/cachyos-benchmarker/
+        # Du kannst ~/cachyos-benchmarker/ durch ein beliebiges Verzeichnis ersetzen, in dem die Protokolle gespeichert werden sollen.
+        ```
+    2. Warte, bis die Vorbereitungsschritte abgeschlossen sind.
+    3. Folge den Anweisungen:
+        - `Do you want to drop page cache now? Root privileges needed! (y/N) y` (Möchtest du jetzt den Page-Cache leeren? Root-Rechte erforderlich!)
+        - `Please enter a name for this run, or leave empty for default:` (Bitte gib einen Namen für diesen Durchlauf ein oder lass das Feld für den Standardnamen leer:)
+    4. Warte, bis die Tests abgeschlossen sind.
+    5. Sobald der Vorgang abgeschlossen ist, geschieht Folgendes:
+        - Erstellung einer Protokolldatei mit einem Namen wie `benchie_<name>_<DATUM>.log`, die detaillierte Informationen über den Benchmark-Lauf enthält.
+          - Beispiel: `benchie_p2dq_2025-09-29-2115.log`
+          - Das Skript `benchmark_scraper.py` wird automatisch ausgeführt, um einen zusammenfassenden Bericht im HTML-Format zu erstellen.
+          - Was macht das Skript?:
+            - Liest alle `benchie_*.log`-Dateien im angegebenen Verzeichnis.
+            - Extrahiert die Benchmark-Namen, -Zeiten und -Werte.
+            - Sortiert oder fasst sie zusammen.
+            - Gibt eine saubere Zusammenfassung der Ergebnisse in deinem Terminal aus und erstellt eine HTML-Datei, die in einem Browser geöffnet werden kann.
+                <details>
+                <summary>Beispiel für die Terminal-Ausgabe:</summary>
+                ```text
+                stress-ng cpu-cache-mem: 15.26
+                y-cruncher pi 1b: 31.23
+                perf sched msg fork thread: 8.892
+                perf memcpy: 13.53
+                namd 92K atoms: 53.54
+                calculating prime numbers: 11.126
+                argon2 hashing: 6.62
+                ffmpeg compilation: 53.38
+                xz compression: 61.13
+                kernel defconfig: 130.73
+                blender render: 96.29
+                x265 encoding: 24.99
+
+                Total time (s): 506.72
+                Total score: 70.71
+
+                Name: p2dq
+                Date: 2025-09-29-2115
+
+                System:    Kernel: 6.17.0-1.1-cachyos-p2dq arch: x86_64 bits: 64
+                           Desktop: KDE Plasma v: 6.4.5 Distro: CachyOS
+                Memory:    System RAM: total: 32 GiB available: 30.61 GiB used: 7.54 GiB (24.6%)
+                           Device-1: Channel-A DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                           Device-2: Channel-B DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                           Device-3: Channel-C DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                           Device-4: Channel-D DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                CPU:       Info: 8-core model: AMD Ryzen 7 8845HS w/ Radeon 780M Graphics bits: 64 type: MT MCP cache: L2: 8 MiB
+                           Speed (MHz): avg: 3366 min/max: 419/5138 cores: 1: 3366 2: 3366 3: 3366 4: 3366 5: 3366 6: 3366 7: 3366 8: 3366 9: 3366 10: 3366 11: 3366 12: 3366 13: 3366 14: 3366 15: 3366 16: 3366
+
+                SCX Scheduler: p2dq_1.0.21_gf90c2aa1_dirty_x86_64_unknown_linux_gnu
+
+                SCX Version: p2dq_1.0.21_gf90c2aa1_dirty_x86_64_unknown_linux_gnu
+
+                 Version         : 0.5.1-1
+                ```
+                </details>
+                <details>
+                <summary>HTML-Beispiel eines Testergebnisses, das zwei verschiedene Branches desselben Schedulers vergleicht:</summary>
+                <ImageComponent imgsrc={import('~/assets/images/cachyos-benchmarker-example.png')} />
+                </details>
+    6. Um zwei oder mehr Durchläufe zu vergleichen, lege die `.log`-Dateien vor dem Ausführen von `benchmark_scraper.py` in dasselbe Verzeichnis. Das Tool erkennt und vergleicht sie automatisch im HTML-Bericht.
+</Steps>
+
+### Testen der Scheduler-Latenz mit schbench
+
+schbench ist ein Scheduler-Benchmark, der entwickelt wurde, um die Scheduler-Latenz unter einer simulierten serverähnlichen Arbeitslast zu messen. Es erzeugt eine konfigurierbare Anzahl von "Worker"- und "Message"-Threads, bei denen die Message-Threads wiederholt die Worker-Threads aufwecken. Durch die Messung der Latenzverteilung vom Aufwecken bis zur Ausführung dieser Worker-Threads liefert es wichtige Einblicke in die Fähigkeit eines Kernels, mit Thread-Aufweckvorgängen, Lastausgleich und CPU-Konflikten umzugehen, insbesondere unter Last.
+
+#### Anwendungsfälle
+
+Du kannst `schbench` verwenden, um:
+
+- **Scheduler-Latenz zu bewerten:** Finde heraus, wie schnell Threads nach dem Aufwecken eingeplant werden.
+- **Aufweckleistung zwischen Schedulern zu vergleichen:** Entdecke Verbesserungen oder Regressionen bei Kontextwechseln und Aufwecklatenz.
+- **Die Auswirkung von Kernel- oder Scheduler-Patches zu testen:** Bewerte, ob Optimierungen oder Updates die Fairness und Reaktionsfähigkeit des Schedulings beeinflussen.
+
+#### Installation
+
+`schbench` ist in den CachyOS-Repositories verfügbar:
+```bash
+sudo pacman -S schbench
+```
+
+#### Ausführen des Benchmarks
+
+Eine einfache Möglichkeit, `schbench` für einen allgemeinen Latenztest auszuführen, ist:
+```bash
+schbench -m 2 -t 8 -r 60
+```
+
+Dieses Beispiel führt aus:
+- 2 Message-Threads (`-m 2`)
+- 8 Worker-Threads pro Message-Thread (`-t 8`)
+- für eine Gesamtlaufzeit von 60 Sekunden (`-r 60`)
+
+Du kannst diese Werte je nach Anzahl deiner CPU-Kerne und dem gewünschten Lastniveau anpassen.
+
+Hier ist eine Tabelle, die einige der wichtigsten Optionen erklärt:
+
+| Option | Beschreibung |
+| ---------------------------- | --------------------------------------------------------------- |
+| `-C, --calibrate` | Kalibrierung durchführen und Zeitmessung berichten (kein Benchmark). |
+| `-L, --no-locking` | Spinlocks während der CPU-Arbeit deaktivieren (Standard: Sperren aktiviert). |
+| `-m, --message-threads <n>` | Anzahl der Message-Threads (Standard: 1). |
+| `-t, --threads <n>` | Worker-Threads pro Message-Thread (Standard: Anzahl der CPUs). |
+| `-r, --runtime <sec>` | Benchmark-Dauer (Standard: 30). |
+| `-F, --cache_footprint <KB>` | Größe des Cache-Footprints (Standard: 256). |
+| `-n, --operations <count>` | Anzahl der auszuführenden "Denkzeit"-Operationen (Standard: 5). |
+| `-A, --auto-rps` | RPS automatisch erhöhen, bis das CPU-Auslastungsziel erreicht ist. |
+| `-R, --rps <count>` | Modus "Anfragen pro Sekunde". |
+| `-p, --pipe <bytes>` | Simuliert einen Pipe-Übertragungstest. |
+| `-w, --warmuptime <sec>` | Aufwärmdauer vor dem Sammeln von Statistiken (Standard: 0). |
+| `-i, --intervaltime <sec>` | Intervall zum Drucken von Latenzen (Standard: 10). |
+| `-z, --zerotime <sec>` | Intervall zum Zurücksetzen der Latenzstatistiken (Standard: nie). |
+
+#### Die Ausgabe verstehen
+
+Nach jedem Durchlauf gibt `schbench` Latenzperzentile aus, wie hier:
+
+<details>
+    <summary>Beispiel für die Ausgabe</summary>
+    ```bash
+    Wakeup Latencies percentiles (usec) runtime 10 (s) (2406 total samples)
+	  50.0th: 60         (648 samples)
+	  90.0th: 2034       (968 samples)
+	* 99.0th: 4104       (211 samples)
+	  99.9th: 10128      (22 samples)
+	  min=1, max=10308
+    Request Latencies percentiles (usec) runtime 10 (s) (2394 total samples)
+	  50.0th: 49216      (726 samples)
+	  90.0th: 69760      (954 samples)
+	* 99.0th: 166656     (212 samples)
+	  99.9th: 273920     (21 samples)
+	  min=11770, max=334247
+    RPS percentiles (requests) runtime 10 (s) (11 total samples)
+	  20.0th: 234        (3 samples)
+	* 50.0th: 238        (3 samples)
+	  90.0th: 241        (4 samples)
+	  min=230, max=248
+    current rps: 230.99
+    Wakeup Latencies percentiles (usec) runtime 10 (s) (2406 total samples)
+	  50.0th: 60         (648 samples)
+	  90.0th: 2034       (968 samples)
+	* 99.0th: 4104       (211 samples)
+	  99.9th: 10128      (22 samples)
+	  min=1, max=10308
+    Request Latencies percentiles (usec) runtime 10 (s) (2406 total samples)
+	  50.0th: 49216      (729 samples)
+	  90.0th: 69760      (956 samples)
+	* 99.0th: 165632     (212 samples)
+	  99.9th: 273920     (22 samples)
+	  min=11770, max=334247
+    RPS percentiles (requests) runtime 10 (s) (11 total samples)
+	  20.0th: 234        (3 samples)
+	* 50.0th: 238        (3 samples)
+	  90.0th: 241        (4 samples)
+	  min=230, max=248
+    average rps: 240.60
     ```
 </details>
 
-Jetzt, da `sbctl` installiert ist, musst du sbctl einrichten und deine Schlüssel in der Firmware registrieren. Dieser Vorgang ist ziemlich einfach, folge einfach den Schritten unten.
+##### Wie man die Ergebnisse interpretiert
 
-<Steps>
-1. Prüfe, ob der Setup-Modus aktiviert ist:
-    ```bash
-    sudo sbctl status
-    ```
-    <details>
-        <summary>Erwartete Ausgabe</summary>
-        ```bash
-        Installed:      ✘ sbctl is not installed
-        Setup Mode:     ✘ Enabled
-        Secure Boot     ✘ Disabled
-        ```
-    </details>
-2. Erstelle deine eigenen Secure-Boot-Schlüssel:
-    ```bash
-    sudo sbctl create-keys
-    ```
-    <details>
-        <summary>Beispiel einer erfolgreichen Schlüsselerstellung</summary>
-        ```bash
-        Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-        Creating secure boot keys...✔
-        Secure boot keys created!
-        ```
-    </details>
-3. Registriere deine Schlüssel zusammen mit den integrierten Schlüsseln von Microsoft und der OEM-Firmware:
-    ```bash
-    sudo sbctl enroll-keys --microsoft --firmware-builtin
-    ```
-    <details>
-        <summary>Erwartete Ausgabe</summary>
-        ```bash
-        Enrolling keys to EFI variables...✔
-        Enrolled keys to the EFI variables!
-        ```
-    </details>
+- **Wakeup Latencies (Aufwecklatenzen):**
+  - Misst, wie schnell Threads aufwachen, nachdem sie ein Signal erhalten haben.
+    - Niedrigere Werte hier (insbesondere das **99. Perzentil**) bedeuten, dass der Scheduler reaktionsschneller ist.
+- **Request Latencies (Anforderungslatenzen):**
+  - Stellt die Zeit dar, die benötigt wird, um Anfragen zwischen Threads abzuschließen.
+    - Eine niedrigere Latenz deutet auf eine bessere Kommunikation zwischen den Threads und eine höhere Scheduling-Effizienz hin.
+- **RPS (Requests Per Second - Anfragen pro Sekunde):**
+  - Zeigt den aufrechterhaltenen Durchsatz:
+    - Ein höherer **durchschnittlicher RPS**-Wert zeigt an, dass der Scheduler unter der gegebenen Konfiguration mehr Arbeit pro Sekunde bewältigen kann.
 
-    :::caution[ASUS / Gigabyte Mainboards — Verwende `--firmware-builtin` nicht]
-    Auf einigen ASUS- und Gigabyte-Mainboards führt die Verwendung des `--firmware-builtin`-Flags zu doppelten Einträgen
-    in den EFI-Schlüsselvariablen (z. B. erscheint `builtin-db` mehrfach unter `Vendor Keys`).
-    Beim Aktivieren von Secure Boot in den UEFI-Einstellungen erkennt das Board diese
-    inkonsistente Schlüsselstruktur und wirft eine **Secure Boot Violation**, bevor der Boot
-    Manager geladen werden kann.
+Zusammenfassend:
+- Ein **guter Scheduler** zeigt **niedrige Aufweck- und Anforderungslatenzen** mit **konstanten RPS-Werten**.
+- Ein **weniger effizienter Scheduler** kann **hohe Latenzspitzen** oder **instabile RPS-Werte** im Laufe der Zeit aufweisen.
 
-    Verwende auf ASUS / Gigabyte Boards nur `--microsoft`:
-
-    ```bash
-    sudo sbctl enroll-keys --microsoft
-    ```
-
-    Wenn unter `Vendor Keys` `microsoft builtin-db builtin-db ...` angezeigt wird, müssen die Schlüssel
-    neu registriert werden. Gehe erneut in den Setup-Modus im UEFI (alle Schlüssel löschen) und führe
-    `sbctl enroll-keys --microsoft` erneut ohne `--firmware-builtin` aus.
-    :::
-
-
-4. Prüfe den Status von sbctl erneut, um sicherzustellen, dass die Schlüssel registriert und der Setup-Modus deaktiviert ist:
-    ```bash
-    sudo sbctl status
-    ```
-    <details>
-        <summary>Erwartete Ausgabe</summary>
-        ```bash
-        Installed:      ✔ sbctl is installed
-        Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-        Setup Mode:     ✔ Disabled
-        Secure Boot     ✘ Disabled
-        Vendor Keys:    microsoft
-        ```
-    </details>
-
-    :::note[Setup-Modus zeigt „Enabled“?]
-    Wenn unter `Setup Mode` **Enabled** angezeigt wird, gehe in die Firmware-Einstellungen und **deaktiviere Secure Boot vorübergehend**. 
-    Starte das System neu, überprüfe den sbctl-Status erneut, Fahre mit [Kernel-Image und Boot-Manager signieren](#kernel-image-und-boot-manager-signieren) 
-    unten fort, starte dann neu und aktiviere Secure Boot erneut in den Firmware-Einstellungen.
-    :::
-    
-</Steps>
-
-## Kernel-Image und Boot-Manager signieren
-
-<Tabs>
-<TabItem label='Limine'>
-Limine ist ein spezieller Boot-Manager, der es ermöglicht, den Hash von Kernel-
-Images und anderen Dateien, die Limine beim Booten verwendet, zu überprüfen. Wenn dies aktiviert ist, wird jede
-manuelle Konfiguration durch den Benutzer, z. B. das Signieren des Images über
-`sbctl-batch-sign`, den Hash der entsprechenden Dateien ändern und
-die Prüfsummenverifizierung von Limine fehlschlagen lassen.
-
-Das Signieren dieser Dateien ist bei Limine jedoch nicht notwendig, da es einen speziellen
-Boot-Prozess hat, der das EFI-Chainloading und die Signaturprüfungen umgeht. Die einzigen EFI-
-Binärdateien, die signiert werden müssen, ist Limine selbst.
-
-:::caution[Limine >= 11.2.0]
-Ab Limine 11.2.0 werden Secure-Boot-Richtlinien **streng durchgesetzt**, wenn UEFI Secure Boot aktiv ist:
-
-- Eine BLAKE2B-Konfigurationsprüfsumme **muss** in der EFI-Binärdatei von Limine eingetragen sein, sonst bricht Limine mit folgender Meldung ab: `SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED`
-- Alle Dateipfade in `limine.conf` (Kernel, initramfs usw.) **müssen** BLAKE2B-Hashes angehängt haben (z. B. `boot():/vmlinuz-linux#<hash>`)
-- Der Konfigurationseditor ist bedingungslos deaktiviert
-- Hash-Abweichungen führen immer zu einem Absturz
+:::note
+Diese Ergebnisse können je nach CPU, Kernanzahl, Systemlast und der Fähigkeit des Schedulers, deine CPU-Architektur effizient zu handhaben, variieren.
 :::
 
-Um die automatische Registrierung der Konfigurationsprüfsumme zu aktivieren, setze folgendes in `/etc/default/limine`:
+### Empfehlungen für das Benchmarking von Spielen
 
-```sh
-ENABLE_ENROLL_LIMINE_CONFIG=yes
-```
+Wenn du Spiele benchmarken möchtest, um die Leistung verschiedener Scheduler zu vergleichen, findest du hier einige Tipps, um die genauesten Ergebnisse zu erhalten:
 
-Fahre fort, um einen Hash für das Splash-Image von Limine zu generieren:
+- **Nutze eingebaute Benchmarks:** Viele moderne Spiele verfügen über integrierte Benchmark-Tools. Diese sind so konzipiert, dass sie konsistente Ergebnisse liefern, indem sie bei jedem Durchlauf dieselbe Abfolge von Ereignissen ausführen.
+  - Schau dir diese [Website](https://www.pcgamingwiki.com/wiki/List_of_games_with_built-in_benchmarks) für eine Liste von Spielen an, die eingebaute Benchmarks enthalten.
+- **Konsistente Einstellungen:** Stelle sicher, dass die Spieleinstellungen (Auflösung, Grafikqualität usw.) bei jedem Testlauf identisch sind.
+- **Schließe Hintergrundanwendungen:** Andere im Hintergrund laufende Anwendungen können die Leistung beeinträchtigen. Schließe unnötige Programme, um ihren Einfluss zu minimieren.
+- Wenn du keinen eingebauten Benchmark verwendest, versuche, bei jedem Testlauf dieselben Aktionen im Spiel auszuführen. Dies könnte das Verfolgen desselben Pfades, die Teilnahme an ähnlichen Kampfszenarien oder die Durchführung derselben Aufgaben umfassen.
+  - Schon das Zielen auf eine andere Stelle kann zu unterschiedlichen Leistungsergebnissen führen.
+- **Mehrere Durchläufe:** Führe mehrere Benchmark-Durchläufe durch und bilde den Durchschnitt, um Schwankungen auszugleichen.
+- **Verwende Leistungsüberwachungstools:** Tools wie MangoHud oder GOverlay können Echtzeit-Leistungsmetriken wie FPS, Frame-Zeiten und CPU/GPU-Auslastung liefern.
+- **Nutze Tastenkombinationen oder Makros:**
+  - Ein Beispiel ist die Erstellung einer Tastenkombination, mit der du im Spiel zwischen verschiedenen Schedulern wechseln oder deren Modi spontan ändern kannst.
+    - Dies kann mit einem Tool wie [scxctl](/de/configuration/sched-ext#wie-man-den-scheduler-startet-und-verwaltet) oder durch das Erstellen eigener Skripte erfolgen, die den aktiven Scheduler und seinen Modus ändern.
 
-:::note[Für die folgenden Schritte sind Root-Rechte erforderlich, stelle sicher, dass du sudo verwendest oder zum Root-Benutzer wechselst.]
-:::
+#### Hochladen und Teilen deiner Benchmarks
 
-<Steps>
+Diese [Website](https://flightlesssomething.ambrosia.one/benchmarks) enthält eine Liste von Benchmarks, die von der Community mit verschiedenen Schedulern oder beim Testen verschiedener Einstellungen durchgeführt wurden.
 
-1. Prüfe den aktuellen Namen und Pfad des Splash-Images in der Konfigurationsdatei:
-    ```sh title="Öffne ein Terminal und führe den folgenden Befehl aus:"
-    sudo cat /boot/limine.conf
-    ```
-    Du solltest eine Zeile wie diese finden:
-    ```sh
-    wallpaper: boot():/limine-splash.png
-    ```
-2. Generiere einen BLAKE2B-Hash für das Splash-Image und hänge ihn an den Pfad in der Konfigurationsdatei an:
-    ```sh title="Führe den folgenden Befehl aus und ersetze den Pfad durch den aus dem vorherigen Schritt:"
-    sudo b2sum /boot/limine-splash.png
-    ```
-    Dies gibt einen Hash wie im folgenden Beispiel aus:
-    ```sh
-    75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
-    ```
-3. Nachdem du den neu generierten Hash aus dem vorherigen Schritt kopiert hast, öffne die Konfigurationsdatei mit einem Texteditor und hänge den Hash an den Pfad des Splash-Images an, wie hier:
-    :::note[Verwende nicht den Beispiel-Hash von oben, stelle sicher, dass du den im vorherigen Schritt generierten Hash verwendest.]
-    :::
-    ```sh
-    wallpaper: boot():/limine-splash.png#75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
-    ```
-    Wie du siehst, wird der Hash mit einem `#`-Symbol an den Pfad angehängt. Speichere die Datei nach der Änderung.
+Um deine eigenen Benchmarks hochzuladen, musst du dein Discord-Konto mit der Website verknüpfen, und dann kannst du deine eigenen Benchmarks einreichen.
 
-</Steps>
+Klicke dann auf die Schaltfläche `New benchmark` und fülle die erforderlichen Informationen aus.
 
-Nachdem du die Registrierung der Konfigurationsprüfsumme aktiviert und den Hash für das Splash-Image generiert hast, führe die folgenden Befehle aus, um die Konfigurationsprüfsumme einzutragen und die EFI-Binärdatei von Limine zu signieren:
+- Du kannst mehrere Ergebnisse für dasselbe Spiel mit verschiedenen Schedulern oder Einstellungen hochladen.
+- Akzeptiert sowohl MangoHud- als auch Afterburner-Protokolle.
+- Ermöglicht die Suche nach Titel oder Beschreibung.
 
-```sh
-# Verwende limine-enroll-config, um die Konfigurationsprüfsumme einzutragen und die EFI-Binärdatei von Limine zu signieren
-# Dies verwendet sbctl im Hintergrund
-sudo limine-enroll-config
-sudo limine-update
-```
-</TabItem>
-<TabItem label='systemd-boot'>
-
-CachyOS stellt [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign) bereit,
-ein Skript, das die Liste der zu signierenden Dateien von `sudo sbctl verify` entgegennimmt und sie alle signiert.
+## Umstieg von scx.service auf scx_loader: Eine umfassende Anleitung
 
 :::caution
-Auf Systemen mit getrennten Partitionen für `/boot` und `/boot/efi` kann es sein, dass `sbctl` nur in `/boot/efi` nach EFI-Binärdateien sucht.
-Dadurch werden Kernel-Images, die sich in `/boot` befinden, nicht erkannt. `sbctl-batch-sign` umgeht das, indem es `/boot` **immer**
-nach `vmlinuz-*`-Dateien durchsucht.
+Versuche nicht, den scx_loader.service zusammen mit dem scx.service auszuführen, sonst startet der Loader-Service zwar, tut aber nichts.
+
+Dieser Konflikt entsteht, weil beide Dienste nichts voneinander wissen, insbesondere nicht, welcher von ihnen die Scheduler verwaltet.
 :::
 
-```bash
-sudo sbctl verify
-Verifying file database and EFI images in /boot...
-✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is not signed
-✘ /boot/EFI/BOOT/BOOTX64.EFI is not signed
-✘ /boot/EFI/systemd/systemd-bootx64.efi is not signed
-✘ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is not signed
-✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is not signed
-
-sudo sbctl-batch-sign
-
-sudo sbctl verify
-Verifying file database and EFI images in /boot...
-✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is signed
-✔ /boot/EFI/BOOT/BOOTX64.EFI is signed
-✔ /boot/EFI/systemd/systemd-bootx64.efi is signed
-✔ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is signed
-✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
-```
-
-Jetzt, da alle Dateien signiert sind. **Starte dein System neu und geh in deine UEFI-Einstellungen, um Secure Boot zu aktivieren.**
-
-:::caution[ASUS Mainboards — Aktivieren von Secure Boot]
-Manche ASUS Mainboards verhalten sich beim Aktivieren von Secure Boot anders als andere Hersteller:
-
-- **`Windows UEFI Mode` verwenden, nicht `Other OS`:**
-  Der Name ist irreführend, diese Einstellung steuert lediglich ob Secure Boot aktiv ist.
-  Das Setzen von `OS Type` auf `Other OS` **deaktiviert** Secure Boot auf ASUS Mainboards, unabhängig von allen anderen Einstellungen.
-  `sbctl status` zeigt in diesem Fall weiterhin `Secure Boot: Disabled`, auch nach einem Neustart.
-
-- **Auf manchen ASUS Mainboards gibt es keinen separaten Secure Boot Ein/Aus-Schalter.**
-  Secure Boot wird implizit durch die Auswahl von `Windows UEFI Mode` aktiviert.
-
-Die korrekte ASUS BIOS Konfiguration zum aktivieren von Secure Boot ist dann:
-```
-Boot → Secure Boot
-  OS Type          → Windows UEFI Mode
-  Secure Boot Mode → Custom
-```
+:::tip
+Der CachyOS Kernel Manager enthält bereits eine [GUI zur Verwaltung des scx_loader.](/de/features/kernel_manager#sched-ext-framework-management)
 :::
 
-Siehe [diesen Abschnitt zur Referenz](/de/configuration/secure_boot_setup#in-den-setup-modus-im-uefi-wechseln)
+Beginnen wir mit einem genauen Vergleich der Dateistruktur von scx.service mit der Konfigurationsdateistruktur von scx_loader.
 
-Beachte, dass dies ein einmaliger Vorgang ist, da das Signieren von Dateien mit dem `-s`-Flag diese Dateien in der Datenbank von `sbctl` speichert.
+*Wenn du zuvor LAVD mit dem alten scx.service wie im folgenden Beispiel ausgeführt hast:*
 
-:::tip[Zur Erinnerung]
-`sbctl` wird mit einem [Pacman-Hook](https://wiki.archlinux.org/title/Pacman_hook) ausgeliefert. Das heißt, es signiert automatisch
-alle neuen Dateien, wenn der Kernel oder der Bootmanager aktualisiert werden.
-:::
+```sh title='scx.service Dateistruktur'
+# Liste der scx_scheduler: scx_bpfland scx_central scx_flash scx_lavd scx_layered scx_nest scx_qmap scx_rlfifo scx_rustland scx_rusty scx_simple scx_userland
+SCX_SCHEDULER=scx_lavd
 
-CachyOS verwendet den `systemd-boot-update.service`, der von systemd bereitgestellt wird, um den Boot-Manager beim Neustart zu aktualisieren. Das bedeutet, dass der `sbctl`-
-Pacman-Hook die aktualisierten EFI-Binärdateien **nicht** signieren wird. Als Workaround können wir den Boot-Manager direkt signieren.
-
-```sh
-sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+# Setze benutzerdefinierte Flags für den Scheduler
+SCX_FLAGS='--performance'
 ```
+
+Dann wird das Äquivalent in der Konfigurationsdatei von scx_loader so aussehen:
+
+```sh title='scx_loader Dateistruktur'
+default_sched = "scx_lavd"
+default_mode = "Auto"
+
+[scheds.scx_lavd]
+auto_mode = ["--performance"]
+```
+
+[Weitere Informationen zur Konfiguration der scx_loader-Datei findest du hier](https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/configuration.md#scx_loader-configuration-file)
+
+Folge der nachstehenden Anleitung für einen einfachen Übergang vom `scx systemd service` zum neuen `scx_loader`-Dienstprogramm.
+<Steps>
+  1. ```sh title='Deaktivieren von scx.service zugunsten des scx_loader.service'
+      systemctl disable --now scx.service && systemctl enable --now scx_loader.service
+      ```
+  2. ```sh title='Erstellen der Konfigurationsdatei für den scx_loader und Hinzufügen der Standardstruktur'
+     # Der Micro-Editor wird eine neue Datei erstellen.
+     sudo micro /etc/scx_loader.toml
+     # Füge die folgenden Zeilen hinzu:
+
+     default_sched = "scx_bpfland" # Bearbeite diese Zeile mit dem Scheduler, den scx_loader beim Booten starten soll
+     default_mode = "Auto" # Mögliche Werte: "Auto", "Gaming", "LowLatency", "PowerSave".
+
+     # Drücke STRG + S, um die Änderungen zu speichern, und STRG + Q, um Micro zu beenden.
+     ```
+  3. ```sh title='Neustarten des scx_loader'
+     systemctl restart scx_loader.service
+     ```
+     - Du bist fertig, der scx_loader wird nun den gewünschten Scheduler laden und starten.
+
+  </Steps>
+
+### Debugging im scx_loader
+
+<Tabs>
+<TabItem label='Einfaches Logging'>
+
+  - ```sh title='Dienststatus überprüfen'
+    systemctl status scx_loader.service
+    ```
+  - ```sh title='Alle Log-Einträge des Dienstes anzeigen'
+    journalctl -u scx_loader.service
+    ```
+  - ```sh title='Nur die Logs der aktuellen Sitzung anzeigen.'
+    journalctl -u scx_loader.service -b 0
+    ```
 </TabItem>
+<TabItem label='Erweitertes Logging'>
+
+*Um ein detaillierteres Log zu erhalten, befolge diese Schritte.*
+  - ```sh title='Die Service-Datei bearbeiten'
+     sudo systemctl edit scx_loader.service
+     ```
+  - ```sh title='Füge die folgende Zeile unter dem Abschnitt [Service] hinzu'
+     Environment=RUST_LOG=trace
+     ```
+  - ```sh title='Den Dienst neu starten'
+     sudo systemctl restart scx_loader.service
+     ```
+  - Überprüfe die Logs erneut, um detailliertere Debugging-Informationen zu erhalten.
+</TabItem>
+
 </Tabs>
 
-## Secure Boot Status prüfen
+## FAQ
 
-Um zu überprüfen, ob Secure Boot tatsächlich aktiviert ist, kannst du einen der folgenden Befehle ausführen
+### Warum ist der X-Scheduler schlechter als der andere?
 
-```bash
-sudo sbctl status
-Installed:      ✓ sbctl is installed
-Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-Setup Mode:     ✓ Disabled
-Secure Boot:    ✓ Enabled
-Vendor Keys:    microsoft
+- Beim Vergleich gibt es viele Variablen zu beachten. Zum Beispiel, wie messen sie die Gewichtung einer Aufgabe? Priorisieren sie interaktive Aufgaben gegenüber nicht-interaktiven?
+  Letztendlich hängt es von ihren Design-Entscheidungen ab.
 
-bootctl
-System:
-      Firmware: UEFI 2.80 (INSYDE Corp. 28724.16435)
- Firmware Arch: x64
-   Secure Boot: enabled (user)
-  TPM2 Support: yes
-  Measured UKI: no
-  Boot into FW: supported
-```
+### Warum sagen alle, dass dieser X-Scheduler der beste für den Fall Y ist, er bei mir aber nicht so gut funktioniert?
 
-## Links und Danksagung
+- Ähnlich wie bei der vorherigen Antwort können die Wahl der CPU und ihr Design, wie z. B. das Core-Layout, die gemeinsame Nutzung des Cache über die Kerne hinweg und andere damit zusammenhängende Faktoren, dazu führen, dass der Scheduler weniger effizient arbeitet.
+- Deshalb ist die Wahlmöglichkeit einer der Höhepunkte des sched-ext-Frameworks. Scheu dich also nicht, einen auszuprobieren und zu sehen, welcher für deinen Anwendungsfall am besten funktioniert. `Beispiele: FPS-Stabilität, maximale Leistung, Reaktionsfähigkeit bei intensiver Arbeitslast usw.`
 
-- [Das Arch Wiki](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
-hat die Grundlage für diese Anleitung gelegt. Das meiste hier wurde von dort übernommen.
-- [sbctl](https://github.com/Foxboron/sbctl) - Diese einfache Anleitung zur Aktivierung der Secure-Boot-Unterstützung wäre nicht möglich gewesen ohne
-die großartige Arbeit, die in die Entwicklung dieser Software geflossen ist.
-- [Improving the Secure Boot Experience by Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) - Blogbeitrag von Morten
-"Foxboron" Linderud darüber, wie kompliziert die Secure-Boot-Erfahrung vor `sbctl` war.
+### Die Anwendungsfälle dieser Scheduler sind ziemlich ähnlich... warum ist das so?
+
+Hauptsächlich, weil es sich um Mehrzweck-Scheduler handelt, was bedeutet, dass sie eine Vielzahl von Arbeitslasten bewältigen können, auch wenn sie vielleicht nicht in jedem Bereich überragen.
+
+- Um herauszufinden, welcher Scheduler am besten zu dir passt, gibt es keinen besseren Rat, als ihn selbst auszuprobieren.
+
+### Warum fehlt bei mir ein Scheduler, den einige Benutzer auf dem CachyOS-Discord-Server erwähnen oder testen?
+Stell sicher, dass du die topaktuelle Version des scx-scheds-Pakets mit dem Namen `scx-scheds-git` verwendest.
+
+- Einer der Gründe könnte sein, dass dieser Scheduler sehr neu ist und gerade von den Benutzern getestet wird und daher noch nicht zum `scx-scheds-git`-Paket hinzugefügt wurde.
+
+### Warum ist der Scheduler plötzlich abgestürzt? Ist er instabil?
+
+- *Es könnte ein paar Gründe geben, warum das passiert ist:*
+  - Einer der häufigsten Gründe ist, dass du ananicy-cpp neben dem Scheduler verwendet hast. Deshalb haben wir diese [Warnung](/de/configuration/sched-ext#ananicy-cpp--sched-ext) hinzugefügt.
+  - Ein weiterer Grund könnte sein, dass die Arbeitslast, die du ausgeführt hast, die Grenzen und die Kapazität des Schedulers überschritten hat, was zu einem Stillstand führte.
+    - Beispiel für eine unangemessene Arbeitslast: `hackbench`
+  - Oder der offensichtlichere Grund: Du hast einen Bug im Scheduler gefunden. Wenn ja, melde ihn bitte als Issue in deren [GitHub](https://github.com/sched-ext/scx/issues) oder lass es sie
+    im CachyOS-Discord-Kanal `sched-ext` wissen.
+
+### Ich habe den scx_loader zuvor in der Kernel-Manager-GUI verwendet. Muss ich die Übergangsschritte trotzdem befolgen?
+
+- In diesem speziellen Fall ist es nicht notwendig, da der Kernel Manager den Übergangsprozess bereits übernimmt.
+  - *Es sei denn, du hast zuvor benutzerdefinierte Flags in `/etc/default/scx` hinzugefügt und möchtest diese weiterhin verwenden.*
+
+## Mehr erfahren
+
+:::note[Danksagung]
+Einige der folgenden Links wurden ursprünglich aus dem [sched-ext GitHub-Repository](https://github.com/sched-ext/scx?tab=readme-ov-file#sched_ext-schedulers-and-tools) übernommen.
+Voller Dank gebührt den Maintainern und Mitwirkenden von sched-ext für das Kuratieren und Teilen dieser exzellenten Ressourcen.
+:::
+
+- [Sched_ext YT-Playlist](https://youtube.com/playlist?list=PLLLT4NxU7U1TnhgFH6k57iKjRu6CXJ3yB&si=DETiqpfwMoj8Anvl)
+- [LWN: The extensible scheduler class (Februar 2023)](https://lwn.net/Articles/922405/)
+- [arighis Blog: Implement your own kernel CPU scheduler in Ubuntu with sched_ext (Juli 2023)](https://arighi.blogspot.com/2023/07/implement-your-own-cpu-scheduler-in.html)
+- [David Vernets Vortrag: Kernel Recipes 2023 - sched_ext: pluggable scheduling in the Linux kernel (September 2023)](https://youtu.be/8kAcnNVSAdI?si=F5Q-dkSS_sG9BTXA)
+- [Changwoos Blog: sched_ext: a BPF-extensible scheduler class (Part 1) (Dezember 2023)](https://blogs.igalia.com/changwoo/sched-ext-a-bpf-extensible-scheduler-class-part-1/)
+- [arighis Blog: Getting started with sched_ext development (April 2024)](https://arighi.blogspot.com/2024/04/getting-started-with-sched-ext.html)
+- [Changwoos Blog: sched_ext: scheduler architecture and interfaces (Part 2) (Juni 2024)](https://blogs.igalia.com/changwoo/sched-ext-scheduler-architecture-and-interfaces-part-2/)
+- [arighis YT-Kanal: scx_bpfland Linux scheduler demo: topology awareness (August 2024)](https://youtu.be/R-FEZOveG-I)
+- [David Vernets Vortrag: Kernel Recipes 2024 - Scheduling with superpowers: Using sched_ext to get big perf gains (September 2024)](https://youtu.be/Cy7-oqdcUCs?si=bjKu3uidOdIzzAWv)
