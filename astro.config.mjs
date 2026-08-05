@@ -130,7 +130,7 @@ export default defineConfig({
               label: 'How to navigate through the wiki',
               translations: {
                 cs: 'Jak se orientovat v wiki',
-                de: 'Wie man im Wiki navigiert',
+                de: 'Wie man das Wiki navigiert',
                 el: 'Πλοήγηση στο wiki',
                 es: 'Cómo navegar por la wiki',
                 fr: 'Bien utiliser le wiki',
@@ -181,6 +181,7 @@ export default defineConfig({
               label: 'ISO Changelogs',
               items: [{ autogenerate: { directory: 'cachyos_basic/changelogs' } }],
               translations: {
+                de: 'ISO-Änderungsprotokolle',
                 el: 'Αρχεία αλλαγών ISO',
                 ja: 'ISO 更新ログ',
                 ru: 'Журналы изменений ISO',
@@ -243,7 +244,7 @@ export default defineConfig({
               label: 'Boot Managers',
               translations: {
                 cs: 'Správci zavádění',
-                de: 'Boot-Manager',
+                de: 'Bootmanager',
                 el: 'Διαχειριστές εκκίνησης',
                 es: 'Gestores de arranque',
                 fr: "Gestionnaire d'amorçage",
@@ -277,7 +278,7 @@ export default defineConfig({
               label: 'Desktop Environments',
               translations: {
                 cs: 'Desktop prostředí',
-                de: 'Desktop-Umgebungen',
+                de: 'Desktopumgebungen',
                 el: 'Περιβάλλοντα επιφάνειας εργασίας',
                 es: 'Entornos de escritorio',
                 fr: 'Environnements de bureau',
@@ -310,7 +311,7 @@ export default defineConfig({
                   label: 'Desktop Edition',
                   translations: {
                     cs: 'Desktop verze',
-                    de: 'Desktop Edition',
+                    de: 'Desktopedition',
                     el: 'Έκδοση Desktop',
                     es: 'Edición de escritorio',
                     fr: 'Edition Desktop',
@@ -327,7 +328,7 @@ export default defineConfig({
                   label: 'Handheld Edition',
                   translations: {
                     cs: 'Handheld verze',
-                    de: 'Handheld Edition',
+                    de: 'Handheldedition',
                     el: 'Έκδοση Handheld',
                     es: 'Edición para dispositivos portátiles',
                     fr: 'Edition Handheld',
@@ -352,7 +353,7 @@ export default defineConfig({
           label: 'CachyOS Features',
           translations: {
             cs: 'Funkce CachyOS',
-            de: 'CachyOS Funktionen',
+            de: 'CachyOS Features',
             el: 'Λειτουργίες του CachyOS',
             es: 'Funciones de CachyOS',
             fr: 'Fonctionnalités de CachyOS',
@@ -386,7 +387,7 @@ export default defineConfig({
               items: [{ autogenerate: { directory: 'features/chwd' } }],
               translations: {
                 cs: 'Detekce hardwaru CachyOS (chwd)',
-                de: 'CachyOS Hardware-Erkennung (chwd)',
+                de: 'CachyOS Hardwareerkennung (chwd)',
                 el: 'Εντοπισμός υλικού στο CachyOS (chwd)',
                 es: 'CachyOS detección de hardware (chwd)',
                 fr: 'CachyOS Détection de Matériel (chwd)',
@@ -419,7 +420,7 @@ export default defineConfig({
               label: 'Kernel Manager',
               translations: {
                 cs: 'Správce jader',
-                de: 'Kernel-Manager',
+                de: 'Kernelmanager',
                 el: 'Διαχειριστής πυρήνα',
                 es: 'Gestor de núcleos',
                 fr: 'Gestion de Noyaux',
@@ -488,7 +489,7 @@ export default defineConfig({
               label: 'Secure Boot Setup',
               translations: {
                 cs: 'Nastavení zabezpečeného spouštění',
-                de: 'Secure Boot-Einrichtung',
+                de: 'Secure-Boot-Einrichtung',
                 el: 'Ρύθμιση του Secure Boot',
                 es: 'Configuración de arranque seguro',
                 fr: 'Configuration de Secure Boot',
@@ -505,7 +506,7 @@ export default defineConfig({
               label: 'Post Install Recommendations',
               translations: {
                 cs: 'Návrhy po instalaci',
-                de: 'Post-Install-Raten',
+                de: 'Post-Install-Empfehlungen',
                 el: 'Προτάσεις μετά την εγκατάσταση',
                 es: 'Recomendaciones post-instalación',
                 fr: 'Recommendations Post-Installation',
@@ -522,7 +523,7 @@ export default defineConfig({
               label: 'Boot Manager Configuration',
               translations: {
                 cs: 'Konfigurace správce spouštění',
-                de: 'Boot-Manager-Konfiguration',
+                de: 'Bootmanager-Konfiguration',
                 el: 'Ρύθμιση διαχειριστή εκκίνησης',
                 es: 'Configuración del gestor de arranque',
                 fr: "Configuration du gestionnaire d'amorçage",
@@ -607,7 +608,7 @@ export default defineConfig({
               label: 'sched-ext Tutorial',
               translations: {
                 cs: 'sched-ext Tutoriál',
-                de: 'sched-ext Anleitung',
+                de: 'sched-ext-Anleitung',
                 el: 'Οδηγός για το sched-ext',
                 es: 'Tutorial de sched-ext',
                 fr: 'Tutorial sur sched-ext',
@@ -641,7 +642,7 @@ export default defineConfig({
               label: 'Enabling Hardware Acceleration in Google Chrome',
               translations: {
                 cs: 'Povolení hardwarové akcelerace v Google Chrome',
-                de: 'Hardware-Beschleunigung in Google Chrome aktivieren',
+                de: 'Hardwarebeschleunigung in Google Chrome aktivieren',
                 el: 'Ενεργοποίηση επιτάχυνσης υλικού στο Google Chrome',
                 es: 'Habilitar la aceleración por hardware en Google Chrome',
                 fr: "Activer l'accélération matérielle sur Google Chrome",
@@ -658,6 +659,7 @@ export default defineConfig({
               label: 'Desktop Environments',
               items: [{ autogenerate: { directory: 'configuration/desktop_environments' } }],
               translations: {
+                de: 'Desktopumgebungen',
                 el: 'Επιφάνειες εργασίας',
                 ja: 'デスクトップ環境',
                 ru: 'Окружения рабочего стола',
@@ -669,6 +671,7 @@ export default defineConfig({
         {
           label: 'Virtualization',
           translations: {
+            de: 'Virtualisierung',
             el: 'Εικονικοποίηση',
             ja: '仮想化',
             pt: 'Virtualização',
@@ -679,6 +682,7 @@ export default defineConfig({
             {
               label: 'QEMU and VMM Setup',
               translations: {
+                de: 'QEMU- und VMM-Einrichtung',
                 el: 'Ρύθμιση των QEMU και VMM',
                 ja: 'QEMU と VMM のセットアップ',
                 pt: 'Configuração do QEMU e VMM',
@@ -690,6 +694,7 @@ export default defineConfig({
             {
               label: 'QEMU User Session',
               translations: {
+                de: 'QEMU-User-Session',
                 el: 'Συνεδρία χρήστη QEMU',
                 ja: 'QEMU ユーザーセッション',
                 pt: 'Sessão de Utilizador QEMU',
@@ -701,6 +706,7 @@ export default defineConfig({
             {
               label: 'EGL Headless',
               translations: {
+                de: 'EGL-Headless',
                 el: 'EGL Headless',
                 ja: 'EGL ヘッドレス',
                 pt: 'EGL Headless',
@@ -712,6 +718,7 @@ export default defineConfig({
             {
               label: 'Virtio-Venus',
               translations: {
+                de: 'Virtio-Venus',
                 el: 'Virtio-Venus',
                 ja: 'Virtio-Venus',
                 pt: 'Virtio-Venus',
@@ -742,7 +749,7 @@ export default defineConfig({
               label: 'Donation',
               translations: {
                 cs: 'Dobrovolné příspěvky',
-                de: 'Spende',
+                de: 'Spenden',
                 el: 'Δωρεές',
                 es: 'Donación',
                 fr: 'Donations',
@@ -759,7 +766,7 @@ export default defineConfig({
               label: 'Social',
               translations: {
                 cs: 'Sociální sítě',
-                de: 'Soziale Medien',
+                de: 'Soziale-Medien',
                 el: 'Κοινωνικά δίκτυα',
                 es: 'Redes sociales',
                 fr: 'Réseaux Sociaux',
@@ -862,7 +869,7 @@ export default defineConfig({
               label: 'Repository Policy',
               translations: {
                 cs: 'Repozitářní politika',
-                de: 'Repository Regeln',
+                de: 'Repository-Regeln',
                 el: 'Πολιτική αποθετηρίων',
                 es: 'Política de repositorios',
                 fr: 'Politique des dépôts',
