@@ -55,6 +55,9 @@ export default defineConfig({
       logo: {
         src: '/src/assets/logo.svg',
       },
+      components: {
+        Banner: './src/components/TranslationBanner.astro',
+      },
       editLink: {
         baseUrl: 'https://github.com/cachyos/wiki/edit/next/',
       },
