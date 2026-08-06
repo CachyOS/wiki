@@ -6,13 +6,18 @@ tableOfContents:
   maxHeadingLevel: 5
 ---
 
-import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
-import { Icon } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem, Icon } from '@astrojs/starlight/components';
 import ImageComponent from '~/components/image-component.astro';
 
 Extensible Scheduler Class (besser bekannt als `sched-ext`) ist ein Linux-Kernel-Feature, das es ermöglicht, Kernel-Thread-Scheduler in
 BPF (Berkeley Packet Filter) zu implementieren und dynamisch zu laden. Im Wesentlichen erlaubt dies Endbenutzern, ihre Scheduler im Userspace zu ändern, ohne
 einen neuen Kernel kompilieren zu müssen, nur um einen anderen Scheduler zu haben.
+
+:::note
+Die Verwendung einer der sched-ext-Scheduler trennt vorübergehend den Standard-Kernel-Scheduler. Wenn ein sched-ext-Scheduler gestoppt wird, übernimmt der Standard-Kernel-Scheduler wieder.
+
+Beispiel: EEVDF oder BORE.
+:::
 
 :::tip[Tritt mit den Entwicklern auf ihrem [Discord-Server](https://discord.gg/b2J8DrWa7t) in Kontakt]
 :::
@@ -59,7 +64,6 @@ Um den Scheduler zu stoppen, drücke `STRG + C`. Der Scheduler wird dann gestopp
 
 :::note[In den Paketen `scx-tools` und `scx-tools-git` enthalten]
 :::
-
 
 :::caution[Benötigt einen funktionierenden Polkit-Agenten, um korrekt zu funktionieren.]
 Siehe die folgende **[Arch-Wiki-Seite als Referenz.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
@@ -183,7 +187,7 @@ Beispiel: LAVD im Modus 1 ist das Äquivalent zu `scx_lavd --performance`
 
 *TLDR: Jeder Modus ist ein Satz verschiedener Flags, die den beabsichtigten Anwendungsfall verbessern sollen.*
 
-[Für einen genaueren Blick darauf, was diese Modi bei jedem Scheduler ändern](<https://github.com/sched-ext/scx-loader/blob/122cdb289d09fc960ba7e24dc6bec10326b424e9/crates/scx_loader/src/config.rs#L193>)
+[Für einen genaueren Blick darauf, was diese Modi bei jedem Scheduler ändern](<https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/src/config.rs#L193>)
 :::
 
 </TabItem>
@@ -239,6 +243,27 @@ Verwende `scx_schedulername --help`, um die verfügbaren Flags und eine kurze Be
 scx_rusty --help
 ```
 
+### [scx_beerland](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_beerland)
+
+**Entwickelt von: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Produktionsreif? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+scx_beerland ist ein Scheduler, der darauf ausgelegt ist, Lokalität und Skalierbarkeit zu priorisieren.
+
+Priorisiert das Halten von Aufgaben auf derselben CPU, um die Cache-Lokalität zu wahren und stellt gleichzeitig eine gute Skalierbarkeit über viele CPUs sicher, indem lokale DSQs (per-CPU-Runqueues) verwendet werden, wenn das System nicht ausgelastet ist.
+
+- Anwendungsfälle:
+  - Cache-intensive Workloads
+  - Systeme mit einer großen Anzahl von CPUs
+  - Gaming: Es funktioniert überraschend gut in bestimmten Spielen, obwohl deine Ergebnisse variieren können.
+  - Server: Gut für allgemeine Server-Workloads aufgrund seiner Skalierbarkeits- und Lokalitätsoptimierungen.
+  - Kann auch für die Desktop-Nutzung verwendet werden.
+
+#### Scheduler-Modi
+
+Momentan keine.
+
 ### [scx_bpfland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_bpfland>)
 
 **Entwickelt von: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
@@ -274,46 +299,136 @@ Wenn Bpfland Entscheidungen darüber trifft, welche Kerne verwendet werden solle
 * **Kommandozeilen-Flags:** `-s 20000 -S`
 * **Beschreibung:** Priorisiert Aufgaben mit strikter Affinität. Diese Option kann den Durchsatz auf Kosten der Latenz erhöhen und ist besser für Server-Workloads geeignet.
 
-### [scx_beerland](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_beerland)
+### [scx_cake](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cake)
+
+**Entwickelt von: RitzDaCat (RitzDaCat [GitHub](<https://github.com/RitzDaCat>))**
+
+- Produktionsreif? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+
+`scx_cake` ist ein experimenteller BPF-CPU-Scheduler, der den DRR++ (Deficit Round Robin++)-Algorithmus des Netzwerk-[CAKE](https://www.bufferbloat.net/projects/codel/wiki/Cake/)-Algorithmus für CPU-Scheduling anpasst.
+- 4-Stufen-Klassifizierung - Aufgaben nach EWMA avg_runtime in Critical / Interactive / Frame / Bulk sortiert
+- Keine globalen Atomics - Per-CPU-BSS-Arrays mit MESI-geschützten Schreibvorgängen eliminieren Bus-Sperrungen
+- Kernel-übertragene Idle-Auswahl - scx_bpf_select_cpu_dfl() für autoritative, stale-freie CPU-Auswahl
+- Per-LLC-DSQ-Sharding - Eliminiert Cross-CCD-Lock-Kontention auf Multi-Chiplet-CPUs
+- DRR++ Deficit-Tracking - Der Flussfairness-Algorithmus von Netzwerk-CAKE, angepasst für die CPU-Aufgabenplanung
+
+Entworfen für Gaming-Workloads auf moderner AMD- und Intel-Hardware.
+
+- Anwendungsfälle:
+  - Gaming
+
+#### 4-Stufen-System
+
+`scx_cake` klassifiziert jede Aufgabe in eine von vier Stufen basierend auf ihrer **EWMA** (Exponential Weighted Moving Average)-Laufzeit. Die Klassifizierung ist automatisch und kontinuierlich, indem sich Aufgaben zwischen den Stufen bewegen, wenn sich ihr Verhalten ändert.
+
+##### Stufen-Grenzen
+
+| Stufe | Name        | avg_runtime | Typischer Workload                                        | Quantum | Starvation |
+| :----- | :---------- | :---------- | :------------------------------------------------------- | :------ | :--------- |
+| **T0** | Critical    | < 100µs     | IRQ-Handler, Eingabetreiber, Audio (PipeWire), Netzwerk  | 0,5ms   | 3ms        |
+| **T1** | Interactive | < 2ms       | Compositoren, Spiel-Physik, Spiel-KI, kurze Workers       | 2,0ms   | 8ms        |
+| **T2** | Frame       | < 8ms       | Spiel-Render-Threads, Videokodierung                     | 4,0ms   | 40ms       |
+| **T3** | Bulk        | ≥ 8ms       | Kompilierung, Hintergrund-Indexing, Batch-Jobs        | 8,0ms   | 100ms      |
+
+:::tip
+**Keine Spiel-Aufgabe sollte sich in T3 befinden**. Spiel-Render-Threads laufen mit 2-8ms pro Frame → T2. Physik/KI läuft mit 0,5-2ms → T1. Eingabe-Handler laufen mit < 100µs → T0. Nur Aufgaben, die 8ms+ ununterbrochene CPU-Arbeit leisten (Shader-Kompilierung, Ladebildschirme), landen in T3.
+:::
+
+##### Wie die Klassifizierung funktioniert
+
+1. **Erstplatzierung**: Basierend auf `nice`-Wert - `nice < 0` → T0, `nice 0-10` → T1, `nice > 10` → T3
+2. **Laufzeit-Autorität**: Nach ~3 Stopps wird die EWMA avg_runtime maßgeblich. Eine nice -5-Aufgabe, die 50ms-Bursts ausführt, wird unabhängig vom nice-Wert nach T3 reklassifiziert.
+3. **Hysterese**: 10% deadband verhindert Oszillation an Stufengrenzen. Promotion erfordert eine avg_runtime deutlich unter der Grenze; Demotion ist sofort.
+4. **Stufenweises Backoff**: Sobald eine Stufe für 3+ aufeinanderfolgende Stopps stabil ist, sinkt die Reklassifizierungsfrequenz pro Stufe: T0 überprüft alle 1024. Stopps, T3 alle 16. Instabilität setzt auf vollständige Frequenzprüfung zurück.
+
+##### DRR++ Deficit-Tracking
+
+Angepasst aus der Flussfairness von Netzwerk-CAKE:
+
+- Jede Aufgabe startet mit einem **Defizit** (Quantum + new-flow-Bonus ≈ 10ms Gutschrift)
+- Jeder Ausführungslauf verbraucht proportional zur Laufzeit das Defizit
+- Wenn das Defizit erschöpft ist → new-flow-Bonus wird entfernt → Aufgabe konkurriert normal
+- Dies gibt neu erstellten Threads (Spiel startet einen Worker) sofortige Reaktionsfähigkeit, die natürlich abklingt
+
+##### DVFS (CPU-Frequenzskalierung)
+
+Jede Stufe wird über eine RODATA-Lookup-Tabelle einem CPU-Leistungsziel zugeordnet:
+
+| Stufe | Ziel               | Begründung                                             |
+| :---- | :----------------- | :----------------------------------------------------- |
+| T0-T2 | 100% (max. Frequenz) | Gaming-Workloads benötigen volle Leistung              |
+| T3    | 75%                | Hintergrundarbeit kann etwas langsamer laufen, um Energie zu sparen |
+
+Auf Intel-Hybrid-CPUs (`has_hybrid = true`) werden die Ziele durch die `cpuperf_cap` jedes Kerns skaliert, um eine übermäßige Anfrage von Frequenz auf E-Kernen zu verhindern.
+
+#### Profile (`--profile, -p`)
+
+| Profil      | Quantum | Starvation | Anwendungsfall                              |
+| :---------- | :------ | :--------- | :------------------------------------------ |
+| **gaming**  | 2ms     | 100ms      | **(Standard)** Ausgewogen für die meisten Spiele |
+| **esports** | 1ms     | 50ms       | Wettbewerbs-FPS, ultra-niedrige Latenz       |
+| **legacy**  | 4ms     | 200ms      | Ältere CPUs, Energiesparen                   |
+| **default** | 2ms     | 100ms      | Alias für gaming                             |
+
+#### CLI-Argumente
+
+| Argument                  | Standard | Beschreibung                           |
+| :------------------------ | :------- | :------------------------------------- |
+| `--profile, -p <PROFILE>` | `gaming` | Voreingestelltes Profil auswählen      |
+| `--quantum <µs>`          | Profil   | Basis-Time-Slice in Mikrosekunden     |
+| `--new-flow-bonus <µs>`   | Profil   | Extra-Defizit für neu aufgewachte Aufgaben |
+| `--starvation <µs>`       | Profil   | Maximale Laufzeit vor erzwungener Preemption |
+| `--verbose, -v`           | `false`  | Live-TUI-Statistik-Anzeige aktivieren  |
+| `--interval <secs>`       | `1`      | TUI-Aktualisierungsintervall           |
+
+#### Pro-Stufe-Anpassung (Gaming-Profil)
+
+| Stufe           | Quantum-Multiplikator | Effektive Slice | Starvation Limit |
+| :------------- | :------------------- | :---------------- | :--------------- |
+| T0 Critical    | 0,75x                | 1,5ms             | 3ms              |
+| T1 Interactive | 1,0x                 | 2,0ms             | 8ms              |
+| T2 Frame       | 1,2x                 | 2,4ms             | 40ms             |
+| T3 Bulk        | 1,4x                 | 2,8ms             | 100ms            |
+
+### [scx_cosmos](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cosmos)
 
 **Entwickelt von: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
 
-Produktionsreif? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+- Produktionsreif? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
 
-scx_beerland ist ein Scheduler, der darauf ausgelegt ist, Lokalität und Skalierbarkeit zu priorisieren.
+Lightweight Scheduler, optimiert für die Beibehaltung der Task-zu-CPU-Lokalität.
 
-Priorisiert das Halten von Aufgaben auf derselben CPU, um die Cache-Lokalität zu wahren, und stellt gleichzeitig eine gute Skalierbarkeit über viele CPUs sicher, indem lokale DSQs (per-CPU-Runqueues) verwendet werden, wenn das System nicht ausgelastet ist.
+Wenn das System nicht ausgelastet ist, priorisiert der Scheduler das Halten von Aufgaben auf derselben CPU mithilfe lokaler DSQs. Dies erhält nicht nur die Lokalität, sondern reduziert auch die Sperrkonflikte im Vergleich zu gemeinsamen DSQs, was eine gute Skalierbarkeit über viele CPUs ermöglicht.
 
 - Anwendungsfälle:
-  - Cache-intensive Workloads
-  - Systeme mit einer großen Anzahl von CPUs
-  - Gaming: Es ist bekannt, dass es in bestimmten Spielen überraschend gut funktioniert, obwohl deine Ergebnisse variieren können
-  - Server: Gut für allgemeine Server-Workloads aufgrund seiner Skalierbarkeits- und Lokalitätsoptimierungen.
-  - Kann auch für die Desktop-Nutzung verwendet werden.
+  - Allzweck-Scheduler: Der Scheduler sollte sich sowohl auf Server-Workloads als auch auf Desktop-Workloads anpassen.
 
 #### Scheduler-Modi
 
-Momentan keine.
+##### Auto
 
-### [scx_rustland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland>)
+* **Kommandozeilen-Flags:** Keine.
+* **Beschreibung:**
 
-**Entwickelt von: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+##### Gaming
 
-Produktionsreif? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+* **Kommandozeilen-Flags:** `-s 700 -S`
+* **Beschreibung:** Opfert Durchsatz für bessere Konsistenz in der Gaming-Leistung durch Reduzierung der Kontention auf geteilten SMT-Kernen.
 
-Für leistungskritische Produktionsszenarien werden andere Scheduler wahrscheinlich eine bessere Leistung zeigen, da das Auslagern aller Scheduling-Entscheidungen in den User-Space mit einem gewissen Preis verbunden ist (auch wenn dieser minimal ist).
+##### Energiesparen
 
-Ein vollständig im User-Space implementierter Scheduler birgt jedoch das Potenzial für eine nahtlose Integration mit anspruchsvollen Bibliotheken, Tracing-Tools, externen Diensten (z. B. KI) usw.
+* **Kommandozeilen-Flags:** `-m powersave`
+* **Beschreibung:** Priorisiert die Energieeffizienz. Bevorzugt weniger leistungsstarke Kerne (z. B. E-Kerne bei Intel).
 
-Daher kann es Situationen geben, in denen die Vorteile den Overhead überwiegen und die Verwendung dieses Schedulers in einer Produktionsumgebung rechtfertigen.
+##### Niedrige Latenz
 
-Teilt Ähnlichkeiten mit bpfland, wurde mit der Absicht erstellt, leicht lesbar und verständlich zu sein, wie er aufgrund seiner Implementierung im Userspace funktioniert.
+* **Kommandozeilen-Flags:** `-s 700 -S -m performance -w`
+* **Beschreibung:** Soll die Latenz auf Kosten des Durchsatzes verringern. Geeignet für Soft-Echtzeitanwendungen wie Audioverarbeitung und Multimedia. Sorgt für eine gleichmäßigere Lastverteilung über verfügbare Kerne unter Opfern der Effizienz.
 
-Denk daran, dass es einen leichten Durchsatznachteil gibt, wenn ein Userspace-Scheduler verwendet wird.
+##### Server
 
-- Anwendungsfälle:
-  - Workloads mit geringer Latenz (Gaming, Videokonferenzen und Live-Streaming)
-  - Desktop-Nutzung
+* **Kommandozeilen-Flags:** `-s 20000 -c 75 -p 250`
+* **Beschreibung:** Aktiviert Adressraumaffinität, um Lokalität und Leistung bei bestimmten cache-sensitiven Workloads zu verbessern. Die Slice-Dauer ist auf 20ms eingestellt und das Polling, das überwacht, wie oft der Scheduler die CPU-Auslastung mit der CPU-Busy-Schwelle vergleicht, um zu entscheiden, wann das System ausgelastet ist.
 
 ### [scx_flash](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_flash>)
 
@@ -356,45 +471,108 @@ Aufgaben, die die CPU frühzeitig freigeben, erhalten ein höheres Latenzgewicht
 * **Kommandozeilen-Flags:** `-m all -s 20000 -S 1000 -I -1 -D -L`
 * **Beschreibung:** Für Server-Workloads optimiert. Tauscht Reaktionsfähigkeit gegen Durchsatz.
 
-### [scx_cosmos](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cosmos)
+### [scx_flow](https://github.com/sched-ext/scx/tree/main/scheds/experimental/scx_flow)
+
+**Entwickelt von: Galih Tama (galpt [GitHub](https://github.com/galpt))**
+
+Produktionsreif? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+scx_flow ist ein budgetbasierter Scheduler, der Aufgaben in eine von vier O(1)-FIFO-Stufen sortiert, basierend darauf, wie viel Budget ihnen noch bleibt. Keine Heuristiken, keine Scoring-Algorithmen, keine adaptive Abstimmung, jede Entscheidung kommt aus einer Zahl: *verbleibendes Budget*.
+
+- Anwendungsfälle:
+  - Allzweck-Desktop- und Workstation-Multitasking
+  - Gaming mit geöffneten Hintergrundanwendungen
+  - Entwicklungsarbeit mit Builds, Tests oder Containern
+  - Jedes Szenario, bei dem interaktive Reaktionsfähigkeit unter gemischter Last wichtig ist
+  - Systeme, die deterministisches, erklärbares Scheduling benötigen (Eingebettete Steuerung, Robotik, Luft- und Raumfahrt)
+
+#### Wie es funktioniert - das Budget
+
+Stell dir vor, jede Aufgabe hat ein "Reaktions-Budget". Während eine Aufgabe schläft (auf etwas wartet), sammelt sie Budget. Wenn sie aufwacht und läuft, gibt sie es aus. Aufgaben, die aufwachen und noch Budget halten, sind ein Zeichen von Interaktivität, sie werden daher sofort zur CPU, auf der sie zuletzt liefen, verschickt und umgehen das Stufensystem vollständig. Aufgaben, die ihr Budget erschöpfen, werden in eine von vier FIFO-Stufen neu eingereiht.
+
+##### Die vier Dispatch-Stufen
+
+Wenn eine Aufgabe neu eingereiht wird (kein Wakeup), entscheidet ihr verbleibendes Budget, in welche Stufe sie landet:
+
+| Stufe | Budget-Schwelle | Welche Art von Aufgaben hier landen |
+|---|---|---|
+| **Priority** | ≥ 1,5ms | Interaktive Aufgaben, die oft schlafen und kurz laufen |
+| **Normal** | ≥ 1ms | Typische Aufgaben mit angemessenem Restbudget |
+| **Low** | ≥ 0,5ms | Aufgaben, die ihr Budget fast aufgebraucht haben |
+| **Deficit** | < 0,5ms | Bulk-Workers, CPU-Hogs, Hintergrundjobs |
+
+Jede Stufe ist eine einfache FIFO-Warteschlange: O(1) Einreihung, O(1) Ausrangierung. Kein Tree-Walks, keine Prioritätsneuberechnungen.
+
+##### Keine Starvation, keine Prioritätsinversion
+
+Die Dispatch-Funktion entleert nicht einfach jedes Mal zuerst Priority. Sie rotiert die Startstufe bei jedem Aufruf, da `gen & 3` entscheidet, wo angefangen wird. Also wartet die Deficit-Stufe nie länger als 3 Dispatch-Zyklen, bevor sie zuerst bedient wird. Das bedeutet, dass Bulk-Workers auch unter schwerer interaktiver Last Fortschritte machen und es gibt keine Prioritätsinversion, weil keine einzelne Stufe die CPU monopolisieren kann.
+
+##### Wakeups überspringen die Warteschlange vollständig
+
+Wenn eine Aufgabe aufwacht (sie schlief und hat jetzt etwas zu tun), wartet sie nicht in irgendeiner Stufen-Warteschlange. Sie geht direkt über `SCX_DSQ_LOCAL_ON` zur CPU, auf der sie zuletzt lief und ist dadurch cache-warm und unmittelbar aktiv. Das ist es, was interaktive Aufgaben flott hält: ein schlafender Discord- oder Browser-Tab wacht mit Budget auf und wird in Mikrosekunden, nicht Millisekunden, verschickt.
+
+##### Pinned-Aufgaben haben Vorrang
+
+Aufgaben, die sich nicht zwischen CPUs bewegen können (setaffinity), bekommen ihre eigene per-CPU-FIFO-Warteschlange, die absolute Priorität vor jeder Stufe hat. Sie werden verschickt, bevor irgendetwas vom Stufensystem auf dieser CPU läuft.
+
+##### Das Ergebnis
+
+Interaktive Aufgaben (Tastatureingaben, UI-Updates, Audio-Threads, Netzwerk-Polling) wachen fast immer mit Budget auf und bekommen die Expressspur. CPU-lastige Batch-Arbeit (Kompilierung, Downloads, Hintergrund-Indizierung) verbraucht ihr Budget und landet in der Deficit-Stufe, wo sie dank des rotierenden Dispatch noch Fortschritte macht. Keine Abstimmung nötig.
+
+##### Keine Profile, kein Autotuning, keine Modi
+
+scx_flow hat **keine** Gaming-, Power-Save- oder Low-Latency-Modi und im Gegensatz zu früheren Versionen hat es auch keine adaptive Regelung. Der rotierende Stufen-Dispatch und die Budget-Schwellen sind Compile-Time-Konstanten. Was du bekommst, ist das, was läuft: deterministisch, erklärbar und auf jedem System identisch. Wenn eine Aufgabe Budget hat, bekommt sie Priorität. Wenn nicht, teilt sie die Deficit-Stufe fair. Das ist die Richtlinie dahinter.
+
+#### Web-UI
+
+Wenn scx_flow startet, bedient es automatisch ein Live-Metriken-Dashboard unter **[http://localhost:50005](http://localhost:50005)**. Du kannst es ohne extra Flags in jedem beliebigen Browser öffnen.
+
+Das Dashboard zeigt:
+- Wie viele Dispatches jede Stufe durchlaufen hat (Priority / Normal / Low / Deficit)
+- Systeminformationen: laufende Aufgaben, Uptime, Menge der gesamten Dispatchs
+- Eine Stufenverteilungsleiste, damit du auf einen Blick sehen kannst, ob interaktive oder Bulk-Arbeit dominiert
+- Jede Metriken-Karte ist anklickbar - öffnet ein History-Modal mit Sparklines und einem Balkendiagramm
+- Alle Werte aktualisieren sich jede Sekunde via Polling - kein Seiten-Refresh nötig
+
+Wenn die Seite nicht lädt, hat der Scheduler möglicherweise aufgehört zu laufen (das Kernel fällt auf den eingebauten EEVDF zurück).
+
+```sh
+# Deaktiviere die Web-UI, wenn du sie nicht brauchst:
+sudo scx_flow --no-webui
+```
+
+Wenn `scx_loader` mit Systemd-Hardening läuft, welches die Socket-Familien einschränkt (`RestrictAddressFamilies`, `SocketBindDeny`), ist TCP-Binding blockiert und scx_flow fällt auf einen Unix-Socket unter `/tmp/scx_flow.sock` zurück. In diesem Fall kann der Browser das Dashboard nicht direkt erreichen. Führe als temporären Fix `sudo scx_flow --no-webui` aus, um Fehler zu unterdrücken, wenn du die UI nicht brauchst.
+
+#### CLI-Argumente
+
+| Argument | Beschreibung |
+|---|---|
+| `--no-webui` | Die eingebettete Web-UI deaktivieren |
+| `-d, --debug` | Debug-Level-Logging aktivieren |
+| `-V, --version` | Scheduler-Version ausgeben und beenden |
+
+:::note
+scx_flow hat **keine** scx_loader-Profil-Modi (Gaming, Power Save, Low Latency, Server). Jede Scheduling-Entscheidung wird direkt aus dem Aufgaben-Budget abgeleitet, dadurch sind keine Profile nötig.
+:::
+
+### [scx_forge](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_forge>)
 
 **Entwickelt von: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
 
-- Produktionsreif? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+- Produktionsreif? <Icon name="close" color="var(--sl-color-text-accent)" size="2rem" />
 
-Leichter Scheduler, optimiert für die Beibehaltung der Task-zu-CPU-Lokalität.
+scx_forge besteht aus zwei Teilen:
 
-Wenn das System nicht ausgelastet ist, priorisiert der Scheduler das Halten von Aufgaben auf derselben CPU mithilfe lokaler DSQs. Dies erhält nicht nur die Lokalität, sondern reduziert auch die Sperrkonflikte im Vergleich zu gemeinsamen DSQs, was eine gute Skalierbarkeit über viele CPUs ermöglicht.
+1. Ein basischer KI-orientierter Scheduler, der zusammen mit dem zweiten Teil verwendet werden soll.
+2. Ein Agent, der mit dem Basis-Scheduler verwendet werden soll, um ein KI-orientierteres Scheduling-Erlebnis zu bieten, plus Optimierung vor Ort durch den Agenten selbst.
 
-- Anwendungsfälle:
-  - Allzweck-Scheduler: Der Scheduler sollte sich sowohl für Server-Workloads als auch für Desktop-Workloads anpassen.
+Der Agent ermöglicht das Einrichten deines KI-Modells und der Workload für die du optimieren möchtest, sowie das Gesamtziel, das du erreichen möchtest. Der Agent wird dann versuchen, den Scheduler für deine spezifische Workload und dein Ziel zu optimieren.
 
-#### Scheduler-Modi
+Wie? über die [spec.toml-Datei](https://github.com/sched-ext/scx/blob/main/tools/scx_forge_agent/spec.toml), die verwendet wird, um die Optimierungsschleife zu starten.
 
-##### Auto
+Im Grunde ist dieser Scheduler perfekt für diejenigen, die eine spezifische Workload durch einen KI-Agenten optimieren möchten.
 
-* **Kommandozeilen-Flags:** `-d`
-* **Beschreibung:** Deaktiviert verzögerte Wakeups. Reduziert den Durchsatz und die Leistung für bestimmte Workloads und verringert gleichzeitig den Stromverbrauch.
-
-##### Gaming
-
-* **Kommandozeilen-Flags:** `-c 0 -p 0`
-* **Beschreibung:** Deaktiviert die CPU-Lastverfolgung und erzwingt immer ein Deadline-basiertes Scheduling, um die Reaktionsfähigkeit zu verbessern.
-
-##### Energiesparen
-
-* **Kommandozeilen-Flags:** `-m powersave -d -p 5000`
-* **Beschreibung:** Priorisiert die Energieeffizienz. Bevorzugt weniger leistungsstarke Kerne (z. B. E-Kerne bei Intel) und deaktiviert verzögerte Wakeups, was den Durchsatz reduziert und die Energieeffizienz erhöht. Die CPU-Lastabfrage wird auf 5 ms erhöht.
-
-##### Niedrige Latenz
-
-* **Kommandozeilen-Flags:** `-m performance -c 0 -p 0 -w`
-* **Beschreibung:** Soll die Latenz auf Kosten des Durchsatzes verringern. Geeignet für Soft-Echtzeitanwendungen wie Audioverarbeitung und Multimedia. Erzwingt immer Deadline-basiertes Scheduling und synchrone Wake-up-Optimierungen, um die Leistungsvorhersehbarkeit zu verbessern.
-
-##### Server
-
-* **Kommandozeilen-Flags:** `-s 20000`
-* **Beschreibung:** Aktiviert die Adressraumaffinität, um die Lokalität und Leistung bei bestimmten cache-sensitiven Workloads zu verbessern. Die Abfrage wird auf 20 ms erhöht.
+Um mehr darüber zu erfahren, schau dir das [scx_forge_agent README](https://github.com/sched-ext/scx/tree/main/tools/scx_forge_agent) an.
 
 ### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>)
 
@@ -431,23 +609,34 @@ Eine der wichtigsten und genialsten Fähigkeiten, die LAVD beinhaltet, ist die *
 * **Kommandozeilen-Flags:** `--powersave`
 * **Beschreibung:** Minimiert den Stromverbrauch bei angemessener Leistung. Priorisiert effiziente Kerne und Threads gegenüber physischen Kernen.
 
-### [scx_rusty](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rusty>)
+### [scx_pandemonium](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_pandemonium)
 
-**Entwickelt von: David Vernet (Byte-Lab [GitHub](<https://github.com/Byte-Lab>))**
+**Entwickelt von: Will Clingan (willclngn [GitHub](https://github.com/wllclngn/))**
 
-- Produktionsreif? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
-  - Ja. Wenn er richtig eingestellt ist.
-
-Rusty bietet eine breite Palette von Funktionen, die seine Fähigkeiten erweitern und eine größere Flexibilität für verschiedene Anwendungsfälle bieten.
-Eine dieser Funktionen ist die Einstellbarkeit, die es dir ermöglicht, Rusty an deine Vorlieben und spezifischen Anforderungen anzupassen.
+*Ein verhaltensbasiert-klassifizierender Scheduler mit topologiebewusster Platzierung. EWMA-gesteuerte Bewertung (Wakeup-Frequenz, Kontextwechsel-Rate, Laufzeitvarianz) sortiert Aufgaben in drei Stufen, LAT_CRITICAL, INTERACTIVE und BATCH, jede mit ihrer eigenen Slice, Preempt-Regeln und DSQ-Routing. Die Platzierung wird durch effektiven Widerstand (R_eff) im CPU-Topologiegraphen gesteuert, abgeleitet aus einer Laplace-Pseudoinversen; per-CPU-DSQs werden in R_eff-Reihenfolge gestohlen, um cache-hot-Arbeit cache-hot zu halten. Jede Zeitkonstante, Sojourn-Rescue, CoDel-Ziel, vtime-Obergrenze und longrun-Schwelle, leitet sich von einem einzigen tau-Wert (dem Fiedler eigenvalue's reciprocal) ab, sodass sich der Scheduler von 2C-Laptops bis 32C+-Servern ohne Abstimmung selbst kalibriert. Ein gedämpfter harmonischer Oszillator passt das CoDel-Stall-Ziel von Rescue-Druck jeden Takt an. Eine 1Hz-Rust-adaptive Regelung (multiplikatives Gewichts-Update über sechs Expertenprofile) stimmt Scheduling-Parameter von BPF-Histogramm-Telemetrie ab und synchronisiert mit dem BPF-Oszillator-Zustand, um Doppelkorrektur zu vermeiden. Eine persistente Prozessdatenbank lernt Aufgabenklassifizierungen über Neustarts hinweg. NUMA-aware, hotplug-correct.*
 
 - Anwendungsfälle:
-  - Gaming
-  - Latenzempfindliche Workloads
-  - Desktop-Nutzung
-  - Multimedia-/Audioproduktion
-  - Hervorragende Interaktivität unter intensiven Workloads
-  - Energiesparen
+    - Gaming
+    - Desktop-Nutzung
+    - Multimedia-/Audio-Produktion
+    - Codebase-Kompilierung
+    - ZFS / storage-lastige Workloads
+    - Gemischte Workloads
+    - Interaktivität unter anhaltender CPU-Auslastung
+
+##### Scheduler-Modi
+Standard (Adaptiv)
+- **Kommandozeilen-Flags:** (keine, läuft adaptiv standardmäßig)
+- **Beschreibung:** Vollständiger adaptiver Modus. Die Rust-Regelung erkennt das Workload-Regime (LIGHT / MIXED / HEAVY) und passt Scheduling-Parameter in Echtzeit an. Am besten für allgemeine Desktop-Nutzung und Gaming geeignet.
+
+###### BPF Only
+- **Kommandozeilen-Flags:** `--no-adaptive`
+- **Beschreibung:** Deaktiviert die Rust-adaptive Regelung. Der BPF-Scheduler läuft mit statischen Abstimmungsparametern. Geringerer Overhead, nützlich für Benchmarking oder wenn die adaptive Schicht bei deiner Workload überkorrigiert.
+
+###### Verbose / Debug
+- **Kommandozeilen-Flags:** `-v` oder `--verbose`
+- **Beschreibung:** Aktiviert detaillierte Telemetrie-Ausgabe einschließlich pro-Stufe-Dispatch-Zählungen, Sojourn-Zeiten und verhaltensbasiert-klassifizierender Statistiken. Nützlich zur Diagnose des Scheduling-Verhaltens.
+
 
 ### [scx_p2dq](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_p2dq>)
 
@@ -529,12 +718,50 @@ Der Scheduler leitet alle Planungsereignisse durch einen Pool von primären CPUs
 * **Kommandozeilen-Flags:** `-f 100`
 * **Beschreibung:** Reduziert, wie oft der Scheduler nach CPU-Konflikten sucht, um den Durchsatz auf Kosten der Reaktionsfähigkeit zu verbessern.
 
+### [scx_rustland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland>)
+
+**Entwickelt von: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Produktionsreif? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+
+Für leistungskritische Produktionsszenarien werden andere Scheduler wahrscheinlich eine bessere Leistung zeigen, da das Auslagern aller Scheduling-Entscheidungen in den User-Space mit einem gewissen Preis verbunden ist (auch wenn dieser minimal ist).
+
+Ein vollständig im User-Space implementierter Scheduler birgt jedoch das Potenzial für eine nahtlose Integration mit anspruchsvollen Bibliotheken, Tracing-Tools, externen Diensten (z. B. KI) usw.
+
+Daher kann es Situationen geben, in denen die Vorteile den Overhead überwiegen und die Verwendung dieses Schedulers in einer Produktionsumgebung rechtfertigen.
+
+Hat Ähnlichkeiten mit bpfland, wurde mit der Absicht erstellt, leicht lesbar und verständlich zu sein, wie er aufgrund seiner Implementierung im Userspace funktioniert.
+
+Denk daran, dass es eine leichte Durchsatzeinbuße gibt, wenn ein Userspace-Scheduler verwendet wird.
+
+- Anwendungsfälle:
+  - Workloads mit geringer Latenz (Gaming, Videokonferenzen und Live-Streaming)
+  - Desktop-Nutzung
+
+### [scx_rusty](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rusty>)
+
+**Entwickelt von: David Vernet (Byte-Lab [GitHub](<https://github.com/Byte-Lab>))**
+
+- Produktionsreif? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+  - Ja. Wenn er richtig eingestellt ist.
+
+Rusty bietet eine breite Palette von Funktionen, die seine Fähigkeiten erweitern und eine größere Flexibilität für verschiedene Anwendungsfälle bieten.
+Eine dieser Funktionen ist die Anpassbarkeit, die es dir ermöglicht, Rusty an deine Vorlieben und spezifischen Anforderungen anzupassen.
+
+- Anwendungsfälle:
+  - Gaming
+  - Latenzempfindliche Workloads
+  - Desktop-Nutzung
+  - Multimedia-/Audioproduktion
+  - Hervorragende Interaktivität unter intensiven Workloads
+  - Energiesparen
+
 ## Konfiguration und Leistungstests
 
 ### LAVD Autopilot & Autopower
 
 *Zitate von Changwoo Min:*
-- Im Autopilot-Modus passt der Scheduler seinen Energiemodus (`Powersave, Balanced oder Performance`) an die Systemlast an, insbesondere an die CPU-Auslastung.
+- Im Autopilot-Modus passt der Scheduler seinen Energiemodus, `Powersave, Balanced oder Performance`, an die Systemlast an, insbesondere an die CPU-Auslastung.
 
 - Autopower: Entscheidet automatisch über den Energiemodus des Schedulers basierend auf dem Energieprofil des Systems, auch bekannt als EPP (Energy Performance Preference).
 
@@ -557,14 +784,14 @@ Um ananicy-cpp zu deaktivieren/stoppen, führe den folgenden Befehl aus:
 systemctl disable --now ananicy-cpp
 ```
 
-### Umschalten der Energieprofile mit scx_loader
+### scx_loader Power Profile Switching
 
-Das Ganze ist im Paket `power-profiles-daemon` von CachyOS drin, das einen [eigenen Patch](https://github.com/CachyOS/CachyOS-PKGBUILDS/blob/master/power-profiles-daemon/0001-Add-support-for-scx_loader-modes-switching.patch) mitbringt, um das Umschalten der `scx_loader`-Energieprofile zu ermöglichen.
+Im Paket `power-profiles-daemon` von CachyOS implementiert, das einen [benutzerdefinierten Patch](https://github.com/CachyOS/CachyOS-PKGBUILDS/blob/master/power-profiles-daemon/0001-Add-support-for-scx_loader-modes-switching.patch) enthält, um `scx_loader` Power-Profile-Umschaltung zu unterstützen.
 
-- Wenn `scx_loader` gerade läuft und du [game-performance](/de/configuration/gaming#wechsel-des-leistungsprofils-bei-bedarf) nutzt, wird der aktive Scheduler automatisch auf das „Gaming“-Profil umgeschaltet, sobald du ein Spiel startest. Wenn du das Spiel wieder schließt, geht's zurück zum Standardprofil.
-- Wenn du zwischen den Energieprofilen wechselst, zum Beispiel in KDE Plasma oder GNOME über den Umschalter für Energieprofile, schaltet `scx_loader` automatisch zum passenden Scheduler-Profil um:
+- Wenn `scx_loader` gerade läuft und [game-performance](/de/configuration/gaming#wechsel-des-leistungsprofils-bei-bedarf) verwendet wird, schaltet es automatisch den aktiven Scheduler auf das `Gaming`-Profil um, wenn ein Spiel gestartet wird und kehrt zum Standardprofil zurück, wenn das Spiel geschlossen wird.
+- Beim Wechseln zwischen Energieprofilen, z. B. in KDE Plasma oder GNOME über den Energieprofil-Umschalter, schaltet `scx_loader` automatisch zum entsprechenden Scheduler-Profil um:
 
-| Power Profile       | Scheduler Profile  |
+| Power Profil       | Scheduler Profil  |
 | ------------------- | ------------------ |
 | Power Saver         | Power Save         |
 | Balanced            | Auto               |
@@ -578,20 +805,20 @@ Es führt eine umfassende Suite von Benchmarks durch, um die CPU-, Speicher- und
 
 Die folgenden Benchmarks sind enthalten:
 
-| Test | Misst | Tool |
-| --------------------------- | ---------------------------------------- | ------------ |
-| **stress-ng cpu-cache-mem** | CPU-, Cache- und Speicherleistung | `stress-ng` |
-| **FFmpeg-Kompilierung** | Parallele Build-Leistung | `make` |
-| **x265-Kodierung** | Videokodierungs-Durchsatz | `x265` |
-| **argon2-Hashing** | Multithreaded-Passwort-Hashing | `argon2` |
-| **perf sched msg** | Kontextwechsel- und IPC-Leistung | `perf` |
-| **perf memcpy** | Speicherdurchsatz `memcpy()` | `perf` |
-| **Primzahlberechnung** | Ganzzahl-Arithmetik und Parallelität | `primesieve` |
-| **NAMD** | Molekulardynamik (wissenschaftliche Arbeitslast) | `namd3` |
-| **Blender-Render** | reines CPU-3D-Rendering | `blender` |
-| **xz-Kompression** | Kompressionsdurchsatz | `xz` |
-| **Kernel-defconfig-Build** | Kernel-Kompilierungsleistung | `make` |
-| **y-cruncher** | Mathematische Präzision und Speicherbelastung | `y-cruncher` |
+| Test                        | Misst                                 | Tool         |
+| --------------------------- | -------------------------------------- | ------------ |
+| **stress-ng cpu-cache-mem** | CPU-, Cache- und Speicherleistung      | `stress-ng`  |
+| **FFmpeg-Kompilierung**     | Parallele Build-Leistung               | `make`       |
+| **x265-Kodierung**          | Videokodierungs-Durchsatz              | `x265`       |
+| **argon2-Hashing**          | Multithreaded-Passwort-Hashing         | `argon2`     |
+| **perf sched msg**          | Kontextwechsel- und IPC-Leistung       | `perf`       |
+| **perf memcpy**             | Speicherdurchsatz `memcpy()`           | `perf`       |
+| **Primzahlberechnung**      | Ganzzahl-Arithmetik und Parallelität   | `primesieve` |
+| **NAMD**                    | Molekulardynamik (wissenschaftliche Arbeitslast) | `namd3`      |
+| **Blender-Render**          | Reines CPU-3D-Rendering                | `blender`    |
+| **xz-Kompression**          | Kompressionsdurchsatz                  | `xz`         |
+| **Kernel-defconfig-Build**  | Kernel-Kompilierungsleistung           | `make`       |
+| **y-cruncher**              | Mathematische Präzision und Speicherbelastung | `y-cruncher` |
 
 `cachyos-benchmarker` kann für verschiedene Zwecke verwendet werden, darunter:
 
@@ -603,7 +830,7 @@ Die folgenden Benchmarks sind enthalten:
   ```
   Dadurch wird eine Datei namens `crash.log` in deinem aktuellen Verzeichnis erstellt.
 - **Vergleich der Scheduler-Leistung**
-  - Bewerte Leistungsunterschiede zwischen Schedulern. z.B. `BPFLAND vs. LAVD`
+  - Bewerte Leistungsunterschiede zwischen Schedulern. z. B. `BPFLAND vs LAVD`
 - **Messen des Effekts von Kernel- oder Scheduler-Updates**
   - Vergleiche Durchläufe vor und nach dem Anwenden von Patches oder Versionsänderungen, um Leistungsregressionen oder -verbesserungen zu prüfen.
 - **Testen von Konfigurationsanpassungen**
@@ -724,21 +951,21 @@ Du kannst diese Werte je nach Anzahl deiner CPU-Kerne und dem gewünschten Lastn
 
 Hier ist eine Tabelle, die einige der wichtigsten Optionen erklärt:
 
-| Option | Beschreibung |
+| Option                       | Beschreibung                                                     |
 | ---------------------------- | --------------------------------------------------------------- |
-| `-C, --calibrate` | Kalibrierung durchführen und Zeitmessung berichten (kein Benchmark). |
-| `-L, --no-locking` | Spinlocks während der CPU-Arbeit deaktivieren (Standard: Sperren aktiviert). |
-| `-m, --message-threads <n>` | Anzahl der Message-Threads (Standard: 1). |
-| `-t, --threads <n>` | Worker-Threads pro Message-Thread (Standard: Anzahl der CPUs). |
-| `-r, --runtime <sec>` | Benchmark-Dauer (Standard: 30). |
-| `-F, --cache_footprint <KB>` | Größe des Cache-Footprints (Standard: 256). |
-| `-n, --operations <count>` | Anzahl der auszuführenden "Denkzeit"-Operationen (Standard: 5). |
-| `-A, --auto-rps` | RPS automatisch erhöhen, bis das CPU-Auslastungsziel erreicht ist. |
-| `-R, --rps <count>` | Modus "Anfragen pro Sekunde". |
-| `-p, --pipe <bytes>` | Simuliert einen Pipe-Übertragungstest. |
-| `-w, --warmuptime <sec>` | Aufwärmdauer vor dem Sammeln von Statistiken (Standard: 0). |
-| `-i, --intervaltime <sec>` | Intervall zum Drucken von Latenzen (Standard: 10). |
-| `-z, --zerotime <sec>` | Intervall zum Zurücksetzen der Latenzstatistiken (Standard: nie). |
+| `-C, --calibrate`            | Kalibrierung durchführen und Zeitmessung berichten (kein Benchmark). |
+| `-L, --no-locking`           | Spinlocks während der CPU-Arbeit deaktivieren (Standard: Sperren aktiviert). |
+| `-m, --message-threads <n>`  | Anzahl der Message-Threads (Standard: 1).                         |
+| `-t, --threads <n>`          | Worker-Threads pro Message-Thread (Standard: Anzahl der CPUs).    |
+| `-r, --runtime <sec>`        | Benchmark-Dauer (Standard: 30).                                  |
+| `-F, --cache_footprint <KB>` | Größe des Cache-Footprints (Standard: 256).                       |
+| `-n, --operations <count>`   | Anzahl der auszuführenden "Denkzeit"-Operationen (Standard: 5).   |
+| `-A, --auto-rps`             | RPS automatisch erhöhen, bis das CPU-Auslastungsziel erreicht ist. |
+| `-R, --rps <count>`          | Modus "Anfragen pro Sekunde".                                    |
+| `-p, --pipe <bytes>`         | Simuliert einen Pipe-Übertragungstest.                           |
+| `-w, --warmuptime <sec>`     | Aufwärmdauer vor dem Sammeln von Statistiken (Standard: 0).      |
+| `-i, --intervaltime <sec>`   | Intervall zum Drucken von Latenzen (Standard: 10).               |
+| `-z, --zerotime <sec>`       | Intervall zum Zurücksetzen der Latenzstatistiken (Standard: nie). |
 
 #### Die Ausgabe verstehen
 
@@ -834,6 +1061,54 @@ Klicke dann auf die Schaltfläche `New benchmark` und fülle die erforderlichen 
 - Akzeptiert sowohl MangoHud- als auch Afterburner-Protokolle.
 - Ermöglicht die Suche nach Titel oder Beschreibung.
 
+## scx_loader-Konfiguration
+
+### Einen Scheduler als Standard festlegen (beim Booten)
+
+Um einen Scheduler so einzurichten, dass er automatisch gestartet wird, wenn `scx_loader` startet (z. B. beim Booten), folge diesen Schritten:
+
+<Steps>
+1. **Kopiere die Beispiel-Konfigurationsdatei** in das Konfigurationsverzeichnis:
+   ```sh
+   sudo mkdir -p /etc/scx_loader
+   sudo cp /usr/share/scx_loader/config.toml /etc/scx_loader/config.toml
+   ```
+
+2. **Bearbeite die Konfigurationsdatei** mit deinem bevorzugten Editor:
+   ```sh
+   sudo nano /etc/scx_loader/config.toml
+   ```
+
+3. **Setze den Standard-Scheduler und den Modus**. Zum Beispiel, um `scx_pandemonium` im `Auto`-Modus zu setzen:
+   ```toml
+   # Dieses Feld gibt den Scheduler an, der automatisch gestartet wird, wenn scx_loader startet (z. B. beim Booten).
+   default_sched = "scx_pandemonium"
+
+   # Dieses Feld gibt den Modus an, der verwendet wird, wenn scx_loader startet (z. B. beim Booten).
+   default_mode = "Auto"
+   ```
+
+4. **Aktiviere und starte den Dienst**:
+   ```sh
+   sudo systemctl enable --now scx_loader.service
+   ```
+</Steps>
+
+#### Konfigurations-Suchreihenfolge
+
+`scx_loader` sucht nach der Konfigurationsdatei in folgender Reihenfolge:
+
+1. `/etc/scx_loader/config.toml` (Bevorzugt)
+2. `/etc/scx_loader.toml`
+3. `/usr/share/scx_loader/config.toml` (Standard-Vorlage)
+4. `/usr/share/scx_loader.toml`
+
+### Anpassen von Scheduler-Argumenten
+
+Du kannst die an jeden Scheduler für verschiedene Modi übergebenen Argumente anpassen, indem du einen `[scheds.scx_name]`-Abschnitt zu deiner Konfigurationsdatei hinzufügst.
+
+Für detaillierte Informationen und Beispiele zur Konfiguration von pro-Scheduler-Argumenten, siehe die [scx_loader-Konfigurationsdokumentation](https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/configuration.md).
+
 ## Umstieg von scx.service auf scx_loader: Eine umfassende Anleitung
 
 :::caution
@@ -926,14 +1201,22 @@ Folge der nachstehenden Anleitung für einen einfachen Übergang vom `scx system
 
 ## FAQ
 
-### Warum ist der X-Scheduler schlechter als der andere?
+### Es gibt so viele Optionen... warum macht man nicht einfach einen Scheduler, der in allem gut ist?
+
+Der Hauptgrund ist, dass es bei der CPU-Scheduling keine One-Size-Fits-All-Lösung gibt. Unterschiedliche Workloads haben unterschiedliche Anforderungen und Prioritäten und ein für eine Art von Workload optimierter Scheduler funktioniert möglicherweise nicht gut für eine andere.
+
+Du kannst CPU-Scheduler wie verschiedene Paar Schuhe betrachten, jedes für eine bestimmte Aktivität konzipiert. Ein Spiel auf einem für Server-Workloads optimierten Scheduler auszuführen, kann zu suboptimaler Leistung und erhöhter Latenz führen, während ein für Gaming konzipierter Scheduler auf einem Server zu ineffizienter Ressourcennutzung und reduziertem Durchsatz führen kann.
+
+Das ist die Magie von sched-ext. Einschränkungen sind kein Problem mehr.
+
+### Warum funktioniert der Scheduler X schlechter als Y?
 
 - Beim Vergleich gibt es viele Variablen zu beachten. Zum Beispiel, wie messen sie die Gewichtung einer Aufgabe? Priorisieren sie interaktive Aufgaben gegenüber nicht-interaktiven?
   Letztendlich hängt es von ihren Design-Entscheidungen ab.
 
-### Warum sagen alle, dass dieser X-Scheduler der beste für den Fall Y ist, er bei mir aber nicht so gut funktioniert?
+### Warum sagen alle, dass Scheduler X der beste für Y ist, aber bei mir funktioniert er nicht gut?
 
-- Ähnlich wie bei der vorherigen Antwort können die Wahl der CPU und ihr Design, wie z. B. das Core-Layout, die gemeinsame Nutzung des Cache über die Kerne hinweg und andere damit zusammenhängende Faktoren, dazu führen, dass der Scheduler weniger effizient arbeitet.
+- Wie bei der vorherigen Antwort können die Wahl der CPU und ihr Design, wie z. B. das Core-Layout, die gemeinsame Nutzung des Cache über die Kerne hinweg und andere damit zusammenhängende Faktoren, dazu führen, dass der Scheduler weniger effizient arbeitet.
 - Deshalb ist die Wahlmöglichkeit einer der Höhepunkte des sched-ext-Frameworks. Scheu dich also nicht, einen auszuprobieren und zu sehen, welcher für deinen Anwendungsfall am besten funktioniert. `Beispiele: FPS-Stabilität, maximale Leistung, Reaktionsfähigkeit bei intensiver Arbeitslast usw.`
 
 ### Die Anwendungsfälle dieser Scheduler sind ziemlich ähnlich... warum ist das so?
