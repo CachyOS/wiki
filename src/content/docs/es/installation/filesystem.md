@@ -1,6 +1,7 @@
 ---
 title: Sistemas de archivos
-description: Descripción y recomendaciones para los sistemas de archivos disponibles. (ext4, f2fs, btrfs, xfs, zfs, bcachefs)
+description: Descripción y recomendaciones para los sistemas de archivos disponibles. (ext4, f2fs, btrfs, xfs, zfs)
+ai_translated: true
 ---
 
 CachyOS ofrece 5 sistemas de archivos diferentes para permitir al usuario elegir el que mejor se adapte a sus necesidades. A continuación se detallarán las ventajas, desventajas y recomendaciones para cada sistema de archivos. Cada sistema de archivos viene con sus requisitos/utilidades preinstalados en CachyOS.

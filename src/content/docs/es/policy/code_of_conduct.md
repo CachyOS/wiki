@@ -1,5 +1,6 @@
 ---
 title: Código de Conducta
+ai_translated: true
 ---
 
 # Código de Conducta del Pacto del Contribuyente
@@ -120,12 +121,12 @@ la comunidad.
 
 Este Código de Conducta está adaptado del [Pacto del Contribuyente][homepage],
 versión 2.0, disponible en
-<https://www.contributor-covenant.org/version/2/0/code_of_conduct.html>.
+[https://www.contributor-covenant.org/version/2/0/code_of_conduct.html](<https://www.contributor-covenant.org/version/2/0/code_of_conduct.html>).
 
 Las Directrices de Impacto Comunitario se inspiraron en la [escala de aplicación del código de conducta de Mozilla](https://github.com/mozilla/diversity).
 
 [homepage]: https://www.contributor-covenant.org
 
 Para obtener respuestas a preguntas comunes sobre este código de conducta, consulta las Preguntas Frecuentes en
-<https://www.contributor-covenant.org/faq>. Hay traducciones disponibles en
-<https://www.contributor-covenant.org/translations>.
+[FAQ](<https://www.contributor-covenant.org/faq>). Las traducciones están disponibles en
+[https://www.contributor-covenant.org/translations](<https://www.contributor-covenant.org/translations>).
