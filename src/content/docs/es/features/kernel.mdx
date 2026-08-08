@@ -4,6 +4,7 @@ description: Características y cambios en el kernel de CachyOS
 tableOfContents:
   minHeadingLevel: 1
   maxHeadingLevel: 4
+ai_translated: true
 ---
 
 El kernel de CachyOS es un kernel personalizado que utiliza mejoras, configuraciones y parches de versiones superiores (upstream).
@@ -12,43 +13,56 @@ El kernel de CachyOS es un kernel personalizado que utiliza mejoras, configuraci
 
 ### Optimizaciones de Rendimiento
 
-- **Compilación Avanzada**: PKGBUILD altamente personalizable con soporte para compiladores GCC y Clang.
-- **Optimización en Tiempo de Enlazado (LTO)**: Thin LTO activado por defecto para un mejor rendimiento.
-- **Optimización Guiada por Perfil (PGO)**: Perfilado con AutoFDO + Propeller para una generación de código óptima ([Aprende más](https://cachyos.org/blog/2411-kernel-autofdo/)).
-- **Integridad de Flujo de Control del Kernel (kCFI)**: Disponible al usar LLVM para una seguridad mejorada.
-- **Opciones de Frecuencia del Temporizador**: Configurable entre 300Hz, 500Hz, 600Hz, 750Hz y 1000Hz (por defecto: 1000Hz).
-- **Optimizaciones de Arquitectura**: Soporte para compilaciones específicas de x86-64-v3, x86-64-v4 y AMD Zen4.
-- **Optimizaciones del Compilador**: Opciones avanzadas de GCC, incluyendo `-fivopts` y `-fmodulo-sched`.
+- **Compilación Avanzada**: PKGBUILD altamente personalizable con soporte para compiladores GCC y Clang
+- **Optimización en Tiempo de Enlazado (LTO)**: Clang Thin LTO activado por defecto en el paquete principal `linux-cachyos`
+- **ThinLTO Distribuido**: Soporte para compilaciones distribuidas de Clang ThinLTO para acelerar la compilación del kernel
+- **Optimización Guiada por Perfil**: Perfilado AutoFDO + Propeller en el kernel por defecto para una generación de código óptima ([Aprende más](https://cachyos.org/blog/2411-kernel-autofdo/))
+- **Integridad de Flujo de Control del Kernel (kCFI)**: Disponible al usar LLVM para una seguridad mejorada
+- **Opciones de Frecuencia del Temporizador**: Configurable entre 100Hz, 250Hz, 300Hz, 500Hz, 600Hz, 750Hz y 1000Hz (por defecto: 1000Hz)
+- **Optimizaciones de Arquitectura**: Soporte para compilaciones específicas de x86-64-v3, x86-64-v4 y AMD Zen4
+- **Optimizaciones del Compilador**: Opciones avanzadas de GCC, incluyendo `-fivopts` y `-fmodulo-sched`
+- **PREEMPT_DYNAMIC**: Modos de preemption seleccionables en tiempo de ejecución (full, lazy, voluntary, none)
 
 ### Mejoras de CPU
 
-- **Múltiples Planificadores**: Planificadores BORE, EEVDF y BMQ para optimización de diferentes cargas de trabajo.
-- **Mejoras en AMD P-State**: Soporte para Preferred Core y las últimas mejoras de amd-pstate de linux-next.
-- **Soporte de Tiempo Real**: Compilaciones de kernel RT disponibles con integración del planificador BORE.
-- **CachyOS Sauce**: Configuración personalizada `CONFIG_CACHY` con ajustes del planificador y del sistema.
-- **Optimizaciones de Baja Latencia**: Parches para una capacidad de respuesta mejorada y una menor fluctuación (jitter).
+- **Múltiples Planificadores**: Planificadores BORE, EEVDF y BMQ para optimización de diferentes cargas de trabajo
+- **[POC Selector](https://github.com/masahitoS/scx_cake)**: Selector rápido de CPU inactiva Piece-Of-Cake inspirado en scx_cake, reduciendo la latencia de despertar
+- **CachyOS Sauce**: Configuración personalizada `CONFIG_CACHY` con ajustes del planificador y del sistema
+- **Mejoras en AMD P-State**: Soporte para Preferred Core y las últimas mejoras de amd-pstate de linux-next
+- **Soporte de Tiempo Real**: Compilaciones de kernel RT disponibles con integración del planificador BORE
+- **Optimizaciones de Baja Latencia**: Parches para una capacidad de respuesta mejorada y una menor fluctuación (jitter)
+- **sched/wait LIFO accept()**: accept() de sockets procesado en orden LIFO para una mejor eficiencia de caché
+
+### Networking
+
+- **[BBR3 TCP](https://github.com/google/bbr)**: Control de congestión BBRv3 disponible como módulo separado junto con BBRv1
 
 ### Sistema de Archivos y Memoria
 
-- **Soporte para ZFS**: Soporte integrado para el sistema de archivos ZFS con módulos precompilados.
+- **Soporte para ZFS**: Soporte integrado para el sistema de archivos ZFS con módulos precompilados
+- **Mejoras NTFS**: Correcciones del controlador NTFS upstream para validación del espejo MFT, verificación de límites de atributos y manejo de logfile
+- **Mejoras MGLRU**: Manejo mejorado de dirty writeback, estadísticas simplificadas de reclamo vmscan y ajuste Cachy Sauce MM (protección de conjunto de trabajo LRU-gen, ajustes de compactación/marcas de agua, reclamo de hugepage)
 - **Integración de NVIDIA**:
-  - Módulos del controlador privativo de NVIDIA con parches.
-  - Soporte para el controlador de código abierto de NVIDIA.
-  - Módulos listos para usar en el repositorio.
+  - Módulos del controlador privativo de NVIDIA con parches
+  - Soporte para el controlador de código abierto de NVIDIA
+  - Módulos listos para usar en el repositorio
 - **Mejoras en el Planificador de E/S**:
-  - Rendimiento mejorado de BFQ y mq-deadline.
-  - Soporte para el planificador de E/S alternativo [ADIOS](https://github.com/firelzrd/adios).
-- **Gestión de Memoria**:
-  - Parche [le9uo](https://github.com/firelzrd/le9uo) para prevenir la hiperpaginación (page thrashing) bajo presión de memoria.
-  - Ajustes de gestión de memoria de Zen-kernel (compactación, optimización de marcas de agua).
+  - Rendimiento mejorado de BFQ y mq-deadline
+  - Soporte para el planificador de E/S multi-cola [ADIOS](https://github.com/firelzrd/adios) v3.2.0
+- **VRAM Cgroup (DMEM)**: Controlador de memoria de dispositivo para restringir el uso de VRAM de GPU por cgroup en el subsistema DRM
 
 ### Características Adicionales
 
 #### Soporte de Hardware
-- **Hardware para Juegos**: Parches para Steam Deck (Audio, peculiaridades de HW, HID) y soporte para ROG Ally.
-- **Hardware de Apple**: Soporte para MacBook T2 incluido por defecto.
-- **Hardware de ASUS**: Parches extendidos para compatibilidad con hardware ASUS.
-- **Gráficos**: Soporte HDR activado, anulación de `min_powercap` de AMDGPU (`amdgpu_ignore_min_pcap`).
+- **AMD ISP4**: Nuevo controlador de cámara AMD ISP 4 para plataformas compatibles
+- **Hardware para Juegos**: Parches para Steam Deck (Audio, HW Quirks, HID), soporte para ROG Ally y controlador HID para MSI Claw (deckify)
+- **Hardware de Apple**: Soporte para MacBook T2 con controlador apple-bce en staging
+- **Hardware de ASUS**: Parches extendidos para compatibilidad con hardware ASUS
+- **Hardware de Lenovo**: Limitación de carga de batería WMI, atributos ajustables de GPU/CPU y capdata debugfs
+- **Hardware de HP**: Soporte para portátiles OMEN Slim y OMEN MAX vía hp-wmi
+- **Gráficos**: Soporte HDR activado, anulación de `min_powercap` de AMDGPU (`amdgpu_ignore_min_pcap`)
+- **Pantalla**: HDMI VRR en AMD, propiedades de conector ALLM y VRR pasivo, análisis de bits por píxel VESA DSC desde EDID
+- **Códigos de Audio**: Soporte para códigos de audio AW88399 y MAX98390 HDA side
 
 #### Mejoras del Sistema
 - **Multimedia**: Módulos v4l2loopback incluidos por defecto.

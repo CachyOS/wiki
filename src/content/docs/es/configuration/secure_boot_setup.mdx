@@ -1,20 +1,14 @@
 ---
 title: Configuración del Arranque Seguro
 description: Configura el arranque seguro con sbctl después de instalar CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
 ---
 
 import ImageComponent from '~/components/image-component.astro';
-
-# sbctl
-
-[sbctl](https://github.com/Foxboron/sbctl) es un gestor de claves de arranque seguro fácil de usar, capaz de configurar el arranque seguro,
-ofrecer capacidades de gestión de claves y hacer un seguimiento de los archivos que necesitan ser firmados en la cadena de arranque.
-
-## Instalando sbctl
-
-```bash
-sudo pacman -S sbctl
-```
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
 ## Pre-configuración
 
@@ -31,8 +25,9 @@ Cargar módulos innecesarios en tu gestor de arranque tiene el potencial de pres
 Solo ejecuta este comando si realmente necesitas el arranque seguro.
 :::
 
-### Entrando en Modo de Configuración en UEFI
-Primero, necesitamos ir a la configuración del firmware y poner el modo de arranque seguro en "Setup Mode" (Modo de Configuración). Puedes reiniciar desde un
+### Habilitar el Modo de Configuración en UEFI
+
+Primero, necesitamos ir a la configuración del firmware y poner el modo de arranque seguro en "Setup Mode". Puedes reiniciar desde un
 sistema ya en funcionamiento a la configuración del firmware con el siguiente comando.
 
 ```bash
@@ -45,41 +40,198 @@ systemctl reboot --firmware-setup
 Así es como se ve la BIOS en un Lenovo Ideapad 5 Pro. Restablece al modo de configuración o restaura las claves de fábrica y reinicia de vuelta
 al sistema.
 
-Sin embargo, algunas placas base MSI no tienen un modo de configuración. Para lograr el mismo efecto, sigue los dos pasos de la imagen a continuación:
+#### Restablecimiento Automático
+
+En algunas placas base Gigabyte, "restablecer al modo de configuración" es seguido inmediatamente por un diálogo de "restablecer sin guardar"
+<ImageComponent imgsrc={import('~/assets/images/gigabyte-reset-without-saving.jpg')} />
+esto debe ser rechazado ya que causará un reinicio del sistema y deshabilitará el modo de configuración.
+
+En su lugar, arranca directamente el SO (Guardar y Salir, y selecciona tu gestor de arranque en Boot Override).
+
+#### Sin modo de configuración
+
+Algunas placas base MSI y ASUS no tienen un Modo de Configuración.
+
+##### MSI
+
+Establece el Modo de Arranque Seguro en "custom" y selecciona la opción de compatibilidad "maximum security" (esto es importante: con el modo predeterminado, ¡podrías no poder arrancar desde tu gestor de arranque hacia CachyOS!). Luego, ve a "key management" y sigue los dos pasos ilustrados en la imagen a continuación:
 <br />
 <ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
 
-## Configurando sbctl
+##### ASUS
 
-```bash
-sudo sbctl status # Si el modo de configuración está habilitado, podemos proceder al siguiente paso
-Installed:      ✘ sbctl is not installed
-Setup Mode:     ✘ Enabled
-Secure Boot     ✘ Disabled
+Navega a Boot → Secure Boot, establece Secure Boot Mode en Custom, luego abre Key Management y selecciona "Delete all Secure Boot Variables".
 
-sudo sbctl create-keys # Crea tus claves de arranque seguro personalizadas
-Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-Creating secure boot keys...✔
-Secure boot keys created!
+#### Instalando sbctl e Inscribiendo Claves
 
-sudo sbctl enroll-keys --microsoft # Inscribe tus claves con las claves de Microsoft
-Enrolling keys to EFI variables...✔
-Enrolled keys to the EFI variables!
+Antes de continuar, asegúrate de comprobar si `sbctl` está instalado.
 
-sudo sbctl status
-# sbctl ahora debería estar instalado, podemos proceder a firmar las imágenes del kernel y el gestor de arranque
-Installed:      ✔ sbctl is installed
-Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-Setup Mode:     ✔ Disabled
-Secure Boot     ✘ Disabled
-Vendor Keys:    microsoft
-```
+[sbctl](https://github.com/Foxboron/sbctl) es un gestor de claves de arranque seguro fácil de usar, capaz de configurar el arranque seguro,
+ofrecer capacidades de gestión de claves y hacer un seguimiento de los archivos que necesitan ser firmados en la cadena de arranque.
+
+<details>
+    <summary>Cómo instalar sbctl</summary>
+    ```bash title='Abre una terminal y ejecuta el siguiente comando'
+    sudo pacman -S sbctl
+    ```
+</details>
+
+Ahora que `sbctl` está instalado, tienes que configurar sbctl e inscribir tus claves en el firmware. Este proceso es bastante sencillo, solo sigue los pasos a continuación.
+
+<Steps>
+1. Comprueba si el Modo de Configuración está habilitado:
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>Salida esperada</summary>
+        ```bash
+        Installed:      ✘ sbctl is not installed
+        Setup Mode:     ✘ Enabled
+        Secure Boot     ✘ Disabled
+        ```
+    </details>
+2. Crea tus claves de Arranque Seguro personalizadas:
+    ```bash
+    sudo sbctl create-keys
+    ```
+    <details>
+        <summary>Ejemplo de creación exitosa de claves</summary>
+        ```bash
+        Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Creating secure boot keys...✔
+        Secure boot keys created!
+        ```
+    </details>
+3. Inscribe tus claves con las claves integradas de Microsoft y del firmware del OEM:
+    ```bash
+    sudo sbctl enroll-keys --microsoft --firmware-builtin
+    ```
+    <details>
+        <summary>Salida esperada</summary>
+        ```bash
+        Enrolling keys to EFI variables...✔
+        Enrolled keys to the EFI variables!
+        ```
+    </details>
+
+    :::caution[Placas base ASUS / Gigabyte — No uses `--firmware-builtin`]
+    En algunas placas base ASUS y Gigabyte, usar la flag `--firmware-builtin` causa entradas duplicadas
+    en las variables de claves EFI (por ejemplo, `builtin-db` apareciendo múltiples veces en `Vendor Keys`).
+    Al activar Secure Boot en la configuración UEFI después, la placa detecta esta
+    estructura de claves inconsistente y lanza un **Secure Boot Violation** antes de que el gestor
+    de arranque pueda cargar.
+
+    Usa solo `--microsoft` en placas ASUS / Gigabyte:
+
+    ```bash
+    sudo sbctl enroll-keys --microsoft
+    ```
+
+    Si `Vendor Keys` muestra `microsoft builtin-db builtin-db ...`, las claves necesitan ser
+    reinscritas. Vuelve a entrar en Setup Mode en el UEFI (usando delete all keys), luego ejecuta
+    `sbctl enroll-keys --microsoft` de nuevo sin `--firmware-builtin`.
+    :::
+
+
+4. Comprueba el estado de sbctl de nuevo para asegurarte de que las claves están inscritas y el modo de configuración está deshabilitado:
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>Salida esperada</summary>
+        ```bash
+        Installed:      ✔ sbctl is installed
+        Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Setup Mode:     ✔ Disabled
+        Secure Boot     ✘ Disabled
+        Vendor Keys:    microsoft
+        ```
+    </details>
+
+    :::note[¿El Modo de Configuración muestra Habilitado?]
+    Si `Setup Mode` muestra **Enabled**, ve a la configuración del firmware y **deshabilita temporalmente Secure Boot**.
+    Arranca de nuevo en el sistema, comprueba el estado de sbctl de nuevo, continúa con [Firmando la Imagen del Kernel y el Gestor de Arranque](#firmando-la-imagen-del-kernel-y-el-gestor-de-arranque)
+    a continuación, luego reinicia y reactiva Secure Boot en la configuración del firmware.
+    :::
+
+</Steps>
 
 ## Firmando la Imagen del Kernel y el Gestor de Arranque
 
+<Tabs>
+<TabItem label='Limine'>
+Limine es un gestor de arranque especial que permite comprobar el hash de las imágenes del
+kernel y otros archivos que Limine usa durante el arranque. Si esto está habilitado, cualquier
+tipo de configuración manual hecha por el usuario, por ejemplo, firmar la imagen a través de
+`sbctl-batch-sign`, modificará el hash de los archivos correspondientes y
+hará que la verificación de suma de comprobación de Limine falle.
+
+Sin embargo, firmar estos archivos no es necesario en Limine porque tiene un proceso de
+arranque especial que evita el encadenamiento de EFI (chainloading) y las comprobaciones de firma. Los únicos binarios EFI
+que necesitan ser firmados son Limine mismo.
+
+:::caution[Limine >= 11.2.0]
+A partir de Limine 11.2.0, las políticas de Secure Boot se **aplican estrictamente** cuando el UEFI Secure Boot está activo:
+
+- Una suma de verificación de configuración BLAKE2B **debe** estar registrada en el binario EFI de Limine, de lo contrario Limine entrará en pánico con: `SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED`
+- Todas las rutas de archivos en `limine.conf` (kernel, initramfs, etc.) **deben** tener hashes BLAKE2B añadidos (por ejemplo, `boot():/vmlinuz-linux#<hash>`)
+- El editor de configuración está incondicionalmente deshabilitado
+- Los conflictos de hash siempre causan un pánico
+:::
+
+Para habilitar el registro automático de la suma de verificación de configuración, establece lo siguiente en `/etc/default/limine`:
+
+```sh
+ENABLE_ENROLL_LIMINE_CONFIG=yes
+```
+
+Procede a generar un hash para la imagen de splash de Limine:
+
+:::note[Se requieren permisos de root para realizar los siguientes pasos, asegúrate de usar sudo o cambiar al usuario root antes de continuar.]
+:::
+
+<Steps>
+
+1. Comprueba el nombre y ruta actuales de la imagen de splash en el archivo de configuración:
+    ```sh title="Abre una terminal y ejecuta el siguiente comando:"
+    sudo cat /boot/limine.conf
+    ```
+    Deberías poder encontrar una línea como esta:
+    ```sh
+    wallpaper: boot():/limine-splash.png
+    ```
+2. Genera un hash BLAKE2B para la imagen de splash y añádelo a la ruta en el archivo de configuración:
+    ```sh title="Ejecuta el siguiente comando, reemplazando la ruta con la que encontraste en el paso anterior:"
+    sudo b2sum /boot/limine-splash.png
+    ```
+    Esto generará un hash como este ejemplo:
+    ```sh
+    75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+3. Después de copiar el hash recién generado del paso anterior. Abre el archivo de configuración con un editor de texto y añade el hash a la ruta de la imagen de splash, así:
+    :::note[No uses el hash de ejemplo de arriba, asegúrate de usar el que generaste en el paso anterior.]
+    :::
+    ```sh
+    wallpaper: boot():/limine-splash.png#75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+    Como puedes ver, el hash se añade a la ruta con un símbolo `#`. Guarda el archivo después de hacer el cambio.
+
+</Steps>
+
+Después de habilitar el registro de la suma de verificación de configuración y generar el hash para la imagen de splash, ejecuta los siguientes comandos para registrar la suma de verificación de configuración y firmar el binario EFI de Limine:
+
+```sh
+# Usa limine-enroll-config para registrar la suma de verificación de configuración y firmar el binario EFI de Limine
+# Esto usa sbctl internamente
+sudo limine-enroll-config
+sudo limine-update
+```
+</TabItem>
+<TabItem label='systemd-boot'>
+
 CachyOS proporciona [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign),
 un script que toma la lista de archivos que necesitan ser firmados de `sudo sbctl verify` y los firma todos.
-Los usuarios de Limine deben saltar a [Limine](#Limine).
 
 :::caution
 En sistemas con una estructura de particiones `/boot` y `/boot/efi` separadas, es posible que `sbctl` solo busque binarios EFI en `/boot/efi`.
@@ -107,16 +259,36 @@ Verifying file database and EFI images in /boot...
 ✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
 ```
 
-Ahora que todos los archivos están firmados. **Reinicia tu sistema y ve a la configuración de tu UEFI para habilitar el arranque seguro.**
+Ahora que todos los archivos están firmados. **Reinicia tu sistema y ve a tu Configuración UEFI para habilitar el Arranque Seguro.**
 
-Ten en cuenta que este es un proceso de una sola vez, ya que firmar archivos con la bandera `-s` guardará esos archivos en la base de datos de `sbctl`.
+:::caution[Placas base ASUS — habilitando Secure Boot]
+Algunas placas base ASUS se comportan de manera diferente a otros fabricantes al habilitar Secure Boot:
+
+- **Usa `Windows UEFI Mode`, no `Other OS`:**
+  El nombre es engañoso, esta configuración simplemente controla si Secure Boot se aplica.
+  Establecer `OS Type` en `Other OS` **deshabilita activamente** Secure Boot en placas ASUS,
+  independientemente de cualquier otra configuración. `sbctl status` continuará mostrando
+  `Secure Boot: Disabled` incluso después de reiniciar.
+
+- **No hay un interruptor separado de Secure Boot on/off** en algunas placas ASUS.
+  Secure Boot se activa implícitamente al seleccionar `Windows UEFI Mode`.
+
+La configuración correcta de la BIOS de ASUS para activar Secure Boot en este caso es:
+```
+Boot → Secure Boot
+  OS Type          → Windows UEFI Mode
+  Secure Boot Mode → Custom
+```
+:::
+
+Consulta [esta parte como referencia](/es/configuration/secure_boot_setup#habilitar-el-modo-de-configuracion-en-uefi)
+
+Ten en cuenta que este es un proceso de una sola vez, ya que firmar archivos con la flag `-s` guardará esos archivos en la base de datos de `sbctl`.
 
 :::tip[Recordatorio]
 `sbctl` viene con un [hook de pacman](https://wiki.archlinux.org/title/Pacman_hook) lo que significa que firmará
 automáticamente todos los archivos nuevos tras una actualización del kernel o del gestor de arranque.
 :::
-
-### systemd-boot
 
 CachyOS usa `systemd-boot-update.service` proporcionado por systemd para actualizar el gestor de arranque al reiniciar. Esto significa que el hook
 de pacman de `sbctl` **no** firmará los binarios EFI actualizados. Como solución, podemos firmar el gestor de arranque directamente
@@ -124,44 +296,10 @@ de pacman de `sbctl` **no** firmará los binarios EFI actualizados. Como soluci�
 ```sh
 sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
 ```
+</TabItem>
+</Tabs>
 
-### Limine
-
-Limine es un gestor de arranque especial que permite comprobar el hash de las imágenes del
-kernel y otros archivos que Limine usa durante el arranque. Si esto está habilitado, cualquier
-tipo de configuración manual hecha por el usuario, por ejemplo, firmar la imagen a través de
-`sbctl-batch-sign`, modificará el hash de los archivos correspondientes y
-hará que la verificación de suma de comprobación de Limine falle.
-
-Sin embargo, firmar estos archivos no es necesario en Limine porque tiene un proceso de
-arranque especial que evita el encadenamiento de EFI (chainloading) y las comprobaciones de firma. Los únicos binarios EFI
-que necesitan ser firmados son Limine mismo.
-
-:::caution[Limine >= 11.2.0]
-A partir de Limine 11.2.0, las políticas de Secure Boot se **aplican estrictamente** cuando el UEFI Secure Boot está activo:
-
-- Una suma de verificación de configuración BLAKE2B **debe** estar registrada en el binario EFI de Limine, de lo contrario Limine entrará en pánico con: `SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED`
-- Todas las rutas de archivos en `limine.conf` (kernel, initramfs, etc.) **deben** tener hashes BLAKE2B añadidos (por ejemplo, `boot():/vmlinuz-linux#<hash>`)
-- El editor de configuración está incondicionalmente deshabilitado
-- Los conflictos de hash siempre causan un pánico
-:::
-
-Para habilitar el registro automático de la suma de verificación de configuración, establece lo siguiente en `/etc/default/limine`:
-
-```sh
-ENABLE_ENROLL_LIMINE_CONFIG=yes
-```
-
-Luego ejecuta:
-
-```sh
-# Usa limine-enroll-config para registrar la suma de verificación de configuración y firmar el binario EFI de Limine
-# Esto usa sbctl internamente
-sudo limine-enroll-config
-sudo limine-update
-```
-
-## Verificar que el Arranque Seguro está Habilitado
+## Verificación del Estado del Arranque Seguro
 
 Para comprobar que el arranque seguro está efectivamente habilitado. Puedes ejecutar uno de los siguientes comandos
 

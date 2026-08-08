@@ -1,6 +1,7 @@
 ---
 title: Donación
 description: Formas de apoyarnos
+ai_translated: true
 ---
 
 Si quieres apoyar nuestro trabajo, puedes donarnos y ayudar a pagar nuestros servidores de compilación.
@@ -12,11 +13,9 @@ Aquí hay una lista de los costos actuales por mes:
 - Segundo servidor de compilación 70€ (Hetzner 7700X)
 - Servidor web/mirror 17 €
 - Servidor de correo/mirror 17 €
-- Servidor del foro (Netcup VPS) 7 euros
+- Servidor del foro (Netcup VPS) 7 €
 
-### Patreon
-
-<https://www.patreon.com/CachyOS>
+### [Patreon](<https://www.patreon.com/CachyOS>)
 
 ### Ethereum
 
