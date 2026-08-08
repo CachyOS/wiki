@@ -1,27 +1,22 @@
 ---
-const locales = ['cs', 'de', 'el', 'es', 'fr', 'ja', 'pl', 'ru', 'sk', 'pt', 'bg'];
-const rawDocs = import.meta.glob('/src/content/docs/(cs|de|el|es|fr|ja|pl|ru|sk|pt|bg)/**/*.{md,mdx}', { query: '?raw', import: 'default', eager: true });
+import DefaultBanner from '@astrojs/starlight/components/Banner.astro';
 
-const segments = Astro.url.pathname.split('/').filter(Boolean);
-const locale = segments[0];
-const isTranslated = locales.includes(locale);
+const { locale, entry, isFallback } = Astro.locals.starlightRoute;
 
-if (!isTranslated) return null;
+if (!locale || isFallback) return null;
 
-const slug = segments.slice(1).join('/') || 'index';
-const raw = rawDocs[`/src/content/docs/${locale}/${slug}.mdx`] ?? rawDocs[`/src/content/docs/${locale}/${slug}.md`];
-let ai = false;
-if (raw) {
-  const fm = raw.match(/^---\n([\s\S]*?)\n---/);
-  if (fm?.[1].includes('ai_translated')) ai = true;
-}
+const aiTranslated = entry.data.ai_translated ?? false;
+
+const hasOutdatedBanner = !!entry.data.banner;
 ---
 
-<div id="translation-banner" class="sl-banner">
+{hasOutdatedBanner && <DefaultBanner />}
+
+<div id="translation-banner" class="sl-banner" data-pagefind-ignore lang="en" data-ai={String(aiTranslated)} style="display: none;">
   <div class="sl-banner-content">
     <strong>Translation notice</strong>
     <p>This is a community-maintained translation. The English version is the authoritative source.</p>
-    {ai && (
+    {aiTranslated && (
       <p>This page was translated using generative AI and may not yet have been reviewed by a native speaker.</p>
     )}
     <p>Found an error? Please open an issue or submit a correction. Community contributions help us keep translations accurate and up to date.</p>
@@ -30,21 +25,20 @@ if (raw) {
     type="button"
     class="sl-dismiss-btn"
     aria-label="Dismiss banner"
-    onclick="sessionStorage.setItem('banner_dismissed','true');document.getElementById('translation-banner').style.display='none';"
+    onclick={`sessionStorage.setItem('banner_dismissed_translation_' + (${aiTranslated} ? 'ai' : 'manual'), 'true');document.getElementById('translation-banner').style.display='none';`}
   >×</button>
 </div>
 
 <style>
   .sl-banner {
+    padding: var(--sl-nav-pad-y) var(--sl-nav-pad-x);
     background-color: var(--sl-color-bg);
     border-bottom: 1px solid var(--sl-color-gray-5);
-    padding: 1rem 4rem 1rem 1.5rem;
-    margin: 0;
+    color: var(--sl-color-text);
+    font-size: 0.8125rem;
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    font-size: 0.8125rem;
-    color: var(--sl-color-text);
     position: sticky;
     top: var(--sl-nav-height);
     z-index: 100;
@@ -62,10 +56,6 @@ if (raw) {
     margin: 0.25rem 0;
     line-height: 1.5;
   }
-  .sl-banner-content p:first-child {
-    margin-top: 0;
-  }
-
   .sl-dismiss-btn {
     position: absolute;
     top: 0.5rem;
@@ -85,9 +75,12 @@ if (raw) {
   }
 </style>
 
-<script>
-  if (sessionStorage.getItem('banner_dismissed') === 'true') {
+<script is:inline>
+  (function() {
     const banner = document.getElementById('translation-banner');
-    if (banner) banner.style.display = 'none';
-  }
+    if (!banner) return;
+    const ai = banner.dataset.ai === 'true';
+    const key = 'banner_dismissed_translation_' + (ai ? 'ai' : 'manual');
+    if (!sessionStorage.getItem(key)) banner.style.display = '';
+  })();
 </script>
