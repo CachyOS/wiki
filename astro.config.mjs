@@ -664,6 +664,7 @@ export default defineConfig({
                 ja: 'デスクトップ環境',
                 ru: 'Окружения рабочего стола',
                 bg: 'Графични среди',
+                pt: 'Ambientes de Desktop',
               },
             },
           ],

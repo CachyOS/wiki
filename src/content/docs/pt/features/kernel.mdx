@@ -4,6 +4,7 @@ description: Funcionalidades e alterações no kernel CachyOS
 tableOfContents:
   minHeadingLevel: 1
   maxHeadingLevel: 4
+ai_translated: true
 ---
 
 O Kernel CachyOS é um kernel personalizado que utiliza melhorias, configurações e patches provenientes do upstream.
@@ -13,42 +14,54 @@ O Kernel CachyOS é um kernel personalizado que utiliza melhorias, configuraçõ
 ### Otimizações de Desempenho
 
 - **Compilação Avançada**: PKGBUILD altamente personalizável com suporte para compiladores GCC e Clang.
-- **Link Time Optimization (LTO)**: Thin LTO ativado por predefinição para um melhor desempenho.
-- **Otimização Guiada por Perfil (PGO)**: Perfilagem AutoFDO + Propeller para uma geração de código ideal ([Saber mais](https://cachyos.org/blog/2411-kernel-autofdo/)).
+- **Link Time Optimization (LTO)**: Clang Thin LTO ativado por predefinição no pacote principal `linux-cachyos`
+- **Distributed ThinLTO**: Suporte para builds distribuídas do Clang ThinLTO para acelerar a compilação do kernel
+- **Otimização Guiada por Perfil (PGO)**: Perfilagem AutoFDO + Propeller no kernel padrão para geração de código ideal ([Saber mais](https://cachyos.org/blog/2411-kernel-autofdo/))
 - **Kernel Control Flow Integrity (kCFI)**: Disponível ao utilizar LLVM para maior segurança.
-- **Opções de Frequência de Temporizador (Timer)**: Configurável entre 300Hz, 500Hz, 600Hz, 750Hz e 1000Hz (predefinição: 1000Hz).
+- **Opções de Frequência de Temporizador (Timer)**: Configurável entre 100Hz, 250Hz, 300Hz, 500Hz, 600Hz, 750Hz e 1000Hz (predefinição: 1000Hz)
 - **Otimizações de Arquitetura**: Suporte para builds específicas de x86-64-v3, x86-64-v4 e AMD Zen4.
-- **Otimizações de Compilador**: Flags de GCC avançadas, incluindo `-fivopts` e `-fmodulo-sched`.
+- **Otimizações de Compilador**: Flags de GCC avançadas, incluindo `-fivopts` e `-fmodulo-sched`
+- **PREEMPT_DYNAMIC**: Modos de preempção selecionáveis em tempo de execução (full, lazy, voluntary, none)
 
 ### Melhorias de CPU
 
-- **Múltiplos Agendadores (Schedulers)**: Agendadores BORE, EEVDF e BMQ para diferentes otimizações de carga de trabalho.
+- **Múltiplos Agendadores (Schedulers)**: Agendadores BORE, EEVDF e BMQ para diferentes otimizações de carga de trabalho
+- **[POC Selector](https://github.com/masahitoS/scx_cake)**: Seletor rápido de CPU ociosa Piece-Of-Cake inspirado no scx_cake, reduzindo a latência de despertar
 - **Melhorias AMD P-State**: Suporte para "Preferred Core" e as mais recentes melhorias amd-pstate do linux-next.
 - **Suporte Real-Time**: Builds de kernel RT disponíveis com integração do agendador BORE.
 - **CachyOS Sauce**: Configuração personalizada `CONFIG_CACHY` com ajustes de agendador e de sistema.
-- **Otimizações de Baixa Latência**: Patches para melhor capacidade de resposta e redução de jitter.
+- **Otimizações de Baixa Latência**: Patches para melhor capacidade de resposta e redução de jitter
+- **sched/wait LIFO accept()**: Socket accept() processado em ordem LIFO para melhor eficiência de cache
+
+### Rede
+
+- **[BBR3 TCP](https://github.com/google/bbr)**: Controlo de congestionamento BBRv3 disponível como módulo separado juntamente com o BBRv1
 
 ### Sistema de Ficheiros e Memória
 
-- **Suporte ZFS**: Suporte nativo para o sistema de ficheiros ZFS com módulos pré-compilados.
-- **Integração NVIDIA**:
+- **Suporte ZFS**: Suporte nativo para o sistema de ficheiros ZFS com módulos pré-compilados
+- **Melhorias NTFS**: Correções do controlador NTFS upstream para validação de espelho MFT, verificação de limites de atributos e gestão de logfile
+- **Melhorias MGLRU**: Gestão melhorada de dirty writeback, estatísticas simplificadas de reclaim vmscan e ajuste Cachy Sauce MM (proteção do working set LRU-gen, ajustes de compaction/watermark, reclaim de hugepage)
   - Módulos de controlador proprietário NVIDIA com patches.
   - Suporte para controlador NVIDIA open-source.
   - Módulos prontos a usar no repositório.
 - **Melhorias no Agendador de I/O**:
   - Desempenho melhorado de BFQ e mq-deadline.
   - Suporte para o agendador de I/O alternativo [ADIOS](https://github.com/firelzrd/adios).
-- **Gestão de Memória**:
-  - Patch [le9uo](https://github.com/firelzrd/le9uo) para prevenir o "page thrashing" sob pressão de memória.
-  - Ajustes de gestão de memória do Zen-kernel (compactação, otimização de watermark).
+- **VRAM Cgroup (DMEM)**: Controlador de memória de dispositivo para restringir o uso de VRAM da GPU por cgroup no subsistema DRM
 
 ### Funcionalidades Adicionais
 
 #### Suporte de Hardware
-- **Hardware de Gaming**: Patches para Steam Deck (Áudio, HW Quirks, HID) e suporte para ROG Ally.
-- **Hardware Apple**: Suporte para MacBook T2 incluído por predefinição.
-- **Hardware ASUS**: Patches de compatibilidade alargada para hardware ASUS.
-- **Gráficos**: Suporte para HDR ativado, override de min_powercap em AMDGPU (`amdgpu_ignore_min_pcap`).
+- **AMD ISP4**: Novo controlador de câmara AMD ISP 4 para plataformas suportadas
+- **Hardware de Gaming**: Patches para Steam Deck (Áudio, HW Quirks, HID), suporte para ROG Ally e controlador HID MSI Claw (deckify)
+- **Hardware Apple**: Suporte para MacBook T2 com controlador apple-bce em staging
+- **Hardware ASUS**: Patches alargados de compatibilidade para hardware ASUS
+- **Hardware Lenovo**: Limitação de carga de bateria WMI, atributos ajustáveis de GPU/CPU e capdata debugfs
+- **Hardware HP**: Suporte para OMEN Slim e OMEN MAX laptop via hp-wmi
+- **Gráficos**: Suporte HDR ativado, override de min_powercap em AMDGPU (`amdgpu_ignore_min_pcap`)
+- **Ecrã**: HDMI VRR em AMD, propriedades ALLM e VRR passivo do conector, análise VESA DSC bits-per-pixel a partir do EDID
+- **Codecs de Áudio**: Suporte para codecs laterais HDA AW88399 e MAX98390
 
 #### Melhorias de Sistema
 - **Multimédia**: Módulos v4l2loopback incluídos por predefinição.
