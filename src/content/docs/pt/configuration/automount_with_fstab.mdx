@@ -1,61 +1,273 @@
 ---
-title: Automontar Discos Adicionais via fstab no Arranque
-description: Monte discos estáticos adicionais no arranque utilizando o ficheiro localizado em /etc/fstab
+title: Automontar Discos Adicionais no Arranque
+description: Monte discos estáticos adicionais no arranque utilizando mounts do systemd ou o ficheiro localizado em /etc/fstab
+ai_translated: true
 ---
 
-Este tutorial descreve os conceitos básicos da utilização do ficheiro fstab localizado em /etc/, de modo a montar discos estáticos durante o arranque. Explica brevemente como encontrar o UUID de uma partição ou disco, o que algumas opções fazem e leituras adicionais caso a informação fornecida seja insuficiente.
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+Este tutorial descreve os conceitos básicos da utilização tanto de ficheiros de montagem do systemd como do ficheiro fstab localizado em /etc/, de modo a montar discos estáticos durante o arranque. Explica brevemente como encontrar o UUID de uma partição ou disco, o que algumas opções fazem e leituras adicionais caso a informação fornecida seja insuficiente.
 
 ## Pré-requisitos
 
 - Acesso Root ou sudo
 
-## Adicionar Entradas ao /etc/fstab
-
 :::note[NTFS no Linux]
-O sistema de ficheiros NTFS pode ser instável em Linux, quer utilize o controlador ntfs3 ou o ntfs-3g. Utilize-o por sua conta e risco. Para melhor estabilidade e desempenho, considere sistemas de ficheiros nativos do Linux, como ext4, xfs ou btrfs.
+O sistema de ficheiros NTFS pode ser instável em Linux, quer utilize o controlador ntfs, ntfs3 ou ntfs-3g. Utilize-o por sua conta e risco. Para melhor estabilidade e desempenho, considere sistemas de ficheiros nativos do Linux, como ext4, xfs ou btrfs.
 :::
+
+## Método Mais Seguro e Amigável para Iniciantes: Montar Discos com Ficheiros de Montagem do Systemd
+
+A vantagem de montar via systemd é que, mesmo que cometa um erro no ficheiro de montagem, o seu sistema ainda arrancará. Ao contrário de um erro no fstab, que pode tornar o seu sistema não arrancável.
 
 ### 1. Listar os UUIDs das suas partições
 
-```sh title="Abra um terminal e execute o seguinte comando:"
+```sh title="Abra um terminal e execute o seguinte comando"
 lsblk -f
 ```
 
-```text title="Exemplo de saída:"
-# NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
-# zram0                                                                              [SWAP]
-# nvme0n1
-# ├─nvme0n1p1 vfat   FAT32       E04D-9F05
-# ├─nvme0n1p2
-# ├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
-# ├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
-# ├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
-# └─nvme0n1p6 ntfs
+```sh title="Exemplo de saída"
+NAME          FSTYPE FSVER LABEL UUID                                 FSAVAIL   FSUSE% MOUNTPOINTS
+zram0                                                                              [SWAP]
+nvme0n1
+├─nvme0n1p1   vfat   FAT32       E04D-9F05
+├─nvme0n1p2
+├─nvme0n1p3   ntfs               08A24E90A24E81E4                      715.4G   50%
+├─nvme0n1p4   vfat   FAT32       E09C-D4DA                             628.1M   39% /boot
+├─nvme0n1p5   ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G   47% /
+└─nvme0n1p6   ntfs
+nvme1n1
+└─nvme1n1p1   ext4               4e55896f-3f1f-4bc5-aa8a-fec099689cd9  931.5G   0%
+
 ```
 
-No nosso exemplo, sabemos que queremos montar uma partição Windows, que é NTFS. Também sabemos que sensivelmente metade do seu espaço está disponível. Portanto, podemos determinar que a partição que queremos montar é a `nvme0n1p3` e o seu UUID é `08A24E90A24E81E4`, com um sistema de ficheiros `ntfs` neste exemplo.
+Neste exemplo, queremos montar um disco extra recém-formatado como ext4. Sabemos que é um disco de 1TB e que ainda nada foi guardado nele. Portanto, podemos determinar que a partição a montar é `nvme1n1p1` que tem o UUID `4e55896f-3f1f-4bc5-aa8a-fec099689cd9`.
 
 ### 2. Identificar a sua partição
 
-Frequentemente, o `lsblk -f` fornecerá nesta fase toda a informação de que necessita para montar o seu disco através do /etc/fstab. Se ainda não tiver a certeza de qual é a partição correta, pode executar o seguinte comando:
+Frequentemente, o `lsblk -f` fornecerá toda a informação de que precisa para montar o seu disco com systemd neste ponto. Se ainda não tiver a certeza de qual é a partição correta, pode executar o seguinte comando:
 
 ```sh
 sudo fdisk -l
 ```
 
-```text title="Exemplo de saída:"
-# Device              Start        End    Sectors  Size Type
-# /dev/nvme0n1p1       2048     206847     204800  100M EFI System
-# /dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
-# /dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
-# /dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
-# /dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
-# /dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
+```sh title="Exemplo de saída"
+Device          Start       End         Sectors     Size    Type
+/dev/nvme0n1p1  2048        206847      204800      100M    EFI System
+/dev/nvme0n1p2  206848      239615      32768       16M     Microsoft reserved
+/dev/nvme0n1p3  239616      2997384182  2997144567  1.4T    Microsoft basic data
+/dev/nvme0n1p4  2997385216  2999482367  2097152     1G      EFI System
+/dev/nvme0n1p5  2999482368  3905454079  905971712   432G    Linux root (x86-64)
+/dev/nvme0n1p6  3905454080  3907026943  1572864     768M    Windows recovery environment
+/dev/nvme1n1p1  2048        1953523711  1953521664  931.5G  Linux filesystem
+
+```
+
+Já conhecemos o nosso UUID neste exemplo. No entanto, o `fdisk -l` pode tornar tudo um pouco mais claro ao mostrar o tamanho exato da partição (931.5G), bem como o seu tipo (Linux filesystem).
+
+Isto deverá tornar perfeitamente claro que a partição que pretendemos é `nvme1n1p1` com o UUID `4e55896f-3f1f-4bc5-aa8a-fec099689cd9`, conforme descrito anteriormente. Já o sabíamos antes, mas agora temos a certeza absoluta.
+
+Assim que tiver a confiança de ter encontrado a partição correta, copie o UUID. A cópia a partir do emulador de terminal é normalmente feita com `ctrl+shift+C`.
+
+### 3. Criar o Ficheiro de Montagem do Systemd
+Digamos que queremos usar este disco principalmente para jogos, um bom local para o montar é na sua pasta pessoal (home). Pode ser em qualquer lado que queira, mas por simplicidade vamos usar /home/user (substitua user pelo seu nome de utilizador Linux). Isto é importante porque o caminho de montagem dita o nome do ficheiro de montagem do systemd. Como este disco é destinado a jogos, vamos montá-lo na pasta de jogos da home do utilizador, `/home/user/games`.
+
+Para um ficheiro de montagem do systemd, isso traduz-se em home-$USER-games.mount (as barras `/` são substituídas por hífens `-`) e os ficheiros de montagem do systemd ficam em /etc/systemd/system.
+
+:::tip
+Se quiser usar um espaço, um hífen, um caractere CJK ou um caractere acentuado no nome da sua pasta de montagem, este deve ser formatado de forma diferente. Digamos que quer usar o caminho da pasta `/home/grzegorz/brzęczyszczykiewicz`, execute o seguinte comando para obter o nome que precisa de usar com o seu ficheiro:
+```bash
+systemd-escape -p --suffix=mount "/home/grzegorz/brzęczyszczykiewicz"
+```
+Como precisa de escapar qualquer `\`, criaria o ficheiro de montagem como `/etc/systemd/system/home-grzegorz-brz\\xc4\\x99czyszczykiewicz.mount`
+:::
+
+Sinta-se à vontade para usar o editor de texto da sua preferência, neste exemplo iremos usar `micro`.
+
+```sh
+micro /etc/systemd/system/home-$USER-games.mount
+```
+:::note
+Se estiver a montar na sua pasta pessoal (home), pode manter o $USER acima no nome do ficheiro, o seu nome de utilizador tomará automaticamente o seu lugar.
+:::
+
+Cole este modelo no ficheiro vazio:
+```ini
+[Unit]
+Description=
+
+[Mount]
+What=
+Where=
+Type=
+Options=
+
+[Install]
+WantedBy=multi-user.target
+```
+Abaixo estão as descrições para cada campo no ficheiro:
+
+<Tabs>
+  <TabItem label='Description'>
+  Description pode ser qualquer coisa que queira, é para a sua própria identificação.
+  </TabItem>
+  <TabItem label= 'What'>
+  Coloque o UUID que copiou anteriormente. Aqui será `UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9`
+  </TabItem>
+  <TabItem label= 'Where'>
+  Este é o ponto de montagem. Uma pasta será criada se não existir. Aqui, será `/home/user/games`. Substitua "user" pelo seu nome de utilizador se montar na sua pasta pessoal (home).
+  </TabItem>
+  <TabItem label= 'Type'>
+  Tipo de sistema de ficheiros, aqui será `ext4`
+  </TabItem>
+  <TabItem label= 'Options'>
+  Quaisquer opções de montagem que queira. Aqui, usaremos `defaults,exec,rw,noatime`. Não ter espaços é importante aqui.
+  </TabItem>
+</Tabs>
+---
+
+Seguindo o exemplo, o ficheiro de montagem preenchido deve parecer-se com isto:
+```ini
+[Unit]
+Description=Mount games drive (/home/user/games)
+
+[Mount]
+What=UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9
+Where=/home/user/games
+Type=ext4
+Options=defaults,exec,rw,noatime
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 4. Finalização
+Para montar o disco para o qual acabámos de criar uma entrada, execute o seguinte:
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now home-$USER-games.mount
+```
+
+Deverá ver a pasta que escolheu para o ponto de montagem, e pode verificar o estado da montagem com `systemctl status home-$USER-games.mount`:
+
+```sh
+● home-user-games.mount - Mount games drive (/home/user/games)
+     Loaded: loaded (/proc/self/mountinfo; enabled; preset: disabled)
+     Active: active (mounted) since Sat 2026-05-02 13:02:31 CDT; 23h ago
+ Invocation: e52ef8fe3d754c64a3825bc1ee89e7da
+      Where: /home/user/games
+       What: /dev/nvme1n1p1
+      Tasks: 0 (limit: 74118)
+     Memory: 316K (peak: 3.9M)
+        CPU: 5ms
+     CGroup: /system.slice/home-user-games.mount
+
+May 02 13:02:31 cachyos systemd[1]: Mounting Mount games drive (/home/user/games)...
+May 02 13:02:31 cachyos systemd[1]: Mounted Mount games drive (/home/user/games).
+```
+
+### tl;dr
+
+- Encontre o **UUID** da sua partição
+
+```sh
+lsblk -f
+```
+
+- Crie o ficheiro de montagem
+
+```sh
+micro /etc/systemd/system/mnt-foo.mount
+```
+
+Substituindo `mnt-foo` pelo caminho completo de onde quer montar, trocando o `/` por `-`.
+
+- Preencha o ficheiro de montagem
+
+```sh
+[Unit]
+Description=Mount drive
+
+[Mount]
+What=UUID=<partition UUID>
+Where=/mnt/foo
+Type=somefs
+Options=defaults
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Substituindo `<partition UUID>`, `/mnt/foo`, e `somefs` pelo seu UUID, diretório e sistema de ficheiros. ex: ext4, bem como definindo quaisquer outras opções que possa querer após defaults, tais como `_netdev` para um NAS, ou `nofail` para qualquer disco não crítico.
+
+- Recarregue o seu daemon
+
+```sh
+sudo systemctl daemon-reload
+```
+
+- Monte o seu disco e defina-o para montar no arranque
+
+```sh
+sudo systemctl enable --now mnt-foo.mount
+```
+
+### Leitura adicional
+
+- [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS sobre /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Manual do dump](<https://linux.die.net/man/8/dump>)
+- [Manual do fsck](https://man.archlinux.org/man/fsck.8)
+- [systemd-mount](https://manual.siduction.org/systemd-mount_en.html)
+
+## Método Avançado: Adicionar Entradas ao /etc/fstab
+
+:::danger
+O ficheiro fstab é lido durante o arranque, e se houver um erro no ficheiro, pode fazer com que o seu sistema falhe ao arrancar. Certifique-se de verificar duas vezes a sua entrada para quaisquer erros de digitação antes de reiniciar. Se cometer um erro, pode normalmente corrigi-lo arrancando num ambiente live e [fazendo chroot na sua instalação](/pt/features/cachy_chroot) para editar o ficheiro.
+:::
+
+### 1. Listar os UUIDs das suas partições
+
+```sh title="Abra um terminal e execute o seguinte comando"
+lsblk -f
+```
+
+```sh title="Exemplo de saída"
+NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+zram0                                                                              [SWAP]
+nvme0n1
+├─nvme0n1p1 vfat   FAT32       E04D-9F05
+├─nvme0n1p2
+├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
+├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
+├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
+└─nvme0n1p6 ntfs
+```
+
+No nosso exemplo, sabemos que queremos montar uma partição Windows, que é ntfs. Também sabemos que sensivelmente metade do seu espaço está disponível. Portanto, podemos determinar que a partição que queremos montar é `nvme0n1p3` e o seu UUID é `08A24E90A24E81E4`, com um sistema de ficheiros `ntfs` neste exemplo.
+
+### 2. Identificar a sua partição
+
+Frequentemente, o `lsblk -f` fornecerá toda a informação de que precisa para montar o seu disco através do /etc/fstab neste ponto. Se ainda não tiver a certeza de qual é a partição correta, pode executar o seguinte comando:
+
+```sh
+sudo fdisk -l
+```
+
+```sh title="Exemplo de saída"
+Device              Start        End    Sectors  Size Type
+/dev/nvme0n1p1       2048     206847     204800  100M EFI System
+/dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
+/dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
+/dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
+/dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
+/dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
 ```
 
 Já conhecemos o nosso UUID neste exemplo. No entanto, o `fdisk -l` pode tornar tudo um pouco mais claro ao mostrar o tamanho exato da partição (1.4T), bem como o seu tipo (Microsoft basic data).
 
-Isto deverá tornar perfeitamente claro que a partição que pretendemos é a `nvme0n1p3` com o UUID `08A24E90A24E81E4`, conforme descrito anteriormente. Já o sabíamos antes, mas agora temos a certeza absoluta.
+Isto deverá tornar perfeitamente claro que a partição que pretendemos é `nvme0n1p3` com o UUID `08A24E90A24E81E4`, conforme descrito anteriormente. Já o sabíamos antes, mas agora temos a certeza absoluta.
 
 Assim que tiver a confiança de ter encontrado a partição correta, copie o UUID. A cópia a partir do emulador de terminal é normalmente feita com `ctrl+shift+C`.
 
@@ -76,7 +288,7 @@ UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail,uid=1000,gid=1000,rw,
 ```
 
 :::note
-`/media/windows` tem de existir no seu sistema de ficheiros. Utilize o comando `mkdir` para criar o diretório caso este não exista.
+`/media/windows` tem de existir no seu sistema de ficheiros. Utilize `mkdir` para criar o diretório caso este não exista.
 :::
 
 A decomposição desta entrada é a seguinte:
@@ -85,35 +297,43 @@ A decomposição desta entrada é a seguinte:
 
 - `/media/windows` é o ponto de montagem do nosso disco. O [Linux Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html) indica que `/media/` é o local apropriado para a montagem de discos removíveis. `windows` indica o diretório onde desejamos montar o disco. Cada disco que pretendamos montar precisará do seu próprio diretório.
 
-- `ntfs3` é o tipo de sistema de ficheiros a ser utilizado. No nosso exemplo, estamos a utilizar explicitamente o controlador (driver) de kernel `ntfs3`. Outros exemplos seriam `ext4`, `xfs` ou semelhantes. Esta declaração explícita pode ser substituída por `auto` para permitir que o comando mount faça a sua melhor estimativa.
+- `ntfs3` é o tipo de sistema de ficheiros a ser utilizado. No nosso exemplo, estamos a utilizar explicitamente o controlador (driver) de kernel ntfs3. Outros exemplos seriam `ext4`, `xfs` ou semelhantes. Esta declaração explícita de tipo de sistema de ficheiros pode ser substituída por `auto` para permitir que o comando mount faça a sua melhor estimativa.
 
-- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000`: Estas são as opções de montagem:
+- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000`: Estas são opções de montagem:
 
   - `defaults`: um conjunto padrão de opções que inclui `rw, suid, dev, exec, auto, nouser, e async.`
-  - `nofail`: permite que o processo de arranque continue mesmo que esta montagem falhe.
-  - `uid=1000` e `gid=1000`: define a propriedade (dono e grupo) dos ficheiros montados para o utilizador e grupo com o ID 1000.
-  - `rw`: monta o sistema de ficheiros com permissões de leitura e escrita (read-write).
-  - `user`: permite que um utilizador não-root monte o sistema de ficheiros.
-  - `exec`: permite a execução de binários no sistema de ficheiros montado.
-  - `umask=000`: define a máscara de permissões de ficheiro para permitir permissões de leitura, escrita e execução para todos.
-  - `o primeiro 0` (dump) está tipicamente em desuso em sistemas modernos. Deixá-lo em 0 não causará problemas. Pode ler mais sobre isto [aqui](https://linux.die.net/man/8/dump).
-  - `o segundo 0` define a ordem para as verificações do sistema de ficheiros (fsck) no momento do arranque. Para uma partição root, este valor deve ser 1, a menos que o seu sistema de ficheiros root seja btrfs (que deve ser 0). Todos os outros sistemas de ficheiros no seu fstab devem ser 0 (desativado) ou 2. Mais informações [aqui](https://man.archlinux.org/man/fsck.8).
 
-Para uma análise mais aprofundada de cada opção, visite as páginas de manual do [fstab](https://man7.org/linux/man-pages/man5/fstab.5.html) e do [mount](https://man7.org/linux/man-pages/man8/mount.8.html).
+  - `nofail`: permite que o processo de arranque continue mesmo que esta montagem falhe.
+
+  - `uid=1000` e `gid=1000`: define a propriedade (dono e grupo) dos ficheiros montados para o utilizador e grupo com o ID 1000.
+
+  - `rw`: monta o sistema de ficheiros com permissões de leitura e escrita.
+
+  - `user`: permite que um utilizador não-root monte o sistema de ficheiros.
+
+  - `exec`: permite a execução de binários no sistema de ficheiros montado.
+
+  - `umask=000`: define a máscara de permissões de ficheiro para permitir permissões de leitura, escrita e execução para todos.
+
+  - `o primeiro 0` dump está tipicamente em desuso em sistemas modernos. Deixá-lo em 0 não causará problemas. Sinta-se à vontade para ler mais sobre isto [aqui](https://linux.die.net/man/8/dump).
+
+  - `o segundo 0` define a ordem para as verificações do sistema de ficheiros no momento do arranque. Para uma partição root, este valor deve ser 1 a menos que o seu sistema de ficheiros root seja btrfs, que deve de outra forma ser definido para 0. Todos os outros sistemas de ficheiros no seu fstab devem ser 0 (desativado) ou 2. Mais informações [aqui](https://man.archlinux.org/man/fsck.8).
+
+Para uma análise mais aprofundada de cada opção, visite estas duas páginas de manual: [fstab man page](https://man7.org/linux/man-pages/man5/fstab.5.html) e [mount man page](https://man7.org/linux/man-pages/man8/mount.8.html)
 
 #### Mais informações
 
 Como nota lateral, todas as opções após a declaração do tipo de sistema de ficheiros são opcionais caso não as altere em relação ao padrão.
 
-Assim:
+Assim
 
-`UUID=<UUID da partição> /media/foo somefs`
+`UUID=<partition UUID> /media/foo somefs`
 
 e
 
-`UUID=<UUID da partição> /media/foo somefs defaults 0 0`
+`UUID=<partition UUID> /media/foo somefs defaults 0 0`
 
-são equivalentes. `somefs` seguido de nada é implicitamente `somefs defaults 0 0`.
+são equivalentes. `somefs` seguido de nada é implicitamente `somefs defaults 0 0`
 
 ### 4. Finalização
 
@@ -129,7 +349,7 @@ e depois:
 sudo mount -a
 ```
 
-O seu disco deverá agora aparecer em `/media/windows` e aparecerá lá sempre que reiniciar o sistema.
+O seu disco deverá agora aparecer em `/media/windows` e aparecerá lá sempre que reiniciar.
 
 ```sh
 ls /media/windows
@@ -167,7 +387,7 @@ ls /media/windows
 # Intel                    'Ship of Harkinian'
  ```
 
-## Resumo (tl;dr)
+### tl;dr
 
 - Encontre o **UUID** da sua partição
 
@@ -175,7 +395,7 @@ ls /media/windows
 lsblk -f
 ```
 
-- Abra o ficheiro `/etc/fstab`
+- Abra `/etc/fstab`
 
 ```sh
 sudo nano /etc/fstab
@@ -187,7 +407,7 @@ sudo nano /etc/fstab
 UUID=<partition UUID> /media/foo somefs defaults 0 0
 ```
 
-Substituindo `<UUID da partição>`, `foo` e `somefs` pelo seu UUID, diretório e sistema de ficheiros (ex: ext4), bem como definindo quaisquer outras opções que deseje após "defaults", tais como `_netdev` para um NAS, ou `nofail` para qualquer disco não crítico.
+Substituindo `<partition UUID>`, `foo`, e `somefs` pelo seu UUID, diretório e sistema de ficheiros. ex: ext4, bem como definindo quaisquer outras opções que possa querer após defaults, tais como `_netdev` para um NAS, ou `nofail` para qualquer disco não crítico.
 
 - Recarregue o seu daemon
 
@@ -201,13 +421,13 @@ sudo systemctl daemon-reload
 sudo mount -a
 ```
 
-Este disco está agora montado e passará também a ser montado automaticamente em cada arranque.
+Este disco está agora montado e passará também a ser montado no arranque a partir de agora.
 
-## Leitura adicional
+### Leitura adicional
 
 - [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
 - [FHS sobre /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
-- [Manual do dump](https://linux.die.net/man/8/dump)
+- [Manual do dump](<https://linux.die.net/man/8/dump>)
 - [Manual do fsck](https://man.archlinux.org/man/fsck.8)
 - [Página de manual do fstab](https://man.archlinux.org/man/fstab.5.en)
 - [Entrada da Arch Linux Wiki sobre o fstab](https://wiki.archlinux.org/title/Fstab)

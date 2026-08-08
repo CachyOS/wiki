@@ -4,6 +4,7 @@ description: Coisas que pode ajustar após a instalação
 tableOfContents:
   minHeadingLevel: 1
   maxHeadingLevel: 4
+ai_translated: true
 ---
 
 import { Tabs, TabItem, Steps, LinkButton, Icon } from '@astrojs/starlight/components';
@@ -235,8 +236,43 @@ FAQ:
   - Não. O limitador interno do jogo (in-game cap) deverá funcionar corretamente.
 - O Smooth Motion pode ser combinado com o DLSS Frame Generation?
   - Não. Apenas um método de geração de frames pode estar ativo de cada vez.
+- O Smooth Motion pode ser utilizado com aplicações OpenGL?
+  - Não diretamente, uma vez que é implementado como uma camada Vulkan, mas é possível utilizando o [Zink](https://docs.mesa3d.org/drivers/zink.html) para traduzir chamadas OpenGL para Vulkan:
+    ```text
+    NVPRESENT_ENABLE_SMOOTH_MOTION=1 zink-run <command>
+    ```
+    :::note
+    Utilizar o Zink provavelmente terá um impacto no desempenho e pode introduzir falhas gráficas em alguns jogos.
+
+    Utilizadores de Dual GPU precisam de definir `DRI_PRIME=1` para utilizar a dGPU Nvidia em vez de métodos mais típicos de seleção de GPU.
+    :::
 
 ## Ajustes de Poupança de Energia
+
+### thermald
+
+O `thermald` é um daemon de gestão térmica para sistemas Intel. Monitoriza sensores térmicos e aplica ações de arrefecimento, como limites de energia da CPU ou alterações de estado de desempenho, antes que o firmware precise de utilizar throttling mais agressivo.
+
+É principalmente útil em computadores portáteis Intel, conversíveis, tablets, dispositivos portáteis (handhelds) e PCs de formato reduzido que expõem controlos térmicos Intel através de `/sys/class/thermal`. Sistemas suportados utilizam frequentemente sensores de temperatura de CPU Intel, Intel P-state, Intel power clamp, RAPL, `INT340X` ou tabelas térmicas ACPI DPTF/adaptive. CPUs AMD não são suportadas pelo `thermald`.
+
+Instale e ative com:
+
+```sh
+sudo pacman -S thermald
+sudo systemctl enable --now thermald.service
+```
+
+Verifique se foi iniciado corretamente:
+
+```sh
+systemctl status thermald.service
+journalctl -u thermald.service -b
+```
+
+Para mais informações:
+
+<LinkButton icon="external" href="https://github.com/intel/thermal_daemon">Repositório upstream do thermald</LinkButton>
+<LinkButton icon="external" href="https://man.archlinux.org/man/thermald.8">Página de manual do thermald</LinkButton>
 
 ### Ativar RCU Lazy
 
@@ -244,25 +280,12 @@ O RCU Lazy ajuda a reduzir o consumo de energia em sistemas em repouso (idle) ou
 A melhoria situa-se entre 5-10% em termos de poupança de energia. No entanto, é importante notar que esta funcionalidade de poupança de energia pode vir acompanhada de uma ligeira redução no desempenho, dependendo do cenário.
 O kernel `linux-cachyos-deckify` terá esta opção ativada por defeito, uma vez que a poupança de energia é fundamental e necessária para estes dispositivos.
 
-Para ativar o RCU Lazy, adicione o seguinte parâmetro à sua lista de parâmetros da [linha de comandos do kernel (cmdline)](/configuration/boot_manager_configuration/):
+Para ativar o RCU Lazy, adicione o seguinte parâmetro à sua lista de parâmetros da [linha de comandos do kernel (cmdline)](/pt/configuration/boot_manager_configuration/):
 ```text
 rcutree.enable_rcu_lazy=1
 ```
 
 ## Resolução de Problemas NVIDIA
-
-### Desativar o Backend Wayland do SDDM
-
-:::note
-A partir do cachyos-kde-settings 4.3, o SDDM utiliza o KWin como o seu compositor Wayland por defeito.
-:::
-
-Embora este seja um passo em frente positivo, pode introduzir alguns inconvenientes, como quebrar o suporte para overclocking através do nvidia-settings ou causar incompatibilidade com GPUs mais antigos que tenham dificuldades sob Wayland.
-
-Para reverter esta alteração, remova o pacote cachyos-kde-settings:
-```sh
-sudo pacman -R cachyos-kde-settings
-```
 
 ### Firmware NVIDIA GSP
 
@@ -362,7 +385,7 @@ Como alternativa, pode tentar utilizar o [JDSP4Linux](https://github.com/Audio4L
 
 Disponibilizamos no nosso repositório um pacote `obs-studio-browser` personalizado que é recomendado em vez do pacote `obs-studio` padrão. Este contém correções (patches) para resolver alguns dos problemas comuns, como erros de CUDA e problemas com a câmara virtual.
 
-```sh title='Open a terminal and run the following command'
+```sh title='Abra um terminal e execute o seguinte comando'
 sudo pacman -S obs-studio-browser
 # Se já tinha o obs-studio instalado anteriormente, o pacman irá perguntar-lhe se
 # deseja substituí-lo; se for o caso, introduza "Y" (Sim).
@@ -379,7 +402,7 @@ Este guia assume que tem a configuração padrão do CachyOS com ZRam ativado e 
 :::
 
 <Steps>
-    1. Desative o ZRam adicionando um parâmetro ao kernel. [Edite a configuração do seu gestor de arranque](/configuration/boot_manager_configuration) e adicione a seguinte linha:
+    1. Desative o ZRam adicionando um parâmetro ao kernel. [Edite a configuração do seu gestor de arranque](/pt/configuration/boot_manager_configuration) e adicione a seguinte linha:
         ```text
         systemd.zram=0
         ```

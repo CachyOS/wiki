@@ -1,118 +1,412 @@
 ---
 title: Definições do CachyOS (CachyOS Settings)
+ai_translated: true
 ---
 import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
 Juntamente com os nossos kernels e repositórios otimizados, também fornecemos definições que melhoram ainda mais a experiência de desktop, bem como alguns
 scripts de auxílio para melhorias na qualidade de vida (QoL). Todas estas configurações e scripts encontram-se no pacote `cachyos-settings`.
 
-## Ajustes sysctl (sysctl Tweaks)
+Consulte o [repositório CachyOS Settings](https://github.com/CachyOS/CachyOS-Settings?tab=readme-ov-file#cachyos-settings) para ler mais sobre todas as configurações e scripts que fornecemos.
+
+## Scripts e Ferramentas
+
+### [cachyos-bugreport.sh](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/cachyos-bugreport.sh)
+
+Aqui está como pode gerar um relatório de erro utilizando o script `cachyos-bugreport.sh`:
+<Steps>
+1. Abra um terminal e execute o seguinte comando:
+    ```sh
+    sudo cachyos-bugreport.sh
+    ```
+    <details>
+        <summary>Exemplo de Saída</summary>
+        ```sh
+        sudo cachyos-bugreport.sh
+        [sudo] password for array:
+        Starting with bugreport
+        Redacting personal information...
+        Do you want to upload this log to https://paste.cachyos.org? [Y]es/[N]o: Y
+        Uploading Log
+          % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                         Dload  Upload  Total   Spent   Left   Speed
+        100 130.3k 100     10 100 130.3k      7  96934   00:01   00:01         117.7k
+        # Um URL será fornecido aqui após o upload estar completo.
+        ```
+    </details>
+2. O script irá gerar um ficheiro de log no seu diretório pessoal contendo informações do sistema e logs que podem ser úteis para depuração. Também irá perguntar se deseja carregar o log para o nosso serviço de pastebin, o que pode ser útil ao reportar bugs.
+</Steps>
+
+### DLSS Swapper
+
+Pode ser útil em alguns casos. Especialmente para a versão Proton fornecida pela Valve.
+
+:::note
+O Proton-CachyOS já fornece uma funcionalidade de atualização integrada.
+:::
+
+:::caution
+Não combine `PROTON_DLSS_UPGRADE=1` e `dlss-swapper` ao mesmo tempo, pois ambos fazem a mesma coisa e podem causar conflitos.
+:::
+
+O que faz é tentar atualizar as DLLs e predefinições do DLSS para a versão mais recente disponível, o que pode ser útil para alguns jogos que requerem uma versão específica do DLSS para funcionar corretamente.
+
+Como? injetando variáveis de ambiente no processo do jogo:
+
+<details>
+    <summary>Variáveis de Ambiente do dlss-swapper</summary>
+    ```sh
+    export PROTON_ENABLE_NGX_UPDATER=1
+    export DXVK_NVAPI_DRS_NGX_DLSS_RR_OVERRIDE=on
+    export DXVK_NVAPI_DRS_NGX_DLSS_SR_OVERRIDE=on
+    export DXVK_NVAPI_DRS_NGX_DLSS_FG_OVERRIDE=on
+    export DXVK_NVAPI_DRS_NGX_DLSS_RR_OVERRIDE_RENDER_PRESET_SELECTION=render_preset_latest
+    export DXVK_NVAPI_DRS_NGX_DLSS_SR_OVERRIDE_RENDER_PRESET_SELECTION=render_preset_latest
+    ```
+</details>
+<details>
+    <summary>Variáveis de Ambiente do dlss-swapper-dll</summary>
+    ```sh
+    export DXVK_NVAPI_DRS_NGX_DLSS_RR_OVERRIDE=on
+    export DXVK_NVAPI_DRS_NGX_DLSS_SR_OVERRIDE=on
+    export DXVK_NVAPI_DRS_NGX_DLSS_FG_OVERRIDE=on
+    export DXVK_NVAPI_DRS_NGX_DLSS_RR_OVERRIDE_RENDER_PRESET_SELECTION=render_preset_latest
+    export DXVK_NVAPI_DRS_NGX_DLSS_SR_OVERRIDE_RENDER_PRESET_SELECTION=render_preset_latest
+    ```
+</details>
+
+- Qual é a diferença entre `dlss-swapper` e `dlss-swapper-dll`?
+    - `dlss-swapper` atualiza as DLLs e predefinições do DLSS para as versões mais recentes disponíveis fornecidas pelo NGX Updater e `dlss-swapper-dll` depende das DLLs já presentes no diretório do jogo.
+
+
+### [game-performance](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/game-performance)
+
+Script minúsculo que ativa o perfil de desempenho do `powerprofilesctl` para o processo alvo (pode ser usado para jogos ou qualquer outro processo) e desativa o protetor de ecrã enquanto o processo está em execução.
+
+Perguntas e Respostas:
+
+<details>
+    <summary>Como usar</summary>
+    Digamos que deseja usar `game-performance` para um jogo do Steam. Pode fazer isso adicionando o comando `game-performance` como uma opção de lançamento para o jogo no Steam:
+        <Steps>
+            1. Abra o Steam e vá à sua Biblioteca.
+            2. Clique com o botão direito no jogo com que deseja usar `game-performance` e selecione "Propriedades".
+            3. Na aba "Geral", encontre a secção "Opções de Lançamento" e adicione o seguinte comando:
+                ```sh
+                game-performance %command%
+                ```
+                :::tip[Guia sobre como gerir opções de lançamento no Steam]
+                Wiki CachyOS - [Como Definir Corretamente Múltiplas Opções de Lançamento](/pt/configuration/gaming#how-to-properly-set-multiple-launch-options)
+                :::
+            4. Feche a aba de propriedades e inicie o jogo.
+        </Steps>
+        <details>
+            <summary>Utilização fora do Steam</summary>
+            Uma vez que `game-performance` é apenas um script wrapper, pode usá-lo para iniciar qualquer processo com o perfil de desempenho ativado. Basta executar o seguinte comando no terminal:
+            ```sh
+            game-performance <command>
+            ```
+        </details>
+</details>
+
+<details>
+    <summary>O game-performance oferece algum benefício para uma CPU antiga?</summary>
+    Geralmente não. Deve evitá-lo para CPUs antigas, pois pode causar mais danos do que benefícios.
+
+    Para uma orientação aproximada, usar game-performance em qualquer CPU abaixo de 6 núcleos/12 threads provavelmente não aumentará ou até diminuirá o desempenho. Como na maioria das opções, deve testar por si mesmo se elas melhoram o desempenho no seu sistema específico ou não.
+      - Para CPUs desktop Intel, o corte aproximado é portanto a 8ª geração (Coffee Lake) para CPUs i7 e i9 e a 10ª geração (Comet Lake) para CPUs i5. Todas as CPUs Intel Ultra devem funcionar.
+      - Para CPUs desktop AMD, é a série 1000 (Zen) para CPUs Ryzen 7 e Ryzen 9. Para CPUs Ryzen 5, é também a série 1000, mas apenas o Ryzen 5 1600 e superior. Este é o caso até à série 5000 (Zen 3), onde agora todos os CPUs Ryzen 5 têm 6 núcleos e 12 threads.
+      - CPUs desktop Intel i3 e Ryzen 3 nunca têm mais de quatro núcleos.
+      - As contagens de núcleos para CPUs mobile, workstation e server variam muito, então pesquise o que tem e experimente diferentes definições, essa é metade da diversão de ter hardware de PC!
+</details>
+
+<details>
+    <summary>Porque não está ativado por predefinição?</summary>
+    Ativar o perfil de desempenho pode não ser ideal para todos os utilizadores e pode causar maior consumo de energia e geração de calor. Ao não o ativar por predefinição, damos aos utilizadores a escolha de o ativar quando precisam, sem o impor a todos.
+</details>
+
+### [kerver](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/kerver)
+
+O kerver é um script que partilha um breve resumo de:
+
+- A sua versão atual do kernel
+    - Verifica o suporte x86_64 e otimizações do compilador da CPU
+- Agendador de I/O atual
+- Resumo da CPU, I/O e agendador sched-ext (se ativo).
+
+<details>
+    <summary>Utilização</summary>
+    ```sh title='Abra um terminal e execute o seguinte comando:'
+    kerver
+    ```
+    <details>
+        <summary>Exemplo de Saída</summary>
+        ```sh
+        kerver
+
+        Check kernel version:
+
+        Linux version 6.19.8-1-hC (linux-hC@hC) (clang version 22.1.1, LLD 22.1.1) #1 SMP PREEMPT_DYNAMIC Sun, 15 Mar 2026 16:27:53 +0000
+        Linux CatchyOS 6.19.8-1-hC #1 SMP PREEMPT_DYNAMIC Sun, 15 Mar 2026 16:27:53 +0000 x86_64 GNU/Linux
+
+
+        Check x86_64 support:
+
+          x86-64-v3 (supported, searched)
+          x86-64-v2 (supported, searched)
+
+
+        Check CPU config:
+
+        CONFIG_X86_NATIVE_CPU=y
+        # CONFIG_GENERIC_CPU is not set
+        # CONFIG_MZEN4 is not set
+
+
+        Current disk schedulers:
+
+        sda: none mq-deadline kyber [adios] bfq
+        sdb: none mq-deadline kyber [adios] bfq
+
+        Check available schedulers:
+
+        BORE CPU Scheduler modification 6.6.2 by Masahito Suzuki
+        rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.
+        io scheduler mq-deadline registered
+        io scheduler kyber registered
+        Adaptive Deadline I/O Scheduler 3.2.0 by Masahito Suzuki
+        io scheduler adios registered
+        io scheduler bfq registered
+        sched_ext: BPF scheduler "bpfland_1.1.0_gc505008f_x86_64_unknown_linux_gnu" enabled with options scx_bpfland
+        ```
+    </details>
+</details>
+
+### [paste-cachyos](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/paste-cachyos)
+
+Uma ferramenta CLI simples que permite carregar texto para o nosso [serviço de pastebin](https://paste.cachyos.org). Pode ser útil para partilhar logs e outros conteúdos de texto ao reportar bugs ou pedir ajuda.
+
+:::note
+Para usar `paste-cachyos`, tem de encaminhar (`|`) o conteúdo que deseja carregar para o comando.
+
+Exemplo:
+```sh
+<command> | paste-cachyos
+```
+:::
+
+Aqui estão alguns exemplos de como usar `paste-cachyos`:
+
+<details>
+    <summary>Partilhar uma saída de atualização do pacman</summary>
+    ```sh
+    sudo pacman -Syu | paste-cachyos
+    ```
+    [Exemplo](https://paste.cachyos.org/p/079e1cc)
+</details>
+
+<details>
+    <summary>Log do journalctl do systemd-resolved</summary>
+    ```sh
+    journalctl -u systemd-resolved.service | paste-cachyos
+    ```
+</details>
+
+### [pci-latency](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/pci-latency)
+
+Um script simples destinado a tentar reduzir a latência e melhorar o desempenho para placas de som PCI ao alterar o temporizador de latência PCI.
+
+Disponível tanto em formato binário como de serviço systemd. O serviço systemd aplicará automaticamente as alterações no arranque, enquanto o binário pode ser usado para aplicar as alterações a pedido.
+
+<details>
+    <summary>Uso único para a sessão atual</summary>
+    ```sh
+    sudo pci-latency
+    ```
+</details>
+<details>
+    <summary>Ativar o serviço systemd</summary>
+    ```sh
+    systemctl enable pci-latency.service
+    ```
+</details>
+<details>
+    <summary>Desativar o serviço systemd</summary>
+    ```sh
+    systemctl disable pci-latency.service
+    ```
+</details>
+
+### [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign)
+
+:::note
+Não compatível com Limine.
+:::
+
+O `sbctl-batch-sign` é um script de auxílio desenhado para facilitar aos utilizadores a assinatura de ficheiros necessários para o suporte ao Secure Boot.
+
+O caso óbvio em que este script ajuda muito é quando se faz dual boot com Windows, pois há muitos ficheiros do Windows que precisam de ser assinados no EFI.
+
+Breve resumo ao executar o script:
+
+- Procura ficheiros não assinados usando `sbctl verify`
+    - Se necessário, assina os ficheiros detetados usando `sbctl sign`
+- Evita ficheiros que pertencem ao Windows, GRUB ou por extensão de ficheiro: `.mui` e `.dll`
+
+Consulte a nossa secção [Configuração do Secure Boot](/pt/configuration/secure_boot_setup#assinar-a-imagem-do-kernel-e-o-gestor-de-arranque) para mais informações.
+
+### [topmem](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/topmem)
+
+Script Lua que mostra os processos que mais consomem memória pela sua utilização de RAM, SWAP e partilha KSM (Kernel Same-page Merging).
+
+<details>
+    <summary>Antes de usar</summary>
+    ```sh
+    # Instale lua-luv para executar o script:
+    sudo pacman -S lua-luv
+    ```
+</details>
+<details>
+    <summary>Utilização</summary>
+    ```sh
+    topmem
+    ```
+    <details>
+        <summary>Exemplo de Saída</summary>
+        ```sh
+        topmem
+
+        MEMORY                Top 10 processes        SWAP      KSM
+        1333M     node                                0M        0M
+        811M      exe                                 0M        0M
+        759M      VQ6B1EUZqoCU04zoRU= --cha...        0M        0M
+        681M      node                                0M        0M
+        531M      zed-editor                          0M        0M
+        484M      brave                               0M        0M
+        424M      qs                                  0M        0M
+        408M      mdx-language-server                 0M        0M
+        395M      Telegram                            0M        0M
+        365M      VQ6B1EUZqoCU04zoRU= --cha...        0M        0M
+        ```
+    </details>
+</details>
+
+### [zink-run](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/zink-run)
+
+Força o uso do Zink (OpenGL sobre Vulkan) para o processo alvo definindo as variáveis de ambiente apropriadas.
+
+<details>
+    <summary>Variáveis de ambiente utilizadas</summary>
+    ```sh
+    MESA_LOADER_DRIVER_OVERRIDE=zink
+    GALLIUM_DRIVER=zink
+    __GLX_VENDOR_LIBRARY_NAME=mesa
+    __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
+    ```
+</details>
+
+Pode ser útil no Steam para alguns jogos que têm melhor desempenho ou compatibilidade com Zink.
+
+<details>
+    <summary>Utilização</summary>
+    ```sh
+    zink-run <command>
+    ```
+</details>
+
+## Criação de Overrides
+
+O que é um override?
+
+Um override é um ficheiro de configuração que cria para alterar as definições padrão fornecidas pelo `cachyos-settings`. Isto permite personalizar o seu sistema sem modificar os ficheiros originais, o que pode ser útil para manter a compatibilidade com atualizações futuras do `cachyos-settings`.
+
+### sysctl
 
 Fornecemos diversos ajustes de sysctl que visam melhorar o desempenho geral do desktop. Cada entrada sysctl está bem documentada
 no ficheiro [70-cachyos-settings.conf](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/sysctl.d/70-cachyos-settings.conf).
 
-Para efetuar alterações em qualquer um destes valores, copie a entrada original e crie um novo ficheiro em `/etc/sysctl.d/` com o valor modificado.
+Para fazer alterações em qualquer um destes valores, copie a entrada original e crie um novo ficheiro em `/etc/sysctl.d/` com o valor modificado.
 
-### Modificar valores sysctl
+<details>
+    <summary>Exemplo de override sysctl</summary>
+    <Steps>
 
-<Steps>
+    1. Analise o valor original em `cachyos-settings`
 
-1. Analise o valor original em `cachyos-settings`
+        ```sh
+        cat /usr/lib/sysctl.d/70-cachyos-settings.conf
+        # Only experimental!
+        # Let Realtime tasks run as long they need
+        # sched: RT throttling activated
+        kernel.sched_rt_runtime_us=-1
+        ```
+    2. Crie um novo ficheiro em `/etc/sysctl.d` para fazer alterações nas definições de sysctl
 
-    ```sh
-    cat /usr/lib/sysctl.d/70-cachyos-settings.conf
-    # Apenas experimental!
-    # Permite que tarefas em Tempo Real (RT) corram o tempo que for necessário
-    # sched: RT throttling ativado
-    kernel.sched_rt_runtime_us=-1
-    ```
+        ```sh title="Reverter kernel.sched_rt_runtime_us= para o seu valor predefinido"
+        sudo micro /etc/sysctl.d/99-kernel-sched-rt.conf # Se o ficheiro não existir, este comando cria e permite-lhe editar o ficheiro
+        kernel.sched_rt_runtime_us=950000
+        ```
+    3. Guarde o ficheiro premindo `CTRL + S` e saia do editor premindo `CTRL + Q`.
+    4. Após fazer alterações nas definições de sysctl, certifique-se de aplicar as alterações:
+        ```sh
+        sudo sysctl --system
+        ```
+    </Steps>
+</details>
 
-2. Crie um novo ficheiro em `/etc/sysctl.d` para efetuar alterações nas definições de sysctl
+### Regras udev
 
-    ```sh title="Reverter kernel.sched_rt_runtime_us= para o seu valor predefinido"
-    sudo micro /etc/sysctl.d/99-kernel-sched-rt.conf # Se o ficheiro não existir, este comando cria e permite-lhe editar o ficheiro
-    kernel.sched_rt_runtime_us=950000
-    ```
+O mesmo vale para regras udev. Pode criar os seus próprios overrides criando um novo ficheiro em `/etc/udev/rules.d/` com o mesmo nome que o ficheiro original.
 
-</Steps>
+:::tip[Utilize o seguinte comando para encontrar os ficheiros originais]
+```sh
+pacman -Ql cachyos-settings | grep udev
+```
+:::
 
-## Regras udev (udev Rules)
+<details>
+    <summary>Exemplo de override de regra udev</summary>
+    1. Verifique a regra udev original do CachyOS:
+        ```sh
+        cat /usr/lib/udev/rules.d/60-ioschedulers.rules
+        ```
+        <details>
+            <summary>Saída:</summary>
+                ```sh
+                # HDD
+                ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", \
+                    ATTR{queue/scheduler}="bfq"
 
-- [Regras ZRAM](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/30-zram.rules) - Define o swappiness do ZRAM para um valor mais agressivo, para que a cache tenha maior probabilidade de fazer swap para o ZRAM
-- [Permissões HPET](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/40-hpet-permissions.rules) - Permite o acesso aos nós de dispositivo `rtc0` e `hpet` pelo grupo audio
-- [Gestão de Energia SATA](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/50-sata.rules) - Define a política de gestão de energia dos dispositivos SATA para `max_performance`. Apenas se o dispositivo suportar LPM.
-- [Regras de Agendador de I/O](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/60-ioschedulers.rules) - Seleciona o agendador (scheduler) ideal para cada tipo de unidade (HDD, SSD, NVMe)
-- [Regras hdparm](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/69-hdparm.rules) - Define HDDs SATA e IDE para o desempenho máximo
-- [NVIDIA RTD3](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/71-nvidia.rules) - Configura a funcionalidade de gestão dinâmica de energia para a geração de GPUs Turing. `O RTD3 não funciona corretamente em GPUs Turing com os módulos open`
-- [Latência de DMA da CPU](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/99-cpu-dma-latency.rules) - Permite o acesso ao nó de dispositivo `cpu_dma_latency` pelo grupo audio
-- [PM snd_hda_intel](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/20-audio-pm.rules) - Define a poupança de energia para `0` quando ligado à corrente (AC Power) e restaura o valor anterior ao mudar para a bateria
+                # SSD
+                ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="mq-deadline"
 
-## Opções de modprobe
+                # NVMe SSD
+                ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="none"
+                ```
+        </details>
+        Agora imagine que deseja alterar o agendador de I/O para SSDs e NVMe para `kyber` em vez de `mq-deadline` e `none`, respetivamente. Pode fazer isso criando um ficheiro de override.
+    2. Crie um novo ficheiro em `/etc/udev/rules.d` para substituir a regra original:
+        ```sh
+        sudo micro /etc/udev/rules.d/60-ioschedulers.rules # Se o ficheiro não existir, este comando cria e permite-lhe editar o ficheiro
+        # HDD
+        ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", \
+            ATTR{queue/scheduler}="bfq"
 
-- Força o controlador AMDGPU em Southern Islands (GCN 1.0) e Sea Islands (GCN 2.0)
-- Ativa [vários ajustes](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/modprobe.d/nvidia.conf) para NVIDIA
-- Coloca módulos watchdog na lista negra (blacklist)
-- Desativa o power_save para o controlador de áudio **sna_hda_intel**
+        # SSD
+        ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", \
+            ATTR{queue/scheduler}="kyber"
 
-## Scripts de Auxílio (Helper Scripts)
+        # NVMe SSD
+        ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", \
+            ATTR{queue/scheduler}="kyber"
+        ```
+    3. Guarde o ficheiro premindo `CTRL + S` e saia do editor premindo `CTRL + Q`.
+    4. Após fazer alterações nas regras udev, certifique-se de recarregar as regras e ativá-las:
 
-- `cachyos-bugreport.sh` - Recolhe vários registos (logs) do `inxi`, `dmesg` e `journalctl` para ajudar na resolução de problemas
-- `game-performance` - Script wrapper para o `powerprofilesctl` para mudar para o perfil de desempenho a pedido. Consulte [Mudança de Perfil de Energia a Pedido](/configuration/gaming#power-profile-switching-on-demand)
-- `dlss-swapper` - Script wrapper para forçar a predefinição de DLSS mais recente em jogos que suportam a tecnologia
-- `dlss-swapper-dll` - Semelhante ao `dlss-swapper`, mas requer a atualização manual da biblioteca `nvngx_dlss.dll` fornecida com o jogo; pode funcionar com jogos que tenham problemas com a versão regular do script
-- `kerver` - Script de qualidade de vida para mostrar informações sobre o kernel atual
-- `paste-cachyos` - Script para colar a saída do terminal para ficheiros de texto a partir do sistema
-
-    <Tabs>
-        <TabItem label="Carregar ficheiros de texto">
-            ```sh
-            paste-cachyos /path/to/file
-            ```
-        </TabItem>
-        <TabItem label="Carregar a Saída do Terminal">
-            ```sh
-            <command> | paste-cachyos
-            ```
-        </TabItem>
-    </Tabs>
-
-- [pci-latency](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/pci-latency) - Reduz o valor de `latency_timer` para `80` em placas de som PCI e redefine todos os outros dispositivos PCI para `20` e `0`
-    ```sh title="Ativar pci-latency em todo o sistema"
-    sudo systemctl enable --now pci-latency.service
-    ```
-- `sbctl-batch-sign` - Script de auxílio para assinar facilmente imagens de kernel e binários EFI para o Secure Boot, guardando-os na base de dados do sbctl
-- `topmem` - Mostra estatísticas de RAM, swap e ksm de 10 processos por ordem decrescente
-- `zink-run` - Facilita a execução de um programa OpenGL através do controlador Zink Gallium
-
-
-## Outras configurações
-
-### Ajustes de Utilização de Memória
-
-- Configuração do THP Shrinker `max_ptes_none = 409`
-- Define o tamanho máximo de `50MB` para o journal do systemd
-- [ZRAM Generator](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/systemd/zram-generator.conf) - Define o ZRAM com o mesmo tamanho da RAM e utiliza ZSTD para compressão
-
-### Regras Ananicy-cpp
-
-- [ananicy-cpp](https://gitlab.com/ananicy-cpp/ananicy-cpp) com [conjuntos de regras mantidos pela comunidade](https://github.com/CachyOS/ananicy-rules)
-
-### Modificações de Rede
-
-- [systemd-resolved como o Resolvedor de DNS predefinido](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/NetworkManager/conf.d/dns.conf) para o NetworkManager
-
-### Qualidade de Vida (QoL) em NTP
-
-- Servidor preferencial definido para `Cloudflare`
-- Servidores de recurso (fallback): `Google` e `Arch Linux`
-
-### Ajustes de Serviços systemd
-
-- Tempo limite (timeout) para iniciar um serviço/unidade definido para `15s`
-- Tempo limite para parar um serviço/unidade definido para `10s`
-- Limite flexível (soft limit) para descritores de ficheiros abertos definido para `2048`
-- Limite rígido (hard limit) para descritores de ficheiros abertos definido para `2097152`
-
-### X.Org
-
-- Ativa o [Toque para Clicar (Tap to Click)](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/share/X11/xorg.conf.d/20-touchpad.conf) por predefinição em todas as sessões X11
+        ```sh
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger
+        ```
+</details>
