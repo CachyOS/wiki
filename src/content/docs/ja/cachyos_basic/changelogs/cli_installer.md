@@ -1,99 +1,98 @@
 ---
 title: CLI インストーラー
 description: CLI インストーラーの更新ログ
-ai_translated: true
 ---
 # 0.8.4
 
-## 新機能 ✨
+## Features ✨
 
-- **パーティション処理の改善:** インストーラーのパーティション処理を大幅にリファクタリング・改善し、正確性と信頼性を向上しました。
-- **カーネルパラメーターの生成:** 検出したパーティション構成に基づいて、インストーラーがカーネルパラメーターを自動生成するようになりました。
-- **`gucc` ライブラリの強化:** `gucc` ライブラリを大幅に強化し、rEFInd のインストールと設定機能も含むようになりました。
+- **Improved Partition Handling:**  Significant refactoring and improvements have been made to how the installer handles partitions, leading to better accuracy and reliability.
+- **Kernel Parameter Generation:** The installer now automatically generates kernel parameters based on the detected partition scheme.
+- **Enhanced `gucc` Library:**  The `gucc` library has been significantly enhanced, now encompassing refind installation and configuration capabilities.
 
-## メンテナンス 🧹
+## Chores 🧹
 
-- **clang-format と clang-tidy:** clang-format と clang-tidy を適用し、コードベースの一貫性と品質を向上しました。
-- **`string_view` を使ったリファクタリング:** コードベースの複数の箇所で `string_view` リテラルを使用し、パフォーマンスと可読性を向上しました。
-- **doctest の導入:** C の assert を doctest に置き換え、より堅牢で詳細な情報を得られるテストにしました。
-- **テストのリファクタリング:** テストスイートをリファクタリングし、明確さとメンテナンス性を向上しました。
-- **`gucc` での rEFInd の処理:** rEFInd 関連のコードをリファクタリングして `gucc` ライブラリに移動し、構成とメンテナンス性を改善しました。
+- **Clang-Format and Clang-Tidy:** Codebase consistency and quality have been improved through the application of clang-format and clang-tidy.
+- **Refactoring with String Views:**  Several areas of the codebase now utilize string_view literals for improved performance and readability.
+- **Doctest Implementation:**  C asserts have been replaced with doctest for more robust and informative testing.
+- **Refactored Tests:** Test suites have been refactored for clarity and maintainability.
+- **Refind Handling in `gucc`:**  Refind-related code has been refactored and moved into the `gucc` library for better organization and maintainability.
 
-## 修正 🐛
+## Bug Fixes 🐛
 
-- **Btrfs サブボリュームの検出:** 既存の Btrfs サブボリュームの検出に関する問題を修正しました。
-- **パーティション情報の正確性:** パーティション情報を正確に収集・表示できるよう改善しました。
-- **rEFInd の root マウントポイント:** rEFInd が使用する root マウントポイントに影響するバグを修正しました。
-- **UUID の検出:** 初期化時のパーティション UUID の検出処理を改善しました。
-- **Meson ビルドの修正:** Meson のビルド中に発生する問題を修正しました。
-- **Btrfs サブボリュームの追加:** 開発環境で Btrfs サブボリュームを追加する際のバグを修正しました。
-- **事前定義済み設定の rootfs:** 事前定義済み設定から生成されたパーティション構成の rootfs に関する問題を修正しました。
-- **rEFInd の読み書き可能なマウント:** rEFInd が必要なパーティションを読み書き可能な権限でマウントするようにしました。
+- **Btrfs Subvolume Detection:** Issues with detecting existing btrfs subvolumes have been resolved.
+- **Partition Information Accuracy:** Improvements have been made to ensure the accurate collection and display of partition information.
+- **Root Mount Point for Refind:**  A bug affecting the root mount point used by refind has been fixed.
+- **UUID Detection:** The process of detecting partition UUIDs during initialization has been improved.
+- **Meson Build Fixes:**  Issues encountered during the meson build process have been addressed.
+- **Btrfs Subvolume Appending:**  A bug related to appending btrfs subvolumes in development environments has been fixed.
+- **Rootfs in Predefined Configurations:**  An issue with the rootfs of partition schemes derived from predefined configurations has been resolved.
+- **Refind Read-Write Mounting:**  Ensured that refind mounts the necessary partitions with read-write permissions.
 
 # 0.8.3
 
-## メンテナンス 🧹
+## Chores 🧹
 
-- CPR 依存パッケージを新しいバージョンに更新し、機能を改善しました。
-- 一貫性とパフォーマンスの向上のため、CTRE (Compile Time Regular Expressions ライブラリ) が C++23 規格を使用するよう明示的に指定しました。
-- ネットワークの遅延や応答の遅れに対応するため、ユーティリティセクションの接続チェックのタイムアウトを延長しました。
+- Updated the CPR dependency to a newer version for improved functionality.
+- Explicitly instructed CTRE (Compile Time Regular Expressions library) to utilize the C++23 standard for consistency and potential performance enhancements.
+- Increased the connection check timeout in the utilities section to accommodate potential network delays or slow responses.
 
 # 0.8.2
 
-## 修正 🐛
+## Fixes 🐛
 
-- `gucc` が Btrfs サブボリュームのマウントポイントを正しく処理できない問題を修正しました。
-- 異なる Btrfs サブボリュームのマウント状態を処理できるよう、`gucc` を改善しました。
+- Resolved an issue where "gucc" didn't correctly handle btrfs subvolume mountpoints.
+- Improved "gucc" to handle different btrfs subvolume mount statuses.
 
-## メンテナンス 🧹
+## Chores 🧹
 
-- README ファイルの誤字を修正し、バージョン情報を更新しました。
+- Fixed a typo in the README file and updated the version information.
 
 # 0.8.1
 
-## 修正 🐛
+## Fixes 🐛
 
-- Oracle VM 上で ISA リポジトリが誤って有効化される問題を修正しました。
-- コマンドの表記における不一致を修正し、ユーザー体験を改善しました。
+- Resolved an issue where ISA repos were incorrectly enabled on Oracle VM.
+- Addressed command style inconsistencies for improved user experience.
 
-## メンテナンス 🧹
+## Chores 🧹
 
-- rEFInd に関連する不要な ucode ロジックを削除し、コードベースを簡素化しました。
+- Removed unnecessary ucode logic related to refind, streamlining the codebase.
 
 # 0.8.0
 
-## 新機能 ✨
+## Features ✨
 
-- ネットワークパッケージプロファイル用のパーサーを追加しました。
-- `gucc` で解析した TOML ファイルから環境パッケージを取得できるようになりました。
-- URL からファイルをダウンロードするヘルパー関数を `gucc` に実装しました 📥。
-- URL からのネットワークプロファイル取得に対応し、`gucc` 内にフォールバック機構も追加しました。
-- バイナリ配布物にネットワークプロファイルのインストールを統合しました。
-- 指定されたパーティションのマウントと検出ロジックを `gucc` に移動しました。
-- 外部コマンドをより安全に実行するため、`utils::exec_checked` を導入しました。
+- Added parser for network package profiles.
+- Introduced the ability to fetch environment packages from a TOML file parsed by gucc.
+- Implemented a helper function in gucc to download files from URLs 📥.
+- Added support for fetching network profiles from a URL with a fallback mechanism within gucc.
+- Integrated the installation of network profiles with the binary distribution.
+- Moved the mounting of specified partitions and detection logic into gucc.
+- Introduced `utils::exec_checked` for safer execution of external commands.
 
-## 改善 ✅
+## Improvements ✅
 
-- `gucc` の crypttab 機能に対するテストカバレッジを拡充しました 🧪。
-- `gucc` のロガーを適切に設定し、ログ出力を改善しました。
-- **C++ のバージョンを C++23 に更新** ⬆️。
-- `std::ranges` や `contains` などの C++23 機能を使用するようコードベースをリファクタリングし、可読性と効率を向上しました。
-- 複数のコンポーネントをリファクタリングし、`utils::exec_checked` を使用するようにしました。
+- Enhanced test coverage for crypttab functionality in gucc 🧪.
+- Improved logging in gucc by setting up the logger appropriately.
+- **Updated C++ version to C++23** ⬆️.
+- Refactored codebase to utilize C++23 features like `std::ranges` and `contains` for better readability and efficiency.
+- Refactored various components to utilize `utils::exec_checked`.
 
-## 修正 🐛
+## Fixes 🐛
 
-- `gucc` 内でライブラリの型がハードコードされていた問題を修正しました。
-- `gucc` にロガーの実装とヘッダーファイルがない問題を修正しました。
-- 非開発環境向けのビルドで CPR ライブラリを有効にしました。
-- 静的ビルド処理を修正しました。
-- コミット [`a70e641e364`](https://github.com/CachyOS/New-Cli-Installer/commit/a70e641e364) で発生した問題を修正しました。
-- TUI コンポーネントのコンパイルエラーを修正しました。
-- FTXUI の `range-v3` への依存関係が public でなかった問題を修正しました。
+- Resolved an issue with hardcoded library types in gucc.
+- Addressed missing logger implementation and header file in gucc.
+- Enabled CPR library for non-development environment builds.
+- Fixed static build process.
+- Addressed issues introduced in commit [`a70e641e364`](https://github.com/CachyOS/New-Cli-Installer/commit/a70e641e364).
+- Fixed compilation errors in the TUI component.
+- Corrected a dependency issue where FTXUI's dependency on range-v3 was not public.
 
-## メンテナンス 🧹
+## Chores 🧹
 
-- CI チェックとビルド処理を更新し、関連する問題を修正しました。
-- バイナリ配布物とともにネットワークプロファイルをインストールする処理を削除しました。
-- TUI, utils, chwd_profiles, user, tests の各コンポーネントをリファクタリングし、コードを整理しました。
-- インストーラーの依存パッケージから使用されていない `range-v3` ライブラリを削除しました。
-- README ファイルを更新しました。
+- Updated CI checks, build processes, and fixed related issues.
+- Removed the reverted installation of network profiles alongside the binary distribution.
+- Refactored and cleaned up code in various components: TUI, utils, chwd_profiles, user, and tests.
+- Removed the unused range-v3 library from installer dependencies.
+- Updated README file.
