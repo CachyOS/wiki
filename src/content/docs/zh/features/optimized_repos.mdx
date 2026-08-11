@@ -1,0 +1,317 @@
+---
+title: 优化软件仓库
+description: 关于我们优化软件仓库的信息
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+为了提供性能优化的发行版，CachyOS 专门为 `x86-64-v3`、`x86-64-v4` 和 `Zen4+` 架构重新编译 Arch Linux 软件包。
+
+- **x86-64-v3：** 与 x86-64 相比，性能提升 5%-20%。
+- **x86-64-v4：** 通过 AVX512 支持提供显著的性能提升，具体取决于工作负载。
+- **Zen 4/5：** 除了 x86-64-v4 指令集外，还添加了以下指令：
+
+```text
+abm, adx, aes, avx512bf16, avx512bitalg, avx512ifma, avx512vbmi, avx512vbmi2, avx512vnni,
+avx512vpopctndq, clflushopt, clwb, clzero, fsgsbase, gfni, mwaitx, pclmul, pku, prfchw,
+rpdid, rdrnd, rdseed, sha, sse4a, vaes, vockmulqdq, wbnoinvd, savec, xsaveopt, xsaves
+```
+
+要了解有关这些架构的更多信息，[查看这篇 Wikipedia 文章](https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels)。
+
+## 自定义软件包
+
+我们的 [CachyOS-PKGBUILDs](https://github.com/CachyOS/CachyOS-PKGBUILDS) 仓库包含持续接收更新、补丁和向后移植修复的软件包。
+为提升性能，我们会根据需要有选择地实施 PGO、LTO 和 BOLT 优化。
+我们还维护了一些 `-git` 软件包，例如 mesa-git。
+
+### [CachyOS 软件包搜索](<https://packages.cachyos.org/>)
+
+介绍 CachyOS 的全新软件包搜索页面。您现在可以轻松搜索软件包并访问详细信息，如编译架构、最后更新日期等。
+
+<ImageComponent imgsrc={import('~/assets/images/cachyos-package-dashboard.png')} />
+
+## 从 x86-64-v3 迁移到 x86-64-v4 或 znver4
+
+如果您当前使用的是 x86-64-v3 仓库，且您的新 CPU 支持 x86-64-v4（或 AMD Zen 4/5），可以按照以下步骤进行迁移：
+
+### 检查 CPU 兼容性
+
+:::caution
+Intel 12 代（Alder Lake）及更新 CPU 可能会报告支持 `x86-64-v4`，但实际上它们**无法运行 AVX-512 指令**。
+
+为什么？
+- **混合架构冲突**：大核"P-cores"支持 AVX-512，但小核"E-cores"不支持。在 E-cores 活跃时运行 AVX-512 会导致不稳定。
+- **Intel 的解决方法**：为避免此不匹配，Intel 通过两种方式禁用了 AVX-512：
+  - **微码/BIOS 更新**（早期 Alder Lake 芯片）：通过避免或回滚微码更新可以重新启用 AVX-512。
+  - **硬件熔断**（2022 年后期及以后芯片）：AVX-512 在出厂时永久禁用，无法重新启用。
+
+由于 `x86-64-v4` 需要 AVX-512，这些 CPU 应视为**仅支持 x86-64-v3**。
+:::
+
+- 验证 `x86-64-v4` 支持：
+  ```sh title='运行以下命令：'
+  /lib/ld-linux-x86-64.so.2 --help | grep supported
+  ```
+  - ✅ `x86-64-v4 (supported, searched)` → CPU 支持 v4
+  - ❌ 没有 `x86-64-v4` 行 → CPU 不支持 v4
+
+示例（CPU 支持 v4）：
+  ```sh
+  $ /lib/ld-linux-x86-64.so.2 --help | grep supported
+    x86-64-v2 (supported, searched)
+    x86-64-v3 (supported, searched)
+    x86-64-v4 (supported, searched)
+  ```
+
+- 对于 AMD Zen 4/5 CPU，检查您的 CPU 是否报告 znver4 或 znver5：
+  - 运行以下命令：
+    ```sh
+    gcc -march=native -Q --help=target 2>&1 | grep -Po "^\s+-march=\s+\K(\w+)\$"
+    ```
+    如果输出为 `znver4` 或 `znver5`，则可以继续迁移。
+
+:::note
+x86-64-v4 和 znver4 都使用相同的镜像列表 `/etc/pacman.d/cachyos-v4-mirrorlist`。
+:::
+
+:::note[如果需要回退到某个仓库或撤销更改，此指南将对您有用。]
+示例：从 znver4 回退到 v4。
+:::
+
+### 迁移步骤
+
+<Steps>
+1. 编辑 `/etc/pacman.conf`，根据您的 CPU 支持将 `x86-64-v3` 仓库替换为以下之一：
+    <Tabs>
+        <TabItem label="x86-64-v4">
+            ```ini title='/etc/pacman.conf'
+            [cachyos-v4]
+            Include = /etc/pacman.d/cachyos-v4-mirrorlist
+
+            [cachyos-core-v4]
+            Include = /etc/pacman.d/cachyos-v4-mirrorlist
+
+            [cachyos-extra-v4]
+            Include = /etc/pacman.d/cachyos-v4-mirrorlist
+            ```
+        </TabItem>
+
+        <TabItem label="znver4（仅限 AMD Zen 4/5）">
+          ```ini title='/etc/pacman.conf'
+          [cachyos-znver4]
+          Include = /etc/pacman.d/cachyos-v4-mirrorlist
+
+          [cachyos-core-znver4]
+          Include = /etc/pacman.d/cachyos-v4-mirrorlist
+
+          [cachyos-extra-znver4]
+          Include = /etc/pacman.d/cachyos-v4-mirrorlist
+        ```
+        </TabItem>
+        保持 `[cachyos]`、`[core]`、`[extra]` 和 `[multilib]` 不变。
+        </Tabs>
+2. 清除软件包缓存并同步数据库：
+
+   ```sh
+   sudo pacman -Scc   # 两次确认输入 'y'
+   sudo pacman -Sy
+   ```
+
+3. 重新安装所有软件包以切换到新架构：
+
+   ```sh
+   pacman -Qqn | sudo pacman -S -
+   ```
+
+4. 重启系统。
+</Steps>
+
+---
+
+## 将我们的仓库添加到现有 Arch Linux 安装
+
+:::tip
+在考虑添加我们的仓库之前，请先查看 **[CPU 兼容性列表](/zh/installation/installation_prepare#x86_64-microarchitecture-level-support)**
+:::
+
+<Tabs>
+
+<TabItem label='自动'>
+
+我们提供了一个脚本，可自动将我们的仓库安装到您的现有基于 Arch 的安装中。
+
+```sh
+curl https://mirror.cachyos.org/cachyos-repo.tar.xz -o cachyos-repo.tar.xz
+tar xvf cachyos-repo.tar.xz && cd cachyos-repo
+sudo ./cachyos-repo.sh
+```
+
+:::tip[脚本工作原理]
+此脚本检测您的 CPU 能够使用的指令集，并安装最适合它的仓库版本。它还会备份您的旧 `pacman.conf`，以便通过脚本删除仓库。
+:::
+
+</TabItem>
+
+<TabItem label='手动'>
+    :::caution
+    安装 CachyOS Pacman 将安装一个来自 CachyOS 的分支版 pacman，添加了如"INSTALLED_FROM"和自动架构检查等功能。Pacman 6.1 添加了功能验证功能，使用 Arch Linux pacman 时可能会导致警告。我们正在与 Arch Linux 合作以恢复适当的兼容性。如果您想避免这种情况，请不要添加包含自定义 pacman 的"cachyos"仓库。所有其他仓库如 cachyos-v3、cachyos-v4、cachyos-extra/core-v3/4 都可以安全添加。
+    :::
+
+<Steps>
+
+1. 安装 CachyOS keyring：
+
+   ```sh
+   # 导入仓库密钥
+   sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
+   # 签名仓库密钥
+   sudo pacman-key --lsign-key F3B607488DB35A47
+   ```
+2. 安装必要的软件包：
+
+   ```sh
+   sudo pacman -U 'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-20240331-1-any.pkg.tar.zst' \
+   'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-mirrorlist-27-1-any.pkg.tar.zst' \
+   'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v3-mirrorlist-27-1-any.pkg.tar.zst' \
+   'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-v4-mirrorlist-27-1-any.pkg.tar.zst' \
+   'https://mirror.cachyos.org/repo/x86_64/cachyos/pacman-7.1.0.r9.g54d9411-4-x86_64.pkg.tar.zst'
+   ```
+3. 将 CachyOS 仓库添加到 pacman 配置文件：
+   :::note
+   这些仓库应放在 Arch Linux 仓库之前。
+   :::
+
+   ```ini
+   # /etc/pacman.conf
+   # If your CPU only supports x86-64, then add the [cachyos] repositories
+   # cachyos repos
+   [cachyos]
+   Include = /etc/pacman.d/cachyos-mirrorlist
+
+   # If your CPU supports x86-64-v3, then add [cachyos-v3],[cachyos-core-v3],[cachyos-extra-v3] and [cachyos]
+   # cachyos repos
+
+   [cachyos-v3]
+   Include = /etc/pacman.d/cachyos-v3-mirrorlist
+   [cachyos-core-v3]
+   Include = /etc/pacman.d/cachyos-v3-mirrorlist
+   [cachyos-extra-v3]
+   Include = /etc/pacman.d/cachyos-v3-mirrorlist
+   [cachyos]
+   Include = /etc/pacman.d/cachyos-mirrorlist
+
+   # If your CPU supports x86-64-v4, then add [cachyos-v4], [cachyos-core-v4], [cachyos-extra-v4] and [cachyos]
+   # cachyos repos
+
+   [cachyos-v4]
+   Include = /etc/pacman.d/cachyos-v4-mirrorlist
+   [cachyos-core-v4]
+   Include = /etc/pacman.d/cachyos-v4-mirrorlist
+   [cachyos-extra-v4]
+   Include = /etc/pacman.d/cachyos-v4-mirrorlist
+   [cachyos]
+   Include = /etc/pacman.d/cachyos-mirrorlist
+
+   # If your CPU is based on Zen 4 or Zen 5, add [cachyos-znver4], [cachyos-core-znver4], [cachyos-extra-znver4] and [cachyos]
+
+   [cachyos-znver4]
+   Include = /etc/pacman.d/cachyos-v4-mirrorlist
+   [cachyos-core-znver4]
+   Include = /etc/pacman.d/cachyos-v4-mirrorlist
+   [cachyos-extra-znver4]
+   Include = /etc/pacman.d/cachyos-v4-mirrorlist
+   [cachyos]
+   Include = /etc/pacman.d/cachyos-mirrorlist
+   ```
+      :::tip
+   为了从 `v4` 仓库过渡到 `znver4`
+
+   添加上一步中的相应条目并执行以下命令：
+    ```sh
+    sudo pacman -Scc # 两次输入 Y
+    sudo pacman -Sy
+    pacman -Qqn | sudo pacman -S --needed - # 将所有 v4 软件包替换为 znver4 软件包
+    # 重启系统
+    ```
+   :::
+
+4. 最后，使用 CachyOS 软件包更新系统：
+   ```sh
+   sudo pacman -Syu
+   ```
+
+</Steps>
+
+</TabItem>
+
+</Tabs>
+
+### 卸载 CachyOS 仓库
+
+<Tabs>
+<TabItem label='自动'>
+
+**运行以下命令从系统中删除 CachyOS 仓库：**
+```sh
+curl https://mirror.cachyos.org/cachyos-repo.tar.xz -o cachyos-repo.tar.xz
+tar xvf cachyos-repo.tar.xz
+cd cachyos-repo
+sudo ./cachyos-repo.sh --remove
+```
+
+</TabItem>
+
+<TabItem label='手动'>
+
+<Steps>
+
+1. 从 Arch Linux 重新安装原始 pacman：
+   ```sh
+   sudo pacman -S core/pacman
+   ```
+2. 执行以下命令：
+   ```sh
+   # 避免收到 %INSTALLED_DB% 警告
+   sudo find /var/lib/pacman/local/ -type f -name "desc" -exec sed -i '/^%INSTALLED_DB%$/,+2d' {} \;
+   ```
+3. 从备份恢复 pacman 配置文件：
+   ```sh
+   sudo mv /etc/pacman.conf.bak /etc/pacman.conf
+   ```
+4. 使用以下命令切换回默认 Arch Linux 软件包：
+   ```sh
+   pacman -Qqn | sudo pacman -S -
+   sudo pacman -Syu
+   ```
+</Steps>
+
+</TabItem>
+</Tabs>
+
+## 测试和基准测试
+
+Phoronix 的 Michael 已经对 CachyOS 进行了多次基准测试，结果显示在基准测试图表和所有测试结果的几何平均值中大多领先。
+自 2022 年的首次基准测试以来，CachyOS 在可用性和性能方面已经发展和成熟了许多。
+
+如果您想了解有关我们仓库性能提升的更多信息，请查看以下链接。
+
+* **2021 年 3 月 14 日：** Arch Linux 的 **Mateusz Jończyk** 发起了一项关于 x86-64-v3 影响的 RFC 讨论，展示了一些初步结果。
+  * [RFC: Use x86_64-v2 architecture](https://lists.archlinux.org/pipermail/arch-general/2021-March/048739.html)
+
+* **2022 年 12 月 9 日：** Michael 完成的首次基准测试。
+  * [The Performance Of Arch Linux Powered CachyOS](https://www.phoronix.com/review/cachyos-linux-perf)
+
+* **2024 年 2 月 29 日：** Phoronix 进行了另一次基准测试，展示了 x86-64-v4、x86-64-v3 和 x86-64（通用）软件包之间的差异。从 PHP 或 GCC 等示例来看，我们自定义 PKGBUILDs 的地方有明显的性能提升。
+  * [Arch Linux CachyOS Benchmarks Of x86-64-v3 & x86-64-v4 Repositories](https://www.phoronix.com/review/cachyos-x86-64-v3-v4)
+
+* **2024 年 8 月 20 日：** Michael 发布了 AMD Ryzen 9950x 的新基准测试，其中包括 CachyOS 和其他一些 Linux 发行版。
+  * [Intel Continues To Show AMD The Importance Of Software Optimizations: 16% More Ryzen 9 9950X Performance](https://www.phoronix.com/review/linux-os-amd-ryzen9-9950x)
+   :::note
+   Liquid-DSP 和 RocksDB 使用 Phoronix Benchmark Suite 编译，忽略了 /etc/makepkg.conf 中指定的编译标志，导致 CachyOS 的性能结果出乎意料。
+   :::

@@ -1,0 +1,121 @@
+---
+title: 使用 CachyOS Settings 安装另一个 DE/WM
+description: 在使用提供的设置的情况下，如何在现有 CachyOS 安装中安装另一个 DE/WM
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+## 安装另一个桌面环境前需要考虑的事项
+
+- 安装多个 DE/WM 可能导致冲突，尤其是与 settings managers、默认应用程序和外观配置（如 GTK 或 QT 应用中的主题和图标）相关。
+- 冲突最严重的两个是 GNOME 和 KDE Plasma，因为它们使用完全不同的 toolkit（分别是 GTK 和 QT），并且运行许多可能干扰其他 DE/WM 的后台服务。
+  - 这并不意味着你不能一起安装它们，只是要注意可能会遇到一些问题。
+- 包膨胀：主流 DE 如 GNOME 和 KDE Plasma 可能包含数百个你可能不需要或不想要的包。
+- 你可以轻松地将许多 Window Manager 与不同 DE 混合使用。例如，你可以同时安装 KDE Plasma 和 Hyprland，并在登录时选择使用哪一个。
+- CachyOS 提供的 DE/WM 包含各自的 `-settings` 包。例如：`cachyos-i3wm-settings`
+  - 这意味着什么？如果你想安装另一个 DE/WM 并希望拥有我们提供的相同外观或更改集，你应该安装相应的 `-settings` 包。
+  - 这些包将配置文件放置在 `/etc/skel/`，作为新用户账户的模板。
+  - 重要：对于现有用户，这些设置**不会自动应用**，以防止覆盖你的个人配置。
+
+## 如何使用 CachyOS 设置安装另一个 DE/WM
+
+:::note
+安装另一个 DE 或 WM 时有两个选择：
+1. **保留当前配置文件**，并根据需要手动调整或从 `/etc/skel` 复制文件。
+  - 例如：如果你只想要 i3wm 配置文件但想保留当前 GTK 主题，只需将 i3wm 相关文件从 `/etc/skel/.config/i3` 复制到你的主目录。
+2. **用 `/etc/skel/` 中的新文件覆盖当前配置文件**
+  - 这给你完整的 CachyOS 体验，但会替换当前设置。
+:::
+
+:::tip
+利用 Arch Wiki 获取相应 DE 或 WM 的更深入信息。
+:::
+
+<Steps>
+1. 备份主目录中的当前配置文件：
+    ```bash
+    mkdir -p ~/config-backup
+    cp -r ~/.config ~/config-backup/
+    cp -r ~/.local ~/config-backup/
+    ```
+2. 如果已安装，卸载当前的 `-settings` 包。例如，如果你使用 KDE，运行：
+    ```bash
+    sudo pacman -R cachyos-kde-settings
+    ```
+    :::note
+    移除此包不会移除任何当前 DE/WM 配置。它只移除存储在 `/etc/skel` 中的文件。
+    :::
+3. 安装新的 DE/WM 及其相应的 `-settings` 包。例如，安装 i3wm：
+    ```bash
+    sudo pacman -Syu i3-wm cachyos-i3wm-settings
+    ```
+    :::tip
+    你可以在 [CachyOS PKGBUILDs GitHub repository](https://github.com/CachyOS/CachyOS-PKGBUILDS) 中查看可用 DE/WM 及其相应 `-settings` 包的列表。
+    :::
+    或使用你选择的文件管理器。
+4. 将新配置文件从 `/etc/skel` 复制到你的主目录：
+    - 例如：`cachyos-i3wm-settings` 包包含 Kvantum、dunst、GTK、i3、polybar、QT5 和 rofi 的配置。
+    - 使用文件管理器的方法：
+        <Steps>
+        1. 打开文件管理器（Dolphin、Nautilus、Thunar 等）
+        2. 启用查看隐藏文件：
+            - **大多数文件管理器**：`Ctrl+H` 或通过菜单：`View` → `Show Hidden Files`
+        3. 在文件管理器中导航到 `/etc/skel`。
+        4. 选择所有文件和文件夹（`Ctrl+A`）
+        5. 复制它们（`Ctrl+C`）
+        6. 导航到你的主目录
+        7. 粘贴文件（`Ctrl+V`）
+        8. 当提示覆盖时，选择：
+            - 对于文件夹选择 **"Merge"** 或 **"Apply to All"**
+            - 对于要更新的单个文件选择 **"Replace"**
+            :::caution
+            替换文件时要小心。这将覆盖你的当前配置！
+            :::
+        </Steps>
+        - 或者如果你熟悉终端，直接使用终端。
+</Steps>
+
+安装新的 DE/WM 并复制配置文件后，注销当前 session。在登录屏幕，选择新安装的 DE/WM 从 session 选项中，然后重新登录。
+
+### 常见问题
+
+#### 如何恢复到之前的 DE/WM 配置？
+
+- 从创建的备份恢复：
+  ```bash
+  cp -r ~/config-backup/.config/* ~/.config/
+  cp -r ~/config-backup/.local/* ~/.local/
+  ```
+  或使用文件管理器。
+
+#### `-settings` 包的新更新怎么办？
+
+- 当 `-settings` 包更新时，新文件放置在 `/etc/skel/`，但你的用户配置在 `/home/` 保持不变。要应用更新，你需要手动再次从 `/etc/skel/` 复制更新的文件。
+
+你必须留意相应 DE/WM 的 GitHub repository 中的任何更改。
+
+以下是 CachyOS 维护的所有不同 DE 和 WM 的 repository 列表：
+- [KDE Plasma](https://github.com/CachyOS/cachyos-kde-settings)
+- [GNOME](https://github.com/CachyOS/cachyos-gnome-settings)
+- [Niri](https://github.com/cachyos/cachyos-niri-noctalia)
+- [Hyprland](https://github.com/CachyOS/cachyos-hypr-noctalia)
+- [MangoWM](https://github.com/CachyOS/cachyos-mangowc-dms)
+- [i3](https://github.com/CachyOS/cachyos-i3wm-settings)
+- [Qtile](https://github.com/CachyOS/cachyos-qtile-settings)
+- [Wayfire](https://github.com/CachyOS/cachyos-wayfire-settings)
+
+我们安装 CachyOS 时提供的所有其他 DE 和 WM 目前没有自己的 `-settings` 包。意味着它们只是 vanilla 版本。
+
+#### 我可以同时安装多个 DE/WM 设置包吗？
+
+- 可以也不可以。你可以安装多个 DE/WM，但建议一次只安装一个 `-settings` 包以避免 `/etc/skel/` 中的冲突。否则 pacman 在尝试安装另一个 `-settings` 包时可能会抱怨文件冲突。
+
+#### "CachyOS Settings" 是什么？
+
+"CachyOS Settings" 是各种桌面环境和窗口管理器的便捷配置包。它们根据你选择的 DE/WM 提供预配置的设置、主题和调整。
+
+当你安装这些包之一时，它还将自动安装不属于 vanilla DE/WM 的额外依赖，如主题、图标、壁纸和附加应用程序。例如在 `cachyos-i3wm-settings` 中，我们安装 `rofi`、`dunst`、`picom`、`lxappearance` 等。

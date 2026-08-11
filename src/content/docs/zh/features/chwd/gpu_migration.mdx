@@ -1,0 +1,94 @@
+---
+title: 在 NVIDIA 和 AMD GPU 之间切换
+description: 在 CachyOS 上从 NVIDIA 迁移到 AMD（反之亦然）的说明。
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+ai_translated: true
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::note[如果您在现有 CachyOS 安装中更换 GPU（NVIDIA ↔ AMD），此指南适用。]
+:::
+
+## 前提条件
+  - 更换的 GPU 已正确安装并连接。
+  - 确保系统已完全更新
+    ```bash
+    sudo pacman -Syu
+    ```
+
+### 迁移步骤
+
+<Tabs>
+    <TabItem label='从 NVIDIA 到 AMD'>
+        虽然 AMD 驱动程序已包含在 Linux 内核中，但您可能需要清理旧的 NVIDIA 配置并确保安装了必要的 AMD 软件包。
+        <Steps>
+            1. 检查当前安装了哪个 NVIDIA 驱动程序配置文件：
+                ```bash
+                sudo chwd --list-installed
+                ```
+            2. 使用 `-r` 标志移除特定配置文件：
+                ```bash
+                sudo chwd -r <profile-name>
+                ```
+            3. 关闭系统并安装 AMD GPU。
+            4. 启动后，使用 chwd 自动检测 GPU 并安装正确的 AMD 软件包。
+                ```bash
+                sudo chwd -a
+                ```
+            5. 安装新驱动程序后，更新 initramfs 和 bootloader 配置
+                > CachyOS 包含一个 pacman hook，在添加或删除驱动程序时会自动重建 initramfs。
+                > 这确保启动时加载正确的驱动程序。
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            6. 重启以应用更改。
+                ```bash
+                sudo reboot
+                ```
+            7. 重启后，验证 AMD 驱动程序是否已激活。
+                ```bash
+                vulkaninfo | grep "deviceName"
+                ```
+                或
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                如果看到列出的 AMD GPU，则驱动程序工作正常。
+        </Steps>
+    </TabItem>
+    <TabItem label='从 AMD 到 NVIDIA'>
+        <Steps>
+            1. 清理剩余的 AMD 软件包。
+                ```bash
+                sudo chwd -r amd
+                ```
+            2. 关闭系统并安装 NVIDIA GPU。
+            3. 启动后，使用 chwd 自动检测 GPU 并安装正确的 NVIDIA 软件包。
+                ```bash
+                sudo chwd -a
+                ```
+            4. 安装新驱动程序后，更新 initramfs 和 bootloader 配置
+                > CachyOS 包含一个 pacman hook，在添加或删除驱动程序时会自动重建 initramfs。
+                > 这确保启动时加载正确的驱动程序。
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            5. 重启以应用更改。
+                ```bash
+                sudo reboot
+                ```
+            6. 重启后，验证 NVIDIA 驱动程序是否已激活。
+                ```bash
+                nvidia-smi
+                ```
+                或
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                如果看到列出的 NVIDIA GPU，则驱动程序工作正常。
+        </Steps>
+    </TabItem>
+</Tabs>

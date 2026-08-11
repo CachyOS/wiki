@@ -1,0 +1,59 @@
+---
+title: Virtio-Venus
+description: 通过 Vulkan 实现 3D 加速
+ai_translated: true
+---
+
+## 使用场景：
+- **接近原生性能的 3D 加速**
+
+在使用 `libvulkan` 的操作系统中，如 **Linux**、**BSD** 和 **Android**，你可以通过将 VM 的调用转换到 vulkan，然后直接到你的 GPU 并返回，从而实现接近原生的性能，而无需将其传递给 VM。
+
+不幸的是，**Virtio-Venus** 不在 **VMM** 中，因此你需要使用 **qemu-cli**。
+你需要记下你给 VM 起的名字以及它的位置。
+
+## 在 qemu-cli 中使用 Virtio-Venus：
+安装符合条件的 VM 后，你可以打开终端并为你的虚拟机创建 qemu-cli 提示符，以下是我的 CachyOS VM 示例：
+
+```sh
+qemu-system-x86_64                                                                             \
+    -enable-kvm                \
+    -M q35                     \
+    -smp 6                     \
+    -m 12G                     \
+    -cpu host                  \
+    -net nic,model=virtio      \
+    -net user,hostfwd=tcp::2222-:22     \
+    -device virtio-sound-pci,audiodev=my_audiodev -audiodev pipewire,id=my_audiodev  \
+    -device virtio-vga-gl,hostmem=4G,blob=true,venus=true  \
+    -vga none                  \
+    -display gtk,gl=on,show-cursor=on \
+    -usb -device usb-tablet    \
+    -object memory-backend-memfd,id=mem1,size=12G \
+    -machine memory-backend=mem1 \
+    -drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd \
+    -drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd \
+    -drive file=.local/share/libvirt/images/archlinux.qcow2
+```
+
+## 解释：
+
+- `-smp 6` 表示 6 个 CPU 核心
+- `-m 12G` 表示 12GB RAM
+- `-net user,hostfwd=tcp::2222-:22` 表示端口 22 从主机转发到 VM 的端口 2222，
+因此如果你想从某个设备 ssh 连接到 VM，你会这样做：
+
+```sh
+ssh -p 2222 vmusername@vmipaddress
+```
+
+- `-device virtio-vga-gl,hostmem=4G,blob=true,venus=true` 这是 venus 驱动，不幸的是尚未在
+virt-manager 中，一旦有了，除了 user mode 之外，整个部分都将被取代。
+- `-hostmem=4G` 表示我让 VM 可以使用我 GPU 上多达 4GB 的 VRAM。
+- `-object memory-backend-memfd,id=mem1,size=12G` 在这部分中，size 是你分配的 RAM，因此我的情况是 12GB。
+- `-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd` 这是 VM 的固件
+文件，这只是它的路径。
+- `-drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd` 这是 VM 的 nvram，没有
+这个或将其设置为只读，VM 将无法运行。
+- `-drive file=.local/share/libvirt/images/archlinux.qcow2` 这是 .qcow2 文件（VM 的存储）的路径。\
+（你可以看到我的音频设备在这种情况下不是 `ich9` 而是 `pipewire`，这无关紧要。）

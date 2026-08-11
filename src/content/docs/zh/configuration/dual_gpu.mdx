@@ -1,0 +1,114 @@
+---
+title: Dual GPU Setup Guide
+ai_translated: true
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+## What's hybrid graphics?
+
+Hybrid graphics 是一种硬件配置，你有两张显卡可以协同工作。这种方式主要见于笔记本电脑，你有 CPU 的集成显卡（iGPU）和独立显卡（dGPU）。
+
+主要优势是集成显卡应该（但不一定）仅用于低配置任务，如上网、看视频等。另一方面，独立显卡用于高性能任务，如游戏、视频编辑、3D 建模等。
+
+因此，如果两个 GPU 分担"大"和"小"任务，那么如果当前只有"小"任务在运行，我们就不需要使用 dGPU，所以可以简单地禁用它（就像睡眠一样），从而显著降低功耗。这样当再次需要我们的 dGPU（运行使用它的应用程序）时，它将唤醒并开始工作。
+
+## What's PRIME Offload?
+
+PRIME 是 Linux 中用于处理不同混合显卡的统一技术，如 NVIDIA Optimus/AMD Dynamic Switchable Graphics。PRIME Offload 是在 Linux 中将渲染执行从一个 GPU 移动到另一个 GPU 的理念的实现。
+
+闭源 NVIDIA 驱动中的 PRIME 支持实际上从 435.17 驱动才开始。所以如果你是过时的 390xx 甚至 340xx 驱动分支的用户，PRIME Offload 对你不起作用。注意，我们也强烈不鼓励你使用处理混合显卡的过时方法，如 nvidia-xrun 或 Bumblebee。它们已过时且不受支持（Bumblebee 已超过 8 年未更新），仅依赖 hacks 且性能低下。同时 Nouveau 驱动支持 PRIME Offload，可以作为旧 dGPU 的替代方案。
+
+在 CachyOS 中，**你不需要配置任何东西来让 PRIME Offload 工作**。使用 nvidia-utils 包和 cachyos-settings，你已经拥有了使用 PRIME Offload 所需的一切。
+
+另外，请避免使用 optimus-manager 等工具。它们可能看起来很方便，但相信我们，它们可能导致很多问题，如果你的 dGPU 支持 PRIME Offload 和动态电源管理，你真的不需要它们。
+
+### How to use PRIME Offload
+
+要指示 PRIME 你想使用独立显卡而不是集成显卡，必须在运行程序之前指定一些环境变量：
+
+```bash
+__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia <program>
+```
+
+这组变量看起来非常繁琐且容易忘记，所以你可以安装 `nvidia-prime` 包（`sudo pacman -S nvidia-prime`），它包含所有这些变量的脚本别名。然后使用它运行应用程序将如下所示：
+
+```bash
+prime-run <program>
+```
+
+其中 `<program>` 是运行你应用程序的命令名称。
+
+:::note
+一些 DX12 游戏即使使用 `prime-run` 也有选择 dGPU 的问题。
+要解决这个问题，在 `prime-run` wrapper 脚本之前添加环境变量 `VK_DRIVER_FILES=/usr/share/vulkan/icd.d/nvidia_icd.json`。
+:::
+
+对于两张显卡都由开源 Mesa 驱动管理的配置（例如 AMD+AMD、AMD+Intel，甚至 Intel+NVIDIA，其中 NVIDIA 独立显卡由开源 Nouveau 驱动管理），不需要配置任何东西，要使用独立显卡，只需在启动应用程序或游戏之前指定 `DRI_PRIME=1` 环境变量，类似于前面为 NVIDIA 描述的所有那些变量，或使用下面讨论的现成图形方法。
+
+## Graphical method
+
+你可能会发现使用终端通过 `prime-run` 启动所有需要的应用程序不方便。
+幸运的是，一些应用程序和桌面环境提供了控制特定应用程序使用哪个 GPU 的工具。
+
+### Lutris
+
+要在 Lutris 中配置游戏使用独立显卡运行，你需要进入设置（窗口右下角的三条线和"Preferences"按钮）。接下来，进入 *"Global Options"* -> *"Display"*。在这里，你可以选择游戏运行的 GPU。
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/lutris-prime.png')} />
+
+### Steam
+
+Steam 没有特定设置来强制游戏使用独立显卡。但是，你可以在启动前点击齿轮图标访问游戏的属性。在"Launch options"字段中，你可以添加 prime-run 命令或环境变量。
+示例：
+
+```bash
+prime-run %command%
+```
+
+确保在 `prime-run` 后添加 `%command%`。记住游戏选项在占位符之后，而系统环境变量或命令应该在其之前。
+
+要在集成显卡上运行游戏，请使用以下启动选项作为 Radeon 集成显卡的示例。这对于低功耗游戏可以获得更长的电池续航和更低的风扇噪音。
+
+```bash
+VK_DRIVER_FILES=/usr/share/vulkan/icd.d/radeon_icd.x86_64.json:/usr/share/vulkan/icd.d/radeon_icd.i686.json %command%
+```
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/steam-prime.png')} />
+
+### KDE Plasma
+
+Plasma 有一个非常方便的方法来设置使用独立显卡启动应用程序。但是，此方法仅在你的系统上安装了 switcheroo-control 包及其相应服务时才有效。
+
+在 CachyOS 的新安装中，此包和服务应已通过 chwd 默认启用。
+
+```bash
+sudo pacman -S switcheroo-control
+sudo systemctl enable --now switcheroo-control
+```
+
+执行两个命令后，右键点击桌面或应用程序菜单中想要的桌面条目，然后进入 *"Properties"* -> *"Application"* -> *"Advanced Options"*。
+
+你应该勾选 *"Run using dedicated graphics card"* 复选框。
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/plasma-prime.jpg')} />
+
+:::note
+使用 switcheroo-control 允许这些复选框在所有 PRIME 配置上工作，即使没有 NVIDIA dGPU 的配置，如 AMD-APU+AMD-Dedicated。
+:::
+
+### GNOME
+
+在 GNOME 上，你也应该如上安装 switcheroo-control，右键点击应用程序图标并选择 *"Run using discrete graphics"*。但请注意，GNOME 不记住此选择，下次你从图标运行应用程序时，它将使用集成显卡而不是独立显卡。
+
+### Cinnamon
+
+与 Plasma 类似，Cinnamon 也允许你为特定应用程序选择 GPU。右键点击应用程序的桌面条目，进入 Properties，并启用相关选项。
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cinnamon-prime.png')} />
+
+如果不可用，确保你已安装 `switcheroo-control` 并启用了其服务，因为所有桌面环境都依赖它来实现此功能。

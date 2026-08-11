@@ -1,0 +1,493 @@
+---
+title: General System Tweaks
+description: Things you can do to tweak after installing
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
+---
+
+import { Tabs, TabItem, Steps, LinkButton, Icon } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+## AMD 性能调整
+
+### AMD P-State 驱动
+---------------------------
+
+`amd-pstate` 是 AMD CPU 性能缩放驱动，在 Linux 内核的現代 AMD APU 和 CPU 系列中引入了新的 CPU 频率控制机制。新机制基于 Collaborative Processor Performance Control（CPPC），比传统 ACPI 硬件 P-States 提供更细粒度的频率管理。
+
+当前 AMD CPU/APU 平台使用 ACPI P-states 驱动管理 CPU 频率和时钟，仅在 3 个 P-states 之间切换。CPPC 取代了 ACPI P-states 控制，为 Linux 内核提供了灵活的、低延迟的接口，直接与硬件通信性能提示。
+
+以下是 `amd_pstate` 驱动的 3 种操作模式和在启动时使用的内核 cmdline 条目：
+
+- AMD P-State（Non-Autonomous Mode）：`amd_pstate=passive`
+- AMD P-State Guided（Guided Autonomous Mode）：`amd_pstate=guided`
+- AMD P-State EPP（Autonomous Mode）：`amd_pstate=active`
+
+:::note
+当没有明确配置时，默认使用 AMD P-State EPP Driver。
+:::
+
+你也可以在运行时切换操作模式以测试选项：
+
+- **Autonomous mode**：平台仅考虑 Minimum performance、Maximum performance 和 Energy Performance Preference 设置的值。
+   ```sh
+   echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+- **Guided-autonomous mode**：平台根据当前工作负载和 OS 通过 minimum 和 maximum performance registers 设置的限制设置 operating performance level。
+   ```sh
+   echo guided | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+- **Non-autonomous mode**：平台通过 Desired Performance Register 直接从 OS 获取期望的性能级别。
+   ```sh
+   echo passive | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+更多深入信息：
+
+<LinkButton icon="external" href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html">AMD P-State Documentation</LinkButton>
+<LinkButton icon="external" href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html#amd-pstate-driver-operation-modes">AMD P-State Driver Operation Modes</LinkButton>
+<LinkButton icon="external" href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html#user-space-interface-in-sysfs-per-policy-control">AMD P-State User Space Interface</LinkButton>
+
+### 配置 AMD P-State EPP
+
+要使用 P-State EPP，有两个 CPU 频率缩放 governors 可用：`powersave` 和 `performance`。建议使用 powersave governor 并设置偏好。
+
+*   设置 powersave governor：`sudo cpupower frequency-set -g powersave`
+*   设置 performance governor：`sudo cpupower frequency-set -g performance`
+
+要设置偏好，使用所需偏好运行以下命令：
+
+```sh
+echo power | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
+```
+
+可用偏好：`performance`、`power`、`balance_power`、`balance_performance`
+
+<LinkButton icon="external" href="https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/">Official Benchmark for each preference</LinkButton>
+
+### AMD 3D V-Cache 优化器
+
+AMD 发布了一个 patch 来优化 Dual CCD 3D CPUs（如 7950X3D 和 7900X3D）上的 Cache Scheduling。
+你需要在 BIOS 的 CPPC Option 下设置为"Driver"Option。这将允许通过 sysfs 覆盖使用的模式。
+
+有两种模式：
+
+1. Frequency
+2. Cache
+
+如果设置为 `cache`，驱动将尝试首先将任务放在具有更高 Cache 的 CCD 上，这主要在玩游戏时有利。
+`frequency` 选项将尝试将任务放在第二个 CCD 上，它的频率比 3D Cache CCD 更高。
+
+Frequency（Default）：
+```sh
+echo frequency | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
+```
+
+Cache：
+```sh
+echo cache | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
+```
+
+更改模式后，amd preferred core stats 应提供不同的排名。你可以用以下命令读取：
+```sh
+grep -v /sys/devices/system/cpu/cpu*/cpufreq/amd_pstate_prefcore_ranking
+```
+
+### AMD P-State 核心性能提升
+
+AMD Core Performance Boost 又名 AMD Turbo Core 是 AMD 的动态频率缩放技术，允许处理器在某些版本的处理器中动态调整和控制处理器运行频率，在需要时提高性能，同时在正常运行期间保持较低的功耗和热参数。
+
+要在 CachyOS 上管理 AMD CPB，你可以使用以下命令：
+
+```sh
+❯ echo 0 | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/boost # Disable boost for all cores
+❯ lscpu -ae # This shows that AMD CPB is disabled globally
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
+  0    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1212.8250
+  1    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1394.2180
+  2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 1204.4600
+
+❯ echo 1 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/boost # Enables boost on cpu0
+❯ lscpu -ae
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
+  0    0      0    0 0:0:0:0          yes 4564.0000 400.0000 1393.2380
+  1    0      0    0 0:0:0:0          yes 3301.0000 400.0000  400.0000
+  2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 2157.8469
+```
+
+CachyOS 还提供 `power-profiles-daemon` 的一个版本，它 backports 一个启用 AMD CPB 支持的 commit。如果使用 `powersave` profile，AMD CPB 将被禁用，在 `balanced` 或 `performance` 上启用。
+
+更多信息见：
+- https://lore.kernel.org/linux-pm/1a78eeaa-fadd-4734-aaeb-2fe11e96e198@amd.com/T/#m4a0c8917ea8fb033504055bd61512c80c85410c8
+- https://lore.kernel.org/linux-pm/20240624213400.67773-1-mario.limonciello@amd.com/
+
+## 性能改进
+
+### [ADIOS I/O Scheduler](https://github.com/firelzrd/adios)
+
+由 [firelzrd](https://github.com/firelzrd) 创建
+
+:::note
+CachyOS 在内核中包含 ADIOS 的 stable branch。
+
+**linux-cachyos** 中的当前版本：`3.2.0`
+
+**linux-cachyos-rc** 中的当前版本：`3.2.0`
+:::
+
+来自 README 的简要介绍：
+
+- *ADIOS（Adaptive Deadline I/O Scheduler）是 Linux 内核的 block layer I/O scheduler，专为现代多队列 block devices（blk-mq）设计。它旨在通过结合 deadline scheduling 原理和基于学习的自适应延迟控制机制，为 I/O 操作提供低延迟。*
+  - *受 mq-deadline 和 Kyber I/O schedulers 的概念启发并在此基础上构建。其核心功能是根据过去的性能和请求特征（操作类型、大小）预测 I/O 完成延迟，并使用此预测动态调整请求 deadlines 和 batching behavior。*
+
+TLDR：ADIOS 通过学习存储设备的延迟配置文件，并使用该知识动态设置 I/O 请求的 deadlines 来工作。它将请求优先分为四个 tier，从关键系统操作（Tier 0）到后台任务（Tier 3），以确保流畅的用户体验。虽然它专注于响应性，但其行为可以通过 sysfs 设置微调以平衡延迟和吞吐量。
+
+对于 live demo，你可以观看此 [video](https://www.youtube.com/watch?v=L9WDcEeHgy4)
+
+#### 如何启用 ADIOS
+
+<Tabs>
+    <TabItem label='Temporarily (takes effect at runtime)'>
+        此方法为当前 session 设置 scheduler。更改将在重启后丢失。
+        ```sh
+        sync && echo adios | sudo tee /sys/block/<yourdrive>/queue/scheduler
+            # Replace <yourdrive> with the actual drive identifier (e.g. sda, sdb, nvme0n1)
+        ```
+    </TabItem>
+    <TabItem label='Persistent after reboot'>
+        <Steps>
+            1. 在你喜欢的文本编辑器（例如 nano、micro、vim）中打开或创建新的 udev rules 文件
+                ```sh title='示例'
+                sudo nano /etc/udev/rules.d/60-ioschedulers.rules
+                ```
+            2. 在文件中添加以下规则。这些规则根据驱动器类型（HDD、SSD 或 NVMe）自动应用特定的 I/O scheduler。
+                ```text
+                # HDD
+                ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", \
+                    ATTR{queue/scheduler}="bfq"
+
+                # SSD
+                ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="adios"
+
+                # NVMe SSD
+                ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="adios"
+                ```
+              3. 保存文件并关闭编辑器。
+              4. 重新加载 `udev` rules 以立即应用更改而无需重启。
+                  ```sh
+                  sudo udevadm control --reload-rules
+                  sudo udevadm trigger
+                  ```
+        </Steps>
+    </TabItem>
+</Tabs>
+
+FAQ：
+
+- 如果它提高了响应性，为什么默认不启用？
+  - ADIOS 仍在积极开发和持续测试中。虽然它为桌面响应性提供了显著好处，但尚未被认为足够稳定以作为所有工作负载和硬件类型的默认值。在某些边缘情况下，bug 可能导致系统锁定等问题。因此，它是希望测试并从其最新改进中受益的用户的可选功能。
+
+### NVIDIA Smooth Motion（RTX 40xx 和 50xx 系列）
+
+:::note[Game Compatibility.]
+运行 DX11、DX12 和 Vulkan 的游戏。见 FAQ 了解 OpenGL 的 workaround。
+
+DXVK 和 VKD3D 都工作正常。
+
+**仅支持 64bit applications。Smooth Motion 不适用于 32bit applications（例如旧 DX11 游戏）。**
+
+:::
+
+来自 NVIDIA 文档的直接引用：
+
+*NVIDIA Smooth Motion 是一种新的基于驱动的 AI 模型，通过在两个渲染帧之间推断额外帧来提供更平滑的游戏体验。对于没有 DLSS Frame Generation 的游戏，NVIDIA Smooth Motion 是在 GeForce RTX 40 Series 和更新 GPU 上增强体验的新选项。*
+
+- 如何为游戏启用 NVIDIA Smooth Motion：
+  - 添加以下环境变量：
+    ```text
+    NVPRESENT_ENABLE_SMOOTH_MOTION=1
+    ```
+
+FAQ：
+
+- 为什么使用 Smooth Motion 而不是 DLSS Frame Generation？
+  - 当游戏不支持 DLSS Frame Generation 时，Smooth motion 由于其基于驱动的 AI 模型而作为替代方案。
+- 使用 Smooth Motion 有任何缺点吗？
+  - 是的，启用 Smooth Motion 可能会由于额外的帧推断过程引入轻微的输入延迟。
+  - 容易引起第三方 overlays 的问题。为了避免这种情况。包含以下环境变量：
+    ```text
+    NVPRESENT_QUEUE_FAMILY=1
+    ```
+    :::note[使用此变量可能会观察到性能影响。]
+    :::
+- 为什么 MangoHud 不报告增加的 framerate？
+  - 目前，MangoHud 不计算 Smooth Motion 生成的额外帧，导致报告的 framerate 误导。
+    - 使用显示器内置的 FPS counter 将提供正确的 framerate。
+- 与 DLSS Frame Generation 相比图像质量如何？
+  - 图像质量不如 DLSS Frame Generation，并可能引入 artifacts，特别是在快速运动场景中。
+- 它与外部 frame capping tools 兼容吗？例如：MangoHud。
+  - 不。In-game cap 应该工作正常。
+- Smooth Motion 可以与 DLSS Frame Generation 结合使用吗？
+  - 不。一次只能激活一种 frame generation 方法。
+- Smooth Motion 可以与 OpenGL applications 一起使用吗？
+  - 不直接，因为它是作为 Vulkan layer 实现的，但可以通过利用 [Zink](https://docs.mesa3d.org/drivers/zink.html) 将 OpenGL 调用翻译为 Vulkan：
+    ```text
+    NVPRESENT_ENABLE_SMOOTH_MOTION=1 zink-run <command>
+    ```
+    :::note
+    使用 Zink 可能会对性能产生影响，并可能在某些游戏中引入图形 glitches。
+
+    Dual GPU 用户需要设置 `DRI_PRIME=1` 以使用 Nvidia dGPU，而不是使用更典型的 GPU 选择方法。
+    :::
+
+## 省电调整
+
+### thermald
+
+`thermald` 是 Intel 系统的热管理 daemon。它监控热传感器并应用冷却操作，如 CPU 功耗限制或性能状态更改，在固件需要使用更激进的 throttling 之前。
+
+它主要用于 Intel laptops、convertibles、tablets、handhelds 和通过 `/sys/class/thermal` 暴露 Intel 热控制的小型 PC。支持的系统通常使用 Intel CPU 温度传感器、Intel P-state、Intel power clamp、RAPL、`INT340X` 或 ACPI DPTF/adaptive thermal tables。AMD CPUs 不受 `thermald` 支持。
+
+安装并启用它：
+
+```sh
+sudo pacman -S thermald
+sudo systemctl enable --now thermald.service
+```
+
+检查它是否正确启动：
+
+```sh
+systemctl status thermald.service
+journalctl -u thermald.service -b
+```
+
+更多信息：
+
+<LinkButton icon="external" href="https://github.com/intel/thermal_daemon">thermald upstream repository</LinkButton>
+<LinkButton icon="external" href="https://man.archlinux.org/man/thermald.8">thermald manual page</LinkButton>
+
+### 启用 RCU Lazy
+
+RCU Lazy 有助于减少空闲或轻负载系统的功耗。这对笔记本电脑和 handheld devices 有用。
+改进在功耗方面为 5-10%。然而，重要的是要注意，此功耗功能可能以略微降低的性能为代价，具体取决于场景。
+linux-cachyos-deckify kernel 将默认启用此选项，因为对这些设备来说，省电是关键和必要的。
+
+要启用 RCU Lazy，将以下参数添加到你的内核 [cmdline](/zh/configuration/boot_manager_configuration/) 参数列表：
+```text
+rcutree.enable_rcu_lazy=1
+```
+
+## NVIDIA 故障排除
+
+### NVIDIA GSP 固件
+
+NVIDIA GSP Firmware 可以**"在某些情况下"**导致性能下降。虽然 555.58.02 NVIDIA Driver 已经很大程度上解决了这个问题，但它在某些系统上可能仍然存在。
+如果你在 KDE 中遇到卡顿或在某些情况下性能不佳，你可以用以下配置文件禁用 GSP Firmware：
+`/etc/modprobe.d/nvidia-gsp.conf`
+
+```text
+options nvidia NVreg_EnableGpuFirmware=0
+```
+
+创建文件后，执行以下命令：
+```sh
+sudo mkinitcpio -P
+```
+
+:::note
+NVIDIA 的 [open kernel modules](https://github.com/NVIDIA/open-gpu-kernel-modules) 基于 GSP firmware。因此，GSP 无法禁用，使用它们时此 modprobe option 将被忽略。使用 `linux-cachyos-nvidia` 或 `nvidia-dkms`。
+:::
+
+通常建议在每次安装新的 NVIDIA driver 后测试 GSP firmware，因为它经常引入有益功能。此外，NVIDIA 主要开始使用 GSP firmware 进行 QA 测试。
+
+## 音频和软件增强
+
+### 增强笔记本扬声器音质
+
+Laptop speakers 由于其紧凑的尺寸和有限的硬件能力，通常产生单薄和令人失望的声音。[EasyEffects](https://wiki.archlinux.org/title/PipeWire#EasyEffects) 可以通过应用各种音频效果和自定义配置，显著提高笔记本电脑内置扬声器的音质。
+
+要开始，你需要安装 EasyEffects 和所需的依赖：
+
+```bash
+# Install EasyEffects
+sudo pacman -S easyeffects
+# Install additional plugins for more effects
+sudo pacman -S lsp-plugins-lv2
+sudo pacman -S zam-plugins
+sudo pacman -S calf
+sudo pacman -S mda.lv2
+```
+
+#### 配置
+
+按照以下步骤配置 EasyEffects：
+
+1. 从应用程序菜单启动 EasyEffects，或在终端中输入 `easyeffects`。
+2. 导航到 **Output** 选项卡以管理应用于扬声器音频的效果。
+3. 切换到 **Effects** 选项卡以添加、修改或调整音频效果。
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects.png')} />
+
+##### 使用社区预设
+
+为了快速有效的设置，从**社区创建的 presets**开始，针对各种音频场景定制：
+
+1. 从 [EasyEffects Community Presets](https://github.com/wwmm/easyeffects/wiki/Community-presets) 仓库下载 presets。
+2. 在 EasyEffects 中，点击 **Presets** 按钮并选择 **"Import preset from local storage"**。
+3. 找到并选择下载的 preset 文件。
+4. 导入后，preset 将出现在你的列表中——点击 **"Load"** 将其应用到音频输出。
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects-presets.png')} />
+
+##### 创建自定义配置文件
+
+为了更个性化的音频体验，创建定制于你笔记本电脑扬声器的自定义 profile：
+
+1. 点击 Presets 菜单中的 **"+"** 按钮创建新 preset（例如，命名为 **"Laptop Speakers"**）。
+2. 选择 **"Load"** 激活新 preset。
+3. 在 **Output** > **Effects** 选项卡中添加和配置效果，尝试均衡器、低音增强器或立体声加宽器等选项。
+
+##### 使用卷积器效果（Dolby Atmos 笔记本）
+
+**Convolver effect** 可以通过应用模拟高质量音频环境的 impulse responses 来显著提高声音。然而，它需要精确设置：
+
+1. 在 **Effects** 选项卡中将 **Convolver** 效果添加到你的效果链。
+2. 加载特定于你笔记本电脑型号的 impulse response 文件（`.wav` 格式），如果可用。你可以在网上搜索这些文件，资源如：
+   - https://wiki.archlinux.org/title/Lenovo_ThinkPad_T14_(AMD)_Gen_4#Speakers
+   - https://github.com/m4tx/thinkpad-p14s-g4-linux/#sound
+   - https://github.com/shuhaowu/linux-thinkpad-speaker-improvements/
+3. **防止 clipping**：Convolver effect 可能会显著增加音量。在效果链中的 Convolver 之后添加 **Limiter** 效果以控制峰值并避免失真。
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects-convolver.png')} />
+
+#### 获得最佳效果的提示
+
+- **尝试**不同的 presets 以确定最适合你特定笔记本电脑型号和个人声音偏好的选项。
+- **逐步调整**单个效果以防止失真或不自然的聲音输出。
+- **通过切换比较**：频繁切换 EasyEffects **on/off** 以评估相对于默认音频的改进。
+- 搜索**设备特定的 presets 或 Convolver impulse responses**，以获得如 **Framework Laptop 13** 或 **ThinkPad T14** 等流行笔记本电脑型号的定制结果。
+- **自动启动**：通过应用程序的偏好设置配置 EasyEffects 在启动时自动启动，以确保自定义 profile 始终应用。
+- **为多个设备自动加载 presets**：使用 **PipeWire** > **Presets Autoloading** 选项卡将特定 presets 与不同输出设备关联（例如 Speakers vs. Headphones），实现无缝切换。<ImageComponent imgsrc={import('~/assets/images/easyeffects-autoloading.png')} />
+
+#### EasyEffects 的替代方案
+
+作为替代，你可以尝试使用 [JDSP4Linux](https://github.com/Audio4Linux/JDSP4Linux)，它是 PipeWire 和 PulseAudio clients 的音频效果处理器。
+
+### OBS Studio
+
+我们在仓库中提供了一个自定义的 obs-studio-browser 包，推荐而不是标准的 `obs-studio` 包。它包含 patches 来修复一些常见问题，如 cuda-errors 和 virtual camera 问题。
+
+```sh title='打开终端并运行以下命令'
+sudo pacman -S obs-studio-browser
+# If you previously had the obs-studio installed then pacman is going to ask you if
+# you want to replace it, if so enter "Y".
+```
+
+## Swap 配置
+
+### 从 ZRam 切换到 Zswap
+
+默认情况下，CachyOS 使用 ZRam 进行 swap 管理。然而，如果你更喜欢使用 Zswap，可以按照以下步骤轻松切换：
+
+:::note
+本指南假设你有默认的 CachyOS 设置，ZRam 已启用，安装期间没有创建 swap partition 或 file。
+:::
+
+<Steps>
+    1. 通过添加内核参数禁用 ZRam。[Edit your bootloader configuration](/zh/configuration/boot_manager_configuration) 并添加以下行：
+        ```text
+        systemd.zram=0
+        ```
+    2. 通过添加以下内核参数启用 Zswap：
+        ```text
+        zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=30
+        ```
+    3. 创建空覆盖文件以禁用 [CachyOS's udev rule](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/30-zram.rules)，它禁用 Zswap：
+        ```bash
+        sudo touch /etc/udev/rules.d/30-zram.rules
+        ```
+    4. 为 Zswap 创建 swap file。
+        <details>
+            <summary>If you're using Btrfs：</summary>
+                <Steps>
+                    1. 为 swap file 创建 Btrfs subvolume：
+                        ```bash
+                        sudo btrfs subvolume create /swap
+                        ```
+                    2. 通过更改 `--size` 参数创建你想要的大小的 swap file（例如 8GB）：
+                        ```bash "--size"
+                        sudo btrfs filesystem mkswapfile --size 4g --uuid clear /swap/swapfile
+                        ```
+                    3. 激活 swap file：
+                        ```bash
+                        sudo swapon /swap/swapfile
+                        ```
+                    4. 将 swap file 添加到 `/etc/fstab` 以使其在重启后持久：
+                        ```bash
+                        echo "/swap/swapfile none swap defaults 0 0" | sudo tee -a /etc/fstab
+                        ```
+                </Steps>
+        </details>
+        <details>
+            <summary>If you're not using Btrfs：</summary>
+            <Steps>
+                1. 通过更改 `count=` 参数创建你想要的大小的 swap file（例如 8GB）：
+                    ```bash "count=8"
+                    sudo dd if=/dev/zero of=/swapfile bs=1G count=8
+                    ```
+                2. 为 swap file 设置正确的权限：
+                    ```bash
+                    sudo chmod 0600 /swapfile
+                    ```
+                3. 格式化 swap file：
+                    ```bash
+                    sudo mkswap /swapfile
+                    ```
+                4. 将 swap file 添加到 `/etc/fstab` 以使其在重启后持久：
+                    ```bash
+                    echo "/swapfile none swap defaults 0 0" | sudo tee -a /etc/fstab
+                    ```
+                5. 激活 swap file：
+                    ```
+                    sudo swapon /swapfile
+                    ```
+            </Steps>
+        </details>
+    5. 将 lz4 压缩模块添加到 `mkinitcpio.conf` 配置文件：
+        1. 用文本编辑器打开文件：
+            ```bash
+            sudo nano /etc/mkinitcpio.conf
+            ```
+        2. 找到 `MODULES` 数组并添加 `lz4`。它应该看起来像这样：
+            ```text
+            MODULES=(... lz4)
+            ```
+        3. 按 `Ctrl + O` 和 `Enter` 保存文件确认，然后用 `Ctrl + X` 退出编辑器。
+    6. 重新构建 initramfs 以应用更改。命令因 bootloader 而异：
+        <details>
+            <summary>systemd-boot</summary>
+            ```bash
+            sudo sdboot-manage gen
+            ```
+        </details>
+        <details>
+            <summary>GRUB</summary>
+            ```bash
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+        </details>
+        <details>
+            <summary>Limine</summary>
+            ```bash
+            sudo limine-mkinitcpio
+            ```
+        </details>
+    7. 重启系统以应用所有更改。
+</Steps>

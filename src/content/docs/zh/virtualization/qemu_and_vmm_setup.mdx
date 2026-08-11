@@ -1,0 +1,68 @@
+---
+title: QEMU 和 VMM 设置
+description: 在 CachyOS 上使两个程序正常工作所需的步骤
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+ai_translated: true
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import { Steps } from '@astrojs/starlight/components';
+
+## 安装
+要在 **CachyOS** 上安装并运行 **VMM**（Virtual Machine Manager）和 **QEMU**，过程如下：
+
+```sh
+# 这将安装所需的软件包（注意下方的 "Windows 11" 注释）：
+sudo pacman -S qemu-full virt-manager swtpm
+# 强制 libvirt 使用 iptables
+echo 'firewall_backend = "iptables"' | sudo tee -a /etc/libvirt/network.conf
+# 这将把用户添加到 "libvirt" 组，以便他们可以正常使用：
+sudo usermod -aG libvirt $USER
+# LXC 后端（可选，用于 Linux 容器，同时启用两个后端不会冲突）：
+systemctl enable --now libvirtd.service
+# QEMU 后端（用于 VM）：
+systemctl enable --now libvirtd.socket
+# 这将使 VM 启动时自动联网：
+sudo virsh net-autostart default
+# 并允许整个 VM 网络不受限制地通行：（你应该根据使用场景和安全需求考虑是否需要更细粒度的防火墙规则）
+sudo ufw route allow from 192.168.122.0/24
+```
+
+:::note[Windows 11]
+如果你要在虚拟机中安装 **Windows 11**，你需要在配置步骤中直通兼容的 TPM 模块，或者如果没有则安装 `swtpm`。
+:::
+
+## 创建 VM 的基础知识
+:::note[User Session]
+在继续之前，你可能想先简要阅读 [QEMU User Session](/zh/virtualization/qemu_user_session)。
+:::
+
+<Steps>
+
+1. 首先，启动 **VMM**，首先会出现这些连接项：<ImageComponent imgsrc={import('~/assets/images/vmmstart.png')} />
+2. 接下来，点击 `Edit -> Preferences -> ✅ Enable XML editing` 并关闭该子菜单。
+3. 现在你可以创建新的虚拟机，点击 **带星标和播放图标的屏幕** 或 `File -> New Virtual Machine`。
+4. 你会看到虚拟机创建向导，在 `Connection:` 旁边你会看到一个下拉菜单，点击它并选择适当的选项，然后继续 `Forward`。<ImageComponent imgsrc={import('~/assets/images/vmmcreatestep1.png')} />
+5. 系统会要求你定位下载的操作系统 `.iso` 镜像，点击 `Browse...` 并找到它。你可能还想添加或创建一个专门用于存储 .iso 文件的目录，可以通过点击 `+ (Add Pool)` 按钮来完成。如果你想为此重用 `User Session` 路径，该路径位于 `~/.config/libvirt/`。<ImageComponent imgsrc={import('~/assets/images/vmmcreatestep2browse.png')} />
+**如果你的操作系统没有被自动检测**，只需取消勾选自动检测并手动选择最接近的匹配项，`例如：CachyOS = Arch Linux`。
+
+6. 第 3 步很简单，只需给你的 VM 分配你喜欢的 RAM 和 CPU 核心数量，这不是固定的，可以轻松更改。
+7. 在第 4 步中，你可以选择创建虚拟存储空间（这会创建一个 **.qcow2** 文件），或者 VM 使用的路径。
+8. 在第 5 步中，勾选 `Customize configuration before install -> Finish`。
+9. 你现在会到达这里：<ImageComponent imgsrc={import('~/assets/images/vmmprevminstall.png')} />
+如果安装 Linux VM，你应该在这里确认几件事，在 `Overview` 中确认芯片组是 **Q35**，固件是 **UEFI**。除非你安装的是非常古老的系统或在做一些奇怪的事情，否则你永远不会想要这里的任何其他变体。如果你在制作 Windows 11 VM，检查是否已添加 TPM 模块，否则前往 Add Hardware -> TPM，然后选择 Emulated 或 Passthrough（参见顶部的注释），点击 Finish 关闭子菜单。
+
+10. 现在点击 `Begin Installation`。
+11. 如果在 **Linux** VM 中（或使用 OpenGL 和/或附带 libvulkan 的其他 OS），请分别前往 [EGL Headless](/zh/virtualization/egl_headless) 和/或 [Virtio-Venus](/zh/virtualization/virtio-venus)。
+
+</Steps>
+
+### 最后说明
+如果在 `Windows 11` VM 中，为了提高性能，你可以：
+- 在客户机中安装 RedHat 的 **Virtio-Win** 驱动
+- 如果你有 Intel iGPU，可以研究 **GVT-g** 和 **MDEV**
+- 如果你有 Intel iGPU 和 dGPU，可以研究 **GVT-d**
+- 如果你有 iGPU 和 dGPU 或 2+ dGPU，并且想直通 dGPU，
+你可以研究 **VFIO**

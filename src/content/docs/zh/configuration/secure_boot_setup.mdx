@@ -1,0 +1,330 @@
+---
+title: Secure Boot Setup
+description: Set up secure boot with sbctl after installing CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+## 设置前
+
+### GRUB 引导管理器
+
+如果你使用 GRUB，运行以下命令使用 CA Keys 在 GRUB 上启用安全启动支持。
+
+```bash
+sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
+```
+
+:::note
+在引导管理器中加载不必要的模块有可能带来安全风险。
+仅在确实需要安全启动时才运行此命令。
+:::
+
+### 在 UEFI 中启用 Setup Mode
+
+首先，我们需要进入固件设置并将安全启动模式设置为 "Setup Mode"。你可以使用以下命令从
+已运行的系统重启到固件设置。
+
+```bash
+systemctl reboot --firmware-setup
+```
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/ideapad-bios-secure-boot.jpg')} />
+
+这是 Lenovo Ideapad 5 Pro 上的 BIOS 外观。重置为 setup mode 或恢复出厂密钥，然后重启回到
+系统。
+
+#### 自动重置
+
+在某些 Gigabyte 主板上，"reset to setup mode" 会立即跟随一个 "reset without saving" 对话框
+<ImageComponent imgsrc={import('~/assets/images/gigabyte-reset-without-saving.jpg')} />
+这需要拒绝，因为它会导致系统重置然后禁用 setup mode。
+
+相反，直接启动操作系统（Save & Exit，然后在 Boot Override 中选择你的引导加载程序）。
+
+#### 无 setup mode
+
+某些 MSI 和 ASUS 主板没有 Setup Mode。
+
+##### MSI
+
+将 Secure Boot Mode 设置为 "custom"，并选择 "maximum security" 兼容性选项（这很重要：使用默认模式，你可能无法从引导加载程序启动到 CachyOS！）。然后，进入 "key management" 并按照下图中的两个步骤操作：
+<br />
+<ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
+
+##### ASUS
+
+导航到 Boot → Secure Boot，将 Secure Boot Mode 设置为 Custom，然后打开 Key Management 并选择 "Delete all Secure Boot Variables"。
+
+#### 安装 sbctl 和注册密钥
+
+在继续之前，确保检查是否已安装 `sbctl`。
+
+[sbctl](https://github.com/Foxboron/sbctl) 是一个用户友好的安全启动密钥管理器，能够设置安全启动，
+提供密钥管理功能，并跟踪引导链中需要签名的文件。
+
+<details>
+    <summary>如何安装 sbctl</summary>
+    ```bash title='打开终端并运行以下命令'
+    sudo pacman -S sbctl
+    ```
+</details>
+
+现在 `sbctl` 已安装，你必须设置 sbctl 并将密钥注册到固件。这个过程非常简单，只需按照以下步骤操作。
+
+<Steps>
+1. 检查 Setup Mode 是否已启用：
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>预期输出</summary>
+        ```bash
+        Installed:      ✘ sbctl is not installed
+        Setup Mode:     ✘ Enabled
+        Secure Boot     ✘ Disabled
+        ```
+    </details>
+2. 创建你的自定义安全启动密钥：
+    ```bash
+    sudo sbctl create-keys
+    ```
+    <details>
+        <summary>成功创建密钥的示例</summary>
+        ```bash
+        Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Creating secure boot keys...✔
+        Secure boot keys created!
+        ```
+    </details>
+3. 将你的密钥与 Microsoft 的和 OEM 固件的内置密钥一起注册：
+    ```bash
+    sudo sbctl enroll-keys --microsoft --firmware-builtin
+    ```
+    <details>
+        <summary>预期输出</summary>
+        ```bash
+        Enrolling keys to EFI variables...✔
+        Enrolled keys to the EFI variables!
+        ```
+    </details>
+
+    :::caution[ASUS / Gigabyte 主板 — 不要使用 `--firmware-builtin`]
+    在某些 ASUS 和 Gigabyte 主板上，使用 `--firmware-builtin` 标志会导致重复条目
+    在 EFI 密钥变量中（例如 `builtin-db` 在 `Vendor Keys` 中出现多次）。
+    之后在 UEFI 设置中激活 Secure Boot 时，主板会检测到这个
+    不一致的密钥结构，并在引导
+    管理器加载之前抛出 **Secure Boot Violation**。
+
+    在 ASUS / Gigabyte 主板上仅使用 `--microsoft`：
+
+    ```bash
+    sudo sbctl enroll-keys --microsoft
+    ```
+
+    如果 `Vendor Keys` 显示 `microsoft builtin-db builtin-db ...`，则需要重新
+    注册密钥。重新进入 UEFI 中的 Setup Mode（使用删除所有密钥），然后运行
+    `sbctl enroll-keys --microsoft`，不带 `--firmware-builtin`。
+    :::
+
+
+4. 再次检查 sbctl 的状态，确保密钥已注册且 setup mode 已禁用：
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>预期输出</summary>
+        ```bash
+        Installed:      ✔ sbctl is installed
+        Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Setup Mode:     ✔ Disabled
+        Secure Boot     ✘ Disabled
+        Vendor Keys:    microsoft
+        ```
+    </details>
+
+    :::note[Setup Mode 显示 Enabled？]
+    如果 `Setup Mode` 显示 **Enabled**，请进入固件设置并**临时禁用 Secure Boot**。
+    启动回系统，再次检查 sbctl 的状态，继续下面的 [Signing the Kernel Image and Boot Manager](#signing-the-kernel-image-and-boot-manager)，
+    然后重启并在固件设置中重新启用 Secure Boot。
+    :::
+
+</Steps>
+
+## 签名内核映像和引导管理器
+
+<Tabs>
+<TabItem label='Limine'>
+Limine 是一个特殊的引导管理器，允许检查内核
+映像和 Limine 在引导期间使用的其他文件的哈希。如果启用了此功能，任何
+由用户手动进行的配置，例如通过
+`sbctl-batch-sign` 签名的映像，都将修改相应文件的哈希，并
+导致 Limine 的校验和验证失败。
+
+但是，在 Limine 上签名这些文件是不必要的，因为它有一个特殊的
+引导过程，绕过 EFI 链式加载和签名检查。唯一需要签名的 EFI
+二进制文件是 Limine 本身。
+
+:::caution[Limine >= 11.2.0]
+从 Limine 11.2.0 开始，当 UEFI Secure Boot 激活时，Secure Boot 策略将**严格执行**：
+
+- BLAKE2B 配置校验和**必须**注册到 Limine EFI 二进制文件中，否则 Limine 将 panic，提示：`SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED`
+- `limine.conf` 中的所有文件路径（内核、initramfs 等）**必须**附加 BLAKE2B 哈希（例如 `boot():/vmlinuz-linux#<hash>`）
+- 配置编辑器无条件禁用
+- 哈希不匹配总是导致 panic
+:::
+
+要启用自动配置校验和注册，在 `/etc/default/limine` 中设置以下内容：
+
+```sh
+ENABLE_ENROLL_LIMINE_CONFIG=yes
+```
+
+继续为 Limine 的 splash 图像生成哈希：
+
+:::note[执行以下步骤需要 root 权限，在继续之前确保使用 sudo 或切换到 root 用户。]
+:::
+
+<Steps>
+
+1. 检查配置文件中 splash 图像的当前名称和路径：
+    ```sh title="打开终端并运行以下命令："
+    sudo cat /boot/limine.conf
+    ```
+    你应该能看到这样的一行：
+    ```sh
+    wallpaper: boot():/limine-splash.png
+    ```
+2. 为 splash 图像生成 BLAKE2B 哈希并将其附加到配置文件中的路径：
+    ```sh title="运行以下命令，将路径替换为上一步中找到的路径："
+    sudo b2sum /boot/limine-splash.png
+    ```
+    这将输出一个哈希，如下例所示：
+    ```sh
+    75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+3. 从上一步复制新生成的哈希后。使用文本编辑器打开配置文件，并将哈希附加到 splash 图像的路径，如下所示：
+    :::note[不要使用上面的示例哈希，确保使用上一步中生成的哈希。]
+    :::
+    ```sh
+    wallpaper: boot():/limine-splash.png#75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+    正如你所见，哈希使用 `#` 符号附加到路径。更改后保存文件。
+
+</Steps>
+
+启用配置校验和注册并为 splash 图像生成哈希后，运行以下命令以注册配置校验和并签名 Limine 的 EFI 二进制文件：
+
+```sh
+# 使用 limine-enroll-config 注册配置校验和并签名 Limine 的 EFI 二进制文件
+# 这底层使用 sbctl
+sudo limine-enroll-config
+sudo limine-update
+```
+</TabItem>
+<TabItem label='systemd-boot'>
+
+CachyOS 提供 [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign)，
+一个脚本，从 `sudo sbctl verify` 获取需要签名的文件列表并全部签名。
+
+:::caution
+在具有单独的 `/boot` 和 `/boot/efi` 分区布局的系统上，`sbctl` 可能仅在 `/boot/efi` 中扫描 EFI 二进制文件。
+这导致 `/boot` 中的内核映像未被检测到。`sbctl-batch-sign` 通过**始终**扫描
+`/boot` 中的 `vmlinuz-*` 文件来解决这个问题。
+:::
+
+```bash
+sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is not signed
+✘ /boot/EFI/BOOT/BOOTX64.EFI is not signed
+✘ /boot/EFI/systemd/systemd-bootx64.efi is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is not signed
+
+sudo sbctl-batch-sign
+
+sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is signed
+✔ /boot/EFI/BOOT/BOOTX64.EFI is signed
+✔ /boot/EFI/systemd/systemd-bootx64.efi is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
+```
+
+现在所有文件都已签名。**重启你的系统并进入 UEFI 设置以启用 Secure Boot。**
+
+:::caution[ASUS 主板 — 启用 Secure Boot]
+某些 ASUS 主板在启用 Secure Boot 时的行为与其他厂商不同：
+
+- **使用 `Windows UEFI Mode`，而不是 `Other OS`：**
+  名称具有误导性，此设置仅控制是否强制执行 Secure Boot。
+  将 `OS Type` 设置为 `Other OS` **主动禁用** ASUS 主板上的 Secure Boot，
+  无论任何其他设置如何。`sbctl status` 将继续显示
+  `Secure Boot: Disabled`，即使重启后也是如此。
+
+- **某些 ASUS 主板上没有单独的 Secure Boot 开/关切换。**
+  Secure Boot 通过选择 `Windows UEFI Mode` 隐式激活。
+
+在这种情况下激活 Secure Boot 的正确 ASUS BIOS 配置是：
+```
+Boot → Secure Boot
+  OS Type          → Windows UEFI Mode
+  Secure Boot Mode → Custom
+```
+:::
+
+查看 [此部分作为参考](/zh/configuration/secure_boot_setup#enabling-setup-mode-in-uefi)
+
+请注意，这是一次性过程，因为使用 `-s` 标志签名文件会将这些文件保存到 `sbctl` 的数据库中。
+
+:::tip[提醒]
+`sbctl` 附带一个 [pacman hook](https://wiki.archlinux.org/title/Pacman_hook)，这意味着在内核或引导管理器更新时它将自动
+签名所有新文件。
+:::
+
+CachyOS 使用 systemd 提供的 `systemd-boot-update.service` 在重启时更新引导管理器。这意味着 `sbctl`
+pacman hook **不会**签名更新的 EFI 二进制文件。作为解决方法，我们可以直接签名引导管理器
+
+```sh
+sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+```
+</TabItem>
+</Tabs>
+
+## 安全启动状态检查
+
+要检查安全启动是否确实已启用。你可以运行以下命令之一
+
+```bash
+sudo sbctl status
+Installed:      ✓ sbctl is installed
+Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Setup Mode:     ✓ Disabled
+Secure Boot:    ✓ Enabled
+Vendor Keys:    microsoft
+
+bootctl
+System:
+      Firmware: UEFI 2.80 (INSYDE Corp. 28724.16435)
+ Firmware Arch: x64
+   Secure Boot: enabled (user)
+  TPM2 Support: yes
+  Measured UKI: no
+  Boot into FW: supported
+```
+
+## 链接与致谢
+
+- [The Arch Wiki](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
+为本指南奠定了基础。这里的大部分东西都是从那里来的。
+- [sbctl](https://github.com/Foxboron/sbctl) - 如果没有创建这个软件所做的出色工作，这个启用安全启动支持的简单指南将不可能实现。
+- [Improving the Secure Boot Experience by Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) - Morten
+"Foxboron" Linderud 的博客文章，讲述了在 `sbctl` 之前安全启动体验的复杂性。

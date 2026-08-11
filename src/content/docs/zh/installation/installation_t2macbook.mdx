@@ -1,0 +1,139 @@
+---
+title: T2 MacBook
+description: 如何在 T2 MacBook 上安装 CachyOS
+ai_translated: true
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+CachyOS 为 T2 MacBook 提供开箱即用的支持，包括所有提供的内核中的必要内核补丁。但是，需要一些关键步骤才能确保设置成功。
+
+:::caution[潜在风险]
+完全删除 macOS 存在风险，例如数据丢失或使设备无法使用。**强烈建议**保留一个 macOS 分区用于固件更新和恢复。详细信息请参阅 [T2 Linux Roadmap](https://wiki.t2linux.org/roadmap/#can-i-completely-remove-macos)。
+
+如果你仍然决定删除 macOS，请确保你有完整备份，并提前创建一个 [可启动的 macOS 安装器](https://support.apple.com/en-us/101578)。
+:::
+
+## 安装前准备
+
+创建可启动的 macOS 安装器是可选的，但如果你计划修改分区或删除 macOS，则建议这样做。它可用于固件更新、故障排除或系统恢复。详细说明请参阅 [Apple 指南](https://support.apple.com/en-us/101578)。
+
+在启动 CachyOS 安装程序**之前**，在 macOS 内执行以下步骤。
+
+### 准备 CachyOS 可启动 USB
+
+下载 [CachyOS ISO](/zh/cachyos_basic/download)，并按照 [创建可启动的 CachyOS USB 驱动器](/zh/installation/installation_prepare#creating-a-bootable-cachyos-usb-drive) 中的说明创建安装介质。
+
+### （可选）提取 Wi-Fi 固件
+
+:::note
+安装期间或安装后 Wi-Fi **将无法使用**，因为所需的固件是专有的，CachyOS 无法重新分发。你需要一个互联网连接（例如以太网、USB 网络共享）来进行安装过程，除非你按照以下步骤提前准备 Wi-Fi 固件并在安装期间启用它。
+:::
+
+在 macOS 中，打开终端并运行以下命令。这会将必要的 Wi-Fi 固件文件复制到你的 EFI 分区，以便在 CachyOS 安装期间访问。
+```sh
+curl -sL https://wiki.t2linux.org/tools/firmware.sh | bash -s copy_to_efi
+```
+
+### 准备磁盘
+
+如果你计划与 macOS 双启动（推荐），你需要为 CachyOS 创建空间。使用 macOS 中的磁盘工具应用程序调整现有 macOS 分区的大小：
+
+<Steps>
+
+1.  打开 **Disk Utility**。
+2.  在 Disk Utility 侧边栏中，选择要调整大小的 **volume**（通常名为 "Macintosh HD" 或类似名称）。
+3.  点击工具栏中的 **"Partition"** 按钮。
+4.  点击表示磁盘使用情况的饼图下方的 **"+"（加号）** 按钮。
+5.  **关键步骤**，当提示时，选择 **"Add Partition"**，*不是* "Add Volume"。你需要为 Linux 创建一个单独的分区。
+6.  **Name：** 为新分区输入描述性名称（例如 "CachyOS" 或 "Linux"）。
+7.  **Format：** 选择任何可用格式（如 APFS 或 Mac OS Extended）。CachyOS 安装程序稍后会重新格式化此分区，因此初始选择不重要。
+8.  **Size：** 为 CachyOS 分配所需的存储空间。**请注意，以后调整分区大小可能很困难或不可能**，因此选择满足你需求的大小。
+10. 点击 **"Apply"** 创建新分区。Disk Utility 将调整 macOS 分区的大小并创建新的空闲空间。
+
+</Steps>
+
+
+### 禁用 Secure Boot
+
+<Steps>
+
+1. 重启 Mac 并在开机后立即按住 `Command (⌘) + R` 进入恢复模式。
+2. 转到 Utilities > Startup Security Utility。
+3. 在 **Secure Boot** 下选择 "No Security"，在 **Allowed Boot Media** 下选择 "Allow booting from external or removable media"。
+
+</Steps>
+
+更多详细信息请参阅 [Apple 关于 Startup Security Utility 的指南](https://support.apple.com/en-in/102522)。
+
+---
+
+有关为 T2 Mac 准备 Linux 的更多概述，请参阅 [t2linux Preinstall 指南](https://wiki.t2linux.org/guides/preinstall/)。
+
+## 安装过程
+
+<Steps>
+
+1.  **从 CachyOS USB 启动：**
+    *   重启 Mac 并在开机后立即按住 `Option (⌥)` 键。
+    *   选择 CachyOS USB 驱动器（通常标记为 "EFI Boot"）。
+2.  **（可选）在 Live 环境中启用 Wi-Fi：**
+    *   如果安装期间需要 Wi-Fi 且没有以太网/网络共享，请在 CachyOS live 环境加载后打开终端。
+    *   运行以下命令从 EFI 分区（在 [提取 Wi-Fi 固件](#optional-extract-wi-fi-firmware) 中创建）复制固件并配置 NetworkManager：
+        ```sh
+        # 挂载 EFI 分区（T2 Mac 上通常是 nvme0n1p1）
+        sudo mkdir -p /tmp/apple-wifi-efi
+        sudo mount /dev/nvme0n1p1 /tmp/apple-wifi-efi
+
+        # 从 EFI 复制固件到 live 环境
+        bash /tmp/apple-wifi-efi/firmware.sh get_from_efi
+        sudo umount /tmp/apple-wifi-efi
+
+        # 配置 NetworkManager 使用 iwd 后端
+        cat <<EOF | sudo tee /etc/NetworkManager/conf.d/wifi_backend.conf
+        [device]
+        wifi.backend=iwd
+        EOF
+        sudo systemctl restart NetworkManager
+        ```
+    *   你现在应该能够使用系统托盘中的网络小程序连接到 Wi-Fi 网络。
+3.  **运行 CachyOS 安装程序：**
+    *   从桌面或应用程序菜单启动 CachyOS 安装程序。
+    *   按照标准安装程序操作，请参阅 [桌面版安装指南](/zh/installation/installation_on_root)。
+    *   分区时，选择之前创建的空闲空间。让安装程序处理格式化。
+        :::caution[分区注意事项]
+        在安装程序的分区步骤中请**非常小心**。确保你选择的是准备正确的空闲空间，并且**不要**意外删除或格式化现有的 macOS 分区，特别是如果你打算双启动。继续之前请仔细检查你的选择。
+        :::
+    *   CachyOS 硬件检测（[chwd](/zh/features/chwd/chwd)）应在安装期间自动应用必要的 T2 特定启动参数和配置。
+
+</Steps>
+
+## 安装后步骤
+
+安装完成并重启到新 CachyOS 系统后，你可能需要执行一些额外步骤以确保一切正常运行。
+
+### 永久安装 Wi-Fi 固件
+
+如果你已经按照可选的 [在 Live 环境中启用 Wi-Fi](#installation-process) 步骤在 live ISO 中获取了固件，你可以简单地再次按照它启用 Wi-Fi。否则连接互联网（例如以太网、USB 网络共享）并按照以下步骤操作：
+
+<Steps>
+1. 打开终端并从 Arch Linux T2 镜像下载固件包：
+   ```sh
+   curl https://mirror.funami.tech/arch-mact2/os/x86_64/apple-bcm-firmware-14.0-1-any.pkg.tar.zst -o apple-bcm-firmware-14.0-1-any.pkg.tar.zst
+   ```
+2. 安装下载的包：
+   ```sh
+   sudo pacman -U apple-bcm-firmware-14.0-1-any.pkg.tar.zst
+   ```
+3. 重新加载 Wi-Fi 内核模块：
+   ```bash
+   sudo modprobe -r brcmfmac_wcc
+   sudo modprobe -r brcmfmac
+   sudo modprobe brcmfmac
+   ```
+</Steps>
+
+Wi-Fi 现在应该在重启后可靠工作。你可以删除下载的 `.pkg.tar.zst` 文件。
+
+###  进一步配置
+有关配置其他硬件组件（如音频、网络摄像头、Touch Bar 等）的信息，请参阅 [t2linux Wiki](https://wiki.t2linux.org/roadmap/#configuring-the-installation) 上的各种指南。

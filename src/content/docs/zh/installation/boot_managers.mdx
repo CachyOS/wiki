@@ -1,0 +1,222 @@
+---
+title: 提供的引导管理器
+description: 对当前提供的引导管理器的描述和建议
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+ai_translated: true
+---
+
+为了在各种设备上提供最佳体验，CachyOS 目前提供以下引导管理器：**systemd-boot、rEFInd、GRUB 和 Limine**。
+
+本文档描述了每个引导管理器的功能集，并包含我们关于何时选择它们的建议。
+有关配置，请参阅 [引导管理器配置](/zh/configuration/boot_manager_configuration)。
+
+:::caution
+**重要提示：** 某些 MSI 主板的 UEFI 固件不完全符合 UEFI 规范。这可能导致与某些引导管理器（包括 GRUB 和 rEFInd）的兼容性问题。
+
+如果遇到此类问题，请考虑使用 `systemd-boot` 或 `Limine`。
+:::
+
+---
+
+## 快速功能对比
+
+<style>{`
+  .bm-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .bm-table th, .bm-table td {
+    padding: 8px 10px;
+    vertical-align: top;
+    word-break: break-word;
+  }
+  /* vertical separators between boot-manager columns */
+  .bm-table th:not(:first-child),
+  .bm-table td:not(:first-child) {
+    border-left: 2px solid var(--ifm-table-border-color, #e5e7eb);
+  }
+  /* bottom rule under header */
+  .bm-table thead th {
+    border-bottom: 2px solid var(--ifm-table-border-color, #e5e7eb);
+  }
+`}</style>
+
+<table className="bm-table">
+  <thead>
+    <tr>
+      <th>功能</th>
+      <th><strong>systemd-boot</strong></th>
+      <th><strong>rEFInd</strong></th>
+      <th><strong>GRUB</strong></th>
+      <th><strong>Limine</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>固件支持</strong></td>
+      <td>仅限 UEFI（不支持 BIOS/MBR）</td>
+      <td>仅限 UEFI</td>
+      <td>UEFI &amp; BIOS</td>
+      <td>UEFI &amp; BIOS</td>
+    </tr>
+    <tr>
+      <td><strong><code>/boot</code> 文件系统支持</strong></td>
+      <td>取决于固件支持（通常为 FAT12/16/32）；使用 EFI 驱动可支持更多</td>
+      <td>固件支持的、ext2、ext3、ext4、btrfs、ISO-9660、HFS+ 和 NTFS；使用 EFI 驱动可支持更多</td>
+      <td>广泛支持文件系统（ext*、Btrfs、XFS 等）</td>
+      <td>FAT12/16/32、ISO9660 用于 <code>/boot</code></td>
+    </tr>
+    <tr>
+      <td><strong>Windows 双启动</strong></td>
+      <td>自动检测同一 ESP 上的 Windows Boot Manager</td>
+      <td>自动检测 EFI 加载器和内核</td>
+      <td>通过 <code>os-prober</code> 或手动配置支持</td>
+      <td>支持；可使用 <code>limine-scan</code> 添加 Windows Boot Manager 条目</td>
+    </tr>
+    <tr>
+      <td><strong>Btrfs 快照集成</strong></td>
+      <td>可通过自定义设置实现（CachyOS 不提供）</td>
+      <td>可通过自定义设置实现（CachyOS 不提供）</td>
+      <td><strong>CachyOS 通过</strong> <code>grub-btrfs-support</code> 支持</td>
+      <td><strong>CachyOS 通过</strong> <code>limine-snapper-sync</code> 支持</td>
+    </tr>
+    <tr>
+      <td><strong>全磁盘加密（FDE）</strong></td>
+      <td>支持（根分区加密；<code>/boot</code> 必须保持未加密）</td>
+      <td>支持（根分区加密；<code>/boot</code> 必须保持未加密）</td>
+      <td>完全支持，包括通过 <code>cryptodisk</code> 加密 <code>/boot</code>（仅限 LUKS1/PBKDF2；LUKS2 支持有限/需要变通方法）</td>
+      <td>支持（根分区加密；<code>/boot</code> 必须保持未加密）</td>
+    </tr>
+    <tr>
+      <td><strong>主题 / UI</strong></td>
+      <td>极简，无主题</td>
+      <td>图形化、可定制主题的 UI</td>
+      <td>可定制主题，经典 UI</td>
+      <td>可定制主题的菜单（皮肤）</td>
+    </tr>
+    <tr>
+      <td><strong>在 CachyOS 上设置的简便性</strong></td>
+      <td>非常简单（CachyOS 默认自动配置）</td>
+      <td>设置简单，自动检测操作系统和内核</td>
+      <td>通过 CachyOS hooks/脚本简化（菜单中包含 Btrfs 快照）</td>
+      <td>通过 CachyOS 工具简化（条目助手 + 快照菜单集成）</td>
+    </tr>
+    <tr>
+      <td><strong>MSI UEFI 兼容性问题</strong></td>
+      <td>工作可靠</td>
+      <td>可能出现问题（需要变通方法）</td>
+      <td>可能出现问题</td>
+      <td>工作可靠</td>
+    </tr>
+    <tr>
+      <td><strong>TPM PCR 度量启动</strong></td>
+      <td>是，<a href="https://systemd.io/TPM2_PCR_MEASUREMENTS/" target="_blank">内置</a></td>
+      <td>使用 systemd-ukify 可实现</td>
+      <td>是，<a href="https://www.gnu.org/software/grub/manual/grub/html_node/Measured-Boot.html" target="_blank">内置</a></td>
+      <td><a href="https://github.com/fwupd/fwupd/discussions/9568" target="_blank">使用 systemd-ukify 可实现</a></td>
+    </tr>
+    <tr>
+      <td><strong>最佳使用场景</strong></td>
+      <td>快速/简单的 UEFI 设置；MSI 兼容性问题的备选方案</td>
+      <td>具有精美 UI 的多启动</td>
+      <td>需要加密 <strong>/boot</strong>、BIOS 或最广泛文件系统支持时</td>
+      <td>需要快照启动 + BIOS &amp; UEFI + 链式加载的现代设置</td>
+    </tr>
+  </tbody>
+</table>
+
+## 引导管理器详情
+
+### systemd-boot
+
+systemd-boot 是 systemd 家族的一部分，被设计得尽可能简单。因此，它仅支持基于 UEFI 的系统。这种简单而高效的设计确保了它的可靠性和速度，但代价是缺少其他引导管理器支持的高级功能。
+
+#### 优点
+- 配置非常简单。
+- 启动条目分离到多个文件中，便于管理。
+- 确保与某些使用其他引导管理器时遇到 UEFI 问题的 MSI 主板兼容。
+- 在 CachyOS 上，配置开箱即用自动生成。
+- 启动过程中会度量 TPM PCRs。
+
+#### 缺点
+- 不支持 BIOS/MBR。
+- 非常基础：无主题或自定义选项。
+- 如果使用超出固件默认支持（FAT12/16/32）的启动文件系统，则需要手动添加单独的 ESP 和 [XBOOTLDR](https://wiki.archlinux.org/title/Systemd-boot#Installation_using_XBOOTLDR) 分区及 EFI 驱动。
+- 无法在自己的 ESP 或 XBOOTLDR 分区之外的分区上找到启动镜像。
+- 除非配置为自动生成，否则配置不会自动生成。
+- 由于需要将内核镜像存储在启动分区而非根分区，因此不支持 Btrfs 快照回滚。
+  - 快照启动仅可通过自定义设置实现（CachyOS 不提供）。
+
+---
+
+### rEFInd
+
+rEFInd 是 rEFIt 的一个分支，最初是为了方便 MacOS 用户多启动而开发的。然而，rEFInd 已发展为由硬件无关，使其成为任何系统上多启动的绝佳选择。rEFInd 的主要吸引力在于其能够在启动时扫描所有存储设备，并相应地显示每个找到的操作系统/内核的条目。
+
+#### 优点
+- 自动检测存储设备上的所有操作系统和内核。
+- 几乎无需手动配置。
+- 图形化 UI，类似于 MacOS 启动选择器。
+- 出色的主题支持，可选触摸屏支持。
+- 可从 EFI 文件系统（FAT12/16/32）以及 EXT4 和 BTRFS 读取启动镜像。通过安装 `efifs` 包中的 EFI 驱动，可以启用更多文件系统支持。
+
+#### 缺点
+- 不支持 BIOS 系统。
+- 与某些 MSI 主板不兼容（由于 UEFI 规范违规）。
+  - 可通过变通方法修复，但需要额外步骤。
+- 不度量 TPM PCRs。<a href="https://github.com/fwupd/fwupd/wiki/TPM-PCR0-differs-from-reconstruction">将导致 TPM PCR0 重建测试失败</a>。
+  - 可通过启动使用 systemd-stub 作为 UEFI stub 的 UKI 来修复。systemd-ukify 可以创建它。
+  - 另一种变通方法是链式加载另一个度量 TPM PCR 的引导加载器（如 systemd-boot、GRUB）。
+---
+
+### GRUB
+
+GRUB 是可用引导管理器中最古老的。它功能非常丰富，几乎可以在每台机器上工作，仍然是使用最广泛的 Linux 引导管理器。
+
+#### 优点
+- 支持几乎所有 Linux 文件系统。
+- 使用广泛——文档和社区帮助丰富。
+- 支持加密的 `/boot` 分区。
+- 支持 Btrfs 快照启动（在 CachyOS 上通过 `grub-btrfs-support` 实现）。
+- 支持 BIOS 和 UEFI 系统。
+- 尽管 UI 有些过时，但仍提供主题支持。
+- 启动过程中会度量 TPM PCRs。
+
+#### 缺点
+- 庞大且复杂，包含许多文件系统驱动。
+- 明显慢于 systemd-boot、rEFInd 和 Limine。
+- 与某些 MSI 主板不兼容（UEFI 规范违规）。
+
+---
+
+### Limine
+
+Limine 是一个现代、高级且可移植的多协议引导加载器。它是 Limine 启动协议的参考实现，支持 Linux 以及链式加载其他加载器。
+
+#### 优点
+- 支持多种启动协议，包括 Multiboot2 和 Linux 启动协议。
+- 可在 UEFI 和 BIOS 系统上启动。
+- 具有类似于 GRUB 的主题功能。
+- 通过 `limine-snapper-sync` 支持 Btrfs 快照，在 CachyOS 上使用 Btrfs 时默认启用。
+
+#### 缺点
+- `/boot` 必须使用 FAT12/16/32 或 ISO9660。其他文件系统需要额外设置。
+- 不会自动向 UEFI NVRAM 添加条目。必须使用 `efibootmgr` 手动完成，或使用 `limine-entry-tool`（CachyOS 预装）自动处理。
+- 不适用于 UFS（Universal Flash Storage），例如某些 Chromebook 使用的存储。
+- 不度量 TPM PCRs。<a href="https://github.com/fwupd/fwupd/wiki/TPM-PCR0-differs-from-reconstruction">将导致 TPM PCR0 重建测试失败</a>。
+  - 可通过启动使用 systemd-stub 作为 UEFI stub 的 UKI 来修复。systemd-ukify 可以创建它（<a href="https://github.com/fwupd/fwupd/discussions/9568" target="_blank">参见此处</a>）。
+  - 另一种变通方法是链式加载另一个度量 TPM PCR 的引导加载器（如 systemd-boot、GRUB）。
+
+---
+
+## TL;DR
+
+- 如果你需要加密的 `/boot`、BIOS 兼容性，或者想要使用稳定成熟的引导管理器配合 Btrfs 快照，请选择 GRUB。
+
+- 如果你想要一个开箱即用支持 Btrfs 快照集成的现代引导加载器，同时支持 BIOS 和 UEFI 以及 Windows 双启动（通过 **limine-scan**），请选择 Limine。
+
+- 如果你想要一个精美的图形界面和 UEFI 系统上的自动多启动检测，请选择 rEFInd。
+
+- 如果你偏好最简单的设置，不需要快照或高级功能，请选择 systemd-boot。它也是 MSI 主板 UEFI 问题最可靠的备选方案。

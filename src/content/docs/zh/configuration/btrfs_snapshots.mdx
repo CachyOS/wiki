@@ -1,0 +1,499 @@
+---
+title: Btrfs Snapshots
+description: Managing Btrfs snapshots in CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 5
+ai_translated: true
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+import MultipleImageComponent from '~/components/multiple-images-component.astro';
+
+## 简介
+
+:::caution
+不要把 Btrfs 快照当作常规备份的替代品。始终确保你有重要数据的适当备份。
+:::
+
+### 什么是 Btrfs 快照？
+
+让我们从基础开始：
+
+Btrfs 快照源于 subvolume（子卷）功能。你可能会问什么是 subvolume？把 subvolume 想象成 Btrfs 文件系统内的独立文件系统。它允许你将数据分割成不同部分。这就是为什么例如在 CachyOS 中，我们为以下内容使用不同的 subvolume：
+
+- Root filesystem: (`/`)
+- Root directory: (`/root`)
+- Home directory: (`/home`)
+- Var directories: (`/var/cache`, `/var/tmp`, `/var/log`)
+- Srv directory: (`/srv`)
+
+通过为这些目录使用不同的 subvolume，我们可以独立管理它们，应用不同的设置，最重要的是为它们创建快照。
+
+这就是快照的诞生。快照本质上是在特定时间点对 subvolume 的只读或读写（**默认**）副本。这意味着你可以捕获那一刻文件系统的状态，包括所有文件和目录。
+
+因此快照成为一个时间点参考，这意味着当目标文件偏离快照数据时，快照将保留原始文件，目标将创建一个带有更改的新文件，而快照永远保持不变，这就是为什么一些用户将快照称为"冻结在时间中的数据"。
+
+想象在特定时刻对文件系统拍照，当你需要时，随时可以回到那张照片。
+
+快照的关键优势之一是它们非常节省空间，因为在对原始数据进行更改之前，它只是对原始数据的引用。
+
+但这就是快照与传统备份的分歧之处。假设你的磁盘崩溃了，如果你有传统备份，你可以从备份中恢复数据。然而，如果你只在崩溃的磁盘上有快照，你将失去对这些快照的访问，因为它们存储在同一个磁盘上。
+
+### 快照有用和无用的恢复场景
+
+在以下情况下有用：
+
+- 系统更新后出现损坏或问题。
+- 阻止系统启动的错误配置。
+- 意外删除或修改文件。
+
+在以下情况下无用：
+
+- Bootloader 问题。
+- 硬件故障（例如硬盘损坏）。
+
+## 管理快照（GUI 和 CLI）
+
+:::tip
+因为 CachyOS 默认包含 `snap-pac`，Snapper 将在使用 `pacman` 安装、升级或移除任何软件包之前和之后自动创建快照。这意味着你不必为这些操作手动创建快照，Snapper 会为你处理。
+:::
+
+:::note
+如果你使用 GRUB bootloader，确保你安装了 `grub-btrfs-support`，以获得所有必要的脚本和钩子，自动检测 BTRFS 快照并将其添加到 GRUB 菜单中。
+```bash
+sudo pacman -Syu grub-btrfs-support
+```
+:::
+
+在管理快照之前需要考虑几件事。**适用于 CLI 和 GUI 方法。**
+
+- 建议最多保留 10 个快照。超过这个数量，快照会变得太旧且不太有用。在最坏情况下，恢复到旧快照可能会与新软件版本引入兼容性问题。
+- 快照理想上用于恢复目的。虽然你可以使用它们撤销对文件的更改而无需还原整个快照。
+- 创建快照时添加有意义的描述。这将帮助你稍后识别每个快照的用途。
+
+### Btrfs Assistant（GUI）
+
+在继续之前，确保你安装了 `btrfsmaintenance`，以利用自动快照管理功能。
+
+对于那些喜欢通过 GUI 管理 Btrfs、快照等的用户，[Btrfs Assistant](https://gitlab.com/btrfs-assistant/btrfs-assistant) 是一个非常适合初学者的项目。
+
+#### 自动快照清理设置
+
+我们将使用 Btrfs Assistant 设置自动快照清理。这将帮助你在无需手动干预的情况下有效管理快照。
+
+按照以下步骤操作：
+
+<Steps>
+
+    1. 通过打开终端并运行以下命令启动 Btrfs Assistant：
+        ```bash
+        btrfs-assistant-launcher
+        ```
+
+        或者：
+
+        ```bash
+        sudo -E btrfs-assistant
+        ```
+
+  2. 导航到 Snapper Settings 选项卡：
+
+      <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperSettingsTab.png')} />
+      按如下方式修改 **Snapshot Retention** 设置：
+      - 确保选择了 `root` 配置
+      - 为 Hourly、Daily、Weekly、Monthly 和 Yearly 输入值 `0`。
+      - 取消勾选 `Enable timeline snapshots`。
+      - 为 `Number` 输入值 `10`。
+      - 在 `Snapper cleanup enabled` 旁添加 ✅。
+      - 点击右上角的 `Save` 按钮，然后点击右下角的 `Apply systemd changes`。
+      **snapper-cleanup.timer 现在将启用，以根据你的配置自动清理旧快照。**
+      :::caution
+      通过检查 Snapper 配置，验证你刚刚所做的调整已正确应用：
+      ```bash
+      sudo nano /etc/snapper/configs/root
+      ```
+      预期输出片段：
+      ```text
+      # 数量清理的限制
+      NUMBER_MIN_AGE="3600"
+      NUMBER_LIMIT="10"
+      NUMBER_LIMIT_IMPORTANT="10"
+      ```
+      如果 `NUMBER_LIMIT` 和 `NUMBER_LIMIT_IMPORTANT` 不包含值 `10`。请相应更新它们。
+      按 `CTRL + O`、`Enter` 和 `CTRL + X` 保存文件并退出。
+      :::
+</Steps>
+
+#### 使用 Btrfs Assistant 删除快照
+
+<Steps>
+    1. 打开 Btrfs Assistant：
+        ```bash
+        btrfs-assistant-launcher
+        ```
+
+        或者：
+
+        ```bash
+        sudo -E btrfs-assistant
+        ```
+    2. 进入 Snapper Settings 选项卡：
+        <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperTab.png')} />
+    3. 从列表中选择要删除的快照。
+        :::tip
+        - 按住 `CTRL` 可选择多个快照。
+        - 按住 `SHIFT` 可选择一系列快照。
+        :::
+    4. 点击窗口顶部的 `Delete` 按钮。
+    5. 重新生成 bootloader 条目以反映更改：
+        <details>
+            <summary>systemd-boot</summary>
+            ```bash
+            sudo sdboot-manage gen
+            ```
+        </details>
+        <details>
+            <summary>GRUB</summary>
+            ```bash
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+        </details>
+        <details>
+            <summary>Limine</summary>
+            ```bash
+            sudo limine-mkinitcpio
+            ```
+        </details>
+</Steps>
+
+查看他们的 [Official Wiki](https://gitlab.com/btrfs-assistant/wiki) 以更深入地了解可以做什么。
+
+### Snapper（CLI）
+
+现在我们已经了解了 Btrfs 快照是什么及其用例，让我们谈谈如何使用由 [openSUSE](https://www.opensuse.org/) 的 [Arvin Schnell](https://github.com/aschnell) 创建的名为 [Snapper](http://snapper.io/) 的工具来管理它们。
+
+<details>
+<summary>CachyOS 默认使用以下 Snapper 配置：</summary>
+
+```text
+# 要快照的子卷
+SUBVOLUME="/"
+
+# 文件系统类型
+FSTYPE="btrfs"
+
+# 用于感知空间的清理算法的 btrfs qgroup
+QGROUP=""
+
+# 快照可使用的文件系统空间的比例或绝对大小
+SPACE_LIMIT="0.5"
+
+# 应保持空闲的文件系统空间的比例或绝对大小
+FREE_LIMIT="0.2"
+
+# 允许使用此配置的用户和组
+ALLOW_USERS=""
+ALLOW_GROUPS=""
+
+# 将用户和组从 ALLOW_USERS 和 ALLOW_GROUPS 同步到 .snapshots
+# 目录
+SYNC_ACL="no"
+
+# 创建 post-snapshot 后在后台开始比较 pre- 和 post-snapshot
+BACKGROUND_COMPARISON="yes"
+
+# 运行每日数量清理
+NUMBER_CLEANUP="yes"
+
+# 数量清理的限制
+NUMBER_MIN_AGE="1800"
+NUMBER_LIMIT="50"
+NUMBER_LIMIT_IMPORTANT="15"
+
+# 创建每小时快照
+TIMELINE_CREATE="no"
+
+# 一段时间后清理每小时快照
+TIMELINE_CLEANUP="yes"
+
+# 时间线清理的限制
+TIMELINE_MIN_AGE="1800"
+TIMELINE_LIMIT_HOURLY="5"
+TIMELINE_LIMIT_DAILY="7"
+TIMELINE_LIMIT_WEEKLY="0"
+TIMELINE_LIMIT_MONTHLY="0"
+TIMELINE_LIMIT_YEARLY="0"
+
+# 清理空的 pre-post 对
+EMPTY_PRE_POST_CLEANUP="yes"
+
+# 空 pre-post 对清理的限制
+EMPTY_PRE_POST_MIN_AGE="1800"
+```
+
+</details>
+
+:::caution
+CachyOS 的默认 Snapper 配置仅覆盖 root subvolume（`/`）。如果你有其他想用 Snapper 管理的 subvolume，你需要为每个 subvolume 创建单独的配置。
+
+此配置需要修订以提高其有效性。
+:::
+
+以下是最常用的 Snapper 命令列表。
+
+:::note
+`< >` 表示你应该替换为适当值的占位符。
+:::
+
+<details>
+    <summary>获取当前配置：</summary>
+    ```bash
+    sudo snapper get-config
+    ```
+    <details>
+        <summary>输出示例：</summary>
+        ```bash
+        Key                    │ Value
+        ───────────────────────┼──────
+        ALLOW_GROUPS           │
+        ALLOW_USERS            │
+        BACKGROUND_COMPARISON  │ yes
+        EMPTY_PRE_POST_CLEANUP │ yes
+        EMPTY_PRE_POST_MIN_AGE │ 1800
+        FREE_LIMIT             │ 0.2
+        FSTYPE                 │ btrfs
+        NUMBER_CLEANUP         │ yes
+        NUMBER_LIMIT           │ 10
+        NUMBER_LIMIT_IMPORTANT │ 10
+        NUMBER_MIN_AGE         │ 3600
+        QGROUP                 │
+        SPACE_LIMIT            │ 0.5
+        SUBVOLUME              │ /
+        SYNC_ACL               │ no
+        TIMELINE_CLEANUP       │ yes
+        TIMELINE_CREATE        │ no
+        TIMELINE_LIMIT_DAILY   │ 0
+        TIMELINE_LIMIT_HOURLY  │ 0
+        TIMELINE_LIMIT_MONTHLY │ 0
+        TIMELINE_LIMIT_WEEKLY  │ 0
+        TIMELINE_LIMIT_YEARLY  │ 0
+        TIMELINE_MIN_AGE       │ 1800
+        ```
+    </details>
+</details>
+
+<details>
+    <summary>列出可用快照 + 详细信息：</summary>
+    ```bash
+    sudo snapper list
+    ```
+    <details>
+        <summary>输出示例：</summary>
+        ```bash
+          # │ Type   │ Pre # │ Date                     │ User │ Cleanup │ Description                                                              │ Userdata
+        ────┼────────┼───────┼──────────────────────────┼──────┼─────────┼──────────────────────────────────────────────────────────────────────────┼─────────
+        0   │ single │       │                          │ root │         │ current                                                                  │
+        715 │ pre    │       │ Thu 22 Jan 2026 16:14:07 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        716 │ post   │   715 │ Thu 22 Jan 2026 16:14:25 │ root │ number  │ docker-buildx lilv sof-firmware zed                                      │
+        717 │ pre    │       │ Sat 24 Jan 2026 11:19:48 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        718 │ post   │   717 │ Sat 24 Jan 2026 11:20:19 │ root │ number  │ bpf cachyos-hello cachyos-wallpapers cpupower jdk-openjdk ldb less libev │
+        719 │ pre    │       │ Sat 24 Jan 2026 11:20:31 │ root │ number  │ pacman -U --config /etc/pacman.conf -- /home/mario/.cache/yay/visual-s   │
+        720 │ post   │   719 │ Sat 24 Jan 2026 11:20:36 │ root │ number  │ visual-studio-code-bin                                                   │
+        721 │ pre    │       │ Sat 24 Jan 2026 20:46:40 │ root │ number  │ pacman -Syu plasma-login-manager                                         │
+        722 │ post   │   721 │ Sat 24 Jan 2026 20:46:48 │ root │ number  │ cmake fastfetch harfbuzz harfbuzz-icu jdk21-openjdk lib32-harfbuzz lib32 │
+        723 │ pre    │       │ Sat 24 Jan 2026 20:46:53 │ root │ number  │ pacman -R sddm-kcm cachyos-themes-sddm sddm                              │
+        724 │ post   │   723 │ Sat 24 Jan 2026 20:46:56 │ root │ number  │ cachyos-themes-sddm sddm sddm-kcm                                        │
+        725 │ pre    │       │ Sun 25 Jan 2026 08:05:05 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        726 │ post   │   725 │ Sun 25 Jan 2026 08:05:11 │ root │ number  │ plasma-login-manager                                                     │
+        727 │ pre    │       │ Sun 25 Jan 2026 15:55:28 │ root │ number  │ pacman -S --config /etc/pacman.conf -- cachyos-extra-znver4/caligula     │
+        728 │ post   │   727 │ Sun 25 Jan 2026 15:55:30 │ root │ number  │ caligula                                                                 │
+      ```
+      - 以下是各列的摘要：
+        - `#`：表示快照编号，用于其他命令。
+        - `Type`：表示快照是单个快照还是 pre/post 对的一部分。
+            - `single`：这些快照与其他快照没有特殊关系。
+            - `pre`：这些快照旨在在任何系统更改（如编辑文件或安装包）之前拍摄。
+            - `post`：顾名思义，这些快照指的是系统更改发生后拍摄的快照。它们与对应的 `pre` 快照链接。
+        - `Pre #`：对于 `post` 快照，此列表示对应 `pre` 快照的快照编号。
+        - `Date`：创建快照的日期和时间。
+        - `User`：创建快照的用户。
+        - `Cleanup`：表示应用于快照的清理算法。
+            - Snapper 中有几种可用的清理算法，如 `number`、`timeline` 和 empty-pre-post。在此示例中，使用了 `number` 算法，这意味着将根据预定义的限制删除较旧的快照。
+            - timeline：根据快照的年龄和频率进行清理。
+            - empty-pre-post：删除差异为空的 pre/post 快照对。
+        - `Description`：快照的简要描述，通常指示创建原因。
+        - `Userdata`：与快照关联的附加用户定义数据。
+        有关输出列的更多详细信息
+    </details>
+</details>
+
+<details>
+    <summary>创建新快照：</summary>
+    ```bash
+    sudo snapper create --type single --description "My Snapshot Description"
+    ```
+</details>
+
+<details>
+    <summary>修改快照：</summary>
+    ```bash
+    sudo snapper modify <option> <snapshot_number>
+    ```
+    <details>
+        <summary>可用选项：</summary>
+        ```bash
+        Options for 'modify' command:
+            --description, -d <description>  Description for snapshot.
+            --cleanup-algorithm, -c <algo>   Cleanup algorithm for snapshot.
+            --userdata, -u <userdata>        Userdata for snapshot.
+            --read-only                      Set snapshot read-only.
+            --read-write                     Set snapshot read-write.
+            --default                        Set snapshot as default snapshot.
+        ```
+        <details>
+            <summary>示例：修改快照 729 的描述：</summary>
+            ```bash
+            sudo snapper modify 729 --description 'My New Snapshot Description'
+            ```
+        </details>
+    </details>
+</details>
+
+<details>
+<summary>删除快照：</summary>
+:::note
+快照 0 无法删除，因为它代表文件系统的当前状态。
+:::
+    <details>
+    <summary>删除单个快照：</summary>
+    ```bash
+    sudo snapper delete <snapshot_number>
+    ```
+    </details>
+    <details>
+    <summary>删除一系列快照：</summary>
+    ```bash
+    sudo snapper delete 718-721
+    ```
+    快照 718、719、720 和 721 将被删除。
+    </details>
+</details>
+
+#### Snapper 文档
+
+[Official Snapper's command man page:](http://snapper.io/manpages/snapper.html#global_options)
+
+[Snapper Configuration File guide:](http://snapper.io/manpages/snapper-configs.html)
+
+[Arch Wiki guide:](https://wiki.archlinux.org/title/Snapper)
+
+### Limine 建议与提示
+
+#### 调整 Limine bootloader 快照显示设置
+
+- 限制 Limine bootloader 菜单中显示的快照数量以避免杂乱：
+
+<Steps>
+    1. 创建 limine-snapper-sync 配置文件的备份：
+        ```bash
+        sudo cp /etc/limine-snapper-sync.conf /etc/limine-snapper-sync.conf.orig
+        ```
+    2. 编辑 limine-snapper-sync 配置文件：
+        ```bash
+        sudo nano /etc/limine-snapper-sync.conf
+        ```
+        预期输出片段：
+        ```bash
+        ### 最大快照条目数
+        ### 设置启动菜单中显示的快照条目数量限制。
+        ### 这取决于你的 FAT32 启动分区大小以及你想保留的不同内核和模块版本数量。
+        ### 更大的 FAT32 启动分区允许更多快照条目。
+        MAX_SNAPSHOT_ENTRIES=10
+        ```
+        可选地，调整快照名称格式：
+        ```bash
+        ### 快照名称格式
+        ### 选择 Limine bootloader 中快照条目的显示格式：
+        ### 0. ID=111 2023-12-20 10:59:59 (默认)
+        ### 1. 111│2023-12-20 10:59:59
+        ### 2. 111 │ 2023-12-20 10:59:59
+        ### 3. 2023-12-20 10:59:59│111
+        ### 4. 2023-12-20 10:59:59 │ 111
+        ### 5. 2023-12-20 10:59:59
+        ### 6. 111
+        ### 7. 111│快照描述
+        ### 8. 2023-12-20 10:59:59│快照描述
+        ### 9. │快照描述
+        SNAPSHOT_FORMAT_CHOICE=8
+        ```
+        `8` 是一个不错的选择，因为它显示日期时间和快照描述。
+    3. 按 `CTRL+O` `Enter` `CTRL+X` 保存文件并退出
+</Steps>
+
+### 从快照恢复
+
+:::caution
+如果你想恢复的快照涉及内核更新，你将无法回滚。
+:::
+
+<details>
+    <summary>Limine</summary>
+    <Steps>
+        1. 从 Limine bootloader 菜单中，导航到 Snapshots 菜单：
+            <ImageComponent imgsrc={import('~/assets/images/limine-snapshotMenu-1.jpg')} />
+        2. 选择要从中恢复的快照和内核：
+            <MultipleImageComponent
+                images={[
+                import('~/assets/images/limine-snapshotMenu-2.jpg'),
+                import('~/assets/images/limine-snapshotMenu-3.jpg')]}
+            />
+        3. 你的系统现在处于 `read-only mode`。应出现一个弹出通知，指示检测到快照并询问是否从中恢复：
+            <ImageComponent imgsrc={import('~/assets/images/kde-snapshot-popup.png')} />
+        4. 点击 `Restore now`。将打开一个终端窗口，显示提示并要求一些确认：
+            ```bash title="Example Restore Prompt"
+            Snapshot ID    : 2
+            Date           : 2026-01-26 11:19:14
+            Description    : nc-git
+            Restore method : replace
+
+            Confirm restore of snapshot 2 using the "replace" method?
+            Type [y]es to restore, [l]ist to display all snapshots, or [c]ancel to abort.
+
+            Your input: yes
+
+            Enter a description for the "backup" of the subvolume: @
+
+            Your input: @
+            ```
+          5. 输入 `yes`，并可选地为备份快照添加描述。
+          6. 恢复过程将开始。完成后，在新提示中再次输入 yes 以重启系统：
+              ```bash
+              The restore is complete. Please reboot now:
+              Type [y]es to reboot, [n]o or [c]ancel to abort rebooting.
+
+              Your input: yes
+              ```
+    </Steps>
+</details>
+
+<details>
+    <summary>GRUB</summary>
+    <Steps>
+        1. 从 GRUB bootloader 菜单中。启动到你想要恢复的快照和内核。
+        2. 启动后。打开 Btrfs Assistant：
+            ```bash
+            btrfs-assistant-launcher
+            ```
+
+            或者：
+
+            ```bash
+            sudo -E btrfs-assistant
+            ```
+        3. 进入 Snapper 选项卡 → "Browse/Restore" 选项卡并选择你启动的快照：
+            <ImageComponent imgsrc={import('~/assets/images/btrfs-assistant-example.png')} />
+        4. 点击 `Restore` 按钮并重启系统以应用更改。
+    </Steps>
+</details>

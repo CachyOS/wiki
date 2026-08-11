@@ -1,0 +1,179 @@
+---
+title: CachyOS Kernel
+description: CachyOS 内核的功能和变更
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
+---
+
+CachyOS 内核是一个自定义内核，利用了上游的增强功能、配置和补丁。
+
+## 功能
+
+
+### 性能优化
+
+- **高级编译**：高度可定制的 PKGBUILD，支持 GCC 和 Clang 编译器
+- **链接时优化（LTO）**：主 `linux-cachyos` 软件包默认启用 Clang Thin LTO
+- **分布式 ThinLTO**：支持分布式 Clang ThinLTO 构建以加快内核编译速度
+- **基于配置的优化**：默认内核使用 AutoFDO + Propeller 配置文件以实现最佳代码生成（[了解更多](https://cachyos.org/blog/2411-kernel-autofdo/)）
+- **内核控制流完整性（kCFI）**：使用 LLVM 时可用，增强安全性
+- **定时器频率选项**：可在 100Hz、250Hz、300Hz、500Hz、600Hz、750Hz 和 1000Hz 之间配置（默认：1000Hz）
+- **架构优化**：支持 x86-64-v3、x86-64-v4 和 AMD Zen4 专用构建
+- **编译器优化**：高级 GCC 标志，包括 `-fivopts` 和 `-fmodulo-sched`
+- **PREEMPT_DYNAMIC**：运行时可选抢占模式（完全、延迟、自愿、无）
+
+### CPU 增强
+
+- **多种调度器**：BORE、EEVDF 和 BMQ 调度器，用于不同工作负载优化
+- **[POC Selector](https://github.com/masahitoS/scx_cake)**：受 scx_cake 启发的 Piece-Of-Cake 快速空闲 CPU 选择器，降低唤醒延迟
+- **CachyOS Sauce**：自定义 `CONFIG_CACHY` 配置，包含调度器和系统调整
+- **AMD P-State 增强**：首选核心支持和来自 linux-next 的最新 amd-pstate 改进
+- **实时支持**：RT 内核构建可用，集成 BORE 调度器
+- **低延迟优化**：提升响应性和减少抖动的补丁
+- **sched/wait LIFO accept()**：Socket accept() 按 LIFO 顺序处理，提高缓存效率
+
+### 网络
+
+- **[BBR3 TCP](https://github.com/google/bbr)**：BBRv3 拥塞控制作为独立模块提供，与 BBRv1 并存
+
+### 文件系统和内存
+
+- **ZFS 支持**：内置 ZFS 文件系统支持，包含预编译模块
+- **NTFS 改进**：上游 NTFS 驱动程序修复，包括 MFT 镜像验证、属性边界检查和日志文件处理
+- **MGLRU 增强**：改进的脏数据回写处理、简化的 vmscan 回收统计，以及 Cachy Sauce MM 调优（LRU-gen 工作集保护、压缩/水位线调整、大页回收）
+- **NVIDIA 集成**：
+  - 带补丁的专有 NVIDIA 驱动程序模块
+  - 开源 NVIDIA 驱动程序支持
+  - 仓库中即插即用的模块
+- **I/O 调度器改进**：
+  - 增强的 BFQ 和 mq-deadline 性能
+  - [ADIOS](https://github.com/firelzrd/adios) v3.2.0 多队列 I/O 调度器支持
+- **VRAM Cgroup（DMEM）**：DRM 子系统中用于限制每个 cgroup 的 GPU VRAM 使用的设备内存控制器
+
+### 其他功能
+
+#### 硬件支持
+- **AMD ISP4**：适用于支持平台的新 AMD ISP 4 相机驱动程序
+- **游戏硬件**：Steam Deck 补丁（音频、硬件 quirks、HID）、ROG Ally 支持，以及 MSI Claw HID 驱动程序（deckify）
+- **Apple 硬件**：通过 staging 中的 apple-bce 驱动程序支持 T2 MacBook
+- **ASUS 硬件**：扩展的 ASUS 硬件兼容性补丁
+- **Lenovo 硬件**：WMI 电池充电限制、GPU/CPU 可调属性，以及 capdata debugfs
+- **HP 硬件**：通过 hp-wmi 支持 OMEN Slim 和 OMEN MAX 笔记本电脑
+- **图形**：启用 HDR 支持，AMDGPU min_powercap 覆盖（`amdgpu_ignore_min_pcap`）
+- **显示**：AMD 上的 HDMI VRR、ALLM 和被动 VRR 连接器属性、从 EDID 解析 VESA DSC 每像素位数
+- **音频编解码器**：AW88399 和 MAX98390 HDA 侧编解码器支持
+
+#### 系统增强
+- **多媒体**：默认包含 v4l2loopback 模块
+- **虚拟化**：支持用于 VFIO/GPU 透传的 ACS Override
+- **上游集成**：来自 Clear Linux 和 linux-next 的精选补丁
+
+#### 杂项
+
+CachyOS 内核还有一些其他值得注意的功能，虽然细微但能改善用户体验：
+
+- 包含内核的调试变体，提供未剥离的内核二进制文件用于调试。此软件包是使用 AutoFDO 分析内核所必需的。
+- [Binder](https://developer.android.com/reference/android/os/Binder) 是 [Waydroid](https://waydro.id/) 所需的模块，在内核配置中默认启用
+并且已经 [设置好](https://github.com/CachyOS/linux-cachyos/blob/2f380e2b35c4ad9acda98296f638f93af3742533/linux-cachyos/config#L11037)。
+
+## 变体
+
+CachyOS 提供多种内核选项。我们提供的所有内核都附带 [CachyOS 基础补丁集](https://github.com/CachyOS/kernel-patches)。
+每个内核都有一个 [对应的 -lto 变体](#package-naming-convention)，
+使用 [clang](https://clang.llvm.org/) 而非 [GCC](https://gcc.gnu.org/) 构建。
+
+- **linux-cachyos**
+  - 默认内核。如果您不确定使用哪个，这是推荐的内核。
+  - 1000Hz 滴答率以提升响应性。
+  - 使用 Clang 和 ThinLTO 构建。
+  - 使用我们自己的 [AutoFDO](https://cachyos.org/blog/2411-kernel-autofdo/) 配置文件进行分析以提升性能。用于分析内核的 [脚本](https://github.com/CachyOS/cachyos-benchmarker/blob/master/kernel-autofdo.sh)。
+- **linux-cachyos-bore**
+  - 使用 [BORE](https://github.com/firelzrd/bore-scheduler) 调度器。
+- **linux-cachyos-bmq**
+  - 使用 Alfred Chen 的 [Project C](https://gitlab.com/alfredchen/projectc/) 中的 BMQ 调度器。
+    - `不支持 sched-ext。`
+- **linux-cachyos-deckify**
+  - 掌机的默认内核。**不推荐**且**不支持**在掌机上使用其他内核。
+  - 使用 [BORE](https://github.com/firelzrd/bore-scheduler) 调度器。
+  - 在基础补丁集之上添加掌机专用补丁，以提升掌机设备的兼容性和整体体验。
+- **linux-cachyos-eevdf**
+  - 调整默认内核调度器以提升响应性。
+- **linux-cachyos-lts**
+  - 基于最新的长期支持内核。
+  - 使用 [BORE](https://github.com/firelzrd/bore-scheduler) 调度器。
+  - 与其他内核相比补丁最少，以确保最大稳定性。
+- **linux-cachyos-hardened**
+  - 使用 [BORE](https://github.com/firelzrd/bore-scheduler) 调度器。
+  - 包含 [linux-hardened](https://github.com/anthraxx/linux-hardened) 补丁集。
+  - 内核配置基于 [linux-hardened config](https://gitlab.archlinux.org/archlinux/packaging/packages/linux-hardened/-/blob/main/config)。
+    - 包含非常激进的加固，会显著影响性能和用户体验。
+    - `不支持 sched-ext。`
+- **linux-cachyos-rc**
+  - 基于 [Linus 的仓库](https://github.com/torvalds/linux/) 中的最新主线内核。
+  - 用于在内补丁集中引入新功能的主要内核。
+- **linux-cachyos-server**
+  - 与桌面使用相比，针对服务器工作负载进行了调优。
+    - 300Hz 滴答率。
+    - 无抢占。
+    - 标准 EEVDF。
+- **linux-cachyos-rt-bore**
+  - 实时抢占。
+  - 使用 [BORE](https://github.com/firelzrd/bore-scheduler) 调度器。
+
+:::note
+除非另有说明，否则可以安全地假设所有其他内核变体
+与默认内核具有相同的配置。
+:::
+
+请在 [linux-cachyos GitHub](https://github.com/CachyOS/linux-cachyos) 上提交 issue，以提出可添加到默认内核的建议和改进。
+
+### 软件包命名约定
+
+```sh
+linux-cachyos # 默认内核的基础内核软件包。使用 Clang 和 ThinLTO 编译
+linux-cachyos-hardened # 加固内核的基础内核软件包。使用 GCC 编译
+linux-cachyos-hardened-lto # linux-cachyos-hardened 的 clang 编译版本
+linux-cachyos-hardened-{,lto-}headers
+linux-cachyos-hardened-{,lto-}nvidia
+linux-cachyos-hardened-{,lto-}nvidia-open
+linux-cachyos-hardened-{,lto-}zfs
+linux-cachyos-hardened-{,lto-}dbg
+```
+
+## 预构建内核模块
+
+为了容纳更多用户，CachyOS 随内核附带一些知名且广泛使用的内核模块。这意味着用户不再需要
+在每次内核更新或安装新内核后重新编译这些模块，只需从仓库安装即可，因为它们
+已经预编译。这实际上使用户可能拥有的任何提供与预编译版本相同模块的 `-dkms` 软件包过时。
+
+### ZFS
+
+[ZFS](https://openzfs.org/wiki/Main_Page) 是 CachyOS 支持的文件系统之一。由于其采用
+[CDDL](https://opensource.org/license/cddl-1-0) 许可证，它与 Linux 内核的许可证不兼容，因此无法合并到内核树中。附带的模块包含
+最新的上游功能和修复，以确保与最新内核的兼容性。
+
+### NVIDIA
+
+CachyOS 附带闭源和 [开源](https://github.com/NVIDIA/open-gpu-kernel-modules/) 内核模块的预编译版本。由于 NVIDIA
+内核模块的开发在内核树之外，因此不遵循内核的发布节奏，标准配置有时可能与最新内核不兼容。作为解决方法，CachyOS 使用社区创建的补丁或 NVIDIA 直接分享的补丁来修补这些模块。
+
+## 常见问题
+
+### 为什么 AutoFDO 不用于所有其他内核变体？
+
+因为构建成本高昂，因为它基本上需要构建两次内核，导致编译需要更多时间和资源。使用 AutoFDO 构建内核的过程包括以下步骤：
+
+1) 启用 AutoFDO 和调试功能构建内核。
+2) 创建配置文件，即执行工作负载以收集可能优化的分析数据。
+3) 使用 AutoFDO 配置文件重新构建内核。
+
+因此目前仅存在于 [linux-cachyos](/zh/features/kernel#variants) 变体中。
+
+有关 AutoFDO 的更多信息，请点击 [此处](https://cachyos.org/blog/2411-kernel-autofdo/)。
+
+### 实时内核能提升游戏性能吗？
+
+不能。与正常可抢占（PREEMPT）内核相比，实时内核使更多代码可抢占。这意味着更多任务（包括游戏进程）
+会被频繁抢占并强制让出系统资源，导致性能下降。

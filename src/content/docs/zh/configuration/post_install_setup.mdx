@@ -1,0 +1,565 @@
+---
+title: Post Install
+description: Steps to configure after installing CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
+---
+
+import { Tabs, TabItem, Steps, LinkButton, Icon } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+## 推荐的安装后步骤
+
+### 更新系统
+
+:::tip
+请务必查看我们的 [Security & Best Practices](/zh/cachyos_basic/faq#security--best-practices)，以避免常见陷阱并保持系统安全。
+:::
+
+<Tabs>
+
+<TabItem label="Shelly (GUI & CLI)">
+    <LinkButton icon="external" href="https://www.seafoam-labs.org/shelly-alpm/overview/">Shelly 维基</LinkButton>
+    <LinkButton icon="external" href="https://www.seafoam-labs.org/shelly-alpm/docs/cli-reference/">Shelly CLI</LinkButton>
+
+    [Shelly](https://github.com/Seafoam-Labs/Shelly-ALPM) 是对 Arch Linux 包管理器的现代化重新构想，旨在成为比 pacman 和 octopi 更直观、更用户友好的替代方案。
+
+    开发者：[Seafoam-Labs](https://github.com/Seafoam-Labs)
+
+    允许用户无需使用终端即可管理他们的包。
+
+    Shelly 的部分功能包括：
+
+    从 AUR、官方仓库、AppImages、Flatpaks 和本地包安装/卸载包，查看包详情，管理包组等。
+
+    为什么选择 Shelly 而不是 Octopi？
+    - 它拥有更现代、更用户友好的界面。
+    - 持续开发和更新，不断添加新功能和改进。
+    - 支持更多包格式（AUR、AppImages、Flatpaks 等）
+    - 安全功能如 PKGBUILDs 验证，更多信息请参阅 [Security Checks](https://www.seafoam-labs.org/shelly-alpm/docs/security/)。
+
+    <details>
+        <summary>Shelly 主页截图</summary>
+        <ImageComponent imgsrc={import('~/assets/images/shelly-homepage.png')} />
+    </details>
+    <details>
+        <summary>包管理选项卡</summary>
+        <ImageComponent imgsrc={import('~/assets/images/shelly-package-management.png')} />
+    </details>
+    以下是一些有用的命令，帮助你开始使用 Shelly 的 CLI：
+
+    <details>
+    <summary>升级所有包（AUR、官方仓库、Flatpak 等）：</summary>
+    ```sh
+    shelly
+    ```
+    </details>
+    <details>
+    <summary>升级标准包（Arch 衍生版）+ 安装包：</summary>
+    ```sh
+    shelly install --upgrade {pkg}
+    # 示例：
+    shelly install --upgrade discord
+    ```
+    </details>
+    <details>
+    <summary>移除包及其依赖：</summary>
+    ```sh
+    shelly remove {pkg}
+    # 示例：
+    shelly remove discord
+    ```
+    </details>
+    <details>
+    <summary>搜索 AUR 包：</summary>
+    ```sh
+    shelly aur search {pkg}
+    ```
+    </details>
+</TabItem>
+
+<TabItem label="使用 Octopi (GUI)">
+
+Octopi 是适用于 Arch 衍生发行版的图形包管理器，提供了一种方便的方式来管理包和更新。
+要使用 Octopi 更新系统，请按照以下步骤操作：
+
+<Steps>
+
+1. 从应用程序菜单启动 **Octopi**。
+2. 在主窗口中，点击 **Check updates** 按钮（左上角），现在旁边是 **System upgrade。**
+3. Octopi 现在将检查可用更新，并提示你在 Octopi 本身或终端中安装它们。
+4. 要继续更新，点击 **Apply** 按钮。
+5. Octopi 将下载并安装更新。
+6. 建议在大型更新后重启你的电脑**（尤其是如果内核有更新）**。
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="使用 Pacman">
+
+<Steps>
+
+1. 打开终端模拟器（或按 `ctrl + alt + t` - 在窗口管理器中如 Qtile 按 `mod + return`）。
+2. 运行以下命令更新系统：
+
+   ```sh
+   sudo pacman -Syu
+   ```
+3. 建议在大型更新后重启你的电脑**（尤其是如果内核有更新）**。
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="离线系统更新">
+
+*CachyOS 支持使用 [`pacman-offline`](https://github.com/eworm-de/pacman-offline) 脚本进行离线系统升级。这允许你的系统下载包更新并在下次重启时应用它们。（是的，像 Windows）*
+
+:::note
+`pacman-offline` 工具与 systemd 的离线更新功能集成。它自动处理内核更新和模块加载。
+
+`/etc/pacman.d/offline.conf` 文件对于管理在常规更新和离线更新期间更新哪些包至关重要。确保它为你的所需内核正确配置，或添加你想要的包，以便它们仅在 pacman-offline 执行期间更新，在常规更新中被忽略。示例：`pacman -Syu`。
+
+**如果你启用了自动更新 timer，你不再需要手动更新系统。**
+:::
+
+<Steps>
+
+1. **安装 pacman-offline 包**
+
+   ```bash
+   sudo pacman -S pacman-offline
+   ```
+
+2. **告诉 Pacman 从单独的包忽略列表读取。**
+
+   :::note[在 [options] 部分之后添加该行。检查下面的示例作为参考。]
+   :::
+
+   ```bash title='在 /etc/pacman.conf 文件中添加以下行'
+   Include = /etc/pacman.d/offline.conf
+   ```
+   *示例*
+   ```bash
+   # /etc/pacman.conf
+   # REPOSITORIES
+   #   - can be defined here or included from another file
+   #   - pacman will search repositories in the order defined here
+   #   - local/custom mirrors can be added here or in separate files
+   #   - repositories listed first will take precedence when packages
+   #     have identical names, regardless of version number
+   #   - URLs will have $repo replaced by the name of the current repo
+   #   - URLs will have $arch replaced by the name of the architecture
+   #
+   # Repository entries are of the format:
+   #       [repo-name]
+   #       Server = ServerName
+   #       Include = IncludePath
+   #
+   # The header [repo-name] is crucial - it must be present and
+   # uncommented to enable the repo.
+   #
+   # GENERAL OPTIONS
+   [options]
+   # other options like 'Color', 'CheckSpace', etc. can be here
+   Include = /etc/pacman.d/offline.conf
+   ```
+3. **添加 CachyOS 内核，以便 pacman 在常规更新期间忽略它们**
+
+   `pacman-offline` 工具使用此文件来确定在传统 pacman 更新期间忽略哪些包。
+
+   示例：当你运行 `sudo pacman -Syu`
+
+   *将 `/etc/pacman.d/offline.conf` 文件的内容替换为以下内容：*
+
+   ```text
+   # Arch Linux kernels
+   IgnorePkg = linux linux-headers linux-docs
+   IgnorePkg = linux-lts linux-lts-headers linux-lts-docs
+   IgnorePkg = linux-zen linux-zen-headers linux-zen-docs
+   IgnorePkg = linux-hardened linux-hardened-headers linux-hardened-docs
+
+   # CachyOS kernels
+   IgnorePkg = linux-cachyos linux-cachyos-headers linux-cachyos-nvidia-open linux-cachyos-zfs
+   IgnorePkg = linux-cachyos-bmq linux-cachyos-bmq-headers linux-cachyos-bmq-nvidia-open linux-cachyos-bmq-zfs
+   IgnorePkg = linux-cachyos-bore linux-cachyos-bore-headers linux-cachyos-bore-nvidia-open linux-cachyos-bore-zfs
+   IgnorePkg = linux-cachyos-deckify linux-cachyos-deckify-headers linux-cachyos-deckify-nvidia-open linux-cachyos-deckify-zfs
+   IgnorePkg = linux-cachyos-eevdf linux-cachyos-eevdf-headers linux-cachyos-eevdf-nvidia-open linux-cachyos-eevdf-zfs
+   IgnorePkg = linux-cachyos-gcc linux-cachyos-gcc-headers linux-cachyos-gcc-nvidia-open linux-cachyos-gcc-zfs
+   IgnorePkg = linux-cachyos-hardened linux-cachyos-hardened-headers linux-cachyos-hardened-nvidia-open linux-cachyos-nvidia-hardened-zfs
+   IgnorePkg = linux-cachyos-lts linux-cachyos-lts-headers linux-cachyos-lts-nvidia-open linux-cachyos-lts-zfs
+   IgnorePkg = linux-cachyos-rc linux-cachyos-rc-headers linux-cachyos-rc-nvidia-open linux-cachyos-rc-nvidia-open linux-cachyos-rc-zfs
+   IgnorePkg = linux-cachyos-rt-bore linux-cachyos-rt-bore-headers linux-cachyos-rt-bore-nvidia-open
+   IgnorePkg = linux-cachyos-server linux-cachyos-server-headers linux-cachyos-server-nvidia-open linux-cachyos-server-zfs
+   ```
+
+   *现在所有这些包都将在常规更新中被忽略，但在离线准备期间进行检查。*
+
+3. **仅启动一次离线更新的准备**
+
+   ```bash title='运行以下命令'
+   sudo systemctl start pacman-offline-prepare.service
+   ```
+   此命令将使 pacman-offline 执行一次，同步包数据库并继续下载更新，但不安装它们。
+
+</Steps>
+
+*如果你希望自动化此脚本，请按照以下步骤操作：*
+
+<Steps>
+
+1. **启用准备 timer**
+
+   启用 `pacman-offline-prepare.timer` 将允许 systemd 在每次系统启动几分钟后每天触发此脚本以下载更新。
+
+   ```bash
+   sudo systemctl enable pacman-offline-prepare.timer
+   ```
+
+2. **重启你的系统：**
+
+   更新将在下次系统重启期间安装。
+
+3. **（可选）自动系统重启：**
+
+    启用 `pacman-offline-reboot.timer` 以在有待处理更新的情况下默认在 **凌晨 3 点**（你的时区）自动重启系统。请注意，由于包含 `RandomizedDelaySec`（默认设置为 2 小时），它并不总是在同一时间安排。
+
+    ```bash
+    sudo systemctl enable pacman-offline-reboot.timer
+    ```
+
+    :::tip
+    你可以编辑 `pacman-offline-reboot.timer` 文件来修改系统在有挂起更新时要重启的时间，或禁用随机调度。
+    :::
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Cachy-Update">
+
+[Arch-Update](https://github.com/Antiz96/arch-update) 的 Fork
+
+Arch Linux 的更新通知器和应用器，协助你完成重要的更新前/更新后任务。
+包含动态且可点击的系统托盘小程序，便于与任何桌面环境/窗口管理器集成。
+
+<details>
+    <summary>如何启用 Cachy-Update</summary>
+    在 `CachyOS Hello > Apps/Tweaks > Cachy Update enabled` 中启用 Cachy-Update
+</details>
+<details>
+    <summary>如何禁用 Cachy-Update</summary>
+        在 `CachyOS Hello > Apps/Tweaks > Cachy Update disabled` 中禁用 Cachy-Update
+            :::tip
+            如果你想保留 Cachy-Update 但仅禁用系统托盘小程序，打开终端并运行以下命令：
+            ```bash
+            mkdir -p ~/.config/autostart
+            echo -e "[Desktop Entry]\nHidden=true" > ~/.config/autostart/arch-update-tray.desktop
+            ```
+            如果你想保留系统托盘小程序启用，但仅禁用自动更新检查，运行以下命令：
+            ```bash
+            systemctl --user disable --now arch-update.timer
+            ```
+            :::
+</details>
+
+- 功能：
+  - 自动检查和列出可用更新。
+  - 检查最近的 Arch Linux 新闻（如果有则提供显示）。
+  - 检查孤包（如果有则提供移除）。
+  - 检查缓存中的旧包和未安装的包（如果有则提供移除）。
+  - 检查需要重启的待处理内核更新（如果有则提供重启）。
+  - 检查需要升级后重启的服务（如果有则提供重启）。
+  - 支持 `sudo`、`sudo-rs`、`doas` 和 `run0`。
+
+**更新检查间隔：** `启动后两分钟一次，然后每天一次，带有一小时随机延迟。`
+
+- 如何更改更新检查间隔：
+
+```sh title='运行以下命令'
+systemctl --user edit --full arch-update.timer
+# 提示：你也可以使用任何你喜欢的文本编辑器代替 `nano`
+# 例如 EDITOR=micro systemctl --user edit --full arch-update.timer
+```
+
+<details>
+<summary>文件的默认内容：</summary>
+    ```systemd
+    [Timer]
+    OnStartupSec=2min # Check for updates two minutes after boot
+    RandomizedDelaySec=1h # One hour random delay
+    OnUnitActiveSec=1d # Check for updates once a day
+    ```
+</details>
+基本上你可以将 `OnUnitActiveSec` 值更改为你想要的任何值。例如，如果你想每 30 分钟检查一次更新，将其更改为 `30m`。或每 6 小时，将其更改为 `6h`。查看此 [文档](https://www.freedesktop.org/software/systemd/man/latest/systemd.time.html#Parsing%20Time%20Spans) 了解更多关于如何设置时间间隔的详细信息。
+
+如果你希望 Cachy-Update 仅在启动时检查一次新更新，你可以简单地完全删除 `OnUnitActiveSec` 行。
+
+感谢 [Antiz](https://github.com/Antiz96) 维护上游 Arch-Update 项目并实现 Cachy-Update
+
+</TabItem>
+
+</Tabs>
+
+### 配置防火墙 (ufw)
+:::note
+安装后默认启用 UFW。
+:::
+要配置 ufw，请按照以下步骤操作：
+
+<Tabs>
+
+<TabItem label="启用">
+
+```bash
+sudo ufw enable
+```
+
+</TabItem>
+
+<TabItem label="禁用">
+
+```bash
+sudo ufw disable
+```
+
+</TabItem>
+
+<TabItem label="允许">
+
+默认情况下，ufw 忽略传入流量，并允许传出流量；你可以向防火墙添加特定规则来阻止或允许特定连接。
+
+```bash
+# 示例 1，允许 ssh 流量：
+sudo ufw allow ssh
+# 示例 2，为 TCP & UDP 流量打开端口 12345：
+sudo ufw allow 12345
+
+# 文本或端口号可以根据需要进行调整，如 12345/udp 仅允许 UDP 流量，或用程序名称替换 ssh
+```
+
+</TabItem>
+
+<TabItem label="拒绝">
+
+默认情况下，ufw 忽略传入流量，并允许传出流量；你可以向防火墙添加特定规则来阻止或允许特定连接。
+
+```bash
+# 示例 1，拒绝 ssh 流量：
+sudo ufw deny ssh
+# 示例 2，为 TCP & UDP 流量关闭端口 12345：
+sudo ufw deny 12345
+
+# 文本或端口号可以根据需要进行调整，如 12345/udp 仅拒绝 UDP 流量，或用程序名称替换 ssh
+```
+
+</TabItem>
+
+<TabItem label="状态">
+
+```bash
+sudo ufw status verbose
+```
+:::tip
+如果你不想忘记为什么打开/关闭某个端口，请向规则添加注释。
+```bash
+# 示例 1，为 TCP & UDP 流量打开端口 12345 并添加注释：
+sudo ufw allow 12345 comment 'Example'
+# 示例 2，为 TCP 关闭端口 6789 并添加注释：
+sudo ufw deny 6789/tcp comment 'Comments can have spaces'
+```
+:::
+</TabItem>
+
+</Tabs>
+
+:::note
+配置防火墙规则时要小心，因为配置不当的规则可能会将你锁定在自己的系统之外。
+:::
+
+:::note
+你也可以使用 KDE Plasma 设置中的 "Firewall" 部分进行图形化配置。
+:::
+
+:::note
+允许/拒绝的更改在 ufw 重新启动后生效。禁用然后再次启用 ufw 以立即生效。
+:::
+
+### 启用全局菜单
+对于某些应用程序如 Visual Studio Code，全局菜单可能无法正常工作，或可能附加到父应用程序而不是面板。
+
+```sh
+# 要启用全局菜单支持，运行命令并重启应用程序。
+sudo pacman -S appmenu-gtk-module libdbusmenu-glib
+```
+
+## 可选配置
+
+### 更改默认 Shell
+
+目前，CachyOS 使用 [fish](https://fishshell.com/) 作为用户的默认登录 shell。但是，你可以将
+默认 shell 更改为你喜欢的任何 shell。
+
+<Tabs>
+   <TabItem label='bash'>
+
+      这是几乎每个 Linux 发行版上的默认 shell。它也被用作 root 用户的登录 shell。bash
+      具有基本的自动补全功能和易于管理的历史记录。它与 zsh 和 fish 的不同之处在于，它没有
+      fish 和 zsh 都拥有的花哨定制和插件生态系统。
+
+
+      ```sh title='将你的默认 shell 更改为 bash'
+      chsh -s /usr/bin/bash
+      ```
+
+   </TabItem>
+
+   <TabItem label='zsh'>
+
+      我们提供了一个带有常用插件和配置的 [zsh 配置](https://github.com/CachyOS/cachyos-zsh-config)。
+      它旨在与我们的 [fish 配置](https://github.com/CachyOS/cachyos-fish-config) 具有 1:1 的功能。
+      这也是 MacOS 中使用的默认 shell。
+
+      ```sh title='将默认 shell 更改为 zsh'
+      chsh -s /usr/bin/zsh
+      ```
+
+   </TabItem>
+</Tabs>
+
+### 更新/使用 [tldr](https://github.com/tldr-pages/tldr)
+
+:::note
+CachyOS 使用 [tealdeer](https://github.com/tealdeer-rs/tealdeer)，它是原始 tldr 的更快的基于 Rust 的实现
+:::
+
+对于那些不想阅读太多或浪费时间阅读帮助/man 页面的人来说，这个工具极其有用。
+
+<Steps>
+
+1. ```sh title="打开终端并运行以下命令"
+   tldr --update
+   ```
+2. 使用 tldr 的示例：
+   ```sh
+   tldr java
+     Execute a `.jar` program:
+
+      java -jar filename.jar
+
+   # 正如你所见，它真的很有用，并且随着时间的推移会添加新工具/页面。
+   ```
+
+</Steps>
+
+### 管理 AppImages
+
+AppImages 是便携式应用程序，可在大多数 Linux 发行版上运行，无需安装或 root 权限。
+
+:::note[所有 AppImages 需要可执行权限才能运行。]
+你可以使用以下命令设置可执行权限：
+```sh
+chmod +x /path/to/your/appimage
+```
+或者右键点击 AppImage 文件，转到 `Properties` > `Permissions`，并勾选 `Allow executing file as program.` 复选框。
+:::
+
+:::note[在运行 AppImages 之前，请确保你的系统上已安装 FUSE（Filesystem in Userspace）。]
+```sh
+sudo pacman -S fuse2
+```
+:::
+
+要管理 AppImages，你可以使用 [gearlever](https://github.com/mijorus/gearlever)，它提供了一种轻松将 AppImages 集成到你的系统中的方法。
+
+`gearlever` 是一个图形工具，简化了系统中 AppImages 的管理。它与你的桌面环境集成，使运行和管理 AppImages 变得容易。
+
+要安装 gearlever，请按照以下步骤操作：
+
+<Steps>
+    1. 如果你还没有安装 flatpak：
+        ```sh
+        sudo pacman -S flatpak
+        ```
+    2. 重启你的系统。
+    3. 使用 flatpak 安装 gearlever：
+        ```sh
+        flatpak install flathub it.mijorus.gearlever
+        ```
+    4. 安装后。注销并重新登录以在应用程序菜单中看到 gearlever。
+</Steps>
+
+### 配置访问 Samba 共享
+
+Samba 是 SMB 网络协议的免费软件重新实现。要连接到你的 samba 服务器，已经为 CachyOS 用户提供了一个有用的配置，但它需要更改你的 samba 服务器的配置。
+
+#### 安装和使用 CachyOS smb.conf 文件
+
+要使用方便的 smb.conf 文件，首先安装一个提供所需 smb.conf 文件的特定包。然后，用此文件替换你的服务器现有的 smb.conf，并重新配置你的共享卷。
+
+:::note[本指南假设你已经有一个工作的 Samba 服务器]
+:::
+
+<Steps>
+    1. 创建原始 `smb.conf` 文件的备份，通常位于 Linux 系统上的 `/etc/samba/smb.conf`。
+    2. 在你的客户端机器上安装 CachyOS Samba 设置包：
+        ```sh
+        sudo pacman -S cachyos-samba-settings
+        ```
+    3. 将 `smb.conf` 从你的客户端机器复制到 Samba 服务器。
+    4. 打开并编辑文件以添加你的共享目录、打印机等。
+    5. 在服务器上重启 Samba 服务：
+        ```sh
+        sudo systemctl restart --now samba
+        ```
+    6. 在客户端机器上，通过你的文件管理器访问你的共享资源（例如，`smb://<your_server_ip>/<share_name>`）。
+
+        如果配置正确，你将被提示输入登录凭据。如果需要，请记住选择保存登录信息的选项。
+</Steps>
+
+### 使用 AppArmor.d 配置文件的 AppArmor 支持
+
+来自 Wikipedia 的引用：
+
+*AppArmor（"Application Armor"）是一个 Linux 内核安全模块，允许系统管理员通过每程序配置文件限制程序的功能。配置文件可以允许诸如网络访问、原始套接字访问以及在匹配路径上读取、写入或执行文件的权限等功能。*
+
+这只是一个关于如何安装基本 AppArmor 设置的介绍，如果你不熟悉 AppArmor。请在不了解影响的情况下不要继续。
+
+有关 AppArmor.d 以及如何创建你自己配置文件的更详细信息，请查看 [AppArmor.d 文档](https://github.com/roddhjav/apparmor.d?tab=readme-ov-file#configuration)。
+
+:::caution[请谨慎操作。配置不当的 AppArmor 设置可能会导致问题。]
+:::
+
+<Steps>
+
+1. 将以下内核参数添加到你的 Boot Manager，参考 [Boot Manager Configuration](/zh/configuration/boot_manager_configuration)
+
+   ```text
+   lsm=landlock,lockdown,yama,integrity,apparmor,bpf
+   ```
+
+2. 安装 apparmor 和 apparmord **（超过 +1500 个配置文件的集合）** 包
+   ```bash
+   sudo pacman -S apparmor apparmor.d
+   ```
+
+3. 启用/启动 AppArmor 服务
+
+   ```bash
+   systemctl enable --now apparmor.service
+   ```
+
+4. 启用 AppArmor 配置文件的缓存
+
+   ```shell
+   # /etc/apparmor/parser.conf
+   ## 添加以下行：
+   write-cache
+   Optimize=compress-fast
+   cache-loc /etc/apparmor/earlypolicy/
+   ```
+   保存文件并重启。
+</Steps>

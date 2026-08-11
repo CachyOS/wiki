@@ -1,0 +1,141 @@
+---
+title: CachyOS chroot Helper
+description: 简化 chroot 进入系统的辅助工具
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
+---
+
+import {Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+[cachy-chroot](https://github.com/CachyOS/cachy-chroot) 是一个简单的辅助程序，用于简化 chroot 到现有 CachyOS 或基于 Arch 的安装系统中的过程。它会列出在机器上发现的所有分区，并支持列出 BTRFS 子卷。此外，`cachy-chroot` 还通过 LUKS 支持加密系统。它会将每个 `fstab` 条目映射到其对应的 `crypttab` 条目，并在退出 chroot 时优雅地关闭所有 LUKS 卷。
+
+:::caution[cachy-chroot 旨在从 live CachyOS 环境中运行。]
+:::
+
+:::note
+cachy-chroot 支持挂载 Linux 内核支持的任何文件系统，ZFS 除外。
+:::
+
+## 使用方法
+
+:::tip
+使用方向键导航选项，按 `ENTER` 选择。
+
+**❯** 符号表示当前选中的选项。
+
+**?** 表示需要用户输入。
+:::
+
+<Steps>
+1. 启动到 CachyOS live ISO
+2. 打开终端并使用 `sudo su` 进入 root 用户
+3. 确保已安装最新版本的 `cachy-chroot`：
+    ```bash
+    pacman -Sy cachy-chroot
+    ```
+4. 输入以下命令运行 `cachy-chroot`：
+    ```bash
+    cachy-chroot
+    ```
+    `cachy-chroot` 将扫描并列出所有可用分区。
+    <details>
+    <summary>CachyOS BTRFS 安装的示例输出</summary>
+        ```bash
+        Info: Found 3 block devices
+        Info: Found partition: Partition: /dev/nvme0n1p1: FS: vfat UUID: EDA6-ED98
+        Info: Found partition: Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+        Info: Found partition: Partition: /dev/nvme0n1p4: FS: btrfs UUID: 66e84339-8c77-4131-afce-50ec2cf67a80
+        ? Select the block device for the root partition (use arrow keys):  ›
+        Partition: /dev/nvme0n1p1: FS: vfat UUID: EDA6-ED98
+        ❯ Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+        ```
+    </details>
+    <details>
+    <summary>EXT4 的示例输出</summary>
+        ```bash
+        Info: Found 8 block devices
+        Info: Found partition: Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+        Info: Found partition: Partition: /dev/sda2: FS: vfat UUID: CA0D-2D5A
+        Info: Found partition: Partition: /dev/sdb1: FS: ntfs UUID: A4763F77763F48F6
+        Info: Found partition: Partition: /dev/sdc1: FS: ntfs UUID: C4CA216BCA215B46
+        Info: Found partition: Partition: /dev/sdc2: FS: ntfs UUID: 060C28590C284651
+        Info: Found partition: Partition: /dev/sdc3: FS: ntfs UUID: 3A3CF8B13CF86971
+        Info: Found partition: Partition: /dev/sdd1: FS: exfat UUID: 4FDC-0AAB
+        Info: Found partition: Partition: /dev/sdd2: FS: vfat UUID: 3105-B091
+        ? Select the block device for the root partition (use arrow keys):  ›
+        ❯ Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+        Partition: /dev/sda2: FS: vfat UUID: CA0D-2D5A
+        Partition: /dev/sdb1: FS: ntfs UUID: A4763F77763F48F6
+        Partition: /dev/sdc1: FS: ntfs UUID: C4CA216BCA215B46
+        Partition: /dev/sdc2: FS: ntfs UUID: 060C28590C284651
+        Partition: /dev/sdc3: FS: ntfs UUID: 3A3CF8B13CF86971
+        Partition: /dev/sdd1: FS: exfat UUID: 4FDC-0AAB
+        Partition: /dev/sdd2: FS: vfat UUID: 3105-B091
+        ```
+        在此示例中，根分区是 `/dev/sda1`，使用 `ext4` 文件系统。其他分区与 chroot 无关。
+    </details>
+5. 选择包含根文件系统的分区：
+    <details>
+    <summary>CachyOS BTRFS 示例</summary>
+        ```bash title="选择根分区"
+        ✔ Select the block device for the root partition (use arrow keys):  · Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+        Info: Selected BTRFS partition, mounting and listing subvolumes...
+        Info: Mounting partition /dev/nvme0n1p2 at /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-858f-2e02be61b342-hwAeIm with options: []
+        Info: Unmounting partition at /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-858f-2e02be61b342-hwAeIm
+        ? Do you want to use CachyOS BTRFS preset to auto mount root subvolume? (y/n) › # Enter yes if on CachyOS
+        ```
+        **如果使用 CachyOS 并搭配 BTRFS**，输入 `y` 使用 CachyOS BTRFS 预设。这将自动挂载根子卷及其他重要子卷，如 `/home`、`/var`、`/tmp` 和 `/srv`。如果使用自定义 BTRFS 布局或非 CachyOS 系统，输入 `n` 手动选择子卷。
+    </details>
+    <details>
+    <summary>EXT4 示例</summary>
+            ```bash title="选择根分区"
+            ✔ Select the block device for the root partition (use arrow keys):  · Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+            Info: Mounting partition /dev/sda1 at /tmp/cachyos-chroot-root-mount-b7fef200-fbb8-4783-9fad-46c5e8b7ca0e-LtsXXC with options: []
+            Info: Mounting additional partitions based on /etc/fstab...
+            Info: Found 3 entries in /etc/fstab
+            Warning: Partition UUID=b7fef200-fbb8-4783-9fad-46c5e8b7ca0e already mounted, skipping...
+            Info: Mounting partition /dev/sda2 at /tmp/cachyos-chroot-root-mount-b7fef200-fbb8-4783-9fad-46c5e8b7ca0e-LtsXXC/boot with options: []
+            Info: Finished mounting additional partitions
+            ✔ Do you want to mount additional partitions? · no
+            Info: Chrooting into the configured root partition...
+            Info: To exit the chroot, type 'exit' or press Ctrl+D
+            ```
+    </details>
+6. `cachy-chroot` 将尝试自动挂载根设备 `/etc/fstab` 中列出的所有分区和子卷。如果任何分区挂载失败，系统会通知您并提供手动挂载的选项。您可以选择 `no` 跳过挂载其他分区。
+7. **现在您已进入 chroot 环境**。
+    ```bash
+    [root@CachyOS /]#
+    ```
+    现在您可以像在已安装系统中一样运行命令。例如，可以更新系统：
+    ```bash title="在 chroot 中更新系统"
+    pacman -Syu
+    ```
+    ```bash title="重新生成 initramfs（以防万一）"
+    mkinitcpio -P
+    ```
+    或根据需要执行其他维护任务。
+8. 完成后，在提示符输入 `exit` 或按键盘上的 `CTRL+D` 退出 chroot 环境。
+    ```bash title="退出 chroot"
+    exit
+    ```
+9. 退出后，`cachy-chroot` 将自动清理已挂载的分区并关闭任何 LUKS 容器。您将返回 live 环境的 shell。
+</Steps>
+
+### 故障排除
+
+- **未找到分区：** 确保包含安装的磁盘已连接并被 live 系统识别。可以使用 `lsblk` 或 `fdisk -l` 检查。
+- **某些分区自动挂载失败：** 可以尝试在 chroot 环境中手动挂载它们。`cachy-chroot` 会忽略失败并继续。
+
+### 常见问题
+
+- **问：手动挂载其他分区有什么用途？**
+  - 答：手动挂载其他分区有多种用途，包括：
+    - **fstab 文件损坏或丢失：** 可以手动挂载必要分区（如 `/boot` 或 `/home`）以执行修复或数据恢复。
+    - **分区 UUID 已更新：** 如果因更改分区 UUID 导致系统无法启动，可以使用 `cachy-chroot` 挂载分区，然后相应更新 fstab。
+
+### 了解更多
+
+- [Arch Wiki - chroot](https://wiki.archlinux.org/title/Chroot)
+- [cachy-chroot 视频演示](https://github.com/user-attachments/assets/29360aaf-b775-4cfa-9051-465ad5360ae8)

@@ -1,0 +1,435 @@
+---
+title: Automount Additional Drives at Boot
+description: Mount additional static drives at boot by utilizing either systemd mounts or the file found at /etc/fstab
+ai_translated: true
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+本教程介绍了使用 systemd mount 文件和 /etc/ 目录中的 fstab 文件在启动时挂载静态驱动器的基础知识。简要说明了如何查找分区或驱动器的 UUID、某些选项的作用，以及如果提供的信息不足时的进一步阅读资料。
+
+## 前提条件
+
+- Root 或 sudo 权限
+
+:::note[NTFS on Linux]
+NTFS 文件系统在使用 ntfs、ntfs3 或 ntfs-3g 驱动时，在 Linux 下可能不稳定。使用风险自负。为了更好的稳定性和性能，请考虑使用 Linux 原生文件系统，如 ext4、xfs 或 btrfs。
+:::
+
+## 更安全且适合初学者的方法：使用 Systemd Mount 文件挂载驱动器
+
+通过 systemd 挂载的好处是，即使你在 mount 文件中配置有误，系统仍然可以启动。而 fstab 中的错误可能导致系统无法启动。
+
+### 1. 列出你的分区 UUID
+
+```sh title="打开终端并运行以下命令"
+lsblk -f
+```
+
+```sh title="示例输出"
+NAME          FSTYPE FSVER LABEL UUID                                 FSAVAIL   FSUSE% MOUNTPOINTS
+zram0                                                                              [SWAP]
+nvme0n1
+├─nvme0n1p1   vfat   FAT32       E04D-9F05
+├─nvme0n1p2
+├─nvme0n1p3   ntfs               08A24E90A24E81E4                      715.4G   50%
+├─nvme0n1p4   vfat   FAT32       E09C-D4DA                             628.1M   39% /boot
+├─nvme0n1p5   ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G   47% /
+└─nvme0n1p6   ntfs
+nvme1n1
+└─nvme1n1p1   ext4               4e55896f-3f1f-4bc5-aa8a-fec099689cd9  931.5G   0%
+
+```
+
+在本例中，我们要挂载一块刚格式化为 ext4 的新驱动器。我们知道它是一块 1TB 的驱动器，且尚未存储任何数据。因此，我们可以确定要挂载的分区是 `nvme1n1p1`，其 UUID 为 `4e55896f-3f1f-4bc5-aa8a-fec099689cd9`。
+
+### 2. 识别你的分区
+
+通常 `lsblk -f` 会提供通过 systemd 挂载磁盘所需的所有信息。如果你仍然不确定哪个是正确分区，可以运行以下命令：
+
+```sh
+sudo fdisk -l
+```
+
+```sh title="示例输出"
+Device          Start       End         Sectors     Size    Type
+/dev/nvme0n1p1  2048        206847      204800      100M    EFI System
+/dev/nvme0n1p2  206848      239615      32768       16M     Microsoft reserved
+/dev/nvme0n1p3  239616      2997384182  2997144567  1.4T    Microsoft basic data
+/dev/nvme0n1p4  2997385216  2999482367  2097152     1G      EFI System
+/dev/nvme0n1p5  2999482368  3905454079  905971712   432G    Linux root (x86-64)
+/dev/nvme0n1p6  3905454080  3907026943  1572864     768M    Windows recovery environment
+/dev/nvme1n1p1  2048        1953523711  1953521664  931.5G  Linux filesystem
+
+```
+
+在本例中我们已经知道了 UUID。不过，`fdisk -l` 可以通过显示分区的确切大小（931.5G）和类型（Linux filesystem），使情况更加清楚。
+
+这应该能非常明确地告诉我们，我们要的分区是 `nvme1n1p1`，UUID 为 `4e55896f-3f1f-4bc5-aa8a-fec099689cd9`，如前所述。我们之前已经知道了，但现在可以百分之百确定。
+
+一旦你确认找到了正确的分区，请复制其 UUID。从终端复制通常使用 `ctrl+shift+C`。
+
+### 3. 创建 Systemd Mount 文件
+
+假设我们要将这块驱动器主要用于游戏，一个合适的挂载位置是在用户主目录。你可以选择任何位置，但为了简单起见，我们使用 /home/user（将 user 替换为你的 Linux 用户名）。这很重要，因为挂载路径决定了 systemd mount 文件的名称。由于这块驱动器用于游戏，我们将它挂载到用户主目录下的 games 文件夹，即 `/home/user/games`。
+
+对于 systemd mount 文件，这对应为 home-$USER-games.mount（正斜杠 `/` 替换为连字符 `-`），systemd mount 文件放在 /etc/systemd/system 中。
+
+:::tip
+如果你想在挂载文件夹名称中使用空格、连字符、CJK 字符或带重音的字符，必须以不同方式格式化。假设你想使用文件夹路径 `/home/grzegorz/brzęczyszczykiewicz`，运行以下命令获取文件所需的名称：
+```bash
+systemd-escape -p --suffix=mount "/home/grzegorz/brzęczyszczykiewicz"
+```
+由于你需要转义任何 `\`，你会创建 mount 文件为 `/etc/systemd/system/home-grzegorz-brz\\xc4\\x99czyszczykiewicz.mount`
+:::
+
+你可以使用任何喜欢的文本编辑器，本例中使用 `micro`。
+
+```sh
+micro /etc/systemd/system/home-$USER-games.mount
+```
+:::note
+如果你挂载在用户主目录下，可以在文件名中保留上面的 $USER，它会自动替换为你的用户名。
+:::
+
+将以下模板粘贴到空文件中：
+```ini
+[Unit]
+Description=
+
+[Mount]
+What=
+Where=
+Type=
+Options=
+
+[Install]
+WantedBy=multi-user.target
+```
+以下是文件中每个字段的说明：
+
+<Tabs>
+  <TabItem label='Description'>
+  Description 可以是任何内容，供你自己识别。
+  </TabItem>
+  <TabItem label= 'What'>
+  填入之前复制的 UUID。这里将是 `UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9`
+  </TabItem>
+  <TabItem label= 'Where'>
+  这是挂载点。如果文件夹不存在，将自动创建。这里将是 `/home/user/games`。如果挂载在主目录下，请将 "user" 替换为你的用户名。
+  </TabItem>
+  <TabItem label= 'Type'>
+  文件系统类型，这里将是 `ext4`
+  </TabItem>
+  <TabItem label= 'Options'>
+  任何你想要的挂载选项。这里，我们将使用 `defaults,exec,rw,noatime`。这里不要留空格很重要。
+  </TabItem>
+</Tabs>
+---
+
+按照示例，填写完整的 mount 文件应该如下所示：
+```ini
+[Unit]
+Description=Mount games drive (/home/user/games)
+
+[Mount]
+What=UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9
+Where=/home/user/games
+Type=ext4
+Options=defaults,exec,rw,noatime
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 4. 完成
+
+要挂载我们刚刚创建条目的驱动器，运行以下命令：
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now home-$USER-games.mount
+```
+
+你应该能看到你选择的挂载点文件夹，并且可以通过 `systemctl status home-$USER-games.mount` 检查挂载状态：
+
+```sh
+● home-user-games.mount - Mount games drive (/home/user/games)
+     Loaded: loaded (/proc/self/mountinfo; enabled; preset: disabled)
+     Active: active (mounted) since Sat 2026-05-02 13:02:31 CDT; 23h ago
+ Invocation: e52ef8fe3d754c64a3825bc1ee89e7da
+      Where: /home/user/games
+       What: /dev/nvme1n1p1
+      Tasks: 0 (limit: 74118)
+     Memory: 316K (peak: 3.9M)
+        CPU: 5ms
+     CGroup: /system.slice/home-user-games.mount
+
+May 02 13:02:31 cachyos systemd[1]: Mounting Mount games drive (/home/user/games)...
+May 02 13:02:31 cachyOS systemd[1]: Mounted Mount games drive (/home/user/games).
+```
+
+### 简而言之
+
+- 找到你分区的 **UUID**
+
+```sh
+lsblk -f
+```
+
+- 创建 mount 文件
+
+```sh
+micro /etc/systemd/system/mnt-foo.mount
+```
+
+将 `mnt-foo` 替换为你想要挂载的完整路径，将 `/` 替换为 `-`。
+
+- 填写 mount 文件
+
+```sh
+[Unit]
+Description=Mount drive
+
+[Mount]
+What=UUID=<partition UUID>
+Where=/mnt/foo
+Type=somefs
+Options=defaults
+
+[Install]
+WantedBy=multi-user.target
+```
+
+将 `<partition UUID>`、`/mnt/foo` 和 `somefs` 替换为你的 UUID、目录和文件系统。例如 ext4，以及在 defaults 之后设置你可能想要的任何其他选项，如 NAS 的 `_netdev` 或任何非关键驱动器的 `nofail`。
+
+- 重新加载 daemon
+
+```sh
+sudo systemctl daemon-reload
+```
+
+- 挂载驱动器并设置为开机自动挂载
+
+```sh
+sudo systemctl enable --now mnt-foo.mount
+```
+
+### 更多阅读
+
+- [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS on /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Manual for dump](<https://linux.die.net/man/8/dump>)
+- [Manual for fsck](https://man.archlinux.org/man/fsck.8)
+- [systemd-mount](https://manual.siduction.org/systemd-mount_en.html)
+
+## 高级方法：向 /etc/fstab 添加条目
+
+:::danger
+fstab 文件在启动时读取，如果文件中有错误，可能导致系统无法启动。在重启前务必仔细检查你的条目是否有任何拼写错误。如果你确实犯了错误，通常可以通过启动到 live 环境并 [chroot 到你的安装](/zh/features/cachy_chroot) 来编辑文件进行修复。
+:::
+
+### 1. 列出你的分区 UUID
+
+```sh title="打开终端并运行以下命令"
+lsblk -f
+```
+
+```sh title="示例输出"
+NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+zram0                                                                              [SWAP]
+nvme0n1
+├─nvme0n1p1 vfat   FAT32       E04D-9F05
+├─nvme0n1p2
+├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
+├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
+├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
+└─nvme0n1p6 ntfs
+```
+
+在我们的示例中，我们知道要挂载一个 Windows 分区，它是 ntfs。我们还知道它大约一半的空间可用。因此，我们可以确定要挂载的分区是 `nvme0n1p3`，UUID 为 `08A24E90A24E81E4`，文件系统为 `ntfs`。
+
+### 2. 识别你的分区
+
+通常 `lsblk -f` 会提供通过 /etc/fstab 挂载磁盘所需的所有信息。如果你仍然不确定哪个是正确分区，可以运行以下命令：
+
+```sh
+sudo fdisk -l
+```
+
+```sh title="示例输出"
+Device              Start        End    Sectors  Size Type
+/dev/nvme0n1p1       2048     206847     204800  100M EFI System
+/dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
+/dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
+/dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
+/dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
+/dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
+```
+
+在本例中我们已经知道了 UUID。不过，`fdisk -l` 可以通过显示分区的确切大小（1.4T）和类型（Microsoft basic data），使情况更加清楚。
+
+这应该能非常明确地告诉我们，我们要的分区是 `nvme0n1p3`，UUID 为 `08A24E90A24E81E4`，如前所述。我们之前已经知道了，但现在可以百分之百确定。
+
+一旦你确认找到了正确的分区，请复制其 UUID。从终端复制通常使用 `ctrl+shift+C`。
+
+### 3. 向 /etc/fstab 添加条目
+
+现在我们已经获取了分区的 UUID，是时候打开 fstab 文件了。
+
+你可以使用任何喜欢的文本编辑器。本例中，我们将使用 nano。要编辑 fstab 文件，必须以 root 身份打开：
+
+```sh
+sudo nano /etc/fstab
+```
+
+使用方向键导航到 fstab 文件底部，然后在空的新行上创建我们的新条目：
+
+```sh
+UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000 0 0
+```
+
+:::note
+`/media/windows` 需要在你的文件系统中存在。如果不存在，使用 `mkdir` 创建该目录。
+:::
+
+此条目的分解如下：
+
+- `UUID=08A24E90A24E81E4` 是我们要挂载的文件系统，由其 UUID 标识。还有其他方法可以标识文件系统，但 UUID 通常最安全。其他方法列在 [这里](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems)。
+
+- `/media/windows` 是我们驱动器的挂载点。[Linux Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html) 规定 `/media/` 是可移动驱动器挂载的正确位置。`windows` 表示我们希望挂载驱动器的目录。我们要挂载的每个驱动器都需要自己的目录。
+
+- `ntfs3` 是要使用的文件系统类型。在我们的示例中，我们显式使用 ntfs3 内核驱动。其他示例包括 `ext4`、`xfs` 或类似类型。此显式文件系统类型声明可以替换为 `auto`，让 mount 命令做出最佳猜测。
+
+- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000`：这些是挂载选项：
+
+  - `defaults`：一组标准选项，包括 `rw, suid, dev, exec, auto, nouser, and async.`
+
+  - `nofail`：即使此挂载失败，也允许启动过程继续。
+
+  - `uid=1000` 和 `gid=1000`：将挂载文件的所有者设置为用户和组 ID 为 1000 的用户和组。
+
+  - `rw`：以读写方式挂载文件系统。
+
+  - `user`：允许非 root 用户挂载文件系统。
+
+  - `exec`：允许在挂载的文件系统上执行二进制文件。
+
+  - `umask=000`：设置文件权限掩码，允许所有人读取、写入和执行。
+
+  - `第一个 0` dump 在现代系统中通常已弃用。将其保留为 0 不会造成任何伤害。你可以在 [这里](https://linux.die.net/man/8/dump) 阅读更多相关信息。
+
+  - `第二个 0` 设置启动时文件系统检查的顺序。对于根分区，这应该是 1，除非你的根文件系统是 btrfs，这种情况下应该设置为 0。fstab 中的所有其他文件系统应该为 0（禁用）或 2。更多信息见 [这里](https://man.archlinux.org/man/fsck.8)。
+
+要更深入地了解每个选项，请访问 [fstab man page](https://man7.org/linux/man-pages/man5/fstab.5.html) 和 [mount man page](https://man7.org/linux/man-pages/man8/mount.8.html)
+
+#### 更多信息
+
+顺便说一下，文件系统类型声明之后的所有选项都是可选的，如果你不更改默认值。
+
+因此
+
+`UUID=<partition UUID> /media/foo somefs`
+
+和
+
+`UUID=<partition UUID> /media/foo somefs defaults 0 0`
+
+是等价的。`somefs` 后面什么都不跟隐式表示 `somefs defaults 0 0`
+
+### 4. 完成
+
+如果你想立即挂载你创建条目的驱动器，需要运行以下命令：
+
+```sh
+sudo systemctl daemon-reload
+```
+
+然后：
+
+```sh
+sudo mount -a
+```
+
+你的驱动器现在应该出现在 `/media/windows` 下，每次重启时都会出现在那里。
+
+```sh
+ls /media/windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+# 'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
+ ```
+
+如果你想在家目录中创建一个指向新挂载驱动器的链接，可以运行以下命令：
+
+```sh
+ln -s /media/windows ~/Windows
+```
+
+要显示它成功了：
+
+```sh
+ls ~/Windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+#'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
+ ```
+
+### 简而言之
+
+- 找到你分区的 **UUID**
+
+```sh
+lsblk -f
+```
+
+- 打开 `/etc/fstab`
+
+```sh
+sudo nano /etc/fstab
+```
+
+- 在文件底部创建条目
+
+```sh
+UUID=<partition UUID> /media/foo somefs defaults 0 0
+```
+
+将 `<partition UUID>`、`foo` 和 `somefs` 替换为你的 UUID、目录和文件系统。例如 ext4，以及在 defaults 之后设置你可能想要的任何其他选项，如 NAS 的 `_netdev` 或任何非关键驱动器的 `nofail`。
+
+- 重新加载 daemon
+
+```sh
+sudo systemctl daemon-reload
+```
+
+- 挂载驱动器
+
+```sh
+sudo mount -a
+```
+
+此驱动器现已挂载，并将在此后的每次启动时自动挂载。
+
+### 更多阅读
+
+- [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS on /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Manual for dump](<https://linux.die.net/man/8/dump>)
+- [Manual for fsck](https://man.archlinux.org/man/fsck.8)
+- [Man page for fstab](https://man.archlinux.org/man/fstab.5.en)
+- [Arch Linux Wiki entry for fstab](https://wiki.archlinux.org/title/Fstab)

@@ -1,0 +1,110 @@
+---
+title: 使用 CachyOS Kernel Manager 管理 Linux 内核和 Sched-ext 框架
+description: CachyOS Kernel Manager 是一个强大的内核管理工具，允许用户轻松安装或构建自定义内核。
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+从仓库安装内核
+---------------------------------------
+
+CachyOS Kernel Manager 使从任何 Arch Linux 仓库安装和管理内核变得简单。
+
+要安装内核，启动 `CachyOS Kernel Manager` 应用程序，从所有可用选项列表中勾选复选框 `[]` 选择所需内核，然后按下 `Execute` 开始内核安装。
+
+要卸载内核，只需取消勾选要移除的已安装内核旁边的复选框 `[]`，然后再次按下 `Execute`。
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km1.png')} />
+
+:::note
+选择已安装的内核时，`Execute` 按钮将不可用。
+:::
+
+配置和构建自定义 CachyOS 内核
+---------------------------------
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km2.png')} />
+
+:::note
+CachyOS Kernel Manager 专门设计用于构建 **CachyOS 变体** 的自定义内核，不支持构建或配置标准 Arch Linux 内核或任何其他变体。
+:::
+
+*开始使用：打开 Kernel Manager，点击 `Configure` 按钮开始调整各种设置，如所需调度器、滴答率等。完成所需更改后，点击 `Build kernel` 开始构建自定义 CachyOS 内核。*
+
+**构建的内核软件包和缓存存储在** `~/.cache/cachyos-km/`
+
+**可用配置选项：**
+
+* `自定义软件包名称`：使用此选项，您可以随意命名内核。例如：`linux-custom-cachy`
+* 调度器（BORE、RC、RT、RT+BORE、EEVDF 和 BMQ）
+* 启用 CachyOS 配置
+* 通过 nconfig、menuconfig、xconfig 或 gconfig 调整配置
+* 启用/禁用 NUMA
+* 启用/禁用 Modprobed-db
+* KBUILD CFLAGS（-O3 或 -O2）
+* 默认使用性能 governor
+* 启用 BBR3
+* 滴答率选择（100Hz、250Hz、300Hz、500Hz、600Hz、750Hz、1000Hz）
+* 无滴答模式（idle、periodic、full）
+* 抢占（Full、Voluntary 或 Server）
+* 透明大页（Always 或 Madvise）
+* 启用/禁用 DAMON
+* 启用/禁用自动 CPU 架构检测
+* 为特定 CPU 架构应用内核优化
+* 启用 LTO（Full、Thin、No）
+* 构建 ZFS 模块
+* 构建 NVIDIA 闭源模块
+* 构建 NVIDIA 开源模块
+* 包含带有调试信息/符号的 vmlinux
+* 加载/保存 Kernel Manager 配置预设：`（仅限管理器本身的预设）`
+* 内核补丁管理（支持远程和本地）
+
+*内核成功构建后，系统将提示您输入 sudo 密码以安装内核。*
+
+## Sched-ext 框架管理
+
+:::caution[需要功能正常的 polkit agent 才能正常工作。]
+查看以下 **[Arch Wiki 页面作为参考](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**。
+:::
+
+Kernel Manager 提供了一个图形用户界面（GUI），用于管理和控制 sched-ext 调度器。点击主窗口中的 `sched-ext scheduler config` 按钮即可访问 GUI。
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km3.png')} />
+
+此 GUI 允许您：
+
+- 在不同的 sched-ext（scx）调度器之间切换。
+- 启用或禁用调度器服务。
+- 检查当前运行的调度器。
+- 设置调度器标志和配置文件。
+
+为实现此功能，Kernel Manager 使用 `scx_loader`，其配置存储在 `/etc/scx_loader.toml` 中。
+
+有关 `scx_loader` 配置文件的更多信息，请查看 [此文档](https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/configuration.md)。
+
+- `scx_loader` 如何工作？
+    - 选择调度器和配置文件后，scx_loader 将使用所选配置文件启动调度器，并将此配置保存到 `/etc/scx_loader.toml` 文件中，以实现跨重启持久化。选择 `scx_bpfland` 并使用 `Gaming` 配置文件时文件外观示例：
+        ```toml
+        default_sched = "scx_bpfland"
+        default_mode = "Gaming"
+
+        [scheds.scx_bpfland]
+        auto_mode = []
+        gaming_mode = ["-m", "performance"]
+        lowlatency_mode = ["-k", "-s", "5000", "-l", "5000"]
+        powersave_mode = ["-m", "powersave"]
+        ```
+
+### 调度器配置文件
+
+- "配置文件"是做什么用的？
+  - 它们是调度器的预设，基于经过验证的组合修改标志，以增强特定用例（如"Gaming"）的效果。
+
+在 [调度器指南](/zh/configuration/sched-ext#scheduler-guide-profiles-and-use-cases) 中查看所有配置文件的详细信息。
