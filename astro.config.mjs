@@ -173,7 +173,7 @@ export default defineConfig({
                 de: 'ISO herunterladen & verifizieren',
                 el: 'Λήψη και επαλήθευση ISO',
                 es: 'Descargar y verificar ISO',
-                fr: 'Télécharger et vérifier l\'ISO',
+                fr: 'Télécharger et vérifier l’ISO',
                 ja: 'ISO のダウンロードと検証',
                 pl: 'Pobierz i zweryfikuj ISO',
                 ru: 'Скачать и проверить ISO',
