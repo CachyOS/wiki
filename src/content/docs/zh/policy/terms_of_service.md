@@ -1,137 +1,138 @@
 ---
-title: Terms of Service
+title: 服务条款
+ai_translated: true
 ---
 
-## 1. Scope of the Terms of Service
+## 1. 服务条款范围
 
-### 1.1. Definitions
+### 1.1. 定义
 
-These Terms of Service govern the use of the CachyOS platform and associated services, including the forums, wiki, bug reporting tool, and other collaborative tools ("Services").
-CachyOS ("we," "us," "our") operates the platform accessible at cachyos.org and related subdomains. Users ("you," "your") must accept these terms to use the Services.
+本服务条款规范 CachyOS 平台及相关服务的使用，包括论坛、wiki、错误报告工具和其他协作工具（"服务"）。
+CachyOS（"我们"、"我们的"）运营可通过 cachyos.org 及相关子域名访问的平台。用户（"您"、"您的"）必须接受这些条款才能使用服务。
 
-### 1.2. Use of the Services
+### 1.2. 服务的使用
 
-Only natural persons of legal age and with full legal capacity are permitted to use the Services. Minors may use the Services with parental or legal guardian consent.
+仅允许达到法定年龄且具有完全法律行为能力的自然人使用服务。未成年人在获得父母或法定监护人同意后可使用服务。
 
-### 1.3. Access to Terms of Service
+### 1.3. 访问服务条款
 
-The latest version of the Terms of Service can be accessed at any time on our website: <https://wiki.cachyos.org/policy/terms_of_service>.
+最新版本的服務条款可随时在我们的网站上访问：<https://wiki.cachyos.org/policy/terms_of_service>。
 
-## 2. Registration, Conclusion of Contract, and Subject Matter
+## 2. 注册、合同订立及标的
 
-### 2.1. Requirements
+### 2.1. 要求
 
-To use our Interactive Services (e.g., forums, package contributions), you must register via our online form, provide accurate contact information, and agree to these Terms of Service.
-Activation of your account signifies the conclusion of the contract. There is no entitlement to activation or participation.
+要使用我们的交互式服务（如论坛、软件包贡献），您必须通过我们的在线表单注册，提供准确的联系信息，并同意本服务条款。
+您的账户激活表示合同订立。无权要求激活或参与。
 
-### 2.2. Change of the Platform
+### 2.2. 平台的变更
 
-We reserve the right to change or expand the Services and structure of the platform. Changes that significantly affect the purpose of these Terms of Service will be communicated to users.
+我们保留更改或扩展服务及平台结构的权利。对本服务条款目的产生重大影响的变更将通知用户。
 
-## 3. Duties as a User of the Interactive Services
+## 3. 作为交互式服务用户的义务
 
-### 3.1. Completeness of Information
+### 3.1. 信息的完整性
 
-You must provide complete and accurate contact information and update it as necessary.
+您必须提供完整且准确的联系信息，并在必要时更新。
 
-### 3.2. Account Use
+### 3.2. 账户使用
 
-Your account is personal and must be protected from unauthorized use. You are responsible for any misuse of your account.
+您的账户是个人专用的，必须防止未经授权使用。您对自己账户的任何误用负责。
 
-### 3.3. Conduct
+### 3.3. 行为
 
-Users must interact respectfully and lawfully, adhering to our General Guidelines and Code of Conduct.
+用户必须以尊重和合法的方式互动，遵守我们的总则和行为准则。
 
-### 3.4. Content and Conduct
+### 3.4. 内容和行为
 
-You are responsible for any content you contribute, ensuring it does not violate these terms or applicable laws.
+您对自己贡献的任何内容负责，确保其不违反本条款或适用法律。
 
-### 3.5. Violations
+### 3.5. 违规
 
-You must not publish content that is insulting, false, malicious, or violates any laws, including copyright and trademark laws.
+您不得发布侮辱性、虚假、恶意或违反任何法律（包括版权和商标法）的内容。
 
-### 3.6. Permanent Entries
+### 3.6. 永久条目
 
-Contributions may be indexed by search engines and remain accessible worldwide. You cannot claim deletion or correction of such entries.
+贡献可能被搜索引擎索引并在全球范围内可访问。您无权要求删除或更正此类条目。
 
-### 3.7. Content Discretion
+### 3.7. 内容酌处权
 
-We reserve the right to refuse, delete, modify, or remove any content at our discretion and to impose sanctions for violations of these terms.
+我们保留自行决定拒绝、删除、修改或移除任何内容的权利，并对违反本条款的行为施加制裁。
 
-## 4. Liability of the Users; Indemnification
+## 4. 用户责任；赔偿
 
-You agree to indemnify us against all costs incurred from third-party claims due to your violations of these Terms of Service.
+您同意赔偿因您违反本服务条款而导致的第三方索赔所产生的所有费用。
 
-## 5. Transfer of Rights of Use
+## 5. 使用权转让
 
-### 5.1. Copyright
+### 5.1. 版权
 
-By posting content, you grant us the rights needed to provide our Services. You must ensure you have the rights to any content you upload.
+通过发布内容，您授予我们提供服务所需的权利。您必须确保对您上传的任何内容拥有权利。
 
-### 5.2. Contribution Licenses
+### 5.2. 贡献许可
 
-Software contributions must be licensed under the project's license or the GNU General Public License version 3.
+软件贡献必须根据项目的许可证或 GNU 通用公共许可证第 3 版进行许可。
 
-### 5.3. Continuation of Rights
+### 5.3. 权利的延续
 
-Rights of use remain in effect even after account termination.
+使用权在账户终止后仍然有效。
 
-## 6. Availability of the Platform
+## 6. 平台的可用性
 
-We strive to keep the platform available but cannot guarantee 100% uptime.
+我们努力保持平台的可用性，但不能保证 100% 正常运行时间。
 
-## 7. Liability of CachyOS
+## 7. CachyOS 的责任
 
-### 7.1. Limitation of Liability
+### 7.1. 责任限制
 
-We are not responsible for user content or any damages resulting from its use. Users must take precautions against harmful content.
+我们不对用户内容或其使用产生的任何损害负责。用户必须对有害内容采取预防措施。
 
-### 7.2. Content Review
+### 7.2. 内容审查
 
-We do not review all content posted by users and are not responsible for it. Unlawful content will be removed upon discovery.
+我们不审查用户发布的所有内容，也不对此负责。发现非法内容将予以删除。
 
-### 7.3. Limitation of Damage Claims
+### 7.3. 损害赔偿限制
 
-We exclude liability for damages except in cases of gross negligence, intentional misconduct, or violation of essential contractual obligations.
+除重大疏忽、故意不当行为或违反基本合同义务的情况外，我们排除损害赔偿责任。
 
-### 7.4. Further Limitation of Liability
+### 7.4. 进一步的责任限制
 
-We are not liable for the content of external linked sites.
+我们不对外部链接网站的内容负责。
 
-## 8. Amendment of the Terms of Service
+## 8. 服务条款的修改
 
-### 8.1. Amendments
+### 8.1. 修改
 
-We may amend these Terms of Service as necessary. Users will be notified of changes by email. Failure to object to changes within two weeks signifies acceptance.
+我们可能会根据需要修改本服务条款。将通过电子邮件通知用户变更。在两周内未对变更提出异议即表示接受。
 
-### 8.2. Objections to Amendments
+### 8.2. 对修改的异议
 
-If you object to changes, the contract will continue under the previous terms, but we may terminate the agreement at the next possible date.
+如果您反对变更，合同将继续按之前的条款执行，但我们可能会在下一个可能的日期终止协议。
 
-## 9. Term and Termination of the Agreement
+## 9. 协议的期限和终止
 
-### 9.1. Period of Terms of Service
+### 9.1. 服务条款的期限
 
-These Terms of Service are concluded for an indefinite period.
+本服务条款为不定期订立。
 
-### 9.2. Termination
+### 9.2. 终止
 
-Either party can terminate these Terms of Service without cause at any time.
+任何一方均可随时无故终止本服务条款。
 
-### 9.3. Account Deletion
+### 9.3. 账户删除
 
-Public statements and contributions may remain visible even after account deletion.
+公开声明和贡献在账户删除后可能仍然可见。
 
-## 10. Miscellaneous
+## 10. 杂项
 
-### 10.1. Applicable Law
+### 10.1. 适用法律
 
-These Terms of Service are governed exclusively by the laws of the relevant jurisdiction, excluding the United Nations Convention on Contracts for the International Sale of Goods (CISG).
+本服务条款仅受相关司法管辖区的法律管辖，不包括《联合国国际货物销售合同公约》（CISG）。
 
-### 10.2. Severability Clause
+### 10.2. 可分割条款
 
-If any provision of these Terms of Service is found to be invalid, the remaining provisions will remain in effect.
+如果本服务条款的任何规定被认定为无效，其余规定将继续有效。
 
-### 10.3. Disputes
+### 10.3. 争议
 
-The European Commission's online dispute resolution platform can be accessed at <https://ec.europa.eu/consumers/odr>. We are not obligated to participate in dispute resolution procedures before a consumer arbitration board.
+可通过 <https://ec.europa.eu/consumers/odr> 访问欧盟委员会的在线争议解决平台。我们没有义务参与消费者仲裁机构前的争议解决程序。

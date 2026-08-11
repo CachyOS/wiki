@@ -1,98 +1,99 @@
 ---
 title: CLI Installer
 description: Changelogs CLI Installer
+ai_translated: true
 ---
 # 0.8.4
 
 ## Features ✨
 
-- **Improved Partition Handling:**  Significant refactoring and improvements have been made to how the installer handles partitions, leading to better accuracy and reliability.
-- **Kernel Parameter Generation:** The installer now automatically generates kernel parameters based on the detected partition scheme.
-- **Enhanced `gucc` Library:**  The `gucc` library has been significantly enhanced, now encompassing refind installation and configuration capabilities.
+- **改进的分区处理：** 对安装程序处理分区的方式进行了重大重构和改进，提高了准确性和可靠性。
+- **内核参数生成：** 安装程序现在会根据检测到的分区方案自动生成内核参数。
+- **增强的 `gucc` 库：** `gucc` 库已得到显著增强，现在包含 refind 安装和配置功能。
 
 ## Chores 🧹
 
-- **Clang-Format and Clang-Tidy:** Codebase consistency and quality have been improved through the application of clang-format and clang-tidy.
-- **Refactoring with String Views:**  Several areas of the codebase now utilize string_view literals for improved performance and readability.
-- **Doctest Implementation:**  C asserts have been replaced with doctest for more robust and informative testing.
-- **Refactored Tests:** Test suites have been refactored for clarity and maintainability.
-- **Refind Handling in `gucc`:**  Refind-related code has been refactored and moved into the `gucc` library for better organization and maintainability.
+- **Clang-Format 和 Clang-Tidy：** 通过应用 clang-format 和 clang-tidy 提高了代码库的一致性和质量。
+- **使用 String Views 重构：** 代码库的多个区域现在使用 string_view 字面量以提高性能和可读性。
+- **Doctest 实现：** C asserts 已被 doctest 取代，以进行更健壮和更有信息量的测试。
+- **重构测试：** 测试套件已重构以提高清晰度和可维护性。
+- **`gucc` 中的 Refind 处理：** Refind 相关代码已重构并移至 `gucc` 库中，以提高组织性和可维护性。
 
 ## Bug Fixes 🐛
 
-- **Btrfs Subvolume Detection:** Issues with detecting existing btrfs subvolumes have been resolved.
-- **Partition Information Accuracy:** Improvements have been made to ensure the accurate collection and display of partition information.
-- **Root Mount Point for Refind:**  A bug affecting the root mount point used by refind has been fixed.
-- **UUID Detection:** The process of detecting partition UUIDs during initialization has been improved.
-- **Meson Build Fixes:**  Issues encountered during the meson build process have been addressed.
-- **Btrfs Subvolume Appending:**  A bug related to appending btrfs subvolumes in development environments has been fixed.
-- **Rootfs in Predefined Configurations:**  An issue with the rootfs of partition schemes derived from predefined configurations has been resolved.
-- **Refind Read-Write Mounting:**  Ensured that refind mounts the necessary partitions with read-write permissions.
+- **Btrfs 子卷检测：** 解决了检测现有 btrfs 子卷的问题。
+- **分区信息准确性：** 改进了分区信息的准确收集和显示。
+- **Refind 的根挂载点：** 修复了影响 refind 使用的根挂载点的错误。
+- **UUID 检测：** 改进了初始化过程中检测分区 UUID 的流程。
+- **Meson 构建修复：** 解决了 meson 构建过程中遇到的问题。
+- **Btrfs 子卷追加：** 修复了开发环境中追加 btrfs 子卷相关的错误。
+- **预定义配置中的 Rootfs：** 解决了源自预定义配置的分区方案的 rootfs 问题。
+- **Refind 读写挂载：** 确保 refind 以读写权限挂载必要的分区。
 
 # 0.8.3
 
 ## Chores 🧹
 
-- Updated the CPR dependency to a newer version for improved functionality.
-- Explicitly instructed CTRE (Compile Time Regular Expressions library) to utilize the C++23 standard for consistency and potential performance enhancements.
-- Increased the connection check timeout in the utilities section to accommodate potential network delays or slow responses.
+- 更新了 CPR 依赖到较新版本以提高功能。
+- 明确指示 CTRE（编译时正则表达式库）使用 C++23 标准以保持一致性和潜在的性能提升。
+- 增加了实用程序部分中的连接检查超时时间，以适应潜在的网络延迟或慢响应。
 
 # 0.8.2
 
 ## Fixes 🐛
 
-- Resolved an issue where "gucc" didn't correctly handle btrfs subvolume mountpoints.
-- Improved "gucc" to handle different btrfs subvolume mount statuses.
+- 解决了 "gucc" 未正确处理 btrfs 子卷挂载点的问题。
+- 改进了 "gucc" 以处理不同的 btrfs 子卷挂载状态。
 
 ## Chores 🧹
 
-- Fixed a typo in the README file and updated the version information.
+- 修复了 README 文件中的拼写错误并更新了版本信息。
 
 # 0.8.1
 
 ## Fixes 🐛
 
-- Resolved an issue where ISA repos were incorrectly enabled on Oracle VM.
-- Addressed command style inconsistencies for improved user experience.
+- 解决了 ISA repos 在 Oracle VM 上被错误启用的问题。
+- 解决了命令风格不一致的问题以改善用户体验。
 
 ## Chores 🧹
 
-- Removed unnecessary ucode logic related to refind, streamlining the codebase.
+- 移除了与 refind 相关的多余 ucode 逻辑，简化了代码库。
 
 # 0.8.0
 
 ## Features ✨
 
-- Added parser for network package profiles.
-- Introduced the ability to fetch environment packages from a TOML file parsed by gucc.
-- Implemented a helper function in gucc to download files from URLs 📥.
-- Added support for fetching network profiles from a URL with a fallback mechanism within gucc.
-- Integrated the installation of network profiles with the binary distribution.
-- Moved the mounting of specified partitions and detection logic into gucc.
-- Introduced `utils::exec_checked` for safer execution of external commands.
+- 添加了网络包配置文件的解析器。
+- 引入了从 gucc 解析的 TOML 文件中获取环境包的功能。
+- 在 gucc 中实现了从 URL 下载文件的辅助函数 📥。
+- 在 gucc 中添加了对从 URL 获取网络配置文件的支持，并带有回退机制。
+- 将网络配置文件的安装与二进制发行版集成。
+- 将指定分区的挂载和检测逻辑移入 gucc。
+- 引入了 `utils::exec_checked` 以更安全地执行外部命令。
 
 ## Improvements ✅
 
-- Enhanced test coverage for crypttab functionality in gucc 🧪.
-- Improved logging in gucc by setting up the logger appropriately.
-- **Updated C++ version to C++23** ⬆️.
-- Refactored codebase to utilize C++23 features like `std::ranges` and `contains` for better readability and efficiency.
-- Refactored various components to utilize `utils::exec_checked`.
+- 增强了 gucc 中 crypttab 功能的测试覆盖率 🧪。
+- 通过正确设置日志记录器改进了 gucc 中的日志记录。
+- **将 C++ 版本更新为 C++23** ⬆️。
+- 重构代码库以利用 C++23 特性如 `std::ranges` 和 `contains`，以提高可读性和效率。
+- 重构各个组件以使用 `utils::exec_checked`。
 
 ## Fixes 🐛
 
-- Resolved an issue with hardcoded library types in gucc.
-- Addressed missing logger implementation and header file in gucc.
-- Enabled CPR library for non-development environment builds.
-- Fixed static build process.
-- Addressed issues introduced in commit [`a70e641e364`](https://github.com/CachyOS/New-Cli-Installer/commit/a70e641e364).
-- Fixed compilation errors in the TUI component.
-- Corrected a dependency issue where FTXUI's dependency on range-v3 was not public.
+- 解决了 gucc 中硬编码库类型的问题。
+- 解决了 gucc 中缺失日志记录器实现和头文件的问题。
+- 为非开发环境构建启用了 CPR 库。
+- 修复了静态构建过程。
+- 解决了提交 [`a70e641e364`](https://github.com/CachyOS/New-Cli-Installer/commit/a70e641e364) 中引入的问题。
+- 修复了 TUI 组件中的编译错误。
+- 纠正了 FTXUI 对 range-v3 的依赖未公开的问题。
 
 ## Chores 🧹
 
-- Updated CI checks, build processes, and fixed related issues.
-- Removed the reverted installation of network profiles alongside the binary distribution.
-- Refactored and cleaned up code in various components: TUI, utils, chwd_profiles, user, and tests.
-- Removed the unused range-v3 library from installer dependencies.
-- Updated README file.
+- 更新了 CI 检查、构建流程并修复了相关问题。
+- 移除了与二进制发行版一起安装网络配置文件的已还原操作。
+- 重构并清理了各个组件中的代码：TUI、utils、chwd_profiles、user 和 tests。
+- 从安装程序依赖项中移除了未使用的 range-v3 库。
+- 更新了 README 文件。

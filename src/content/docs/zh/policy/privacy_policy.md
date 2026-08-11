@@ -1,93 +1,94 @@
 ---
-title: Privacy Policy
+title: 隐私政策
+ai_translated: true
 ---
 
-## 1. Introduction
+## 1. 引言
 
-CachyOS ("we," "us," or "our") is committed to protecting your privacy. This Privacy Policy outlines how we collect, use, disclose, and safeguard your information when you visit our website and use our services, including the forum based on Discourse software. By using our services, you agree to the collection and use of information in accordance with this policy.
+CachyOS（"我们"、"我们的"）致力于保护您的隐私。本隐私政策概述了当您访问我们的网站和使用我们的服务（包括基于 Discourse 软件的论坛）时，我们如何收集、使用、披露和保护您的信息。使用我们的服务即表示您同意按照本政策收集和使用信息。
 
-## 2. Controller
+## 2. 数据控制方
 
-The data controller responsible for your personal data is:
-CachyOS Team
-Email: admin at cachyos dot org
+负责您个人数据的数据控制方为：
+CachyOS 团队
+邮箱：admin at cachyos dot org
 
-## 3. Data Collection and Use
+## 3. 数据收集和使用
 
-### 3.1. General Use of the Platform
+### 3.1. 平台的一般使用
 
-When you visit our website, our hosting provider automatically collects certain technical data:
+当您访问我们的网站时，我们的托管提供商会自动收集某些技术数据：
 
-- IP address
-- Accessed content
-- Date and time of access
-- Browser type and version
-- Referrer URL
+- IP 地址
+- 访问的内容
+- 访问的日期和时间
+- 浏览器类型和版本
+- 引用 URL
 
-This data is necessary for the operation of the website and to ensure its security, in compliance with Art. 6(1)(f) GDPR. The data is stored for 91 days before being deleted.
+根据 GDPR 第 6(1)(f) 条，这些数据对于网站的运行和确保安全是必要的。数据将存储 91 天后删除。
 
-### 3.2. User Account Registration
+### 3.2. 用户账户注册
 
-When you create a user account, we collect:
+当您创建用户账户时，我们收集：
 
-- Username
-- Email address
-- Password
+- 用户名
+- 电子邮件地址
+- 密码
 
-We may also collect additional data such as your IP address, language preference, and timezone. This information is used to manage your account and provide our services, under Art. 6(1)(b) GDPR. Your data will be stored as long as you have an account with us.
+我们可能还会收集其他数据，如您的 IP 地址、语言偏好和时区。根据 GDPR 第 6(1)(b) 条，这些信息用于管理您的账户和提供我们的服务。只要您在我们这里拥有账户，您的数据就会被存储。
 
-## 4. Services
+## 4. 服务
 
-### 4.1. Forum
+### 4.1. 论坛
 
-To participate in our forum, you must register an account. We collect your username, email address, and a captcha response to prevent spam. You can choose whether to display your email address to other users. Posts and comments will display your username and registration date. Upon account deletion, posts will remain anonymized.
+要参与我们的论坛，您必须注册账户。我们收集您的用户名、电子邮件地址和验证码响应以防止垃圾邮件。您可以选择是否向其他用户显示您的电子邮件地址。帖子和评论将显示您的用户名和注册日期。删除账户后，帖子将保持匿名。
 
-### 4.2. Website
+### 4.2. 网站
 
-You can browse our website without providing personal data. However, certain interactions, such as contacting us or subscribing to newsletters, may require you to provide personal data such as your email address and name. This data is processed to fulfill your requests, under Art. 6(1)(b) GDPR.
+您可以在不提供个人数据的情况下浏览我们的网站。但是，某些交互（如联系我们或订阅通讯）可能需要您提供个人数据，如电子邮件地址和姓名。根据 GDPR 第 6(1)(b) 条，处理这些数据以履行您的请求。
 
-## 5. Contact
+## 5. 联系我们
 
-When you contact us via email, we collect your email address and any other information you provide. This data is used to respond to your inquiry and is stored for as long as necessary to fulfill this purpose, in compliance with Art. 6(1)(f) GDPR.
+当您通过电子邮件联系我们时，我们收集您的电子邮件地址和您提供的任何其他信息。根据 GDPR 第 6(1)(f) 条，这些数据用于回复您的查询，并存储以实现此目的所需的时长。
 
-## 6. Data Retention
+## 6. 数据保留
 
-We retain your personal data only for as long as necessary to fulfill the purposes for which it was collected. Once the data is no longer needed, it will be deleted in accordance with our data retention policies.
+我们仅在实现收集目的所需的时间内保留您的个人数据。一旦数据不再需要，将根据我们的数据保留政策删除。
 
-## 7. Data Recipients
+## 7. 数据接收方
 
-We may share your data with external service providers, such as our hosting provider, to facilitate our services. These providers are contractually obligated to protect your data and use it only for the specified purposes.
+我们可能会与外部服务提供商（如我们的托管提供商）共享您的数据，以促进我们的服务。这些提供商受合同约束，必须保护您的数据并仅用于指定目的。
 
-## 8. Your Rights
+## 8. 您的权利
 
-Under the GDPR, you have the following rights regarding your personal data:
+根据 GDPR，您对个人数据享有以下权利：
 
-- Right of access (Art. 15 GDPR)
-- Right to rectification (Art. 16 GDPR)
-- Right to deletion (Art. 17 GDPR)
-- Right to restriction of processing (Art. 18 GDPR)
-- Right to data portability (Art. 20 GDPR)
-- Right to object (Art. 21 GDPR)
-- Right to withdraw consent (Art. 7(3) GDPR)
-- Right to lodge a complaint with a supervisory authority (Art. 77 GDPR)
+- 访问权（GDPR 第 15 条）
+- 更正权（GDPR 第 16 条）
+- 删除权（GDPR 第 17 条）
+- 限制处理权（GDPR 第 18 条）
+- 数据可携带权（GDPR 第 20 条）
+- 反对权（GDPR 第 21 条）
+- 撤回同意权（GDPR 第 7(3) 条）
+- 向监管机构投诉的权利（GDPR 第 77 条）
 
-To exercise these rights, please contact us at <admin@cachyos.org>.
+要行使这些权利，请联系 <admin@cachyos.org>。
 
-## 9. Data Security
+## 9. 数据安全
 
-We implement appropriate technical and organizational measures to ensure a level of security appropriate to the risk, protecting your data from unauthorized access, alteration, disclosure, or destruction.
+我们实施适当的技术和组织措施，确保与风险相适应的安全级别，保护您的数据免受未经授权的访问、更改、披露或破坏。
 
-## 10. Changes to This Privacy Policy
+## 10. 本隐私政策的变更
 
-We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page. Changes are effective immediately upon posting.
+我们可能会不时更新隐私政策。我们将通过在此页面上发布新的隐私政策来通知您任何变更。变更后立即生效。
 
-## 11. Contact Us
+## 11. 联系我们
 
-If you have any questions or concerns about this Privacy Policy, please contact us at:
-Email: admin at cachyos dot org
+如果您对本隐私政策有任何问题或疑虑，请联系我们：
+邮箱：admin at cachyos dot org
 
 ---
 
-This Privacy Policy ensures compliance with GDPR and outlines the practices regarding your personal data for CachyOS services and website.
+本隐私政策确保遵守 GDPR，并概述了 CachyOS 服务和网站关于您个人数据的做法。
 
-Date: 1.06.2024
+日期：2024 年 6 月 1 日

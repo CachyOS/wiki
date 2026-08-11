@@ -1,83 +1,78 @@
 ---
-title: Repository Usage Policy
+title: 仓库使用政策
+ai_translated: true
 ---
 
-CachyOS Repository Usage Policy
+CachyOS 仓库使用政策
 
-## 1. Introduction
+## 1. 引言
 
-The CachyOS repository is designed to provide high-quality, optimized packages for users of the CachyOS and ArchLinux distributions. This policy outlines the terms and conditions for the use of the CachyOS repository.
+CachyOS 仓库旨在为 CachyOS 和 ArchLinux 发行版的用户提供高质量、优化的软件包。本政策概述了使用 CachyOS 仓库的条款和条件。
 
-## 2. Disclaimer of Warranty
+## 2. 免责声明
 
-Unless required by applicable law or agreed to in writing, the CachyOS team provides the repository on an **"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND**, either express or implied, including, without limitation,
-any warranties or conditions of **TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A PARTICULAR PURPOSE**. You, as repository users, are solely responsible for determining the appropriateness of using the repository and assume
-any risks associated with your exercise of permissions.
+除非适用法律要求或书面同意，CachyOS 团队以 **"按原样"基础** 提供仓库，**不提供任何形式的明示或暗示的保证或条件**，包括但不限于关于 **所有权、不侵权、适销性或特定用途适用性** 的任何保证或条件。作为仓库用户，您全权负责确定使用仓库的适当性，并承担与行使权限相关的任何风险。
 
-## 3. Limitation of Liability
+## 3. 责任限制
 
-In no event and under no legal theory, whether in tort (including negligence), contract, or otherwise, unless required by applicable law (such as deliberate and grossly negligent acts) or agreed to in writing, shall the CachyOS team
-be liable to repository users for damages, including any direct, indirect, special, incidental, or consequential damages of any character arising as a result of this policy or out of the use or inability to use the repository
-(including but not limited to damages for loss of goodwill, work stoppage, computer failure or malfunction, or any and all other commercial damages or losses), even if the CachyOS team has been advised of the possibility of such damages.
+在任何情况下，无论根据何种法律理论，无论是侵权（包括疏忽）、合同或其他，除非适用法律要求（如故意和重大疏忽行为）或书面同意，CachyOS 团队均不对仓库用户承担损害赔偿责任，包括因本政策或使用或无法使用仓库而产生的任何直接、间接、特殊、附带或后果性损害（包括但不限于商誉损失、工作中断、计算机故障或 malfunction，或任何其他商业损害或损失），即使 CachyOS 团队已被告知可能发生此类损害。
 
-## 4. Supported Users
+## 4. 支持的用户
 
-The CachyOS repository (and its mirrors) provides support exclusively for the following users:
+CachyOS 仓库（及其镜像）仅为以下用户提供支持：
 
-- CachyOS Users
-- ArchLinux Users
+- CachyOS 用户
+- ArchLinux 用户
 
-## 5. Unsupported Users
+## 5. 不支持的用户
 
-Users from other distributions are **NOT SUPPORTED** and **HIGHLY DISCOURAGED** to use the CachyOS repository (and its mirrors). This includes, but is not limited to:
+**不支持**且**强烈不建议**其他发行版的用户使用 CachyOS 仓库（及其镜像）。包括但不限于：
 
 - Manjaro
 - EndeavourOS
 - ArcoLinux
 - Parabola
-- Users of any other Linux distribution not explicitly mentioned in the "Supported Users" section.
+- "支持的用户"部分未明确提及的任何其他 Linux 发行版用户。
 
-## 6. Redistribution of the Repository
+## 6. 仓库的再分发
 
-This policy defines "redistribution" as the behaviors of inclusion of the CachyOS repository (and its mirrors) or packages obtained from the CachyOS repository as a part of the distributed image of the operating system or sysroots.
-Redistribution also includes the behaviors of **Linux distributions** to provide the utilities that enable CachyOS repository by users' choice, or to provide any distributed or official document that guide users to enable CachyOS
-repository (and its mirrors) by their means. End users and third-party mirrors are not subject to the redistribution policy.
+本政策将"再分发"定义为将 CachyOS 仓库（及其镜像）或从 CachyOS 仓库获得的软件包作为操作系统或 sysroots 的分发映像的一部分的行为。再分发还包括 **Linux 发行版** 提供允许用户选择启用 CachyOS 仓库的工具，或提供任何分发或官方文档指导用户通过其方式启用 CachyOS 仓库（及其镜像）的行为。终端用户和第三方镜像不受再分发政策的约束。
 
-Redistribution of CachyOS repository is exclusively authorized to the CachyOS team only.
+CachyOS 仓库的再分发仅授权给 CachyOS 团队。
 
-## 7. Prohibited Redistribution
+## 7. 禁止的再分发
 
-Redistribution of the CachyOS repository (and its mirrors) in any unauthorized Linux distribution, including other Arch-based distributions, is **STRICTLY PROHIBITED**. This includes, but is not limited to:
+**严格禁止**在任何未经授权的 Linux 发行版（包括其他基于 Arch 的发行版）中再分发 CachyOS 仓库（及其镜像）。包括但不限于：
 
 - Manjaro
 - EndeavourOS
 - ArcoLinux
 - Parabola
-- Any other Linux distribution not explicitly mentioned in the "Redistribution of the Repository" section.
+- "仓库的再分发"部分未明确提及的任何其他 Linux 发行版。
 
-## 8.Mirror
+## 8. 镜像
 
-It is allowed to mirror the repository via rsync and syncthing. Third-party mirrors are permitted to mirror the repository and provide a web server for it, as long as they ensure that the repository data remains unchanged.
+允许通过 rsync 和 syncthing 镜像仓库。第三方镜像被允许镜像仓库并为其提供 Web 服务器，只要他们确保仓库数据保持不变。
 
-## 9. Compliance and Monitoring
+## 9. 合规和监控
 
-We reserve the right to monitor the usage of our repository to ensure compliance with this policy. Any unauthorized use may result in access being revoked.
+我们保留监控仓库使用情况以确保遵守本政策的权利。任何未经授权使用可能导致访问被撤销。
 
-## 10. Reporting Violations
+## 10. 报告违规
 
-If you suspect that this policy is being violated, please report it to us at [admin@cachyos.org].
+如果您怀疑本政策被违反，请向我们报告至 [admin@cachyos.org]。
 
-## 11. Policy Changes
+## 11. 政策变更
 
-CachyOS reserves the right to modify this policy at any time. Changes will be communicated through our official channels.
+CachyOS 保留随时修改本政策的权利。变更将通过我们的官方渠道通知。
 
-## 12. Contact Information
+## 12. 联系信息
 
-For any questions or concerns regarding this policy, please contact us at:
+有关本政策的任何问题或疑虑，请联系我们：
 
-- Email: [admin@cachyos.org](mailto:admin@cachyos.org)
-- Website: [https://cachyos.org](https://cachyos.org)
+- 邮箱：[admin@cachyos.org](mailto:admin@cachyos.org)
+- 网站：[https://cachyos.org](https://cachyos.org)
 
-## 13. Acknowledgment
+## 13. 确认
 
-By using the CachyOS repository (and its mirrors), you acknowledge that you have read, understood, and agree to comply with this policy.
+通过使用 CachyOS 仓库（及其镜像），您确认已阅读、理解并同意遵守本政策。

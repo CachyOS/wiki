@@ -1,60 +1,61 @@
 ---
-title: Filesystems
-description: Description and recommendations for the available filesystems. (ext4, f2fs, btrfs, xfs, zfs)
+title: 文件系统
+description: 对可用文件系统的描述和建议。（ext4、f2fs、btrfs、xfs、zfs）
+ai_translated: true
 ---
 
-CachyOS offers 5 different filesystems to allow the user to choose what best fits their needs. The following will go over advantages, disadvantages, and recommendations for each filesystem. Each filesystem comes with its requirements/utilities preinstalled on CachyOS.
+CachyOS 提供 5 种不同的文件系统，让用户可以选择最适合自己需求的文件系统。以下内容将介绍每种文件系统的优点、缺点和建议。每个文件系统都随 CachyOS 预装了其所需的工具/实用程序。
 
 :::note
-BTRFS is the default and recommended filesystem for CachyOS. Choose it if unsure.
+BTRFS 是 CachyOS 的默认和推荐文件系统。如果不確定，请选择它。
 :::
 
 ## XFS
 
-XFS is a journaling filesystem created and developed by Silicon Graphics, Inc. It was created in 1993, ported to linux in 2001, and is now widely supported by most Linux distributions.
+XFS 是由 Silicon Graphics, Inc. 创建和开发的日志文件系统。它创建于 1993 年，于 2001 年移植到 Linux，现在被大多数 Linux 发行版广泛支持。
 
-### Pros
+### 优点
 
-- XFS was originally designed with speed and extreme scalability in mind.
-- Reliable, XFS makes use of several technologies to prevent data corruption.
-- Resistant to fragmentation due to its extent-based nature and delayed allocation strategy.
+- XFS 最初设计时考虑了速度和极高的可扩展性。
+- 可靠，XFS 使用多种技术来防止数据损坏。
+- 由于其基于 extent 的特性和延迟分配策略，抗碎片化能力强。
 
-### Cons
+### 缺点
 
-- Cannot be shrunk.
+- 无法缩小。
 
-### Userspace utility
+### 用户空间工具
 
-The package containing userspace tools to manage XFS filesystems is `xfsprogs`.
+包含管理 XFS 文件系统用户空间工具的包是 `xfsprogs`。
 
-### Recommendation
+### 建议
 
-XFS is the recommended filesystem for users who do not need advanced features and simply want a fast and reliable filesystem.
+XFS 是推荐给不需要高级功能、只需要快速可靠文件系统的用户的文件系统。
 
 ## BTRFS
 
-BTRFS is a modern copy-on-write(COW) filesystem created in 2007 and declared stable in the linux kernel in 2013. It is widely supported and is mainly known for its advanced feature set.
+BTRFS 是一种现代写时复制（COW）文件系统，创建于 2007 年，于 2013 年在 Linux 内核中被宣布为稳定版本。它被广泛支持，主要以其高级功能集而闻名。
 
-### Pros
+### 优点
 
-- Transparent compression. BTRFS supports transparently compressing files to allow for significant space savings with no user intervention. **CachyOS ships with ZSTD compression set to level 3 by default.**
-- Snapshot functionality. BTRFS leverages its COW nature to allow for the creation of snapshots of subvolumes that take up very little actual space.
-- Subvolume functionality allowing for greater control over the filesystem.
-- Able to grow or shrink.
-- Very fast development.
+- 透明压缩。BTRFS 支持透明压缩文件，无需用户干预即可显著节省空间。**CachyOS 默认使用 ZSTD 压缩，级别设置为 3。**
+- 快照功能。BTRFS 利用其 COW 特性，允许创建占用实际空间极少的子卷快照。
+- 子卷功能，允许对文件系统进行更精细的控制。
+- 可以扩容或缩小。
+- 开发速度非常快。
 
-### Cons
+### 缺点
 
-- Sometimes requires defragmentation or balancing.
-- Worse on rotational drives due to aforementioned fragmentation.
+- 有时需要碎片整理或平衡。
+- 由于上述碎片化问题，在旋转硬盘上表现较差。
 
-### Userspace utility
+### 用户空间工具
 
-Btrfs userspace utility package is `btrfs-progs`
+Btrfs 用户空间工具包是 `btrfs-progs`。
 
-### Subvolume Layout
+### 子卷布局
 
-CachyOS provides a subvolume layout out of the box to allow easy snapshot functionality.
+CachyOS 开箱即用地提供一个子卷布局，以便于使用快照功能。
 
 - Subvol @ = /
 - Subvol @home = /home
@@ -64,94 +65,94 @@ CachyOS provides a subvolume layout out of the box to allow easy snapshot functi
 - Subvol @tmp = /var/tmp
 - Subvol @log = /var/log
 
-### Recommendation
+### 建议
 
-BTRFS is recommended for users who want snapshot/backup functionality and transparent compression.
+BTRFS 推荐给需要快照/备份功能和透明压缩的用户。
 
 ## EXT4
 
-EXT4 (fourth extended filesystem) is the most commonly used Linux filesystem. EXT4 was made stable in the linux kernel in 2008.
+EXT4（第四代扩展文件系统）是使用最广泛的 Linux 文件系统。EXT4 于 2008 年在 Linux 内核中成为稳定版本。
 
-### Pros
+### 优点
 
-- Can be as fast or faster than XFS in some scenarios.
-- Very common, allowing easy access to plenty of resources.
-- Reliable. EXT4 has a proven track record of being very reliable.
-- Able to grow or shrink.
-  - Shrinking is only supported offline and requires the filesystem to be unmounted.
+- 在某些场景下可以比 XFS 一样快或更快。
+- 非常常见，可以轻松访问大量资源。
+- 可靠。EXT4 有着非常可靠的 proven 记录。
+- 可以扩容或缩小。
+  - 缩小仅支持离线操作，需要卸载文件系统。
 
-### Cons
+### 缺点
 
-- Lacks many of the advanced features other filesystems offer.
+- 缺少其他文件系统提供的许多高级功能。
 
-### Userspace utilities
+### 用户空间工具
 
-The package to manage ext4 is `e2fsprogs`
+管理 ext4 的包是 `e2fsprogs`。
 
-### Recommendation
+### 建议
 
-EXT4 is recommended for users who want the simplest and most commonly used filesystem.
+EXT4 推荐给想要最简单和最常用文件系统的用户。
 
 ## ZFS
 
-ZFS is an advanced filesystem originally developed by Sun Microsystems in 2005. ZFS has many features, but is licensed under CDDL which means it cannot be included inside the linux kernel and requires a separate module installed.
+ZFS 是一种高级文件系统，最初由 Sun Microsystems 于 2005 年开发。ZFS 有许多功能，但采用 CDDL 许可证，这意味着它不能包含在 Linux 内核中，需要安装单独的模块。
 
 :::caution
-Do not use a Real-time kernel together with ZFS, it's not compatible due to licensing issues.
+不要将实时内核与 ZFS 一起使用，由于许可证问题，它们不兼容。
 :::
 
-### Pros
+### 优点
 
-- Pooled storage (zpool)
-- Snapshots using COW
-- Compression
-- Raid-Z support
-- ARC cache allows insanely fast read times on commonly accessed files.
+- 存储池（zpool）
+- 使用 COW 的快照
+- 压缩
+- Raid-Z 支持
+- ARC 缓存使得常用文件的读取速度极快。
 
-### Cons
+### 缺点
 
-- Very complicated to use and understand due to features like zpool and ARC.
-- ARC requires a lot of ram to be effective.
-- Not included in the linux kernel therefore dependent on a third party kernel module (OpenZFS)
-- Incompatible with Real-time preemption
+- 由于 zpool 和 ARC 等功能，使用和理解起来非常复杂。
+- ARC 需要大量内存才能发挥效果。
+- 未包含在 Linux 内核中，因此依赖于第三方内核模块（OpenZFS）
+- 与实时抢占不兼容
 
-### Required tools
+### 所需工具
 
-'ZFS-Module' CachyOS provides a precompiled zfs module for each kernel version.
-`zfs-utils` for the userspace utilities.
+'ZFS-Module' CachyOS 为每个内核版本提供预编译的 zfs 模块。
+`zfs-utils` 用于用户空间工具。
 
-### Recommendation
+### 建议
 
-ZFS should only be used by advanced users who want to use its advanced features, such as pooled storage or the ARC cache.
+ZFS 应仅由想要使用其高级功能（如存储池或 ARC 缓存）的高级用户使用。
 
 ## F2FS
 
-F2FS (Flash-Friendly File System) is a flash file system originally created and developed by Samsung for the linux kernel. F2FS was created to cater specifically for the NAND flash used in modern day storage.
+F2FS（Flash-Friendly File System）是一种闪存文件系统，最初由三星为 Linux 内核创建和开发。F2FS 专为现代存储中使用的 NAND 闪存而设计。
 
-### Pros
+### 优点
 
-- Designed with flash friendliness in mind.
-- Transparent compression used to reduce disk writes (space savings not currently usable by the user).
-- Better wear leveling, which further prolongs the life of NAND flash.
+- 设计时考虑了闪存友好性。
+- 透明压缩用于减少磁盘写入（节省的空间目前用户无法使用）。
+- 更好的磨损均衡，进一步延长 NAND 闪存的使用寿命。
 
-### Cons
+### 缺点
 
-- Cannot shrink.
-- Space savings from compression cannot currently be used by the user. This may be added in the future.
-- Relatively weak fsck (filesystem check).
-- Downgrading to a kernel older than the version that created the filesystem may cause issues.
-- Requires a workaround when used with GRUB on MBR/BIOS system.
+- 无法缩小。
+- 压缩节省的空间目前用户无法使用。未来可能会添加此功能。
+- fsck（文件系统检查）相对较弱。
+- 降级到比创建文件系统的版本更旧的内核可能会导致问题。
+- 在 MBR/BIOS 系统上与 GRUB 一起使用时需要变通方法。
 
-### Userspace utilities
+### 用户空间工具
 
-The main utility for f2fs is `f2fs-tools`
+f2fs 的主要工具是 `f2fs-tools`。
 
-### Recommendation
+### 建议
 
-- F2FS is recommended for users who want to maximize the lifespan of their NAND flash devices.
-- Limine is the recommended bootloader for F2FS users on MBR/BIOS systems since it does not require a workaround like GRUB does.
+- F2FS 推荐给想要最大化 NAND 闪存设备使用寿命的用户。
+- Limine 是 MBR/BIOS 系统上 F2FS 用户的推荐引导加载器，因为它不需要像 GRUB 那样的变通方法。
 
 ## TL:DR
 
-Use the default filesystem **BTRFS** as it is considered stable and has a lot of neat features (snapshots, compression, etc). Use **XFS** or **EXT4** for a simple
-and fast filesystem.
+使用默认文件系统 **BTRFS**，因为它被认为是稳定的，并且有很多不错的功能（快照、压缩等）。如果需要简单
+快速的文件系统，使用 **XFS** 或 **EXT4**。

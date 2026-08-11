@@ -1,16 +1,17 @@
 ---
-title: Official CachyOS Community
-description: Discord, Reddit, X, Forum, Mastodon
+title: CachyOS 官方社区
+description: Discord、Reddit、X、论坛、Mastodon
+ai_translated: true
 ---
 
-The following Social Media are maintained by the CachyOS Team.
+以下社交媒体由 CachyOS 团队维护。
 
-You can follow the links to chat and ask for help.
+您可以点击链接聊天并寻求帮助。
 
-Feel free to join!
+欢迎加入！
 
 - [Discord](<https://discord.gg/cachyos-862292009423470592>)
 - [Reddit](<https://www.reddit.com/r/cachyos>)
-- [Forum](<https://discuss.cachyos.org>)
-- [X](<https://x.com/cachyos>) - `Excluded from asking for help.`
-- [Mastodon](<https://fosstodon.org/@CachyOS>) - `Excluded from asking for help.`
+- [论坛](<https://discuss.cachyos.org>)
+- [X](<https://x.com/cachyos>) - `不用于寻求帮助。`
+- [Mastodon](<https://fosstodon.org/@CachyOS>) - `不用于寻求帮助。`

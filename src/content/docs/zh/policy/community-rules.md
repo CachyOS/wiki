@@ -1,21 +1,22 @@
 ---
-title: Official CachyOS Community Rules
-description: Discord, Reddit, Twitter, Forum
+title: CachyOS 官方社区规则
+description: Discord、Reddit、Twitter、论坛
+ai_translated: true
 ---
 
-Violating these rules is not allowed and account ban will follow:
+不允许违反以下规则，违者将被封禁账号：
 
-1. Insulting community participants is prohibited.
-2. Incitement of ethnic hatred is prohibited.
-3. The posting of pornographic materials is prohibited.
-4. Discussion of political topics is prohibited when it gets out of control.
-5. Discussion of religious topics is prohibited.
-6. It is forbidden to advertise other resources without the consent of the administration.
-7. It is forbidden to impersonate another person.
-8. It is forbidden to flood (publish the same type of information several times in a row).
-9. It is forbidden to provoke conflicts between participants.
-10. This is a LGBTQ+ safe place, and so it is forbidden to provoke and insult LGBTQ+ people.
+1. 禁止侮辱社区参与者。
+2. 禁止煽动种族仇恨。
+3. 禁止发布色情材料。
+4. 当政治话题失控时，禁止讨论政治话题。
+5. 禁止讨论宗教话题。
+6. 未经管理员同意，禁止宣传其他资源。
+7. 禁止冒充他人。
+8. 禁止刷屏（连续多次发布相同类型的信息）。
+9. 禁止挑拨参与者之间的冲突。
+10. 这是一个 LGBTQ+ 安全空间，因此禁止挑衅和侮辱 LGBTQ+ 人士。
 
-Violating these rules will result in timeouts, escalating to an account ban for repeated offenses:
+违反以下规则将导致暂时禁言，重复违规将升级为封禁账号：
 
-1. The use of languages other than English for communication is prohibited unless the convo is a "small-talk" or dedicated language channel exist.
+1. 禁止使用英语以外的语言进行交流，除非对话是"闲聊"或存在专用语言频道。

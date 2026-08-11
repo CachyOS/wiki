@@ -1,31 +1,32 @@
 ---
 title: Automount Additional Drives at Boot
 description: Mount additional static drives at boot by utilizing either systemd mounts or the file found at /etc/fstab
+ai_translated: true
 ---
 
 import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
-This tutorial describes the basics of utilizing both systemd mount files and the fstab file located in /etc/ in order to mount static drives during boot. It briefly explains how to find a partition or drive's UUID, what some options do, and further reading should the information provided be insufficient.
+本教程介绍了使用 systemd mount 文件和 /etc/ 目录中的 fstab 文件在启动时挂载静态驱动器的基础知识。简要说明了如何查找分区或驱动器的 UUID、某些选项的作用，以及如果提供的信息不足时的进一步阅读资料。
 
-## Prerequisites
+## 前提条件
 
-- Root or sudo access
+- Root 或 sudo 权限
 
 :::note[NTFS on Linux]
-The NTFS filesystem can be unstable under Linux, whether using the ntfs, ntfs3 or ntfs-3g driver. Use it at your own risk. For better stability and performance, consider Linux native filesystems like ext4, xfs, or btrfs.
+NTFS 文件系统在使用 ntfs、ntfs3 或 ntfs-3g 驱动时，在 Linux 下可能不稳定。使用风险自负。为了更好的稳定性和性能，请考虑使用 Linux 原生文件系统，如 ext4、xfs 或 btrfs。
 :::
 
-## Safer and Beginner Friendly Method: Mounting Drives with Systemd Mount Files
+## 更安全且适合初学者的方法：使用 Systemd Mount 文件挂载驱动器
 
-The benefit of mounting via systemd is that even if you get something wrong in your mount file, your system will still boot. Whereas a mistake in the fstab can render your system unbootable.
+通过 systemd 挂载的好处是，即使你在 mount 文件中配置有误，系统仍然可以启动。而 fstab 中的错误可能导致系统无法启动。
 
-### 1. List the UUIDs of your partitions
+### 1. 列出你的分区 UUID
 
-```sh title="Open a terminal and run the following command"
+```sh title="打开终端并运行以下命令"
 lsblk -f
 ```
 
-```sh title="Example output"
+```sh title="示例输出"
 NAME          FSTYPE FSVER LABEL UUID                                 FSAVAIL   FSUSE% MOUNTPOINTS
 zram0                                                                              [SWAP]
 nvme0n1
@@ -40,17 +41,17 @@ nvme1n1
 
 ```
 
-In this example, we want to mount an extra drive freshly formatted as ext4. We know it's a 1TB drive, and know that nothing has been stored on it yet. Therefore, we can determine the partition to be mounted is `nvme1n1p1` that has a UUID of `4e55896f-3f1f-4bc5-aa8a-fec099689cd9`.
+在本例中，我们要挂载一块刚格式化为 ext4 的新驱动器。我们知道它是一块 1TB 的驱动器，且尚未存储任何数据。因此，我们可以确定要挂载的分区是 `nvme1n1p1`，其 UUID 为 `4e55896f-3f1f-4bc5-aa8a-fec099689cd9`。
 
-### 2. Identifying your partition
+### 2. 识别你的分区
 
-Often `lsblk -f` will provide all the information you need to mount your disk with systemd at this point. If you're still unsure which is the correct partition, you can run the following command:
+通常 `lsblk -f` 会提供通过 systemd 挂载磁盘所需的所有信息。如果你仍然不确定哪个是正确分区，可以运行以下命令：
 
 ```sh
 sudo fdisk -l
 ```
 
-```sh title="Example output"
+```sh title="示例输出"
 Device          Start       End         Sectors     Size    Type
 /dev/nvme0n1p1  2048        206847      204800      100M    EFI System
 /dev/nvme0n1p2  206848      239615      32768       16M     Microsoft reserved
@@ -62,35 +63,36 @@ Device          Start       End         Sectors     Size    Type
 
 ```
 
-We already know our UUID in this example. However, `fdisk -l` can make it a bit more clear to us by showing the exact size of the partition (931.5G) as well as its type (Linux filesystem).
+在本例中我们已经知道了 UUID。不过，`fdisk -l` 可以通过显示分区的确切大小（931.5G）和类型（Linux filesystem），使情况更加清楚。
 
-That should make it abundantly clear to us that the partition we want is `nvme1n1p1` with a UUID of `4e55896f-3f1f-4bc5-aa8a-fec099689cd9` as described earlier. We knew earlier, but now we just know it for sure.
+这应该能非常明确地告诉我们，我们要的分区是 `nvme1n1p1`，UUID 为 `4e55896f-3f1f-4bc5-aa8a-fec099689cd9`，如前所述。我们之前已经知道了，但现在可以百分之百确定。
 
-Once you are confident you've found the correct partition, copy the UUID. Copying from the terminal emulator is typically done with `ctrl+shift+C`.
+一旦你确认找到了正确的分区，请复制其 UUID。从终端复制通常使用 `ctrl+shift+C`。
 
-### 3. Creating the Systemd Mount File
-Let us say we want to use this drive primarily for games, a good place to mount that is in your user home. It can be anywhere you want, but for simplicity's sake we're going with in /home/user (replace user with your linux username). This matters because the mounting path dictates the name of the systemd mount file. Because this drive is intended for games, we'll mount it to the games folder in user home, `/home/user/games`.
+### 3. 创建 Systemd Mount 文件
 
-For a systemd mount file, that translates to home-$USER-games.mount (forward slashes `/` get replaced with hypens `-`) and systemd mount files go in /etc/systemd/system.
+假设我们要将这块驱动器主要用于游戏，一个合适的挂载位置是在用户主目录。你可以选择任何位置，但为了简单起见，我们使用 /home/user（将 user 替换为你的 Linux 用户名）。这很重要，因为挂载路径决定了 systemd mount 文件的名称。由于这块驱动器用于游戏，我们将它挂载到用户主目录下的 games 文件夹，即 `/home/user/games`。
+
+对于 systemd mount 文件，这对应为 home-$USER-games.mount（正斜杠 `/` 替换为连字符 `-`），systemd mount 文件放在 /etc/systemd/system 中。
 
 :::tip
-If you want to use a space, a hyphen, a CJK character, or an accented character in your mount folder name, it must be formatted differently. Let's say you want to use the folder path of `/home/grzegorz/brzęczyszczykiewicz`, run the following command to get the name you need to use with your file:
+如果你想在挂载文件夹名称中使用空格、连字符、CJK 字符或带重音的字符，必须以不同方式格式化。假设你想使用文件夹路径 `/home/grzegorz/brzęczyszczykiewicz`，运行以下命令获取文件所需的名称：
 ```bash
 systemd-escape -p --suffix=mount "/home/grzegorz/brzęczyszczykiewicz"
 ```
-Since you need to escape any `\`, you would create the mount file as `/etc/systemd/system/home-grzegorz-brz\\xc4\\x99czyszczykiewicz.mount`
+由于你需要转义任何 `\`，你会创建 mount 文件为 `/etc/systemd/system/home-grzegorz-brz\\xc4\\x99czyszczykiewicz.mount`
 :::
 
-Feel free to use your text editor of choice, in this example we'll be using `micro`.
+你可以使用任何喜欢的文本编辑器，本例中使用 `micro`。
 
 ```sh
 micro /etc/systemd/system/home-$USER-games.mount
 ```
 :::note
-If you are mounting in your user home, you can keep the above $USER in the file name, your username will automatically take its place.
+如果你挂载在用户主目录下，可以在文件名中保留上面的 $USER，它会自动替换为你的用户名。
 :::
 
-Paste this template into the empty file:
+将以下模板粘贴到空文件中：
 ```ini
 [Unit]
 Description=
@@ -104,28 +106,28 @@ Options=
 [Install]
 WantedBy=multi-user.target
 ```
-Below are descriptions for each field in the file:
+以下是文件中每个字段的说明：
 
 <Tabs>
   <TabItem label='Description'>
-  Description can be anything you want, it's for your own recognition.
+  Description 可以是任何内容，供你自己识别。
   </TabItem>
   <TabItem label= 'What'>
-  Put in the UUID you copied earlier. Here it will be `UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9`
+  填入之前复制的 UUID。这里将是 `UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9`
   </TabItem>
   <TabItem label= 'Where'>
-  This is the mount point. A folder will be created if it doesn't exist. Here, it will be `/home/user/games`. Replace "user" with your username if mounting in your home folder.
+  这是挂载点。如果文件夹不存在，将自动创建。这里将是 `/home/user/games`。如果挂载在主目录下，请将 "user" 替换为你的用户名。
   </TabItem>
   <TabItem label= 'Type'>
-  Filesystem type, here it will be `ext4`
+  文件系统类型，这里将是 `ext4`
   </TabItem>
   <TabItem label= 'Options'>
-  Any mounting options you want. Here, we'll use `defaults,exec,rw,noatime`. No spaces is important here.
+  任何你想要的挂载选项。这里，我们将使用 `defaults,exec,rw,noatime`。这里不要留空格很重要。
   </TabItem>
 </Tabs>
 ---
 
-Following the example, the filled out mount file should look like this:
+按照示例，填写完整的 mount 文件应该如下所示：
 ```ini
 [Unit]
 Description=Mount games drive (/home/user/games)
@@ -140,15 +142,16 @@ Options=defaults,exec,rw,noatime
 WantedBy=multi-user.target
 ```
 
-### 4. Finishing Up
-To mount the drive we just created an entry for, run the following:
+### 4. 完成
+
+要挂载我们刚刚创建条目的驱动器，运行以下命令：
 
 ```sh
 sudo systemctl daemon-reload
 sudo systemctl enable --now home-$USER-games.mount
 ```
 
-You should see the folder you chose for the mount point, and can check the status of the mount with `systemctl status home-$USER-games.mount`:
+你应该能看到你选择的挂载点文件夹，并且可以通过 `systemctl status home-$USER-games.mount` 检查挂载状态：
 
 ```sh
 ● home-user-games.mount - Mount games drive (/home/user/games)
@@ -163,26 +166,26 @@ You should see the folder you chose for the mount point, and can check the statu
      CGroup: /system.slice/home-user-games.mount
 
 May 02 13:02:31 cachyos systemd[1]: Mounting Mount games drive (/home/user/games)...
-May 02 13:02:31 cachyos systemd[1]: Mounted Mount games drive (/home/user/games).
+May 02 13:02:31 cachyOS systemd[1]: Mounted Mount games drive (/home/user/games).
 ```
 
-### tl;dr
+### 简而言之
 
-- Find the **UUID** of your partition
+- 找到你分区的 **UUID**
 
 ```sh
 lsblk -f
 ```
 
-- Create the mount file
+- 创建 mount 文件
 
 ```sh
 micro /etc/systemd/system/mnt-foo.mount
 ```
 
-Replacing `mnt-foo` with the full path of where you want to mount, swapping the `/` for `-`.
+将 `mnt-foo` 替换为你想要挂载的完整路径，将 `/` 替换为 `-`。
 
-- Fill out the mount file
+- 填写 mount 文件
 
 ```sh
 [Unit]
@@ -198,21 +201,21 @@ Options=defaults
 WantedBy=multi-user.target
 ```
 
-Replacing `<partition UUID>`, `/mnt/foo`, and `somefs` with your UUID, directory, and filesystem. eg., ext4, as well as setting any other options you may want after defaults, such as `_netdev` for a NAS, or `nofail` for any non-critical drive.
+将 `<partition UUID>`、`/mnt/foo` 和 `somefs` 替换为你的 UUID、目录和文件系统。例如 ext4，以及在 defaults 之后设置你可能想要的任何其他选项，如 NAS 的 `_netdev` 或任何非关键驱动器的 `nofail`。
 
-- Reload your daemon
+- 重新加载 daemon
 
 ```sh
 sudo systemctl daemon-reload
 ```
 
-- Mount your drive and set it to mount on boot
+- 挂载驱动器并设置为开机自动挂载
 
 ```sh
 sudo systemctl enable --now mnt-foo.mount
 ```
 
-### Additional reading
+### 更多阅读
 
 - [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
 - [FHS on /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
@@ -220,19 +223,19 @@ sudo systemctl enable --now mnt-foo.mount
 - [Manual for fsck](https://man.archlinux.org/man/fsck.8)
 - [systemd-mount](https://manual.siduction.org/systemd-mount_en.html)
 
-## Advanced Method: Adding Entries to /etc/fstab
+## 高级方法：向 /etc/fstab 添加条目
 
 :::danger
-The fstab file is read during boot, and if there is an error in the file, it can cause your system to fail to boot. Be sure to double check your entry for any typos before rebooting. If you do make a mistake, you can typically fix it by booting into a live environment and [chrooting into your installation](/features/cachy_chroot) to edit the file.
+fstab 文件在启动时读取，如果文件中有错误，可能导致系统无法启动。在重启前务必仔细检查你的条目是否有任何拼写错误。如果你确实犯了错误，通常可以通过启动到 live 环境并 [chroot 到你的安装](/zh/features/cachy_chroot) 来编辑文件进行修复。
 :::
 
-### 1. List the UUIDs of your partitions
+### 1. 列出你的分区 UUID
 
-```sh title="Open a terminal and run the following command"
+```sh title="打开终端并运行以下命令"
 lsblk -f
 ```
 
-```sh title="Example output"
+```sh title="示例输出"
 NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
 zram0                                                                              [SWAP]
 nvme0n1
@@ -244,17 +247,17 @@ nvme0n1
 └─nvme0n1p6 ntfs
 ```
 
-In our example, we know that we want to mount a Windows partition, which is ntfs. We also know that roughly half its space is available. Therefore, we can determine that the partition we want to mount is `nvme0n1p3` and its UUID to be `08A24E90A24E81E4`, with a file system of `ntfs` in this example.
+在我们的示例中，我们知道要挂载一个 Windows 分区，它是 ntfs。我们还知道它大约一半的空间可用。因此，我们可以确定要挂载的分区是 `nvme0n1p3`，UUID 为 `08A24E90A24E81E4`，文件系统为 `ntfs`。
 
-### 2. Identifying your partition
+### 2. 识别你的分区
 
-Often `lsblk -f` will provide all the information you need to mount your disk through /etc/fstab at this point. If you're still unsure which is the correct partition, you can run the following command:
+通常 `lsblk -f` 会提供通过 /etc/fstab 挂载磁盘所需的所有信息。如果你仍然不确定哪个是正确分区，可以运行以下命令：
 
 ```sh
 sudo fdisk -l
 ```
 
-```sh title="Example output"
+```sh title="示例输出"
 Device              Start        End    Sectors  Size Type
 /dev/nvme0n1p1       2048     206847     204800  100M EFI System
 /dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
@@ -264,91 +267,91 @@ Device              Start        End    Sectors  Size Type
 /dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
 ```
 
-We already know our UUID in this example. However, `fdisk -l` can make it a bit more clear to us by showing the exact size of the partition (1.4T) as well as its type (Microsoft basic data).
+在本例中我们已经知道了 UUID。不过，`fdisk -l` 可以通过显示分区的确切大小（1.4T）和类型（Microsoft basic data），使情况更加清楚。
 
-That should make it abundantly clear to us that the partition we want is `nvme0n1p3` with a UUID of `08A24E90A24E81E4` as described earlier. We knew earlier, but now we just know it for sure.
+这应该能非常明确地告诉我们，我们要的分区是 `nvme0n1p3`，UUID 为 `08A24E90A24E81E4`，如前所述。我们之前已经知道了，但现在可以百分之百确定。
 
-Once you are confident you've found the correct partition, copy the UUID. Copying from the terminal emulator is typically done with `ctrl+shift+C`.
+一旦你确认找到了正确的分区，请复制其 UUID。从终端复制通常使用 `ctrl+shift+C`。
 
-### 3. Adding an Entry to /etc/fstab
+### 3. 向 /etc/fstab 添加条目
 
-Now that we've obtained the UUID of our partition, it's time to open up the fstab file.
+现在我们已经获取了分区的 UUID，是时候打开 fstab 文件了。
 
-Feel free to use your text editor of choice. In this example, we will use nano. In order to edit the fstab file, it must be opened as root:
+你可以使用任何喜欢的文本编辑器。本例中，我们将使用 nano。要编辑 fstab 文件，必须以 root 身份打开：
 
 ```sh
 sudo nano /etc/fstab
 ```
 
-Using the arrow keys, navigate to the bottom of the fstab file, then create our new entry on an empty new line:
+使用方向键导航到 fstab 文件底部，然后在空的新行上创建我们的新条目：
 
 ```sh
 UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000 0 0
 ```
 
 :::note
-`/media/windows` needs to exist on your filesystem. Use `mkdir` to create the directory if it doesn't.
+`/media/windows` 需要在你的文件系统中存在。如果不存在，使用 `mkdir` 创建该目录。
 :::
 
-The break down of this entry is as follows:
+此条目的分解如下：
 
-- `UUID=08A24E90A24E81E4` is the file system we want to mount, identified by its UUID. There are other methods to identify your filesystem, though UUID tends to be safest. Additional methods listed [here](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems).
+- `UUID=08A24E90A24E81E4` 是我们要挂载的文件系统，由其 UUID 标识。还有其他方法可以标识文件系统，但 UUID 通常最安全。其他方法列在 [这里](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems)。
 
-- `/media/windows` is the mount point of our drive. The [Linux Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html) says that `/media/` is the proper location for removable drives to be mounted. `windows` indicates the directory we wish to mount our drive to. Each drive we want to mount will need its own directory.
+- `/media/windows` 是我们驱动器的挂载点。[Linux Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html) 规定 `/media/` 是可移动驱动器挂载的正确位置。`windows` 表示我们希望挂载驱动器的目录。我们要挂载的每个驱动器都需要自己的目录。
 
-- `ntfs3` is the filesystem type to be used. We are explicitly using the ntfs3 kernel driver in our example. Other examples would be `ext4`, `xfs` or similar. This explicit filesystem type declaration can be replaced with `auto` to allow the mount command to make its best guess.
+- `ntfs3` 是要使用的文件系统类型。在我们的示例中，我们显式使用 ntfs3 内核驱动。其他示例包括 `ext4`、`xfs` 或类似类型。此显式文件系统类型声明可以替换为 `auto`，让 mount 命令做出最佳猜测。
 
-- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000`: These are mount options:
+- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000`：这些是挂载选项：
 
-  - `defaults`: a standard set of options including `rw, suid, dev, exec, auto, nouser, and async.`
+  - `defaults`：一组标准选项，包括 `rw, suid, dev, exec, auto, nouser, and async.`
 
-  - `nofail`: allows the boot process to continue even if this mount fails.
+  - `nofail`：即使此挂载失败，也允许启动过程继续。
 
-  - `uid=1000` and `gid=1000`: sets the user and group ownership of the mounted files to the user and group with ID 1000.
+  - `uid=1000` 和 `gid=1000`：将挂载文件的所有者设置为用户和组 ID 为 1000 的用户和组。
 
-  - `rw`: mounts the filesystem as read-write.
+  - `rw`：以读写方式挂载文件系统。
 
-  - `user`: allows a non-root user to mount the filesystem.
+  - `user`：允许非 root 用户挂载文件系统。
 
-  - `exec`: allows execution of binaries on the mounted filesystem.
+  - `exec`：允许在挂载的文件系统上执行二进制文件。
 
-  - `umask=000`: sets the file permission mask to allow read, write, and execute permissions for everyone.
+  - `umask=000`：设置文件权限掩码，允许所有人读取、写入和执行。
 
-  - `the first 0` dump is typically deprecated in modern systems. Leaving this at 0 won't hurt anything. Feel free to read more about it [here](https://linux.die.net/man/8/dump).
+  - `第一个 0` dump 在现代系统中通常已弃用。将其保留为 0 不会造成任何伤害。你可以在 [这里](https://linux.die.net/man/8/dump) 阅读更多相关信息。
 
-  - `the second 0` sets the order for file system checks at boot time. For a root partition, this should be 1 unless your root file system is btrfs, which should otherwise be set to 0. All other file systems in your fstab should be either 0 (disabled) or 2. More information [here](https://man.archlinux.org/man/fsck.8).
+  - `第二个 0` 设置启动时文件系统检查的顺序。对于根分区，这应该是 1，除非你的根文件系统是 btrfs，这种情况下应该设置为 0。fstab 中的所有其他文件系统应该为 0（禁用）或 2。更多信息见 [这里](https://man.archlinux.org/man/fsck.8)。
 
-For a more in depth look of each option, visit these two [fstab man page](https://man7.org/linux/man-pages/man5/fstab.5.html) and [mount man page](https://man7.org/linux/man-pages/man8/mount.8.html)
+要更深入地了解每个选项，请访问 [fstab man page](https://man7.org/linux/man-pages/man5/fstab.5.html) 和 [mount man page](https://man7.org/linux/man-pages/man8/mount.8.html)
 
-#### More info
+#### 更多信息
 
-As an aside, all options after the filesystem type declaration are optional if you do not change them from the default.
+顺便说一下，文件系统类型声明之后的所有选项都是可选的，如果你不更改默认值。
 
-Thus
+因此
 
 `UUID=<partition UUID> /media/foo somefs`
 
-and
+和
 
 `UUID=<partition UUID> /media/foo somefs defaults 0 0`
 
-are equivalent.  `somefs` followed by nothing is implicitly `somefs defaults 0 0`
+是等价的。`somefs` 后面什么都不跟隐式表示 `somefs defaults 0 0`
 
-### 4. Finishing Up
+### 4. 完成
 
-If you wish to mount the drive you created an entry for now, you need to run the following:
+如果你想立即挂载你创建条目的驱动器，需要运行以下命令：
 
 ```sh
 sudo systemctl daemon-reload
 ```
 
-and then:
+然后：
 
 ```sh
 sudo mount -a
 ```
 
-Your drive should now appear under `/media/windows` and will appear there each time you reboot.
+你的驱动器现在应该出现在 `/media/windows` 下，每次重启时都会出现在那里。
 
 ```sh
 ls /media/windows
@@ -364,16 +367,16 @@ ls /media/windows
 # Intel                    'Ship of Harkinian'
  ```
 
- If you wish to create a link to your newly mounted drive in your home directory, you can run the following:
+如果你想在家目录中创建一个指向新挂载驱动器的链接，可以运行以下命令：
 
- ```sh
- ln -s /media/windows ~/Windows
- ```
+```sh
+ln -s /media/windows ~/Windows
+```
 
- To show it worked:
+要显示它成功了：
 
- ```sh
- ls ~/Windows
+```sh
+ls ~/Windows
 # '$Recycle.Bin'             Linux                  SteamLibrary
 # AMD                       Modding                swapfile.sys
 # Apps                      pagefile.sys          'System Volume Information'
@@ -386,43 +389,43 @@ ls /media/windows
 # Intel                    'Ship of Harkinian'
  ```
 
-### tl;dr
+### 简而言之
 
-- Find the **UUID** of your partition
+- 找到你分区的 **UUID**
 
 ```sh
 lsblk -f
 ```
 
-- Open `/etc/fstab`
+- 打开 `/etc/fstab`
 
 ```sh
 sudo nano /etc/fstab
 ```
 
-- Create an entry in the bottom of the file
+- 在文件底部创建条目
 
 ```sh
 UUID=<partition UUID> /media/foo somefs defaults 0 0
 ```
 
-Replacing `<partition UUID>`, `foo`, and `somefs` with your UUID, directory, and filesystem. eg., ext4, as well as setting any other options you may want after defaults, such as `_netdev` for a NAS, or `nofail` for any non-critical drive.
+将 `<partition UUID>`、`foo` 和 `somefs` 替换为你的 UUID、目录和文件系统。例如 ext4，以及在 defaults 之后设置你可能想要的任何其他选项，如 NAS 的 `_netdev` 或任何非关键驱动器的 `nofail`。
 
-- Reload your daemon
+- 重新加载 daemon
 
 ```sh
 sudo systemctl daemon-reload
 ```
 
-- Mount your drive
+- 挂载驱动器
 
 ```sh
 sudo mount -a
 ```
 
-This drive is now mounted, and will now be mounted on boot moving forward as well.
+此驱动器现已挂载，并将在此后的每次启动时自动挂载。
 
-### Additional reading
+### 更多阅读
 
 - [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
 - [FHS on /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
