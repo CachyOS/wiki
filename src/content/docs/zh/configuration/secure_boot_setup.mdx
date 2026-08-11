@@ -1,0 +1,330 @@
+---
+title: Secure Boot Setup
+description: Set up secure boot with sbctl after installing CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+## Pre-setup
+
+### GRUB Boot Manager
+
+If you are using GRUB, run the following command to enable secure boot support on GRUB using CA Keys.
+
+```bash
+sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
+```
+
+:::note
+Loading unnecessary modules in your boot manager has the potential to present a security risk.
+Only run this command if you actually need secure boot.
+:::
+
+### Enabling Setup Mode in UEFI
+
+Firstly, we need to go to firmware settings and set secure boot mode to "Setup Mode". You can reboot from an
+already running system to firmware settings with following command.
+
+```bash
+systemctl reboot --firmware-setup
+```
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/ideapad-bios-secure-boot.jpg')} />
+
+This is how the BIOS looks like on a Lenovo Ideapad 5 Pro. Reset to setup mode or restore factory keys and reboot back
+to the system.
+
+#### Auto Reset
+
+On some Gigabyte motherboards, "reset to setup mode" is immediately followed by a "reset without saving" dialog
+<ImageComponent imgsrc={import('~/assets/images/gigabyte-reset-without-saving.jpg')} />
+this needs to be rejected as it will cause a system reset then disable setup mode.
+
+Instead boot directly the OS (Save & Exit, and select your bootloader in Boot Override).
+
+#### No setup mode
+
+Some MSI and ASUS motherboards don't have a Setup Mode.
+
+##### MSI
+
+Set the Secure Boot Mode to "custom" and select the "maximum security" compatibility option (this is important: with the default mode, you might not be able to boot from your bootloader into CachyOS!). Then, go into "key management" and follow the two steps illustrated in the image below:
+<br />
+<ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
+
+##### ASUS
+
+navigate to Boot → Secure Boot, set Secure Boot Mode to Custom, then open Key Management and select "Delete all Secure Boot Variables". 
+
+#### Installing sbctl and Enrolling Keys
+
+Before proceeding, make sure to check if `sbctl` is installed.
+
+[sbctl](https://github.com/Foxboron/sbctl) is a user-friendly secure boot key manager capable of setting up secure boot,
+offering key management capabilities, and keeping track of files that need to be signed in the boot chain.
+
+<details>
+    <summary>How to install sbctl</summary>
+    ```bash title='Open a terminal and run the following command'
+    sudo pacman -S sbctl
+    ```
+</details>
+
+Now that `sbctl` is installed, you have to setup sbctl and enroll your keys to the firmware. This process is pretty straightforward, just follow the steps below.
+
+<Steps>
+1. Check if Setup Mode is enabled:
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>Expected Output</summary>
+        ```bash
+        Installed:      ✘ sbctl is not installed
+        Setup Mode:     ✘ Enabled
+        Secure Boot     ✘ Disabled
+        ```
+    </details>
+2. Create your custom Secure Boot keys:
+    ```bash
+    sudo sbctl create-keys
+    ```
+    <details>
+        <summary>Example of a successful key creation</summary>
+        ```bash
+        Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Creating secure boot keys...✔
+        Secure boot keys created!
+        ```
+    </details>
+3. Enroll your keys with Microsoft's and the OEM firmware's built-in keys:
+    ```bash
+    sudo sbctl enroll-keys --microsoft --firmware-builtin
+    ```
+    <details>
+        <summary>Expected output</summary>
+        ```bash
+        Enrolling keys to EFI variables...✔
+        Enrolled keys to the EFI variables!
+        ```
+    </details>
+
+    :::caution[ASUS / Gigabyte Motherboards — Do not use `--firmware-builtin`]
+    On some ASUS and Gigabyte motherboards using the `--firmware-builtin` flag causes duplicate entries
+    in the EFI key variables (e.g. `builtin-db` appearing multiple times in `Vendor Keys`).
+    When activating Secure Boot in the UEFI settings afterwards, the board detects this
+    inconsistent key structure and throws a **Secure Boot Violation** before the boot
+    manager can load.
+
+    Use only `--microsoft` on ASUS / Gigabyte boards:
+
+    ```bash
+    sudo sbctl enroll-keys --microsoft
+    ```
+
+    If `Vendor Keys` shows `microsoft builtin-db builtin-db ...`, the keys need to be
+    re-enrolled. Re-enter Setup Mode in the UEFI (using delete all keys), then run
+    `sbctl enroll-keys --microsoft` again without `--firmware-builtin`.
+    :::
+
+
+4. Check the status of sbctl again to make sure that the keys are enrolled and setup mode is disabled:
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>Expected Output</summary>
+        ```bash
+        Installed:      ✔ sbctl is installed
+        Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Setup Mode:     ✔ Disabled
+        Secure Boot     ✘ Disabled
+        Vendor Keys:    microsoft
+        ```
+    </details>
+
+    :::note[Setup Mode shows Enabled?]
+    If `Setup Mode` shows **Enabled**, go to firmware settings and **temporarily disable Secure Boot**. 
+    Boot back into the system, check status of sbctl again, proceed with [Signing the Kernel Image and Boot Manager](#signing-the-kernel-image-and-boot-manager) 
+    below, then reboot and re-enable Secure Boot in firmware settings.
+    :::
+    
+</Steps>
+
+## Signing the Kernel Image and Boot Manager
+
+<Tabs>
+<TabItem label='Limine'>
+Limine is a special boot manager that allows checking the hash of kernel
+images and other files that Limine uses during boot. If this is enabled, any
+sort of manual configuration done by the user, e.g. signing the image via
+`sbctl-batch-sign`, will modify the hash of the corresponding files and
+fail Limine's checksum verification.
+
+However, signing these files isn't necessary on Limine because it has a special
+boot process that bypasses EFI chainloading and signature checks. The only EFI
+binaries that need to be signed are Limine itself.
+
+:::caution[Limine >= 11.2.0]
+Starting with Limine 11.2.0, Secure Boot policies are **strictly enforced** when UEFI Secure Boot is active:
+
+- A BLAKE2B config checksum **must** be enrolled in the Limine EFI binary, otherwise Limine will panic with: `SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED`
+- All file paths in `limine.conf` (kernel, initramfs, etc.) **must** have BLAKE2B hashes appended (e.g. `boot():/vmlinuz-linux#<hash>`)
+- The config editor is unconditionally disabled
+- Hash mismatches always cause a panic
+:::
+
+To enable automatic config checksum enrollment, set the following in `/etc/default/limine`:
+
+```sh
+ENABLE_ENROLL_LIMINE_CONFIG=yes
+```
+
+Proceed to generate a hash for Limine's splash image:
+
+:::note[Root permissions are required to perform the following steps, make sure to use sudo or switch to the root user before proceeding.]
+:::
+
+<Steps>
+
+1. Check the current name and path of the splash image in the config file:
+    ```sh title="Open a terminal and run the following command:"
+    sudo cat /boot/limine.conf
+    ```
+    You should be able to spot a line like this:
+    ```sh
+    wallpaper: boot():/limine-splash.png
+    ```
+2. Generate a BLAKE2B hash for the splash image and append it to the path in the config file:
+    ```sh title="Run the following command, replacing the path with the one you found in the previous step:"
+    sudo b2sum /boot/limine-splash.png
+    ```
+    This will output a hash like this example:
+    ```sh
+    75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+3. Afer copying the newly generated hash from the previous step. Open the config file with a text editor and append the hash to the path of the splash image, like this:
+    :::note[Do not use the example hash from above, make sure to use the one you generated in the previous step.]
+    :::
+    ```sh
+    wallpaper: boot():/limine-splash.png#75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+    As you can see, the hash is appended to the path with a `#` symbol. Save the file after making the change.
+
+</Steps>
+
+After enabling config checksum enrollment and generating the hash for the splash image, run the following commands to enroll the config checksum and sign Limine's EFI binary:
+
+```sh
+# Use limine-enroll-config to enroll the config checksum and sign Limine's EFI binary
+# This uses sbctl under the hood
+sudo limine-enroll-config
+sudo limine-update
+```
+</TabItem>
+<TabItem label='systemd-boot'>
+
+CachyOS provides [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign),
+a script that takes the list of files needed to be signed from `sudo sbctl verify` and signs them all.
+
+:::caution
+On systems with a separate `/boot` and `/boot/efi` partition layout, `sbctl` may only scan for EFI binaries in `/boot/efi`.
+This causes kernel images that are in `/boot` to not be detected. `sbctl-batch-sign` works around this by **always** scanning
+`/boot` for `vmlinuz-*` files.
+:::
+
+```bash
+sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is not signed
+✘ /boot/EFI/BOOT/BOOTX64.EFI is not signed
+✘ /boot/EFI/systemd/systemd-bootx64.efi is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is not signed
+
+sudo sbctl-batch-sign
+
+sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is signed
+✔ /boot/EFI/BOOT/BOOTX64.EFI is signed
+✔ /boot/EFI/systemd/systemd-bootx64.efi is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
+```
+
+Now that all the files are signed. **Reboot your system and go to your UEFI Settings to enable Secure Boot.**
+
+:::caution[ASUS Motherboards — enabling Secure Boot]
+Some ASUS motherboards behave differently from other vendors when enabling Secure Boot:
+
+- **Use `Windows UEFI Mode`, not `Other OS`:**
+  The name is misleading this setting simply controls whether Secure Boot is enforced.
+  Setting `OS Type` to `Other OS` **actively disables** Secure Boot on ASUS boards,
+  regardless of any other settings. `sbctl status` will continue to show
+  `Secure Boot: Disabled` even after rebooting.
+
+- **There is no separate Secure Boot on/off toggle** on some ASUS boards.
+  Secure Boot is activated implicitly by selecting `Windows UEFI Mode`.
+
+The correct ASUS BIOS configuration to activate Secure Boot in this case is:
+```
+Boot → Secure Boot
+  OS Type          → Windows UEFI Mode
+  Secure Boot Mode → Custom
+```
+:::
+
+Check [this part for reference](/configuration/secure_boot_setup#enabling-setup-mode-in-uefi)
+
+Note that this is a one-time process as signing files with `-s` flag will save those files to `sbctl`'s database.
+
+:::tip[Reminder]
+`sbctl` ships with a [pacman hook](https://wiki.archlinux.org/title/Pacman_hook) meaning it will automatically
+sign all new files upon a kernel or boot manager update.
+:::
+
+CachyOS uses `systemd-boot-update.service` provided by systemd to update the boot manager on reboot. This means that the `sbctl`
+pacman hook will **not** sign the updated EFI binaries. As a workaround, we can sign the boot manager directly
+
+```sh
+sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+```
+</TabItem>
+</Tabs>
+
+## Secure Boot Status Check
+
+To check that secure boot is indeed enabled. You can run one of the following commands
+
+```bash
+sudo sbctl status
+Installed:      ✓ sbctl is installed
+Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Setup Mode:     ✓ Disabled
+Secure Boot:    ✓ Enabled
+Vendor Keys:    microsoft
+
+bootctl
+System:
+      Firmware: UEFI 2.80 (INSYDE Corp. 28724.16435)
+ Firmware Arch: x64
+   Secure Boot: enabled (user)
+  TPM2 Support: yes
+  Measured UKI: no
+  Boot into FW: supported
+```
+
+## Links and Credits
+
+- [The Arch Wiki](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
+laid the groundwork for this guide. Most of the stuff here was taken from there.
+- [sbctl](https://github.com/Foxboron/sbctl) - This easy guide to enable secure boot support wouldn't have been possible if it weren't
+for the amazing work done to create this piece of software.
+- [Improving the Secure Boot Experience by Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) - Blog post by Morten
+"Foxboron" Linderud on how the secure boot experience was complicated before `sbctl`.

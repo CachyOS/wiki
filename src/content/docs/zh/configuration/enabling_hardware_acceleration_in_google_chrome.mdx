@@ -1,0 +1,387 @@
+---
+title: Chromium-Based Browsers HW Acceleration
+description: Configure hardware acceleration for video decode/encode in Chromium-based browsers on CachyOS. Includes AMD GPU setup and a template for other GPUs/browsers.
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+This guide outlines enabling hardware acceleration in Chromium-based browsers on CachyOS. This offloads video/graphics tasks to your GPU, improving performance.
+
+## Prerequisites
+
+**Required:**
+* **Chromium-based Browser:** (e.g., Chrome, Brave, Ungoogled Chromium, Edge)
+* **GPU Drivers/APIs:** Up-to-date Mesa (AMD/Intel) or NVIDIA drivers, with Vulkan/VA-API/VDPAU configured.
+
+**Optional:**
+
+* **amdgpu_top:** Install `amdgpu_top` from the repository through package manager if you wish to monitor AMD GPU activity from the terminal.
+* **nvtop:** (Intel GPU's only) Install `nvtop` (Lunar Lake) and `intel-gpu-tools` (Pre-Lunar Lake) through the Shelly package manager if you wish to monitor Intel GPU activity from the terminal.
+
+## Contribution
+
+This guide is extensible. If you have a working hardware acceleration setup for a specific GPU and Chromium-based browser, contribute by adding a new section under "GPU & Browser Configurations." Include:
+
+* **Browser Name**
+* **GPU Model**
+* **Flags:** `~/.config/[browser]-flags.conf` content.
+* **File Path:** Full path to the flags file.
+* **Notes (Optional):** Key drivers, packages, or setup specifics.
+
+### Template to contribute
+
+#### [Your Browser] - [Your GPU Model] (Contributed by [Your Name/Handle])
+
+* **Browser:** [e.g., Brave, Ungoogled Chromium, Microsoft Edge, Vivaldi, Opera, Chromium]
+
+* **GPU:** [e.g., NVIDIA GeForce RTX 3080, Intel Iris Xe]
+
+* **Flags File Path:** (Crucial, varies per browser!)
+
+  * Common `.conf` paths:
+
+    * Chromium: `~/.config/chromium-flags.conf`
+
+    * Brave Browser: `~/.config/brave-flags.conf`
+
+    * Ungoogled Chromium: `~/.config/ungoogled-chromium-flags.conf`
+
+* `.desktop` file modification:
+    * Some browsers (Brave, Edge, Vivaldi, Opera) might require editing the `Exec=` line in their `.desktop` file (copy from `/usr/share/applications/` to `~/.local/share/applications/` first).
+
+Flags Content (for `.conf` file or `Exec=` line):
+
+```bash
+# Paste your flags here.
+# For .desktop files, flags are space-separated after the executable.
+```
+
+**Notes (Optional):**
+
+* Required drivers (e.g., `nvidia-dkms`, `intel-media-driver`).
+
+* Specific setup considerations or `.desktop` file modification instructions.
+
+
+### Setup Steps
+
+<Steps>
+
+1. Identify Flags File: Locate your browser's flags file path in "GPU & Browser Configurations."
+2. Edit Flags File: Open/create the file using `nano` (or your preferred text editor like `micro`, `vim`).
+
+    ```bash
+    nano [PATH_TO_YOUR_BROWSER_FLAGS_FILE]
+    # Example: nano ~/.config/chrome-flags.conf
+    ```
+
+3. Add Flags: Paste the relevant GPU/browser flags into the file.
+4. Save & Close.
+5. Restart Browser: Close all browser instances and relaunch.
+6. Verify: Navigate to `chrome://gpu` (or `brave://gpu`, `edge://gpu`, etc.). Confirm "Hardware accelerated" status under "Video Acceleration Information" and "Graphics Feature Status."
+
+</Steps>
+
+## How to Verify Video Hardware Acceleration
+
+<Tabs>
+
+<TabItem label='AMD GPUs (amdgpu_top)'>
+
+<Steps>
+
+1. Open a terminal and run the command:
+    ```bash
+    amdgpu_top
+    ```
+2. Start playing a video in your browser (e.g., on YouTube).
+3. Observe the `media` section in `amdgpu_top`. You should see some utilization here, indicating your GPU's media engine is active. If it remains at 0% during video playback, hardware acceleration might not be fully engaged for decoding.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='Intel GPUs (nvtop)'>
+
+<Steps>
+
+1. Open a terminal and run the command:
+    ```bash
+    sudo nvtop
+    ```
+2. Start playing a video in your browser (e.g., on YouTube).
+3. Observe the `ENC/DEC` percentage in `nvtop`, the percentage should increase if video decoding is working in hardware.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='Intel GPUs (intel_gpu_tools)'>
+
+<Steps>
+
+1. Open a terminal and run the command:
+
+    ```bash
+    sudo intel_gpu_top
+    ```
+
+    Note: Some newer Intel gpu's such as Lunar Lake GPU's no longer expose the gpu performance counters with `intel_gpu_top`, use `nvtop` for these systems
+
+2. Start playing a video in your browser (e.g., on YouTube).
+3. Observe the `Video` and `VideoEnhance` percentage in intel_gpu_top, the percentage should increase if video decoding is working in hardware.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='Browser Developer Tools'>
+
+<Steps>
+
+1. Open your Chromium-based browser.
+
+2. Start playing a video (e.g., on YouTube or a local file).
+
+3. Open Developer Tools: Press `F12` or `Ctrl+Shift+I`.
+
+4. Navigate to the **Media** tab. If you don't see it, click the three dots (`...`) or `>>` (More tabs) on the Developer Tools toolbar, then select `Media`.
+
+5. In the "Players" section on the left, click on the entry corresponding to your video.
+
+6. In the main panel, scroll down to the **Video Decoder** section.
+
+7. Look for the `Hardware decoder` label. It should be `true`. If it says `false` or shows a software decoder name (e.g., `FFmpegVideoDecoder`, `VpxVideoDecoder`, `Dav1dVideoDecoder`), hardware acceleration is not active for that video.
+
+</Steps>
+
+</TabItem>
+
+</Tabs>
+
+## GPU & Browser Configurations
+
+### AMD Radeon RX 6900 XT (Google Chrome)
+
+* **Browser:** Google Chrome
+
+* **GPU:** AMD Radeon RX 6900 XT
+
+* **Flags File:** `~/.config/chrome-flags.conf`
+
+```bash
+--use-gl=angle
+--use-angle=vulkan
+--enable-features=Vulkan,VulkanFromANGLE,DefaultANGLEVulkan,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
+```
+
+**Notes:** Leverages Vulkan (via ANGLE) and VA-API. `--ozone-platform=x11` may be useful on Wayland for certain acceleration paths.
+
+
+### Nvidia RTX 4090 (Vivaldi)
+
+* **Browser:** Vivaldi
+
+* **GPU:** Nvidia RTX 4090
+
+* **Flags File:** `~/.config/vivaldi-stable.conf`
+
+```bash
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL
+```
+
+* **Flags File:** `/usr/share/applications/vivaldi-stable.desktop`
+
+```bash
+# Keep all other lines the same
+# You should only change this Exec= entry under the '[Desktop Entry]' section
+Exec=/usr/bin/vivaldi-stable --enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL %U
+```
+
+**Notes:**
+
+You should only need to apply one of these conf file changes, but doing so on both should not cause issues.
+
+Alternatively you can do the following for KDE:
+1. Delete any Task Manager / taskbar shortcuts for Vivaldi
+2. Search for `Vivaldi` in the Application Launcher list
+3. Right-click the entry in the Application Launcher and select `Edit Application...`
+4. In the `Command-line arguments` section, add in the following arguments before the last argument `%U`:
+```
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL
+```
+5. Launch Vivaldi and pin the process to your Task Manager / taskbar
+
+
+### AMD Radeon RX 550 (UnGoogled Chromium)
+
+* **Browser:** UnGoogled Chromium
+
+* **GPU:** AMD Radeon RX 550
+
+* **Flags File:** `~/.config/chromium-flags.conf`
+
+```bash
+--enable-wayland-ime
+--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,WaylandSessionManagement,WaylandTextInputV3,WaylandUiScale,WaylandWindowDecorations
+```
+
+
+### Nvidia RTX 5070 TI (Brave)
+
+* **Browser:** Brave
+
+* **GPU:** Nvidia RTX 5070 TI
+
+* **Flags File:** `~/.config/brave-flags.conf`
+
+```bash
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks
+```
+
+**Notes:**
+- Video decoding **and** encoding showing as `Hardware accelerated` on `brave://gpu`.
+- Sometimes inspecting the `media` tab on a YouTube video will show Hardware acceleration, sometimes not.
+
+
+### Brave - 7700xt (Contributed by DaJRJesus)
+
+* **Browser:** Brave
+
+* **GPU:** AMD Radeon RX 7700 XT
+
+* **Flags File Path:** `~/.config/brave-flags.conf`
+
+```bash
+--ignore-gpu-blocklist
+--enable-gpu-rasterization
+--enable-zero-copy
+--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,CanvasOopRasterization,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
+```
+
+**Notes:**
+Disabling "Ambient Mode" in YouTube settings is required to prevent UI lag.
+
+
+### Vivaldi - AMD Radeon RX 9070 XT (Contributed by tTrmc)
+
+* **Browser:** Vivaldi
+
+* **GPU:** AMD Radeon RX 9070 XT (RDNA 4 / gfx1201)
+
+* **Flags File Path:** `~/.config/vivaldi-stable.conf`
+
+```bash
+--ignore-gpu-blocklist
+--enable-gpu-rasterization
+--enable-zero-copy
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
+```
+
+**Notes:**
+- Tested on CachyOS with kernel 6.19.11-1-cachyos, Mesa 26.0.3, GNOME (Wayland), display 2560x1440.
+- Confirmed working: `vivaldi://gpu` shows Video Decode and Video Encode as "Hardware accelerated". Full codec support for H264, VP9, HEVC, AV1 decoding and H264, AV1 encoding. DevTools Media tab shows `VaapiVideoDecoder` as the active decoder.
+- The RX 9070 XT (RDNA 4) may be on Chromium's GPU blocklist, so `--ignore-gpu-blocklist` is required.
+- The log may show a warning: `'--ozone-platform=wayland' is not compatible with Vulkan` — this does not prevent hardware acceleration from working.
+
+
+### Google Chrome - AMD Radeon RX 9070 XT (Contributed by naknak)
+
+* **Browser:** Google Chrome
+
+* **GPU:** AMD Radeon RX 9070 XT (RDNA 4 / gfx1201)
+
+* **Flags File Path:** `~/.config/chrome-flags.conf`
+
+```bash
+--ignore-gpu-blocklist
+--enable-gpu-rasterization
+--enable-zero-copy
+--use-gl=angle
+--use-angle=vulkan
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo,Vulkan,VulkanFromANGLE,DefaultANGLEVulkan
+```
+
+**Notes:**
+- Video decoding **and** encoding showing as `Hardware accelerated` on `chrome://gpu`.
+- Sometimes inspecting the `media` tab on a YouTube video will show Hardware acceleration, sometimes not.
+
+### Vivaldi - AMD Ryzen AI Max+ 395 (Contributed by woutervanelten)
+
+* **Browser:** Vivaldi (8.0.4033.35)
+
+* **APU:** AMD Radeon 8060S (GFX1151/Strix Halo)
+
+* **Flags File Path:** `~/.config/vivaldi-stable.conf`
+
+```bash
+--ignore-gpu-blocklist
+--enable-gpu-rasterization
+--enable-zero-copy
+--ozone-platform=wayland
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
+```
+
+**Notes:**
+- Tested on CachyOS with kernel 7.0.10-2-cachyos, Mesa 26.1.1, GNOME (Wayland), display 5120x1440.
+- Confirmed working: `vivaldi://gpu` shows Canvas, Compositing, Rasterization, Video Decode, Video Encode, WebGL, WebGPU, and WebGPU interop as "Hardware accelerated". Full codec support for H264, H265, VP9, AV1 decoding and H264, H265 and AV1 encoding.
+
+### Vivaldi - NVIDIA RTX 5090 (Contributed by icetea)
+
+* **Browser:** Vivaldi (8.1)
+
+* **GPU:** NVIDIA GeForce RTX 5090 (Blackwell)
+
+* **Flags File Path:** `~/.config/vivaldi-stable.conf`
+
+```bash
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,VaapiOnNvidiaGPUs,VaapiIgnoreDriverChecks
+--use-gl=angle
+--use-angle=gl
+--disable-features=Vulkan
+--ignore-gpu-blocklist
+--ozone-platform=wayland
+```
+
+**Notes:**
+- Requires `libva-nvidia-driver`. Tested July 2026: driver 610.43.03, KDE Plasma (Wayland), Vivaldi 8.1.
+- `VaapiIgnoreDriverChecks` is the key flag on NVIDIA — without it decode initializes and `vivaldi://gpu` claims "Hardware accelerated", but runtime decode fails (`vaEndPicture failed, VA error: internal decoding error`) and silently falls back to software.
+- Verify with DevTools → Media tab (`VaapiVideoDecoder` as decoder name) and `nvidia-smi dmon -s u` (DEC column > 0 during playback). Do not rely on `vivaldi://gpu` alone.
+- AV1 decode is broken in `libva-nvidia-driver` 0.0.17 (fix on upstream master, unreleased — see [elFarto/nvidia-vaapi-driver#419](https://github.com/elFarto/nvidia-vaapi-driver/issues/419)). Block AV1 (e.g. enhanced-h264ify) so YouTube serves VP9.
+
+### Google Chrome - NVIDIA RTX 5070 (Contributed by pisyukaev)
+
+* **Browser:** Google Chrome
+
+* **GPU:** NVIDIA GeForce RTX 5070 (Blackwell / GB205)
+
+* **Flags File Path:** `~/.config/chrome-flags.conf`
+
+```bash
+--enable-features=AcceleratedVideoDecodeLinuxGL,VaapiVideoDecoder,VaapiIgnoreDriverChecks,VaapiOnNvidiaGPUs
+--ignore-gpu-blocklist
+```
+
+**Notes:**
+- Requires `libva-nvidia-driver` and `nvidia-utils` (tested with driver 610.43.03).
+- **Critical flag:** `VaapiOnNvidiaGPUs` — this is the key flag that enables VA-API on NVIDIA GPUs in Chrome/Chromium. Without it, Chrome hardcodes a block on NVIDIA devices in `vaapi_wrapper.cc` and silently falls back to software decoding.
+- `VaapiIgnoreDriverChecks` is also recommended to prevent runtime decode failures.
+- `AcceleratedVideoDecodeLinuxGL` enables hardware-accelerated video decode through ANGLE's OpenGL backend.
+- Verified working: `chrome://gpu` → Video Acceleration Information shows decode support for H264 (baseline, main, high), VP8, VP9 (profile0, profile2), HEVC (main, main 10, main still-picture), and AV1.
+- To verify: Open `chrome://gpu` and confirm that "Video Acceleration Information" lists decode codecs. Play an HEVC video and check DevTools → Media tab for `VaapiVideoDecoder` as the active decoder.
+- The `--ozone-platform=wayland` flag is not needed — Chrome auto-detects Wayland on CachyOS. If you experience issues, you can add `--ozone-platform=wayland` explicitly.
+
+### Brave Origin - AMD Radeon RX 7600 (Contributed by RyuuPendragon)
+
+* **Browser:** Brave Origin
+
+* **GPU:** AMD Radeon RX 7600
+
+* **Flags File Path:** `~/.config/brave-origin-flags.conf`
+
+```bash
+--ignore-gpu-blocklist
+--enable-gpu-rasterization
+--enable-zero-copy
+--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,CanvasOopRasterization,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
+```

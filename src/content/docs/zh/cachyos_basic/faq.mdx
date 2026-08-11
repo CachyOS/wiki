@@ -1,0 +1,932 @@
+---
+title: CachyOS FAQ & Troubleshooting Guide
+description: Frequently asked questions and tips
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 5
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::note
+The following questions & answers apply to CachyOS and Arch-based distributions.
+
+**This is not meant to replace the information on the Arch Linux Wiki.**
+:::
+
+:::tip
+Stay alert to any official announcements from CachyOS on our [Forum](https://discuss.cachyos.org/c/announcements/5), Reddit post in our [official subreddit](https://www.reddit.com/r/cachyos/) or [Discord #announcements](https://discord.com/channels/862292009423470592/873309651364610118) and [#updates-repo](https://discord.com/channels/862292009423470592/871739561364033566) regarding known issues with a package or updates that require manual intervention.
+:::
+
+## How to Report an Issue or Bug to CachyOS
+
+:::danger
+Be careful relying on help and commands provided by an AI model (like ChatGPT) without verifying the information from official sources. AI models can sometimes provide incorrect or misleading information, especially in technical contexts. Always cross-reference with trusted documentation or community resources.
+
+Otherwise you might end up with a completely broken system or make the issue even worse.
+:::
+
+:::tip
+Remember. In the Linux world there is an amazing quote: "Most likely someone else had the same issue before you." So, please use the search function on Google, the Arch Wiki, or the CachyOS Forum/Discord before reporting an issue, as it might already have been solved.
+:::
+
+:::tip
+Don't forget to use the tldr command to view a simplified version of the man pages for commands you are not familiar with. Example:
+
+Some of the most common commands and descriptions for git:
+```bash
+tldr git
+```
+
+You can also combine tldr with a specific git command to get more detailed information about a parameter, for example:
+```bash
+tldr git add
+```
+:::
+
+### Places to Open Reports
+
+- [Github](https://github.com/CachyOS/distribution)
+- [Forum](https://discuss.cachyos.org/c/feedback/bugreports/10)
+- **Discord:** [Support Forum](https://discord.com/channels/862292009423470592/1400865136373403708)
+  - Before creating a new post, read the [support-guidelines](https://discord.com/channels/862292009423470592/1522310323250397274) pinned in the channel.
+    - Or, if you think your issue can be solved quickly, use the [#support channel](https://discord.com/channels/862292009423470592/862294383470051348)
+- [Reddit](https://www.reddit.com/r/cachyos/)
+
+### Be Patient and Respectful
+
+The CachyOS team and community are volunteers who work on this in their free time. Please be patient and respectful when interacting with them. Providing a high-quality bug report is the best way to get your issue resolved quickly.
+
+If you ask a vague question or provide insufficient information. Then you might get a vague response too or no response at all.
+
+Here is an example:
+
+- **Good question:**
+  - After a recent update (my last update was on DATE), my system fails to boot with a black screen. I have an NVIDIA GPU (model). I tried downgrading the `linux-cachyos` package to the previous version, but the issue persists. Here is the output of `journalctl -b -1` and `dmesg` from the live environment.
+- **Bad or vague question:**
+  - My system is broken, please help me.
+  <details>
+  <summary>Otherwise you might end up looking like Abraham from this meme:</summary>
+   <ImageComponent imgsrc={import('~/assets/images/abraham-meme.jpg')} />
+  </details>
+
+### Describe your Issue
+
+Here is a couple of things you should ask yourself:
+
+- What is not working?
+- Does downgrading package X fix the issue?
+- Do other people experience this issue / has it been solved before? (use the search functionality)
+- Did the issue appear after an update?
+- Have you made modifications on your own?
+  - Example: adding an additional flag in a modprobe file
+- Is it hardware related? (e.g., GPU, Wi-Fi)
+- Is it software related? (e.g., specific application, desktop environment)
+- Is it a fresh installation or did the issue appear after some time of usage?
+
+## How to Gather Logs
+
+There are many ways to gather logs from your system. Here are a couple of examples and tools you can use:
+
+### Creating a general bug report
+CachyOS provides a great tool to gather system logs called `cachyos-bugreport.sh`.
+This tool will collect logs from:
+  - `dmesg`
+  - `journalctl`
+  - `inxi` (To collect hardware information)
+
+After the logs are collected, the user will be prompted to decide whether to upload them to our paste website.
+
+To run this script, enter the following command in the terminal and share the generated link in your report:
+  ```sh
+  sudo cachyos-bugreport.sh
+  ```
+
+### Gathering logs from a program that is not starting
+There are many reasons why a graphical program might not start. The best way to gather logs for this kind of issue is to run the program from a terminal. This way, you can see any error messages or output that might help with diagnosing the problem.
+
+For example, if Firefox doesn't fully start, try starting it from the terminal and look for error messages:
+  ```sh
+  firefox
+  ```
+
+:::tip
+  If you want to save the output to a text file for easier sharing, you can redirect the output like this:
+    ```sh
+    firefox &> firefox-log.txt
+    ```
+  Remember to press `CTRL + C` to terminate the process after it fails to start so the terminal writes the output to the file.
+:::
+
+### Check the latest updated packages in pacman.
+
+To get a list of the most recently updated packages on your system, you can use the following command:
+
+```bash
+grep "\[ALPM\] upgraded" /var/log/pacman.log | tail -n 50
+```
+
+:::tip
+Adjust the `-n` parameter of tail to get more or fewer lines.
+:::
+
+### Keybinds for Navigating in journalctl and dmesg
+
+Most common Keybinds to navigate through the logs when less is or human readable mode is being used:
+
+`ArrowUp & ArrowDown or J & K` to scroll up or down line by line.
+
+`PageUp & PageDown or Ctrl + B/D` to scroll up or down one page at a time.
+
+`G or Home` to jump to the beginning of the log.
+
+`Shift + G or End` to jump to the end of the log.
+
+### Using journalctl to Gather System Logs
+
+The `journalctl` command is an extremely useful tool for viewing system logs. Here are some of the most common and useful command combinations.
+
+#### Basic Usage and Common Examples
+
+:::tip
+Combine multiple options for more specific filtering.
+:::
+
+<details>
+<summary>View the entire log (from oldest to newest):</summary>
+```bash
+journalctl
+```
+</details>
+
+<details>
+<summary>View logs from the current boot only:</summary>
+```bash
+journalctl -b
+```
+</details>
+
+<details>
+<summary>Security and authentication problems:</summary>
+```bash
+journalctl -u sshd -u polkit -b -0 | grep -i "fail\|error\|denied"
+```
+Look for authentication failures and security policy denials.
+</details>
+
+<details>
+<summary>Follow logs in real time:</summary>
+```bash
+journalctl -f
+```
+:::tip
+Combine this with other filters. For example:
+```bash
+# Following logs from Adguard Home service:
+journalctl -u adguardhome -f
+```
+:::
+</details>
+
+<details>
+<summary>Audio issues from the current boot:</summary>
+```bash
+journalctl --user -u pipewire -u pipewire-pulse -u wireplumber -b 0
+```
+View logs from audio services to troubleshoot sound issues.
+</details>
+
+<details>
+<summary>Memory (RAM) errors:</summary>
+```bash
+journalctl -k | grep -i "memory\|ram"
+```
+Look for memory corruption or detection issues.
+</details>
+
+<details>
+<summary>Bluetooth issues:</summary>
+```bash
+# From the current boot:
+journalctl -u bluetooth -b 0
+# From the previous boot:
+journalctl -u bluetooth -b -1
+```
+</details>
+
+##### Time-based Filtering
+<details>
+
+<summary>View logs from the last few minutes/hours:</summary>
+```bash
+journalctl --since "10 minutes ago"
+journalctl --since "1 hour ago"
+journalctl --since "2024-01-15 14:30:00"
+```
+</details>
+
+<details>
+<summary>View logs from a specific time range:</summary>
+```bash
+journalctl --since "09:00" --until "10:00"
+```
+</details>
+
+##### Filtering by Priority and Service or Program
+
+Possible priority levels are: `debug`, `info`, `notice`, `warning`, `err`, `crit`, `alert`, `emerg`.
+
+Or by using numbers:
+
+`0` equals `emerg`
+
+`1` equals `alert`
+
+`2` equals `crit`
+
+`3` equals `err`
+
+`4` equals `warning`
+
+`5` equals `notice`
+
+`6` equals `info`
+
+and `7` equals `debug`.
+
+<details>
+<summary>Show only error, critical, and emergency messages:</summary>
+```bash
+journalctl -p err..emerg
+```
+:::tip
+You can combine these with the previous examples:
+
+Example:
+```bash
+journalctl -p err..emerg --since "9:00" --until "10:00"
+```
+:::
+</details>
+
+<details>
+<summary>Show logs from a specific system service:</summary>
+```bash title='Examples'
+# View logs from the NetworkManager service:
+journalctl -u NetworkManager
+# View logs from the GDM (GNOME Display Manager) service:
+journalctl -u gdm
+# View logs from the SDDM (Simple Desktop Display Manager) service:
+journalctl -u sddm
+```
+</details>
+
+<details>
+<summary>Show logs from a specific Process ID (PID):</summary>
+```bash
+journalctl _PID=pid
+# Example:
+journalctl _PID=3344
+```
+</details>
+
+<details>
+<summary>Show logs from a specific executable:</summary>
+```bash
+journalctl path/to/executable
+# Example:
+journalctl /usr/bin/firefox
+```
+</details>
+
+### Using journalctl to Check Kernel Messages
+
+:::note
+When to use `journalctl -k`  vs `dmesg`:
+
+- `journalctl -k` accesses kernel messages stored in the systemd journal (persistent across reboots if configured and offers better integration with time-based filtering and journal features.
+- `dmesg` reads the current kernel ring buffer (volatile, lost after reboot).
+:::
+
+<details>
+<summary>Basic kernel message viewing:</summary>
+```bash
+journalctl -k
+```
+Shows all kernel messages from the journal, equivalent to `dmesg` but from the journal's perspective.
+</details>
+
+<details>
+<summary>Current boot kernel messages only:</summary>
+```bash
+journalctl -k -b 0
+```
+Displays kernel messages from the current boot session only.
+</details>
+
+<details>
+<summary>Previous boot kernel messages:</summary>
+```bash
+journalctl -k -b -1
+```
+View kernel messages from the previous boot. Useful for diagnosing boot failures or crashes.
+</details>
+
+<details>
+<summary>Follow new kernel messages in real time:</summary>
+```bash
+journalctl -k -f
+```
+Watch kernel messages as they occur, great for monitoring hardware events or driver loading.
+</details>
+
+<details>
+<summary>Search for specific driver messages:</summary>
+```bash
+# Examples:
+# GPU related messages:
+journalctl -k | grep -i "nvidia\|amd\|intel"
+# USB device messages:
+journalctl -k | grep -i "usb\|pci"
+```
+</details>
+
+<details>
+<summary>Time-based kernel message filtering:</summary>
+```bash
+journalctl -k --since "1 hour ago"
+journalctl -k --since "09:00" --until "10:00"
+```
+View kernel messages from specific time periods.
+</details>
+
+### Using dmesg for Kernel Messages
+
+The `dmesg` command displays the kernel ring buffer, which contains messages from the kernel about hardware detection, driver initialization and system events.
+
+#### Basic Usage and Formatting
+
+<details>
+<summary>View the entire kernel message buffer:</summary>
+```bash
+dmesg
+```
+</details>
+
+<details>
+<summary>View with human-readable timestamps:</summary>
+```bash
+dmesg -T
+```
+</details>
+
+<details>
+<summary>View in a pager for easier reading:</summary>
+```bash
+dmesg | less
+```
+</details>
+
+#### Filtering by Priority Level
+
+Similar to journalctl, dmesg allows filtering messages by priority level.
+
+<details>
+<summary>Show only errors and critical messages:</summary>
+```bash
+dmesg -l err,crit,alert,emerg
+```
+Possible priority levels are: `debug`, `info`, `notice`, `warning`, `err`, `crit`, `alert`, `emerg`.
+
+Or by using numbers:
+
+`0` equals `emerg`
+
+`1` equals `alert`
+
+`2` equals `crit`
+
+`3` equals `err`
+
+`4` equals `warning`
+
+`5` equals `notice`
+
+`6` equals `info`
+
+and `7` equals `debug`.
+</details>
+
+<details>
+<summary>View the most recent kernel messages:</summary>
+```bash
+dmesg -w
+```
+</details>
+
+<details>
+<summary>Search for specific hardware or driver messages:</summary>
+```bash
+# Examples:
+# To search for USB related messages:
+dmesg | grep -i usb | less
+# Bluetooth devices:
+dmesg | grep -i bluetooth
+# NVIDIA related:
+dmesg | grep -i nvidia | less
+# Devices failing to initialize:
+dmesg | grep -i "error\|failed" | less
+```
+</details>
+
+##### Common examples for specific issues using dmesg
+
+<details>
+<summary>When a USB device isn't recognized:</summary>
+```bash
+dmesg -w | grep -i usb
+```
+Then plug in the device and watch for new messages.
+</details>
+
+<details>
+<summary>GPU initialization issues:</summary>
+```bash
+dmesg | grep -i "nvidia\|amd\|intel\|radeon\|drm\|gpu" | less
+```
+</details>
+
+<details>
+<summary>Wi-Fi or network adapter issues:</summary>
+```bash
+dmesg | grep -i "wlan\|wifi\|network\|firmware" | tail -20
+```
+Check for missing firmware loads or driver errors that prevent your wireless card from working.
+</details>
+
+<details>
+<summary>HDD/SSD detection problems:</summary>
+```bash
+dmesg | grep -i "sda\|sdb\|nvme\|scsi\|disk" | head -30
+```
+Use this when a storage device isn't being detected or shows errors during boot.
+</details>
+
+<details>
+<summary>System freezes or kernel panics:</summary>
+```bash
+dmesg -T -l emerg,alert,crit,err | tail -30
+```
+Check the most severe kernel messages that occurred before a system crash or freeze.
+</details>
+
+<details>
+<summary>Memory (RAM) errors:</summary>
+```bash
+dmesg | grep -i "memory\|ram"
+```
+Look for memory corruption, detection issues, or ECC error reports.
+</details>
+
+<details>
+<summary>Audio device events:</summary>
+```bash
+dmesg | grep -i "audio\|snd\|hda" | grep -i "error\|fail\|card"
+```
+Check if your sound card is being detected properly and if drivers are loading correctly.
+</details>
+
+<details>
+<summary>Kernel module loading failures:</summary>
+```bash
+dmesg | grep -i "module\|init" | grep -i "error\|fail"
+```
+When specific hardware drivers aren't loading or are failing to initialize.
+</details>
+
+<details>
+<summary>Real-time monitoring for hardware events:</summary>
+```bash
+dmesg -w -l warn,err,crit,alert,emerg -T
+```
+Continuously watch for new important kernel messages while you reproduce an issue.
+</details>
+
+<details>
+<summary>BIOS/UEFI and firmware issues:</summary>
+```bash
+dmesg | grep -i "bios\|uefi\|firmware\|efi"
+```
+Check for compatibility issues between your hardware firmware and the Linux kernel.
+</details>
+
+## Installation & Live Environment
+
+### Why does the CachyOS live ISO only include KDE Plasma?
+
+We've chosen to focus our development and maintenance efforts exclusively on the KDE Plasma desktop environment. This allows us to deliver a more polished, stable, and consistent user experience on our live ISO.
+
+The live environment is primarily intended for installing CachyOS or using cachy-chroot for system recovery. For a safe way to **test** other desktop environments or window managers, we highly recommend trying them in a virtual machine (VM).
+
+### Why does the installer take so long to start after clicking "Launch Installer"?
+
+:::caution
+Make sure you have an active/running internet connection, otherwise nothing will happen after you press this button.
+:::
+
+The installer is not frozen. It is running a necessary background script to prepare your system for installation. This process ensures that your system's keyrings and clock are up-to-date, which helps prevent common installation issues.
+
+[View the script on GitHub](https://github.com/CachyOS/CachyOS-Live-ISO/blob/master/archiso/airootfs/usr/local/bin/calamares-online.sh) to have a better understanding of what it does.
+<Steps>
+  1. Removes old keyring files.
+  2. Updates the Arch Linux & CachyOS keyring packages to the latest version.
+  3. Initializes and populates the pacman keyring.
+  4. Enables network time synchronization.
+  5. Checks your system's boot type (UEFI or BIOS/MBR) to prompt the user to select a bootloader depending on the type.
+</Steps>
+
+### Why does my installation get stuck at 33%
+
+This happens when the installer is struggling to download packages. It's usually a sign of a very slow or unstable internet connection. Please check your network connection and try again.
+
+## Bootloader Recovery
+
+:::note
+In the case of a deleted `/boot` partition, please create a new one following the respective [partition scheme](/installation/installation_on_root#uefigpt) from step 5.
+:::
+
+### Steps to recover your bootloader
+
+:::tip
+If you're unsure on how to use `cachy-chroot`, please refer to the [CachyOS chroot Helper](/features/cachy_chroot) documentation first.
+:::
+
+<Steps>
+    1. Boot into the CachyOS Live ISO.
+    2. Open a terminal and chroot into the installed system using the `cachy-chroot` command.
+
+        ```bash
+        sudo cachy-chroot
+        ```
+        If the system is utilizing BTRFS with our preset say `y` in the prompt:
+         ```bash title='Example'
+         Do you want to use CachyOS BTRFS preset to auto mount root subvolume? y
+         Do you want to mount additional partitions? · yes
+         Enter the mount point for additional partition (e.g. /boot) type 'skip' to cancel:
+         # Type /boot for systemd-boot, Limine or rEFInd
+         # Type /boot/efi for GRUB
+         ```
+    3. Follow the instructions below for the installed bootloader and system type (UEFI or MBR/BIOS).
+        <Tabs>
+            <TabItem label='GRUB'>
+                Reinstall GRUB with the following command:
+                <Tabs>
+                    <TabItem label='UEFI'>
+                        ```bash
+                        sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos
+                        ```
+                    </TabItem>
+                    <TabItem label='MBR/BIOS'>
+                        ```bash
+                        sudo grub-install --target=i386-pc /dev/sdX # Replace sdX with your disk, e.g., sda
+                        ```
+                    </TabItem>
+                </Tabs>
+            </TabItem>
+            <TabItem label='systemd-boot (UEFI only)'>
+                Reinstall systemd-boot with the following command:
+                ```bash
+                sudo bootctl install
+                ```
+            </TabItem>
+            <TabItem label='Limine'>
+                Reinstall Limine with the following command:
+                <Tabs>
+                    <TabItem label='UEFI'>
+                        ```bash
+                        sudo limine-install
+                        ```
+                    </TabItem>
+                    <TabItem label='MBR/BIOS'>
+                        ```bash
+                        sudo limine bios-install /dev/sdX # Replace sdX with your disk e.g. sda
+                        ```
+                    </TabItem>
+                </Tabs>
+            </TabItem>
+            <TabItem label='rEFInd (UEFI only)'>
+                Reinstall rEFInd with the following command:
+                ```bash
+                sudo refind-install
+                ```
+            </TabItem>
+        </Tabs>
+    4. Reinstall the CachyOS kernel:
+        ```bash
+        sudo pacman -Syu linux-cachyos linux-cachyos-headers
+        ```
+    5. Exit from cachy-chroot:
+        ```bash
+        exit
+        ```
+    6. Reboot the system.
+</Steps>
+
+## Package Management & Updates
+
+### Pacman Troubleshooting
+
+#### error: signature is invalid
+
+This error indicates a problem with the cryptographic signature of a package. It is usually caused by an outdated mirror or a broken keyring on your system.
+
+While mirrors often fix themselves after a short while, if the issue persists, you should try one of the following two solutions.
+
+<Tabs>
+
+<TabItem label='First Solution: Resync Pacman Mirrors'>
+
+```sh
+sudo pacman -Syu
+```
+
+</TabItem>
+
+<TabItem label='Second Solution: Rate Your Mirrors'>
+
+```sh title='Rate your mirrors'
+sudo cachyos-rate-mirrors
+```
+
+</TabItem>
+
+<TabItem label='Third Solution: Reset Keyrings'>
+
+If rating your mirrors doesn't work, it's likely your system's keyrings are broken.
+
+- Open CachyOS Hello and navigate to **Troubleshooting**.
+- Click the Reset keyrings button.
+
+</TabItem>
+
+</Tabs>
+
+#### error: 404 Not Found
+
+This error means the package you are trying to install is not available on your current mirror. This usually happens when your local package database is out of sync with the remote repositories.
+
+**Solution:**
+
+Run the following command to refresh your package database and perform a full system upgrade. This will ensure your system knows about the latest available packages.
+
+```sh
+sudo pacman -Syu
+# Then try to install the package you want again.
+```
+
+#### error: could not remove
+
+This error occurs when the pacman cache contains files that the system cannot automatically manage. This is a common issue that can be easily fixed.
+
+- Solution 1: Use CachyOS Hello.
+  - The simplest way to fix this is with CachyOS Hello. Open it and go to **Troubleshooting**, then click the **Clear package cache** button.
+
+- Solution 2: Manually remove the cache.
+  - Run the following command to remove all orphaned packages from the cache.
+  ```sh
+  sudo rm -r /var/cache/pacman/pkg/*
+  ```
+
+#### error: File is corrupted (invalid or corrupted package (PGP signature))
+
+```sh
+# Example:
+:: File /var/cache/pacman/pkg/python-charset-normalizer-3.4.0-1-any.pkg.tar.zst
+is corrupted (invalid or corrupted package (PGP signature)).
+```
+
+This error typically indicates a problem with your system's pacman keyrings, which verify the authenticity of packages. The following commands will reset and re-populate the keyrings to resolve the issue.
+
+```sh
+sudo rm -rf /etc/pacman.d/gnupg/
+sudo pacman-key --init
+sudo pacman-key --populate
+
+sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
+sudo pacman-key --lsign-key F3B607488DB35A47
+
+sudo rm -R /var/lib/pacman/sync
+```
+
+If the above is unsuccessful, your keyring is not the problem. There could be an issue with your mirrors, so you can select working mirrors then clear your cache by running the following:
+
+```sh
+sudo cachyos-rate-mirrors
+sudo pacman -Scc
+```
+
+#### error: unable to lock database
+
+This error occurs when another pacman process is already running, which locks the database to prevent corruption. If the previous process crashed or was interrupted, the lock file `db.lck` might not have been removed.
+
+- Solution 1: Use CachyOS Hello
+  - The simplest way to fix this is with the **Remove db lock** function in the **Troubleshooting** tab of CachyOS Hello
+
+- Solution 2: Remove the lock file manually
+  - If you prefer not to use CachyOS Hello, you can remove the lock file manually:
+
+```sh
+sudo rm /var/lib/pacman/db.lck
+```
+
+#### error: failed retrieving file ... Connection timed out
+
+You might see errors like these:
+
+```text
+# Example errors:
+error: failed retrieving file '...' from ... : Connection timed out
+error: failed retrieving file '...' from ... : Couldn't resolve host name
+error: failed retrieving file '...' from ... : The requested URL returned error: 526
+```
+
+These errors almost always indicate a problem with your current mirrors. They may be slow, temporarily down, or unreachable from your location.
+
+- Solution: The best way to fix this is to update your mirror list with faster and more reliable mirrors.
+
+```sh
+sudo cachyos-rate-mirrors
+# Afterwards, you can update your system with:
+sudo pacman -Syu
+```
+
+:::tip
+The `cachyos-rate-mirrors` command tests available CachyOS mirrors based on speed and synchronization status, then updates your mirror list file (`/etc/pacman.d/cachyos-mirrorlist`) with the best-performing ones.
+
+Consider running it periodically, especially if you notice slowdowns during system updates.
+:::
+
+#### warning: local is newer than...
+
+This warning appears when a package version on your system is newer than the version available in the official repositories. This can happen if a mirror is out of date or if a package was downgraded in the repositories or if a package was installed from a different source.
+
+- Solution: the `pacman -Syuu` command performs a full system upgrade and allows for downgrades, which will fix the warning by synchronizing your local packages with the repository versions.
+
+```sh title='To remove these warnings, execute the following command:'
+sudo pacman -Syuu
+```
+
+#### error: failed to commit transaction (conflicting files)
+
+This error indicates that pacman is trying to install or update a package that contains files already present on your system from a different source. This is a built-in safety feature to prevent system breakage.
+
+- Solution: You can resolve this issue by removing the conflicting files manually. For more information and solutions, please refer to the [Arch Wiki](https://wiki.archlinux.org/title/Pacman#%22Failed_to_commit_transaction_(conflicting_files)%22_error).
+
+```sh title='Example'
+error: failed to commit transaction (conflicting files)
+nvidia-utils: /usr/lib/environment.d/10-gsk.conf exists in filesystem
+Errors occurred, no packages were upgraded.
+ -> error installing repo packages
+```
+
+To fix this specific example, you would remove the conflicting file and then run your update command again.
+
+```sh
+sudo rm /usr/lib/environment.d/10-gsk.conf
+```
+
+#### ERROR: module not found: 'nvidia', 'nvidia_modeset', ...
+
+```sh title='Example'
+==> ERROR: module not found: 'nvidia'
+==> ERROR: module not found: 'nvidia_modeset'
+==> ERROR: module not found: 'nvidia_uvm'
+==> ERROR: module not found: 'nvidia_drm'
+```
+
+**Two reasons for this error:**
+
+1) Since Early Module Loading is always enabled in chwd, mkinitcpio consistently expects the presence of NVIDIA modules; this error arises when those modules are missing.
+
+2) You might be missing NVIDIA modules from other installed kernels on your system.
+
+```sh title='Install the following package to fix this error'
+sudo pacman -S nvidia
+```
+
+### Specific Software Issues
+
+#### Discord asks for an update that isn't available in the repositories.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/discord-update.png')} />
+
+This happens because Discord uses its own update system, which gets ahead of the official repositories. A new version of the app has been released, but it hasn't been packaged for our mirrors yet.
+
+In order to get around this issue, follow [Arch Wiki's fix guide](<https://wiki.archlinux.org/title/Discord#Discord_asks_for_an_update_not_yet_available_in_the_repository>).
+
+### General questions
+
+#### Recently, my system is taking a long time to boot
+
+Since this issue can be caused by many different things. Let's begin with the basics by checking systemd-analyze to see where the system is struggling:
+
+Open a terminal and run one of the two following commands:
+
+```sh
+systemd-analyze blame
+```
+
+or:
+
+```sh
+systemd-analyze critical-chain
+```
+
+If the output shows `cachyos-rate-mirrors.service` taking a long time to execute. Then you should run the following command to mask this service, which will prevent it from running at boot:
+
+```sh
+systemctl mask cachyos-rate-mirrors
+systemctl mask cachyos-rate-mirrors.timer
+```
+
+#### What is the origin of CachyOS and why its named "CachyOS"?
+
+CachyOS is named after the "Cachy" scheduler, which was the original name of the [cacULE scheduler](https://github.com/hamadmarri/cacule-cpu-scheduler), a CPU scheduler for the Linux kernel.
+
+The project originated in 2020-2021 when ptr1337 (one of the CachyOS founders) was testing and collaborating with a developer named Hamad on the cacULE scheduler. When they decided to create an optimized Linux distribution based on Arch Linux with x86-64-v3 optimized packages,
+they named it "CachyOS" after the scheduler that brought them together.
+
+#### What is the interval on which -git packages are updated?
+
+Usually once on Monday, though there may be exceptions.
+
+#### Do the -bin packages in the CachyOS repositories benefit from the same performance optimizations?
+
+No. The `-bin` packages are precompiled binaries and do not include the same performance optimizations as the source based packages in the CachyOS repositories.
+
+#### How to disable the boot loading animation (Plymouth)
+
+:::note[This could solve a black screen issue on some systems, especially ones with old NVIDIA GPUs.]
+:::
+
+To disable the boot loading animation, you need to edit your [bootloader configuration](/configuration/boot_manager_configuration) and add the following kernel parameters:
+
+```sh
+plymouth.enable=0 disablehooks=plymouth
+```
+
+:::note[systemd-boot, GRUB and Limine require regenerating the initramfs images]
+systemd-boot: `sudo sdboot-manage gen`
+
+GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+
+Limine: `sudo limine-mkinitcpio`
+:::
+
+#### Submitting Package Requests to CachyOS
+
+CachyOS offers an extensive list of precompiled AUR Packages, which are commonly used.
+Users can create requests for AUR packages in the following ways:
+
+If you want us to add a package, you can submit a request on GitHub or in the forum.
+
+- [GitHub](https://github.com/CachyOS/distribution/issues)
+- [Forum](https://discuss.cachyos.org/c/feedback/repository/11)
+- [Discord feedback channel](https://discord.com/channels/862292009423470592/1150723027986813018)
+
+## Security & Best Practices
+
+### AUR Safety Practices
+
+The AUR offers a vast selection, but security is paramount. Here’s a concise guide to safe AUR usage for your CachyOS system.
+
+* **Understand the PKGBUILD:** It's the build script. Know its structure, variables (`source`, `pkgname`), and functions (`build()`, `package()`).
+* **Verify Source Links:** Always check that `source` URLs point to official project sites or trusted repositories. Avoid suspicious or personal links.
+* **Review Installation Steps:** Inspect where files are installed (`package()` function) and if any commands are unusual or touch sensitive system areas. Check `.install` scripts too.
+* **Research the Maintainer:** Look into the maintainer's history on the AUR for any past security issues or suspicious activity.
+* **Check Checksums & PGP:** Absolutely crucial! Confirm all checksums (SHA256, BLAKE2b, etc.) match upstream. Use PGP signatures (`validpgpkeys`) for authenticity when available.
+* **Be Cautious with `-bin` Packages:** These use pre-compiled binaries, meaning you can't inspect the source. Apply maximum scrutiny to their origins and integrity.
+* **Read Community Comments:** Check the AUR page comments for warnings, issues, or insights from other users.
+* **Never Skip Integrity Checks:** Using `--skipinteg` or similar flags bypasses all security checks. Don't do it.
+* **Control Your AUR Helper:** Understand how your helper (yay, paru) works. Ensure it shows you the PKGBUILD and its diffs, or build manually with `makepkg`.
+* **Assess Necessity:** Before installing, ask if you truly need this AUR package, or if an official repo alternative exists.
+* **Keep Your System Updated:** Regularly run `sudo pacman -Syu` to ensure all your system components, including `pacman` and `makepkg`, have the latest security patches.
+
+Stay vigilant to keep your Arch-based system secure!
+
+### CachyOS Regular Maintenance
+
+Follow the Arch Wiki for this: https://wiki.archlinux.org/title/System_maintenance
+
+### Choosing a GUI Package Manager
+
+While graphical package managers offer convenience, certain ones are known to cause severe issues on rolling-release systems like CachyOS and should be avoided for managing system packages.
+
+- **Pamac:** is known to improperly handle certain package management tasks, such as corrupting system package keyrings. This can lead to PGP signature errors that prevent you from updating your system.
+- **Discover (KDE) & GNOME Software Center:** These app stores use the PackageKit backend. While they're generally safe for managing Flatpaks, using them to install or update **system packages** is risky. PackageKit-based managers can also be unstable or prone to crashing, which could leave your system in a broken state after a failed transaction.
+
+For maximum stability and reliability, we **highly recommend** managing system packages through the command line with `pacman`
+
+If you prefer a graphical interface, GUI front-ends like **[Shelly](</configuration/post_install_setup/#updating-the-system>)** or the **CachyOS Package Installer** are considered as safe alternatives, as they are more direct wrappers for pacman functionality.
