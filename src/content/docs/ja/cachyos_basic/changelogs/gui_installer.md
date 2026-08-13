@@ -1,6 +1,7 @@
 ---
 title: GUI インストーラー
 description: Calamares と GUI ライブ ISO の更新ログ
+ai_translated: true
 sidebar:
   order: 1
 ---
@@ -12,7 +13,7 @@ sidebar:
 * **パッケージ**
   * Python のパフォーマンス向上のため、拡張 PGO を使用するように
   * 汎用 x86 の分岐予測ミス調整のための [GCC パッチ](https://www.phoronix.com/news/GCC-x86-Generic-Mispredict)を追加、最新の Intel/AMD CPU における分岐予測ミスコストの算出方法を改善
-  * 高コア CPU で OpenBLAS を使用する際に Phoronix Benchmarks で見つかったリグレッションを修正
+  * コア数の多い CPU で OpenBLAS を使用する際に Phoronix Benchmarks で見つかったリグレッションを修正
   * `proton-cachyos` を `proton-cachyos-native` にリネーム
 * **pacman** スクリプトレットおよびフックに[ネットワーク分離機能](https://github.com/CachyOS/pacman/commit/4056cd687f6379e61e7decb9b66e9b57cb3949a9)を追加
 * **インストーラー**
@@ -52,11 +53,11 @@ sidebar:
   * 仮想マシンのベンダー ID を修正
   * 不要な `fprintd` サービスの有効化処理を削除
   * Mesa の削除ガードを修正
-  
+
 26.04
 ----
 
-**機能**
+**新機能**
 
 * **インストーラー**
   * GUI パッケージマネージャーを Octopi から Shelly に変更
@@ -66,43 +67,54 @@ sidebar:
   * UKUI デスクトップへの対応を終了
   * AMD GPU において、Plymouth テーマが外部モニターを接続したノート PC で正しく表示されない問題があったため別のテーマに変更
   * GNOME のパッケージ一覧の内容を整理・更新
-  * DMS シェルを搭載した `MangoWM` のインストールオプションを追加
+  * `MangoWM` と `DMS` シェルをインストールするオプションを追加
 * **CachyOS-Welcome**
-  * blocky による DNS-over-HTTPS に対応
-  * DNS ページに個々のサーバーのレイテンシ計測機能を追加、カスタムサーバーの追加も可能に
-  * AMD および Intel dGPU における VRAM 管理の改善を有効化する設定を追加 (gamescope または KDE 環境でのみ有効)
-  * キーボードナビゲーションに完全対応
+  * `blocky` 経由の DNS-over-HTTPS (DoH) に対応
+  * カスタム DNS サーバーへの対応と、DHCP の自動検出表示およびリセット機能を追加
+  * DNS サーバーにメタデータ (地域、ホームページ、フィルタリング) を表示し、個別のレイテンシテストに対応
+  * VRAM 管理を切り替える `dmemcg-booster` を追加 (KDE では `plasma-foreground-booster` もインストール)
+  * アクセシビリティ向けに完全なキーボードナビゲーションへ対応
+  * PNG のソーシャルアイコンを鮮明で HiDPI 対応の SVG に置き換え
+  * ターミナルヘルパーに `wezterm` を追加
 * **chwd**
-  * 対応デバイスにおいて、指紋認証ベースの sudo の有効化に対応
-  * 対応デバイスにおいて `intel-lpmd` に対応、設定を改善した独自フォーク版を使用
-  * プロファイルに PC ケースの種類を識別する機能を追加
-  * Xbox ROG Ally を chwd プロファイルに追加
-* **cachyos-settings**
-  * デフォルトの NVMe I/O スケジューラを `none` から `kyber` へ変更
+  * ネイティブな USB デバイス検出 (libusb/sysfs 経由) とシャーシ種別の検出を追加
+  * 指紋認証 (`fprint`) と sudo の統合に対応
+  * `intel-lpmd` 対応のため CPU ファミリー/モデル検出を追加
+  * **ハンドヘルド:** Xbox ROG Ally の正確なパターンを追加
+  * **ネットワーク:** Marvell AVASTAR 88W8897 Wi-Fi プロファイル (Surface Pro 4) を追加
+  * NVIDIA プロファイルをノート PC とデスクトップ環境向けに分割
+  * 仮想マシン用プロファイルを分割して更新
+* **cachyos-settings:** デフォルトの NVMe I/O スケジューラを `none` から `kyber` へ変更
 
 **修正**
 
 * **インストーラー**
   * パーティション方式をデバッグログに出力するように
   * 既存のブートパーティションを再利用する際、古いマイクロコードパッケージを削除するように
+* **CachyOS-Welcome**
+  * ping に失敗しても接続確認が誤って true を返す問題を修正
+  * ダークテーマで外部リンクアイコンが見えるように修正
+  * ウェルカムアプリが同時に複数起動しないように修正
+  * `StartupWMClass` を追加し、`.desktop` ウィンドウのマッチングを改善
 * **chwd**
-  * NVIDIA プロファイルにおけるカーネル検索の精度を向上
-  * 470xx プロファイルから強制的な Xorg セッションを削除
-  * ハンドヘルド製品名の識別を改善
+  * NVIDIA ドライバの競合を修正するため、非ポータブルデスクトップ環境で `kms` フックを `mkinitcpio.conf` から削除
+  * NVIDIA プロファイルにおけるインストール済みカーネルの検索精度を向上
+  * NVIDIA 470xx プロファイルから強制的な Xorg セッションを削除 (`plasma-login-manager` との互換性を修正)
+  * 仮想マシン用プロファイルから古い GDM の `WaylandEnable=false` を削除
+  * ハンドヘルドの誤検出 (特定の MSI ノート PC が MSI Claw として検出される場合など) を修正
 * **cachyos-settings**
-  * NVIDIA 595 ドライバにおける問題のため、S01x 電源管理を廃止
+  * NVIDIA 595 ドライバにおける問題のため、`S01x` 電源管理を廃止
   * NVIDIA ドライバの VR 関連の問題のため、`AggressiveVblank` を無効化
 
----
-
-## 26.03
+26.03
+----
 
 **機能**
 
 * **インストーラー**
   * デスクトップ環境の選択画面で、デスクトップの見た目を GIF / WebP 動画で確認できるように (Plasma, GNOME, Niri, COSMIC で対応)
   * 画像サイズ削減のため、デスクトップ環境の選択画面で JPEG XL に対応
-  * GNOME および KDE 環境をインストール際、デフォルトで Cachy-Update を有効化するように
+  * GNOME および KDE 環境をインストールする際、デフォルトで Cachy-Update を有効化するように
   * マイクロコードのインストールロジックを改善し、ハードウェアを識別して適切なマイクロコードのみをインストールするよう変更
   * EFI パーティションが小さすぎる際のエラーメッセージを改善
   * デスクトップ環境の一覧を、セットアップの難易度順に並び替え (上から順にかんたん -> WM など上級者向け)
@@ -110,20 +122,13 @@ sidebar:
   * かんたんに Windows Docker 仮想マシンを構築できる "Winboat" をインストール・有効化するボタンを追加
   * DNS の選択肢に FFMUC DNS サーバーを追加
   * ウクライナ語の翻訳を追加
-* **chwd**
-  * NVIDIA dGPU 構成において initramfs のサイズを大幅に削減
-* **linux-cachyos**
-  * `0001-cachyos-base-all.patch` を生成する代わりに、リリース毎に Linux リポジトリ内で CachyOS のパッチ済みカーネルを生成するよう変更
-* **cachyos-rate-mirrors**
-  * 中国およびロシアのユーザー向けに、ミラーの評価前に適切なチェックを行うよう改善
-* **cachyos-settings**
-  * タイムゾーンに基づいてワイヤレスの規制区域を自動設定する機能を追加
-* **ウェブサイト**
-  * ウェブサイトのデザインをよりモダンに刷新・改善
-* **GitHub**
-  * バグレポートの品質向上とユーザーへのヘルプを目的として、重要な GitHub リポジトリに Issue テンプレートを追加
-* **ミラー**
-  * ロシア (jura12, cachy-arch.ru)、スウェーデン (Zyner)、カナダ (All Things Linux) に新しいミラーを追加
+* **chwd:** NVIDIA dGPU 構成において initramfs のサイズを大幅に削減
+* **linux-cachyos:** `0001-cachyos-base-all.patch` を生成する代わりに、リリースごとに Linux リポジトリ内で CachyOS のパッチ済みカーネルを生成するよう変更
+* **cachyos-rate-mirrors:** 中国およびロシアのユーザー向けに、ミラーの評価前に適切なチェックを行うよう改善
+* **cachyos-settings:** タイムゾーンに基づいてワイヤレスの規制区域を自動設定する機能を追加
+* **ウェブサイト:** ウェブサイトのデザインをよりモダンに刷新・改善
+* **GitHub:** バグレポートの品質向上とユーザーへのヘルプを目的として、重要な GitHub リポジトリに Issue テンプレートを追加
+* **ミラー:** ロシア (jura12, cachy-arch.ru)、スウェーデン (Zyner)、カナダ (All Things Linux) に新しいミラーを追加
 
 **修正**
 
@@ -131,8 +136,7 @@ sidebar:
   * bcachefs-dkms が必要となるため、ファイルシステム選択から bcachefs を削除
   * 特定のデバイスで LUKS2 を使用した際の暗号化を修正
   * ディスプレイマネージャー "ly" の有効化に関する問題を修正
-* **cachyos-settings**
-  * `cachyos-bugreport.sh` が IP アドレス、ユーザー名、ホスト名、MAC アドレスを伏せ字にするように
+* **cachyos-settings:** `cachyos-bugreport.sh` が IP アドレス、ユーザー名、ホスト名、MAC アドレスを伏せ字にするように
 * **chwd**
   * 汎用的なハンドヘルドプロファイルの追加と、ハンドヘルド用 GPU 対応の改善
   * Lenovo 製ハンドヘルドデバイスで fwupd を有効化
@@ -140,17 +144,12 @@ sidebar:
 
 **ハンドヘルド版の変更履歴**
 
-* **gamescope-session**
-  * gamescope-session-plus を、Valve の gamescope-session からフォークした gamescope-session-cachyos へ置き換え
+* **gamescope-session:** gamescope-session-plus を、Valve の gamescope-session からフォークした gamescope-session-cachyos へ置き換え
   * Steam Deck および Lenovo Legion Go デバイスのファームウェアアップデートに対応
-* **plasma-login-manager**
-  * ログインマネージャーを SDDM から plasma-login-manager へ置き換え
-* **ブートローダー**
-  * Limine を自動スナップショット付きのデフォルトとして選択するように変更、systemd-boot も引き続き選択可能
-* **インストーラー**
-  * Handheld 版 Calamares とデスクトップ版 Calamares を統合
-* **ISO**
-  * ISO が X11 に代わり Wayland を使用するように変更
+* **plasma-login-manager:** ログインマネージャーを SDDM から plasma-login-manager へ置き換え
+* **ブートローダー:** Limine を自動スナップショット付きのデフォルトとして選択するように変更、systemd-boot も引き続き選択可能
+* **インストーラー:** Handheld 版 Calamares とデスクトップ版 Calamares を統合
+* **ISO:** ISO が X11 に代わり Wayland を使用するように変更
 
 26.01
 ----

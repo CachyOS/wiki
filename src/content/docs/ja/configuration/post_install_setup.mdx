@@ -14,7 +14,7 @@ import ImageComponent from '~/components/image-component.astro';
 ### システムの更新
 
 :::tip
-よくある落とし穴を避けてシステムを安全に保つために、[セキュリティとベストプラクティス](/ja/cachyos_basic/faq#セキュリティとベストプラクティス)を確認してください。
+よくある罠を避けてシステムを安全に保つために、[セキュリティとベストプラクティス](/ja/cachyos_basic/faq#セキュリティとベストプラクティス)を確認してください。
 :::
 
 <Tabs>
@@ -54,7 +54,7 @@ import ImageComponent from '~/components/image-component.astro';
     ```
     </details>
     <details>
-    <summary>(ディストリビューションのものを含む) 標準パッケージやインストールパッケージをアップグレード</summary>
+    <summary>Arch 系ディストリビューションの標準パッケージのアップグレード + パッケージのインストール</summary>
     ```sh
     shelly install --upgrade {pkg}
     # 使用例
@@ -245,17 +245,21 @@ Octopi でシステムをアップデートするには以下の手順にした�
 
 <details>
     <summary>Cachy-Update を有効にする</summary>
-    `CachyOS Hello > アプリ/チューニング > Cachy Update を有効化` で Cachy-Update を有効にしてください。
+    `CachyOS Hello` → `アプリ/チューニング` → `Cachy Update を有効化` で Cachy-Update を有効にしてください。
 </details>
 <details>
     <summary>Cachy-Update を無効にする</summary>
-        ターミナルを開き以下のコマンドを実行してください。
-            ```bash
-            sudo systemctl --global disable arch-update-tray.service
-            sudo systemctl --global disable arch-update.timer
-            ```
+        `CachyOS Hello` → `アプリ/チューニング` → `Cachy Update を無効化` で Cachy-Update を無効にしてください。
             :::tip
-            システムトレイアプレットは残しつつ自動アップデートチェックだけを無効にする場合は、サービスを無効にせずタイマーのみを無効にしてください。
+            Cachy-Update を残してシステムトレイアプレットだけを無効にする場合は、ターミナルを開いて以下のコマンドを実行してください。
+            ```bash
+            mkdir -p ~/.config/autostart
+            echo -e "[Desktop Entry]\nHidden=true" > ~/.config/autostart/arch-update-tray.desktop
+            ```
+            システムトレイアプレットは残し、自動アップデートチェックだけを無効にする場合は、以下のコマンドを実行してください。
+            ```bash
+            systemctl --user disable --now arch-update.timer
+            ```
             :::
 </details>
 
@@ -268,7 +272,7 @@ Octopi でシステムをアップデートするには以下の手順にした�
   - アップグレード後の再起動が必要なサービスを確認 (ある場合は再起動するかどうかを確認)
   - `sudo`, `sudo-rs`, `doas`, `run0` に対応
 
-**アップデート確認間隔:** `起動から15秒後に1回、その後1時間ごと`
+**アップデート確認間隔:** `起動から2分後に1回、その後は1時間のランダムな遅延を含めて1日1回`
 
 - アップデート確認間隔を変更する方法は以下のとおりです。
 
@@ -282,8 +286,9 @@ systemctl --user edit --full arch-update.timer
 <summary>設定ファイルの初期設定</summary>
     ```systemd
     [Timer]
-    OnStartupSec=15 # 起動から15秒後にアップデートを確認
-    OnUnitActiveSec=1h # 1時間ごとにアップデートを確認
+    OnStartupSec=2min # 起動から2分後にアップデートを確認
+    RandomizedDelaySec=1h # 1時間のランダムな遅延
+    OnUnitActiveSec=1d # 1日1回アップデートを確認
     ```
 </details>
 `OnUnitActiveSec` の値を好きな値に変更できます。30分ごとにチェックするなら `30m`、6時間ごとなら `6h` に設定してください。時間間隔の指定方法の詳細は[こちらのドキュメント](https://www.freedesktop.org/software/systemd/man/latest/systemd.time.html#Parsing%20Time%20Spans)をご覧ください。
@@ -362,7 +367,7 @@ sudo ufw status verbose
 ```bash
 # 例1: コメント付きで TCP と UDP トラフィック向けに 12345 番ポートを開く
 sudo ufw allow 12345 comment 'コメント例'
-# 例2: コメント付きで TCP トラフィック向けに 12345 番ポートを閉じる
+# 例2: コメント付きで TCP トラフィック向けに 6789 番ポートを閉じる
 sudo ufw deny 6789/tcp comment 'コメント は スペース を つけること が できます'
 ```
 :::
@@ -551,4 +556,47 @@ AppArmor.d の詳細情報と独自プロファイルの作成方法について
    cache-loc /etc/apparmor/earlypolicy/
    ```
    ファイルを保存して再起動してください。
+</Steps>
+
+### 暗号化 (LUKS) デバイスでの TRIM の有効化
+
+CachyOS ではデフォルトで `fstrim.timer` を有効にして、SSD や NVMe ドライブを定期的にトリムすることで、書き込みパフォーマンスとドライブの寿命を維持していますが、Linux の device-mapper 方式の暗号化レイヤー (`dm-crypt`/LUKS) は、デフォルトでは discard (TRIM) コマンドをブロックしています。そのため、定期的に TRIM を実行していても、discard のパススルーが明示的に有効化されていない場合には、暗号化済みパーティションをトリムすることはできません。またこのとき、エラーや警告などは表示されません。
+
+:::caution[セキュリティとプライバシーに関する注意]
+暗号化デバイスで TRIM を有効にすると、どのセクターが空で、どのセクターにデータがあるかといった情報を下層の SSD コントローラーに渡すことになります。データ自体は完全に暗号化されたままですが、実際のストレージに物理的にアクセスできる攻撃者に、使用済み容量の概算、ファイルシステムのレイアウト、データの配置パターンを推測されるおそれがあります。
+
+こうしたメタデータの漏洩がセキュリティ上のリスクとして許容できる場合は、discard パススルーを有効化することで、SSD のパフォーマンスとドライブの寿命をのばすことができます。
+:::
+
+#### discard パススルーの有効化 (LUKS2)
+
+<Steps>
+1. 現在使用中の LUKS マッパー名を確認してください。
+
+   ```bash
+   lsblk
+   ```
+
+   ディスクパーティション配下の `crypt` 形式のエントリを探してください。(例: `luks-1e647929-62c0-4922-8944-f941ed4155fd`)
+
+2. 現在使用中の LUKS マッピングに、永続的な discard パススルーを設定してください。
+
+   ```bash
+   sudo cryptsetup --allow-discards --persistent refresh <mapper_name>
+   ```
+
+   :::note
+   `<mapper_name>` を手順1で確認した実際のマッピング名に置き換えてください。(例: `sudo cryptsetup --allow-discards --persistent refresh luks-1e647929-62c0-4922-8944-f941ed4155fd`)
+   :::
+
+3. 変更を適用するために、システムを再起動してください。
+
+4. discard パススルーが有効になっていることを確認してください。
+
+   ```bash
+   lsblk -D
+   sudo fstrim -v /
+   ```
+
+   `lsblk -D` では、暗号化ボリュームの `DISC-GRAN` と `DISC-MAX` にゼロ以外の値が表示されるようになります。また `fstrim` はデバイスをスキップすることなく、トリムされた容量を出力するようになります。
 </Steps>

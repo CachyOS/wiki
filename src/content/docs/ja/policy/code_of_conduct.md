@@ -2,6 +2,12 @@
 title: 行動規範
 ---
 
+:::note
+このページは [Contributor Covenant](https://www.contributor-covenant.org/translations) の公式日本語訳を引用しています。同一の文章はこちらから確認することができます。
+
+[コントリビューター行動規範 2.0 日本語版](https://www.contributor-covenant.org/ja/version/2/0/code_of_conduct/code_of_conduct.md)
+:::
+
 # コントリビューター行動規範
 
 ## 私たちの約束
