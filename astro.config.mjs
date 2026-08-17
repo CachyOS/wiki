@@ -36,6 +36,71 @@ if (import.meta.env.PROD) {
 
 const site = 'https://wiki.cachyos.org/';
 
+const nonRootLocales = lunariaConfig.locales.map((l) => l.lang);
+
+/**
+ * Paths that should never trigger language redirection.
+ * Add new entries here if additional non-translatable routes are introduced.
+ */
+const redirectExcludedPaths = [
+  '/localization', // translation status dashboard (Lunaria)
+  '/404', // 404 error page
+];
+
+/**
+ * Inline script to redirect users to their preferred locale based on browser
+ * language settings. Runs synchronously in <head> to avoid content flash.
+ * Skips redirect if the user has already been redirected in the current session
+ * or has manually selected a language via the language picker.
+ */
+const langRedirectScript = `(function(){
+  var locales = ${JSON.stringify(nonRootLocales)};
+  var excluded = ${JSON.stringify(redirectExcludedPaths)};
+  var key = 'starlight-lang-redirected';
+  try {
+    var p = window.location.pathname;
+    for (var i = 0; i < locales.length; i++) {
+      var l = locales[i];
+      if (p === '/' + l || p.indexOf('/' + l + '/') === 0) {
+        sessionStorage.setItem(key, 'true');
+        return;
+      }
+    }
+    for (var k = 0; k < excluded.length; k++) {
+      if (p.indexOf(excluded[k]) === 0) return;
+    }
+    if (sessionStorage.getItem(key)) return;
+
+    var langs = navigator.languages || [navigator.language || navigator.userLanguage];
+    var target = null;
+    for (var j = 0; j < langs.length; j++) {
+      var code = (langs[j] || '').toLowerCase().split('-')[0];
+      if (!code) continue;
+      if (code === 'en') break;
+      if (locales.indexOf(code) !== -1) {
+        target = code;
+        break;
+      }
+    }
+
+    if (target) {
+      sessionStorage.setItem(key, 'true');
+      var targetPath = '/' + target + (p === '/' ? '/' : p);
+      window.location.replace(targetPath + window.location.search + window.location.hash);
+    }
+  } catch (e) {}
+
+  try {
+    window.addEventListener('DOMContentLoaded', function() {
+      document.addEventListener('change', function(e) {
+        if (e.target && e.target.closest && e.target.closest('starlight-lang-select')) {
+          sessionStorage.setItem(key, 'true');
+        }
+      });
+    });
+  } catch (e) {}
+})();`;
+
 // https://astro.build/config
 export default defineConfig({
   site,
@@ -110,6 +175,10 @@ export default defineConfig({
             property: 'twitter:image',
             content: site + 'og.jpg?v=1',
           },
+        },
+        {
+          tag: 'script',
+          content: langRedirectScript,
         },
       ],
       sidebar: [
