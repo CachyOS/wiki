@@ -601,6 +601,10 @@ export default defineConfig({
               link: 'configuration/dual_gpu',
             },
             {
+              label: 'NVIDIA',
+              link: 'configuration/nvidia',
+            },
+            {
               label: 'Gaming',
               link: 'configuration/gaming',
               translations: {
