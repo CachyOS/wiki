@@ -257,11 +257,11 @@ Incluye un applet de bandeja del sistema dinámico y clicable para una fácil in
             Si quieres mantener Cachy-Update y solo deshabilitar el applet de la bandeja del sistema, abre una terminal y ejecuta los siguientes comandos:
             ```bash
             mkdir -p ~/.config/autostart
-            echo -e "[Desktop Entry]\nHidden=true" > ~/.config/autostart/arch-update-tray.desktop"
+            echo -e "[Desktop Entry]\nHidden=true" > ~/.config/autostart/arch-update-tray.desktop
             ```
             Si quieres mantener el applet de la bandeja del sistema habilitado y simplemente deshabilitar la comprobación automática de actualizaciones, ejecuta el siguiente comando:
             ```bash
-            sudo systemctl --global disable --now arch-update.timer
+            systemctl --user disable --now arch-update.timer
             ```
             :::
 </details>
@@ -462,7 +462,7 @@ AppImages son aplicaciones portátiles que se ejecutan en la mayoría de distrib
 :::note[Todas las AppImages requieren permisos de ejecución para funcionar.]
 Puedes establecer el permiso de ejecución usando el siguiente comando:
 ```sh
-chmod +x /ruta/a/tu/appimage
+chmod +x /path/to/your/appimage
 ```
 O haz clic derecho en el archivo AppImage, ve a `Propiedades` > `Permisos`, y marca la casilla que dice `Permitir ejecutar el archivo como un programa.`
 :::
@@ -562,4 +562,47 @@ Para información más detallada sobre AppArmor.d y cómo crear tus propios perf
    cache-loc /etc/apparmor/earlypolicy/
    ```
    Guarda el archivo y reinicia.
+</Steps>
+
+### Activar TRIM en dispositivos cifrados (LUKS)
+
+CachyOS habilita `fstrim.timer` de forma predeterminada para realizar el trim de SSDs y unidades NVMe periódicamente, lo que ayuda a mantener el rendimiento de escritura y la vida útil de las unidades. Sin embargo, la capa de cifrado de device-mapper de Linux (`dm-crypt`/LUKS) bloquea los comandos discard (TRIM) de forma predeterminada. Como resultado, las ejecuciones periódicas de TRIM se realizan de forma silenciosa sin hacer trim de las particiones cifradas a menos que se habilite explícitamente la pasarela de discard.
+
+:::caution[Consideraciones de seguridad y privacidad]
+Activar TRIM en un dispositivo cifrado permite que el controlador del SSD subyacente sepa qué sectores están vacíos y cuáles contienen datos. Aunque tus datos permanecen completamente cifrados, un atacante con acceso físico al almacenamiento en bruto podría inferir el espacio de almacenamiento aproximadamente utilizado, el diseño del sistema de archivos o los patrones de datos.
+
+Si esta fuga de metadatos es aceptable para tu modelo de amenazas, puedes habilitar la pasarela de discard de forma segura para mejorar el rendimiento del SSD y la salud de la unidad.
+:::
+
+#### Habilitar la pasarela de discard (LUKS2)
+
+<Steps>
+1. Identifica el nombre de tu mapper LUKS activo:
+
+   ```bash
+   lsblk
+   ```
+
+   Busca la entrada de tipo `crypt` bajo la partición de tu disco (por ejemplo, `luks-1e647929-62c0-4922-8944-f941ed4155fd`).
+
+2. Habilita la pasarela de discard persistente en el mapeo LUKS activo:
+
+   ```bash
+   sudo cryptsetup --allow-discards --persistent refresh <mapper_name>
+   ```
+
+   :::note
+   Reemplaza `<mapper_name>` con tu nombre mapeado real encontrado en el paso 1 (por ejemplo, `sudo cryptsetup --allow-discards --persistent refresh luks-1e647929-62c0-4922-8944-f941ed4155fd`).
+   :::
+
+3. Reinicia tu sistema para aplicar los cambios.
+
+4. Verifica que la pasarela de discard esté activa:
+
+   ```bash
+   lsblk -D
+   sudo fstrim -v /
+   ```
+
+   `lsblk -D` debe mostrar ahora valores distintos de cero bajo `DISC-GRAN` y `DISC-MAX` para tu volumen cifrado, y `fstrim` mostrará la cantidad de espacio trimado en lugar de omitir el dispositivo.
 </Steps>

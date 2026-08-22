@@ -15,7 +15,7 @@ import ImageComponent from '~/components/image-component.astro';
 ### 更新系统
 
 :::tip
-请务必查看我们的 [Security & Best Practices](/zh/cachyos_basic/faq#security--best-practices)，以避免常见陷阱并保持系统安全。
+请务必查看我们的 [Security & Best Practices](/zh/cachyos_basic/faq#安全和最佳实践)，以避免常见陷阱并保持系统安全。
 :::
 
 <Tabs>
@@ -562,4 +562,47 @@ Samba 是 SMB 网络协议的免费软件重新实现。要连接到你的 samba
    cache-loc /etc/apparmor/earlypolicy/
    ```
    保存文件并重启。
+</Steps>
+
+### 在加密（LUKS）设备上启用 TRIM
+
+CachyOS 默认启用 `fstrim.timer`，以定期 trim SSD 和 NVMe 驱动器，从而帮助维持写入性能和驱动器寿命。然而， Linux 设备映射（device-mapper）加密层（`dm-crypt`/LUKS）默认会阻止 discard（TRIM）命令。因此，除非明确启用 discard 直通（passthrough）， 否则定期 TRIM 运行将静默执行而不会对加密分区进行 trim。
+
+:::caution[安全与隐私注意事项]
+在加密设备上启用 TRIM 会使底层 SSD 控制器能够知道哪些扇区是空的、哪些 包含数据。虽然您的数据仍完全加密，但能物理访问原始存储的攻击者可能推断出大致的已用存储空间、 文件系统布局或数据模式。
+
+如果您的威胁模型可以接受这种元数据泄露，则可以安全地启用 discard 直通，以提升 SSD 性能和驱动器健康状态。
+:::
+
+#### 启用 discard 直通（LUKS2）
+
+<Steps>
+1. 识别您活动的 LUKS mapper 名称：
+
+   ```bash
+   lsblk
+   ```
+
+   查找磁盘分区下类型为 `crypt` 的条目（例如 `luks-1e647929-62c0-4922-8944-f941ed4155fd`）。
+
+2. 在活动 LUKS 映射上启用持久 discard 直通：
+
+   ```bash
+   sudo cryptsetup --allow-discards --persistent refresh <mapper_name>
+   ```
+
+   :::note
+   将 `<mapper_name>` 替换为您在第 1 步中找到的实际映射名称（例如， `sudo cryptsetup --allow-discards --persistent refresh luks-1e647929-62c0-4922-8944-f941ed4155fd`）。
+   :::
+
+3. 重启系统以应用更改。
+
+4. 验证 discard 直通已激活：
+
+   ```bash
+   lsblk -D
+   sudo fstrim -v /
+   ```
+
+   `lsblk -D` 现在应显示您的加密卷在 `DISC-GRAN` 和 `DISC-MAX` 下的非零值，并且 `fstrim` 将输出已 trim 的空间量，而不是跳过该设备。
 </Steps>

@@ -1,6 +1,7 @@
 ---
 title: Doações
 description: Formas de nos apoiar
+ai_translated: true
 ---
 
 Se deseja apoiar o nosso trabalho, pode fazer uma doação e ajudar-nos a pagar os nossos servidores de compilação (buildservers).
@@ -14,9 +15,7 @@ Aqui está uma lista dos custos mensais atuais:
 - Servidor de E-mail/Mirror: 17 €
 - Servidor do Fórum: (Netcup VPS) 7 €
 
-### Patreon
-
-<https://www.patreon.com/CachyOS>
+### [Patreon](<https://www.patreon.com/CachyOS>)
 
 ### Ethereum
 
