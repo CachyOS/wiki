@@ -303,7 +303,7 @@ Danke an [Antiz](https://github.com/Antiz96) für die Wartung des Upstream-Proje
 
 </Tabs>
 
-## Firewall konfigurieren (ufw)
+### Firewall konfigurieren (ufw)
 :::note
 UFW ist nach der Installation standardmäßig aktiviert.
 :::
@@ -453,7 +453,7 @@ Dieses Tool ist extrem nützlich für diejenigen, die nicht viel lesen oder Zeit
 
 </Steps>
 
-## Appimages verwalten
+### Appimages verwalten
 
 Appimages sind portable Anwendungen, die auf den meisten Linux-Distributionen laufen, ohne dass eine Installation oder root-Rechte erforderlich sind.
 
@@ -490,11 +490,11 @@ Um gearlever zu installieren, befolge diese Schritte:
     4. Nach der Installation. Logge dich aus und wieder ein, um gearlever in deinem Anwendungsmenü zu sehen.
 </Steps>
 
-## Zugriff auf Samba-Freigaben konfigurieren
+### Zugriff auf Samba-Freigaben konfigurieren
 
 Samba ist eine freie Software-Neuimplementierung des SMB-Netzwerkprotokolls. Um eine Verbindung zu deinem Samba-Server herzustellen, wurde den CachyOS-Benutzern eine nützliche Konfiguration zur Verfügung gestellt, die jedoch eine Änderung der Konfiguration deines Samba-Servers erfordert.
 
-### Installieren und Verwenden der CachyOS smb.conf-Datei
+#### Installieren und Verwenden der CachyOS smb.conf-Datei
 
 Um die praktische smb.conf-Datei zu verwenden, installiere zuerst ein spezifisches Paket, das die erforderliche smb.conf-Datei bereitstellt. Ersetze dann die vorhandene smb.conf deines Servers durch diese Datei und konfiguriere deine freigegebenen Volumes neu.
 
@@ -518,7 +518,7 @@ Um die praktische smb.conf-Datei zu verwenden, installiere zuerst ein spezifisch
         Wenn alles richtig konfiguriert ist, wirst du nach Anmeldeinformationen gefragt. Denke daran, die Option zum Speichern deiner Anmeldeinformationen auszuwählen, wenn du das möchtest.
 </Steps>
 
-### Ünterstützung von AppArmor durch AppArmor.d-Profile
+### Unterstützung von AppArmor durch AppArmor.d-Profile
 
 Zitat von Wikipedia:
 
@@ -560,4 +560,47 @@ Für detailliertere Informationen über AppArmor.d und wie man eigene Profile er
    cache-loc /etc/apparmor/earlypolicy/
    ```
    Speichere die Datei und starte dein System neu.
+</Steps>
+
+### TRIM auf verschlüsselten (LUKS-)Geräten aktivieren
+
+CachyOS aktiviert standardmäßig `fstrim.timer`, um SSDs und NVMe-Laufwerke regelmäßig zu trimmen und so die Schreibperformance und die Lebensdauer des Laufwerks zu erhalten. Allerdings blockiert die Linux-Device-Mapper- Verschlüsselungsschicht (`dm-crypt`/LUKS) standardmäßig discard-(TRIM)-Befehle. Infolgedessen werden die periodischen TRIM-Vorgänge im Hintergrund ausgeführt, ohne verschlüsselte Partitionen zu trimmen, es sei denn, Discard-Passthrough wird ausdrücklich aktiviert.
+
+:::caution[Sicherheit & Datenschutz]
+Die Aktivierung von TRIM auf einem verschlüsselten Gerät ermöglicht es dem darunter liegenden SSD-Controller zu erkennen, welche Sektoren leer sind und welche Daten enthalten. Während deine Daten vollständig verschlüsselt bleiben, könnte ein Angreifer mit physischem Zugriff auf den Rohspeicher den ungefähr genutzten Speicherplatz, das Dateisystem-Layout oder Datenmuster ableiten.
+
+Wenn diese Metadaten-Lücke für dein Bedrohungsmodell akzeptabel ist, kannst du Discard-Passthrough aktivieren, um die SSD-Performance und den Zustand des Laufwerks zu verbessern.
+:::
+
+#### Aktivieren des Discard-Passthrough (LUKS2)
+
+<Steps>
+1. Identifiziere deinen aktiven LUKS-Mapper-Namen:
+
+   ```bash
+   lsblk
+   ```
+
+   Suche unter deiner Disk-Partition nach einem Eintrag vom Typ `crypt` (z. B. `luks-1e647929-62c0-4922-8944-f941ed4155fd`).
+
+2. Aktiviere den dauerhaften Discard-Passthrough auf dem aktiven LUKS-Mapping:
+
+   ```bash
+   sudo cryptsetup --allow-discards --persistent refresh <mapper_name>
+   ```
+
+   :::note
+   Ersetze `<mapper_name>` durch deinen tatsächlichen gemappeten Namen aus Schritt 1 (zum Beispiel `sudo cryptsetup --allow-discards --persistent refresh luks-1e647929-62c0-4922-8944-f941ed4155fd`).
+   :::
+
+3. Starte dein System neu, um die Änderungen anzuwenden.
+
+4. Überprüfe, ob der Discard-Passthrough aktiv ist:
+
+   ```bash
+   lsblk -D
+   sudo fstrim -v /
+   ```
+
+   `lsblk -D` sollte für dein verschlüsseltes Volume nun nicht-null-Werte unter `DISC-GRAN` und `DISC-MAX` anzeigen, und `fstrim` gibt die Menge des getrimmten Speicherplatzes aus, anstatt das Gerät zu überspringen.
 </Steps>

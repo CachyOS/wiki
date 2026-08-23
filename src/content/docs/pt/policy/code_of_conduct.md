@@ -1,5 +1,6 @@
 ---
 title: Código de Conduta
+ai_translated: true
 ---
 
 # Código de Conduta do Pacto do Colaborador
@@ -74,10 +75,14 @@ Os líderes da comunidade seguirão estas Diretrizes de Impacto na Comunidade pa
 
 ## Atribuição
 
-Este Código de Conduta foi adaptado do [Contributor Covenant][homepage], versão 2.0, disponível em <https://www.contributor-covenant.org/version/2/0/code_of_conduct.html>.
+Este Código de Conduta foi adaptado do [Contributor Covenant][homepage],
+versão 2.0, disponível em
+[https://www.contributor-covenant.org/version/2/0/code_of_conduct.html](<https://www.contributor-covenant.org/version/2/0/code_of_conduct.html>).
 
 As Diretrizes de Impacto na Comunidade foram inspiradas na [escada de aplicação do código de conduta da Mozilla](https://github.com/mozilla/diversity).
 
-[homepage]: https://www.contributor-covenant.org
+[homepage](https://www.contributor-covenant.org)
 
-Para respostas a perguntas comuns sobre este código de conduta, consulte as FAQ em <https://www.contributor-covenant.org/faq>. Estão disponíveis traduções em <https://www.contributor-covenant.org/translations>.
+Para respostas a perguntas comuns sobre este código de conduta, consulte as FAQ em
+[FAQ](<https://www.contributor-covenant.org/faq>). Estão disponíveis traduções em
+[https://www.contributor-covenant.org/translations](<https://www.contributor-covenant.org/translations>).

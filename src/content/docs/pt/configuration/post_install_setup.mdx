@@ -15,7 +15,7 @@ import ImageComponent from '~/components/image-component.astro';
 ### Atualizar o Sistema
 
 :::tip
-Certifique-se de consultar as nossas [Práticas Recomendadas e de Segurança](/pt/cachyos_basic/faq#security--best-practices) para evitar erros comuns e manter o seu sistema seguro.
+Certifique-se de consultar as nossas [Práticas Recomendadas e de Segurança](/pt/cachyos_basic/faq#segurança-e-boas-práticas) para evitar erros comuns e manter o seu sistema seguro.
 :::
 
 <Tabs>
@@ -257,11 +257,11 @@ Inclui uma applet de systray dinâmica e clicável para uma integração fácil 
             Se pretende manter o Cachy-Update e apenas desativar a applet de systray, abra um terminal e execute os seguintes comandos:
             ```bash
             mkdir -p ~/.config/autostart
-            echo -e "[Desktop Entry]\nHidden=true" > ~/.config/autostart/arch-update-tray.desktop"
+            echo -e "[Desktop Entry]\nHidden=true" > ~/.config/autostart/arch-update-tray.desktop
             ```
             Se pretende manter a applet de systray ativada e simplesmente desativar a verificação automática de atualizações, execute o seguinte comando:
             ```bash
-            sudo systemctl --global disable --now arch-update.timer
+            systemctl --user disable --now arch-update.timer
             ```
             :::
 </details>
@@ -400,12 +400,15 @@ sudo pacman -S appmenu-gtk-module libdbusmenu-glib
 
 ### Alterar a Shell Predefinida
 
-Atualmente, o CachyOS utiliza a [fish](https://fishshell.com/) como a shell de início de sessão (login shell) predefinida do utilizador. No entanto, pode alterar a shell predefinida para qualquer outra que deseje.
+Atualmente, o CachyOS utiliza a [fish](https://fishshell.com/) como a shell de início de sessão (login shell) predefinida do utilizador. No entanto, pode
+alterar a shell predefinida para qualquer outra que deseje.
 
 <Tabs>
    <TabItem label='bash'>
 
-      Esta é a shell predefinida em quase todas as distribuições Linux. Também continua a ser utilizada como a shell de início de sessão do utilizador root. A bash possui uma funcionalidade básica de autoconclusão e uma gestão de histórico fácil. Difere da zsh e da fish por não possuir o ecossistema de plugins e a personalização avançada que tanto a fish como a zsh oferecem.
+      Esta é a shell predefinida em quase todas as distribuições Linux. Também continua a ser utilizada como a shell de início de sessão do utilizador root. A bash
+      possui uma funcionalidade básica de autoconclusão e uma gestão de histórico fácil. Difere da zsh e da fish por não
+      possuir o ecossistema de plugins e a personalização avançada que tanto a fish como a zsh oferecem.
 
 
       ```sh title='Alterar a sua shell predefinida para bash'
@@ -416,7 +419,9 @@ Atualmente, o CachyOS utiliza a [fish](https://fishshell.com/) como a shell de i
 
    <TabItem label='zsh'>
 
-      Disponibilizamos uma [configuração zsh](https://github.com/CachyOS/cachyos-zsh-config) com plugins e configurações comummente utilizados. O objetivo é ter uma funcionalidade 1:1 com a nossa [configuração fish](https://github.com/CachyOS/cachyos-fish-config). Esta é também a shell predefinida utilizada no MacOS.
+      Disponibilizamos uma [configuração zsh](https://github.com/CachyOS/cachyos-zsh-config) com plugins e configurações comummente utilizados.
+      O objetivo é ter uma funcionalidade 1:1 com a nossa [configuração fish](https://github.com/CachyOS/cachyos-fish-config).
+      Esta é também a shell predefinida utilizada no MacOS.
 
       ```sh title='Alterar a shell predefinida para zsh'
       chsh -s /usr/bin/zsh
@@ -559,4 +564,48 @@ Para informações mais detalhadas sobre o AppArmor.d e como criar os seus próp
    ```
    Guarde o ficheiro e reinicie o sistema.
 
+</Steps>
+
+### Ativar TRIM em dispositivos criptografados (LUKS)
+
+O CachyOS ativa o `fstrim.timer` por predefinição, a fim de efetuar periodicamente o `trim` de SSDs e unidades NVMe, ajudando a manter o desempenho de escrita e a vida útil das unidades. No entanto, a camada de criptografia de device-mapper do Linux (`dm-crypt`/LUKS) bloqueia por predefinição os comandos de descarte (TRIM). Como resultado, as execuções periódicas de TRIM ocorrem silenciosamente sem executar o `trim` das partições criptografadas, a menos que a passagem direta de
+descarte seja explicitamente ativada.
+
+:::caution[Considerações de segurança e privacidade]
+Ativar o TRIM num dispositivo criptografado permite que o controlador SSD subjacente saiba que setores estão vazios e que contêm dados. Embora os seus dados permaneçam totalmente criptografados, um atacante com acesso físico ao armazenamento bruto poderia inferir o espaço de armazenamento aproximadamente utilizado, o layout do sistema de ficheiros ou os padrões de dados.
+
+Se esta fuga de metadados for aceitável para o seu modelo de ameaças, pode ativar com segurança a passagem direta de descarte para melhorar o desempenho do SSD e a saúde da unidade.
+:::
+
+#### Ativar a passagem direta de descarte (LUKS2)
+
+<Steps>
+1. Identifique o nome do seu mapper LUKS ativo:
+
+   ```bash
+   lsblk
+   ```
+
+   Procure a entrada de tipo `crypt` sob a partição do seu disco (por exemplo, `luks-1e647929-62c0-4922-8944-f941ed4155fd`).
+
+2. Ative a passagem direta de descarte persistente no mapeamento LUKS ativo:
+
+   ```bash
+   sudo cryptsetup --allow-discards --persistent refresh <mapper_name>
+   ```
+
+   :::note
+   Substitua `<mapper_name>` pelo seu nome mapeado real encontrado no passo 1 (por exemplo, `sudo cryptsetup --allow-discards --persistent refresh luks-1e647929-62c0-4922-8944-f941ed4155fd`).
+   :::
+
+3. Reinicie o sistema para aplicar as alterações.
+
+4. Verifique se a passagem direta de descarte está ativa:
+
+   ```bash
+   lsblk -D
+   sudo fstrim -v /
+   ```
+
+   O `lsblk -D` deve agora mostrar valores diferentes de zero sob `DISC-GRAN` e `DISC-MAX` para o seu volume criptografado, e o `fstrim` mostrará a quantidade de espaço em que foi efetuado o `trim`, em vez de ignorar o dispositivo.
 </Steps>

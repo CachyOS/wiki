@@ -1,5 +1,6 @@
 ---
 title: Política de Utilização do Repositório
+ai_translated: true
 ---
 
 Política de Utilização do Repositório CachyOS
@@ -33,13 +34,13 @@ A utilização do repositório CachyOS (e dos seus mirrors) por utilizadores de 
 - Parabola
 - Utilizadores de qualquer outra distribuição Linux não mencionada explicitamente na secção "Utilizadores Suportados".
 
-## 5. Redistribuição do Repositório
+## 6. Redistribuição do Repositório
 
 Esta política define "redistribuição" como os comportamentos de inclusão do repositório CachyOS (e dos seus mirrors) ou de pacotes obtidos a partir do repositório CachyOS como parte da imagem distribuída do sistema operativo ou sysroots. A redistribuição também inclui os comportamentos de **distribuições Linux** ao fornecerem utilitários que permitam ativar o repositório CachyOS por escolha do utilizador, ou ao fornecerem qualquer documento distribuído ou oficial que oriente os utilizadores a ativar o repositório CachyOS (e os seus mirrors) pelos seus próprios meios. Os utilizadores finais e mirrors de terceiros não estão sujeitos à política de redistribuição.
 
 A redistribuição do repositório CachyOS é autorizada exclusivamente apenas à equipa do CachyOS.
 
-## 6. Redistribuição Proibida
+## 7. Redistribuição Proibida
 
 A redistribuição do repositório CachyOS (e dos seus mirrors) em qualquer distribuição Linux não autorizada, incluindo outras distribuições baseadas em Arch, é **ESTRITAMENTE PROIBIDA**. Isto inclui, mas não se limita a:
 
@@ -49,29 +50,29 @@ A redistribuição do repositório CachyOS (e dos seus mirrors) em qualquer dist
 - Parabola
 - Qualquer outra distribuição Linux não mencionada explicitamente na secção "Redistribuição do Repositório".
 
-## 7. Mirror (Espelho)
+## 8.Mirror (Espelho)
 
 É permitido espelhar o repositório via rsync e syncthing. Mirrors de terceiros estão autorizados a espelhar o repositório e a fornecer um servidor web para o mesmo, desde que garantam que os dados do repositório permanecem inalterados.
 
-## 8. Conformidade e Monitorização
+## 9. Conformidade e Monitorização
 
 Reservamo-nos o direito de monitorizar a utilização do nosso repositório para garantir a conformidade com esta política. Qualquer utilização não autorizada poderá resultar na revogação do acesso.
 
-## 9. Reportar Violações
+## 10. Reportar Violações
 
 Se suspeitar que esta política está a ser violada, por favor reporte-nos através de [admin@cachyos.org].
 
-## 10. Alterações à Política
+## 11. Alterações à Política
 
 O CachyOS reserva-se o direito de modificar esta política a qualquer momento. As alterações serão comunicadas através dos nossos canais oficiais.
 
-## 11. Informações de Contacto
+## 12. Informações de Contacto
 
 Para quaisquer questões ou preocupações relativas a esta política, por favor contacte-nos através de:
 
-- E-mail: <admin@cachyos.org>
-- Website: <https://cachyos.org>
+- E-mail: [admin@cachyos.org](mailto:admin@cachyos.org)
+- Website: [https://cachyos.org](https://cachyos.org)
 
-## 12. Reconhecimento
+## 13. Reconhecimento
 
 Ao utilizar o repositório CachyOS (e os seus mirrors), reconhece que leu, compreendeu e concorda em cumprir esta política.
