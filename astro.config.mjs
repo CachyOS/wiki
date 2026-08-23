@@ -691,6 +691,10 @@ export default defineConfig({
               link: 'configuration/enabling_hardware_acceleration_in_google_chrome',
             },
             {
+              label: 'Updating Desktop Dotfiles',
+              link: 'configuration/update_dotfiles',
+            },
+            {
               label: 'Desktop Environments',
               items: [{ autogenerate: { directory: 'configuration/desktop_environments' } }],
               translations: {
