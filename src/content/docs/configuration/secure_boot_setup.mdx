@@ -298,6 +298,88 @@ sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/
 </TabItem>
 </Tabs>
 
+## Signing Kernel Modules (DKMS / MOK)
+
+When Secure Boot is enabled, the kernel refuses to load any module that is not
+signed by a key it trusts. Modules shipped with the kernel are already signed
+with CachyOS's build key, but out-of-tree modules built locally through
+[DKMS](https://wiki.archlinux.org/title/Dynamic_Kernel_Module_Support) — for
+example `openrazer` — are signed with a separate key that the kernel does not
+trust by default. Until that key is enrolled, these modules fail to load:
+
+```sh
+modprobe: ERROR: could not insert 'razerkbd': Operation not permitted
+```
+
+DKMS already signs every module it builds with a Machine Owner Key (MOK) stored
+at `/var/lib/dkms/mok.key` (private key) and `/var/lib/dkms/mok.pub`
+(certificate). What is missing is telling the firmware and kernel to *trust*
+that key, which is done by enrolling the certificate as a MOK. Because this
+guide sets up Secure Boot with `sbctl` alone, `shim` — which performs the MOK
+enrollment — has to be added to the boot chain first.
+
+:::note[Root permissions are required for the following steps.]
+:::
+
+<Steps>
+
+1. Install `shim`, `mokutil` and `dkms`:
+    ```sh
+    sudo pacman -S --needed shim-signed mokutil dkms
+    ```
+2. Copy `shim`, `MokManager` and a copy of your boot manager into a directory on
+    the ESP, then sign them with `sbctl`. `shim` chainloads a file named
+    `grubx64.efi` next to itself, so the boot manager is copied under that name:
+    ```sh title="Example for systemd-boot with the ESP mounted at /boot:"
+    sudo mkdir -p /boot/EFI/shim
+    sudo cp /usr/share/shim-signed/shimx64.efi /boot/EFI/shim/shimx64.efi
+    sudo cp /usr/share/shim-signed/mmx64.efi   /boot/EFI/shim/mmx64.efi
+    sudo cp /boot/EFI/systemd/systemd-bootx64.efi /boot/EFI/shim/grubx64.efi
+    sudo sbctl sign /boot/EFI/shim/shimx64.efi
+    sudo sbctl sign /boot/EFI/shim/mmx64.efi
+    sudo sbctl sign /boot/EFI/shim/grubx64.efi
+    ```
+    :::note
+    Adjust the paths for your setup. The file copied to `grubx64.efi` must be the
+    EFI binary your system currently boots (e.g. Limine or GRUB instead of
+    systemd-boot).
+    :::
+3. Add a firmware boot entry that launches `shim`, keeping your existing entry as
+    a fallback:
+    ```sh title="Replace the disk and partition number with those of your ESP."
+    sudo efibootmgr -c -d /dev/nvme0n1 -p 1 -L "shim" -l '\EFI\shim\shimx64.efi'
+    ```
+4. Generate the DKMS signing key if it does not exist yet, then queue it for
+    enrollment and set a one-time password when prompted:
+    ```sh
+    sudo dkms generate_mok
+    sudo mokutil --import /var/lib/dkms/mok.pub
+    ```
+5. Reboot. `shim` launches **MokManager** (a blue screen): choose
+    **Enroll MOK → Continue → Yes**, enter the password from the previous step,
+    then reboot.
+
+</Steps>
+
+After the reboot, confirm the key was loaded into the `.machine` keyring:
+
+```sh title="The DKMS module signing key should be listed:"
+sudo grep -iE '\.machine|dkms' /proc/keys
+```
+
+:::note[Empty `.machine` keyring]
+If `.machine` is still empty, enable trust for MOK keys in the kernel keyring,
+reboot once more and confirm the prompt in MokManager:
+
+```sh
+sudo mokutil --trust-mok
+```
+:::
+
+The previously blocked modules now load on boot. DKMS re-signs its modules
+automatically on every rebuild and the MOK stays enrolled across kernel updates,
+so this enrollment only needs to be done once.
+
 ## Secure Boot Status Check
 
 To check that secure boot is indeed enabled. You can run one of the following commands
