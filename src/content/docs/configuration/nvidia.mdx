@@ -1,0 +1,162 @@
+---
+title: NVIDIA Configuration
+description: Setting up NVIDIA GPUs with the open kernel modules on CachyOS, including Wayland and Hyprland
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+## Overview
+
+CachyOS ships both precompiled versions of the close-sourced and [open-sourced](https://github.com/NVIDIA/open-gpu-kernel-modules/) kernel modules (see the [Kernel](/features/kernel/) page). This page covers the **open** kernel modules (`nvidia-open`) on a desktop machine running a Wayland compositor such as [Hyprland](/configuration/desktop_environments/hyprland/).
+
+### `nvidia-open` vs `nvidia`
+
+The `nvidia-open` kernel module is the open-sourced variant of NVIDIA's kernel driver. It is developed in the open on [GitHub](https://github.com/NVIDIA/open-gpu-kernel-modules/), while the userspace libraries (`nvidia-utils`) remain proprietary.
+
+- `nvidia-open` supports **Turing and newer** GPUs (GeForce GTX 16 series, RTX 20 series and later, as well as newer Quadro/Workstation cards).
+- Older GPUs (e.g. GTX 10 series) require the proprietary `nvidia` kernel module instead.
+- Both variants use the same `nvidia-utils` userspace, so configuration below applies to both unless noted.
+
+:::note
+The open kernel modules are based on NVIDIA's GSP firmware and **cannot** run without it. The `NVreg_EnableGpuFirmware=0` option (see the [GSP firmware section of the General System Tweaks](/configuration/general_system_tweaks/#nvidia-gsp-firmware)) is ignored when the open modules are used.
+:::
+
+## Installation
+
+The easiest way is to let [chwd](/features/chwd/chwd/) handle the installation, which it does automatically during installation of CachyOS when an NVIDIA GPU is detected:
+
+```sh
+sudo chwd -a
+```
+
+To install the `nvidia-open` profile manually:
+
+```sh
+sudo chwd -i nvidia-open-dkms
+```
+
+Alternatively, CachyOS provides **precompiled** kernel modules that are matched to its kernels, so you do not need to recompile after every kernel update. For the default kernel install:
+
+```sh
+sudo pacman -S linux-cachyos-nvidia-open
+```
+
+This package conflicts with the proprietary counterpart `linux-cachyos-nvidia` and pulls in `nvidia-utils`. Precompiled modules are also available for the other CachyOS kernel variants, e.g. `linux-cachyos-lts-nvidia-open` or `linux-cachyos-server-nvidia-open`.
+
+:::note
+When the kernel and the precompiled module version are not in sync, CachyOS ships a new version of the module package together with the kernel, so they stay aligned automatically.
+:::
+
+Verify the driver is working:
+
+```sh
+nvidia-smi
+```
+
+## Enabling Wayland with DRM KMS
+
+Wayland compositors (including Hyprland) require kernel mode setting (KMS) to be enabled for the `nvidia_drm` driver. Without it, the compositor cannot take over the display.
+
+Create the following file:
+
+```text title='/etc/modprobe.d/nvidia.conf'
+options nvidia_drm modeset=1 fbdev=1
+```
+
+- `modeset=1` enables KMS, which is **required** for Wayland.
+- `fbdev=1` enables the framebuffer console on the NVIDIA GPU.
+
+### Early modesetting (initramfs)
+
+To load the modules early (during the initramfs stage) and avoid flicker or black screen issues at boot, add the NVIDIA modules to `/etc/mkinitcpio.conf`:
+
+```text title='/etc/mkinitcpio.conf'
+MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)
+```
+
+Then rebuild the initramfs:
+
+```sh
+sudo mkinitcpio -P
+```
+
+:::note
+Loading the `nvidia` module inside the initramfs is also what makes the kernel suspend notifiers approach below work, because the driver registers its notifiers when the module is loaded.
+:::
+
+## Kernel module options
+
+The following options belong to the `nvidia` module itself and can be set in a separate file:
+
+```text title='/etc/modprobe.d/nvidia-power.conf'
+options nvidia NVreg_DynamicPowerManagement=0x02
+```
+
+### Dynamic power management
+
+`NVreg_DynamicPowerManagement=0x02` enables dynamic power management, which lets the GPU drop to lower power states when idle. This is mainly relevant for laptops with hybrid graphics (see [Dual GPU Setup](/configuration/dual_gpu/)) and for keeping idle power draw low on desktop cards. On most Turing+ GPUs this is already the default; setting it explicitly is safe.
+
+### GSP firmware
+
+GSP firmware is used by default since driver 520 and is **mandatory** for the open kernel modules. Do **not** try to disable it with `NVreg_EnableGpuFirmware=0` when using `nvidia-open`, the option is simply ignored.
+
+## Suspend and resume
+
+To preserve the contents of the GPU's video memory across suspend, add:
+
+```text title='/etc/modprobe.d/nvidia-power.conf'
+options nvidia NVreg_PreserveVideoMemoryAllocations=1
+```
+
+Without this option the display may come back blank or the session may crash after resume. There are two mutually exclusive ways to hook the NVIDIA driver into the suspend process:
+
+### 1. systemd services (userspace approach)
+
+The `nvidia`/`nvidia-open` packages ship suspend helper services. Enable them with:
+
+```sh
+sudo systemctl enable nvidia-suspend.service nvidia-hibernate.service nvidia-resume.service
+```
+
+This approach runs systemd units on suspend/hibernate that save and restore the video memory allocation state.
+
+### 2. Kernel suspend notifiers (NVreg_UseKernelSuspendNotifiers)
+
+The driver can handle the suspend notifiers entirely in the kernel instead of relying on userspace services:
+
+```text title='/etc/modprobe.d/nvidia-power.conf'
+options nvidia NVreg_PreserveVideoMemoryAllocations=1 NVreg_UseKernelSuspendNotifiers=1
+```
+
+Because the notifiers are registered when the module is loaded, this requires the module to be loaded **early, inside the initramfs** (as described in [Early modesetting](#early-modesetting-initramfs)).
+
+:::caution
+Use only **one** of the two approaches. Enabling `nvidia-suspend.service`/`nvidia-hibernate.service`/`nvidia-resume.service` **and** `NVreg_UseKernelSuspendNotifiers=1` at the same time can cause suspend/resume problems.
+:::
+
+## Wayland on Hyprland
+
+With `nvidia_drm.modeset=1` in place, Hyprland works out of the box on NVIDIA. The following environment variables are the recommended set for NVIDIA under Hyprland (add them to your Hyprland config with `env =`):
+
+```text title='~/.config/hypr/hyprland.conf'
+env = LIBVA_DRIVER_NAME,nvidia
+env = GBM_BACKEND,nvidia-drm
+env = __GLX_VENDOR_LIBRARY_NAME,nvidia
+```
+
+- `LIBVA_DRIVER_NAME=nvidia` enables hardware video decoding for applications using VA-API.
+- `GBM_BACKEND=nvidia-drm` makes Mesa use the NVIDIA GBM backend.
+- `__GLX_VENDOR_LIBRARY_NAME=nvidia` forces GLX to use the NVIDIA vendor library.
+
+:::note
+If you see cursor rendering artifacts, you can fall back to software cursors with `env = WLR_NO_HARDWARE_CURSORS,1`. On recent NVIDIA drivers and Hyprland versions hardware cursors generally work, so this is only a workaround.
+:::
+
+Some applications (e.g. Electron-based ones) may misbehave under Wayland with NVIDIA. Launching them with the following environment variable usually fixes rendering:
+
+```sh
+__GLX_VENDOR_LIBRARY_NAME=nvidia <program>
+```
+
+See also the [Gaming](/configuration/gaming/) and [Dual GPU Setup](/configuration/dual_gpu/) pages for running games and PRIME offload configurations.
