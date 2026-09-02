@@ -221,6 +221,78 @@ While entries are handled automatically, you can **configure the kernel paramete
 
    This command triggers the `mkinitcpio` process, which includes the `limine-mkinitcpio-hook`, ensuring your changes in `/etc/default/limine` are incorporated into the boot entries at `/boot/limine.conf`.
 
+## Workaround: Slow Charging on HP OmniBook X Flip
+
+Some HP OmniBook laptops (e.g., the OmniBook X Flip 16-ar0xxx) charge at a crawl under Linux — roughly 0.2 W instead of the expected 30 W+. The embedded controller (EC) firmware only enables fast charging when the ACPI `_OSI("Windows 2022")` query is answered, and falls back to a degraded mode otherwise.
+
+CachyOS kernels do not provide the `acpi_rev_override` option, so the workaround is to answer the `_OSI` query directly on the kernel command line:
+
+```shell
+acpi_osi=! acpi_osi="Windows 2022"
+```
+
+The first part (`acpi_osi=!`) clears the OSI strings, the second re-answers the `Windows 2022` query. Note that `acpi_osi=!` removes **all** Windows OSI responses, which may affect other Windows-specific workarounds.
+
+### Limine
+
+Append the parameters in `/etc/default/limine` — the `+=` appends to the distribution defaults instead of replacing them:
+
+```shell
+# /etc/default/limine
+
+KERNEL_CMDLINE[default]+=acpi_osi=! acpi_osi="Windows 2022"
+```
+
+Then regenerate the entries:
+
+```bash
+sudo limine-mkinitcpio
+```
+
+### GRUB
+
+Add the parameters to `GRUB_CMDLINE_LINUX_DEFAULT` in `/etc/default/grub` and regenerate the configuration:
+
+```shell
+# /etc/default/grub
+
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash acpi_osi=! acpi_osi=\"Windows 2022\""
+```
+
+```bash
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+```
+
+### systemd-boot
+
+Add the parameters to the `LINUX_OPTIONS` line in `/etc/sdboot-manage.conf` and regenerate the entries:
+
+```shell
+# /etc/sdboot-manage.conf
+
+LINUX_OPTIONS="zswap.enabled=0 nowatchdog quiet splash acpi_osi=! acpi_osi=\"Windows 2022\""
+```
+
+```bash
+sudo sdboot-manage gen
+```
+
+### Verifying
+
+After a reboot, confirm the parameters are active and check the charging rate:
+
+```shell
+cat /proc/cmdline
+cat /sys/class/power_supply/BAT0/power_now
+```
+
+With the workaround, `power_now` reports tens of millions of microwatts (i.e., 30 W+) while charging; without it, it stays around 200000 (0.2 W).
+
+### References
+
+* [Kernel Bugzilla 221866: Slow charging on HP OmniBook X Flip with Linux](https://bugzilla.kernel.org/show_bug.cgi?id=221866)
+* [CachyOS issue #971: HP OmniBook X Flip slow charging under Linux](https://github.com/CachyOS/linux-cachyos/issues/971)
+
 ## Learn more
 
 * [loader.conf manual page](https://man.archlinux.org/man/loader.conf.5)
