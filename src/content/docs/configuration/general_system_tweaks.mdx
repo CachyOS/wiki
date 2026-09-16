@@ -394,6 +394,48 @@ sudo pacman -S obs-studio-browser
 
 ## Swap Configuration
 
+### Troubleshooting Unexpected ZRam or Swap Usage from `/tmp`
+
+Some CachyOS installations on SSDs mount `/tmp` as a [tmpfs](https://docs.kernel.org/filesystems/tmpfs.html). Tmpfs stores files in virtual memory and can move their pages to swap. If the mount has no explicit `size=` option, its default size limit is 50% of physical RAM.
+
+Check the mount type, current usage, memory, and ZRam statistics with:
+
+```sh
+findmnt /tmp
+df -h /tmp
+free -h
+zramctl
+```
+
+If `/tmp` is a tmpfs and its usage is unexpectedly high, identify large files before changing swap or ZRam settings:
+
+```sh
+sudo du -xah /tmp | sort -h | tail -n 20
+```
+
+:::caution
+Do not delete all of `/tmp` or unmount it on a running system. Applications may still depend on files there. Confirm that a suspected file is no longer in use with `lsof <path>` before removing it.
+:::
+
+Already-compressed files, such as package archives and large wheels, may compress poorly in ZRam. In that case, ZRam's physical memory use can be close to the amount of data swapped. The Linux [ZRam documentation](https://docs.kernel.org/admin-guide/blockdev/zram.html) describes the `mm_stat` values reported by the kernel.
+
+For a large one-off package installation or build, first verify that `/var/tmp` is disk-backed, then direct that command's temporary files there:
+
+```sh
+findmnt -T /var/tmp
+TMPDIR=/var/tmp <command>
+```
+
+For example:
+
+```sh
+TMPDIR=/var/tmp pip install <package>
+```
+
+If this behavior is unsuitable for the system's workload, inspect the `/tmp` entry in `/etc/fstab`. An explicit `size=` limit bounds tmpfs growth, while removing the tmpfs entry makes `/tmp` use the root filesystem after the next boot. A smaller limit can cause legitimate large operations to fail with `ENOSPC`, so choose it for the expected workload. Do not remount or unmount an active `/tmp`; apply persistent changes on a reboot.
+
+See [CachyOS/cachyos-calamares#267](https://github.com/CachyOS/cachyos-calamares/issues/267) for an observed case and discussion of installer defaults.
+
 ### Switching from ZRam to Zswap
 
 By default, CachyOS uses ZRam for swap management. However, if you prefer to use Zswap instead, you can easily switch by following these steps:
