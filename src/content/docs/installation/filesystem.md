@@ -37,7 +37,7 @@ BTRFS is a modern copy-on-write(COW) filesystem created in 2007 and declared sta
 
 ### Pros
 
-- Transparent compression. BTRFS supports transparently compressing files to allow for significant space savings with no user intervention. **CachyOS ships with ZSTD compression set to level 3 by default.**
+- Transparent compression. BTRFS supports transparently compressing files to allow for significant space savings with no user intervention. **CachyOS ships with ZSTD compression set to level 1 by default.**
 - Snapshot functionality. BTRFS leverages its COW nature to allow for the creation of snapshots of subvolumes that take up very little actual space.
 - Subvolume functionality allowing for greater control over the filesystem.
 - Able to grow or shrink.
