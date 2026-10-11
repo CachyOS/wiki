@@ -116,6 +116,53 @@ Limine is a modern bootloader known for its simple configuration. This guide cov
 
 Configuration primarily happens in `/boot/limine.conf` (or sometimes in the EFI system partition) for menu settings, and `/etc/default/limine` for kernel parameters.
 
+### Recovering a missing UEFI boot entry
+
+If CachyOS still boots from the firmware's manual boot menu or from the fallback EFI loader, but no dedicated Limine entry appears in the normal UEFI boot order, you can recreate the entry manually.
+
+First inspect the current UEFI entries and identify the disk and EFI System Partition (ESP) that contain Limine:
+
+```shell
+sudo efibootmgr -v
+lsblk -f
+```
+
+Confirm that the Limine EFI binary exists on the ESP. Depending on where your ESP is mounted, the path is typically one of these:
+
+```text
+/boot/EFI/limine/limine_x64.efi
+/boot/efi/EFI/limine/limine_x64.efi
+```
+
+:::caution
+The disk and partition values below are examples. Replace `/dev/sdX` and `Y` with the actual disk and ESP partition number from your system. Using the wrong values can create an invalid firmware entry.
+:::
+
+Create a dedicated Limine entry:
+
+```shell
+sudo efibootmgr -C -d /dev/sdX -p Y \
+  -L "CachyOS (Limine)" \
+  -l '\EFI\limine\limine_x64.efi'
+```
+
+`efibootmgr` will print the new boot number, for example `Boot0002`. Before changing the permanent boot order, test that entry once with `BootNext`:
+
+```shell
+sudo efibootmgr -n 0002
+sudo reboot
+```
+
+After the system boots, verify that the new entry was actually used:
+
+```shell
+sudo efibootmgr
+```
+
+`BootCurrent` should match the entry you tested. If it does, prefer setting the permanent boot priority from the firmware setup utility. If you use `efibootmgr -o` instead, preserve the complete existing `BootOrder` and only move the tested Limine entry to the desired position.
+
+This approach keeps the existing fallback entry available and validates the new entry before making a permanent boot-order change.
+
 ### Boot Menu Configuration
 
 This file controls the boot menu's behavior and appearance. Changes made here take effect immediately after saving – no extra commands are needed.
