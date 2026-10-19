@@ -253,29 +253,63 @@ FAT filesystems cannot be resized in-place. To properly "resize" the FAT EFI par
         **GRUB uses os-prober to automatically detect the Windows EFI partition and add it to the boot menu.**
 
         <Steps>
-        1. Install **os-prober**.
+        1. Start a terminal and run **os-prober** (Install it if necessary)
 
             ```sh
-            sudo pacman -S os-prober
+            sudo os-prober
+            ```
+            The output will be something similar to this:
+            ```sh
+            ➜  ~ sudo os-prober
+            /dev/nvme0n1p1@/efi/Microsoft/Boot/bootmgfw.efi:Windows Boot Manager:Windows:efi
             ```
 
-        2. Enable **os-prober** in the GRUB configuration file.
+        2. Retrieve the **UUID** of the EFI partition
+
+            ```sh
+            sudo blkid /dev/nvme0n1p1
+            ```
+            (Replace nvme0n1p1 with the correct partition you retrieved at step 1)
+
+            Output looks similar to this:
+            ```sh
+            sudo blkid /dev/nvme0n1p1
+/dev/nvme0n1p1: UUID='1212-1FF1' BLOCK_SIZE='512' TYPE='vfat' PARTLABEL='EFI system partition' PARTUUID='ffffff00-07ff-4bff-9bff-fcffffff13c3'
+            ```
+
+            UUID='1212-1FF1'
+
+        3. Customize GRUB the correct way
 
             ```sh title='Press CTRL+S to save and CTRL+Q to exit from Micro'
-            sudo micro /etc/default/grub
-            # /etc/default/grub
-            # Probing for other operating systems is disabled for security reasons. Read
-            # documentation on GRUB_DISABLE_OS_PROBER, if still want to enable this
-            # functionality install os-prober and uncomment to detect and include other
-            # operating systems.
-            GRUB_DISABLE_OS_PROBER=false
+            sudo micro /etc/grub.d/40_custom
+            ```
+            Insert this at the End of that file:
+            ```sh
+            menuentry 'Windows 11' {
+            search --fs-uuid --set=root <UUID>
+            chainloader (${root})/EFI/Microsoft/Boot/bootmgfw.efi
+            }
+            ```
+            Replace with the value you retrieved at step 2.
+            Save the changes in the file
 
+        4. Remove write permissions
+            ```sh
+            sudo chmod o-w /etc/grub.d/40_custom
             ```
 
-        3. Update grub.cfg, now using **os-prober**.
+        5. Regenerate grub.cfg including your overrided changes
             ```sh
             sudo grub-mkconfig -o /boot/grub/grub.cfg
             ```
+
+        6. (Optional) Check the generated file
+            ```sh
+            sudo cat /boot/grub/grub.cfg | grep "Windows 11"
+            ```
+
+        7. Reboot and see if it works!
 
             **Windows should now be added to the boot menu.**
 
