@@ -1,0 +1,230 @@
+---
+title: Easy Anti-Cheat (Linux v2)
+description: Boot the CachyOS EAC kernel with Secure Boot so games using Easy Anti-Cheat Linux v2 can run
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+{/* DRAFT: not published yet. Open points are marked with TODO. */}
+
+:::caution[Draft]
+This page is a draft. The CachyOS EAC certificate, the package names and some steps may still change.
+:::
+
+[Easy Anti-Cheat Linux v2](https://onlineservices.epicgames.com/news/introducing-easy-anti-cheat-linux-v2)
+only lets games start when it can verify how the system was booted. It checks that:
+
+- Secure Boot is enabled and the kernel is signed with a key that Epic trusts
+- the system has a TPM 2.0, which records every step of the boot (measured boot)
+- the kernel runs in lockdown integrity mode and only loads signed modules
+- the IOMMU is enabled, kexec is disabled and the BPF LSM is active
+
+CachyOS provides a dedicated kernel, `linux-cachyos-eac`, that meets these requirements, and a systemd-boot
+signed with the same key. You keep your own Secure Boot keys. The only addition is the CachyOS EAC
+certificate in the Secure Boot database, so that your firmware accepts the CachyOS-signed files.
+
+The EAC kernel gets its own boot entry. Your normal kernel and boot entries stay unchanged, so you only
+boot into the EAC entry when you want to play a game that uses EAC.
+
+:::note
+This page currently covers **systemd-boot** only. Limine users will be able to boot the EAC kernel through
+the signed systemd-boot as a separate firmware boot entry. That part is still being worked on.
+:::
+
+## Requirements
+
+- CachyOS installed in UEFI mode with **systemd-boot** as boot manager.
+- **TPM 2.0** enabled in the firmware settings. A firmware TPM (AMD fTPM, Intel PTT) is fine.
+- **IOMMU** enabled in the firmware settings (AMD-Vi / "IOMMU" on AMD, VT-d on Intel).
+- NVIDIA GPUs: Turing or newer (GTX 16 / RTX 20 series and later), as the EAC kernel ships with the open NVIDIA modules.
+
+:::caution[No DKMS modules]
+The EAC kernel only loads modules that were signed when the kernel was built. Modules built with DKMS
+(for example `nvidia-dkms`, `virtualbox-host-dkms` or `zfs-dkms`) will not load in the EAC boot entry.
+Do not install `linux-cachyos-eac-headers`.
+:::
+
+## Setup
+
+<Steps>
+
+1. **Put the firmware into Setup Mode**
+
+    Enrolling the CachyOS EAC certificate requires Setup Mode, also if you already use Secure Boot with
+    your own keys. Follow [Enabling Setup Mode in UEFI](/configuration/secure_boot_setup#enabling-setup-mode-in-uefi)
+    and keep Secure Boot **disabled** for now.
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+    {/* TODO: test "sbctl enroll-keys --append" for users who already have their keys enrolled */}
+
+2. **Install the packages**
+
+    If you followed the [Secure Boot guide](/configuration/secure_boot_setup) before, remove the self-signed
+    systemd-boot it created first. `systemd-boot-cachyos-signed` replaces it, and pacman refuses to install
+    the package while the file exists:
+
+    ```bash
+    sudo sbctl remove-file /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed
+    sudo rm -f /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed
+    ```
+
+    Then install the packages:
+
+    ```bash
+    sudo pacman -S sbctl linux-cachyos-eac systemd-boot-cachyos-signed
+    sudo bootctl install
+    ```
+
+    On systems with an NVIDIA GPU, also install `linux-cachyos-eac-nvidia-open`.
+
+    `bootctl install` installs the CachyOS-signed systemd-boot to the EFI system partition. Future
+    systemd-boot updates are signed by CachyOS as well, so you don't have to sign them yourself.
+
+3. **Enroll the Secure Boot keys**
+
+    `sbctl` creates your own keys (if you don't have any yet) and enrolls them together with Microsoft's
+    keys, the firmware's built-in keys and the CachyOS EAC certificate.
+
+    {/* TODO: final certificate name and how it is shipped (package or download) */}
+
+    ```bash
+    sudo install -Dm644 cachyos-eac-ca.der /var/lib/sbctl/keys/custom/db/cachyos-eac-ca.der
+    sudo sbctl create-keys
+    sudo sbctl enroll-keys --microsoft --firmware-builtin --custom
+    ```
+
+    If `sbctl` reports that the firmware has no built-in keys, run the last command without
+    `--firmware-builtin`.
+
+    Check that the certificate was enrolled:
+
+    ```bash
+    sudo sbctl list-enrolled-keys
+    ```
+
+    The `db` section has to list the CachyOS EAC certificate.
+
+4. **Keep sbctl away from the CachyOS-signed files**
+
+    The EAC kernel and systemd-boot are already signed by CachyOS. If `sbctl` signs them again with your
+    own key, EAC no longer recognizes them. This happens when the files are in sbctl's database, for
+    example after running `sbctl-batch-sign` or `sbctl sign -s`.
+
+    ```bash
+    sudo sbctl list-files
+    ```
+
+    If `vmlinuz-linux-cachyos-eac`, `systemd-bootx64.efi` or `BOOTX64.EFI` are listed, remove them and
+    reinstall the packages to restore the CachyOS signatures:
+
+    ```bash
+    sudo sbctl remove-file /boot/vmlinuz-linux-cachyos-eac
+    sudo sbctl remove-file /boot/EFI/systemd/systemd-bootx64.efi
+    sudo sbctl remove-file /boot/EFI/BOOT/BOOTX64.EFI
+    sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
+    sudo bootctl install
+    ```
+
+    {/* TODO: remove this step once sbctl-batch-sign skips CachyOS-signed files */}
+
+    Check the signatures. Each file has to show exactly **one** signature, issued by CachyOS:
+
+    ```bash
+    sudo sbverify --list /boot/vmlinuz-linux-cachyos-eac
+    sudo sbverify --list /boot/EFI/systemd/systemd-bootx64.efi
+    ```
+
+5. **Create the EAC boot entry**
+
+    EAC checks the kernel command line for the required options, so the EAC kernel needs its own boot
+    entry. The entry that `sdboot-manage` creates automatically ("Linux CachyOS Eac") lacks these options
+    and is overwritten on updates, so create a separate entry based on the command line of your running
+    system:
+
+    {/* TODO: replace with automatic entry generation (sdboot-manage or package hook) */}
+
+    ```bash
+    EAC_REQ="lockdown=integrity lsm=landlock,lockdown,yama,integrity,bpf iommu.passthrough=0 intel_iommu=on module.sig_enforce=1 sysctl.kernel.kexec_load_disabled=1"
+    EAC_OPTS="$(sed -E 's/(^| )(BOOT_IMAGE|initrd)=[^ ]*//g' /proc/cmdline) $EAC_REQ"
+    echo "$EAC_OPTS"
+    ```
+
+    The output has to contain your `root=` option and end with the EAC options. Then write the entry:
+
+    ```bash
+    printf 'title   CachyOS (EAC)\nlinux   /vmlinuz-linux-cachyos-eac\ninitrd  /initramfs-linux-cachyos-eac.img\noptions %s\n' "$EAC_OPTS" \
+      | sudo install -Dm644 /dev/stdin /boot/loader/entries/cachyos-eac.conf
+    ```
+
+    :::caution
+    Don't remove any of the EAC options from this entry. Without them, EAC refuses to start the game.
+    :::
+
+6. **Enable Secure Boot and boot the EAC entry**
+
+    Reboot into the firmware settings and enable Secure Boot. See the ASUS notes in the
+    [Secure Boot guide](/configuration/secure_boot_setup#signing-the-kernel-image-and-boot-manager) if your board has no
+    Secure Boot switch.
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+    To boot the EAC entry, select **CachyOS (EAC)** in the systemd-boot menu, or run:
+
+    ```bash
+    systemctl reboot --boot-loader-entry=cachyos-eac.conf
+    ```
+
+</Steps>
+
+## Verifying the setup
+
+After booting the EAC entry:
+
+```bash
+uname -r                                     # ends with -cachyos-eac
+sudo sbctl status                            # Setup Mode: Disabled, Secure Boot: Enabled
+cat /sys/kernel/security/lockdown            # none [integrity] confidentiality
+cat /sys/kernel/security/lsm                 # contains bpf
+cat /proc/sys/kernel/kexec_load_disabled     # 1
+sudo dmesg | grep 'iommu: Default domain'    # Translated
+```
+
+To check which certificate the firmware used to verify the boot, read the TPM event log. It has to show the
+CachyOS EAC certificate. A Microsoft certificate in addition is fine (used for GPU firmware), but your own
+"Database Key" must **not** appear:
+
+```bash
+sudo pacman -S --needed tpm2-tools
+sudo tpm2_eventlog /sys/kernel/security/tpm0/binary_bios_measurements \
+  | awk '/EV_EFI_VARIABLE_AUTHORITY/{f=1} f&&/VariableData:/{print $2; f=0}' | tr -d '"' \
+  | while read -r h; do echo "$h" | cut -c33- | tr a-f A-F | basenc --base16 -d \
+  | openssl x509 -inform DER -noout -subject; done
+```
+
+## Troubleshooting
+
+### Your own key shows up in the TPM event log
+
+The EAC kernel or systemd-boot was signed again by `sbctl`. Repeat
+[step 4](#setup) to remove the files from sbctl's database and reinstall the packages.
+
+### The game says the system is not supported
+
+Check that you booted **CachyOS (EAC)** and not the automatically created "Linux CachyOS Eac" entry:
+
+```bash
+cat /proc/cmdline
+```
+
+The output has to contain all EAC options from step 5.
+
+### A module does not load in the EAC entry
+
+Modules built with DKMS are not signed with the kernel's key and cannot be loaded. Use the modules
+shipped for the EAC kernel (such as `linux-cachyos-eac-nvidia-open`), or boot your normal kernel for
+anything that needs DKMS modules.
