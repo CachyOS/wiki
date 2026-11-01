@@ -691,6 +691,24 @@ export default defineConfig({
               link: 'configuration/enabling_hardware_acceleration_in_google_chrome',
             },
             {
+              label: 'Development',
+              translations: {
+                cs: 'Vývoj',
+                de: 'Entwicklung',
+                el: 'Ανάπτυξη',
+                es: 'Desarrollo',
+                fr: 'Développement',
+                ja: '開発',
+                pl: 'Programowanie',
+                ru: 'Разработка',
+                sk: 'Vývoj',
+                pt: 'Desenvolvimento',
+                bg: 'Разработка',
+                zh: '开发',
+              },
+              link: 'configuration/development',
+            },
+            {
               label: 'Desktop Environments',
               items: [{ autogenerate: { directory: 'configuration/desktop_environments' } }],
               translations: {
