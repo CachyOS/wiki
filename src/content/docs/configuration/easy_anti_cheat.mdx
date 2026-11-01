@@ -46,21 +46,76 @@ shipped as `linux-cachyos-eac-*` packages, other modules built with DKMS (for ex
 will not load in the EAC boot entry. Do not install `linux-cachyos-eac-headers`.
 :::
 
+## If you already use Secure Boot
+
+If you already set up Secure Boot with `sbctl`, for example with the [Secure Boot guide](/configuration/secure_boot_setup),
+you don't need Setup Mode. `sbctl` can add the CachyOS EAC CA to the Secure Boot database while Secure Boot
+stays enabled. It signs the change with your own Key Exchange Key (KEK), which the firmware accepts.
+
+{/* TODO: only tested in OVMF so far, test on real hardware */}
+
+<Steps>
+
+1. **Check your Secure Boot setup**
+
+    ```bash
+    sudo sbctl status
+    ```
+
+    The output has to show `sbctl is installed`, `Setup Mode: Disabled` and `Secure Boot: Enabled`. If
+    your keys were not created with `sbctl`, follow the setup for your boot manager from step 1 instead.
+
+2. **Enroll the CachyOS EAC CA**
+
+    ```bash
+    sudo pacman -S cachyos-eac-signing-key
+    sudo sbctl enroll-keys --append --partial db --custom --ignore-immutable
+    ```
+
+    `--append` keeps all certificates that are already enrolled, `--partial db` only changes the Secure Boot
+    database (`db`) and `--ignore-immutable` lets `sbctl` write it, as Linux marks it read-only by default.
+
+    :::caution[Run this only once]
+    `sbctl` does not check which certificates are already enrolled. Every run adds the CachyOS EAC CA again,
+    together with your own Database Key, and the firmware only has limited space for them.
+    :::
+
+    Check that the certificate was enrolled:
+
+    ```bash
+    sudo sbctl list-enrolled-keys
+    ```
+
+    The `db` section has to list `CachyOS EAC CA` next to your previous entries. Your own `Database Key`
+    is listed twice now, which is harmless.
+
+    If `sbctl` reports an error, the firmware did not accept the change, usually because the enrolled KEK
+    is not the one in sbctl's key directory. In this case, follow the setup for your boot manager from
+    step 1.
+
+3. **Continue with the setup for your boot manager**
+
+    Follow the [systemd-boot setup](#setup-with-systemd-boot) or the [Limine setup](#setup-with-limine)
+    from step 2. Skip step 3, the CA is enrolled and your boot manager is already signed. In step 6,
+    Secure Boot is already enabled, so you only have to boot the EAC entry.
+
+</Steps>
+
 ## Setup with systemd-boot
 
 <Steps>
 
 1. **Put the firmware into Setup Mode**
 
-    Enrolling the CachyOS EAC CA requires Setup Mode, also if you already use Secure Boot with
-    your own keys. Follow [Enabling Setup Mode in UEFI](/configuration/secure_boot_setup#enabling-setup-mode-in-uefi)
+    If you already use Secure Boot with `sbctl`, follow [If you already use Secure Boot](#if-you-already-use-secure-boot)
+    instead and continue with step 2.
+
+    Follow [Enabling Setup Mode in UEFI](/configuration/secure_boot_setup#enabling-setup-mode-in-uefi)
     and keep Secure Boot **disabled** for now.
 
     ```bash
     systemctl reboot --firmware-setup
     ```
-
-    {/* TODO: test "sbctl enroll-keys --append" for users who already have their keys enrolled */}
 
 2. **Install the packages**
 
@@ -88,6 +143,8 @@ will not load in the EAC boot entry. Do not install `linux-cachyos-eac-headers`.
     systemd-boot updates are signed by CachyOS as well, so you don't have to sign them yourself.
 
 3. **Enroll the Secure Boot keys**
+
+    Skip this step if you enrolled the CA as described in [If you already use Secure Boot](#if-you-already-use-secure-boot).
 
     `cachyos-eac-signing-key` puts the CachyOS EAC CA certificate into sbctl's directory for custom
     certificates. `sbctl` creates your own keys (if you don't have any yet) and enrolls them together with
@@ -170,6 +227,8 @@ will not load in the EAC boot entry. Do not install `linux-cachyos-eac-headers`.
 
 6. **Enable Secure Boot and boot the EAC entry**
 
+    If Secure Boot is already enabled, skip to booting the EAC entry.
+
     Reboot into the firmware settings and enable Secure Boot. See the ASUS notes in the
     [Secure Boot guide](/configuration/secure_boot_setup#signing-the-kernel-image-and-boot-manager) if your board has no
     Secure Boot switch.
@@ -196,6 +255,9 @@ After that, your system starts Limine again as usual.
 <Steps>
 
 1. **Put the firmware into Setup Mode**
+
+    If you already use Secure Boot with `sbctl`, follow [If you already use Secure Boot](#if-you-already-use-secure-boot)
+    instead and continue with step 2.
 
     Follow [Enabling Setup Mode in UEFI](/configuration/secure_boot_setup#enabling-setup-mode-in-uefi)
     and keep Secure Boot **disabled** for now.
@@ -225,6 +287,8 @@ After that, your system starts Limine again as usual.
     :::
 
 3. **Enroll the Secure Boot keys and sign Limine**
+
+    Skip this step if you enrolled the CA as described in [If you already use Secure Boot](#if-you-already-use-secure-boot).
 
     `cachyos-eac-signing-key` puts the CachyOS EAC CA certificate into sbctl's directory for custom
     certificates. Enroll your own keys together with Microsoft's keys, the firmware's built-in keys and the
@@ -313,6 +377,8 @@ After that, your system starts Limine again as usual.
     {/* TODO: hide the linux-cachyos-eac entry in Limine (limine-entry-tool has no per-kernel exclude yet) */}
 
 6. **Enable Secure Boot and boot into EAC**
+
+    If Secure Boot is already enabled, skip to booting into EAC.
 
     Reboot into the firmware settings and enable Secure Boot. See the ASUS notes in the
     [Secure Boot guide](/configuration/secure_boot_setup#signing-the-kernel-image-and-boot-manager) if your board has no
