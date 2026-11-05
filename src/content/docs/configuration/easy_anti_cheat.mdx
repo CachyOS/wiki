@@ -23,8 +23,8 @@ CachyOS provides a dedicated kernel, `linux-cachyos-eac`, that meets these requi
 signed with the same key. You keep your own Secure Boot keys. The only addition is the **CachyOS EAC CA**
 certificate in the Secure Boot database, so that your firmware accepts the CachyOS-signed files.
 
-The EAC kernel gets its own boot entry. Your normal kernel and boot entries stay unchanged, so you only
-boot into the EAC entry when you want to play a game that uses EAC.
+The EAC kernel gets its own boot entry. Your normal boot entries stay unchanged, so you only boot into the
+EAC entry when you want to play a game that uses EAC.
 
 EAC requires a boot manager that verifies everything it loads against the Secure Boot database and
 measures it into the TPM. systemd-boot does this, Limine does not. Limine users therefore keep Limine as
@@ -44,6 +44,12 @@ own firmware boot entry and is only used for the EAC boot.
 The EAC kernel only loads modules that were signed when the kernel was built. NVIDIA and ZFS modules are
 shipped as `linux-cachyos-eac-*` packages, other modules built with DKMS (for example `virtualbox-host-dkms`)
 will not load in the EAC boot entry. Do not install `linux-cachyos-eac-headers`.
+:::
+
+:::danger[BitLocker and TPM disk unlock]
+This setup changes the Secure Boot keys, which changes what the TPM measures. BitLocker on a Windows dual boot can
+then ask for its recovery key, and a LUKS disk that you bound to the TPM yourself asks for its passphrase. Make sure
+you have them before you start, otherwise you can lose access to your data.
 :::
 
 ## If you already use Secure Boot
@@ -150,6 +156,13 @@ stays enabled. It signs the change with your own Key Exchange Key (KEK), which t
     certificates. `sbctl` creates your own keys (if you don't have any yet) and enrolls them together with
     Microsoft's keys, the firmware's built-in keys and the CachyOS EAC CA.
 
+    :::caution[ASUS and Gigabyte motherboards]
+    On these boards, run `sudo sbctl enroll-keys --microsoft --custom` as the last command below, without
+    `--firmware-builtin`. On some of them the flag creates duplicate key entries, and the board stops with a
+    **Secure Boot Violation** once Secure Boot is enabled. If that already happened, see the
+    [Secure Boot guide](/configuration/secure_boot_setup#installing-sbctl-and-enrolling-keys).
+    :::
+
     ```bash
     sudo sbctl create-keys
     sudo sbctl enroll-keys --microsoft --firmware-builtin --custom
@@ -165,6 +178,18 @@ stays enabled. It signs the change with your own Key Exchange Key (KEK), which t
     ```
 
     The `db` section has to list `CachyOS EAC CA`.
+
+    Then sign your normal kernels, otherwise they won't boot once Secure Boot is enabled. The loop skips the
+    EAC kernel, which is already signed by CachyOS:
+
+    ```bash
+    for kernel in /boot/vmlinuz-*; do
+      [ "$kernel" = /boot/vmlinuz-linux-cachyos-eac ] || sudo sbctl sign -s "$kernel"
+    done
+    sudo sbctl list-files
+    ```
+
+    The output has to show each of your normal kernels as signed.
 
 4. **Keep sbctl away from the CachyOS-signed files**
 
@@ -292,7 +317,14 @@ After that, your system starts Limine again as usual.
 
     `cachyos-eac-signing-key` puts the CachyOS EAC CA certificate into sbctl's directory for custom
     certificates. Enroll your own keys together with Microsoft's keys, the firmware's built-in keys and the
-    CachyOS EAC CA:
+    CachyOS EAC CA.
+
+    :::caution[ASUS and Gigabyte motherboards]
+    On these boards, run `sudo sbctl enroll-keys --microsoft --custom` as the last command below, without
+    `--firmware-builtin`. On some of them the flag creates duplicate key entries, and the board stops with a
+    **Secure Boot Violation** once Secure Boot is enabled. If that already happened, see the
+    [Secure Boot guide](/configuration/secure_boot_setup#installing-sbctl-and-enrolling-keys).
+    :::
 
     ```bash
     sudo sbctl create-keys
@@ -422,9 +454,28 @@ certificate, such as your own "Database Key", is reported with `[WARN] Boot was 
 ### `eac-status` reports two signatures or your own key
 
 `has 2 signatures` or `Boot was also verified by Database Key` means that `sbctl` signed the EAC kernel or
-systemd-boot again with your own key. Repeat step 4 of the [systemd-boot setup](#setup-with-systemd-boot)
-to remove the files from sbctl's database and reinstall the packages. With Limine, also copy the signed
-systemd-boot again (step 4 of the [Limine setup](#setup-with-limine)).
+systemd-boot again with your own key.
+
+With systemd-boot, repeat step 4 of the [systemd-boot setup](#setup-with-systemd-boot) to remove the files
+from sbctl's database and reinstall the packages.
+
+With Limine, do **not** follow that step. Its `bootctl install` would make systemd-boot your default boot
+manager and replace the fallback boot loader on the EFI system partition. Check sbctl's database instead:
+
+```bash
+sudo sbctl list-files
+```
+
+If a listed path contains `cachyos-eac`, remove it with `sudo sbctl remove-file <path>`. Then reinstall the
+packages and copy the signed systemd-boot again:
+
+```bash
+sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
+ESP="$(bootctl --print-esp-path)"
+sudo install -Dm644 /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed "$ESP/EFI/cachyos-eac/systemd-bootx64.efi"
+```
+
+{/* TODO: the sbctl mkinitcpio post hook signs the kernel again during the reinstall, so the kernel keeps a second signature once sbctl keys exist, with both boot managers */}
 
 ### The game says the system is not supported
 
