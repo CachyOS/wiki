@@ -1,0 +1,61 @@
+---
+title: CachyOS on WSL
+description: Install and use CachyOS on the Windows Subsystem for Linux
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+CachyOS provides an image for the [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/about) (WSL). It is maintained in the [cachyos-wsl](https://github.com/CachyOS/cachyos-wsl) repository, where you can also report image-specific bugs.
+
+## Installation
+
+You need WSL 2 version `2.4.4` or newer, which you can update with `wsl --update`. For older versions, see the [cachyos-wsl README](https://github.com/CachyOS/cachyos-wsl#wsl-prior-to-244).
+
+<Steps>
+
+1. Download the `.wsl` image from the [latest release](https://github.com/CachyOS/cachyos-wsl/releases/latest), or in PowerShell:
+
+   ```powershell
+   $v = (Invoke-RestMethod https://api.github.com/repos/CachyOS/cachyos-wsl/releases/latest).tag_name
+   Invoke-WebRequest "https://github.com/CachyOS/cachyos-wsl/releases/download/$v/cachyos-$v.wsl" -OutFile "$env:TEMP\cachyos.wsl"
+   ```
+
+2. Install it by double-clicking the file, or in PowerShell:
+
+   ```powershell
+   wsl --install --from-file "$env:TEMP\cachyos.wsl"
+   ```
+
+3. Start CachyOS from the Start menu, or with `wsl -d cachyos`.
+
+</Steps>
+
+## First setup
+
+The first launch can take a few minutes. It sets up the pacman keyring, ranks the mirrors, switches to the optimized packages and asks you to create your user, which has `sudo` access and uses `fish` as its shell.
+
+Images are only built periodically, so run `sudo pacman -Syu` once it is done.
+
+## Optimized packages
+
+The image is generic and runs on any x86-64 CPU. Like the CachyOS installer, the first setup then switches to the best [optimized repositories](/features/optimized_repos) for your CPU: `znver4`, `v4` or `v3`. Older CPUs stay on the generic packages.
+
+If the switch fails, for example because you are offline, the setup continues with the generic packages. To try again:
+
+```sh
+sudo /usr/lib/wsl/optimize-repos
+```
+
+## Differences from a regular installation
+
+WSL always runs the Microsoft kernel, so `linux-cachyos`, its schedulers and `sched-ext` are not used. The image also has no boot manager, `chwd` or zram.
+
+## Troubleshooting
+
+If pacman says a reboot is recommended, restart the distribution from PowerShell with `wsl --terminate cachyos`.
+
+To start over, remove the distribution with `wsl --unregister cachyos` and install it again.
+
+:::caution
+`wsl --unregister` permanently deletes everything inside the distribution, including your Linux home directory.
+:::

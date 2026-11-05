@@ -769,6 +769,10 @@ export default defineConfig({
               },
               link: 'virtualization/virtio-venus',
             },
+            {
+              label: 'CachyOS on WSL',
+              link: 'virtualization/wsl',
+            },
           ],
         },
         {
