@@ -116,6 +116,40 @@ Limine is a modern bootloader known for its simple configuration. This guide cov
 
 Configuration primarily happens in `/boot/limine.conf` (or sometimes in the EFI system partition) for menu settings, and `/etc/default/limine` for kernel parameters.
 
+### Recovering a missing UEFI boot entry
+
+If CachyOS still boots from the firmware's manual boot menu or from the fallback EFI loader, but the dedicated Limine entry is missing from UEFI NVRAM, first inspect the current entries:
+
+```shell
+sudo efibootmgr -v
+```
+
+On current CachyOS installations, `limine-install` handles the UEFI registration itself. If the Limine entry is missing, running `limine-install` will recreate it in NVRAM:
+
+```shell
+sudo limine-install
+```
+
+:::caution
+By default, `UEFI_BOOT_ORDER=first`, so a newly created Limine entry is placed first in the firmware boot order. If you need to preserve the current default boot choice, set `UEFI_BOOT_ORDER=last` or `UEFI_BOOT_ORDER=keep` in `/etc/default/limine` before running `limine-install`.
+:::
+
+After rebooting, check the firmware state again:
+
+```shell
+sudo efibootmgr
+```
+
+The Limine entry should now be present. If the machine booted through it, `BootCurrent` should match that entry.
+
+Some non-compliant UEFI implementations cannot reliably store or honor NVRAM boot entries. In that case, install Limine as the standard fallback loader instead:
+
+```shell
+sudo limine-install --skip-uefi --fallback
+```
+
+This intentionally skips UEFI NVRAM registration. Reboot into the firmware setup and select the disk or fallback EFI loader as the boot target.
+
 ### Boot Menu Configuration
 
 This file controls the boot menu's behavior and appearance. Changes made here take effect immediately after saving – no extra commands are needed.
