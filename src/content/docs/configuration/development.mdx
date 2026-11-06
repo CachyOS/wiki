@@ -1,0 +1,182 @@
+---
+title: Development on CachyOS
+description: Compilers, linkers, Rust build settings, debug symbols and a faster memory allocator for software development on CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+---
+
+import { Tabs, TabItem, LinkButton } from '@astrojs/starlight/components';
+
+CachyOS builds its repositories for `x86-64-v3`, `x86-64-v4` or `znver4` with LTO (see [Optimized Repositories](/features/optimized_repos)) and ships a `makepkg.conf` that builds AUR packages with `-march=native -O3` and LTO. The rest of a development setup, clang and mold, Rust build settings, debug symbols and a faster allocator, you add yourself.
+
+## Toolchains
+
+Install `base-devel` for the AUR, plus clang, LLVM and mold:
+
+```sh
+sudo pacman -S base-devel clang llvm mold
+```
+
+For Rust, use `rustup` rather than the `rust` package. The Cranelift section below needs a nightly next to stable:
+
+```sh
+sudo pacman -S rustup
+rustup default stable
+```
+
+## mold
+
+[mold](https://github.com/rui314/mold) links several times faster than GNU ld. gcc and clang select it with `-fuse-ld=mold`:
+
+```sh
+clang -fuse-ld=mold -o hello hello.c
+gcc -fuse-ld=mold -o hello hello.c
+```
+
+Where that flag goes depends on the build system:
+
+<Tabs>
+  <TabItem label="CMake">
+    ```sh
+    cmake -B build -DCMAKE_LINKER_TYPE=MOLD
+    ```
+  </TabItem>
+  <TabItem label="Meson">
+    ```sh
+    CC_LD=mold CXX_LD=mold meson setup build
+    ```
+  </TabItem>
+  <TabItem label="mold -run">
+    `mold -run` wraps a build and redirects every `ld` call to mold, for build systems that expose no linker flag:
+    ```sh
+    mold -run make
+    mold -run ninja -C build
+    ```
+  </TabItem>
+</Tabs>
+
+## makepkg and the AUR
+
+makepkg compiles with `-march=native -O3`, `-fno-plt`, `_FORTIFY_SOURCE=3` and LTO, `-j` set to your thread count. A package built this way runs only on CPUs with the same instruction set extensions, so don't copy it to another machine.
+
+makepkg reads drop-in files from `/etc/makepkg.conf.d/` after the main file. CachyOS ships `rust.conf` there, which sets `-C target-cpu=native`. A drop-in of your own switches AUR builds to clang and mold without touching the main file. makepkg exports only its own build variables, so `CC` and `CXX` need an `export`:
+
+```sh title="/etc/makepkg.conf.d/clang.conf"
+export CC=clang
+export CXX=clang++
+LDFLAGS+=" -fuse-ld=mold"
+# clang treats makepkg's default -flto=auto as full LTO, ThinLTO links faster
+LTOFLAGS="-flto=thin"
+```
+
+Not every package builds with clang, and a PKGBUILD that forces gcc gets `-flto=thin`, which gcc rejects. Move the drop-in away for those builds. The same lines in `~/.config/pacman/makepkg.conf`, which makepkg sources last, apply to your user alone.
+
+:::note
+clang accepts every flag in `/etc/makepkg.conf`. If you add your own, make sure both compilers take them, or configure checks fail with errors that have nothing to do with the flag.
+:::
+
+## Rust
+
+Put the settings below in `~/.cargo/config.toml` for all projects, or in a project's `.cargo/config.toml` for one. cargo ignores them whenever the `RUSTFLAGS` environment variable is set, which makepkg does through `rust.conf`, so AUR builds keep makepkg's flags.
+
+### mold as the linker
+
+Since Rust 1.90, rustc links `x86_64-unknown-linux-gnu` with its bundled lld by default. One link argument overrides that:
+
+```toml title="~/.cargo/config.toml"
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-C", "link-arg=-fuse-ld=mold"]
+```
+
+`cargo rustc -- --print link-args` shows the linker command line, and `readelf -p .comment target/debug/<binary>` names the linker that produced the binary. If you'd rather rustc didn't add its lld flags at all, `-C linker-features=-lld` turns the bundled lld off. That flag is stable on this target since 1.90.
+
+### Target CPU
+
+`-C target-cpu=native` is the Rust side of `-march=native` and carries the same restriction: leave it out of anything you distribute.
+
+```toml title="~/.cargo/config.toml"
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-C", "link-arg=-fuse-ld=mold", "-C", "target-cpu=native"]
+```
+
+### Cranelift for debug builds
+
+The [Cranelift backend](https://github.com/rust-lang/rustc_codegen_cranelift) compiles unoptimized code faster than LLVM. It needs nightly:
+
+```sh
+rustup toolchain install nightly
+rustup component add rustc-codegen-cranelift-preview --toolchain nightly
+```
+
+Enable it for the `dev` profile only, so release builds still go through LLVM:
+
+```toml title=".cargo/config.toml"
+[unstable]
+codegen-backend = true
+
+[profile.dev]
+codegen-backend = "cranelift"
+```
+
+Put this in a project's config rather than the global one unless you run nightly everywhere, because stable cargo rejects the `codegen-backend` profile key. Unwinding is experimental in Cranelift, so a test that relies on `catch_unwind` can fail there and pass under LLVM. Rerun it with `CARGO_PROFILE_DEV_CODEGEN_BACKEND=llvm`.
+
+The Rust Performance Book covers build configuration and profiling in more depth:
+
+<LinkButton icon="external" href="https://nnethercote.github.io/perf-book/introduction.html">The Rust Performance Book</LinkButton>
+
+## debuginfod
+
+CachyOS runs a [debuginfod](https://sourceware.org/elfutils/Debuginfod.html) server at `https://debuginfod.cachyos.org`, and `cachyos-settings` registers it in `/etc/debuginfod/` next to Arch's. With both URLs in `DEBUGINFOD_URLS`, gdb, perf and valgrind fetch debug symbols and sources for repository packages on demand. bash and zsh get the variable from `/etc/profile.d/`, which `libelf` ships. fish, the CachyOS default shell, gets it from the `debuginfod` package, which valgrind needs as well, so install it:
+
+```sh
+sudo pacman -S debuginfod
+```
+
+Open a new login shell and check:
+
+```sh
+echo $DEBUGINFOD_URLS
+```
+
+It prints both URLs. gdb asks once per session whether it may contact the servers. To skip the question, enable it in `~/.gdbinit`:
+
+```text title="~/.gdbinit"
+set debuginfod enabled on
+```
+
+`debuginfod-find` tests the setup without a debugger:
+
+```sh
+debuginfod-find debuginfo /usr/bin/bash
+```
+
+It prints the path of the cached debug file. The cache lives in `~/.cache/debuginfod_client`.
+
+## mimalloc
+
+Programs that allocate many small objects from many threads, compilers and Qt or GTK applications for instance, run a few percent faster with [mimalloc](https://github.com/microsoft/mimalloc) than with glibc's malloc and use somewhat more memory. Measure before you keep it.
+
+`LD_PRELOAD` loads it into any dynamically linked program without a rebuild:
+
+```sh
+sudo pacman -S mimalloc
+LD_PRELOAD=/usr/lib/libmimalloc.so ./my-program
+```
+
+`MIMALLOC_VERBOSE=1` prints its options on stderr at startup to confirm it loaded:
+
+```sh
+MIMALLOC_VERBOSE=1 LD_PRELOAD=/usr/lib/libmimalloc.so ls > /dev/null
+```
+
+Don't load it system-wide through `/etc/ld.so.preload`:
+
+- The package ships only the 64-bit library, so every 32-bit program, Steam included, prints a harmless loader warning.
+- Games in a Steam Linux Runtime container, which includes Proton, don't see it. The container has its own `/etc`, and Windows games allocate through Wine's heap anyway.
+- Firefox and Chromium bring their own allocators and gain nothing.
+- AddressSanitizer binaries built with gcc refuse to start with another allocator preloaded, unless you set `ASAN_OPTIONS=verify_asan_link_order=0`.
+
+The mimalloc README lists the environment options:
+
+<LinkButton icon="external" href="https://github.com/microsoft/mimalloc#environment-options">mimalloc environment options</LinkButton>
