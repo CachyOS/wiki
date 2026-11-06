@@ -306,6 +306,10 @@ export default defineConfig({
               link: 'installation/desktop_environments',
             },
             {
+              label: 'Handheld Compatibility',
+              link: 'installation/handheld_compatibility',
+            },
+            {
               label: 'Guides',
               translations: {
                 cs: 'Průvodce',
