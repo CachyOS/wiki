@@ -543,3 +543,26 @@ Modules built with DKMS are not signed with the kernel's key and cannot be loade
 shipped for the EAC kernel (`linux-cachyos-eac-nvidia-open`, `linux-cachyos-eac-nvidia-580xx`,
 `linux-cachyos-eac-zfs` or `linux-cachyos-eac-r8125`), or boot your normal kernel for anything that needs
 DKMS modules.
+
+### IOMMU is in passthrough mode on AMD
+
+If IOMMU is enabled in the firmware and `iommu.passthrough=0` is set, but
+`eac-status` still reports passthrough mode, check whether any devices use
+an identity domain:
+
+```bash
+sudo grep -H -x identity /sys/kernel/iommu_groups/*/type
+```
+
+Some AMD integrated GPUs, such as the Radeon 610M, can remain in this mode
+even when the default domain is translated.
+
+On affected AMD systems, add `amd_iommu=force_isolation` to the existing
+`options` line in `loader/entries/cachyos-eac.conf` on the EFI system
+partition.
+
+This forces isolation for all devices. See the
+[Linux kernel documentation](https://www.kernel.org/doc/html/latest/admin-guide/kernel-parameters.html)
+for details.
+
+Boot the EAC entry again and run `sudo eac-status` to check the result.
