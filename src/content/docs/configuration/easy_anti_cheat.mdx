@@ -162,8 +162,11 @@ stays enabled. It signs the change with your own Key Exchange Key (KEK), which t
     :::caution[ASUS and Gigabyte motherboards]
     On these boards, run `sudo sbctl enroll-keys --microsoft --custom` as the last command below, without
     `--firmware-builtin`. On some of them the flag creates duplicate key entries, and the board stops with a
-    **Secure Boot Violation** once Secure Boot is enabled. If that already happened, see the
-    [Secure Boot guide](/configuration/secure_boot_setup#installing-sbctl-and-enrolling-keys).
+    **Secure Boot Violation** once Secure Boot is enabled. If that already happened, delete all Secure Boot
+    keys in the firmware settings to enter Setup Mode again (see
+    [Enabling Setup Mode in UEFI](/configuration/secure_boot_setup#enabling-setup-mode-in-uefi)), boot
+    CachyOS and run `sudo sbctl enroll-keys --microsoft --custom`. Don't use the command from the Secure Boot
+    guide for this, it leaves out the CachyOS EAC CA.
     :::
 
     ```bash
@@ -299,6 +302,17 @@ After that, your system starts Limine again as usual.
 
 2. **Install the packages**
 
+    If you used systemd-boot with the [Secure Boot guide](/configuration/secure_boot_setup) before switching
+    to Limine, remove the self-signed systemd-boot it created first. Otherwise pacman refuses to install
+    `systemd-boot-cachyos-signed`, and `sbctl` overwrites the CachyOS-signed systemd-boot:
+
+    ```bash
+    sudo sbctl remove-file /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+    sudo rm -f /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed
+    ```
+
+    Then install the packages:
+
     ```bash
     sudo pacman -S sbctl sbsigntools tpm2-tools efibootmgr cachyos-eac-signing-key linux-cachyos-eac systemd-boot-cachyos-signed
     ```
@@ -329,8 +343,11 @@ After that, your system starts Limine again as usual.
     :::caution[ASUS and Gigabyte motherboards]
     On these boards, run `sudo sbctl enroll-keys --microsoft --custom` as the last command below, without
     `--firmware-builtin`. On some of them the flag creates duplicate key entries, and the board stops with a
-    **Secure Boot Violation** once Secure Boot is enabled. If that already happened, see the
-    [Secure Boot guide](/configuration/secure_boot_setup#installing-sbctl-and-enrolling-keys).
+    **Secure Boot Violation** once Secure Boot is enabled. If that already happened, delete all Secure Boot
+    keys in the firmware settings to enter Setup Mode again (see
+    [Enabling Setup Mode in UEFI](/configuration/secure_boot_setup#enabling-setup-mode-in-uefi)), boot
+    CachyOS and run `sudo sbctl enroll-keys --microsoft --custom`. Don't use the command from the Secure Boot
+    guide for this, it leaves out the CachyOS EAC CA.
     :::
 
     ```bash
@@ -340,6 +357,14 @@ After that, your system starts Limine again as usual.
 
     If `sbctl` stops with `could not enroll built-in firmware keys`, the firmware has no built-in keys and
     nothing was enrolled yet. Run the last command again without `--firmware-builtin`.
+
+    Check that the certificate was enrolled:
+
+    ```bash
+    sudo sbctl list-enrolled-keys
+    ```
+
+    The `db` section has to list `CachyOS EAC CA`.
 
     Limine itself still has to be signed with your own key, so your normal boot keeps working with Secure
     Boot enabled. Follow the Limine tab in
@@ -483,8 +508,9 @@ manager and replace the fallback boot loader on the EFI system partition. Check 
 sudo sbctl list-files
 ```
 
-If a listed path contains `cachyos-eac`, remove it with `sudo sbctl remove-file <path>`. Then reinstall the
-packages and copy the signed systemd-boot again:
+If a listed path contains `cachyos-eac`, or is `/usr/lib/systemd/boot/efi/systemd-bootx64.efi` (left over
+from the systemd-boot steps of the Secure Boot guide), remove it with `sudo sbctl remove-file <path>`. Then
+reinstall the packages and copy the signed systemd-boot again:
 
 ```bash
 sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
