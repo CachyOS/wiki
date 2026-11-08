@@ -8,7 +8,7 @@ import { Steps } from '@astrojs/starlight/components';
 {/* DRAFT: not published yet. Open points are marked with TODO. */}
 
 :::caution[Draft]
-This page is a draft. The packages are not in the CachyOS repositories yet, and some steps may still change.
+This page is a draft, and some steps may still change.
 :::
 
 [Easy Anti-Cheat Linux v2](https://onlineservices.epicgames.com/news/introducing-easy-anti-cheat-linux-v2)
@@ -41,15 +41,20 @@ own firmware boot entry and is only used for the EAC boot.
   `linux-cachyos-eac-nvidia-580xx` for Maxwell, Pascal and Volta.
 
 :::caution[No DKMS modules]
-The EAC kernel only loads modules that were signed when the kernel was built. NVIDIA and ZFS modules are
-shipped as `linux-cachyos-eac-*` packages, other modules built with DKMS (for example `virtualbox-host-dkms`)
-will not load in the EAC boot entry. Do not install `linux-cachyos-eac-headers`.
+The EAC kernel only loads modules that were signed when the kernel was built. NVIDIA, ZFS and Realtek r8125
+modules are shipped as `linux-cachyos-eac-*` packages, other modules built with DKMS (for example
+`virtualbox-host-dkms`) will not load in the EAC boot entry. Do not install `linux-cachyos-eac-headers`.
 :::
 
 :::danger[BitLocker and TPM disk unlock]
 This setup changes the Secure Boot keys, which changes what the TPM measures. BitLocker on a Windows dual boot can
 then ask for its recovery key, and a LUKS disk that you bound to the TPM yourself asks for its passphrase. Make sure
 you have them before you start, otherwise you can lose access to your data.
+:::
+
+:::note[Run the commands in bash]
+The commands on this page are written for bash. The default shell on CachyOS is fish, which rejects some of
+them, for example with `Unsupported use of '='`. Run `bash` in your terminal first, then run the commands.
 :::
 
 ## If you already use Secure Boot
@@ -143,7 +148,8 @@ stays enabled. It signs the change with your own Key Exchange Key (KEK), which t
 
     On systems with an NVIDIA GPU, also install `linux-cachyos-eac-nvidia-open` (Turing and newer) or
     `linux-cachyos-eac-nvidia-580xx` (Maxwell, Pascal and Volta). If you use ZFS, also install
-    `linux-cachyos-eac-zfs`.
+    `linux-cachyos-eac-zfs`. If you use `r8125-dkms` for a Realtek 2.5 GbE network card, also install
+    `linux-cachyos-eac-r8125`.
 
     `bootctl install` installs the CachyOS-signed systemd-boot to the EFI system partition. Future
     systemd-boot updates are signed by CachyOS as well, so you don't have to sign them yourself.
@@ -168,8 +174,8 @@ stays enabled. It signs the change with your own Key Exchange Key (KEK), which t
     sudo sbctl enroll-keys --microsoft --firmware-builtin --custom
     ```
 
-    If `sbctl` reports that the firmware has no built-in keys, run the last command without
-    `--firmware-builtin`.
+    If `sbctl` stops with `could not enroll built-in firmware keys`, the firmware has no built-in keys and
+    nothing was enrolled yet. Run the last command again without `--firmware-builtin`.
 
     Check that the certificate was enrolled:
 
@@ -183,7 +189,7 @@ stays enabled. It signs the change with your own Key Exchange Key (KEK), which t
     EAC kernel, which is already signed by CachyOS:
 
     ```bash
-    for kernel in /boot/vmlinuz-*; do
+    for kernel in $(sudo find /boot -maxdepth 1 -name 'vmlinuz-*'); do
       [ "$kernel" = /boot/vmlinuz-linux-cachyos-eac ] || sudo sbctl sign -s "$kernel"
     done
     sudo sbctl list-files
@@ -194,8 +200,9 @@ stays enabled. It signs the change with your own Key Exchange Key (KEK), which t
 4. **Keep sbctl away from the CachyOS-signed files**
 
     The EAC kernel and systemd-boot are already signed by CachyOS. If `sbctl` signs them again with your
-    own key, EAC no longer recognizes them. This happens when the files are in sbctl's database, for
-    example after running `sbctl-batch-sign` or `sbctl sign -s`.
+    own key, EAC no longer recognizes them. `cachyos-eac-signing-key` stops sbctl's initramfs hook from
+    signing the EAC kernel, but `sbctl` still signs every file in its database, for example after running
+    `sbctl-batch-sign` or `sbctl sign -s`.
 
     ```bash
     sudo sbctl list-files
@@ -299,7 +306,8 @@ After that, your system starts Limine again as usual.
 
     On systems with an NVIDIA GPU, also install `linux-cachyos-eac-nvidia-open` (Turing and newer) or
     `linux-cachyos-eac-nvidia-580xx` (Maxwell, Pascal and Volta). If you use ZFS, also install
-    `linux-cachyos-eac-zfs`.
+    `linux-cachyos-eac-zfs`. If you use `r8125-dkms` for a Realtek 2.5 GbE network card, also install
+    `linux-cachyos-eac-r8125`.
 
     :::danger
     Do **not** run `bootctl install`. It would make systemd-boot your default boot manager and replace
@@ -331,8 +339,8 @@ After that, your system starts Limine again as usual.
     sudo sbctl enroll-keys --microsoft --firmware-builtin --custom
     ```
 
-    If `sbctl` reports that the firmware has no built-in keys, run the last command without
-    `--firmware-builtin`.
+    If `sbctl` stops with `could not enroll built-in firmware keys`, the firmware has no built-in keys and
+    nothing was enrolled yet. Run the last command again without `--firmware-builtin`.
 
     Limine itself still has to be signed with your own key, so your normal boot keeps working with Secure
     Boot enabled. Follow the Limine tab in
@@ -377,9 +385,10 @@ After that, your system starts Limine again as usual.
     kernel and its initramfs up to date in a directory named after your machine ID. Check that both exist:
 
     ```bash
+    ESP="$(bootctl --print-esp-path)"
     KERNEL="/$(cat /etc/machine-id)/linux-cachyos-eac/vmlinuz"
     INITRD="/$(cat /etc/machine-id)/linux-cachyos-eac/initramfs"
-    ls -l "$ESP$KERNEL" "$ESP$INITRD"
+    sudo ls -l "$ESP$KERNEL" "$ESP$INITRD"
     ```
 
     Then build the kernel command line from your running system plus the EAC options:
@@ -454,7 +463,12 @@ certificate, such as your own "Database Key", is reported with `[WARN] Boot was 
 ### `eac-status` reports two signatures or your own key
 
 `has 2 signatures` or `Boot was also verified by Database Key` means that `sbctl` signed the EAC kernel or
-systemd-boot again with your own key.
+systemd-boot again with your own key. Versions of `cachyos-eac-signing-key` before 1-2 let sbctl's initramfs hook
+do this whenever the initramfs was rebuilt, so update your system first:
+
+```bash
+sudo pacman -Syu
+```
 
 With systemd-boot, repeat step 4 of the [systemd-boot setup](#setup-with-systemd-boot) to remove the files
 from sbctl's database and reinstall the packages.
@@ -474,8 +488,6 @@ sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
 ESP="$(bootctl --print-esp-path)"
 sudo install -Dm644 /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed "$ESP/EFI/cachyos-eac/systemd-bootx64.efi"
 ```
-
-{/* TODO: the sbctl mkinitcpio post hook signs the kernel again during the reinstall, so the kernel keeps a second signature once sbctl keys exist, with both boot managers */}
 
 ### The game says the system is not supported
 
@@ -499,5 +511,6 @@ update or reset. Create it again (step 4 of the [Limine setup](#setup-with-limin
 ### A module does not load in the EAC entry
 
 Modules built with DKMS are not signed with the kernel's key and cannot be loaded. Use the modules
-shipped for the EAC kernel (`linux-cachyos-eac-nvidia-open`, `linux-cachyos-eac-nvidia-580xx` or
-`linux-cachyos-eac-zfs`), or boot your normal kernel for anything that needs DKMS modules.
+shipped for the EAC kernel (`linux-cachyos-eac-nvidia-open`, `linux-cachyos-eac-nvidia-580xx`,
+`linux-cachyos-eac-zfs` or `linux-cachyos-eac-r8125`), or boot your normal kernel for anything that needs
+DKMS modules.
