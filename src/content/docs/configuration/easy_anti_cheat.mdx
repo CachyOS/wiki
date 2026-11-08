@@ -5,12 +5,6 @@ description: Boot the CachyOS EAC kernel with Secure Boot so games using Easy An
 
 import { Steps } from '@astrojs/starlight/components';
 
-{/* DRAFT: not published yet. Open points are marked with TODO. */}
-
-:::caution[Draft]
-This page is a draft, and some steps may still change.
-:::
-
 [Easy Anti-Cheat Linux v2](https://onlineservices.epicgames.com/news/introducing-easy-anti-cheat-linux-v2)
 only lets games start when it can verify how the system was booted. It checks that:
 
@@ -188,13 +182,11 @@ stays enabled. It signs the change with your own Key Exchange Key (KEK), which t
 
     The `db` section has to list `CachyOS EAC CA`.
 
-    Then sign your normal kernels, otherwise they won't boot once Secure Boot is enabled. The loop skips the
-    EAC kernel, which is already signed by CachyOS:
+    Then sign your normal kernels, otherwise they won't boot once Secure Boot is enabled. The command skips
+    the EAC kernel, which is already signed by CachyOS:
 
     ```bash
-    for kernel in $(sudo find /boot -maxdepth 1 -name 'vmlinuz-*'); do
-      [ "$kernel" = /boot/vmlinuz-linux-cachyos-eac ] || sudo sbctl sign -s "$kernel"
-    done
+    sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
     sudo sbctl list-files
     ```
 
@@ -407,7 +399,8 @@ After that, your system starts Limine again as usual.
     ```
 
     The output has to contain your `root=` option and end with the EAC options. Write the entry and make
-    it the default, so systemd-boot starts it without showing a menu:
+    it the default, so systemd-boot starts it without showing a menu. This replaces an existing
+    `loader/loader.conf`, which is fine here, because systemd-boot only starts the EAC entry:
 
     ```bash
     printf 'title   CachyOS (EAC)\nlinux   %s\ninitrd  %s\noptions %s\n' "$KERNEL" "$INITRD" "$EAC_OPTS" \
