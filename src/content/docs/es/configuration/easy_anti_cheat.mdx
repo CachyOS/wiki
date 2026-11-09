@@ -31,7 +31,7 @@ obtiene su propia entrada de arranque en el firmware y solo se usa para el arran
 - CachyOS instalado en modo UEFI con **systemd-boot** o **Limine** como gestor de arranque.
 - Un sistema actualizado (`sudo pacman -Syu`). `eac-status` y el soporte EAC en `sbctl-batch-sign` necesitan
   `cachyos-settings` 1.4.2 o posterior.
-- **TPM 2.0** habilitado en la configuración del firmware. Un TPM de firmware (AMD fTPM, Intel PTT) sirve.
+- **TPM 2.0** habilitado en la configuración del firmware. Un TPM de firmware (AMD fTPM, Intel PTT) es suficiente.
 - **IOMMU** habilitada en la configuración del firmware (AMD-Vi / "IOMMU" en AMD, VT-d en Intel).
 - GPUs NVIDIA: Maxwell o posterior (GTX 750, serie GTX 900 y posteriores). El kernel EAC incluye los módulos de
   NVIDIA como paquetes: `linux-cachyos-eac-nvidia-open` para Turing y posteriores (GTX 16 / serie RTX 20 y
@@ -46,7 +46,7 @@ Realtek r8125 se distribuyen como paquetes `linux-cachyos-eac-*`; otros módulos
 :::danger[BitLocker y desbloqueo de disco con TPM]
 Esta configuración cambia las claves de Secure Boot, lo que cambia lo que mide el TPM. BitLocker en un arranque
 dual con Windows puede entonces pedir su clave de recuperación, y un disco LUKS que hayas vinculado tú mismo al
-TPM pedirá su frase de contraseña. Asegúrate de tenerlas antes de empezar; de lo contrario, podrías perder el
+TPM pedirá su contraseña. Asegúrate de tenerlas antes de empezar; de lo contrario, podrías perder el
 acceso a tus datos.
 :::
 
@@ -73,7 +73,7 @@ mientras Secure Boot sigue habilitado. Firma el cambio con tu propia Key Exchang
     ```
 
     La salida debe mostrar `sbctl is installed`, `Setup Mode: Disabled` y `Secure Boot: Enabled`. Si
-    tus claves no se crearon con `sbctl`, sigue en su lugar la configuración de tu gestor de arranque desde el paso 1.
+    tus claves no se crearon con `sbctl`, en su lugar sigue la configuración de tu gestor de arranque desde el paso 1.
 
 2. **Inscribe el CachyOS EAC CA**
 
@@ -164,7 +164,7 @@ mientras Secure Boot sigue habilitado. Firma el cambio con tu propia Key Exchang
     claves de Microsoft, las claves integradas del firmware y el CachyOS EAC CA.
 
     :::caution[Placas base ASUS y Gigabyte]
-    En estas placas, ejecuta `sudo sbctl enroll-keys --microsoft --custom` como último comando de abajo, sin
+    En estas placas, ejecuta `sudo sbctl enroll-keys --microsoft --custom` como el último comando siguiente, sin
     `--firmware-builtin`. En algunas de ellas, el flag crea entradas de clave duplicadas y la placa se detiene con
     una **Secure Boot Violation** una vez que se habilita Secure Boot. Si eso ya ocurrió, elimina todas las claves
     de Secure Boot en la configuración del firmware para entrar de nuevo en el modo de configuración (consulta
@@ -222,7 +222,7 @@ mientras Secure Boot sigue habilitado. Firma el cambio con tu propia Key Exchang
     sudo bootctl install
     ```
 
-    Para los archivos que no aparecen listados, `sbctl` informa de `doesn't exist in database`, lo cual es correcto.
+    Para los archivos que no aparecen listados, `sbctl` informa de `doesn't exist in database`, lo cual está bien.
 
     Comprueba las firmas. Cada archivo debe mostrar exactamente **una** firma, emitida por `CachyOS EAC CA`,
     seguida de `Signature verification OK`:
@@ -346,7 +346,7 @@ de costumbre.
     firmware y el CachyOS EAC CA.
 
     :::caution[Placas base ASUS y Gigabyte]
-    En estas placas, ejecuta `sudo sbctl enroll-keys --microsoft --custom` como último comando de abajo, sin
+    En estas placas, ejecuta `sudo sbctl enroll-keys --microsoft --custom` como el último comando siguiente, sin
     `--firmware-builtin`. En algunas de ellas, el flag crea entradas de clave duplicadas y la placa se detiene con
     una **Secure Boot Violation** una vez que se habilita Secure Boot. Si eso ya ocurrió, elimina todas las claves
     de Secure Boot en la configuración del firmware para entrar de nuevo en el modo de configuración (consulta
@@ -411,7 +411,7 @@ de costumbre.
 5. **Crea la entrada de arranque EAC**
 
     systemd-boot lee su configuración de la partición del sistema EFI. El hook de Limine mantiene el kernel EAC
-    y su initramfs actualizados en un directorio con el nombre de tu machine ID. Comprueba que ambos existan:
+    y su initramfs actualizados en un directorio con el nombre de tu `machine-id`. Comprueba que ambos existan:
 
     ```bash
     ESP="$(bootctl --print-esp-path)"
@@ -480,15 +480,16 @@ Después de arrancar la entrada EAC, ejecuta `eac-status` desde `cachyos-setting
 sudo eac-status
 ```
 
-Comprueba Secure Boot y el modo de configuración, el TPM, el CachyOS EAC CA inscrito, las firmas del kernel EAC
-y de systemd-boot, la línea de comandos del kernel, el bloqueo (lockdown), las firmas de módulos, kexec, la IOMMU
-y qué certificados usó el firmware para verificar el arranque (del registro de eventos del TPM). Cada comprobación
-debe mostrar `[ OK ]`, y la última línea debe decir `All checks passed`. En tu entrada de arranque normal, solo
-comprueba el firmware y los archivos de arranque, y termina con `The boot files are ready` si lo están.
+Este comando comprueba Secure Boot y el modo de configuración, el TPM, el CachyOS EAC CA inscrito, las firmas
+del kernel EAC y de systemd-boot, la línea de comandos del kernel, el bloqueo (lockdown), las firmas de módulos,
+kexec, la IOMMU y qué certificados usó el firmware para verificar el arranque (del registro de eventos del TPM).
+Cada comprobación debe mostrar `[ OK ]`, y la última línea debe decir `All checks passed`. En tu entrada de
+arranque normal, solo comprueba el firmware y los archivos de arranque, y termina con `The boot files are ready`
+si lo están.
 
 Estas comprobaciones solo cubren tu sistema. Que un juego arranque sigue dependiendo de Easy Anti-Cheat y del juego.
 
-Un certificado de Microsoft en el registro de eventos del TPM es correcto (se usa para el firmware de la GPU) y no
+Un certificado de Microsoft en el registro de eventos del TPM está bien (se usa para el firmware de la GPU) y no
 se informa. Cualquier otro certificado, como tu propia "Database Key", se informa con `[WARN] Boot was also verified by`.
 
 ## Solución de problemas
@@ -496,9 +497,9 @@ se informa. Cualquier otro certificado, como tu propia "Database Key", se inform
 ### `eac-status` informa de dos firmas o de tu propia clave
 
 `has 2 signatures` o `Boot was also verified by Database Key` significa que `sbctl` firmó el kernel EAC o
-systemd-boot de nuevo con tu propia clave. Las versiones de `cachyos-eac-signing-key` anteriores a la 1-2 permitían
-que el hook de initramfs de sbctl hiciera esto cada vez que se reconstruía el initramfs, así que actualiza tu
-sistema primero:
+systemd-boot de nuevo con tu propia clave. Las versiones de `cachyos-eac-signing-key` anteriores a la versión 1-2
+permitían que el hook de initramfs de sbctl hiciera esto cada vez que se reconstruía el initramfs, así que
+actualiza tu sistema primero:
 
 ```bash
 sudo pacman -Syu
@@ -516,7 +517,7 @@ sudo sbctl list-files
 ```
 
 Si una ruta listada contiene `cachyos-eac`, o es `/usr/lib/systemd/boot/efi/systemd-bootx64.efi` (sobrante de los
-pasos de systemd-boot de la guía de Secure Boot), elimínala con `sudo sbctl remove-file <ruta>`. Luego reinstala
+pasos de systemd-boot de la guía de Secure Boot), elimínala con `sudo sbctl remove-file <path>`. Luego reinstala
 los paquetes y copia de nuevo el systemd-boot firmado:
 
 ```bash
