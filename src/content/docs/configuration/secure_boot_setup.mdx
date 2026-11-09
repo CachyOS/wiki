@@ -308,6 +308,34 @@ Skip this step if you use the [Easy Anti-Cheat setup](/configuration/easy_anti_c
 provides a systemd-boot signed by CachyOS.
 :::
 </TabItem>
+<TabItem label='rEFInd'>
+
+rEFInd starts the kernels through the firmware, so the firmware checks the signatures of rEFInd and of each
+kernel. These steps are for installations where the EFI system partition is mounted at `/boot`, which is how
+the CachyOS installer sets up rEFInd. `bootctl --print-esp-path` has to print `/boot`.
+
+Sign rEFInd and your kernels. The `find` command skips the kernel for
+[Easy Anti-Cheat](/configuration/easy_anti_cheat), which is already signed by CachyOS:
+
+```bash
+sudo sbctl sign -s /boot/EFI/refind/refind_x64.efi
+sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+sudo sbctl verify
+```
+
+`sbctl verify` has to list rEFInd and each of your kernels as signed. If you use Easy Anti-Cheat, it also lists
+`vmlinuz-linux-cachyos-eac` and `EFI/cachyos-eac/systemd-bootx64.efi` as not signed. That is expected, they are
+signed by CachyOS. **Don't sign them**, otherwise EAC no longer accepts them. Then **reboot into your UEFI Settings
+and enable Secure Boot.** On ASUS motherboards, see the notes in the systemd-boot tab.
+
+The `-s` flag saves the files to `sbctl`'s database, and its pacman hook signs the kernels again after updates.
+pacman doesn't update rEFInd on the EFI system partition. If you run `refind-install` yourself, sign it again
+afterwards:
+
+```bash
+sudo sbctl sign-all
+```
+</TabItem>
 </Tabs>
 
 ## Secure Boot Status Check
