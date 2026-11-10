@@ -3,7 +3,7 @@ title: Easy Anti-Cheat (Linux v2)
 description: Boote den CachyOS-EAC-Kernel mit Secure Boot, damit Spiele mit Easy Anti-Cheat Linux v2 starten
 ---
 
-import { Steps } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 [Easy Anti-Cheat Linux v2](https://onlineservices.epicgames.com/news/introducing-easy-anti-cheat-linux-v2)
 lässt Spiele nur starten, wenn es überprüfen kann, wie das System gebootet wurde. Es prüft, dass:
@@ -22,15 +22,20 @@ Der EAC-Kernel bekommt einen eigenen Booteintrag. Deine normalen Booteinträge b
 EAC-Eintrag also nur, wenn du ein Spiel mit EAC spielen willst.
 
 EAC braucht einen Boot-Manager, der alles, was er lädt, gegen die Secure-Boot-Datenbank prüft und in das TPM misst.
-systemd-boot macht das, Limine nicht. Wer Limine nutzt, behält Limine deshalb als Standard-Boot-Manager und startet
-den EAC-Kernel über das von CachyOS signierte systemd-boot. Es bekommt einen eigenen Firmware-Booteintrag und wird nur
+systemd-boot macht das, Limine nicht. rEFInd macht es zwar, ist aber mit deinem eigenen Schlüssel signiert, und das
+akzeptiert EAC nicht. Wer Limine oder rEFInd nutzt, behält seinen Boot-Manager deshalb als Standard und startet den
+EAC-Kernel über das von CachyOS signierte systemd-boot. Es bekommt einen eigenen Firmware-Booteintrag und wird nur
 für den EAC-Boot verwendet.
+
+Das [Skript `eac-setup`](#einrichtung-mit-eac-setup) übernimmt die Einrichtung für dich. Die
+[manuelle Einrichtung](#manuelle-einrichtung) beschreibt dieselben Schritte von Hand.
 
 ## Voraussetzungen
 
-- CachyOS im UEFI-Modus installiert, mit **systemd-boot** oder **Limine** als Boot-Manager.
-- Ein aktuelles System (`sudo pacman -Syu`). `eac-status` und die EAC-Unterstützung in `sbctl-batch-sign` brauchen
-  `cachyos-settings` 1.4.2 oder neuer.
+- CachyOS im UEFI-Modus installiert, mit **systemd-boot**, **Limine** oder **rEFInd** als Boot-Manager. Mit rEFInd
+  muss die EFI-Systempartition unter `/boot` eingehängt sein, so wie der CachyOS-Installer sie einrichtet.
+- Ein aktuelles System (`sudo pacman -Syu`). `eac-setup` braucht `cachyos-settings` 1.4.4 oder neuer, `eac-status`
+  und die EAC-Unterstützung in `sbctl-batch-sign` brauchen 1.4.2 oder neuer.
 - **TPM 2.0** in den Firmware-Einstellungen aktiviert. Ein Firmware-TPM (AMD fTPM, Intel PTT) reicht aus.
 - **IOMMU** in den Firmware-Einstellungen aktiviert (AMD-Vi / „IOMMU“ bei AMD, VT-d bei Intel).
 - NVIDIA-GPUs: Maxwell oder neuer (GTX 750, GTX-900-Serie und neuer). Der EAC-Kernel liefert die NVIDIA-Module als
@@ -50,13 +55,98 @@ hast, fragt nach ihrer Passphrase. Halte sie bereit, bevor du anfängst, sonst k
 verlieren.
 :::
 
+## Einrichtung mit eac-setup
+
+`eac-setup` aus `cachyos-settings` übernimmt die Einrichtung für systemd-boot, Limine und rEFInd. Es prüft, was schon
+erledigt ist, du kannst es also jederzeit erneut ausführen, zum Beispiel um die Einrichtung zu reparieren. Nur die
+Änderungen in den Firmware-Einstellungen musst du selbst vornehmen.
+
+<Steps>
+
+1. **Versetze die Firmware in den Setup-Modus**
+
+    Überspringe diesen Schritt, wenn du Secure Boot bereits mit Schlüsseln verwendest, die mit `sbctl` erstellt
+    wurden, zum Beispiel nach der [Secure-Boot-Anleitung](/de/configuration/secure_boot_setup). `eac-setup` fügt die
+    CachyOS EAC CA dann zur Secure-Boot-Datenbank hinzu, während Secure Boot aktiviert bleibt.
+
+    Folge sonst [In den Setup-Modus im UEFI wechseln](/de/configuration/secure_boot_setup#in-den-setup-modus-im-uefi-wechseln)
+    und lass Secure Boot vorerst **deaktiviert**.
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+2. **Führe eac-setup aus**
+
+    ```bash
+    sudo eac-setup
+    ```
+
+    Das Skript fragt nach, bevor es die Secure-Boot-Schlüssel registriert, und pacman fragt nach, bevor es die Pakete
+    installiert. Es führt diese Schritte aus:
+
+    - Es prüft das TPM, die IOMMU und welchen Boot-Manager du verwendest.
+    - Es registriert die CachyOS EAC CA. Im Setup-Modus erstellt es zuerst deine eigenen Schlüssel und registriert
+      sie zusammen mit den Schlüsseln von Microsoft.
+    - Es installiert `linux-cachyos-eac`, `systemd-boot-cachyos-signed` und die `linux-cachyos-eac-*`-Modulpakete, die
+      zu deinem System passen (NVIDIA, ZFS, r8125).
+    - Es signiert deine normalen Kernel mit deinem eigenen Schlüssel, ebenso Limine oder rEFInd, damit dein normaler
+      Boot mit aktiviertem Secure Boot weiter funktioniert.
+    - Es hält `sbctl` von den CachyOS-signierten Dateien fern und stellt ihre Signaturen wieder her, falls `sbctl` sie
+      erneut signiert hat.
+    - Es erstellt den EAC-Booteintrag aus den Kernel-Optionen deines laufenden Systems und den EAC-Optionen. Mit
+      Limine und rEFInd installiert es außerdem das von CachyOS signierte systemd-boot mit einem eigenen
+      Firmware-Booteintrag „CachyOS EAC“.
+
+    Wenn die Firmware nicht im Setup-Modus ist und deine Schlüssel nicht mit `sbctl` erstellt wurden, bricht das
+    Skript ab und fordert dich auf, die Firmware in den Setup-Modus zu versetzen. Mach das und führe es erneut aus.
+
+    Der EAC-Eintrag verwendet die Kernel-Optionen, mit denen dein System gebootet wurde. Wenn du später die
+    Kernel-Optionen deines normalen Booteintrags änderst, starte neu und führe `sudo eac-setup` erneut aus.
+
+3. **Aktiviere Secure Boot**
+
+    `eac-setup` sagt dir am Ende, ob Secure Boot noch deaktiviert ist. Wenn es bereits aktiviert ist, überspringe
+    diesen Schritt.
+
+    Starte in die Firmware-Einstellungen neu und aktiviere Secure Boot. Wenn dein Board keinen Schalter für Secure
+    Boot hat, sieh dir die ASUS-Hinweise in der
+    [Secure-Boot-Anleitung](/de/configuration/secure_boot_setup#kernel-image-und-boot-manager-signieren) an.
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+4. **Boote in EAC**
+
+    ```bash
+    sudo eac-setup boot
+    ```
+
+    Das startet einmalig in den EAC-Eintrag neu. Der Neustart nach deiner Spielesession startet wieder dein normales
+    System. Mit systemd-boot kannst du auch **CachyOS (EAC)** im Bootmenü auswählen.
+
+    :::caution
+    Das Limine-Menü zeigt ebenfalls einen Eintrag für `linux-cachyos-eac`. Wenn du ihn über Limine bootest, besteht
+    er die EAC-Prüfungen **nicht**. Verwende immer `sudo eac-setup boot`.
+    :::
+
+    Prüfe danach das Ergebnis wie unter [Einrichtung überprüfen](#einrichtung-überprüfen) beschrieben.
+
+</Steps>
+
+## Manuelle Einrichtung
+
+Das sind die Schritte, die `eac-setup` ausführt, zum Nachmachen von Hand oder zum Nachschlagen, was das Skript ändert.
+Du kannst jederzeit zum Skript wechseln, es macht dort weiter, wo die Einrichtung gerade steht.
+
 :::note[Führe die Befehle in bash aus]
 Die Befehle auf dieser Seite sind für bash geschrieben. Die Standard-Shell von CachyOS ist fish, die einige davon
 ablehnt, zum Beispiel mit `Unsupported use of '='`. Starte zuerst `bash` in deinem Terminal und führe dann die Befehle
 aus.
 :::
 
-## Wenn du Secure Boot bereits verwendest
+### Wenn du Secure Boot bereits verwendest
 
 Wenn du Secure Boot bereits mit `sbctl` eingerichtet hast, zum Beispiel mit der
 [Secure-Boot-Anleitung](/de/configuration/secure_boot_setup), brauchst du den Setup-Modus nicht. `sbctl` kann die
@@ -106,14 +196,221 @@ mit deinem eigenen Key Exchange Key (KEK), den die Firmware akzeptiert.
 
 3. **Mache mit der Einrichtung für deinen Boot-Manager weiter**
 
-    Folge der [Einrichtung mit systemd-boot](#einrichtung-mit-systemd-boot) oder der
-    [Einrichtung mit Limine](#einrichtung-mit-limine) ab Schritt 2. Überspringe Schritt 3, die CA ist registriert und
-    dein Boot-Manager ist bereits signiert. In Schritt 6 ist Secure Boot bereits aktiviert, du musst also nur den
-    EAC-Eintrag booten.
+    Folge der [Einrichtung für deinen Boot-Manager](#einrichtung-für-deinen-boot-manager) ab Schritt 2. Überspringe
+    Schritt 3, die CA ist registriert und dein Boot-Manager ist bereits signiert. In Schritt 6 ist Secure Boot
+    bereits aktiviert, du musst also nur den EAC-Eintrag booten.
 
 </Steps>
 
-## Einrichtung mit systemd-boot
+### Einrichtung für deinen Boot-Manager
+
+<Tabs syncKey="boot-manager">
+<TabItem label='Limine'>
+
+Limine bleibt dein Standard-Boot-Manager. Das von CachyOS signierte systemd-boot wird daneben installiert, in einem
+eigenen Verzeichnis auf der EFI-Systempartition und mit einem eigenen Firmware-Booteintrag. Zum Spielen sagst du der
+Firmware, dass sie beim nächsten Boot einmalig systemd-boot starten soll (`BootNext`). systemd-boot bootet dann direkt
+den EAC-Kernel. Danach startet dein System wie gewohnt wieder Limine.
+
+<Steps>
+
+1. **Versetze die Firmware in den Setup-Modus**
+
+    Wenn du Secure Boot bereits mit `sbctl` verwendest, folge stattdessen
+    [Wenn du Secure Boot bereits verwendest](#wenn-du-secure-boot-bereits-verwendest) und mache mit Schritt 2 weiter.
+
+    Folge [In den Setup-Modus im UEFI wechseln](/de/configuration/secure_boot_setup#in-den-setup-modus-im-uefi-wechseln)
+    und lass Secure Boot vorerst **deaktiviert**.
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+2. **Installiere die Pakete**
+
+    Wenn du systemd-boot vor dem Wechsel zu Limine mit der [Secure-Boot-Anleitung](/de/configuration/secure_boot_setup)
+    verwendet hast, entferne zuerst das selbst signierte systemd-boot, das dabei erstellt wurde. Sonst verweigert
+    pacman die Installation von `systemd-boot-cachyos-signed`, und `sbctl` überschreibt das von CachyOS signierte
+    systemd-boot:
+
+    ```bash
+    sudo sbctl remove-file /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+    sudo rm -f /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed
+    ```
+
+    Installiere dann die Pakete:
+
+    ```bash
+    sudo pacman -S sbctl sbsigntools tpm2-tools efibootmgr cachyos-eac-signing-key linux-cachyos-eac systemd-boot-cachyos-signed
+    ```
+
+    Auf Systemen mit NVIDIA-GPU installiere zusätzlich `linux-cachyos-eac-nvidia-open` (Turing und neuer) oder
+    `linux-cachyos-eac-nvidia-580xx` (Maxwell, Pascal und Volta). Wenn du ZFS verwendest, installiere zusätzlich
+    `linux-cachyos-eac-zfs`. Wenn du `r8125-dkms` für eine Realtek-Netzwerkkarte mit 2,5 GbE verwendest, installiere
+    zusätzlich `linux-cachyos-eac-r8125`.
+
+    :::danger
+    Führe `bootctl install` **nicht** aus. Es würde systemd-boot zu deinem Standard-Boot-Manager machen und den
+    Fallback-Bootloader auf der EFI-Systempartition ersetzen.
+    :::
+
+    :::caution
+    Lass `ENABLE_UKI=no` (die Voreinstellung) in `/etc/default/limine` stehen. Mit aktivierten UKIs wird der
+    EAC-Kernel in ein neues Image gepackt, das `sbctl` mit deinem eigenen Schlüssel signiert, und das akzeptiert EAC
+    nicht.
+    :::
+
+3. **Registriere die Secure-Boot-Schlüssel und signiere Limine**
+
+    Überspringe diesen Schritt, wenn du die CA wie unter
+    [Wenn du Secure Boot bereits verwendest](#wenn-du-secure-boot-bereits-verwendest) beschrieben registriert hast.
+
+    `cachyos-eac-signing-key` legt das Zertifikat der CachyOS EAC CA in das Verzeichnis von `sbctl` für eigene
+    Zertifikate. Registriere deine eigenen Schlüssel zusammen mit den Schlüsseln von Microsoft, den integrierten
+    Schlüsseln der Firmware und der CachyOS EAC CA.
+
+    :::caution[ASUS- und Gigabyte-Mainboards]
+    Führe auf diesen Boards statt des letzten Befehls unten `sudo sbctl enroll-keys --microsoft --custom` aus, also
+    ohne `--firmware-builtin`. Auf einigen von ihnen erzeugt das Flag doppelte Schlüsseleinträge, und das Board bricht
+    mit einer **Secure Boot Violation** ab, sobald Secure Boot aktiviert ist. Falls das schon passiert ist, lösche alle
+    Secure-Boot-Schlüssel in den Firmware-Einstellungen, um wieder in den Setup-Modus zu kommen (siehe
+    [In den Setup-Modus im UEFI wechseln](/de/configuration/secure_boot_setup#in-den-setup-modus-im-uefi-wechseln)),
+    boote CachyOS und führe `sudo sbctl enroll-keys --microsoft --custom` aus. Verwende dafür nicht den Befehl aus der
+    Secure-Boot-Anleitung, er lässt die CachyOS EAC CA weg.
+    :::
+
+    ```bash
+    sudo sbctl create-keys
+    sudo sbctl enroll-keys --microsoft --firmware-builtin --custom
+    ```
+
+    Wenn `sbctl` mit `could not enroll built-in firmware keys` abbricht, hat die Firmware keine integrierten
+    Schlüssel, und es wurde noch nichts registriert. Führe den letzten Befehl erneut ohne `--firmware-builtin` aus.
+
+    Prüfe, ob das Zertifikat registriert wurde:
+
+    ```bash
+    sudo sbctl list-enrolled-keys
+    ```
+
+    Im Abschnitt `db` muss `CachyOS EAC CA` stehen.
+
+    Limine selbst muss weiterhin mit deinem eigenen Schlüssel signiert werden, damit dein normaler Boot mit
+    aktiviertem Secure Boot weiter funktioniert. Folge dem Limine-Tab unter
+    [Kernel-Image und Boot-Manager signieren](/de/configuration/secure_boot_setup#kernel-image-und-boot-manager-signieren).
+
+    :::caution
+    Signiere den EAC-Kernel oder das von CachyOS signierte systemd-boot niemals mit `sbctl`. Verwende dafür weder
+    `sbctl-batch-sign` noch `sbctl sign`, auch wenn `sbctl verify` sie als nicht signiert auflistet. Sie sind von
+    CachyOS signiert.
+    :::
+
+4. **Lege systemd-boot als eigenen Firmware-Booteintrag an**
+
+    `sbctl` signiert jede Datei in seiner Datenbank erneut, sobald ein Kernel oder eine EFI-Datei aktualisiert wird.
+    Prüfe, dass keine der CachyOS-signierten Dateien darin steht, zum Beispiel von einem früheren `sbctl sign -s`:
+
+    ```bash
+    sudo sbctl list-files
+    ```
+
+    Wenn ein aufgelisteter Pfad `cachyos-eac` enthält oder `/usr/lib/systemd/boot/efi/systemd-bootx64.efi` ist,
+    entferne ihn mit `sudo sbctl remove-file <Pfad>`. Installiere dann die Pakete neu, um die CachyOS-Signaturen
+    wiederherzustellen:
+
+    ```bash
+    sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
+    ```
+
+    Kopiere das signierte systemd-boot in ein eigenes Verzeichnis auf der EFI-Systempartition:
+
+    ```bash
+    ESP="$(bootctl --print-esp-path)"
+    sudo install -Dm644 /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed "$ESP/EFI/cachyos-eac/systemd-bootx64.efi"
+    ```
+
+    Solange `EFI/cachyos-eac` existiert, aktualisiert `systemd-boot-cachyos-signed` diese Kopie automatisch.
+
+    Erstelle dann den Firmware-Booteintrag. `--create-only` legt den Eintrag an, ohne die Bootreihenfolge zu ändern,
+    Limine bleibt also der Standard:
+
+    ```bash
+    ESP_DEV="$(findmnt -no SOURCE "$ESP")"
+    ESP_DISK="/dev/$(lsblk -no PKNAME "$ESP_DEV")"
+    ESP_PART="$(cat "/sys/class/block/$(basename "$ESP_DEV")/partition")"
+    sudo efibootmgr --create-only --disk "$ESP_DISK" --part "$ESP_PART" \
+      --label "CachyOS EAC" --loader '\EFI\cachyos-eac\systemd-bootx64.efi'
+    ```
+
+    Prüfe, dass der neue Eintrag aufgelistet ist und `BootOrder` weiterhin mit Limine beginnt:
+
+    ```bash
+    efibootmgr
+    ```
+
+5. **Erstelle den EAC-Booteintrag**
+
+    systemd-boot liest seine Konfiguration von der EFI-Systempartition. Der Limine-Hook hält den EAC-Kernel und sein
+    initramfs in einem Verzeichnis aktuell, das nach deiner Machine-ID benannt ist. Prüfe, dass beide existieren:
+
+    ```bash
+    ESP="$(bootctl --print-esp-path)"
+    KERNEL="/$(cat /etc/machine-id)/linux-cachyos-eac/vmlinuz"
+    INITRD="/$(cat /etc/machine-id)/linux-cachyos-eac/initramfs"
+    sudo ls -l "$ESP$KERNEL" "$ESP$INITRD"
+    ```
+
+    Erstelle dann die Kernel-Kommandozeile aus der deines laufenden Systems und den EAC-Optionen:
+
+    ```bash
+    EAC_REQ="lockdown=integrity lsm=landlock,lockdown,yama,integrity,bpf iommu.passthrough=0 intel_iommu=on module.sig_enforce=1 sysctl.kernel.kexec_load_disabled=1"
+    EAC_OPTS="$(sed -E 's/(^| )(BOOT_IMAGE|initrd)=[^ ]*//g' /proc/cmdline) $EAC_REQ"
+    echo "$EAC_OPTS"
+    ```
+
+    Die Ausgabe muss deine `root=`-Option enthalten und mit den EAC-Optionen enden. Schreibe den Eintrag und mache
+    ihn zum Standard, damit systemd-boot ihn startet, ohne ein Menü anzuzeigen. Eine vorhandene `loader/loader.conf`
+    wird dabei ersetzt. Das ist hier in Ordnung, weil systemd-boot nur den EAC-Eintrag startet:
+
+    ```bash
+    printf 'title   CachyOS (EAC)\nlinux   %s\ninitrd  %s\noptions %s\n' "$KERNEL" "$INITRD" "$EAC_OPTS" \
+      | sudo install -Dm644 /dev/stdin "$ESP/loader/entries/cachyos-eac.conf"
+    printf 'default cachyos-eac.conf\ntimeout 0\n' | sudo install -Dm644 /dev/stdin "$ESP/loader/loader.conf"
+    ```
+
+    Um das Menü von systemd-boot trotzdem zu sehen, halte beim Start die <kbd>Leertaste</kbd> gedrückt.
+
+    :::caution
+    Das Limine-Menü zeigt ebenfalls einen Eintrag für `linux-cachyos-eac`. Wenn du ihn über Limine bootest, besteht
+    er die EAC-Prüfungen **nicht**. Verwende immer den Firmware-Eintrag „CachyOS EAC“.
+    :::
+
+6. **Aktiviere Secure Boot und boote in EAC**
+
+    Wenn Secure Boot bereits aktiviert ist, springe direkt zum Booten in EAC.
+
+    Starte in die Firmware-Einstellungen neu und aktiviere Secure Boot. Wenn dein Board keinen Schalter für Secure
+    Boot hat, sieh dir die ASUS-Hinweise in der
+    [Secure-Boot-Anleitung](/de/configuration/secure_boot_setup#kernel-image-und-boot-manager-signieren) an.
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+    Um in EAC zu booten, setze den Eintrag „CachyOS EAC“ als `BootNext` und starte neu. `sudo eac-setup boot` macht
+    dasselbe:
+
+    ```bash
+    EAC_BOOTNUM="$(efibootmgr | sed -n 's/^Boot\([0-9A-F]\{4\}\)\* CachyOS EAC.*/\1/p')"
+    sudo efibootmgr --bootnext "$EAC_BOOTNUM" && systemctl reboot
+    ```
+
+    `BootNext` gilt nur für den nächsten Boot. Der Neustart nach deiner Spielesession startet wieder Limine.
+
+</Steps>
+
+</TabItem>
+<TabItem label='systemd-boot'>
 
 <Steps>
 
@@ -284,12 +581,23 @@ mit deinem eigenen Key Exchange Key (KEK), den die Firmware akzeptiert.
 
 </Steps>
 
-## Einrichtung mit Limine
+</TabItem>
+<TabItem label='rEFInd'>
 
-Limine bleibt dein Standard-Boot-Manager. Das von CachyOS signierte systemd-boot wird daneben installiert, in einem
-eigenen Verzeichnis auf der EFI-Systempartition und mit einem eigenen Firmware-Booteintrag. Zum Spielen sagst du der
-Firmware, dass sie beim nächsten Boot einmalig systemd-boot starten soll (`BootNext`). systemd-boot bootet dann direkt
-den EAC-Kernel. Danach startet dein System wie gewohnt wieder Limine.
+rEFInd bleibt dein Standard-Boot-Manager. Wie bei Limine wird das von CachyOS signierte systemd-boot in einem eigenen
+Verzeichnis auf der EFI-Systempartition installiert und bekommt einen eigenen Firmware-Booteintrag. Zum Spielen sagst
+du der Firmware, dass sie beim nächsten Boot einmalig systemd-boot starten soll (`BootNext`). systemd-boot bootet
+dann direkt den EAC-Kernel. Danach startet dein System wie gewohnt wieder rEFInd.
+
+Für diese Schritte muss die EFI-Systempartition unter `/boot` eingehängt sein, so richtet der CachyOS-Installer rEFInd
+ein. Prüfe das:
+
+```bash
+bootctl --print-esp-path
+```
+
+Die Ausgabe muss `/boot` sein. Andere Layouts, zum Beispiel eine EFI-Systempartition unter `/boot/efi` von älteren
+Installationen, werden nicht unterstützt.
 
 <Steps>
 
@@ -307,7 +615,7 @@ den EAC-Kernel. Danach startet dein System wie gewohnt wieder Limine.
 
 2. **Installiere die Pakete**
 
-    Wenn du systemd-boot vor dem Wechsel zu Limine mit der [Secure-Boot-Anleitung](/de/configuration/secure_boot_setup)
+    Wenn du systemd-boot vor dem Wechsel zu rEFInd mit der [Secure-Boot-Anleitung](/de/configuration/secure_boot_setup)
     verwendet hast, entferne zuerst das selbst signierte systemd-boot, das dabei erstellt wurde. Sonst verweigert
     pacman die Installation von `systemd-boot-cachyos-signed`, und `sbctl` überschreibt das von CachyOS signierte
     systemd-boot:
@@ -333,13 +641,7 @@ den EAC-Kernel. Danach startet dein System wie gewohnt wieder Limine.
     Fallback-Bootloader auf der EFI-Systempartition ersetzen.
     :::
 
-    :::caution
-    Lass `ENABLE_UKI=no` (die Voreinstellung) in `/etc/default/limine` stehen. Mit aktivierten UKIs wird der
-    EAC-Kernel in ein neues Image gepackt, das `sbctl` mit deinem eigenen Schlüssel signiert, und das akzeptiert EAC
-    nicht.
-    :::
-
-3. **Registriere die Secure-Boot-Schlüssel und signiere Limine**
+3. **Registriere die Secure-Boot-Schlüssel und signiere rEFInd**
 
     Überspringe diesen Schritt, wenn du die CA wie unter
     [Wenn du Secure Boot bereits verwendest](#wenn-du-secure-boot-bereits-verwendest) beschrieben registriert hast.
@@ -374,9 +676,19 @@ den EAC-Kernel. Danach startet dein System wie gewohnt wieder Limine.
 
     Im Abschnitt `db` muss `CachyOS EAC CA` stehen.
 
-    Limine selbst muss weiterhin mit deinem eigenen Schlüssel signiert werden, damit dein normaler Boot mit
-    aktiviertem Secure Boot weiter funktioniert. Folge dem Limine-Tab unter
-    [Kernel-Image und Boot-Manager signieren](/de/configuration/secure_boot_setup#kernel-image-und-boot-manager-signieren).
+    rEFInd und deine normalen Kernel müssen weiterhin mit deinem eigenen Schlüssel signiert werden, damit dein
+    normaler Boot mit aktiviertem Secure Boot weiter funktioniert. Der `find`-Befehl überspringt den EAC-Kernel, der
+    bereits von CachyOS signiert ist:
+
+    ```bash
+    sudo sbctl sign -s /boot/EFI/refind/refind_x64.efi
+    sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+    sudo sbctl list-files
+    ```
+
+    Die Ausgabe muss rEFInd und jeden deiner normalen Kernel als signiert anzeigen. `sbctl` signiert sie nach
+    Kernel-Updates erneut. pacman aktualisiert rEFInd auf der EFI-Systempartition nicht. Wenn du `refind-install`
+    selbst ausführst, führe danach `sudo sbctl sign-all` aus.
 
     :::caution
     Signiere den EAC-Kernel oder das von CachyOS signierte systemd-boot niemals mit `sbctl`. Verwende dafür weder
@@ -385,6 +697,21 @@ den EAC-Kernel. Danach startet dein System wie gewohnt wieder Limine.
     :::
 
 4. **Lege systemd-boot als eigenen Firmware-Booteintrag an**
+
+    `sbctl` signiert jede Datei in seiner Datenbank erneut, sobald ein Kernel oder eine EFI-Datei aktualisiert wird.
+    Prüfe, dass keine der CachyOS-signierten Dateien darin steht, zum Beispiel von einem früheren `sbctl sign -s`:
+
+    ```bash
+    sudo sbctl list-files
+    ```
+
+    Wenn ein aufgelisteter Pfad `cachyos-eac` enthält oder `/usr/lib/systemd/boot/efi/systemd-bootx64.efi` ist,
+    entferne ihn mit `sudo sbctl remove-file <Pfad>`. Installiere dann die Pakete neu, um die CachyOS-Signaturen
+    wiederherzustellen:
+
+    ```bash
+    sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
+    ```
 
     Kopiere das signierte systemd-boot in ein eigenes Verzeichnis auf der EFI-Systempartition:
 
@@ -396,7 +723,7 @@ den EAC-Kernel. Danach startet dein System wie gewohnt wieder Limine.
     Solange `EFI/cachyos-eac` existiert, aktualisiert `systemd-boot-cachyos-signed` diese Kopie automatisch.
 
     Erstelle dann den Firmware-Booteintrag. `--create-only` legt den Eintrag an, ohne die Bootreihenfolge zu ändern,
-    Limine bleibt also der Standard:
+    rEFInd bleibt also der Standard:
 
     ```bash
     ESP_DEV="$(findmnt -no SOURCE "$ESP")"
@@ -406,7 +733,7 @@ den EAC-Kernel. Danach startet dein System wie gewohnt wieder Limine.
       --label "CachyOS EAC" --loader '\EFI\cachyos-eac\systemd-bootx64.efi'
     ```
 
-    Prüfe, dass der neue Eintrag aufgelistet ist und `BootOrder` weiterhin mit Limine beginnt:
+    Prüfe, dass der neue Eintrag aufgelistet ist und `BootOrder` weiterhin mit rEFInd beginnt:
 
     ```bash
     efibootmgr
@@ -414,17 +741,8 @@ den EAC-Kernel. Danach startet dein System wie gewohnt wieder Limine.
 
 5. **Erstelle den EAC-Booteintrag**
 
-    systemd-boot liest seine Konfiguration von der EFI-Systempartition. Der Limine-Hook hält den EAC-Kernel und sein
-    initramfs in einem Verzeichnis aktuell, das nach deiner Machine-ID benannt ist. Prüfe, dass beide existieren:
-
-    ```bash
-    ESP="$(bootctl --print-esp-path)"
-    KERNEL="/$(cat /etc/machine-id)/linux-cachyos-eac/vmlinuz"
-    INITRD="/$(cat /etc/machine-id)/linux-cachyos-eac/initramfs"
-    sudo ls -l "$ESP$KERNEL" "$ESP$INITRD"
-    ```
-
-    Erstelle dann die Kernel-Kommandozeile aus der deines laufenden Systems und den EAC-Optionen:
+    systemd-boot liest seine Konfiguration von der EFI-Systempartition, auf der der EAC-Kernel und sein initramfs
+    bereits liegen. Erstelle die Kernel-Kommandozeile aus der deines laufenden Systems und den EAC-Optionen:
 
     ```bash
     EAC_REQ="lockdown=integrity lsm=landlock,lockdown,yama,integrity,bpf iommu.passthrough=0 intel_iommu=on module.sig_enforce=1 sysctl.kernel.kexec_load_disabled=1"
@@ -433,21 +751,28 @@ den EAC-Kernel. Danach startet dein System wie gewohnt wieder Limine.
     ```
 
     Die Ausgabe muss deine `root=`-Option enthalten und mit den EAC-Optionen enden. Schreibe den Eintrag und mache
-    ihn zum Standard, damit systemd-boot ihn startet, ohne ein Menü anzuzeigen. Eine vorhandene `loader/loader.conf`
-    wird dabei ersetzt. Das ist hier in Ordnung, weil systemd-boot nur den EAC-Eintrag startet:
+    ihn zum Standard, damit systemd-boot ihn startet, ohne ein Menü anzuzeigen:
 
     ```bash
-    printf 'title   CachyOS (EAC)\nlinux   %s\ninitrd  %s\noptions %s\n' "$KERNEL" "$INITRD" "$EAC_OPTS" \
+    ESP="$(bootctl --print-esp-path)"
+    printf 'title   CachyOS (EAC)\nlinux   /vmlinuz-linux-cachyos-eac\ninitrd  /initramfs-linux-cachyos-eac.img\noptions %s\n' "$EAC_OPTS" \
       | sudo install -Dm644 /dev/stdin "$ESP/loader/entries/cachyos-eac.conf"
     printf 'default cachyos-eac.conf\ntimeout 0\n' | sudo install -Dm644 /dev/stdin "$ESP/loader/loader.conf"
     ```
 
     Um das Menü von systemd-boot trotzdem zu sehen, halte beim Start die <kbd>Leertaste</kbd> gedrückt.
 
-    :::caution
-    Das Limine-Menü zeigt ebenfalls einen Eintrag für `linux-cachyos-eac`. Wenn du ihn über Limine bootest, besteht
-    er die EAC-Prüfungen **nicht**. Verwende immer den Firmware-Eintrag „CachyOS EAC“.
-    :::
+    rEFInd findet den EAC-Kernel und systemd-boot von selbst und nimmt sie in sein Menü auf. Alles, was aus dem
+    rEFInd-Menü gestartet wird, besteht die EAC-Prüfungen **nicht**, weil rEFInd mit deinem eigenen Schlüssel
+    signiert ist. Blende beide Einträge aus:
+
+    ```bash
+    printf '\n# Easy Anti-Cheat: boot these only through the "CachyOS EAC" firmware entry\ndont_scan_files +,vmlinuz-linux-cachyos-eac\ndont_scan_dirs +,EFI/cachyos-eac\n' \
+      | sudo tee -a "$ESP/EFI/refind/refind.conf" >/dev/null
+    ```
+
+    Das `+` behält die Dateien und Verzeichnisse bei, die rEFInd bereits überspringt. Ab dem nächsten Boot zeigt das
+    rEFInd-Menü nur noch deine normalen Kernel.
 
 6. **Aktiviere Secure Boot und boote in EAC**
 
@@ -461,16 +786,20 @@ den EAC-Kernel. Danach startet dein System wie gewohnt wieder Limine.
     systemctl reboot --firmware-setup
     ```
 
-    Um in EAC zu booten, setze den Eintrag „CachyOS EAC“ als `BootNext` und starte neu:
+    Um in EAC zu booten, setze den Eintrag „CachyOS EAC“ als `BootNext` und starte neu. `sudo eac-setup boot` macht
+    dasselbe:
 
     ```bash
     EAC_BOOTNUM="$(efibootmgr | sed -n 's/^Boot\([0-9A-F]\{4\}\)\* CachyOS EAC.*/\1/p')"
     sudo efibootmgr --bootnext "$EAC_BOOTNUM" && systemctl reboot
     ```
 
-    `BootNext` gilt nur für den nächsten Boot. Der Neustart nach deiner Spielesession startet wieder Limine.
+    `BootNext` gilt nur für den nächsten Boot. Der Neustart nach deiner Spielesession startet wieder rEFInd.
 
 </Steps>
+
+</TabItem>
+</Tabs>
 
 ## Einrichtung überprüfen
 
@@ -504,11 +833,16 @@ hat der initramfs-Hook von `sbctl` das bei jedem Neubau des initramfs getan. Akt
 sudo pacman -Syu
 ```
 
-Mit systemd-boot wiederhole Schritt 4 der [Einrichtung mit systemd-boot](#einrichtung-mit-systemd-boot), um die
-Dateien aus der Datenbank von `sbctl` zu entfernen und die Pakete neu zu installieren.
+Führe danach `sudo eac-setup` erneut aus. Es entfernt die Dateien aus der Datenbank von `sbctl` und stellt die
+CachyOS-Signaturen wieder her. Um das von Hand zu machen, folge den Schritten unten.
 
-Mit Limine folge diesem Schritt **nicht**. Sein `bootctl install` würde systemd-boot zu deinem Standard-Boot-Manager
-machen und den Fallback-Bootloader auf der EFI-Systempartition ersetzen. Prüfe stattdessen die Datenbank von `sbctl`:
+Mit systemd-boot wiederhole Schritt 4 im systemd-boot-Tab unter
+[Einrichtung für deinen Boot-Manager](#einrichtung-für-deinen-boot-manager), um die Dateien aus der Datenbank von
+`sbctl` zu entfernen und die Pakete neu zu installieren.
+
+Mit Limine oder rEFInd folge diesem Schritt **nicht**. Sein `bootctl install` würde systemd-boot zu deinem
+Standard-Boot-Manager machen und den Fallback-Bootloader auf der EFI-Systempartition ersetzen. Prüfe stattdessen die
+Datenbank von `sbctl`:
 
 ```bash
 sudo sbctl list-files
@@ -527,11 +861,12 @@ sudo install -Dm644 /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed "$ESP/E
 ### Das Spiel meldet, dass das System nicht unterstützt wird
 
 Führe `sudo eac-status` im EAC-Eintrag aus und behebe jede Prüfung, die mit `[FAIL]` markiert ist. Meistens wurde der
-falsche Eintrag gebootet, und `eac-status` meldet, dass die EAC-Optionen in der Kernel-Kommandozeile fehlen. Boote
-**CachyOS (EAC)** in systemd-boot, nicht den automatisch erstellten Eintrag „Linux CachyOS Eac“. Mit Limine boote über
-den Firmware-Eintrag „CachyOS EAC“, nicht über das Limine-Menü.
+falsche Eintrag gebootet, und `eac-status` meldet, dass die EAC-Optionen in der Kernel-Kommandozeile fehlen. Starte
+mit `sudo eac-setup boot` neu. In systemd-boot kannst du auch **CachyOS (EAC)** auswählen, nicht den automatisch
+erstellten Eintrag „Linux CachyOS Eac“. Mit Limine oder rEFInd starte den EAC-Kernel nicht aus dem Limine- oder
+rEFInd-Menü.
 
-### Limine startet statt des EAC-Eintrags
+### Limine oder rEFInd startet statt des EAC-Eintrags
 
 Prüfe, ob `BootNext` vor dem Neustart gesetzt wurde:
 
@@ -540,8 +875,9 @@ efibootmgr | grep -E 'BootNext|CachyOS EAC'
 ```
 
 Wenn der Eintrag „CachyOS EAC“ fehlt, hat die Firmware ihn entfernt, was manche Boards nach einem Firmware-Update
-oder einem Reset tun. Lege ihn erneut an (Schritt 4 der [Einrichtung mit Limine](#einrichtung-mit-limine)). Du kannst
-„CachyOS EAC“ auch im einmaligen Bootmenü der Firmware auswählen.
+oder einem Reset tun. Führe `sudo eac-setup` aus, um ihn erneut anzulegen, oder wiederhole Schritt 4 im Limine- oder
+rEFInd-Tab unter [Einrichtung für deinen Boot-Manager](#einrichtung-für-deinen-boot-manager). Du kannst „CachyOS EAC“
+auch im einmaligen Bootmenü der Firmware auswählen.
 
 ### Ein Modul lädt im EAC-Eintrag nicht
 
