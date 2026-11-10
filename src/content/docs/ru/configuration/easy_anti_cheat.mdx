@@ -4,7 +4,7 @@ description: Загрузка ядра CachyOS EAC с Secure Boot, чтобы з
 ai_translated: true
 ---
 
-import { Steps } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 [Easy Anti-Cheat Linux v2](https://onlineservices.epicgames.com/news/introducing-easy-anti-cheat-linux-v2)
 разрешает запуск игр, только если может проверить, как была загружена система. Он проверяет, что:
@@ -22,15 +22,20 @@ systemd-boot, подписанный тем же ключом. Ваши собс
 запись EAC вы загружаетесь только тогда, когда хотите поиграть в игру с EAC.
 
 EAC требует загрузчик, который проверяет всё загружаемое по базе данных Secure Boot и измеряет это в TPM.
-systemd-boot это делает, Limine — нет. Поэтому пользователи Limine оставляют Limine загрузчиком по умолчанию и
-запускают ядро EAC через подписанный CachyOS systemd-boot, который получает собственную загрузочную запись в прошивке
-и используется только для загрузки EAC.
+systemd-boot это делает, Limine — нет. rEFInd это делает, но он подписан вашим собственным ключом, а такой загрузчик
+EAC не принимает. Поэтому пользователи Limine и rEFInd оставляют свой загрузчик загрузчиком по умолчанию и запускают
+ядро EAC через подписанный CachyOS systemd-boot, который получает собственную загрузочную запись в прошивке и
+используется только для загрузки EAC.
+
+[Скрипт `eac-setup`](#настройка-с-помощью-eac-setup) выполняет настройку за вас. В разделе
+[Ручная настройка](#ручная-настройка) те же шаги описаны для выполнения вручную.
 
 ## Требования
 
-- CachyOS, установленная в режиме UEFI с **systemd-boot** или **Limine** в качестве загрузчика.
-- Обновлённая система (`sudo pacman -Syu`). Для `eac-status` и поддержки EAC в `sbctl-batch-sign` нужен
-  `cachyos-settings` версии 1.4.2 или новее.
+- CachyOS, установленная в режиме UEFI с **systemd-boot**, **Limine** или **rEFInd** в качестве загрузчика. С rEFInd
+  системный раздел EFI должен быть смонтирован в `/boot`, как его настраивает установщик CachyOS.
+- Обновлённая система (`sudo pacman -Syu`). Для `eac-setup` нужен `cachyos-settings` версии 1.4.4 или новее, для
+  `eac-status` и поддержки EAC в `sbctl-batch-sign` — 1.4.2 или новее.
 - **TPM 2.0**, включённый в настройках прошивки. TPM в прошивке (AMD fTPM, Intel PTT) тоже подходит.
 - **IOMMU**, включённый в настройках прошивки (AMD-Vi / «IOMMU» на AMD, VT-d на Intel).
 - Видеокарты NVIDIA: Maxwell или новее (GTX 750, серия GTX 900 и новее). Ядро EAC поставляет модули NVIDIA в виде
@@ -49,12 +54,96 @@ EAC загружаться не будут. Не устанавливайте `l
 фразу. Подготовьте их до начала, иначе вы можете потерять доступ к своим данным.
 :::
 
+## Настройка с помощью eac-setup
+
+`eac-setup` из `cachyos-settings` выполняет настройку для systemd-boot, Limine и rEFInd. Он проверяет, что уже
+сделано, поэтому его можно запускать повторно в любой момент, например чтобы исправить настройку. Вам остаётся только
+изменить настройки прошивки.
+
+<Steps>
+
+1. **Переведите прошивку в режим настройки (Setup Mode)**
+
+    Пропустите этот шаг, если вы уже используете Secure Boot с ключами, созданными `sbctl`, например по
+    [руководству по Secure Boot](/ru/configuration/secure_boot_setup). В этом случае `eac-setup` добавит CachyOS EAC
+    CA в базу данных Secure Boot, а Secure Boot останется включённым.
+
+    В противном случае следуйте разделу
+    [Вход в режим настройки (Setup Mode) в UEFI](/ru/configuration/secure_boot_setup#вход-в-режим-настройки-setup-mode-в-uefi)
+    и пока оставьте Secure Boot **отключённым**.
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+2. **Запустите eac-setup**
+
+    ```bash
+    sudo eac-setup
+    ```
+
+    Скрипт спрашивает подтверждение перед регистрацией ключей Secure Boot, а pacman — перед установкой пакетов. Он
+    выполняет следующие шаги:
+
+    - Проверяет TPM, IOMMU и то, какой загрузчик вы используете.
+    - Регистрирует CachyOS EAC CA. В режиме настройки он сначала создаёт ваши собственные ключи и регистрирует их
+      вместе с ключами Microsoft.
+    - Устанавливает `linux-cachyos-eac`, `systemd-boot-cachyos-signed` и пакеты модулей `linux-cachyos-eac-*`,
+      подходящие для вашей системы (NVIDIA, ZFS, r8125).
+    - Подписывает ваши обычные ядра вашим собственным ключом, а также Limine или rEFInd, чтобы обычная загрузка
+      продолжала работать при включённом Secure Boot.
+    - Не даёт `sbctl` подписывать файлы, подписанные CachyOS, и восстанавливает их подписи, если `sbctl` подписал их
+      повторно.
+    - Создаёт загрузочную запись EAC из параметров ядра работающей системы и параметров EAC. С Limine и rEFInd он
+      также устанавливает подписанный CachyOS systemd-boot с собственной загрузочной записью прошивки «CachyOS EAC».
+
+    Если прошивка не находится в режиме настройки, а ваши ключи созданы не с помощью `sbctl`, скрипт останавливается
+    и просит перевести прошивку в режим настройки. Сделайте это и запустите его снова.
+
+    Запись EAC использует параметры ядра, с которыми была загружена ваша система. Если позже вы измените параметры
+    ядра своей обычной загрузочной записи, перезагрузитесь и снова запустите `sudo eac-setup`.
+
+3. **Включите Secure Boot**
+
+    В конце `eac-setup` сообщает, если Secure Boot всё ещё отключён. Если он уже включён, пропустите этот шаг.
+
+    Перезагрузитесь в настройки прошивки и включите Secure Boot. Если на вашей плате нет переключателя Secure Boot,
+    см. примечания для ASUS в
+    [руководстве по Secure Boot](/ru/configuration/secure_boot_setup#подпись-образа-ядра-и-загрузчика).
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+4. **Загрузитесь в EAC**
+
+    ```bash
+    sudo eac-setup boot
+    ```
+
+    Эта команда один раз перезагружает систему в запись EAC. При перезагрузке после игровой сессии снова запустится
+    ваша обычная система. С systemd-boot можно также выбрать **CachyOS (EAC)** в меню загрузки.
+
+    :::caution
+    В меню Limine тоже есть запись для `linux-cachyos-eac`. Загрузка через Limine **не** проходит проверки EAC.
+    Всегда используйте `sudo eac-setup boot`.
+    :::
+
+    Затем проверьте результат, как описано в разделе [Проверка настройки](#проверка-настройки).
+
+</Steps>
+
+## Ручная настройка
+
+Это шаги, которые выполняет `eac-setup`. Их можно выполнить вручную или посмотреть по ним, что меняет скрипт. В любой
+момент можно перейти на скрипт: он продолжит с того, что уже сделано.
+
 :::note[Выполняйте команды в bash]
 Команды на этой странице написаны для bash. Оболочка CachyOS по умолчанию — fish, и она отклоняет некоторые из них,
 например с ошибкой `Unsupported use of '='`. Сначала запустите `bash` в терминале, затем выполняйте команды.
 :::
 
-## Если вы уже используете Secure Boot
+### Если вы уже используете Secure Boot
 
 Если вы уже настроили Secure Boot с помощью `sbctl`, например по
 [руководству по Secure Boot](/ru/configuration/secure_boot_setup), режим настройки (Setup Mode) вам не нужен. `sbctl`
@@ -102,13 +191,222 @@ EAC загружаться не будут. Не устанавливайте `l
 
 3. **Продолжите настройку для вашего загрузчика**
 
-    Выполните [настройку с systemd-boot](#настройка-с-systemd-boot) или [настройку с Limine](#настройка-с-limine),
-    начиная с шага 2. Пропустите шаг 3: CA уже зарегистрирован, а ваш загрузчик уже подписан. На шаге 6 Secure Boot
-    уже включён, поэтому вам нужно только загрузить запись EAC.
+    Выполните [настройку для вашего загрузчика](#настройка-для-вашего-загрузчика), начиная с шага 2. Пропустите шаг
+    3: CA уже зарегистрирован, а ваш загрузчик уже подписан. На шаге 6 Secure Boot уже включён, поэтому вам нужно
+    только загрузить запись EAC.
 
 </Steps>
 
-## Настройка с systemd-boot
+### Настройка для вашего загрузчика
+
+<Tabs syncKey="boot-manager">
+<TabItem label='Limine'>
+
+Limine остаётся вашим загрузчиком по умолчанию. Подписанный CachyOS systemd-boot устанавливается рядом с ним, в
+собственный каталог в системном разделе EFI и с собственной загрузочной записью в прошивке. Чтобы поиграть, вы
+указываете прошивке один раз запустить systemd-boot при следующей загрузке (`BootNext`). Затем systemd-boot сразу
+загружает ядро EAC. После этого система, как обычно, снова запускает Limine.
+
+<Steps>
+
+1. **Переведите прошивку в режим настройки (Setup Mode)**
+
+    Если вы уже используете Secure Boot с `sbctl`, вместо этого выполните шаги из раздела
+    [Если вы уже используете Secure Boot](#если-вы-уже-используете-secure-boot) и продолжите с шага 2.
+
+    Следуйте разделу
+    [Вход в режим настройки (Setup Mode) в UEFI](/ru/configuration/secure_boot_setup#вход-в-режим-настройки-setup-mode-в-uefi)
+    и пока оставьте Secure Boot **отключённым**.
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+2. **Установите пакеты**
+
+    Если до перехода на Limine вы использовали systemd-boot с
+    [руководством по Secure Boot](/ru/configuration/secure_boot_setup), сначала удалите созданный им самоподписанный
+    systemd-boot. Иначе pacman откажется устанавливать `systemd-boot-cachyos-signed`, а `sbctl` перезапишет
+    подписанный CachyOS systemd-boot:
+
+    ```bash
+    sudo sbctl remove-file /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+    sudo rm -f /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed
+    ```
+
+    Затем установите пакеты:
+
+    ```bash
+    sudo pacman -S sbctl sbsigntools tpm2-tools efibootmgr cachyos-eac-signing-key linux-cachyos-eac systemd-boot-cachyos-signed
+    ```
+
+    В системах с видеокартой NVIDIA также установите `linux-cachyos-eac-nvidia-open` (Turing и новее) или
+    `linux-cachyos-eac-nvidia-580xx` (Maxwell, Pascal и Volta). Если вы используете ZFS, также установите
+    `linux-cachyos-eac-zfs`. Если вы используете `r8125-dkms` для сетевой карты Realtek 2,5 GbE, также установите
+    `linux-cachyos-eac-r8125`.
+
+    :::danger
+    **Не** запускайте `bootctl install`. Это сделает systemd-boot вашим загрузчиком по умолчанию и заменит резервный
+    загрузчик в системном разделе EFI.
+    :::
+
+    :::caution
+    Оставьте `ENABLE_UKI=no` (значение по умолчанию) в `/etc/default/limine`. При включённых UKI ядро EAC
+    упаковывается в новый образ, который `sbctl` подписывает вашим собственным ключом, а такой образ EAC не
+    принимает.
+    :::
+
+3. **Зарегистрируйте ключи Secure Boot и подпишите Limine**
+
+    Пропустите этот шаг, если вы зарегистрировали CA, как описано в разделе
+    [Если вы уже используете Secure Boot](#если-вы-уже-используете-secure-boot).
+
+    `cachyos-eac-signing-key` помещает сертификат CachyOS EAC CA в каталог `sbctl` для пользовательских сертификатов.
+    Зарегистрируйте ваши собственные ключи вместе с ключами Microsoft, встроенными ключами прошивки и CachyOS EAC CA.
+
+    :::caution[Материнские платы ASUS и Gigabyte]
+    На этих платах вместо последней команды ниже выполните `sudo sbctl enroll-keys --microsoft --custom`, то есть без
+    `--firmware-builtin`. На некоторых из них этот флаг создаёт дублирующиеся записи ключей, и после включения Secure
+    Boot плата останавливается с ошибкой **Secure Boot Violation**. Если это уже произошло, удалите все ключи Secure
+    Boot в настройках прошивки, чтобы снова войти в режим настройки (см.
+    [Вход в режим настройки (Setup Mode) в UEFI](/ru/configuration/secure_boot_setup#вход-в-режим-настройки-setup-mode-в-uefi)),
+    загрузите CachyOS и выполните `sudo sbctl enroll-keys --microsoft --custom`. Не используйте для этого команду из
+    руководства по Secure Boot: в ней нет CachyOS EAC CA.
+    :::
+
+    ```bash
+    sudo sbctl create-keys
+    sudo sbctl enroll-keys --microsoft --firmware-builtin --custom
+    ```
+
+    Если `sbctl` завершается с ошибкой `could not enroll built-in firmware keys`, в прошивке нет встроенных ключей, и
+    ничего ещё не зарегистрировано. Выполните последнюю команду ещё раз без `--firmware-builtin`.
+
+    Проверьте, что сертификат зарегистрирован:
+
+    ```bash
+    sudo sbctl list-enrolled-keys
+    ```
+
+    В разделе `db` должен быть указан `CachyOS EAC CA`.
+
+    Сам Limine по-прежнему нужно подписать вашим собственным ключом, чтобы обычная загрузка продолжала работать при
+    включённом Secure Boot. Следуйте вкладке Limine в разделе
+    [Подпись образа ядра и загрузчика](/ru/configuration/secure_boot_setup#подпись-образа-ядра-и-загрузчика).
+
+    :::caution
+    Никогда не подписывайте ядро EAC или подписанный CachyOS systemd-boot с помощью `sbctl`. Не используйте для них
+    `sbctl-batch-sign` или `sbctl sign`, даже если `sbctl verify` показывает их как неподписанные. Они подписаны
+    CachyOS.
+    :::
+
+4. **Добавьте systemd-boot как отдельную загрузочную запись прошивки**
+
+    `sbctl` заново подписывает каждый файл из своей базы данных при каждом обновлении ядра или EFI-файла. Проверьте,
+    что в ней нет файлов, подписанных CachyOS, например после прежнего `sbctl sign -s`:
+
+    ```bash
+    sudo sbctl list-files
+    ```
+
+    Если путь в списке содержит `cachyos-eac` или совпадает с `/usr/lib/systemd/boot/efi/systemd-bootx64.efi`,
+    удалите его командой `sudo sbctl remove-file <путь>`. Затем переустановите пакеты, чтобы восстановить подписи
+    CachyOS:
+
+    ```bash
+    sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
+    ```
+
+    Скопируйте подписанный systemd-boot в отдельный каталог в системном разделе EFI:
+
+    ```bash
+    ESP="$(bootctl --print-esp-path)"
+    sudo install -Dm644 /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed "$ESP/EFI/cachyos-eac/systemd-bootx64.efi"
+    ```
+
+    Пока существует `EFI/cachyos-eac`, `systemd-boot-cachyos-signed` автоматически обновляет эту копию.
+
+    Затем создайте загрузочную запись в прошивке. `--create-only` добавляет запись, не меняя порядок загрузки, поэтому
+    Limine остаётся загрузчиком по умолчанию:
+
+    ```bash
+    ESP_DEV="$(findmnt -no SOURCE "$ESP")"
+    ESP_DISK="/dev/$(lsblk -no PKNAME "$ESP_DEV")"
+    ESP_PART="$(cat "/sys/class/block/$(basename "$ESP_DEV")/partition")"
+    sudo efibootmgr --create-only --disk "$ESP_DISK" --part "$ESP_PART" \
+      --label "CachyOS EAC" --loader '\EFI\cachyos-eac\systemd-bootx64.efi'
+    ```
+
+    Проверьте, что новая запись есть в списке и что `BootOrder` по-прежнему начинается с Limine:
+
+    ```bash
+    efibootmgr
+    ```
+
+5. **Создайте загрузочную запись EAC**
+
+    systemd-boot читает свою конфигурацию из системного раздела EFI. Хук Limine поддерживает ядро EAC и его initramfs
+    в актуальном состоянии в каталоге, названном по идентификатору вашей машины (machine ID). Проверьте, что оба файла
+    существуют:
+
+    ```bash
+    ESP="$(bootctl --print-esp-path)"
+    KERNEL="/$(cat /etc/machine-id)/linux-cachyos-eac/vmlinuz"
+    INITRD="/$(cat /etc/machine-id)/linux-cachyos-eac/initramfs"
+    sudo ls -l "$ESP$KERNEL" "$ESP$INITRD"
+    ```
+
+    Затем соберите командную строку ядра из командной строки работающей системы и параметров EAC:
+
+    ```bash
+    EAC_REQ="lockdown=integrity lsm=landlock,lockdown,yama,integrity,bpf iommu.passthrough=0 intel_iommu=on module.sig_enforce=1 sysctl.kernel.kexec_load_disabled=1"
+    EAC_OPTS="$(sed -E 's/(^| )(BOOT_IMAGE|initrd)=[^ ]*//g' /proc/cmdline) $EAC_REQ"
+    echo "$EAC_OPTS"
+    ```
+
+    Вывод должен содержать ваш параметр `root=` и заканчиваться параметрами EAC. Запишите запись и сделайте её
+    записью по умолчанию, чтобы systemd-boot запускал её без показа меню. Существующий `loader/loader.conf` при этом
+    заменяется. Здесь это нормально, потому что systemd-boot запускает только запись EAC:
+
+    ```bash
+    printf 'title   CachyOS (EAC)\nlinux   %s\ninitrd  %s\noptions %s\n' "$KERNEL" "$INITRD" "$EAC_OPTS" \
+      | sudo install -Dm644 /dev/stdin "$ESP/loader/entries/cachyos-eac.conf"
+    printf 'default cachyos-eac.conf\ntimeout 0\n' | sudo install -Dm644 /dev/stdin "$ESP/loader/loader.conf"
+    ```
+
+    Чтобы всё же увидеть меню systemd-boot, удерживайте <kbd>Пробел</kbd> во время его запуска.
+
+    :::caution
+    В меню Limine тоже есть запись для `linux-cachyos-eac`. Загрузка через Limine **не** проходит проверки EAC.
+    Всегда используйте загрузочную запись прошивки «CachyOS EAC».
+    :::
+
+6. **Включите Secure Boot и загрузитесь в EAC**
+
+    Если Secure Boot уже включён, переходите сразу к загрузке в EAC.
+
+    Перезагрузитесь в настройки прошивки и включите Secure Boot. Если на вашей плате нет переключателя Secure Boot,
+    см. примечания для ASUS в
+    [руководстве по Secure Boot](/ru/configuration/secure_boot_setup#подпись-образа-ядра-и-загрузчика).
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+    Чтобы загрузиться в EAC, установите запись «CachyOS EAC» как `BootNext` и перезагрузитесь. `sudo eac-setup boot`
+    делает то же самое:
+
+    ```bash
+    EAC_BOOTNUM="$(efibootmgr | sed -n 's/^Boot\([0-9A-F]\{4\}\)\* CachyOS EAC.*/\1/p')"
+    sudo efibootmgr --bootnext "$EAC_BOOTNUM" && systemctl reboot
+    ```
+
+    `BootNext` действует только для следующей загрузки. При перезагрузке после игровой сессии снова запустится Limine.
+
+</Steps>
+
+</TabItem>
+<TabItem label='systemd-boot'>
 
 <Steps>
 
@@ -279,12 +577,23 @@ EAC загружаться не будут. Не устанавливайте `l
 
 </Steps>
 
-## Настройка с Limine
+</TabItem>
+<TabItem label='rEFInd'>
 
-Limine остаётся вашим загрузчиком по умолчанию. Подписанный CachyOS systemd-boot устанавливается рядом с ним, в
-собственный каталог в системном разделе EFI и с собственной загрузочной записью в прошивке. Чтобы поиграть, вы
-указываете прошивке один раз запустить systemd-boot при следующей загрузке (`BootNext`). Затем systemd-boot сразу
-загружает ядро EAC. После этого система, как обычно, снова запускает Limine.
+rEFInd остаётся вашим загрузчиком по умолчанию. Как и в случае с Limine, подписанный CachyOS systemd-boot
+устанавливается в собственный каталог в системном разделе EFI и получает собственную загрузочную запись в прошивке.
+Чтобы поиграть, вы указываете прошивке один раз запустить systemd-boot при следующей загрузке (`BootNext`). Затем
+systemd-boot сразу загружает ядро EAC. После этого система, как обычно, снова запускает rEFInd.
+
+Для этих шагов системный раздел EFI должен быть смонтирован в `/boot`: так установщик CachyOS настраивает rEFInd.
+Проверьте это:
+
+```bash
+bootctl --print-esp-path
+```
+
+Вывод должен быть `/boot`. Другие схемы, например системный раздел EFI в `/boot/efi` из более старых установок, не
+поддерживаются.
 
 <Steps>
 
@@ -303,7 +612,7 @@ Limine остаётся вашим загрузчиком по умолчани�
 
 2. **Установите пакеты**
 
-    Если до перехода на Limine вы использовали systemd-boot с
+    Если до перехода на rEFInd вы использовали systemd-boot с
     [руководством по Secure Boot](/ru/configuration/secure_boot_setup), сначала удалите созданный им самоподписанный
     systemd-boot. Иначе pacman откажется устанавливать `systemd-boot-cachyos-signed`, а `sbctl` перезапишет
     подписанный CachyOS systemd-boot:
@@ -329,13 +638,7 @@ Limine остаётся вашим загрузчиком по умолчани�
     загрузчик в системном разделе EFI.
     :::
 
-    :::caution
-    Оставьте `ENABLE_UKI=no` (значение по умолчанию) в `/etc/default/limine`. При включённых UKI ядро EAC
-    упаковывается в новый образ, который `sbctl` подписывает вашим собственным ключом, а такой образ EAC не
-    принимает.
-    :::
-
-3. **Зарегистрируйте ключи Secure Boot и подпишите Limine**
+3. **Зарегистрируйте ключи Secure Boot и подпишите rEFInd**
 
     Пропустите этот шаг, если вы зарегистрировали CA, как описано в разделе
     [Если вы уже используете Secure Boot](#если-вы-уже-используете-secure-boot).
@@ -369,9 +672,19 @@ Limine остаётся вашим загрузчиком по умолчани�
 
     В разделе `db` должен быть указан `CachyOS EAC CA`.
 
-    Сам Limine по-прежнему нужно подписать вашим собственным ключом, чтобы обычная загрузка продолжала работать при
-    включённом Secure Boot. Следуйте вкладке Limine в разделе
-    [Подпись образа ядра и загрузчика](/ru/configuration/secure_boot_setup#подпись-образа-ядра-и-загрузчика).
+    rEFInd и ваши обычные ядра по-прежнему нужно подписать вашим собственным ключом, чтобы обычная загрузка
+    продолжала работать при включённом Secure Boot. Команда `find` пропускает ядро EAC, которое уже подписано
+    CachyOS:
+
+    ```bash
+    sudo sbctl sign -s /boot/EFI/refind/refind_x64.efi
+    sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+    sudo sbctl list-files
+    ```
+
+    Вывод должен показывать rEFInd и каждое из ваших обычных ядер как подписанные. `sbctl` снова подписывает их после
+    обновлений ядра. pacman не обновляет rEFInd в системном разделе EFI. Если вы сами запускаете `refind-install`,
+    после этого выполните `sudo sbctl sign-all`.
 
     :::caution
     Никогда не подписывайте ядро EAC или подписанный CachyOS systemd-boot с помощью `sbctl`. Не используйте для них
@@ -380,6 +693,21 @@ Limine остаётся вашим загрузчиком по умолчани�
     :::
 
 4. **Добавьте systemd-boot как отдельную загрузочную запись прошивки**
+
+    `sbctl` заново подписывает каждый файл из своей базы данных при каждом обновлении ядра или EFI-файла. Проверьте,
+    что в ней нет файлов, подписанных CachyOS, например после прежнего `sbctl sign -s`:
+
+    ```bash
+    sudo sbctl list-files
+    ```
+
+    Если путь в списке содержит `cachyos-eac` или совпадает с `/usr/lib/systemd/boot/efi/systemd-bootx64.efi`,
+    удалите его командой `sudo sbctl remove-file <путь>`. Затем переустановите пакеты, чтобы восстановить подписи
+    CachyOS:
+
+    ```bash
+    sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
+    ```
 
     Скопируйте подписанный systemd-boot в отдельный каталог в системном разделе EFI:
 
@@ -391,7 +719,7 @@ Limine остаётся вашим загрузчиком по умолчани�
     Пока существует `EFI/cachyos-eac`, `systemd-boot-cachyos-signed` автоматически обновляет эту копию.
 
     Затем создайте загрузочную запись в прошивке. `--create-only` добавляет запись, не меняя порядок загрузки, поэтому
-    Limine остаётся загрузчиком по умолчанию:
+    rEFInd остаётся загрузчиком по умолчанию:
 
     ```bash
     ESP_DEV="$(findmnt -no SOURCE "$ESP")"
@@ -401,7 +729,7 @@ Limine остаётся вашим загрузчиком по умолчани�
       --label "CachyOS EAC" --loader '\EFI\cachyos-eac\systemd-bootx64.efi'
     ```
 
-    Проверьте, что новая запись есть в списке и что `BootOrder` по-прежнему начинается с Limine:
+    Проверьте, что новая запись есть в списке и что `BootOrder` по-прежнему начинается с rEFInd:
 
     ```bash
     efibootmgr
@@ -409,18 +737,8 @@ Limine остаётся вашим загрузчиком по умолчани�
 
 5. **Создайте загрузочную запись EAC**
 
-    systemd-boot читает свою конфигурацию из системного раздела EFI. Хук Limine поддерживает ядро EAC и его initramfs
-    в актуальном состоянии в каталоге, названном по идентификатору вашей машины (machine ID). Проверьте, что оба файла
-    существуют:
-
-    ```bash
-    ESP="$(bootctl --print-esp-path)"
-    KERNEL="/$(cat /etc/machine-id)/linux-cachyos-eac/vmlinuz"
-    INITRD="/$(cat /etc/machine-id)/linux-cachyos-eac/initramfs"
-    sudo ls -l "$ESP$KERNEL" "$ESP$INITRD"
-    ```
-
-    Затем соберите командную строку ядра из командной строки работающей системы и параметров EAC:
+    systemd-boot читает свою конфигурацию из системного раздела EFI, где уже находятся ядро EAC и его initramfs.
+    Соберите командную строку ядра из командной строки работающей системы и параметров EAC:
 
     ```bash
     EAC_REQ="lockdown=integrity lsm=landlock,lockdown,yama,integrity,bpf iommu.passthrough=0 intel_iommu=on module.sig_enforce=1 sysctl.kernel.kexec_load_disabled=1"
@@ -429,21 +747,27 @@ Limine остаётся вашим загрузчиком по умолчани�
     ```
 
     Вывод должен содержать ваш параметр `root=` и заканчиваться параметрами EAC. Запишите запись и сделайте её
-    записью по умолчанию, чтобы systemd-boot запускал её без показа меню. Существующий `loader/loader.conf` при этом
-    заменяется. Здесь это нормально, потому что systemd-boot запускает только запись EAC:
+    записью по умолчанию, чтобы systemd-boot запускал её без показа меню:
 
     ```bash
-    printf 'title   CachyOS (EAC)\nlinux   %s\ninitrd  %s\noptions %s\n' "$KERNEL" "$INITRD" "$EAC_OPTS" \
+    ESP="$(bootctl --print-esp-path)"
+    printf 'title   CachyOS (EAC)\nlinux   /vmlinuz-linux-cachyos-eac\ninitrd  /initramfs-linux-cachyos-eac.img\noptions %s\n' "$EAC_OPTS" \
       | sudo install -Dm644 /dev/stdin "$ESP/loader/entries/cachyos-eac.conf"
     printf 'default cachyos-eac.conf\ntimeout 0\n' | sudo install -Dm644 /dev/stdin "$ESP/loader/loader.conf"
     ```
 
     Чтобы всё же увидеть меню systemd-boot, удерживайте <kbd>Пробел</kbd> во время его запуска.
 
-    :::caution
-    В меню Limine тоже есть запись для `linux-cachyos-eac`. Загрузка через Limine **не** проходит проверки EAC.
-    Всегда используйте загрузочную запись прошивки «CachyOS EAC».
-    :::
+    rEFInd сам находит ядро EAC и systemd-boot и добавляет их в своё меню. Всё, что запущено из меню rEFInd, **не**
+    проходит проверки EAC, потому что rEFInd подписан вашим собственным ключом. Скройте обе записи:
+
+    ```bash
+    printf '\n# Easy Anti-Cheat: boot these only through the "CachyOS EAC" firmware entry\ndont_scan_files +,vmlinuz-linux-cachyos-eac\ndont_scan_dirs +,EFI/cachyos-eac\n' \
+      | sudo tee -a "$ESP/EFI/refind/refind.conf" >/dev/null
+    ```
+
+    `+` сохраняет файлы и каталоги, которые rEFInd уже пропускает. Со следующей загрузки меню rEFInd будет показывать
+    только ваши обычные ядра.
 
 6. **Включите Secure Boot и загрузитесь в EAC**
 
@@ -457,16 +781,20 @@ Limine остаётся вашим загрузчиком по умолчани�
     systemctl reboot --firmware-setup
     ```
 
-    Чтобы загрузиться в EAC, установите запись «CachyOS EAC» как `BootNext` и перезагрузитесь:
+    Чтобы загрузиться в EAC, установите запись «CachyOS EAC» как `BootNext` и перезагрузитесь. `sudo eac-setup boot`
+    делает то же самое:
 
     ```bash
     EAC_BOOTNUM="$(efibootmgr | sed -n 's/^Boot\([0-9A-F]\{4\}\)\* CachyOS EAC.*/\1/p')"
     sudo efibootmgr --bootnext "$EAC_BOOTNUM" && systemctl reboot
     ```
 
-    `BootNext` действует только для следующей загрузки. При перезагрузке после игровой сессии снова запустится Limine.
+    `BootNext` действует только для следующей загрузки. При перезагрузке после игровой сессии снова запустится rEFInd.
 
 </Steps>
+
+</TabItem>
+</Tabs>
 
 ## Проверка настройки
 
@@ -500,11 +828,15 @@ systemd-boot вашим собственным ключом. В версиях `
 sudo pacman -Syu
 ```
 
-С systemd-boot повторите шаг 4 [настройки с systemd-boot](#настройка-с-systemd-boot), чтобы удалить файлы из базы
-данных `sbctl` и переустановить пакеты.
+Затем снова запустите `sudo eac-setup`. Он удаляет файлы из базы данных `sbctl` и восстанавливает подписи CachyOS.
+Чтобы сделать это вручную, следуйте шагам ниже.
 
-С Limine **не** выполняйте этот шаг. Его `bootctl install` сделает systemd-boot вашим загрузчиком по умолчанию и
-заменит резервный загрузчик в системном разделе EFI. Вместо этого проверьте базу данных `sbctl`:
+С systemd-boot повторите шаг 4 на вкладке systemd-boot в разделе
+[Настройка для вашего загрузчика](#настройка-для-вашего-загрузчика), чтобы удалить файлы из базы данных `sbctl` и
+переустановить пакеты.
+
+С Limine или rEFInd **не** выполняйте этот шаг. Его `bootctl install` сделает systemd-boot вашим загрузчиком по
+умолчанию и заменит резервный загрузчик в системном разделе EFI. Вместо этого проверьте базу данных `sbctl`:
 
 ```bash
 sudo sbctl list-files
@@ -523,11 +855,11 @@ sudo install -Dm644 /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed "$ESP/E
 ### Игра сообщает, что система не поддерживается
 
 Запустите `sudo eac-status` в записи EAC и исправьте каждую проверку, отмеченную `[FAIL]`. Чаще всего была загружена
-не та запись, и `eac-status` сообщает, что в командной строке ядра нет параметров EAC. Загружайте **CachyOS (EAC)** в
-systemd-boot, а не автоматически созданную запись «Linux CachyOS Eac». С Limine загружайтесь через загрузочную запись
-прошивки «CachyOS EAC», а не через меню Limine.
+не та запись, и `eac-status` сообщает, что в командной строке ядра нет параметров EAC. Перезагрузитесь командой
+`sudo eac-setup boot`. В systemd-boot можно также выбрать **CachyOS (EAC)**, а не автоматически созданную запись
+«Linux CachyOS Eac». С Limine или rEFInd не запускайте ядро EAC из меню Limine или rEFInd.
 
-### Вместо записи EAC запускается Limine
+### Вместо записи EAC запускается Limine или rEFInd
 
 Проверьте, был ли установлен `BootNext` перед перезагрузкой:
 
@@ -536,8 +868,9 @@ efibootmgr | grep -E 'BootNext|CachyOS EAC'
 ```
 
 Если записи «CachyOS EAC» нет, её удалила прошивка: некоторые платы делают это после обновления прошивки или сброса
-настроек. Создайте её заново (шаг 4 [настройки с Limine](#настройка-с-limine)). Также можно выбрать «CachyOS EAC» в
-меню однократной загрузки прошивки.
+настроек. Запустите `sudo eac-setup`, чтобы создать её заново, или повторите шаг 4 на вкладке Limine или rEFInd в
+разделе [Настройка для вашего загрузчика](#настройка-для-вашего-загрузчика). Также можно выбрать «CachyOS EAC» в меню
+однократной загрузки прошивки.
 
 ### Модуль не загружается в записи EAC
 
