@@ -530,6 +530,10 @@ export default defineConfig({
               link: 'configuration/secure_boot_setup',
             },
             {
+              label: 'Easy Anti-Cheat (Linux v2)',
+              link: 'configuration/easy_anti_cheat',
+            },
+            {
               label: 'Post Install Recommendations',
               translations: {
                 cs: 'Návrhy po instalaci',
@@ -773,6 +777,10 @@ export default defineConfig({
                 zh: 'Virtio-Venus',
               },
               link: 'virtualization/virtio-venus',
+            },
+            {
+              label: 'CachyOS on WSL',
+              link: 'virtualization/wsl',
             },
           ],
         },
