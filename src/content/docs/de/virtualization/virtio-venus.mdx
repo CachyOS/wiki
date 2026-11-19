@@ -3,19 +3,114 @@ title: Virtio-Venus
 description: 3D-Beschleunigung durch Vulkan
 ---
 
+import { Steps } from '@astrojs/starlight/components';
+
 ## Anwendungsfälle:
 - **Nahezu native 3D-Beschleunigung**
 
-In Betriebssystemen, die `libvulkan` nutzen, wie zum Beispiel **Linux**, **BSD**s und **Android**, kannst
-du eine fast native Leistung erzielen. Das geschieht, indem Aufrufe von der VM an Vulkan und dann direkt an
-deine GPU und zurück übersetzt werden, ohne sie durch eine VM schleusen zu müssen.
+In Betriebssystemen, die `libvulkan` nutzen, also **Linux**, die **BSD**s und **Android**, erreichst du
+nahezu native Leistung: Die Vulkan-Aufrufe des Gastes werden direkt an deine GPU weitergegeben und die
+Ergebnisse wieder zurück, ohne dass du der VM eine GPU exklusiv durchreichen musst.
 
-Leider ist **Virtio-Venus** nicht in **VMM** enthalten, weshalb du **qemu-cli** benutzen musst.
-Du musst dir den Namen merken, den du deiner VM gegeben hast, und wo sie sich befindet.
+**VMM** (virt-manager) hat keinen eigenen Schalter für **Virtio-Venus**, du kannst es dort aber trotzdem
+aktivieren, indem du die Eigenschaft direkt aus dem Domain-XML an **QEMU** weitergibst. Du musst deine VM
+also nicht auf **qemu-cli** umstellen. Beide Wege sind hier beschrieben.
+
+:::caution
+Im Gast brauchst du den Venus-Treiber von **Mesa**, unter **CachyOS**/**Arch** ist das das Paket
+`vulkan-virtio`. Ohne dieses Paket landet der Gast beim Software-Rendering (`lavapipe`) oder findet gar
+kein Vulkan-Gerät.
+:::
+
+## Virtio-Venus in VMM verwenden:
+
+Das meiste lässt sich in der Oberfläche einstellen, Venus selbst muss aber im Domain-XML aktiviert werden.
+Dafür musst du in **VMM** zuerst die XML-Bearbeitung einschalten
+(`Bearbeiten -> Einstellungen -> ✅ XML-Bearbeitung aktivieren`).
+
+:::caution
+Mach das an einer VM, die schon installiert ist. Im Fenster `Konfiguration vor der Installation anpassen`
+steckt das XML noch voller Platzhalter, und **VMM** akzeptiert dort überhaupt keine manuellen Änderungen.
+:::
+
+<Steps>
+
+1. Stelle unter `Anzeige Spice` den `Listentyp` auf `Kein` und aktiviere `OpenGL`. Wenn du mehrere GPUs
+   hast, wähle im Feld darunter die aus, auf der gerendert werden soll, und klicke dann auf `Übernehmen`.
+
+2. Setze unter `Video Virtio` ein Häkchen bei `3D-Beschleunigung` und klicke auf `Übernehmen`.
+
+3. Setze unter `Speicher` ein Häkchen bei `Gemeinsamen Speicher aktivieren`. Blob-Ressourcen brauchen das,
+   und es ist standardmäßig **aus**. Klicke wieder auf `Übernehmen`.
+
+4. Öffne den `XML`-Tab des Videogeräts, ergänze im `<model>`-Element `blob="on"` und klicke auf
+   `Übernehmen`. `device="virtio-vga-gl"` steht schon da, das setzt **VMM** mit der 3D-Beschleunigung
+   automatisch:
+
+   ```xml
+   <video>
+     <model type="virtio" heads="1" primary="yes" blob="on" device="virtio-vga-gl">
+       <acceleration accel3d="yes"/>
+     </model>
+     <address type="pci" domain="0x0000" bus="0x00" slot="0x01" function="0x0"/>
+   </video>
+   ```
+
+5. Öffne den `XML`-Tab von `Übersicht` und ergänze im `<domain>`-Element den QEMU-Namensraum, sonst werden
+   die `qemu:`-Elemente aus dem nächsten Schritt abgelehnt. Klicke hier noch **nicht** auf `Übernehmen`,
+   allein überlebt der Namensraum das nicht:
+
+   ```xml
+   <domain xmlns:qemu="http://libvirt.org/schemas/domain/qemu/1.0" type="kvm">
+   ```
+
+6. Füge im selben XML den Override-Block irgendwo innerhalb des `<domain>`-Elements ein (direkt vor dem
+   schließenden `</domain>`-Tag ist ein guter Platz). Das ist der Teil, der Venus tatsächlich einschaltet,
+   und **jetzt** klickst du auf `Übernehmen`:
+
+   ```xml
+   <qemu:override>
+     <qemu:device alias="video0">
+       <qemu:frontend>
+         <qemu:property name="venus" type="bool" value="true"/>
+         <qemu:property name="hostmem" type="unsigned" value="4294967296"/>
+       </qemu:frontend>
+     </qemu:device>
+   </qemu:override>
+   ```
+
+7. Starte die VM. Im Gast kannst du mit `vulkaninfo --summary` oder `vkcube` nachsehen, die GPU sollte dort
+   als `Virtio-GPU Venus (<deine Host-GPU>)` auftauchen.
+
+</Steps>
+
+### Der hostmem-Wert:
+
+`hostmem` legt fest, wie viel deines VRAMs die VM benutzen darf, und anders als überall sonst in **VMM**
+muss der Wert in **Byte** angegeben werden. `4294967296` im Beispiel oben sind 4 GB. Um auf die Zahl für
+deine Wunschgröße zu kommen, multiplizierst du die GB dreimal mit 1024 (GB -> MB -> KB -> Byte), oder du
+lässt die Shell rechnen:
+
+```sh
+# 4 GB in Byte:
+echo $((4 * 1024 * 1024 * 1024))
+```
+
+Für Ungeduldige die üblichen Verdächtigen:
+
+| VRAM | Wert für `hostmem` |
+| ---- | ------------------ |
+| 1 GB | `1073741824`       |
+| 2 GB | `2147483648`       |
+| 4 GB | `4294967296`       |
+| 8 GB | `8589934592`       |
+
+Gib nicht mehr her, als deine GPU übrig hat. Dieser Speicher kommt aus demselben VRAM, das auch dein
+Host-Desktop und deine Spiele benutzen.
 
 ## Virtio-Venus in qemu-cli verwenden:
-Sobald du eine geeignete VM installiert hast, kannst du das Terminal öffnen und einen qemu-cli-Befehl
-für deine virtuelle Maschine erstellen. Hier ist ein Beispiel für meine CachyOS-VM:
+Wenn du `libvirt` komplett umgehen willst, kannst du stattdessen das Terminal öffnen und deine virtuelle
+Maschine direkt mit qemu-cli starten. Hier ist ein Beispiel für meine CachyOS-VM:
 
 ```sh
 qemu-system-x86_64                                                                             \
@@ -42,20 +137,22 @@ qemu-system-x86_64                                                              
 
 - `-smp 6` bedeutet 6 CPU-Kerne
 - `-m 12G` bedeutet 12 GB RAM
-- `-net user,hostfwd=tcp::2222-:22` bedeutet, dass Port 22 vom Host an die VM als Port 2222 weitergeleitet wird,
-wenn du also eine SSH-Verbindung zur VM von einem anderen Gerät aus herstellen willst, würdest du das so machen:
+- `-net user,hostfwd=tcp::2222-:22` bedeutet, dass Port 22 der VM auf dem Host als Port 2222 erreichbar
+ist. Eine SSH-Verbindung von einem anderen Gerät zur VM baust du damit so auf:
 
 ```sh
 ssh -p 2222 vmbenutzername@vmipadresse
 ```
 
-- `-device virtio-vga-gl,hostmem=4G,blob=true,venus=true` das ist der Venus-Treiber, der leider noch nicht in
-virt-manager ist. Sobald er da ist, wird dieser ganze Abschnitt, außer dem User-Modus, überflüssig.
-- `-hostmem=4G` bedeutet, ich erlaube der VM, bis zu 4 GB meines VRAMs von meiner GPU zu nutzen.
-- `-object memory-backend-memfd,id=mem1,size=12G` in diesem Abschnitt ist die Größe der RAM, den du ihr zugewiesen hast, also in meinem Fall 12 GB.
-- `-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd` das ist die Firmware-
-Datei für die VM, hier steht einfach nur der Pfad dorthin.
-- `-drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd` das ist das NVRAM der VM. Ohne
-das oder wenn es auf schreibgeschützt gesetzt ist, läuft die VM nicht.
-- `-drive file=.local/share/libvirt/images/archlinux.qcow2` das ist der Pfad zur .qcow2-Datei (dem Speicher der VM).\
-(Du siehst, mein Audiogerät ist in diesem Fall nicht `ich9`, sondern `pipewire`, das ist aber unwichtig.)
+- `-device virtio-vga-gl,hostmem=4G,blob=true,venus=true` das ist der Venus-Treiber, also genau das, was
+der `<qemu:override>`-Block weiter oben in **VMM** setzt.
+- `-hostmem=4G` bedeutet, ich erlaube der VM, bis zu 4 GB des VRAMs meiner GPU zu benutzen.
+- `-object memory-backend-memfd,id=mem1,size=12G` die Größe hier ist der RAM, den du der VM zugewiesen
+hast, in meinem Fall also 12 GB.
+- `-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd` das ist die
+Firmware-Datei der VM, hier steht einfach der Pfad dorthin.
+- `-drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd` das ist das NVRAM der
+VM. Ohne dieses oder mit Schreibschutz darauf startet die VM nicht.
+- `-drive file=.local/share/libvirt/images/archlinux.qcow2` das ist der Pfad zur .qcow2-Datei (dem
+Speicher der VM).\
+(Wie du siehst, ist mein Audiogerät hier nicht `ich9`, sondern `pipewire`, das spielt aber keine Rolle.)
