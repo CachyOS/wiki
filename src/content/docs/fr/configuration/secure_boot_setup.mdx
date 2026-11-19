@@ -6,6 +6,13 @@ description: Configurer le démarrage sécurisé avec sbctl après avoir install
 import ImageComponent from '~/components/image-component.astro';
 import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
+:::tip[Easy Anti-Cheat]
+Pour jouer à des jeux utilisant Easy Anti-Cheat Linux v2, suivez plutôt le [guide Easy Anti-Cheat](/configuration/easy_anti_cheat).
+Il configure Secure Boot dès le départ ; vous n'avez donc pas besoin de consulter ce guide au préalable. Il enregistre vos propres clés
+avec celles de Microsoft, ce qui permet au double démarrage avec Windows de continuer à fonctionner. Il utilise également le noyau signé
+par CachyOS et systemd-boot, qui ne doivent pas être signés à nouveau avec vos propres clés.
+:::
+
 ## Pré-configuration
 
 ### Gestionnaire de démarrage GRUB
@@ -129,7 +136,8 @@ Maintenant que `sbctl` est installé, vous devez le configurer et enregistrer vo
 </Steps>
 
 ## Signature de l'image du noyau et du gestionnaire de démarrage
-<Tabs>
+
+<Tabs syncKey="boot-manager">
 <TabItem label='Limine'>
 Limine est un gestionnaire de démarrage spécial qui permet de vérifier le hachage des images du noyau
 et d'autres fichiers que Limine utilise au démarrage. Si cette option est activée, toute
@@ -267,13 +275,44 @@ Notez qu'il s'agit d'un processus unique, car la signature des fichiers avec l'o
 tous les nouveaux fichiers lors d'une mise à jour du noyau ou du gestionnaire de démarrage.
 :::
 
-CachyOS utilise `systemd-boot-update.service` fourni par systemd pour mettre à jour le gestionnaire de démarrage au redémarrage. Cela signifie que le hook pacman
+CachyOS utilise `systemd-boot-update.service` fourni par systemd pour mettre à jour le gestionnaire de démarrage au redémarrage. Cela signifie que le pacman hook
 de `sbctl` ne signera **pas** les binaires EFI mis à jour. Pour contourner ce problème, nous pouvons signer le gestionnaire de démarrage directement.
 
 ```sh
 sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
 ```
 
+:::note
+Ignorez cette étape si vous utilisez la [configuration d'Easy Anti-Cheat](/configuration/easy_anti_cheat). Dans cette configuration `systemd-boot-cachyos-signed`
+fournit un systemd-boot signé par CachyOS.
+:::
+</TabItem>
+<TabItem label='rEFInd'>
+
+rEFInd lance les noyaux via le firmware, ce dernier vérifie donc les signatures de rEFInd et de chaque noyau.
+Ces étapes s'appliquent aux installations dont la partition système EFI est montée sur `/boot`, ce qui correspond à la
+manière dont le programme d'installation de CachyOS configure rEFInd. `bootctl --print-esp-path` doit afficher `/boot`.
+
+Pour signer rEFInd et vos noyaux. La commande `find` ignore le noyau pour
+[Easy Anti-Cheat](/configuration/easy_anti_cheat), qui est déjà signé par CachyOS :
+
+```bash
+sudo sbctl sign -s /boot/EFI/refind/refind_x64.efi
+sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+sudo sbctl verify
+```
+
+`sbctl verify` doit indiquer que rEFInd et chacun de vos noyaux sont signés. Si vous utilisez Easy Anti-Cheat, elle indique
+également que `vmlinuz-linux-cachyos-eac` et `EFI/cachyos-eac/systemd-bootx64.efi` ne sont pas signés. C'est ce qui est attendu car ils sont
+signés par CachyOS. **Ne les signez pas**, sinon EAC ne les acceptera plus. Ensuite, **redémarrez en accédant à vos paramètres UEFI
+et activez le démarrage sécurisé.** Sur les cartes mères ASUS, consultez les notes dans l'onglet « systemd-boot ».
+
+L'argument `-s` sauvegarde les fichiers dans la base de données de `sbctl`, et son pacman hook re-signe les noyaux après les mises à jour.
+pacman ne met pas à jour rEFInd sur la partition système EFI. Si vous exécutez vous-même `refind-install`, vous devrez le re-signer :
+
+```bash
+sudo sbctl sign-all
+```
 </TabItem>
 </Tabs>
 
@@ -301,7 +340,7 @@ System:
 
 ## Fwupd
 
-Pour utiliser `fwupd` lorsque le démarrage sécurisé (Secure Boot) est activé, signez l'exécutable UEFI :
+Pour utiliser `fwupd` lorsque le démarrage sécurisé est activé, signez l'exécutable UEFI :
 
 ```sh
 sudo sbctl sign -s -o /usr/lib/fwupd/efi/fwupdx64.efi.signed /usr/lib/fwupd/efi/fwupdx64.efi
