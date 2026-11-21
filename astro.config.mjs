@@ -530,6 +530,9 @@ export default defineConfig({
             },
             {
               label: 'Easy Anti-Cheat (Linux v2)',
+              translations: {
+                es: 'Easy Anti-Cheat (Linux v2)',
+              },
               link: 'configuration/easy_anti_cheat',
             },
             {
@@ -713,6 +716,7 @@ export default defineConfig({
           label: 'Virtualization',
           translations: {
             de: 'Virtualisierung',
+            es: 'Virtualización',
             el: 'Εικονικοποίηση',
             ja: '仮想化',
             pt: 'Virtualização',
@@ -725,6 +729,7 @@ export default defineConfig({
               label: 'QEMU and VMM Setup',
               translations: {
                 de: 'QEMU- und VMM-Einrichtung',
+                es: 'Configuración de QEMU y VMM',
                 el: 'Ρύθμιση των QEMU και VMM',
                 ja: 'QEMU と VMM のセットアップ',
                 pt: 'Configuração do QEMU e VMM',
@@ -738,6 +743,7 @@ export default defineConfig({
               label: 'QEMU User Session',
               translations: {
                 de: 'QEMU-User-Session',
+                es: 'Sesión de usuario de QEMU',
                 el: 'Συνεδρία χρήστη QEMU',
                 ja: 'QEMU ユーザーセッション',
                 pt: 'Sessão de Utilizador QEMU',
@@ -751,6 +757,7 @@ export default defineConfig({
               label: 'EGL Headless',
               translations: {
                 de: 'EGL-Headless',
+                es: 'EGL sin pantalla',
                 el: 'EGL Headless',
                 ja: 'EGL ヘッドレス',
                 pt: 'EGL Headless',
@@ -764,6 +771,7 @@ export default defineConfig({
               label: 'Virtio-Venus',
               translations: {
                 de: 'Virtio-Venus',
+                es: 'Virtio-Venus',
                 el: 'Virtio-Venus',
                 ja: 'Virtio-Venus',
                 pt: 'Virtio-Venus',
@@ -775,6 +783,9 @@ export default defineConfig({
             },
             {
               label: 'CachyOS on WSL',
+              translations: {
+                es: 'CachyOS en WSL',
+              },
               link: 'virtualization/wsl',
             },
           ],
