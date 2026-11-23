@@ -775,6 +775,9 @@ export default defineConfig({
             },
             {
               label: 'CachyOS on WSL',
+              translations: {
+                ja: 'WSL 向け CachyOS'
+              },
               link: 'virtualization/wsl',
             },
           ],

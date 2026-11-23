@@ -940,7 +940,7 @@ sidebar:
 - CachyOS-sddm-theme got added to the KDE Installation
 - Automatic version script added when creating the ISO
 - Calamares updated to the latest commit
-- The mirrors are now ranked with "cachyos-rate-mirros", which ranks our mirrors and the arch ones
+- The mirrors are now ranked with "cachyos-rate-mirrors", which ranks our mirrors and the arch ones
 - Packages Update: 6.1.1 Kernel, mesa 22.3.1, plasma 5.26.4,...
 - The Kofuku Desktop Environment got removed
 - extra ISO with llvm 15 included to provide support for newer AMD Cards
@@ -1062,7 +1062,7 @@ Following options you can select for a kernel compile:
 - Set performance governor as default
 - Enable BBR2
 - Tickrate (500Hz, 600Hz, 750Hz, 1000Hz)
-- tickless (idle, perodic, full)
+- tickless (idle, periodic, full)
 - disable MQ-Deadline I/O Scheduler
 - disable Kyber I/O Scheduler
 - Enable or disable MG-LRU

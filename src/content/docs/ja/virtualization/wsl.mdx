@@ -1,0 +1,63 @@
+---
+title: WSL 上で CachyOS を利用するには
+description: Windows Subsystem for Linux に CachyOS をインストールして使用する方法について
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+CachyOS には [Windows Subsystem for Linux](https://learn.microsoft.com/ja-jp/windows/wsl/about) (WSL) 用イメージが用意されており、[cachyos-wsl](https://github.com/CachyOS/cachyos-wsl) リポジトリでメンテナンスされています。WSL 用イメージ特有の不具合に関してはこちらのリポジトリに報告してください。
+
+## インストール
+
+WSL 2 のバージョン `2.4.4` 以降が必要です。(`wsl --update` でアップデート可能)\
+古いバージョンを使用している場合は [cachyos-wsl の README](https://github.com/CachyOS/cachyos-wsl#wsl-prior-to-244) をご覧ください。
+
+<Steps>
+
+1. [最新リリース](https://github.com/CachyOS/cachyos-wsl/releases/latest)から `.wsl` イメージをダウンロードするか、PowerShell で以下を実行してください。
+
+   ```powershell
+   $v = (Invoke-RestMethod https://api.github.com/repos/CachyOS/cachyos-wsl/releases/latest).tag_name
+   Invoke-WebRequest "https://github.com/CachyOS/cachyos-wsl/releases/download/$v/cachyos-$v.wsl" -OutFile "$env:TEMP\cachyos.wsl"
+   ```
+
+2. ダウンロードしたファイルをダブルクリックするか、PowerShell で以下を実行してインストールしてください。
+
+   ```powershell
+   wsl --install --from-file "$env:TEMP\cachyos.wsl"
+   ```
+
+3. スタートメニューから CachyOS を起動するか、`wsl -d cachyos` を実行して起動してください。
+
+</Steps>
+
+## 初回セットアップ
+
+初回起動には数分かかる場合があります。この間に pacman キーリングのセットアップ、ミラーのランク付け、最適化パッケージへの切り替えが行われたのち、ユーザーの作成を求められます。ここで作成されたユーザーには `sudo` 権限が付与され、ログインシェルには `fish` が設定されます。
+
+配布されているイメージは最新のビルドをリアルタイムで反映しているわけではなく、一定周期でビルドされているものです。そのためセットアップが完了したら `sudo pacman -Syu` を実行してシステムを最新の状態に更新してください。
+
+## 最適化パッケージ
+
+配布されているイメージは汎用ビルドのため、どの x86-64 CPU でも動作します。\
+CachyOS インストーラーと同様に、初回セットアップ中にお使いの CPU に合わせた[最適化リポジトリ](/ja/features/optimized_repos) (`znver4` / `v4` / `v3`) へ自動的に設定されます。ただし、最適化リポジトリに対応していない古い世代の CPU の場合は汎用パッケージから変更されることはありません。
+
+オフラインである等により自動設定に失敗した場合は、汎用パッケージのままセットアップされます。再度自動設定を実行する場合は、以下のコマンドを実行してください。
+
+```sh
+sudo /usr/lib/wsl/optimize-repos
+```
+
+## 通常のインストールとの違い
+
+WSL では常に Microsoft によるカーネルが動作するため、`linux-cachyos` やそのスケジューラ、および `sched-ext` が使用されることはありません。またブートマネージャーや `chwd`、zram も同様にインストールされていません。
+
+## トラブルシューティング
+
+pacman により「再起動してください」というメッセージが表示された際は、PowerShell から `wsl --terminate cachyos` を実行してディストリビューションを再起動してください。
+
+初期化するときは、`wsl --unregister cachyos` でディストリビューションを削除してから再インストールしてください。
+
+:::caution
+`wsl --unregister` を実行すると、Linux のホームディレクトリを含むディストリビューション内のすべてのデータが完全に削除されます。
+:::

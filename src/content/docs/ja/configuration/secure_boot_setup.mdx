@@ -9,11 +9,18 @@ tableOfContents:
 import ImageComponent from '~/components/image-component.astro';
 import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
+:::tip[Easy Anti-Cheat]
+Easy Anti-Cheat Linux v2 が搭載されているゲームをプレイする場合は、このページではなく [Easy Anti-Cheat 専用チュートリアル](/ja/configuration/easy_anti_cheat)をご覧ください。\
+Easy Anti-Cheat 用環境では CachyOS 公式により署名されているカーネルと systemd-boot を使用するため、前もって下記の手順で署名を行うと起動できなくなります。
+
+Windows とのデュアルブートに関しても専用チュートリアル内で完結するため、下記手順にしたがう必要はありません。
+:::
+
 ## 事前準備
 
 ### GRUB ブートマネージャー
 
-GRUB を使用している場合は、以下のコマンドを実行して CA キーを使用する GRUB のセキュアブートに対応する設定を有効にしてください。
+GRUB を使用している場合は、以下のコマンドを実行して CA キーを利用したセキュアブートに対応する設定を有効にしてください。
 
 ```bash
 sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
@@ -26,7 +33,7 @@ sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=
 
 ### UEFI でセットアップモードを有効化
 
-まず、ファームウェア設定に移動してセキュアブートモードを「セットアップモード」に設定する必要があります。起動中のシステムから以下のコマンドでファームウェア設定に再起動できます。
+まず、ファームウェア設定に移動してセキュアブートモードを「セットアップモード」に設定する必要があります。システムの起動中に以下のコマンドを実行すると、再起動が行われ自動的にファームウェア設定画面が表示されます。
 
 ```bash
 systemctl reboot --firmware-setup
@@ -35,7 +42,9 @@ systemctl reboot --firmware-setup
 <br />
 <ImageComponent imgsrc={import('~/assets/images/ideapad-bios-secure-boot.jpg')} />
 
-これは Lenovo Ideapad 5 Pro の BIOS の画面です。セットアップモードにリセットするかファクトリーキーを復元し、システムに再起動してください。
+この画像は Lenovo Ideapad 5 Pro の BIOS 設定画面のものです。セットアップモード (`setup mode`) にリセットするかファクトリーキー (`factory keys`) を復元し、システムを再起動してください。
+
+<i>翻訳者注: 上記は実機での日本語表記を確認したものではないため、実際の BIOS 画面上での表記と異なる可能性があります。これ以降の機種固有の操作についても同様です。</i>
 
 #### 自動リセット
 
@@ -43,7 +52,7 @@ systemctl reboot --firmware-setup
 <ImageComponent imgsrc={import('~/assets/images/gigabyte-reset-without-saving.jpg')} />
 ここで `Yes` を選択してしまうとシステムがリセットされ、その後セットアップモードが無効になるため、`No` を選択してください。
 
-かわりに "Save & Exit" を選択し、"Boot Override" で使用するブートローダーを選択して OS を直接起動してください。
+その後 "Save & Exit" を選択し、"Boot Override" でブートローダーを直接指定して OS を起動してください。
 
 #### セットアップモードがない場合
 
@@ -51,7 +60,8 @@ systemctl reboot --firmware-setup
 
 ##### MSI
 
-セキュアブートモードを "custom" に設定し、互換性オプションを "maximum security" に指定してください (デフォルトモードのままだと、ブートローダーから CachyOS を起動できなくなるおそれがあるため注意してください)。その後、"key management" 画面で以下の画像に示す2つの手順を行ってください。
+セキュアブートモードを "custom" に設定し、互換性オプションを "maximum security" に指定してください。デフォルトモードのまま設定を行うと、ブートローダーから CachyOS を起動できなくなるおそれがあるため注意してください。\
+その後、"key management" 画面で2つの操作を行ってください。(下記画像参照)
 <br />
 <ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
 
@@ -63,7 +73,7 @@ Boot → Secure Boot に移動し、セキュアブートモードを Custom に
 
 作業を始める前に、`sbctl` がインストールされているかどうかを確認してください。
 
-[sbctl](https://github.com/Foxboron/sbctl) は使いやすさを重視したセキュアブートキーマネージャーです。セキュアブートの設定やキー管理、ブートチェーンで署名が必要なファイルの追跡ができます。
+[sbctl](https://github.com/Foxboron/sbctl) は使いやすさを重視したセキュアブートキーマネージャーです。このツールでは、セキュアブートの設定やキー管理、ブートチェーンで署名が必要なファイルの追跡を行うことができます。
 
 <details>
     <summary>sbctl のインストール方法</summary>
@@ -92,7 +102,7 @@ Boot → Secure Boot に移動し、セキュアブートモードを Custom に
     sudo sbctl create-keys
     ```
     <details>
-        <summary>キー作成成功時の出力例</summary>
+        <summary>キー作成に成功した場合の出力例</summary>
         ```bash
         Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
         Creating secure boot keys...✔
@@ -112,20 +122,20 @@ Boot → Secure Boot に移動し、セキュアブートモードを Custom に
     </details>
 
     :::caution[ASUS 製や Gigabyte 製マザーボードで `--firmware-builtin` は使用しないでください]
-    一部の ASUS 製や Gigabyte 製マザーボードでは `--firmware-builtin` フラグを使用すると、EFI キー変数に重複エントリが発生します。(例: `Vendor Keys` に `builtin-db` が複数回表示される) \
-    その後 UEFI 設定からセキュアブートを有効化すると、マザーボードが不適切なキーを検知し、ブートマネージャーが読み込まれる前に **Secure Boot Violation** エラーが発生します。
+    一部の ASUS 製や Gigabyte 製マザーボードでは `--firmware-builtin` を指定すると、EFI キー変数のエントリに重複が生じます。(例: `Vendor Keys` に `builtin-db` が複数回表示される) \
+    その後 UEFI 設定からセキュアブートを有効化すると、マザーボードが不適切なキーを検知することになり、ブートマネージャーが読み込まれる前に **Secure Boot Violation** エラーが発生します。
 
-    ASUS 製や Gigabyte 製マザーボードでは `--microsoft` を使用してください。
+    ASUS 製や Gigabyte 製マザーボードでは `--microsoft` を指定してください。
 
     ```bash
     sudo sbctl enroll-keys --microsoft
     ```
 
-    `Vendor Keys` に `microsoft builtin-db builtin-db ...` と表示されている場合は、キーを再登録する必要があります。すべてのキーを削除することで UEFI のセットアップモードに戻ることができるため、その後 `--firmware-builtin` を除いた `sbctl enroll-keys --microsoft` でもう一度実行してください。
+    `Vendor Keys` に `microsoft builtin-db builtin-db ...` と表示されている場合は、キーを再登録する必要があります。すべてのキーを削除すると UEFI のセットアップモードを再度表示することができるため、その後 `--firmware-builtin` を除いた `sbctl enroll-keys --microsoft` で再登録を行ってください。
     :::
 
 
-4. キーが登録され、セットアップモードが無効になっていることを確認するために、sbctl のステータスをもう一度確認してください。
+4. sbctl のステータスをもう一度確認し、キーが登録されており、セットアップモードが無効になっていることを確認してください。
     ```bash
     sudo sbctl status
     ```
@@ -142,26 +152,26 @@ Boot → Secure Boot に移動し、セキュアブートモードを Custom に
 
     :::note[セットアップモードが Enabled と表示されるときは]
     `Setup Mode` が **Enabled** と表示されている場合は、ファームウェア設定で**一時的にセキュアブートを無効化してください**。
-    その後システムを再起動し、sbctl のステータスをもう一度確認したら、以下の[カーネルイメージとブートマネージャーへの署名](#カーネルイメージとブートマネージャーへの署名)に進んでください。作業が終わって再起動したら、ファームウェア設定でセキュアブートを再度有効化してください。
+    その後システムを再起動し、sbctl のステータスをもう一度確認した後、以下の[カーネルイメージとブートマネージャーへの署名](#カーネルイメージとブートマネージャーへの署名)に進んでください。署名作業の完了後は再起動し、ファームウェア設定でセキュアブートを再度有効化してください。
     :::
 
 </Steps>
 
 ## カーネルイメージとブートマネージャーへの署名
 
-<Tabs>
+<Tabs syncKey="boot-manager">
 <TabItem label='Limine'>
-Limine は特殊なブートマネージャーで、ブート時に使用するカーネルイメージやその他のファイルのハッシュを検証できます。この機能が有効な場合、`sbctl-batch-sign` による署名など、ユーザーが手動で行った変更はファイルのハッシュを変更するため、Limine のチェックサム検証の失敗につながります。
+Limine はブートマネージャーとしては特殊な機能が搭載されており、ブート時に使用するカーネルイメージやその他のファイルのハッシュを検証することができます。この機能が有効な場合、`sbctl-batch-sign` を利用した署名など、ユーザーが手動で変更を行った場合にファイルのハッシュが変動するため、Limine のチェックサム検証が失敗することにつながります。
 
-ただし、Limine は EFI チェーンロードと署名チェックをバイパスする特殊なブートプロセスを持つため、これらのファイルへの署名は必要ありません。署名が必要な EFI バイナリは Limine 自身だけです。
+ただし Limine は EFI チェーンロードと署名チェックをバイパスするという特殊なブート処理を行うため、こうしたのファイルへの署名は必要ありません。そのため、署名が必要な EFI バイナリは Limine 自身のみとなります。
 
 :::caution[Limine 11.2.0 以降について]
 Limine 11.2.0 より、UEFI セキュアブートが有効な場合は、セキュアブートポリシーが**すべてのファイルに対して強制的に適用される**ようになりました。
 
-- 設定ファイルの BLAKE2B チェックサムを Limine EFI バイナリに**かならず登録**する必要があります。登録されていない場合、Limine で `SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED` エラーが発生します。
+- 設定ファイルの BLAKE2B チェックサムを Limine EFI バイナリに**かならず登録**する必要があります。このチェックサムが登録されていない場合、Limine で `SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED` エラーが発生します。
 - カーネルや initramfs など、`limine.conf` 内のすべてのファイルパスの末尾に、BLAKE2B ハッシュを**かならず書き加える**必要があります。(例: `boot():/vmlinuz-linux#<hash>`)
-- 設定エディターはすべての環境で無効化されます。
-- ハッシュが一致しないときにはかならずエラーが発生します。
+- 設定エディターはすべての環境で無効化されるようになります。
+- ハッシュが一致しないときにはかならずエラーが発生するようになります。
 :::
 
 設定ファイルのチェックサムを自動で登録するよう設定するには、`/etc/default/limine` に以下の行を追加してください。
@@ -170,7 +180,7 @@ Limine 11.2.0 より、UEFI セキュアブートが有効な場合は、セキ�
 ENABLE_ENROLL_LIMINE_CONFIG=yes
 ```
 
-次に、Limine のスプラッシュ画像のハッシュを生成します。
+次に、Limine のスプラッシュ画像のハッシュを生成する必要があります。
 
 :::note[以下の手順には root 権限が必要です。sudo を使用するか、作業前に root ユーザーに切り替えてください。]
 :::
@@ -181,7 +191,7 @@ ENABLE_ENROLL_LIMINE_CONFIG=yes
     ```sh title="ターミナルを開き以下のコマンドを実行"
     sudo cat /boot/limine.conf
     ```
-    以下のような行が見つかるはずです。
+    以下のような行があることを確認してください。
     ```sh
     wallpaper: boot():/limine-splash.png
     ```
@@ -189,12 +199,12 @@ ENABLE_ENROLL_LIMINE_CONFIG=yes
     ```sh title="以下のコマンドを、パスは前の手順で確認したものに置き換えて実行"
     sudo b2sum /boot/limine-splash.png
     ```
-    ハッシュが出力されます。以下はハッシュの例です。
+    生成されたハッシュが出力されます。以下はハッシュの一例です。
     ```sh
     75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
     ```
 3. 前の手順で生成したハッシュをコピーしたのち、テキストエディターで設定ファイルを開き、スプラッシュ画像のパスの末尾にハッシュを書き加えてください。
-    :::note[上記のハッシュ例をそのまま使用せず、かならず前の手順で生成したハッシュを使用してください。]
+    :::note[上記のハッシュ例ではなく、かならず前の手順で生成したハッシュを使用してください。]
     :::
     ```sh
     wallpaper: boot():/limine-splash.png#75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
@@ -274,6 +284,34 @@ CachyOS は systemd の `systemd-boot-update.service` を使って再起動時�
 ```sh
 sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
 ```
+
+:::note
+[Easy Anti-Cheat 用環境](/ja/configuration/easy_anti_cheat)の場合は `systemd-boot-cachyos-signed` パッケージにより、事前に CachyOS により署名が行われた systemd-boot がインストールされているため、上記の手順をスキップしてください。 
+:::
+</TabItem>
+<TabItem label='rEFInd'>
+
+rEFInd はファームウェア経由でカーネルを起動するため、ファームウェア側で rEFInd とお使いの各カーネルの署名が検証される流れになります。\
+以下の手順は、CachyOS インストーラーが自動で rEFInd を構成した場合と同様に、EFI システムパーティションが `/boot` にマウントされている環境を前提としています。(`bootctl --print-esp-path` の出力が `/boot` であることを確認してください)
+
+以下のコマンドで rEFInd と各カーネルに署名してください。なお、下記の `find` コマンドでは事前に CachyOS により署名されている [Easy Anti-Cheat](/ja/configuration/easy_anti_cheat) 用カーネルを署名対象から除外しています。
+
+```bash
+sudo sbctl sign -s /boot/EFI/refind/refind_x64.efi
+sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+sudo sbctl verify
+```
+
+`sbctl verify` の出力で、rEFInd とお使いの通常版カーネルが署名済み (`is signed`) として表示されていることを確認してください。\
+Easy Anti-Cheat 用環境の場合、`vmlinuz-linux-cachyos-eac` と `EFI/cachyos-eac/systemd-bootx64.efi` が未署名 (`is not signed`) として表示されますが、これは正常な動作です。CachyOS 公式により署名されており、それ以外のキーで再署名すると Easy Anti-Cheat 側で認識されなくなるため、**署名を手動で行わないでください**。
+
+上記の内容を確認できたら、**システムを再起動して UEFI 設定でセキュアブートを有効にしてください**。(ASUS 製マザーボードをお使いの場合は、`systemd-boot` タブの注意事項をご覧ください)
+
+`-s` フラグで署名されたファイルは `sbctl` のデータベースに保存され、カーネルのアップデート時には pacman フックによって自動的に再署名されるようになります。ただし pacman により EFI システムパーティション内にある rEFInd 本体が更新されることはありません。手動で `refind-install` を実行し更新を行う際は、更新後に以下のコマンドで再署名してください。
+
+```bash
+sudo sbctl sign-all
+```
 </TabItem>
 </Tabs>
 
@@ -299,8 +337,23 @@ System:
   Boot into FW: supported
 ```
 
+## Fwupd
+
+セキュアブートを有効にした状態で `fwupd` を使用したい場合は、UEFI 実行ファイルに署名する必要があります。
+
+```sh
+sudo sbctl sign -s -o /usr/lib/fwupd/efi/fwupdx64.efi.signed /usr/lib/fwupd/efi/fwupdx64.efi
+```
+
+次に `/etc/fwupd/fwupd.conf` に以下を追記してください。
+
+```sh
+[uefi_capsule]
+DisableShimForSecureBoot=true
+```
+
 ## リンクとクレジット
 
-- このガイドの基礎となった [Arch Wiki (クリックすると日本語版に飛びます)](https://wiki.archlinux.jp/index.php/Unified_Extensible_Firmware_Interface/%E3%82%BB%E3%82%AD%E3%83%A5%E3%82%A2%E3%83%96%E3%83%BC%E3%83%88#sbctl_%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%97%E3%81%9F%E3%82%A2%E3%82%B7%E3%82%B9%E3%83%88%E3%83%97%E3%83%AD%E3%82%BB%E3%82%B9) — ここに記載された内容の多くはここから引用しています。
-- [sbctl](https://github.com/Foxboron/sbctl) — このセキュアブート設定ガイドは、このソフトウェアの素晴らしい開発があってこそ実現しました。
-- [Improving the Secure Boot Experience by Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) — `sbctl` が開発される以前のセキュアブート設定の複雑さについて書かれた Morten "Foxboron" Linderud のブログ記事です。
+- このガイドの基礎となった [Arch Wiki](https://wiki.archlinux.jp/index.php/Unified_Extensible_Firmware_Interface/%E3%82%BB%E3%82%AD%E3%83%A5%E3%82%A2%E3%83%96%E3%83%BC%E3%83%88#sbctl_%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%97%E3%81%9F%E3%82%A2%E3%82%B7%E3%82%B9%E3%83%88%E3%83%97%E3%83%AD%E3%82%BB%E3%82%B9) … ここに記載された内容の多くはここから引用されています。
+- [sbctl](https://github.com/Foxboron/sbctl) … このセキュアブート設定ガイドは、このような素晴らしいソフトウェアの開発があってこそ実現しました。
+- [Improving the Secure Boot Experience by Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) … `sbctl` が開発される以前のセキュアブート設定の複雑さについて書かれた Morten "Foxboron" Linderud のブログ記事です。
