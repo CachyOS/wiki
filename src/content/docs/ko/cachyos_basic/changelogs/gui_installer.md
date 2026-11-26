@@ -3,7 +3,57 @@ title: GUI 설치 프로그램
 description: Calamares 및 GUI Live ISO의 변경 로그
 sidebar:
   order: 1
+ai_translated: true
 ---
+26.06
+----
+
+**기능:**
+
+* **Packages:**
+  * Python이 이제 성능을 개선하기 위해 확장된 PGO를 사용합니다.
+  * 일반 x86 분기 예측 실패(branch misprediction) 튜닝을 위한 [GCC 패치](https://www.phoronix.com/news/GCC-x86-Generic-Mispredict)를 추가하여, 최신 Intel 및 AMD CPU에서 GCC가 분기 예측 실패 비용을 계산하는 방식을 개선했습니다.
+  * 코어 수가 많은 CPU에서 OpenBLAS를 사용할 때 Phoronix 벤치마크에서 발견된 성능 저하(regression)를 수정했습니다.
+  * `proton-cachyos`의 이름을 `proton-cachyos-native`로 변경했습니다.
+* **pacman:** [스크립틀릿 및 훅에 대한 네트워크 격리](https://github.com/CachyOS/pacman/commit/4056cd687f6379e61e7decb9b66e9b57cb3949a9)를 추가했습니다.
+* **Installer:**
+  * CachyOS Hyprland Noctalia 데스크톱 옵션과 미리보기 동영상을 추가했습니다.
+  * 설치에서 `paru`를 제거했습니다. 대안으로 GUI 또는 CLI를 통해 [Shelly](https://wiki.cachyos.org/configuration/post_install_setup/#updating-the-system)를 사용하시는 것을 권장합니다.
+  * MangoWM의 디스플레이 매니저로 SDDM을 추가했습니다.
+  * GNOME 시스템 모니터를 Resources로 교체했습니다.
+  * audio 패키지 그룹에 `realtime-privileges`를 추가했습니다.
+  * 라이브 세션의 키보드 레이아웃 및 변형(variant) 감지를 개선했습니다.
+* **CachyOS-Welcome:**
+  * `blocky`를 통한 DNS over QUIC(DoQ) 지원을 추가했습니다.
+  * 전용 문제 해결(Troubleshooting) 페이지를 추가했습니다.
+  * Ptyxis 터미널 지원을 추가했습니다.
+  * 아제르바이잔어 및 그리스어 현지화를 추가했습니다.
+  * 프랑스어 readme 및 참여(involvement) 페이지를 추가했습니다.
+  * 이탈리아어, 독일어, 프랑스어, 일본어, 불가리아어 번역을 업데이트했습니다.
+* **chwd:**
+  * 터키어 현지화를 추가했습니다.
+  * handheld 패키지 목록에서 `cachyos-handheld`를 제거했습니다.
+  * 호환되지 않는 드라이버 브랜치가 필요한 멀티 GPU 시스템(예: 여러 세대의 NVIDIA GPU가 혼합된 경우)에서 드라이버 충돌을 해결하여, 가장 적합한 공통 드라이버를 설치하거나 기본 GPU로 대체(fallback)합니다.
+  * 가상 머신용 32비트 Vulkan 드라이버를 추가했습니다.
+* **cachyos-settings:** 사용자 서비스에 15초 시작 제한 시간과 10초 종료 제한 시간을 적용하여 90초 종료 지연을 방지합니다.
+
+**수정:**
+
+* **Installer:**
+  * 키보드 레이아웃 순서 및 `locale1` 구성 처리를 수정했습니다.
+  * 설치된 시스템에 올바른 pacman 구성이 복사되도록 수정했습니다.
+  * 설치 후 남아 있던 `/etc/calamares` 디렉터리를 제거했습니다.
+  * Calamares 정리를 모든 설치 스크립트 이후로 이동했습니다.
+  * 불필요한 Limine 설치 후 단계를 제거했습니다.
+* **CachyOS-Welcome:**
+  * `cachyos-pi`가 설치되지 않은 상태에서 "Install Apps"를 선택할 때 발생하던 충돌을 방지했습니다. 이제 사용할 수 없는 경우 버튼이 숨겨집니다.
+  * 저장된 설정 파일을 읽거나 파싱할 수 없을 때 발생하던 충돌을 수정했습니다. 이제 실패 시 설정이 기본값으로 초기화됩니다.
+  * 트윅 감지(`graphical-session.target.wants` 포함) 및 polkit을 통한 전역 사용자 서비스 트윅 비활성화를 수정했습니다.
+* **chwd:**
+  * 가상 머신 공급업체 ID(vendor ID)를 수정했습니다.
+  * 불필요한 `fprintd` 서비스 활성화를 제거했습니다.
+  * Mesa 제거 가드(removal guard)를 수정했습니다.
+
 26.04
 ----
 

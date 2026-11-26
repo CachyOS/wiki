@@ -4,10 +4,18 @@ description: CachyOS 설치 후 sbctl로 Secure Boot 설정하기
 tableOfContents:
   minHeadingLevel: 1
   maxHeadingLevel: 4
+ai_translated: true
 ---
 
 import ImageComponent from '~/components/image-component.astro';
 import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+:::tip[Easy Anti-Cheat]
+Easy Anti-Cheat Linux v2를 사용하는 게임을 실행하려면 이 문서 대신 [Easy Anti-Cheat 가이드](/ko/configuration/easy_anti_cheat)를
+따르세요. 해당 가이드는 처음부터 Secure Boot를 설정하므로 이 가이드를 먼저 진행할 필요가 없습니다. 또한 사용자 키를 Microsoft 키와
+함께 등록하여 Windows 듀얼 부팅이 계속 작동하도록 유지하며, CachyOS가 서명한 커널과 systemd-boot를 사용하므로 사용자 키로
+다시 서명해서는 안 됩니다.
+:::
 
 ## 사전 설정
 
@@ -37,13 +45,27 @@ systemctl reboot --firmware-setup
 
 위 이미지는 Lenovo Ideapad 5 Pro의 BIOS 화면 예시입니다. Setup Mode로 초기화하거나 공장 키를 복원한 뒤 시스템으로 다시 재부팅하세요.
 
-하지만 일부 MSI 메인보드에는 Setup Mode가 없습니다. 같은 효과를 얻으려면 아래 이미지의 두 단계를 따르세요.
+#### 자동 재설정
+
+일부 Gigabyte 메인보드에서는 "reset to setup mode" 직후 "reset without saving" 대화 상자가 표시됩니다.
+<ImageComponent imgsrc={import('~/assets/images/gigabyte-reset-without-saving.jpg')} />
+이를 수락하면 시스템이 재설정되면서 Setup Mode가 비활성화되므로 반드시 거부해야 합니다.
+
+대신 OS로 직접 부팅하세요(Save & Exit에서 Boot Override의 부트로더 선택).
+
+#### Setup Mode가 없는 경우
+
+일부 MSI 및 ASUS 메인보드에는 Setup Mode가 없습니다.
+
+##### MSI
+
+Secure Boot Mode를 "custom"으로 설정하고 "maximum security" 호환성 옵션을 선택하세요(중요: 기본 모드에서는 부트로더에서 CachyOS로 부팅하지 못할 수 있습니다!). 그런 다음 "key management"로 들어가 아래 이미지에 표시된 두 단계를 따르세요.
 <br />
 <ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
 
-일부 Asus 메인보드도 전용 Setup Mode가 없기 때문에 위에서 언급한 MSI 메인보드와 비슷하게 동작합니다.
+##### ASUS
 
-Boot → Secure Boot로 이동해 Secure Boot Mode를 Custom으로 설정한 다음, Key Management를 열고 "Delete all Secure Boot Variables"를 선택하세요. 
+Boot → Secure Boot로 이동해 Secure Boot Mode를 Custom으로 설정한 다음, Key Management를 열고 "Delete all Secure Boot Variables"를 선택하세요.
 
 #### sbctl 설치 및 키 등록
 
@@ -97,13 +119,13 @@ Boot → Secure Boot로 이동해 Secure Boot Mode를 Custom으로 설정한 다
         ```
     </details>
 
-    :::caution[ASUS 메인보드 — `--firmware-builtin`을 사용하지 마세요]
-    일부 ASUS 메인보드에서는 `--firmware-builtin` 플래그를 사용하면 EFI 키 변수에 중복 항목이 생깁니다.
+    :::caution[ASUS / Gigabyte 메인보드 — `--firmware-builtin`을 사용하지 마세요]
+    일부 ASUS 및 Gigabyte 메인보드에서는 `--firmware-builtin` 플래그를 사용하면 EFI 키 변수에 중복 항목이 생깁니다.
     예를 들어 `Vendor Keys`에 `builtin-db`가 여러 번 나타날 수 있습니다.
     이후 UEFI 설정에서 Secure Boot를 활성화하면, 보드가 이 일관되지 않은 키 구조를 감지해 부트
     매니저가 로드되기 전에 **Secure Boot Violation**을 발생시킵니다.
 
-    ASUS 보드에서는 `--microsoft`만 사용하세요.
+    ASUS / Gigabyte 보드에서는 `--microsoft`만 사용하세요.
 
     ```bash
     sudo sbctl enroll-keys --microsoft
@@ -129,11 +151,18 @@ Boot → Secure Boot로 이동해 Secure Boot Mode를 Custom으로 설정한 다
         Vendor Keys:    microsoft
         ```
     </details>
+
+    :::note[Setup Mode가 Enabled로 표시되나요?]
+    `Setup Mode`가 **Enabled**로 표시되면 펌웨어 설정으로 들어가 **Secure Boot를 일시적으로 비활성화**하세요.
+    시스템으로 다시 부팅한 뒤 sbctl 상태를 재확인하고 아래의 [커널 이미지와 부트 매니저 서명](#커널-이미지와-부트-매니저-서명)으로
+    진행한 다음, 재부팅하여 펌웨어 설정에서 Secure Boot를 다시 활성화하세요.
+    :::
+
 </Steps>
 
 ## 커널 이미지와 부트 매니저 서명
 
-<Tabs>
+<Tabs syncKey="boot-manager">
 <TabItem label='Limine'>
 Limine은 부팅 중 사용하는 커널 이미지와 기타 파일의 해시를 확인할 수 있는 특수한 부트 매니저입니다.
 이 기능이 활성화되어 있으면, 예를 들어 `sbctl-batch-sign`으로 이미지를 서명하는 것처럼 사용자가 수동으로 수행한
@@ -146,7 +175,7 @@ Limine은 부팅 중 사용하는 커널 이미지와 기타 파일의 해시를
 Limine 11.2.0부터는 UEFI Secure Boot가 활성화되어 있을 때 Secure Boot 정책이 **엄격하게 적용**됩니다.
 
 - BLAKE2B 구성 체크섬이 Limine EFI 바이너리에 **반드시** 등록되어 있어야 합니다. 그렇지 않으면 Limine이 `SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED` 메시지와 함께 패닉을 일으킵니다.
-- `limine.conf`의 모든 파일 경로, 예를 들어 kernel, initramfs 등에는 BLAKE2B 해시가 추가되어 있어야 합니다. 예: `boot():/vmlinuz-linux#<hash>`
+- `limine.conf`의 모든 파일 경로, 예를 들어 kernel, initramfs, etc.에는 BLAKE2B 해시가 추가되어 있어야 합니다. 예: `boot():/vmlinuz-linux#<hash>`
 - 구성 편집기는 조건 없이 비활성화됩니다.
 - 해시가 일치하지 않으면 항상 패닉이 발생합니다.
 :::
@@ -250,7 +279,7 @@ Boot → Secure Boot
 ```
 :::
 
-참고하려면 [이 부분](/configuration/secure_boot_setup#enabling-setup-mode-in-uefi)을 확인하세요.
+참고하려면 [이 부분](/ko/configuration/secure_boot_setup#uefi에서-setup-mode-활성화)을 확인하세요.
 
 `-s` 플래그로 파일에 서명하면 해당 파일이 `sbctl` 데이터베이스에 저장되므로, 이 과정은 한 번만 수행하면 됩니다.
 
@@ -263,6 +292,36 @@ pacman hook은 업데이트된 EFI 바이너리에 **서명하지 않습니다**
 
 ```sh
 sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+```
+
+:::note
+[Easy Anti-Cheat 설정](/ko/configuration/easy_anti_cheat)을 사용하는 경우 이 단계를 건너뛰세요. 해당 설정에서는 `systemd-boot-cachyos-signed`가
+CachyOS에서 서명한 systemd-boot를 제공합니다.
+:::
+</TabItem>
+<TabItem label='rEFInd'>
+
+rEFInd는 펌웨어를 통해 커널을 시작하므로, 펌웨어가 rEFInd와 각 커널의 서명을 확인합니다. 이 단계는 EFI 시스템 파티션이 `/boot`에 마운트된 설치 환경을 기준으로 하며, CachyOS 설치 프로그램이 rEFInd를 설정하는 방식과 같습니다. `bootctl --print-esp-path` 출력이 `/boot`여야 합니다.
+
+rEFInd와 커널에 서명하세요. 아래 `find` 명령은 이미 CachyOS가 서명한 [Easy Anti-Cheat](/ko/configuration/easy_anti_cheat)용 커널을 건너뜁니다.
+
+```bash
+sudo sbctl sign -s /boot/EFI/refind/refind_x64.efi
+sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+sudo sbctl verify
+```
+
+`sbctl verify` 결과에 rEFInd와 각 커널이 서명됨(signed)으로 표시되어야 합니다. Easy Anti-Cheat를 사용하는 경우
+`vmlinuz-linux-cachyos-eac` 및 `EFI/cachyos-eac/systemd-bootx64.efi`가 서명되지 않음으로 표시될 수 있습니다. 이는
+CachyOS가 서명한 파일이므로 정상입니다. **이 파일들은 서명하지 마세요.** 그렇지 않으면 EAC가 더 이상 허용하지 않습니다. 그런 다음 **UEFI 설정으로
+재부팅하여 Secure Boot를 활성화하세요.** ASUS 메인보드의 경우 systemd-boot 탭의 참고 사항을 확인하세요.
+
+`-s` 플래그는 파일을 `sbctl` 데이터베이스에 저장하며, pacman hook이 업데이트 후 커널에 다시 서명합니다.
+pacman은 EFI 시스템 파티션의 rEFInd를 업데이트하지 않습니다. `refind-install`을 직접 실행한 경우에는
+이후 다시 서명하세요.
+
+```bash
+sudo sbctl sign-all
 ```
 </TabItem>
 </Tabs>
@@ -287,6 +346,21 @@ System:
   TPM2 Support: yes
   Measured UKI: no
   Boot into FW: supported
+```
+
+## Fwupd
+
+Secure Boot가 활성화된 상태에서 `fwupd`를 사용하려면 UEFI 실행 파일에 서명하세요.
+
+```sh
+sudo sbctl sign -s -o /usr/lib/fwupd/efi/fwupdx64.efi.signed /usr/lib/fwupd/efi/fwupdx64.efi
+```
+
+그리고 `/etc/fwupd/fwupd.conf`에 다음을 추가하세요.
+
+```sh
+[uefi_capsule]
+DisableShimForSecureBoot=true
 ```
 
 ## 링크 및 크레딧

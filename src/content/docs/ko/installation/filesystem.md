@@ -1,6 +1,6 @@
 ---
 title: 파일 시스템
-description: 사용 가능한 파일 시스템에 대한 설명과 권장 사항. (ext4, f2fs, btrfs, xfs, zfs, bcachefs)
+description: 사용 가능한 파일 시스템에 대한 설명과 권장 사항. (ext4, f2fs, btrfs, xfs, zfs)
 ---
 
 CachyOS는 사용자가 자신의 필요에 가장 잘 맞는 것을 선택할 수 있도록 5가지 파일 시스템을 제공합니다. 아래에서는 각 파일 시스템의 장점, 단점, 권장 사항을 살펴봅니다. 각 파일 시스템에 필요한 요구 사항/유틸리티는 CachyOS에 사전 설치되어 제공됩니다.
