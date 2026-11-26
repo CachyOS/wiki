@@ -1,6 +1,7 @@
 ---
 title: sched-ext 튜토리얼
 description: 프레임워크 사용 방법과 기타 정보를 다루는 튜토리얼
+ai_translated: true
 tableOfContents:
   minHeadingLevel: 1
   maxHeadingLevel: 5
@@ -12,6 +13,12 @@ import ImageComponent from '~/components/image-component.astro';
 Extensible Scheduler Class, 더 잘 알려진 이름인 `sched-ext`는 Linux 커널 기능으로, 커널 스레드 스케줄러를
 BPF(Berkeley Packet Filter)로 구현하고 동적으로 로드할 수 있게 해줍니다. 본질적으로 이는 최종 사용자가 다른 스케줄러를 사용하기 위해
 새 커널을 빌드할 필요 없이 사용자 공간에서 스케줄러를 변경할 수 있게 해줍니다.
+
+:::note
+sched-ext 스케줄러 중 하나를 사용하면 기본 커널 스케줄러가 일시적으로 분리됩니다. sched-ext 스케줄러가 중지되면 기본 커널 스케줄러가 다시 이어받습니다.
+
+예: EEVDF 또는 BORE.
+:::
 
 :::tip[개발자와 연락하려면 [Discord 서버](https://discord.gg/b2J8DrWa7t)를 이용하세요]
 :::
@@ -136,7 +143,7 @@ Options:
 
 *이름에서 알 수 있듯이, 이는 D-Bus 인터페이스를 사용해 sched-ext 프레임워크의 로더이자 관리자로 동작하는 유틸리티입니다.*
 
-*systemd가 필요하지는 않지만, systemd와 함께 사용할 수도 있습니다.* [참고용 전환 가이드를 확인하세요](/configuration/sched-ext#transitioning-from-scxservice-to-scx_loader-a-comprehensive-guide).
+*systemd가 필요하지는 않지만, systemd와 함께 사용할 수도 있습니다.* [참고용 전환 가이드를 확인하세요](/ko/configuration/sched-ext#scxservice에서-scx_loader로-전환하기-종합-가이드).
 
 - scx 스케줄러에 대한 중지, 시작, 재시작, 정보 읽기 등 다양한 작업을 수행할 수 있습니다.
   - *`dbus-send` 또는 `gdbus` 같은 도구를 사용해 통신할 수 있습니다.*
@@ -324,8 +331,9 @@ Bpfland는 어떤 코어를 사용할지 결정할 때 캐시 레이아웃과 �
 | **T2** | Frame       | < 8ms       | 게임 렌더 스레드, 비디오 인코딩                       | 4.0ms   | 40ms       |
 | **T3** | Bulk        | ≥ 8ms       | 컴파일, 백그라운드 인덱싱, 배치 작업                  | 8.0ms   | 100ms      |
 
-> [!TIP]
-> **게임 작업은 T3에 들어가면 안 됩니다**. 게임 렌더 스레드는 프레임당 2~8ms 실행 → T2. 물리/AI는 0.5~2ms 실행 → T1. 입력 핸들러는 < 100µs 실행 → T0. 중단 없이 8ms 이상 CPU 작업을 수행하는 작업(셰이더 컴파일, 로딩 화면)만 T3에 들어갑니다.
+:::tip
+**게임 작업은 T3에 들어가면 안 됩니다**. 게임 렌더 스레드는 프레임당 2~8ms 실행 → T2. 물리/AI는 0.5~2ms 실행 → T1. 입력 핸들러는 < 100µs 실행 → T0. 중단 없이 8ms 이상 CPU 작업을 수행하는 작업(셰이더 컴파일, 로딩 화면)만 T3에 들어갑니다.
+:::
 
 ##### 분류 방식
 
@@ -354,34 +362,11 @@ Bpfland는 어떤 코어를 사용할지 결정할 때 캐시 레이아웃과 �
 
 Intel 하이브리드 CPU(`has_hybrid = true`)에서는 E-core에서 과도한 주파수 요청을 방지하기 위해 각 코어의 `cpuperf_cap`에 따라 목표가 조정됩니다.
 
-#### 프로필 (`--profile, -p`)
-
-| 프로필       | Quantum | Starvation | 사용 사례                            |
-| :---------- | :------ | :--------- | :------------------------------------ |
-| **gaming**  | 2ms     | 100ms      | **(기본값)** 대부분의 게임에 균형적 |
-| **esports** | 1ms     | 50ms       | 경쟁 FPS, 초저지연                   |
-| **legacy**  | 4ms     | 200ms      | 구형 CPU, 배터리 절약                |
-| **default** | 2ms     | 100ms      | gaming의 별칭                        |
-
 #### CLI 인수
 
-| 인수                      | 기본값    | 설명                                  |
-| :------------------------ | :------- | :------------------------------------ |
-| `--profile, -p <PROFILE>` | `gaming` | 사전 설정 프로필 선택                 |
-| `--quantum <µs>`          | profile  | 마이크로초 단위 기본 타임 슬라이스    |
-| `--new-flow-bonus <µs>`   | profile  | 새로 깨어난 작업에 대한 추가 deficit  |
-| `--starvation <µs>`       | profile  | 강제 선점 전 최대 실행 시간           |
-| `--verbose, -v`           | `false`  | 실시간 TUI 통계 표시 활성화           |
-| `--interval <secs>`       | `1`      | TUI 새로고침 간격                     |
-
-#### 계층별 튜닝 (Gaming 프로필)
-
-| 계층           | Quantum 배수 | 유효 슬라이스 | Starvation 제한 |
-| :------------- | :----------- | :------------ | :-------------- |
-| T0 Critical    | 0.75x        | 1.5ms         | 3ms             |
-| T1 Interactive | 1.0x         | 2.0ms         | 8ms             |
-| T2 Frame       | 1.2x         | 2.4ms         | 40ms            |
-| T3 Bulk        | 1.4x         | 2.8ms         | 100ms           |
+| 인수                      | 기본값   | 설명                          |
+| :------------------------ | :------- | :---------------------------- |
+| `--verbose, -v`           | `false`  | 실시간 TUI 통계 표시 활성화   |
 
 ### [scx_cosmos](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cosmos)
 
@@ -463,6 +448,109 @@ CPU를 일찍 반환하는 작업에는 더 높은 latency 가중치가 부여�
 
 * **명령줄 플래그:** `-m all -s 20000 -S 1000 -I -1 -D -L`
 * **설명:** 서버 워크로드에 맞춰 조정되었습니다. 반응성을 희생해 처리량을 얻습니다.
+
+### [scx_flow](https://github.com/sched-ext/scx/tree/main/scheds/experimental/scx_flow)
+
+**개발자: Galih Tama (galpt [GitHub](https://github.com/galpt))**
+
+프로덕션 준비 여부? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+scx_flow는 작업을 남은 budget의 양에 따라 4개의 O(1) FIFO 계층 중 하나로 분류하는 budget 기반 스케줄러입니다. 휴리스틱도, 점수 산정 알고리즘도, 적응형 튜닝도 없이 모든 결정은 단 하나의 숫자, 즉 *남은 budget*에서 나옵니다.
+
+- 사용 사례:
+  - 범용 데스크톱 및 워크스테이션 멀티태스킹
+  - 백그라운드 애플리케이션을 열어 둔 상태의 게임
+  - 빌드, 테스트 또는 컨테이너가 실행 중인 개발 작업
+  - 혼합 부하 상황에서 상호작용 반응성이 중요한 모든 시나리오
+  - 결정론적이고 설명 가능한 스케줄링이 필요한 시스템(임베디드 제어, 로보틱스, 항공전자)
+
+#### 작동 방식 — budget
+
+모든 작업이 "반응성 budget"을 가지고 있다고 생각해 보세요. 작업이 절전 상태(할 일을 기다리는 상태)에 있는 동안 budget을 축적합니다. 깨어나서 실행될 때는 이 budget을 소비합니다. 아직 budget을 보유한 채로 깨어나는 작업은 상호작용성의 신호이므로, 계층 시스템을 완전히 건너뛰고 마지막으로 실행되었던 CPU로 즉시 디스패치됩니다. budget을 모두 소진한 작업은 4개의 FIFO 계층 중 하나로 다시 큐에 들어갑니다.
+
+##### 4개의 디스패치 계층
+
+작업이(웨이크업이 아니라) 다시 큐에 들어갈 때, 남은 budget에 따라 어느 계층에 배치될지가 결정됩니다.
+
+| 계층 | Budget 임계값 | 이곳에 배치되는 작업 유형 |
+|---|---|---|
+| **Priority** | ≥ 1.5ms | 자주 잠들고 짧게 실행되는 상호작용형 작업 |
+| **Normal** | ≥ 1ms | 적절한 budget이 남아 있는 일반 작업 |
+| **Low** | ≥ 0.5ms | budget이 부족해지고 있는 작업 |
+| **Deficit** | < 0.5ms | 대량 작업자, CPU 점유 작업, 백그라운드 작업 |
+
+각 계층은 단순한 FIFO 큐입니다 — O(1) 인큐, O(1) 디큐. 트리 순회도, 우선순위 재계산도 없습니다.
+
+##### 기아 현상 없음, 우선순위 역전 없음
+
+디스패치 함수는 매번 Priority부터 비우지 않습니다. 호출할 때마다 시작 계층을 회전시킵니다 — `gen & 3`이 어디서 시작할지 결정합니다. 따라서 Deficit 계층은 먼저 서비스되기까지 3번 이상의 디스패치 주기를 기다리지 않습니다. 즉, 부하가 큰 상호작용 워크로드에서도 대량 작업자가 계속 진행할 수 있으며, 단일 계층이 CPU를 독점할 수 없으므로 우선순위 역전도 발생하지 않습니다.
+
+##### 웨이크업은 대기열을 완전히 건너뜁니다
+
+작업이 깨어날 때(잠들어 있다가 이제 할 일이 생긴 경우) 어떤 계층 큐에서도 기다리지 않습니다. `SCX_DSQ_LOCAL_ON`을 통해 마지막으로 실행되었던 CPU로 바로 이동하여 캐시가 따뜻한 상태에서 즉시 실행됩니다. 이것이 상호작용형 작업을 빠릿하게 유지하는 비결입니다. 잠들어 있던 Discord나 브라우저 탭이 budget을 가진 채 깨어나면 밀리초가 아니라 마이크로초 단위로 디스패치됩니다.
+
+##### 고정(Pinned) 작업은 항상 먼저 실행됩니다
+
+CPU 간에 마이그레이션할 수 없는 작업(setaffinity)은 모든 계층보다 절대적 우선순위를 갖는 자체 CPU별 FIFO 큐를 받습니다. 해당 CPU에서 계층 시스템의 어떤 작업이 실행되기 전에 먼저 디스패치됩니다.
+
+##### 결과
+
+상호작용형 작업(키보드 입력, UI 업데이트, 오디오 스레드, 네트워크 폴링)은 거의 항상 budget을 가진 상태로 깨어나 급행 차선을 탑니다. CPU 부하가 큰 배치 작업(컴파일, 다운로드, 백그라운드 인덱싱)은 budget을 소진하고 Deficit 계층에 자리 잡지만, 순환 디스패치 덕분에 여전히 정상적으로 진행됩니다. 별도의 튜닝은 필요하지 않습니다.
+
+##### 프로필 없음, 자동 튜닝 없음, 모드 없음
+
+scx_flow에는 Gaming, Power Save 또는 Low Latency 모드가 **없으며**, 초기 버전과 달리 적응형 제어 루프도 없습니다. 회전 계층 디스패치와 budget 임계값은 컴파일 타임 상수입니다. 실행되는 그대로가 전부이며, 결정론적이고 설명 가능하며 모든 시스템에서 동일하게 동작합니다. 작업에 budget이 있으면 우선순위를 얻고, 없으면 Deficit 계층을 공정하게 공유합니다. 그것이 전체 정책입니다.
+
+#### 웹 UI
+
+scx_flow가 시작되면 **[http://localhost:50005](http://localhost:50005)**에서 실시간 메트릭 대시보드를 자동으로 제공합니다. 추가 플래그 없이 아무 브라우저에서나 열면 됩니다.
+
+대시보드는 다음을 표시합니다.
+- 각 계층(Priority / Normal / Low / Deficit)을 통해 처리된 디스패치 수
+- 시스템 정보: 실행 중인 작업, 가동 시간, 총 디스패치 수
+- 상호작용형 작업과 대량 작업 중 어느 쪽이 우세한지 한눈에 볼 수 있는 계층 분포 막대
+- 모든 메트릭 카드는 클릭 가능 — 스파크라인과 막대 차트가 포함된 기록 모달을 엽니다
+- 모든 값은 폴링을 통해 매초 업데이트 — 페이지 새로고침이 필요 없습니다
+
+페이지가 로드되지 않으면 스케줄러 실행이 중지되었을 수 있습니다(이 경우 커널은 내장 EEVDF로 폴백합니다).
+
+```sh
+# Disable the web UI if you don't need it:
+sudo scx_flow --no-webui
+```
+
+`scx_loader`가 소켓 패밀리를 제한하는 systemd 보안 강화(`RestrictAddressFamilies`, `SocketBindDeny`)와 함께 실행되는 경우 TCP 바인딩이 차단되어 scx_flow는 `/tmp/scx_flow.sock`의 Unix 소켓으로 폴백합니다. 이 경우 브라우저가 대시보드에 직접 연결할 수 없으므로, UI가 필요하지 않다면 오류 메시지를 없애기 위해 임시로 `sudo scx_flow --no-webui`를 실행하세요.
+
+#### CLI 인수
+
+| 인수 | 설명 |
+|---|---|
+| `--no-webui` | 내장 웹 UI 비활성화 |
+| `-d, --debug` | 디버그 수준 로깅 활성화 |
+| `-V, --version` | 스케줄러 버전 출력 후 종료 |
+
+:::note
+scx_flow에는 scx_loader 프로필 모드(Gaming, Power Save, Low Latency, Server)가 **없습니다**. 모든 스케줄링 결정은 작업 budget에서 직접 도출되므로 프로필이 필요하지 않습니다.
+:::
+
+### [scx_forge](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_forge>)
+
+**개발자: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+- 프로덕션 준비 여부? <Icon name="close" color="var(--sl-color-text-accent)" size="2rem" />
+
+scx_forge는 두 부분으로 구성됩니다.
+
+1. 두 번째 부분과 함께 사용하도록 설계된 기본 AI 지향 스케줄러.
+2. 기본 스케줄러와 함께 사용하여 보다 AI 지향적인 스케줄링 경험과 에이전트 자체의 즉석 최적화를 제공하기 위한 에이전트.
+
+이 에이전트를 사용하면 AI 모델, 최적화하려는 워크로드, 달성하려는 전체 목표를 설정할 수 있습니다. 그러면 에이전트가 특정 워크로드와 목표에 맞게 스케줄러를 최적화하려고 시도합니다.
+
+어떻게 작동할까요? 최적화 루프를 시작하는 데 사용되는 [spec.toml 파일](https://github.com/sched-ext/scx/blob/main/tools/scx_forge_agent/spec.toml)을 통해서입니다.
+
+기본적으로 이 스케줄러는 AI 에이전트로 특정 워크로드를 최적화하려는 사용자에게 적합합니다.
+
+자세한 내용은 [scx_forge_agent README](https://github.com/sched-ext/scx/tree/main/tools/scx_forge_agent)를 확인하세요.
 
 ### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>)
 
@@ -678,7 +766,7 @@ systemctl disable --now ananicy-cpp
 
 CachyOS에서 제공하는 `power-profiles-daemon` 패키지에 구현되어 있으며, `scx_loader` 전원 프로필 전환을 지원하기 위한 [사용자 지정 패치](https://github.com/CachyOS/CachyOS-PKGBUILDS/blob/master/power-profiles-daemon/0001-Add-support-for-scx_loader-modes-switching.patch)가 포함되어 있습니다.
 
-- `scx_loader`가 현재 실행 중인 경우 [game-performance](/configuration/gaming#power-profile-switching-on-demand)를 사용하면, 게임 실행 시 활성 스케줄러가 자동으로 `Gaming` 프로필로 전환되고 게임 종료 시 기본 프로필로 되돌아갑니다.
+- `scx_loader`가 현재 실행 중인 경우 [game-performance](/ko/configuration/gaming#필요할-때-전원-프로필-전환하기)를 사용하면, 게임 실행 시 활성 스케줄러가 자동으로 `Gaming` 프로필로 전환되고 게임 종료 시 기본 프로필로 되돌아갑니다.
 - KDE Plasma 또는 GNOME의 전원 프로필 전환기 등에서 전원 프로필을 변경하면 `scx_loader`가 자동으로 해당 스케줄러 프로필로 전환됩니다.
 
 | 전원 프로필        | 스케줄러 프로필 |
@@ -937,7 +1025,7 @@ CPU 코어 수와 원하는 부하 수준에 따라 이 값을 조정할 수 있
 - **성능 모니터링 도구 사용:** MangoHud나 GOverlay 같은 도구는 FPS, 프레임 시간, CPU/GPU 사용률 같은 실시간 성능 지표를 제공할 수 있습니다.
 - **키보드 단축키 또는 매크로 활용:**
   - 한 가지 예시는 게임 중 즉시 서로 다른 스케줄러로 전환하거나 모드를 변경할 수 있는 키 바인딩을 만드는 것입니다.
-    - 이는 [scxctl](/configuration/sched-ext#how-to-launch-and-manage-the-scheduler) 같은 도구를 사용하거나 활성 스케줄러와 해당 모드를 변경하는 사용자 지정 스크립트를 만들어 수행할 수 있습니다.
+    - 이는 [scxctl](/ko/configuration/sched-ext#스케줄러-실행-및-관리-방법) 같은 도구를 사용하거나 활성 스케줄러와 해당 모드를 변경하는 사용자 지정 스크립트를 만들어 수행할 수 있습니다.
 
 #### 벤치마크 업로드 및 공유
 
@@ -1008,7 +1096,7 @@ scx_loader.service를 scx.service와 함께 실행하려고 하지 마세요. �
 :::
 
 :::tip
-CachyOS Kernel Manager에는 이미 [scx_loader를 관리하기 위한 GUI](/features/kernel_manager#sched-ext-framework-management)가 포함되어 있습니다.
+CachyOS Kernel Manager에는 이미 [scx_loader를 관리하기 위한 GUI](/ko/features/kernel_manager#sched-ext-프레임워크-관리)가 포함되어 있습니다.
 :::
 
 먼저 scx.service 파일 구조와 scx_loader 설정 파일 구조를 가까이 비교해 보겠습니다.
@@ -1123,7 +1211,7 @@ CPU 스케줄러를 특정 활동에 맞게 설계된 서로 다른 신발 한 �
 ### 왜 스케줄러가 갑자기 충돌했나요? 불안정한가요?
 
 - *이 일이 발생한 데에는 몇 가지 이유가 있을 수 있습니다:*
-  - 가장 흔한 이유 중 하나는 스케줄러와 함께 ananicy-cpp를 사용하고 있었기 때문입니다. 그래서 이 [경고](/configuration/sched-ext#ananicy-cpp--sched-ext)를 추가했습니다
+  - 가장 흔한 이유 중 하나는 스케줄러와 함께 ananicy-cpp를 사용하고 있었기 때문입니다. 그래서 이 [경고](/ko/configuration/sched-ext#ananicy-cpp--sched-ext)를 추가했습니다
   - 또 다른 이유는 실행 중인 워크로드가 스케줄러의 한계와 용량을 초과하여 멈춤을 유발했기 때문일 수 있습니다.
     - 비합리적인 워크로드 예: `hackbench`
   - 또는 더 명백하게는 스케줄러에서 버그를 발견한 것입니다. 그렇다면 해당 [GitHub](https://github.com/sched-ext/scx/issues)에 issue로 보고하거나 CachyOS Discord 채널 `sched-ext`에서 알려주세요.

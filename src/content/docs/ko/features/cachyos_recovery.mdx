@@ -1,0 +1,288 @@
+---
+title: CachyOS Recovery
+description: 부트 메뉴의 복구 환경에서 시스템을 부팅, 복원 및 복구합니다
+tableOfContents:
+  minHeadingLevel: 2
+  maxHeadingLevel: 3
+ai_translated: true
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+[CachyOS Recovery](https://github.com/CachyOS/cachyos-recovery)는 커널 옆에 설치되어 부트 메뉴에서 실행할 수 있는 소형 복구 시스템입니다. 업데이트나 설정 변경으로 인해 시스템에 문제가 발생했을 때 라이브 USB 없이도 다음과 같은 작업을 수행할 수 있습니다:
+
+- 시스템을 변경하지 않고 정상 작동 여부를 확인하기 위해 **Btrfs 스냅샷으로 부팅**하기,
+- 일치하는 커널 및 부트 파일을 포함하여 스냅샷으로 영구적으로 **롤백**하기,
+- 수동으로 문제를 해결하기 위해 **설치된 시스템을 컨테이너에서 열기**.
+
+복구 환경은 약 70 MB의 공간을 차지합니다. 설치된 시스템의 상태에 의존하지 않으므로 시스템 자체가 더 이상 부팅되지 않을 때도 작동합니다.
+
+:::caution
+스냅샷은 백업이 아닙니다. 스냅샷은 시스템과 동일한 디스크에 저장되므로 디스크 고장이나 `/home` 내 파일의 실수 삭제로부터 보호해 주지 않습니다. 중요한 데이터는 정기적으로 백업해 두세요.
+:::
+
+## 요구 사항
+
+복구 환경은 Btrfs, ext4, XFS 또는 F2FS 루트 파일 시스템을 사용하는 모든 CachyOS 설치에서 시작할 수 있습니다. 스냅샷 관련 작업을 사용하려면 다음 조건이 추가로 필요합니다:
+
+- CachyOS 설치 프로그램이 구성하는 방식대로 `@` 서브볼륨에 루트가 있는 **Btrfs** 루트 파일 시스템.
+- 루트 서브볼륨의 **읽기 전용 스냅샷**. Snapper는 기본적으로 이를 생성하며, `cachyos-snapper-support` 패키지가 설치되어 있으면 CachyOS는 모든 `pacman` 트랜잭션 전후에 자동으로 스냅샷을 생성합니다. systemd-boot를 사용하는 설치에는 아직 이 패키지가 포함되어 있지 않으므로 ["스냅샷을 찾을 수 없음"](#스냅샷을-찾을-수-없음)을 참조하세요. [Btrfs 스냅샷](/ko/configuration/btrfs_snapshots)도 함께 확인해 보세요.
+- CachyOS의 기본 initramfs 생성기인 **mkinitcpio**.
+
+UEFI 시스템에서는 EFI 시스템 파티션이 `/etc/fstab`에 `vfat` 유형으로 나열되어 있어야 하며 `/boot`, `/efi` 또는 `/boot/efi`에 마운트되어 있어야 합니다.
+
+EFI 시스템 파티션이 `/boot`에 마운트된 경우, 롤백 시 **Limine**, **systemd-boot**(`sdboot-manage` 사용) 및 **GRUB**의 커널, initramfs 이미지 및 부트 매니저 설정도 함께 재생성됩니다. **rEFInd**는 설정 업데이트가 필요하지 않습니다. EFI 시스템 파티션이 `/efi` 또는 `/boot/efi`에 마운트된 경우와 `/boot`가 루트 파일 시스템의 일부인 BIOS 시스템에서는 커널이 스냅샷에 포함되어 있으므로 스냅샷과 함께 복원됩니다.
+
+### 암호화된 디스크 및 키보드 레이아웃
+
+**LUKS**로 암호화된 디스크가 지원됩니다. 디스크가 아직 잠금 해제되지 않은 경우 복구 환경 시작 시 LUKS 암호문을 요청합니다. 평소 TPM2 또는 FIDO2로 디스크 잠금을 해제하더라도 암호문을 미리 준비해 두세요.
+
+복구 환경은 암호문 입력과 chroot 로그인을 포함하여 항상 **US 키보드 레이아웃**을 사용합니다. 암호문이나 비밀번호에 사용 중인 키보드와 위치가 다른 문자가 포함되어 있다면 US 키보드 기준으로 입력해야 합니다.
+
+## 설치
+
+<Tabs syncKey="firmware">
+  <TabItem label="UEFI">
+    ```bash
+    sudo pacman -S cachyos-recovery
+    ```
+
+    설치 과정에서 pacman 훅이 모든 구성을 자동으로 설정합니다:
+
+    - 복구 이미지를 EFI 시스템 파티션의 `EFI/Linux/cachyos-recovery.efi`에 복사합니다.
+    - 루트 파일 시스템(및 LUKS 장치가 있는 경우 해당 장치)의 위치를 이미지 옆의 작은 애드온 파일인 `EFI/Linux/cachyos-recovery.efi.extra.d/root.addon.efi`에 기록합니다.
+    - `sbctl`로 Secure Boot가 설정되어 있는 경우 `sbctl`을 사용하여 두 파일에 모두 서명합니다([Secure Boot](#secure-boot) 참조).
+    - **Limine**을 사용하는 경우 부트 메뉴에 **CachyOS Recovery** 항목을 추가합니다.
+    - **GRUB**을 사용하는 경우 `/etc/grub.d/50-cachyos-recovery`에 **CachyOS Recovery** 항목을 작성하고 GRUB 설정을 재생성합니다.
+    - 펌웨어의 부트 메뉴에 **CachyOS Recovery** 항목을 추가합니다(`efibootmgr` 필요). 이 항목은 부팅 순서의 맨 끝에 추가되므로 기존 기본 부트 매니저는 그대로 유지됩니다.
+
+    **systemd-boot**는 `EFI/Linux`의 이미지를 자동으로 나열하며, **rEFInd**는 EFI 시스템 파티션을 스캔할 때 이미지를 찾습니다. 다른 부트 매니저를 사용하는 경우에는 펌웨어의 부트 메뉴에서 복구 환경을 시작하세요.
+  </TabItem>
+  <TabItem label="BIOS">
+    ```bash
+    sudo pacman -S cachyos-recovery-legacy
+    ```
+
+    설치 과정에서 pacman 훅이 **Limine** 또는 **GRUB**의 부트 메뉴에 **CachyOS Recovery** 항목을 추가합니다. GRUB의 경우 복구 커널과 initramfs를 `/boot/cachyos-recovery.vmlinuz` 및 `/boot/cachyos-recovery.initrd`에 복사하고 `/etc/grub.d/50-cachyos-recovery`에 항목을 작성한 뒤 GRUB 설정을 재생성합니다.
+
+    `cachyos-recovery`와 `cachyos-recovery-legacy`는 동시에 설치할 수 없습니다. `cachyos-recovery`에는 UEFI 이미지만 포함되어 있으므로 BIOS 시스템에 설치하지 마세요.
+  </TabItem>
+</Tabs>
+
+이 훅은 패키지가 업데이트될 때마다 다시 실행됩니다. 새 디스크로 이전하거나 암호화를 설정하는 등 시스템이 설치된 위치를 변경한 경우, 복구 환경이 루트 파일 시스템을 다시 찾을 수 있도록 패키지를 재설치하세요: UEFI에서는 `sudo pacman -S cachyos-recovery`, BIOS에서는 `sudo pacman -S cachyos-recovery-legacy`를 실행하면 됩니다.
+
+패키지 설치 및 재설치는 정상적으로 부팅된 시스템에서 진행해야 합니다. 스냅샷으로 부팅된 상태에서는 루트 파일 시스템을 감지할 수 없습니다.
+
+### Secure Boot
+
+[Secure Boot 설정](/ko/configuration/secure_boot_setup)에 설명된 대로 `sbctl`을 사용하여 Secure Boot를 설정한 경우 복구 이미지와 해당 애드온에 자동으로 서명됩니다. 이는 다음 조건을 충족할 때 작동합니다:
+
+- `sbctl`이 설치되어 있고 키가 생성된 상태,
+- Secure Boot가 활성화되어 있고 펌웨어가 설정 모드(Setup Mode)가 아닌 상태,
+- 키가 등록(enrolled)된 상태.
+
+다음 명령으로 서명 상태를 확인할 수 있습니다:
+
+```bash
+sudo sbctl verify | grep cachyos-recovery
+```
+
+예를 들어 패키지 설치 후에 Secure Boot를 활성화하여 파일에 서명이 되어 있지 않다면, 복구 이미지를 삭제한 후 패키지를 재설치하세요. 이미지가 이미 EFI 시스템 파티션에 변경 없이 존재하면 훅이 이미지를 다시 복사하거나 서명하지 않으므로 단순 재설치만으로는 충분하지 않습니다.
+
+```bash
+sudo rm /boot/EFI/Linux/cachyos-recovery.efi
+sudo pacman -S cachyos-recovery
+```
+
+EFI 시스템 파티션이 `/efi` 또는 `/boot/efi`에 마운트되어 있다면 그에 맞게 경로를 조정하세요. 그러면 훅이 두 파일에 서명하고, Limine을 사용하는 경우 부트 메뉴 항목도 업데이트합니다.
+
+:::caution
+Secure Boot가 활성화된 상태에서는 펌웨어가 서명되지 않은 복구 이미지의 실행을 거부하며, Limine은 복구 메뉴 대신 오류를 표시합니다. Limine이 마지막 선택 항목을 기억하도록 설정되어 있다면 부트 메뉴에서 다른 항목을 선택하여 시스템으로 다시 부팅한 다음 파일에 서명하세요.
+:::
+
+## 복구 환경 시작하기
+
+<Steps>
+1. 컴퓨터를 다시 시작합니다.
+2. 부트 메뉴에서 **CachyOS Recovery**를 선택합니다. 부트 매니저에 해당 항목이 없다면 대신 펌웨어의 부트 메뉴(보통 시작 시 <kbd>F8</kbd>, <kbd>F11</kbd> 또는 <kbd>F12</kbd>)를 열고 거기서 **CachyOS Recovery**를 선택하세요.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-limine-entry.png')} />
+3. 디스크가 암호화되어 있는 경우 LUKS 암호문을 입력합니다. 입력 기회는 5번입니다.
+4. 복구 메뉴가 열립니다.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-main-menu.png')} />
+</Steps>
+
+방향키와 <kbd>Enter</kbd> 키로 항목을 선택하고 <kbd>Esc</kbd> 키로 뒤로 이동합니다. 목록에서는 글자를 입력하여 항목을 필터링할 수 있습니다. 하단의 상자에는 선택한 작업에 대한 설명이 표시됩니다.
+
+복구 환경은 시스템을 읽기 전용으로 마운트합니다. 롤백을 시작하거나 chroot에서 변경을 가하기 전까지는 디스크의 어떤 내용도 변경되지 않습니다.
+
+| 작업 | 설명 |
+| --- | --- |
+| **Boot Btrfs snapshot** | 임시 쓰기 가능 루트로 스냅샷을 부팅합니다. 권장되는 첫 번째 단계입니다. |
+| **Rollback Btrfs snapshot** | 스냅샷을 영구적으로 복원합니다. |
+| **Chroot into target system** | 숙련된 사용자를 위해 설치된 시스템을 컨테이너에서 시작합니다. |
+| **Reboot** | 컴퓨터를 다시 시작합니다. |
+
+두 가지 스냅샷 작업은 루트 파일 시스템이 Btrfs인 경우에만 표시됩니다.
+
+## 스냅샷 부팅
+
+스냅샷 부팅은 정상 작동하는 상태를 찾는 가장 안전한 방법입니다. 일반 시스템처럼 스냅샷을 사용해 볼 수 있으며, 유지를 결정하기 전까지는 아무것도 복원되지 않습니다.
+
+<Steps>
+1. **Boot Btrfs snapshot**을 선택합니다.
+2. 스냅샷을 선택합니다. 목록에는 Btrfs 서브볼륨 ID와 UTC 기준 생성 시간이 표시됩니다. 오른쪽에서는 스냅샷의 경로와 Snapper 스냅샷의 경우 설명 및 유형을 확인할 수 있습니다. 루트 파일 시스템의 스냅샷을 선택하세요. 경로는 `.snapshots/<number>/snapshot`과 같은 형태입니다.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-snapshot-list.png')} />
+3. 부팅할 커널을 선택합니다. 이 스냅샷에 설치되어 있는 커널만 목록에 표시됩니다.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-kernel-picker.png')} />
+4. 복구 환경이 스냅샷을 준비하고 시작합니다. 평소와 같이 시스템이 부팅됩니다. 암호화된 디스크를 사용하는 경우 암호문을 다시 입력해야 할 수 있습니다.
+</Steps>
+
+스냅샷으로 부팅된 상태에서는 다음과 같이 동작합니다:
+
+- 시스템(루트 서브볼륨의 모든 내용)에 대한 변경 사항은 메모리에만 유지되며 재부팅하면 사라집니다.
+- `/home`과 같은 다른 서브볼륨 및 파티션은 평소처럼 마운트됩니다. **해당 위치의 변경 사항은 그대로 유지됩니다.**
+- 사용자가 설정한 커널 매개변수는 적용되지 않습니다. 스냅샷은 시스템을 찾는 데 필요한 매개변수로 부팅됩니다.
+
+### 스냅샷 유지
+
+데스크톱에 로그인하면 스냅샷을 유지할지 묻는 알림이 표시됩니다.
+
+<ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-notifier.png')} />
+
+- **Rollback snapshot**은 터미널을 열고 비밀번호를 묻습니다. `y`로 확인하면 스냅샷이 현재 시스템을 대체합니다([롤백 시 수행되는 작업](#롤백-시-수행되는-작업) 참조). 완료 후 재부팅하세요.
+- **Stay in snapshot**은 알림을 닫습니다. 아무것도 복원되지 않으며 설치된 시스템은 변경되지 않은 상태로 유지됩니다.
+
+알림이 지원되지 않는 창 관리자 등에서 알림이 나타나지 않거나 터미널이 열리지 않는 경우, 터미널에서 직접 롤백을 시작하세요:
+
+```bash
+sudo cachyos-recovery rollback
+```
+
+이 명령은 복구 환경에서 스냅샷으로 부팅된 상태에서만 사용할 수 있습니다.
+
+:::tip
+하드웨어가 스냅샷 커널로의 재시작을 처리하지 못하는 등의 이유로 스냅샷 부팅이 되지 않는다면, 복구 메뉴에서 대신 **Rollback Btrfs snapshot**을 사용하세요.
+:::
+
+## 스냅샷 롤백
+
+어떤 스냅샷이 정상 작동하는지 이미 알고 있거나 스냅샷 부팅에 실패했을 때 이 방법을 사용합니다.
+
+<Steps>
+1. **Rollback Btrfs snapshot**을 선택합니다.
+2. [스냅샷 부팅](#스냅샷-부팅)에 설명된 대로 복원할 스냅샷을 선택합니다.
+3. `y`와 <kbd>Enter</kbd>를 눌러 확인합니다.
+4. 롤백이 완료될 때까지 기다립니다. 완료되면 복구 환경이 재부팅 여부를 묻습니다.
+5. **Yes, reboot**을 선택하여 복원된 시스템을 시작합니다.
+</Steps>
+
+:::danger[현재 시스템 상태가 삭제됩니다]
+롤백은 현재 루트 서브볼륨을 대체하며, 롤백이 성공하면 기존 루트 서브볼륨을 삭제합니다. 이 작업은 이전에 찍어 둔 스냅샷으로만 되돌릴 수 있습니다. 홈 디렉터리와 다른 서브볼륨은 영향을 받지 않으며 기존 스냅샷들도 유지됩니다.
+:::
+
+### 롤백 시 수행되는 작업
+
+<Steps>
+1. EFI 시스템 파티션이 `/boot`에 마운트된 경우, 복구 환경은 스냅샷 내부의 도구를 사용하여 스냅샷의 커널을 복사하고 일치하는 initramfs 이미지와 부트 매니저 설정을 생성합니다. 이 파일들은 먼저 임시 위치에 준비되므로 EFI 시스템 파티션은 아직 변경되지 않습니다. 스냅샷에 존재하지 않는 커널은 부트 메뉴에서 제거되며, `sbctl`로 Secure Boot가 설정되어 있으면 파일에 서명이 이루어집니다.
+2. 스냅샷으로부터 새 루트 서브볼륨을 생성하고 현재 루트와 교체합니다.
+3. 스냅샷을 계속 사용할 수 있도록 기존 루트에서 `/.snapshots` 같은 중첩된 서브볼륨을 새 루트로 이동합니다.
+4. 준비된 부트 파일을 EFI 시스템 파티션에 복사합니다.
+5. 기존 루트 서브볼륨을 삭제합니다.
+</Steps>
+
+부트 파일이 복사되기 전에 단계가 실패하면 복구 환경은 기존 루트를 되돌리고 EFI 시스템 파티션을 변경하지 않은 상태로 둡니다.
+
+EFI 시스템 파티션이 `/efi` 또는 `/boot/efi`에 있는 경우 커널이 스냅샷 자체에 포함되어 있으므로 1단계와 4단계는 건너뜁니다.
+
+:::caution[Secure Boot 및 이전 스냅샷]
+새 부트 파일은 **스냅샷 내부**에 설치된 `sbctl`로 서명됩니다. Secure Boot를 설정하기 전에 생성된 스냅샷으로 롤백하면 어떤 파일에도 서명되지 않으며, Secure Boot가 활성화된 상태에서는 시스템이 부팅되지 않습니다. 복구 환경은 이에 대해 별도로 경고하지 않습니다. 또한 `/var/lib/sbctl`에 있던 `sbctl` 키도 기존 루트와 함께 삭제됩니다.
+
+복구 이미지 자체는 서명된 상태로 유지됩니다. 더 최신 스냅샷에 `sbctl`과 키가 아직 남아 있다면 펌웨어의 부트 메뉴에서 **CachyOS Recovery**를 시작하고 해당 스냅샷으로 롤백하세요. 롤백 과정에서 부트 파일에 다시 서명됩니다.
+
+그렇지 않다면 펌웨어에서 Secure Boot를 비활성화하고 시스템으로 부팅하세요. `sbctl`을 설치하고 `/.snapshots`의 더 최신 스냅샷에서 `/var/lib/sbctl`을 다시 복사해 옵니다. 그런 다음 [커널 이미지와 부트 매니저 서명](/ko/configuration/secure_boot_setup#커널-이미지와-부트-매니저-서명)에 설명된 대로 커널과 부트 매니저에 서명하고 Secure Boot를 다시 활성화하세요. `/var/lib/sbctl`이 포함된 최신 스냅샷이 없다면 처음부터 [Secure Boot 설정](/ko/configuration/secure_boot_setup)을 따라 새 키를 생성하고 등록해야 합니다.
+:::
+
+:::note[Easy Anti-Cheat 커널]
+롤백 시 `linux-cachyos-eac` 커널은 사용자 본인의 키로 서명하지 않으므로 [Easy Anti-Cheat](/ko/configuration/easy_anti_cheat) 부트 항목에 필요한 CachyOS 서명이 유지됩니다. 롤백 후 Easy Anti-Cheat 항목이 부팅되지 않는다면 `linux-cachyos-eac`를 재설치하여 CachyOS 서명 커널을 `/boot`에 다시 복사하거나, Limine을 사용하는 경우 `sudo limine-mkinitcpio`를 실행하세요.
+:::
+
+## 시스템으로 chroot
+
+**Chroot into target system**은 `systemd-nspawn`을 사용하여 설치된 시스템을 컨테이너에서 시작합니다. 설치된 시스템의 로그인 프롬프트가 나타나며 사용자 이름과 비밀번호로 로그인할 수 있습니다. 이 모드에서는 루트 파일 시스템이 쓰기 가능하므로 변경한 내용이 저장됩니다.
+
+`/etc`의 손상된 설정 파일을 수정하거나 부팅을 방해하는 서비스를 비활성화하는 등 루트 파일 시스템에 대한 오프라인 복구 작업에 사용하세요. 이 컨테이너에는 **네트워크 액세스가 없으며**, 루트 파일 시스템만 마운트됩니다. Btrfs에서는 `/home`, `/var/cache`, `/var/log` 같은 다른 서브볼륨과 EFI 시스템 파티션을 포함한 다른 파티션을 사용할 수 없을 수 있습니다. 패키지 설치나 재설치처럼 이러한 요소가 필요한 복구 작업에는 라이브 ISO에서 [cachy-chroot](/ko/features/cachy_chroot)를 사용하세요.
+
+컨테이너를 종료하고 복구 메뉴로 돌아가려면 1초 이내에 <kbd>Ctrl</kbd>+<kbd>]</kbd>를 세 번 누르세요.
+
+## CachyOS Recovery 제거
+
+<Tabs syncKey="firmware">
+  <TabItem label="UEFI">
+    ```bash
+    sudo pacman -Rns cachyos-recovery
+    ```
+
+    pacman 훅이 EFI 시스템 파티션에서 복구 이미지와 애드온을 제거하고, Limine 또는 GRUB 부트 메뉴 항목과 펌웨어 부트 메뉴의 **CachyOS Recovery** 항목을 삭제합니다.
+  </TabItem>
+  <TabItem label="BIOS">
+    ```bash
+    sudo pacman -Rns cachyos-recovery-legacy
+    ```
+
+    pacman 훅이 Limine 부트 메뉴 항목을 제거하거나, GRUB의 경우 복사된 복구 커널, initramfs 및 `/etc/grub.d`의 항목을 제거하고 GRUB 설정을 재생성합니다.
+  </TabItem>
+</Tabs>
+
+## 문제 해결
+
+### 부트 메뉴에 CachyOS Recovery 항목이 없음
+
+패키지(UEFI에서는 `cachyos-recovery`, BIOS에서는 `cachyos-recovery-legacy`)를 재설치하고 **Installing system recovery image...** 단계의 출력을 확인하세요:
+
+```bash
+sudo pacman -S cachyos-recovery
+```
+
+Limine 항목에는 `limine-entry-tool`이 필요하고, 펌웨어 항목에는 `efibootmgr`가 필요합니다. systemd-boot를 사용하는 경우 이미지가 systemd-boot가 설치된 동일한 EFI 시스템 파티션에 있어야 합니다.
+
+### Secure Boot 활성화 시 복구 환경이 시작되지 않음
+
+복구 이미지 또는 애드온에 서명되지 않았습니다. [Secure Boot](#secure-boot)의 설명에 따라 확인하고 서명하세요.
+
+### "스냅샷을 찾을 수 없음"
+
+복구 환경은 읽기 전용 스냅샷만 나열합니다. Snapper가 루트 파일 시스템의 스냅샷을 생성하고 있는지 확인하세요:
+
+```bash
+sudo snapper list
+```
+
+명령어에서 `root` 설정이 존재하지 않는다고 출력되면 Snapper가 설정되어 있지 않은 것입니다. 아직 설치 프로그램에서 Snapper를 설정하지 않는 **systemd-boot** 기반 설치의 경우가 이에 해당합니다. 루트 파일 시스템용 Snapper 설정을 생성하고 모든 `pacman` 트랜잭션 전후에 스냅샷을 찍도록 `snap-pac`을 함께 설치하는 `cachyos-snapper-support`를 설치하세요:
+
+```bash
+sudo pacman -S cachyos-snapper-support
+```
+
+이후부터 생성되는 스냅샷을 복구 환경에서 사용할 수 있습니다.
+
+### 스냅샷 부팅이 실패하거나 화면이 검은색으로 유지됨
+
+복구 환경에서 스냅샷 커널을 직접 시작하는 기능은 모든 기기에서 작동하지 않을 수 있습니다. 대신 **Rollback Btrfs snapshot**을 사용하여 스냅샷을 복원하세요.
+
+### "ESP 파티션을 찾을 수 없음"
+
+패키지 설치와 롤백 모두 `/etc/fstab`(롤백 중에는 스냅샷 내부의 `/etc/fstab`)에서 EFI 시스템 파티션의 위치를 읽습니다. 파티션이 해당 파일에 `vfat` 유형으로 나열되어 있어야 하며 `/boot`, `/efi` 또는 `/boot/efi`에 마운트되어 있어야 합니다.
+
+### 오류와 함께 롤백이 중단됨
+
+메시지 위에 표시된 오류 내용을 확인하세요. 복구 환경이 부트 파일을 준비하지 못한 경우 아무것도 변경되지 않았으며 기존 시스템은 그대로 유지됩니다.
+
+스냅샷은 복원되었지만 `/boot`가 일관되지 않은 상태라는 메시지가 표시되면 스냅샷 복원에는 성공했으나 부트 파일 복사에 실패한 것입니다. 라이브 ISO로 부팅한 뒤 [cachy-chroot](/ko/features/cachy_chroot)로 시스템에 들어가 부트 파일을 재생성하세요:
+
+- **Limine**을 사용하는 경우 `limine-mkinitcpio`를 실행합니다.
+- 다른 부트 매니저를 사용하는 경우 커널 패키지를 재설치합니다(예: `pacman -S linux-cachyos`). 이 방법은 설치된 커널 버전이 아직 패키지 캐시에 남아 있을 때 작동합니다. pacman이 해당 패키지를 다운로드할 수 없다면 대신 `pacman -Syu`로 전체 시스템을 업데이트하세요.

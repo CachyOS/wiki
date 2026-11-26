@@ -1,0 +1,62 @@
+---
+title: WSL의 CachyOS
+description: Windows Subsystem for Linux(WSL)에서 CachyOS를 설치하고 사용합니다
+ai_translated: true
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+CachyOS는 [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/about)(WSL)용 이미지를 제공합니다. 이 이미지는 [cachyos-wsl](https://github.com/CachyOS/cachyos-wsl) 저장소에서 관리되며, 이미지와 관련된 버그도 이곳에 보고할 수 있습니다.
+
+## 설치
+
+WSL 2 버전 `2.4.4` 이상이 필요하며, `wsl --update` 명령으로 업데이트할 수 있습니다. 이전 버전을 사용 중이라면 [cachyos-wsl README](https://github.com/CachyOS/cachyos-wsl#wsl-prior-to-244)를 참조하세요.
+
+<Steps>
+
+1. [최신 릴리스](https://github.com/CachyOS/cachyos-wsl/releases/latest)에서 `.wsl` 이미지를 다운로드하거나, PowerShell에서 다음 명령을 실행하세요:
+
+   ```powershell
+   $v = (Invoke-RestMethod https://api.github.com/repos/CachyOS/cachyos-wsl/releases/latest).tag_name
+   Invoke-WebRequest "https://github.com/CachyOS/cachyos-wsl/releases/download/$v/cachyos-$v.wsl" -OutFile "$env:TEMP\cachyos.wsl"
+   ```
+
+2. 다운로드한 파일을 더블 클릭하거나 PowerShell에서 다음 명령을 실행하여 설치하세요:
+
+   ```powershell
+   wsl --install --from-file "$env:TEMP\cachyos.wsl"
+   ```
+
+3. 시작 메뉴 또는 `wsl -d cachyos` 명령으로 CachyOS를 시작하세요.
+
+</Steps>
+
+## 초기 설정
+
+처음 실행할 때는 몇 분 정도 걸릴 수 있습니다. 이 과정에서 pacman 키링을 설정하고, 미러 순위를 매기며, 최적화된 패키지로 전환한 뒤 `sudo` 권한이 있고 `fish`를 기본 셸로 사용하는 사용자 계정을 생성하도록 요청합니다.
+
+이미지는 주기적으로만 빌드되므로 초기 설정이 완료되면 `sudo pacman -Syu`를 실행하세요.
+
+## 최적화된 패키지
+
+이 이미지는 범용(generic)으로 빌드되어 모든 x86-64 CPU에서 실행됩니다. CachyOS 설치 프로그램과 마찬가지로 초기 설정 과정에서 사용자의 CPU에 가장 적합한 [최적화된 저장소](/ko/features/optimized_repos)(`znver4`, `v4` 또는 `v3`)로 전환합니다. 구형 CPU에서는 범용 패키지를 그대로 사용합니다.
+
+오프라인 상태 등의 이유로 전환에 실패하면 범용 패키지를 사용하는 상태로 설정이 계속 진행됩니다. 다시 시도하려면 다음 명령을 실행하세요:
+
+```sh
+sudo /usr/lib/wsl/optimize-repos
+```
+
+## 일반 설치와의 차이점
+
+WSL은 항상 Microsoft 커널을 실행하므로 `linux-cachyos`와 그 스케줄러 및 `sched-ext`는 사용되지 않습니다. 또한 이 이미지에는 부트 매니저, `chwd`, zram이 포함되어 있지 않습니다.
+
+## 문제 해결
+
+pacman이 재부팅을 권장하는 경우 PowerShell에서 `wsl --terminate cachyos`를 실행하여 배포판을 재시작하세요.
+
+처음부터 다시 시작하려면 `wsl --unregister cachyos`로 배포판을 제거한 뒤 다시 설치하세요.
+
+:::caution
+`wsl --unregister`는 Linux 홈 디렉터리를 포함하여 배포판 내부의 모든 데이터를 영구적으로 삭제합니다.
+:::

@@ -1,6 +1,7 @@
 ---
 title: CachyOS 커널
 description: CachyOS 커널의 기능과 변경 사항
+ai_translated: true
 tableOfContents:
   minHeadingLevel: 1
   maxHeadingLevel: 4
@@ -13,42 +14,55 @@ CachyOS 커널은 업스트림의 개선 사항, 구성, 패치를 활용하는 
 ### 성능 최적화
 
 - **고급 컴파일**: GCC와 Clang 컴파일러를 모두 지원하는, 높은 수준으로 사용자 지정 가능한 PKGBUILD
-- **링크 타임 최적화(LTO)**: 더 나은 성능을 위해 Thin LTO가 기본으로 활성화됨
-- **프로파일 기반 최적화**: 최적의 코드 생성을 위한 AutoFDO 프로파일링([자세히 알아보기](https://cachyos.org/blog/2411-kernel-autofdo/))
+- **링크 타임 최적화(LTO)**: 기본 `linux-cachyos` 패키지에 Clang Thin LTO가 기본으로 활성화됨
+- **분산 ThinLTO(Distributed ThinLTO)**: 커널 컴파일 속도를 높이기 위한 분산 Clang ThinLTO 빌드 지원
+- **프로파일 기반 최적화**: 최적의 코드 생성을 위한 기본 커널의 AutoFDO 프로파일링([자세히 알아보기](https://cachyos.org/blog/2411-kernel-autofdo/))
 - **커널 제어 흐름 무결성(kCFI)**: 향상된 보안을 위해 LLVM 사용 시 이용 가능
-- **타이머 주파수 옵션**: 300Hz, 500Hz, 600Hz, 750Hz, 1000Hz 사이에서 구성 가능(기본값: 1000Hz)
+- **타이머 주파수 옵션**: 100Hz, 250Hz, 300Hz, 500Hz, 600Hz, 750Hz, 1000Hz 사이에서 구성 가능(기본값: 1000Hz)
 - **아키텍처 최적화**: x86-64-v3, x86-64-v4, AMD Zen4 전용 빌드 지원
 - **컴파일러 최적화**: `-fivopts`, `-fmodulo-sched`를 포함한 고급 GCC 플래그
+- **PREEMPT_DYNAMIC**: 런타임에 선택 가능한 선점 모드(full, lazy, voluntary, none)
 
 ### CPU 개선 사항
 
 - **다중 스케줄러**: 다양한 워크로드 최적화를 위한 BORE, EEVDF, BMQ 스케줄러
+- **[POC Selector](https://github.com/masahitoS/scx_cake)**: scx_cake에서 영감을 받은 Piece-Of-Cake 고속 유휴 CPU 선택기로, 웨이크업 지연을 줄여 줍니다
+- **CachyOS Sauce**: 스케줄러 및 시스템 조정이 포함된 사용자 지정 `CONFIG_CACHY` 구성
 - **AMD P-State 개선**: Preferred Core 지원과 linux-next의 최신 amd-pstate 개선 사항
 - **실시간 지원**: BORE 스케줄러 통합이 포함된 RT 커널 빌드 제공
-- **CachyOS Sauce**: 스케줄러 및 시스템 조정이 포함된 사용자 지정 `CONFIG_CACHY` 구성
 - **저지연 최적화**: 응답성을 높이고 지터를 줄이기 위한 패치
+- **sched/wait LIFO accept()**: 더 나은 캐시 효율성을 위해 소켓 accept()를 LIFO 순서로 처리
+
+### 네트워킹
+
+- **[BBR3 TCP](https://github.com/google/bbr)**: BBRv1과 함께 별도 모듈로 제공되는 BBRv3 혼잡 제어
 
 ### 파일시스템 및 메모리
 
 - **ZFS 지원**: 사전 컴파일된 모듈을 포함한 내장 ZFS 파일시스템 지원
+- **NTFS 개선**: MFT 미러 검증, 속성 경계 검사 및 로그 파일 처리를 위한 업스트림 NTFS 드라이버 수정 사항
+- **MGLRU 개선**: 향상된 더티 라이트백 처리, 간소화된 vmscan 회수 통계, Cachy Sauce MM 튜닝(LRU-gen 워킹 셋 보호, 컴팩션/워터마크 조정, 휴지페이지 회수)
 - **NVIDIA 통합**:
   - 패치가 적용된 독점 NVIDIA 드라이버 모듈
   - 오픈 소스 NVIDIA 드라이버 지원
   - 저장소에서 바로 사용할 수 있는 모듈 제공
 - **I/O 스케줄러 개선**:
   - 향상된 BFQ 및 mq-deadline 성능
-  - 대체 [ADIOS](https://github.com/firelzrd/adios) I/O 스케줄러 지원
-- **메모리 관리**:
-  - 메모리 압박 상황에서 페이지 스래싱을 방지하기 위한 [le9uo](https://github.com/firelzrd/le9uo) 패치
-  - Zen-kernel 메모리 관리 조정(컴팩션, 워터마크 최적화)
+  - [ADIOS](https://github.com/firelzrd/adios) v3.2.0 다중 큐 I/O 스케줄러 지원
+- **VRAM Cgroup (DMEM)**: DRM 서브시스템에서 cgroup별로 GPU VRAM 사용량을 제한하기 위한 장치 메모리 컨트롤러
 
 ### 추가 기능
 
 #### 하드웨어 지원
-- **게임용 하드웨어**: Steam Deck 패치(Audio, HW Quirks, HID)와 ROG Ally 지원
-- **Apple 하드웨어**: T2 MacBook 지원이 기본 포함됨
+- **AMD ISP4**: 지원되는 플랫폼을 위한 새로운 AMD ISP 4 카메라 드라이버
+- **게임용 하드웨어**: Steam Deck 패치(Audio, HW Quirks, HID), ROG Ally 지원 및 MSI Claw HID 드라이버(deckify)
+- **Apple 하드웨어**: staging의 apple-bce 드라이버를 통한 T2 MacBook 지원
 - **ASUS 하드웨어**: 확장된 ASUS 하드웨어 호환성 패치
+- **Lenovo 하드웨어**: WMI 배터리 충전 제한, GPU/CPU 튜닝 가능 속성 및 capdata debugfs
+- **HP 하드웨어**: hp-wmi를 통한 OMEN Slim 및 OMEN MAX 노트북 지원
 - **그래픽**: HDR 지원 활성화, AMDGPU min_powercap 오버라이드(`amdgpu_ignore_min_pcap`)
+- **디스플레이**: AMD의 HDMI VRR, ALLM 및 패시브 VRR 커넥터 속성, EDID에서 VESA DSC 픽셀당 비트 수 파싱
+- **오디오 코덱**: AW88399 및 MAX98390 HDA 사이드 코덱 지원
 
 #### 시스템 개선 사항
 - **멀티미디어**: v4l2loopback 모듈이 기본 포함됨
@@ -66,7 +80,7 @@ CachyOS 커널에는 눈에 잘 띄지는 않지만 사용자 경험을 개선�
 ## 변형
 
 CachyOS는 다양한 커널 옵션을 제공합니다. 제공되는 모든 커널은 [CachyOS Base Patchset](https://github.com/CachyOS/kernel-patches)과 함께 배포됩니다.
-각 커널에는 [대응되는 -lto 변형](#package-naming-convention)이 있으며,
+각 커널에는 [대응되는 -lto 변형](#패키지-이름-지정-규칙)이 있으며,
 [clang](https://clang.llvm.org/)으로 빌드됩니다. 이는 [GCC](https://gcc.gnu.org/) 대신 사용됩니다.
 
 - **linux-cachyos**
@@ -155,7 +169,7 @@ out-of-tree 방식으로 개발되며 커널의 릴리스 주기를 따르지 �
 2) 가능한 최적화를 위한 프로파일링 데이터를 수집하기 위해 워크로드를 실행하여 프로파일을 생성합니다.
 3) AutoFDO 프로파일을 사용해 커널을 다시 빌드합니다.
 
-따라서 현재는 [linux-cachyos](/features/kernel#variants) 변형에만 포함되어 있습니다.
+따라서 현재는 [linux-cachyos](/ko/features/kernel#변형) 변형에만 포함되어 있습니다.
 
 AutoFDO에 대한 자세한 정보는 [여기](https://cachyos.org/blog/2411-kernel-autofdo/)를 클릭하세요.
 
