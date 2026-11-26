@@ -1,0 +1,288 @@
+---
+title: CachyOS 系统恢复
+description: 从引导菜单中的恢复环境启动、还原和修复你的系统
+tableOfContents:
+  minHeadingLevel: 2
+  maxHeadingLevel: 3
+ai_translated: true
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+[CachyOS Recovery](https://github.com/CachyOS/cachyos-recovery) 是一个安装在内核旁的小型恢复系统，可从引导菜单启动。当系统更新或配置更改导致系统损坏时，你无需使用 Live USB，即可通过它：
+
+- **启动 Btrfs 快照**，在不修改现有系统的情况下测试快照是否正常工作；
+- **回滚**到某个快照，永久恢复系统（包括对应的内核与引导文件）；
+- **在容器中打开已安装的系统**，以便手动修复问题。
+
+该恢复环境仅占用约 70 MB 空间。它不依赖你已安装系统的当前状态，因此即使系统本身已无法启动，它也能正常运行。
+
+:::caution
+快照并非备份。它们与你的系统位于同一块磁盘上，无法防范磁盘故障或误删 `/home` 中的文件。请务必定期备份重要数据。
+:::
+
+## 要求
+
+该恢复环境可在任何使用 Btrfs、ext4、XFS 或 F2FS 根文件系统的 CachyOS 安装上启动。若要使用快照相关操作，还需要满足以下条件：
+
+- 使用 **Btrfs** 根文件系统，且根目录位于 `@` 子卷上（这也是 CachyOS 安装器的默认配置）。
+- 具备根子卷的**只读快照**。Snapper 默认会创建只读快照；安装 `cachyos-snapper-support` 软件包后，CachyOS 会在每次执行 `pacman` 事务前后自动创建快照。使用 systemd-boot 的系统目前尚未默认包含此软件包，请参阅[“未找到快照”](#未找到快照)。另请参阅 [Btrfs 快照](/zh/configuration/btrfs_snapshots)。
+- 使用 **mkinitcpio** 作为 initramfs 生成器（CachyOS 默认使用）。
+
+在 UEFI 系统上，EFI 系统分区必须在 `/etc/fstab` 中以 `vfat` 类型列出，并挂载到 `/boot`、`/efi` 或 `/boot/efi`。
+
+如果 EFI 系统分区挂载在 `/boot`，回滚操作还会为 **Limine**、**systemd-boot**（通过 `sdboot-manage`）和 **GRUB** 重新生成内核、initramfs 映像及引导管理器配置。**rEFInd** 无需更新配置。如果 EFI 系统分区挂载在 `/efi` 或 `/boot/efi`，或者在 `/boot` 属于根文件系统一部分的 BIOS 系统上，内核本身就包含在快照中，会随快照一并还原。
+
+### 加密磁盘与键盘布局
+
+支持使用 **LUKS** 加密的磁盘。如果磁盘尚未解锁，恢复环境在启动时会要求输入 LUKS 密码。即使你平时使用 TPM2 或 FIDO2 自动解锁磁盘，也请妥善备好密码。
+
+恢复环境始终使用 **美式（US）键盘布局**，包括输入密码以及登录 chroot 环境时也是如此。如果你的密码中包含在你所用键盘上位置不同的字符，请按照美式键盘上的按键位置输入。
+
+## 安装
+
+<Tabs syncKey="firmware">
+  <TabItem label="UEFI">
+    ```bash
+    sudo pacman -S cachyos-recovery
+    ```
+
+    安装过程中，pacman 钩子（hook）会自动完成所有配置：
+
+    - 将恢复映像复制到 EFI 系统分区上的 `EFI/Linux/cachyos-recovery.efi`。
+    - 将根文件系统（以及 LUKS 设备，如有）的位置写入映像旁的一个小型附加组件中：`EFI/Linux/cachyos-recovery.efi.extra.d/root.addon.efi`。
+    - 当系统已通过 `sbctl` 配置 Secure Boot 时，使用 `sbctl` 为上述两个文件签名（请参阅[安全启动](#安全启动)）。
+    - 对于 **Limine**，在引导菜单中添加一个 **CachyOS Recovery** 条目。
+    - 对于 **GRUB**，将 **CachyOS Recovery** 条目写入 `/etc/grub.d/50-cachyos-recovery`，并重新生成 GRUB 配置。
+    - 在固件的引导菜单中添加一个 **CachyOS Recovery** 条目（需要 `efibootmgr`）。该条目会添加到引导顺序的末尾，因此你原有的默认引导管理器不会改变。
+
+    **systemd-boot** 会自动列出 `EFI/Linux` 中的映像，而 **rEFInd** 在扫描 EFI 系统分区时也会自动发现该映像。对于其他引导管理器，请从固件的引导菜单中启动恢复环境。
+  </TabItem>
+  <TabItem label="BIOS">
+    ```bash
+    sudo pacman -S cachyos-recovery-legacy
+    ```
+
+    安装过程中，pacman 钩子会在 **Limine** 或 **GRUB** 的引导菜单中添加一个 **CachyOS Recovery** 条目。对于 GRUB，它还会将恢复内核和 initramfs 复制到 `/boot/cachyos-recovery.vmlinuz` 和 `/boot/cachyos-recovery.initrd`，将条目写入 `/etc/grub.d/50-cachyos-recovery`，并重新生成 GRUB 配置。
+
+    `cachyos-recovery` 和 `cachyos-recovery-legacy` 不能同时安装。切勿在 BIOS 系统上安装 `cachyos-recovery`，因为它仅包含 UEFI 映像。
+  </TabItem>
+</Tabs>
+
+每次更新该软件包时，该钩子都会再次运行。如果你更改了系统的安装位置（例如迁移到新磁盘或设置了磁盘加密），请重新安装该软件包，以便恢复环境重新识别你的根文件系统：UEFI 系统执行 `sudo pacman -S cachyos-recovery`，BIOS 系统执行 `sudo pacman -S cachyos-recovery-legacy`。
+
+请务必在正常启动的系统中安装或重新安装该软件包。从快照启动时无法检测到你的根文件系统。
+
+### 安全启动
+
+如果你已按照[安全启动设置](/zh/configuration/secure_boot_setup)中的说明使用 `sbctl` 配置了 Secure Boot，恢复映像及其附加组件会自动获得签名。自动签名会在满足以下条件时触发：
+
+- 已安装 `sbctl` 并已生成密钥；
+- 已启用 Secure Boot 且固件不处于 Setup Mode（设置模式）；
+- 你的密钥已注册（enrolled）。
+
+你可以使用以下命令检查签名状态：
+
+```bash
+sudo sbctl verify | grep cachyos-recovery
+```
+
+如果文件未签名（例如你在安装该软件包之后才启用 Secure Boot），请先删除恢复映像，再重新安装软件包。仅重新安装是不够的，因为当 EFI 系统分区上的映像未发生变化时，钩子不会重新复制和签名该文件。
+
+```bash
+sudo rm /boot/EFI/Linux/cachyos-recovery.efi
+sudo pacman -S cachyos-recovery
+```
+
+如果你的 EFI 系统分区挂载在 `/efi` 或 `/boot/efi`，请相应调整路径。随后钩子会为这两个文件签名，并在使用 Limine 时更新引导菜单条目。
+
+:::caution
+启用 Secure Boot 后，固件会拒绝启动未签名的恢复映像，Limine 也会显示错误提示而不会进入恢复菜单。如果 Limine 设置为记住上次选择的条目，请在引导菜单中选择其他条目重新启动系统，然后再为这些文件签名。
+:::
+
+## 启动恢复环境
+
+<Steps>
+1. 重启计算机。
+2. 在引导菜单中选择 **CachyOS Recovery**。如果你的引导管理器中没有该条目，请改为打开固件的引导菜单（通常在开机时按 <kbd>F8</kbd>、<kbd>F11</kbd> 或 <kbd>F12</kbd>）并在其中选择 **CachyOS Recovery**。
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-limine-entry.png')} />
+3. 如果你的磁盘已加密，请输入 LUKS 密码。你共有五次尝试机会。
+4. 恢复菜单随即打开。
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-main-menu.png')} />
+</Steps>
+
+使用方向键和 <kbd>Enter</kbd> 选择条目，按 <kbd>Esc</kbd> 返回。在列表中，你可以直接输入文字来过滤条目。底部的方框会显示当前所选操作的说明。
+
+恢复环境会以只读方式挂载你的系统。在你开始回滚或在 chroot 中进行修改之前，磁盘上的任何内容都不会被更改。
+
+| 操作 | 功能说明 |
+| --- | --- |
+| **Boot Btrfs snapshot** | 使用临时的可写根目录启动快照。推荐将其作为首选第一步。 |
+| **Rollback Btrfs snapshot** | 永久还原某个快照。 |
+| **Chroot into target system** | 在容器中启动已安装的系统，供有经验的用户使用。 |
+| **Reboot** | 重启计算机。 |
+
+仅当你的根文件系统为 Btrfs 时，才会显示前两个快照相关操作。
+
+## 启动快照
+
+启动快照是寻找可用系统状态的最安全方式。你可以像使用正常系统一样使用该快照，在你决定保留它之前，不会对现有系统执行任何还原操作。
+
+<Steps>
+1. 选择 **Boot Btrfs snapshot**。
+2. 选择一个快照。列表中会显示 Btrfs 子卷 ID 以及 UTC 创建时间。在右侧可以看到快照路径；对于 Snapper 快照，还会显示其描述和类型。请选择根文件系统的快照，其路径通常形如 `.snapshots/<number>/snapshot`。
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-snapshot-list.png')} />
+3. 选择要启动的内核。此处仅会列出该快照中已安装的内核。
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-kernel-picker.png')} />
+4. 恢复环境会准备该快照并启动它。系统会像往常一样启动。如果磁盘已加密，系统可能会再次要求你输入密码。
+</Steps>
+
+当你从快照启动并进入系统时：
+
+- 对系统所做的更改（根子卷上的所有内容）仅保存在内存中，重启后会丢失。
+- 其他子卷和分区（例如 `/home`）会按常规方式挂载。**在其中所做的更改会保留。**
+- 你自定义的内核参数不会生效。快照会使用定位系统所需的参数来启动。
+
+### 保留快照
+
+登录桌面后，系统会弹出一条通知，询问你是否要保留该快照。
+
+<ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-notifier.png')} />
+
+- **Rollback snapshot** 会打开一个终端并要求输入密码。输入 `y` 确认后，该快照会替换你当前的系统（请参阅[回滚会执行哪些操作](#回滚会执行哪些操作)）。操作完成后请重启系统。
+- **Stay in snapshot** 会关闭通知。不会执行任何还原操作，你已安装的系统保持不变。
+
+如果通知没有出现（例如在使用无通知功能的窗口管理器时），或者没有打开终端，请手动在终端中执行以下命令开始回滚：
+
+```bash
+sudo cachyos-recovery rollback
+```
+
+此命令仅在你通过恢复环境启动并进入快照时可用。
+
+:::tip
+如果快照无法启动（例如你的硬件不支持直接重启进入快照内核），请改用恢复菜单中的 **Rollback Btrfs snapshot**。
+:::
+
+## 回滚快照
+
+当你明确知道哪个快照可以正常工作，或者无法直接启动快照时，请使用此功能。
+
+<Steps>
+1. 选择 **Rollback Btrfs snapshot**。
+2. 按照[启动快照](#启动快照)中的说明选择要还原的快照。
+3. 输入 `y` 并按 <kbd>Enter</kbd> 确认。
+4. 等待回滚完成。完成后恢复环境会询问是否重启。
+5. 选择 **Yes, reboot** 以启动还原后的系统。
+</Steps>
+
+:::danger[你当前的系统状态将被删除]
+回滚会替换你当前的根子卷，并在回滚成功后将其删除。该操作只能通过此前已创建的快照来撤销。你的主目录（`/home`）和其他子卷不会受到影响，现有的快照也会保留。
+:::
+
+### 回滚会执行哪些操作
+
+<Steps>
+1. 如果你的 EFI 系统分区挂载在 `/boot`，恢复环境会使用快照内的工具复制该快照的内核，并生成对应的 initramfs 映像与引导管理器配置。这些文件会先在临时位置准备，因此此时还不会修改 EFI 系统分区。快照中不存在的内核会从引导菜单中移除；如果已使用 `sbctl` 配置 Secure Boot，这些文件也会获得签名。
+2. 从所选快照创建一个新的根子卷，并将其与当前的根子卷交换。
+3. 将嵌套子卷（例如 `/.snapshots`）从旧的根子卷移动到新的根子卷，以确保你的快照仍然可用。
+4. 将准备好的引导文件复制到 EFI 系统分区。
+5. 删除旧的根子卷。
+</Steps>
+
+如果在复制引导文件之前有任何步骤失败，恢复环境会恢复你原来的根子卷，并保持 EFI 系统分区不变。
+
+如果 EFI 系统分区挂载在 `/efi` 或 `/boot/efi`，内核本身就包含在快照中，因此会跳过第 1 步和第 4 步。
+
+:::caution[Secure Boot 与较早的快照]
+新的引导文件是使用**快照内部**的 `sbctl` 安装环境进行签名的。如果你回滚到一个在设置 Secure Boot 之前创建的快照，所有文件都不会被签名，启用 Secure Boot 后系统将无法启动。恢复环境对此不会发出警告，并且你在 `/var/lib/sbctl` 中的 `sbctl` 密钥也会随旧的根子卷一并删除。
+
+恢复映像本身仍然保留签名。如果较新的快照中仍包含 `sbctl` 及其密钥，请从固件的引导菜单启动 **CachyOS Recovery** 并回滚到该较新的快照，回滚过程会重新为引导文件签名。
+
+否则，请在固件中禁用 Secure Boot 并启动系统。安装 `sbctl` 并从 `/.snapshots` 中较新的快照复制回 `/var/lib/sbctl`。然后按照[签名内核映像和引导管理器](/zh/configuration/secure_boot_setup#签名内核映像和引导管理器)中的说明为你的内核和引导管理器签名，并重新启用 Secure Boot。如果没有任何较新的快照包含 `/var/lib/sbctl`，请从头按照[安全启动设置](/zh/configuration/secure_boot_setup)重新创建并注册新的密钥。
+:::
+
+:::note[Easy Anti-Cheat 内核]
+回滚不会使用你自己的密钥对 `linux-cachyos-eac` 内核进行签名，因此会保留 [Easy Anti-Cheat](/zh/configuration/easy_anti_cheat) 引导条目所需的 CachyOS 官方签名。如果回滚后 Easy Anti-Cheat 条目无法启动，请通过重新安装 `linux-cachyos-eac`（或者在 Limine 下运行 `sudo limine-mkinitcpio`）将带有 CachyOS 签名的内核重新复制到 `/boot`。
+:::
+
+## Chroot 进入系统
+
+**Chroot into target system** 会使用 `systemd-nspawn` 在容器中启动你已安装的系统。系统会提示你登录已安装的系统，你可以使用自己的用户名和密码登录。在此模式下，你的根文件系统是可写的，因此所做的修改会保存下来。
+
+此功能适合对根文件系统进行离线修复，例如修复 `/etc` 中损坏的配置文件，或禁用导致无法启动的服务。该容器**没有网络连接**，且仅挂载了你的根文件系统。在 Btrfs 上，`/home`、`/var/cache`、`/var/log` 等其他子卷以及包括 EFI 系统分区在内的其他分区可能都不可用。如果修复操作需要这些位置（例如安装或重新安装软件包），请从 Live ISO 启动并使用 [cachy-chroot](/zh/features/cachy_chroot)。
+
+要退出容器并返回恢复菜单，请在一秒内连续按三次 <kbd>Ctrl</kbd>+<kbd>]</kbd>。
+
+## 移除 CachyOS Recovery
+
+<Tabs syncKey="firmware">
+  <TabItem label="UEFI">
+    ```bash
+    sudo pacman -Rns cachyos-recovery
+    ```
+
+    pacman 钩子会从 EFI 系统分区移除恢复映像及其附加组件，同时移除 Limine 或 GRUB 的引导菜单条目，以及固件引导菜单中的 **CachyOS Recovery** 条目。
+  </TabItem>
+  <TabItem label="BIOS">
+    ```bash
+    sudo pacman -Rns cachyos-recovery-legacy
+    ```
+
+    pacman 钩子会移除 Limine 的引导菜单条目；对于 GRUB，则会移除复制的恢复内核、initramfs 以及 `/etc/grub.d` 中的条目，并重新生成 GRUB 配置。
+  </TabItem>
+</Tabs>
+
+## 故障排除
+
+### 引导菜单中没有 CachyOS Recovery 条目
+
+请重新安装软件包（UEFI 系统为 `cachyos-recovery`，BIOS 系统为 `cachyos-recovery-legacy`），并查看 **Installing system recovery image...** 步骤的输出信息：
+
+```bash
+sudo pacman -S cachyos-recovery
+```
+
+Limine 条目需要 `limine-entry-tool`，固件条目需要 `efibootmgr`。对于 systemd-boot，恢复映像必须位于安装 systemd-boot 的同一个 EFI 系统分区上。
+
+### 启用 Secure Boot 后无法启动恢复环境
+
+恢复映像或其附加组件未签名。请按照[安全启动](#安全启动)中的说明检查并为其签名。
+
+### “未找到快照”
+
+恢复环境仅会列出只读快照。请检查 Snapper 是否为你的根文件系统创建了快照：
+
+```bash
+sudo snapper list
+```
+
+如果该命令提示配置 `root` 不存在，则说明 Snapper 尚未配置。在使用 **systemd-boot** 安装的系统中会出现这种情况，因为安装器目前尚未为 systemd-boot 自动配置 Snapper。请安装 `cachyos-snapper-support`，它会为你的根文件系统创建 Snapper 配置，并引入 `snap-pac` 以便在每次 `pacman` 事务前后自动创建快照：
+
+```bash
+sudo pacman -S cachyos-snapper-support
+```
+
+恢复环境即可使用此后创建的快照。
+
+### 启动快照失败或保持黑屏
+
+从恢复环境直接启动快照内核并非在所有设备上都能正常工作。请改用 **Rollback Btrfs snapshot** 来还原该快照。
+
+### “未找到 ESP 分区”
+
+软件包安装和回滚操作都会从 `/etc/fstab` 中读取 EFI 系统分区的位置（在回滚过程中读取的是快照内的 `/etc/fstab`）。该分区必须在其中以 `vfat` 类型列出，并挂载在 `/boot`、`/efi` 或 `/boot/efi`。
+
+### 回滚因错误而中止
+
+请阅读提示信息上方的错误内容。如果恢复环境无法准备引导文件，系统不会做出任何更改，你原有的系统仍然保持原样。
+
+如果消息提示快照已还原但 `/boot` 状态不一致，则说明快照已经还原，但复制引导文件失败。请从 Live ISO 启动，使用 [cachy-chroot](/zh/features/cachy_chroot) 进入你的系统并重新生成引导文件：
+
+- 对于 **Limine**，运行 `limine-mkinitcpio`。
+- 对于其他引导管理器，重新安装你的内核软件包，例如 `pacman -S linux-cachyos`。当已安装的内核版本仍保留在软件包缓存中时，此方法有效；如果 pacman 无法下载该版本，请改用 `pacman -Syu` 更新整个系统。

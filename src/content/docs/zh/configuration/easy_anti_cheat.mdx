@@ -1,0 +1,744 @@
+---
+title: Easy Anti-Cheat (Linux v2)
+description: 使用安全启动（Secure Boot）引导 CachyOS EAC 内核，以运行使用 Easy Anti-Cheat Linux v2 的游戏
+ai_translated: true
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+[Easy Anti-Cheat Linux v2](https://onlineservices.epicgames.com/news/introducing-easy-anti-cheat-linux-v2)
+仅在能够验证系统的引导方式时才允许游戏启动。它会检查以下内容：
+
+- Secure Boot 已启用，且内核使用受 Epic 信任的密钥签名
+- 系统具备 TPM 2.0，用于记录引导的每一步（度量启动 / Measured Boot）
+- 内核运行在 lockdown integrity 模式下，且仅加载已签名的模块
+- 已启用 IOMMU、禁用了 kexec，且 BPF LSM 处于活动状态
+
+CachyOS 提供了满足这些要求的专用内核 `linux-cachyos-eac`，以及使用相同密钥签名的 systemd-boot。你可以保留自己的 Secure Boot 密钥，唯一需要添加的是将 **CachyOS EAC CA** 证书写入 Secure Boot 数据库，以便你的固件接受由 CachyOS 签名的文件。
+
+EAC 内核拥有独立的引导项。你原有的常规引导项保持不变，因此只需在想玩使用 EAC 的游戏时引导进入 EAC 引导项即可。
+
+EAC 要求引导管理器必须根据 Secure Boot 数据库验证其加载的所有内容，并将其度量记录到 TPM 中。systemd-boot 支持这一点，而 Limine 不支持；rEFInd 虽然支持，但它使用的是你自己的密钥签名，EAC 并不接受，GRUB 也是如此。因此，Limine、rEFInd 和 GRUB 用户可以将原有的引导管理器保留为默认引导项，并通过由 CachyOS 签名的 systemd-boot 来启动 EAC 内核——它会拥有自己独立的固件引导项，且仅用于 EAC 引导。
+
+[`eac-setup` 脚本](#使用-eac-setup-进行配置) 会为你自动完成配置。[手动配置](#手动配置) 部分则详细说明了相同的手动操作步骤。
+
+## 系统要求
+
+- 以 UEFI 模式安装的 CachyOS，并使用 **systemd-boot**、**Limine** 或 **rEFInd** 作为引导管理器。若使用 rEFInd，EFI 系统分区必须挂载在 `/boot`（与 CachyOS 安装器的默认配置一致）。目前实验性支持 **GRUB**，请参阅 [GRUB（实验性）](#grub实验性)。
+- 系统已更新至最新状态（`sudo pacman -Syu`）。`eac-setup` 需要 `cachyos-settings` 1.4.4 或更新版本，`eac-status` 以及 `sbctl-batch-sign` 中的 EAC 支持需要 1.4.2 或更新版本。
+- 在固件设置中已启用 **TPM 2.0**。固件 TPM（AMD fTPM、Intel PTT）同样适用。
+- 在固件设置中已启用 **IOMMU**（AMD 平台为 AMD-Vi / "IOMMU"，Intel 平台为 VT-d）。
+- NVIDIA GPU：Maxwell 架构或更新型号（GTX 750、GTX 900 系列及后续型号）。EAC 内核以独立软件包的形式提供 NVIDIA 模块：Turing 及更新架构（GTX 16 / RTX 20 系列及以后）使用 `linux-cachyos-eac-nvidia-open`，Maxwell、Pascal 和 Volta 架构使用 `linux-cachyos-eac-nvidia-580xx`。
+
+:::caution[不支持 DKMS 模块]
+EAC 内核仅加载在内核构建时一并签名的模块。NVIDIA、ZFS 和 Realtek r8125 模块均以 `linux-cachyos-eac-*` 软件包的形式提供；其他通过 DKMS 构建的模块（例如 `virtualbox-host-dkms`）将无法在 EAC 引导项中加载。请勿安装 `linux-cachyos-eac-headers`。
+:::
+
+:::danger[BitLocker 与 TPM 磁盘解锁]
+此配置会更改 Secure Boot 密钥，从而改变 TPM 所度量的内容。Windows 双系统中的 BitLocker 可能会因此要求输入恢复密钥，而你自己绑定到 TPM 的 LUKS 加密磁盘也会要求输入密码短语。在开始操作前，请务必确认手头备有这些密钥或密码，否则可能会失去对数据的访问权限。
+:::
+
+:::danger[Steam Deck]
+Steam Deck 的固件设置中没有标准的 Secure Boot 开关，目前不受支持。录入密钥可能会导致设备无法启动，且难以禁用 Secure Boot。请勿在 Steam Deck 上按本指南操作。
+:::
+
+## 使用 eac-setup 进行配置
+
+来自 `cachyos-settings` 的 `eac-setup` 支持为 systemd-boot、Limine、rEFInd 和 GRUB 进行配置。它会检查已完成的步骤，因此你可以随时重新运行它（例如用于修复配置）。只有固件设置中的更改需要你手动完成。
+
+<Steps>
+
+1. **将固件切换至设置模式（Setup Mode）**
+
+    如果你已经在使用由 `sbctl` 创建密钥的 Secure Boot（例如参考过 [Secure Boot 指南](/zh/configuration/secure_boot_setup)），请跳过此步骤。`eac-setup` 会在 Secure Boot 保持启用的状态下将 CachyOS EAC CA 添加到 Secure Boot 数据库中。
+
+    否则，请按照 [在 UEFI 中启用设置模式](/zh/configuration/secure_boot_setup#在-uefi-中启用-setup-mode) 操作，并暂时保持 Secure Boot **禁用**。
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+2. **运行 eac-setup**
+
+    ```bash
+    sudo eac-setup
+    ```
+
+    该脚本在录入 Secure Boot 密钥前会向你确认，pacman 在安装软件包前也会向你确认。它会执行以下步骤：
+
+    - 检查 TPM、IOMMU 以及你所使用的引导管理器。
+    - 录入 CachyOS EAC CA。如果处于 Setup Mode，它会先创建你自己的密钥，并将其与 Microsoft 的密钥一起录入。
+    - 安装 `linux-cachyos-eac`、`systemd-boot-cachyos-signed` 以及与你的系统匹配的 `linux-cachyos-eac-*` 模块软件包（NVIDIA、ZFS、r8125）。
+    - 使用你自己的密钥为常规内核签名，同时也为 Limine、rEFInd 或 GRUB 签名，以确保在启用 Secure Boot 后常规系统仍能正常引导。
+    - 阻止 `sbctl` 修改由 CachyOS 签名的文件；如果 `sbctl` 再次对它们进行了签名，则恢复其原始签名。
+    - 根据你当前运行系统的内核参数加上 EAC 所需参数，创建 EAC 引导项。对于 Limine、rEFInd 和 GRUB，它还会安装由 CachyOS 签名的 systemd-boot，并为其创建独立的“CachyOS EAC”固件引导项。
+
+    如果固件既未处于 Setup Mode，你当前的密钥也不是由 `sbctl` 创建的，脚本会停止并提示你将固件切换至 Setup Mode。完成切换后重新运行脚本即可。
+
+    EAC 引导项会沿用你当前系统启动时使用的内核参数。如果你日后更改了常规引导项的内核参数，请重启系统并再次运行 `sudo eac-setup`。
+
+3. **启用 Secure Boot**
+
+    如果结束时 Secure Boot 仍处于禁用状态，`eac-setup` 会提醒你。如果已启用，请跳过此步骤。
+
+    重启进入固件设置并启用 Secure Boot。如果你的主板没有 Secure Boot 开关，请参阅 [Secure Boot 指南](/zh/configuration/secure_boot_setup#签名内核映像和引导管理器) 中的 ASUS 注意事项。
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+4. **引导进入 EAC**
+
+    ```bash
+    sudo eac-setup boot
+    ```
+
+    该命令会在下一次重启时引导进入 EAC 引导项（仅生效一次）。游戏结束后再次重启，系统会恢复启动你的常规系统。如果使用 systemd-boot，你也可以直接在引导菜单中选择 **CachyOS (EAC)**。
+
+    :::caution
+    Limine 和 GRUB 菜单中也会显示一个 `linux-cachyos-eac` 引导项。通过 Limine 或 GRUB 直接启动它**无法**通过 EAC 检查。请务必使用 `sudo eac-setup boot`。
+    :::
+
+    然后按照 [验证配置](#验证配置) 中的说明检查结果。
+
+</Steps>
+
+### GRUB（实验性）
+
+GRUB 支持是新增功能，目前测试较少，需要 `cachyos-settings` 1.4.5 或更新版本。如遇问题，请在 [CachyOS-Settings 问题追踪器](https://github.com/CachyOS/CachyOS-Settings/issues) 中报告。
+
+GRUB 仅支持通过 `eac-setup` 配置，暂无手动配置指南。整体步骤与上文相同，此外脚本还会执行以下更改：
+
+- 使用 `tpm` 模块重新安装 GRUB，并移除 shim lock，然后使用你自己的密钥对其进行签名。如果不这样做，GRUB 将无法在启用 Secure Boot 的情况下启动你的常规内核。
+- 将 EAC 内核及其 initramfs 复制到 EFI 系统分区，因为 systemd-boot 无法从根文件系统的 `/boot` 中读取它们。这大约需要占用 40 MiB 空间。脚本会安装 `cachyos-eac-grub-hook`，其 mkinitcpio 钩子会在 EAC 内核或其 initramfs 发生变化时自动更新该副本。
+- 重新生成 GRUB 菜单。之后菜单中的 UEFI 固件引导项下会出现一个 **CachyOS EAC (EFI BootNext)** 条目，其作用与 `sudo eac-setup boot` 相同。
+- 如果 GRUB 默认会启动 `linux-cachyos-eac`，脚本会将 `/etc/default/grub` 中的 `GRUB_TOP_LEVEL` 设置为你的常规内核。当尚未设置该选项时会出现这种情况，因为此时 GRUB 会按名称对内核排序。
+
+:::caution
+如果 `/etc/default/grub` 中设置了 `GRUB_SAVEDEFAULT=true`，请勿选择 **CachyOS EAC (EFI BootNext)** 菜单项。GRUB 会记住该选择，导致每次开机都进入 EAC。请改用 `sudo eac-setup boot`。如果已经发生这种情况，请再次运行 `sudo eac-setup`，它会清除已保存的默认条目。
+:::
+
+目前 GRUB 尚不支持磁盘加密。CachyOS 安装器会将 `/boot` 保存在加密的根分区内部，并将磁盘密钥放入 initramfs 中。如果将 initramfs 复制到未加密的 EFI 系统分区，将会暴露该密钥，因此当检测到 `/boot` 已加密时，`eac-setup` 会中止执行。
+
+## 手动配置
+
+以下列出了 `eac-setup` 所执行的详细步骤，供你手动操作或了解脚本对系统所做的更改。你可以随时切换回脚本，它会从当前已完成的进度继续执行。
+
+:::note[请在 bash 中运行命令]
+本页中的命令均针对 bash 编写。CachyOS 的默认 shell 是 fish，它会拒绝执行其中的部分命令（例如报错 `Unsupported use of '='`）。请先在终端中运行 `bash`，然后再执行这些命令。
+:::
+
+### 如果你已在使用 Secure Boot
+
+如果你已经使用 `sbctl` 配置了 Secure Boot（例如按照 [Secure Boot 指南](/zh/configuration/secure_boot_setup) 完成配置），则无需进入 Setup Mode。`sbctl` 可以在 Secure Boot 保持启用的状态下将 CachyOS EAC CA 添加到 Secure Boot 数据库中——它会使用你自己的密钥交换密钥（KEK）对该更改进行签名，从而获得固件的认可。
+
+{/* TODO: only tested in OVMF so far, test on real hardware */}
+
+<Steps>
+
+1. **检查你的 Secure Boot 配置**
+
+    ```bash
+    sudo sbctl status
+    ```
+
+    输出必须显示 `sbctl is installed`、`Setup Mode: Disabled` 和 `Secure Boot: Enabled`。如果你的密钥不是使用 `sbctl` 创建的，请改按你所用引导管理器对应的步骤从第 1 步开始配置。
+
+2. **录入 CachyOS EAC CA**
+
+    ```bash
+    sudo pacman -S cachyos-eac-signing-key
+    sudo sbctl enroll-keys --append --partial db --custom --ignore-immutable
+    ```
+
+    `--append` 会保留所有已录入的证书，`--partial db` 仅修改 Secure Boot 数据库（`db`），而 `--ignore-immutable` 允许 `sbctl` 写入该变量（Linux 默认将其标记为只读）。
+
+    :::caution[此命令只需运行一次]
+    `sbctl` 不会检查哪些证书已经被录入。每次运行都会重复添加 CachyOS EAC CA 以及你自己的 Database Key，而固件可用于存储证书的空间是有限的。
+    :::
+
+    检查证书是否已成功录入：
+
+    ```bash
+    sudo sbctl list-enrolled-keys
+    ```
+
+    `db` 部分应在你原有的条目旁列出 `CachyOS EAC CA`。此时你自己的 `Database Key` 会被列出两次，这是正常且无害的。
+
+    如果 `sbctl` 报错，说明固件拒绝了该更改，通常是因为当前已录入的 KEK 与 sbctl 密钥目录中的不一致。此时请按你所用引导管理器对应的步骤从第 1 步开始配置。
+
+3. **继续完成引导管理器的配置**
+
+    从第 2 步开始继续遵循 [为你的引导管理器进行配置](#为你的引导管理器进行配置)。跳过第 3 步，因为 CA 已录入且你的引导管理器已经签名。在第 6 步中，由于 Secure Boot 已经启用，你只需直接引导 EAC 引导项即可。
+
+</Steps>
+
+### 为你的引导管理器进行配置
+
+<Tabs syncKey="boot-manager">
+<TabItem label='Limine'>
+
+Limine 将继续作为你的默认引导管理器。由 CachyOS 签名的 systemd-boot 会作为旁路引导程序安装在 EFI 系统分区上的独立目录中，并拥有自己的固件引导项。玩游戏时，你只需告诉固件在下一次启动时（`BootNext`）临时启动一次 systemd-boot，systemd-boot 便会直接引导 EAC 内核。游戏结束后再次开机，系统就会照常启动 Limine。
+
+<Steps>
+
+1. **将固件切换至设置模式（Setup Mode）**
+
+    如果你已使用 `sbctl` 启用了 Secure Boot，请改按 [如果你已在使用 Secure Boot](#如果你已在使用-secure-boot) 操作，然后直接从第 2 步继续。
+
+    请按照 [在 UEFI 中启用设置模式](/zh/configuration/secure_boot_setup#在-uefi-中启用-setup-mode) 操作，并暂时保持 Secure Boot **禁用**。
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+2. **安装软件包**
+
+    如果你在切换到 Limine 之前曾按照 [Secure Boot 指南](/zh/configuration/secure_boot_setup) 使用过 systemd-boot，请先移除当时创建的自签名 systemd-boot。否则 pacman 会拒绝安装 `systemd-boot-cachyos-signed`，且 `sbctl` 会覆盖 CachyOS 签名的 systemd-boot：
+
+    ```bash
+    sudo sbctl remove-file /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+    sudo rm -f /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed
+    ```
+
+    然后安装所需软件包：
+
+    ```bash
+    sudo pacman -S sbctl sbsigntools tpm2-tools efibootmgr cachyos-eac-signing-key linux-cachyos-eac systemd-boot-cachyos-signed
+    ```
+
+    在配备 NVIDIA GPU 的系统上，还需安装 `linux-cachyos-eac-nvidia-open`（Turing 及更新架构）或 `linux-cachyos-eac-nvidia-580xx`（Maxwell、Pascal 和 Volta 架构）。如果你使用 ZFS，还需安装 `linux-cachyos-eac-zfs`。如果你使用 `r8125-dkms` 驱动 Realtek 2.5 GbE 网卡，还需安装 `linux-cachyos-eac-r8125`。
+
+    :::danger
+    **切勿**运行 `bootctl install`。这会将 systemd-boot 设为你的默认引导管理器，并替换 EFI 系统分区上的回退引导加载程序。
+    :::
+
+    :::caution
+    请将 `/etc/default/limine` 中的 `ENABLE_UKI=no` 保持为默认值。若启用了 UKI，EAC 内核会被打包进一个新的镜像中，并由 `sbctl` 使用你自己的密钥签名，而这是 EAC 所不接受的。
+    :::
+
+3. **录入 Secure Boot 密钥并为 Limine 签名**
+
+    如果你已按照 [如果你已在使用 Secure Boot](#如果你已在使用-secure-boot) 录入了 CA，请跳过此步骤。
+
+    `cachyos-eac-signing-key` 会将 CachyOS EAC CA 证书放入 sbctl 的自定义证书目录。请将你自己的密钥与 Microsoft 密钥、固件内置密钥以及 CachyOS EAC CA 一同录入。
+
+    :::caution[华硕（ASUS）和技嘉（Gigabyte）主板]
+    在这些主板上，请将下方最后一条命令替换为 `sudo sbctl enroll-keys --microsoft --custom`（不带 `--firmware-builtin`）。部分主板使用该参数会产生重复的密钥条目，导致启用 Secure Boot 后停在 **Secure Boot Violation** 界面。如果已经遇到此问题，请在固件设置中删除所有 Secure Boot 密钥以重新进入 Setup Mode（参阅 [在 UEFI 中启用设置模式](/zh/configuration/secure_boot_setup#在-uefi-中启用-setup-mode)），启动 CachyOS 后运行 `sudo sbctl enroll-keys --microsoft --custom`。请勿使用 Secure Boot 指南中的命令，因为它不会录入 CachyOS EAC CA。
+    :::
+
+    ```bash
+    sudo sbctl create-keys
+    sudo sbctl enroll-keys --microsoft --firmware-builtin --custom
+    ```
+
+    如果 `sbctl` 报错 `could not enroll built-in firmware keys` 并停止，说明你的固件没有内置密钥，且尚未录入任何内容。去掉 `--firmware-builtin` 再次运行最后一条命令即可。
+
+    检查证书是否已录入：
+
+    ```bash
+    sudo sbctl list-enrolled-keys
+    ```
+
+    `db` 部分必须包含 `CachyOS EAC CA`。
+
+    Limine 本身仍需要使用你自己的密钥进行签名，这样启用 Secure Boot 后你的常规引导才能继续工作。请按照 [为内核镜像和引导管理器签名](/zh/configuration/secure_boot_setup#签名内核映像和引导管理器) 中的 Limine 选项卡进行操作。
+
+    :::caution
+    切勿使用 `sbctl` 为 EAC 内核或 CachyOS 签名的 systemd-boot 签名。即使 `sbctl verify` 将它们显示为未签名，也不要对它们运行 `sbctl-batch-sign` 或 `sbctl sign`。它们已由 CachyOS 官方签名。
+    :::
+
+4. **将 systemd-boot 添加为独立的固件引导项**
+
+    每当内核或 EFI 二进制文件更新时，`sbctl` 都会重新为其数据库中的所有文件签名。请检查确保数据库中没有包含任何由 CachyOS 签名的文件（例如之前运行 `sbctl sign -s` 留下的）：
+
+    ```bash
+    sudo sbctl list-files
+    ```
+
+    如果列出的路径包含 `cachyos-eac` 或为 `/usr/lib/systemd/boot/efi/systemd-bootx64.efi`，请使用 `sudo sbctl remove-file <path>` 将其移除。然后重新安装软件包以恢复 CachyOS 签名：
+
+    ```bash
+    sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
+    ```
+
+    将已签名的 systemd-boot 复制到 EFI 系统分区上的独立目录中：
+
+    ```bash
+    ESP="$(bootctl --print-esp-path)"
+    sudo install -Dm644 /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed "$ESP/EFI/cachyos-eac/systemd-bootx64.efi"
+    ```
+
+    只要 `EFI/cachyos-eac` 目录存在，`systemd-boot-cachyos-signed` 就会在更新时自动更新此副本。
+
+    接着创建固件引导项。`--create-only` 仅添加条目而不会改变启动顺序，从而确保 Limine 仍为默认项：
+
+    ```bash
+    ESP_DEV="$(findmnt -no SOURCE "$ESP")"
+    ESP_DISK="/dev/$(lsblk -no PKNAME "$ESP_DEV")"
+    ESP_PART="$(cat "/sys/class/block/$(basename "$ESP_DEV")/partition")"
+    sudo efibootmgr --create-only --disk "$ESP_DISK" --part "$ESP_PART" \
+      --label "CachyOS EAC" --loader '\EFI\cachyos-eac\systemd-bootx64.efi'
+    ```
+
+    检查新条目是否已列出，且 `BootOrder` 仍以 Limine 开头：
+
+    ```bash
+    efibootmgr
+    ```
+
+5. **创建 EAC 引导项**
+
+    systemd-boot 会从 EFI 系统分区读取配置。Limine 钩子会将 EAC 内核及其 initramfs 更新并保存在以你的 machine ID 命名的目录中。请检查确认两者均存在：
+
+    ```bash
+    ESP="$(bootctl --print-esp-path)"
+    KERNEL="/$(cat /etc/machine-id)/linux-cachyos-eac/vmlinuz"
+    INITRD="/$(cat /etc/machine-id)/linux-cachyos-eac/initramfs"
+    sudo ls -l "$ESP$KERNEL" "$ESP$INITRD"
+    ```
+
+    然后根据当前运行系统的命令行加上 EAC 参数来构建内核命令行：
+
+    ```bash
+    EAC_REQ="lockdown=integrity lsm=landlock,lockdown,yama,integrity,bpf iommu.passthrough=0 intel_iommu=on module.sig_enforce=1 sysctl.kernel.kexec_load_disabled=1"
+    EAC_OPTS="$(sed -E 's/(^| )(BOOT_IMAGE|initrd)=[^ ]*//g' /proc/cmdline) $EAC_REQ"
+    echo "$EAC_OPTS"
+    ```
+
+    输出中必须包含你的 `root=` 参数，并以 EAC 参数结尾。写入该引导项并将其设为默认，这样 systemd-boot 启动时无需显示菜单即可直接引导。此操作会替换现有的 `loader/loader.conf`，在这里完全没问题，因为该 systemd-boot 仅用于启动 EAC 引导项：
+
+    ```bash
+    printf 'title   CachyOS (EAC)\nlinux   %s\ninitrd  %s\noptions %s\n' "$KERNEL" "$INITRD" "$EAC_OPTS" \
+      | sudo install -Dm644 /dev/stdin "$ESP/loader/entries/cachyos-eac.conf"
+    printf 'default cachyos-eac.conf\ntimeout 0\n' | sudo install -Dm644 /dev/stdin "$ESP/loader/loader.conf"
+    ```
+
+    如果你仍想查看 systemd-boot 菜单，可在其启动时按住 <kbd>Space</kbd> 键。
+
+    :::caution
+    Limine 菜单中也会显示一个 `linux-cachyos-eac` 引导项。通过 Limine 启动它**无法**通过 EAC 检查。请务必使用“CachyOS EAC”固件引导项。
+    :::
+
+    {/* TODO: hide the linux-cachyos-eac entry in Limine (limine-entry-tool has no per-kernel exclude yet) */}
+
+6. **启用 Secure Boot 并引导进入 EAC**
+
+    如果 Secure Boot 已经启用，请直接跳至引导进入 EAC 的步骤。
+
+    重启进入固件设置并启用 Secure Boot。如果你的主板没有 Secure Boot 开关，请参阅 [Secure Boot 指南](/zh/configuration/secure_boot_setup#签名内核映像和引导管理器) 中的 ASUS 注意事项。
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+    要引导进入 EAC，请将“CachyOS EAC”引导项设为 `BootNext` 并重启。`sudo eac-setup boot` 执行的就是相同的操作：
+
+    ```bash
+    EAC_BOOTNUM="$(efibootmgr | sed -n 's/^Boot\([0-9A-F]\{4\}\)\* CachyOS EAC.*/\1/p')"
+    sudo efibootmgr --bootnext "$EAC_BOOTNUM" && systemctl reboot
+    ```
+
+    `BootNext` 仅对下一次启动生效。游戏结束并重启后，系统会恢复启动 Limine。
+
+</Steps>
+
+</TabItem>
+<TabItem label='systemd-boot'>
+
+<Steps>
+
+1. **将固件切换至设置模式（Setup Mode）**
+
+    如果你已使用 `sbctl` 启用了 Secure Boot，请改按 [如果你已在使用 Secure Boot](#如果你已在使用-secure-boot) 操作，然后直接从第 2 步继续。
+
+    请按照 [在 UEFI 中启用设置模式](/zh/configuration/secure_boot_setup#在-uefi-中启用-setup-mode) 操作，并暂时保持 Secure Boot **禁用**。
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+2. **安装软件包**
+
+    如果你之前按照 [Secure Boot 指南](/zh/configuration/secure_boot_setup) 操作过，请先移除当时创建的自签名 systemd-boot。`systemd-boot-cachyos-signed` 会替换它，而只要该文件存在，pacman 就会拒绝安装该软件包。`sbctl` 会在其数据库中以未签名文件的路径列出它；只要它仍在列表中，`sbctl` 就会用自签名版本覆盖由 CachyOS 签名的 systemd-boot：
+
+    ```bash
+    sudo sbctl remove-file /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+    sudo rm -f /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed
+    ```
+
+    然后安装所需软件包：
+
+    ```bash
+    sudo pacman -S sbctl sbsigntools tpm2-tools cachyos-eac-signing-key linux-cachyos-eac systemd-boot-cachyos-signed
+    sudo bootctl install
+    ```
+
+    在配备 NVIDIA GPU 的系统上，还需安装 `linux-cachyos-eac-nvidia-open`（Turing 及更新架构）或 `linux-cachyos-eac-nvidia-580xx`（Maxwell、Pascal 和 Volta 架构）。如果你使用 ZFS，还需安装 `linux-cachyos-eac-zfs`。如果你使用 `r8125-dkms` 驱动 Realtek 2.5 GbE 网卡，还需安装 `linux-cachyos-eac-r8125`。
+
+    `bootctl install` 会将 CachyOS 签名的 systemd-boot 安装到 EFI 系统分区。日后 systemd-boot 的更新也同样由 CachyOS 签名，因此你无需自行签名。
+
+3. **录入 Secure Boot 密钥**
+
+    如果你已按照 [如果你已在使用 Secure Boot](#如果你已在使用-secure-boot) 录入了 CA，请跳过此步骤。
+
+    `cachyos-eac-signing-key` 会将 CachyOS EAC CA 证书放入 sbctl 的自定义证书目录。`sbctl` 会创建你自己的密钥（如果你还没有的话），并将它们与 Microsoft 密钥、固件内置密钥以及 CachyOS EAC CA 一同录入。
+
+    :::caution[华硕（ASUS）和技嘉（Gigabyte）主板]
+    在这些主板上，请将下方最后一条命令替换为 `sudo sbctl enroll-keys --microsoft --custom`（不带 `--firmware-builtin`）。部分主板使用该参数会产生重复的密钥条目，导致启用 Secure Boot 后停在 **Secure Boot Violation** 界面。如果已经遇到此问题，请在固件设置中删除所有 Secure Boot 密钥以重新进入 Setup Mode（参阅 [在 UEFI 中启用设置模式](/zh/configuration/secure_boot_setup#在-uefi-中启用-setup-mode)），启动 CachyOS 后运行 `sudo sbctl enroll-keys --microsoft --custom`。请勿使用 Secure Boot 指南中的命令，因为它不会录入 CachyOS EAC CA。
+    :::
+
+    ```bash
+    sudo sbctl create-keys
+    sudo sbctl enroll-keys --microsoft --firmware-builtin --custom
+    ```
+
+    如果 `sbctl` 报错 `could not enroll built-in firmware keys` 并停止，说明你的固件没有内置密钥，且尚未录入任何内容。去掉 `--firmware-builtin` 再次运行最后一条命令即可。
+
+    检查证书是否已录入：
+
+    ```bash
+    sudo sbctl list-enrolled-keys
+    ```
+
+    `db` 部分必须包含 `CachyOS EAC CA`。
+
+    接着为你的常规内核签名，否则启用 Secure Boot 后它们将无法启动。以下命令会跳过已由 CachyOS 签名的 EAC 内核：
+
+    ```bash
+    sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+    sudo sbctl list-files
+    ```
+
+    输出中必须将你的每个常规内核显示为已签名状态。
+
+4. **防止 sbctl 修改由 CachyOS 签名的文件**
+
+    EAC 内核和 systemd-boot 已经由 CachyOS 签名。如果 `sbctl` 再次用你自己的密钥对它们进行签名，EAC 将不再认可它们。`cachyos-eac-signing-key` 会阻止 sbctl 的 initramfs 钩子为 EAC 内核签名，但 `sbctl` 仍会对数据库中的所有文件重新签名（例如在运行 `sbctl-batch-sign` 或 `sbctl sign -s` 之后）。
+
+    ```bash
+    sudo sbctl list-files
+    ```
+
+    如果列表中包含 `vmlinuz-linux-cachyos-eac`、`systemd-bootx64.efi` 或 `BOOTX64.EFI`，请将它们移除并重新安装软件包以恢复 CachyOS 签名：
+
+    ```bash
+    sudo sbctl remove-file /boot/vmlinuz-linux-cachyos-eac
+    sudo sbctl remove-file /boot/EFI/systemd/systemd-bootx64.efi
+    sudo sbctl remove-file /boot/EFI/BOOT/BOOTX64.EFI
+    sudo sbctl remove-file /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+    sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
+    sudo bootctl install
+    ```
+
+    对于未列出的文件，`sbctl` 会提示 `doesn't exist in database`，这属于正常现象。
+
+    检查签名状态。每个文件都必须只显示**一个**由 `CachyOS EAC CA` 签发的签名，并附带 `Signature verification OK`：
+
+    ```bash
+    for f in /boot/vmlinuz-linux-cachyos-eac /boot/EFI/systemd/systemd-bootx64.efi; do
+      sudo sbverify --list "$f"
+      sudo sbverify --cert /usr/share/cachyos-eac/cachyos-eac-ca.crt "$f"
+    done
+    ```
+
+    `sbctl verify` 仍会将这些文件显示为未签名，因为它只统计使用你自己的密钥进行的签名。请勿为它们签名。`sbctl-batch-sign` 会自动跳过它们。
+
+5. **创建 EAC 引导项**
+
+    EAC 会检查内核命令行中是否包含所需的参数，因此 EAC 内核需要单独的引导项。`sdboot-manage` 自动创建的引导项（“Linux CachyOS Eac”）缺少这些参数，且在更新时会被覆盖，因此请基于当前运行系统的命令行创建一个独立的引导项：
+
+    {/* TODO: replace with automatic entry generation (sdboot-manage or package hook) */}
+
+    ```bash
+    EAC_REQ="lockdown=integrity lsm=landlock,lockdown,yama,integrity,bpf iommu.passthrough=0 intel_iommu=on module.sig_enforce=1 sysctl.kernel.kexec_load_disabled=1"
+    EAC_OPTS="$(sed -E 's/(^| )(BOOT_IMAGE|initrd)=[^ ]*//g' /proc/cmdline) $EAC_REQ"
+    echo "$EAC_OPTS"
+    ```
+
+    输出中必须包含你的 `root=` 参数，并以 EAC 参数结尾。然后写入引导项：
+
+    ```bash
+    printf 'title   CachyOS (EAC)\nlinux   /vmlinuz-linux-cachyos-eac\ninitrd  /initramfs-linux-cachyos-eac.img\noptions %s\n' "$EAC_OPTS" \
+      | sudo install -Dm644 /dev/stdin /boot/loader/entries/cachyos-eac.conf
+    ```
+
+    :::caution
+    请勿从该引导项中移除任何 EAC 参数。缺少这些参数时，EAC 会拒绝启动游戏。
+    :::
+
+6. **启用 Secure Boot 并引导 EAC 引导项**
+
+    如果 Secure Boot 已经启用，请直接跳至引导 EAC 引导项的步骤。
+
+    重启进入固件设置并启用 Secure Boot。如果你的主板没有 Secure Boot 开关，请参阅 [Secure Boot 指南](/zh/configuration/secure_boot_setup#签名内核映像和引导管理器) 中的 ASUS 注意事项。
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+    要引导 EAC 引导项，请在 systemd-boot 菜单中选择 **CachyOS (EAC)**，或者运行：
+
+    ```bash
+    systemctl reboot --boot-loader-entry=cachyos-eac.conf
+    ```
+
+</Steps>
+
+</TabItem>
+<TabItem label='rEFInd'>
+
+rEFInd 将继续作为你的默认引导管理器。与 Limine 类似，由 CachyOS 签名的 systemd-boot 会安装在 EFI 系统分区上的独立目录中，并拥有自己的固件引导项。玩游戏时，你只需告诉固件在下一次启动时（`BootNext`）临时启动一次 systemd-boot，systemd-boot 便会直接引导 EAC 内核。游戏结束后再次开机，系统就会照常启动 rEFInd。
+
+这些步骤要求 EFI 系统分区挂载在 `/boot`，这正是 CachyOS 安装器配置 rEFInd 的方式。请检查确认：
+
+```bash
+bootctl --print-esp-path
+```
+
+输出必须为 `/boot`。不支持其他布局，例如早期安装中将 EFI 系统分区挂载在 `/boot/efi` 的情况。
+
+<Steps>
+
+1. **将固件切换至设置模式（Setup Mode）**
+
+    如果你已使用 `sbctl` 启用了 Secure Boot，请改按 [如果你已在使用 Secure Boot](#如果你已在使用-secure-boot) 操作，然后直接从第 2 步继续。
+
+    请按照 [在 UEFI 中启用设置模式](/zh/configuration/secure_boot_setup#在-uefi-中启用-setup-mode) 操作，并暂时保持 Secure Boot **禁用**。
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+2. **安装软件包**
+
+    如果你在切换到 rEFInd 之前曾按照 [Secure Boot 指南](/zh/configuration/secure_boot_setup) 使用过 systemd-boot，请先移除当时创建的自签名 systemd-boot。否则 pacman 会拒绝安装 `systemd-boot-cachyos-signed`，且 `sbctl` 会覆盖 CachyOS 签名的 systemd-boot：
+
+    ```bash
+    sudo sbctl remove-file /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+    sudo rm -f /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed
+    ```
+
+    然后安装所需软件包：
+
+    ```bash
+    sudo pacman -S sbctl sbsigntools tpm2-tools efibootmgr cachyos-eac-signing-key linux-cachyos-eac systemd-boot-cachyos-signed
+    ```
+
+    在配备 NVIDIA GPU 的系统上，还需安装 `linux-cachyos-eac-nvidia-open`（Turing 及更新架构）或 `linux-cachyos-eac-nvidia-580xx`（Maxwell、Pascal 和 Volta 架构）。如果你使用 ZFS，还需安装 `linux-cachyos-eac-zfs`。如果你使用 `r8125-dkms` 驱动 Realtek 2.5 GbE 网卡，还需安装 `linux-cachyos-eac-r8125`。
+
+    :::danger
+    **切勿**运行 `bootctl install`。这会将 systemd-boot 设为你的默认引导管理器，并替换 EFI 系统分区上的回退引导加载程序。
+    :::
+
+3. **录入 Secure Boot 密钥并为 rEFInd 签名**
+
+    如果你已按照 [如果你已在使用 Secure Boot](#如果你已在使用-secure-boot) 录入了 CA，请跳过此步骤。
+
+    `cachyos-eac-signing-key` 会将 CachyOS EAC CA 证书放入 sbctl 的自定义证书目录。请将你自己的密钥与 Microsoft 密钥、固件内置密钥以及 CachyOS EAC CA 一同录入。
+
+    :::caution[华硕（ASUS）和技嘉（Gigabyte）主板]
+    在这些主板上，请将下方最后一条命令替换为 `sudo sbctl enroll-keys --microsoft --custom`（不带 `--firmware-builtin`）。部分主板使用该参数会产生重复的密钥条目，导致启用 Secure Boot 后停在 **Secure Boot Violation** 界面。如果已经遇到此问题，请在固件设置中删除所有 Secure Boot 密钥以重新进入 Setup Mode（参阅 [在 UEFI 中启用设置模式](/zh/configuration/secure_boot_setup#在-uefi-中启用-setup-mode)），启动 CachyOS 后运行 `sudo sbctl enroll-keys --microsoft --custom`。请勿使用 Secure Boot 指南中的命令，因为它不会录入 CachyOS EAC CA。
+    :::
+
+    ```bash
+    sudo sbctl create-keys
+    sudo sbctl enroll-keys --microsoft --firmware-builtin --custom
+    ```
+
+    如果 `sbctl` 报错 `could not enroll built-in firmware keys` 并停止，说明你的固件没有内置密钥，且尚未录入任何内容。去掉 `--firmware-builtin` 再次运行最后一条命令即可。
+
+    检查证书是否已录入：
+
+    ```bash
+    sudo sbctl list-enrolled-keys
+    ```
+
+    `db` 部分必须包含 `CachyOS EAC CA`。
+
+    rEFInd 本身以及你的常规内核仍需使用你自己的密钥进行签名，这样启用 Secure Boot 后常规引导才能继续工作。下方 `find` 命令会跳过已由 CachyOS 签名的 EAC 内核：
+
+    ```bash
+    sudo sbctl sign -s /boot/EFI/refind/refind_x64.efi
+    sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+    sudo sbctl list-files
+    ```
+
+    输出中必须将 rEFInd 和你的每个常规内核显示为已签名状态。内核更新后，`sbctl` 会自动重新为它们签名。pacman 不会更新 EFI 系统分区上的 rEFInd；如果你自己运行过 `refind-install`，请在之后执行 `sudo sbctl sign-all`。
+
+    :::caution
+    切勿使用 `sbctl` 为 EAC 内核或 CachyOS 签名的 systemd-boot 签名。即使 `sbctl verify` 将它们显示为未签名，也不要对它们运行 `sbctl-batch-sign` 或 `sbctl sign`。它们已由 CachyOS 官方签名。
+    :::
+
+4. **将 systemd-boot 添加为独立的固件引导项**
+
+    每当内核或 EFI 二进制文件更新时，`sbctl` 都会重新为其数据库中的所有文件签名。请检查确保数据库中没有包含任何由 CachyOS 签名的文件（例如之前运行 `sbctl sign -s` 留下的）：
+
+    ```bash
+    sudo sbctl list-files
+    ```
+
+    如果列出的路径包含 `cachyos-eac` 或为 `/usr/lib/systemd/boot/efi/systemd-bootx64.efi`，请使用 `sudo sbctl remove-file <path>` 将其移除。然后重新安装软件包以恢复 CachyOS 签名：
+
+    ```bash
+    sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
+    ```
+
+    将已签名的 systemd-boot 复制到 EFI 系统分区上的独立目录中：
+
+    ```bash
+    ESP="$(bootctl --print-esp-path)"
+    sudo install -Dm644 /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed "$ESP/EFI/cachyos-eac/systemd-bootx64.efi"
+    ```
+
+    只要 `EFI/cachyos-eac` 目录存在，`systemd-boot-cachyos-signed` 就会在更新时自动更新此副本。
+
+    接着创建固件引导项。`--create-only` 仅添加条目而不会改变启动顺序，从而确保 rEFInd 仍为默认项：
+
+    ```bash
+    ESP_DEV="$(findmnt -no SOURCE "$ESP")"
+    ESP_DISK="/dev/$(lsblk -no PKNAME "$ESP_DEV")"
+    ESP_PART="$(cat "/sys/class/block/$(basename "$ESP_DEV")/partition")"
+    sudo efibootmgr --create-only --disk "$ESP_DISK" --part "$ESP_PART" \
+      --label "CachyOS EAC" --loader '\EFI\cachyos-eac\systemd-bootx64.efi'
+    ```
+
+    检查新条目是否已列出，且 `BootOrder` 仍以 rEFInd 开头：
+
+    ```bash
+    efibootmgr
+    ```
+
+5. **创建 EAC 引导项**
+
+    systemd-boot 会从 EFI 系统分区读取配置，而 EAC 内核及其 initramfs 已经位于该分区中。根据当前运行系统的命令行加上 EAC 参数来构建内核命令行：
+
+    ```bash
+    EAC_REQ="lockdown=integrity lsm=landlock,lockdown,yama,integrity,bpf iommu.passthrough=0 intel_iommu=on module.sig_enforce=1 sysctl.kernel.kexec_load_disabled=1"
+    EAC_OPTS="$(sed -E 's/(^| )(BOOT_IMAGE|initrd)=[^ ]*//g' /proc/cmdline) $EAC_REQ"
+    echo "$EAC_OPTS"
+    ```
+
+    输出中必须包含你的 `root=` 参数，并以 EAC 参数结尾。写入该引导项并将其设为默认，这样 systemd-boot 启动时无需显示菜单即可直接引导：
+
+    ```bash
+    ESP="$(bootctl --print-esp-path)"
+    printf 'title   CachyOS (EAC)\nlinux   /vmlinuz-linux-cachyos-eac\ninitrd  /initramfs-linux-cachyos-eac.img\noptions %s\n' "$EAC_OPTS" \
+      | sudo install -Dm644 /dev/stdin "$ESP/loader/entries/cachyos-eac.conf"
+    printf 'default cachyos-eac.conf\ntimeout 0\n' | sudo install -Dm644 /dev/stdin "$ESP/loader/loader.conf"
+    ```
+
+    如果你仍想查看 systemd-boot 菜单，可在其启动时按住 <kbd>Space</kbd> 键。
+
+    rEFInd 会自动发现 EAC 内核和 systemd-boot 并将它们添加到菜单中。从 rEFInd 菜单启动的任何条目都**无法**通过 EAC 检查，因为 rEFInd 是使用你自己的密钥签名的。请隐藏这两个条目：
+
+    ```bash
+    printf '\n# Easy Anti-Cheat: boot these only through the "CachyOS EAC" firmware entry\ndont_scan_files +,vmlinuz-linux-cachyos-eac\ndont_scan_dirs +,EFI/cachyos-eac\n' \
+      | sudo tee -a "$ESP/EFI/refind/refind.conf" >/dev/null
+    ```
+
+    其中的 `+` 会保留 rEFInd 原本已经跳过的其他文件和目录。从下次启动开始，rEFInd 菜单将仅显示你的常规内核。
+
+6. **启用 Secure Boot 并引导进入 EAC**
+
+    如果 Secure Boot 已经启用，请直接跳至引导进入 EAC 的步骤。
+
+    重启进入固件设置并启用 Secure Boot。如果你的主板没有 Secure Boot 开关，请参阅 [Secure Boot 指南](/zh/configuration/secure_boot_setup#签名内核映像和引导管理器) 中的 ASUS 注意事项。
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+    要引导进入 EAC，请将“CachyOS EAC”引导项设为 `BootNext` 并重启。`sudo eac-setup boot` 执行的就是相同的操作：
+
+    ```bash
+    EAC_BOOTNUM="$(efibootmgr | sed -n 's/^Boot\([0-9A-F]\{4\}\)\* CachyOS EAC.*/\1/p')"
+    sudo efibootmgr --bootnext "$EAC_BOOTNUM" && systemctl reboot
+    ```
+
+    `BootNext` 仅对下一次启动生效。游戏结束并重启后，系统会恢复启动 rEFInd。
+
+</Steps>
+
+</TabItem>
+</Tabs>
+
+## 验证配置
+
+引导进入 EAC 引导项后，运行来自 `cachyos-settings` 的 `eac-status`：
+
+```bash
+sudo eac-status
+```
+
+它会检查 Secure Boot 和 Setup Mode 状态、TPM、已录入的 CachyOS EAC CA、EAC 内核与 systemd-boot 的签名、内核命令行、lockdown 状态、模块签名、kexec、IOMMU，以及固件（从 TPM 事件日志中记录的）用于验证引导的证书。每一项检查都必须显示 `[ OK ]`，且最后一行必须显示 `All checks passed`。在你的常规引导项中，它只会检查固件和引导文件；如果准备就绪，末尾会显示 `The boot files are ready`。
+
+这些检查仅验证你的系统环境；游戏最终能否启动仍取决于 Easy Anti-Cheat 和游戏本身。
+
+TPM 事件日志中出现的 Microsoft 证书属于正常现象（用于 GPU 固件），不会被报告。其他任何证书（例如你自己的“Database Key”）都会以 `[WARN] Boot was also verified by` 提示。
+
+## 故障排除
+
+### `eac-status` 报告存在两个签名或你自己的密钥
+
+出现 `has 2 signatures` 或 `Boot was also verified by Database Key`，说明 `sbctl` 又使用你自己的密钥对 EAC 内核或 systemd-boot 进行了签名。早于 1-2 版本的 `cachyos-eac-signing-key` 会让 sbctl 的 initramfs 钩子在每次重建 initramfs 时执行此操作，因此请先更新系统：
+
+```bash
+sudo pacman -Syu
+```
+
+然后再次运行 `sudo eac-setup`。它会自动从 sbctl 数据库中移除这些文件并恢复 CachyOS 签名。如需手动处理，请按以下步骤操作。
+
+如果使用 systemd-boot，请重复 [为你的引导管理器进行配置](#为你的引导管理器进行配置) 中 systemd-boot 选项卡的第 4 步，以从 sbctl 数据库中移除这些文件并重新安装软件包。
+
+如果使用 Limine 或 rEFInd，请**不要**照搬该步骤——其中的 `bootctl install` 会将 systemd-boot 设为默认引导管理器并替换 EFI 系统分区上的回退引导加载程序。请改用以下命令检查 sbctl 的数据库：
+
+```bash
+sudo sbctl list-files
+```
+
+如果列出的路径包含 `cachyos-eac`，或者为 `/usr/lib/systemd/boot/efi/systemd-bootx64.efi`（按照 Secure Boot 指南中 systemd-boot 步骤操作后遗留的），请使用 `sudo sbctl remove-file <path>` 将其移除。然后重新安装软件包并再次复制已签名的 systemd-boot：
+
+```bash
+sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
+ESP="$(bootctl --print-esp-path)"
+sudo install -Dm644 /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed "$ESP/EFI/cachyos-eac/systemd-bootx64.efi"
+```
+
+### `eac-status` 报告引导未通过 CachyOS EAC CA 验证
+
+如果 `Boot was not verified by CachyOS EAC CA` 与内核命令行检查失败同时出现，说明启动了错误的引导项。请参阅 [游戏提示系统不受支持](#游戏提示系统不受支持)。
+
+如果它是唯一失败的检查项，说明固件没有记录其用于验证引导文件的证书。在微星（MSI）主板上，最常见的原因是默认的 Secure Boot 策略：即使启用了 Secure Boot，固件仍会未经验证直接启动所有引导文件。
+
+请打开固件设置中的 Secure Boot 页面。视主板型号而定，该页面位于 **Settings > Advanced > Windows OS Configuration > Secure Boot** 或 **Settings > Security > Secure Boot**。具体选项名称取决于固件版本：
+
+| 选项 | 值 |
+| ---------------------- | ------------------------------------------------------------ |
+| Image Execution Policy | 针对 **Fixed Media** 和 **Removable Media** 设为 **Deny Execute** |
+| Secure Boot Preset | **Maximum Security** |
+| Target OS | **Windows UEFI OS** |
+
+:::caution
+请勿将 **Secure Boot Mode** 切换为 **Standard**，也不要恢复出厂默认密钥（factory keys）。这两种操作都会清除 CachyOS EAC CA 以及你自己的密钥。
+:::
+
+保存更改后，引导进入 EAC 引导项并再次运行 `sudo eac-status`。如果此时提示未录入 CachyOS EAC CA，说明固件重置了密钥，重新运行 `sudo eac-setup` 即可。
+
+### 游戏提示系统不受支持
+
+请在 EAC 引导项中运行 `sudo eac-status`，并修复所有标记为 `[FAIL]` 的检查项。最常见的情况是启动了错误的引导项，`eac-status` 会报告内核命令行中缺少 EAC 参数。请使用 `sudo eac-setup boot` 重启。在 systemd-boot 中，你也可以直接选择 **CachyOS (EAC)**，而不要选择自动生成的“Linux CachyOS Eac”条目。如果使用 Limine、rEFInd 或 GRUB，请勿从引导管理器的菜单中直接启动 EAC 内核。
+
+### 启动时进入了 Limine 或 rEFInd 而非 EAC 引导项
+
+检查重启前是否正确设置了 `BootNext`：
+
+```bash
+efibootmgr | grep -E 'BootNext|CachyOS EAC'
+```
+
+如果“CachyOS EAC”条目缺失，说明固件将其移除了——部分主板会在固件更新或重置后执行此操作。运行 `sudo eac-setup` 即可重新创建该条目，或者重复 [为你的引导管理器进行配置](#为你的引导管理器进行配置) 中 Limine 或 rEFInd 选项卡的第 4 步。你也可以在固件的一次性启动菜单（one-time boot menu）中直接选择“CachyOS EAC”。
+
+### 某个模块无法在 EAC 引导项中加载
+
+通过 DKMS 构建的模块未使用内核密钥签名，因此无法加载。请改用专为 EAC 内核提供的模块软件包（`linux-cachyos-eac-nvidia-open`、`linux-cachyos-eac-nvidia-580xx`、`linux-cachyos-eac-zfs` 或 `linux-cachyos-eac-r8125`），或在需要使用 DKMS 模块时启动你的常规内核。

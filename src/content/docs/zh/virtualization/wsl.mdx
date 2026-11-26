@@ -1,0 +1,62 @@
+---
+title: WSL 上的 CachyOS
+description: 在适用于 Linux 的 Windows 子系统（WSL）上安装和使用 CachyOS
+ai_translated: true
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+CachyOS 为[适用于 Linux 的 Windows 子系统](https://learn.microsoft.com/en-us/windows/wsl/about)（WSL）提供了官方映像。该映像在 [cachyos-wsl](https://github.com/CachyOS/cachyos-wsl) 仓库中维护，你也可以在那里报告与该映像相关的漏洞。
+
+## 安装
+
+你需要使用 WSL 2 的 `2.4.4` 或更高版本，可通过 `wsl --update` 进行更新。对于更早的版本，请参阅 [cachyos-wsl README](https://github.com/CachyOS/cachyos-wsl#wsl-prior-to-244)。
+
+<Steps>
+
+1. 从[最新发布页](https://github.com/CachyOS/cachyos-wsl/releases/latest)下载 `.wsl` 映像，或在 PowerShell 中运行：
+
+   ```powershell
+   $v = (Invoke-RestMethod https://api.github.com/repos/CachyOS/cachyos-wsl/releases/latest).tag_name
+   Invoke-WebRequest "https://github.com/CachyOS/cachyos-wsl/releases/download/$v/cachyos-$v.wsl" -OutFile "$env:TEMP\cachyos.wsl"
+   ```
+
+2. 双击该文件进行安装，或在 PowerShell 中运行：
+
+   ```powershell
+   wsl --install --from-file "$env:TEMP\cachyos.wsl"
+   ```
+
+3. 从开始菜单启动 CachyOS，或运行 `wsl -d cachyos`。
+
+</Steps>
+
+## 首次设置
+
+首次启动可能需要几分钟时间。它会自动设置 pacman 密钥环、测速并排序镜像源、切换到针对 CPU 优化的软件包，并提示你创建用户（该用户拥有 `sudo` 权限，且默认使用 `fish` 作为 Shell）。
+
+由于映像仅会定期构建，请在首次设置完成后运行 `sudo pacman -Syu`。
+
+## 优化软件包
+
+该映像为通用构建，可在任何 x86-64 CPU 上运行。与 CachyOS 安装器一样，首次设置随后会切换到最适合你 CPU 的[优化软件仓库](/zh/features/optimized_repos)：`znver4`、`v4` 或 `v3`。较旧的 CPU 则会继续使用通用软件包。
+
+如果切换失败（例如由于处于离线状态），设置过程会继续使用通用软件包。如需稍后重试，请运行：
+
+```sh
+sudo /usr/lib/wsl/optimize-repos
+```
+
+## 与常规安装的差异
+
+WSL 始终运行 Microsoft 内核，因此不会使用 `linux-cachyos`、其调度器以及 `sched-ext`。此外，该映像也不包含引导管理器、`chwd` 或 zram。
+
+## 故障排除
+
+如果 pacman 提示建议重启，请在 PowerShell 中运行 `wsl --terminate cachyos` 来重启该发行版。
+
+如需从头开始，请使用 `wsl --unregister cachyos` 移除该发行版，然后重新安装。
+
+:::caution
+`wsl --unregister` 会永久删除该发行版内的所有内容，包括你的 Linux 主目录。
+:::
