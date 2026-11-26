@@ -328,7 +328,7 @@ UI のラグを防ぐには YouTube 設定の「アンビエントモード」�
 
 **補足**
 - CachyOS カーネル 7.0.10-2-cachyos, Mesa 26.1.1, GNOME (Wayland), 5120x1440 のディスプレイでテスト済みです。
-- `vivaldi://gpu` で Canvas, Compositing, Rasterization, Video Decode, Video Encode, WebGL, WebGPU, WebGPU interop が "Hardware accelerated" と表示されることを確認し、H264, H265, VP9, AV1 のデコードと H264, H265 のエンコードに対応していることを確認しています。
+- `vivaldi://gpu` で Canvas, Compositing, Rasterization, Video Decode, Video Encode, WebGL, WebGPU, WebGPU interop が "Hardware accelerated" と表示されることを確認し、H264, H265, VP9, AV1 のデコードと H264, H265, AV1 のエンコードに対応していることを確認しています。
 
 ### Vivaldi - NVIDIA RTX 5090 (icetea 提供)
 
@@ -350,7 +350,7 @@ UI のラグを防ぐには YouTube 設定の「アンビエントモード」�
 **補足**
 - `libva-nvidia-driver` が必要です。ドライバ 610.43.03, KDE Plasma (Wayland), Vivaldi 8.1 でテスト済みです。(2026年7月)
 - NVIDIA 環境では `VaapiIgnoreDriverChecks` が重要となります。これがなくてもデコードの初期化は行われ `vivaldi://gpu` では `Hardware accelerated` と表示されますが、ランタイムでデコードに失敗して (`vaEndPicture failed, VA error: internal decoding error`) 暗黙的にソフトウェアデコーダに戻ってしまいます。
-- そのため、確認は開発者ツールの「メディア」タブ (デコーダー名は `VaapiVideoDecoder`) と `nvidia-smi dmon -s u` (再生中に DEC の項目が0以上) で行ってください。`vivaldi://gpu` 単体では不十分です。
+- そのため、確認は開発者ツールの「メディア」タブ (デコーダー名は `VaapiVideoDecoder`) と `nvidia-smi dmon -s u` (再生中に DEC の項目が 0 より大きい) で行ってください。`vivaldi://gpu` 単体では不十分です。
 - `libva-nvidia-driver` 0.0.17 では AV1 デコードに不具合があります (上流の master では修正済みだが未リリース、[elFarto/nvidia-vaapi-driver#419](https://github.com/elFarto/nvidia-vaapi-driver/issues/419) 参照)。Youtube に VP9 を使用させるため、enhanced-h264ify などで AV1 をブロックしてください。
 
 ### Google Chrome - NVIDIA RTX 5070 (pisyukaev 提供)
@@ -389,3 +389,23 @@ UI のラグを防ぐには YouTube 設定の「アンビエントモード」�
 --enable-zero-copy
 --enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,CanvasOopRasterization,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
 ```
+
+### Vivaldi - NVIDIA RTX 5070Ti (Peek4Boo7 提供)
+
+* **ブラウザ:** Vivaldi
+
+* **GPU:** NVIDIA GeForce RTX 5070Ti
+
+* **フラグファイルのパス:** `~/.config/vivaldi-stable.conf`
+
+```bash
+--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,VaapiOnNvidiaGPUs
+```
+
+**補足**
+- ドライバ: NVIDIA 615.71.09, `libva-nvidia-driver` 0.0.18-1.1
+- Vivaldi バージョン: 8.2.4133.52 (Official Build) (x86_64)
+- `vainfo` (ドライバ: VA-API NVDEC driver [direct backend]) と `nvidia-smi dmon` で動作を確認済みです。
+- このドライババージョンでは `VaapiVideoDecoder` と `VaapiIgnoreDriverChecks` は不要です。
+- AV1 の動作を確認済みです: AV1 再生時 (`av01` コーデック) に開発者ツールの「メディア」パネルで Decoder name として `VaapiVideoDecoder` が表示されます。
+- `vainfo` で AV1 プロファイルがサポート対象 (`VAProfileAV1Profile0`) として一覧表示されます。

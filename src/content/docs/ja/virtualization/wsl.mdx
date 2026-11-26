@@ -1,0 +1,62 @@
+---
+title: WSL 上の CachyOS
+description: Windows Subsystem for Linux (WSL) 上に CachyOS をインストールして使用します
+ai_translated: true
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+CachyOS は [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/about)（WSL）向けのイメージを提供しています。このイメージは [cachyos-wsl](https://github.com/CachyOS/cachyos-wsl) リポジトリでメンテナンスされており、イメージ固有のバグの報告もそちらで行えます。
+
+## インストール
+
+WSL 2 バージョン `2.4.4` 以降が必要です（`wsl --update` で更新できます）。それより古いバージョンについては、[cachyos-wsl README](https://github.com/CachyOS/cachyos-wsl#wsl-prior-to-244) を参照してください。
+
+<Steps>
+
+1. [最新リリース](https://github.com/CachyOS/cachyos-wsl/releases/latest)から `.wsl` イメージをダウンロードするか、PowerShell で以下を実行します。
+
+   ```powershell
+   $v = (Invoke-RestMethod https://api.github.com/repos/CachyOS/cachyos-wsl/releases/latest).tag_name
+   Invoke-WebRequest "https://github.com/CachyOS/cachyos-wsl/releases/download/$v/cachyos-$v.wsl" -OutFile "$env:TEMP\cachyos.wsl"
+   ```
+
+2. ファイルをダブルクリックしてインストールするか、PowerShell で以下を実行します。
+
+   ```powershell
+   wsl --install --from-file "$env:TEMP\cachyos.wsl"
+   ```
+
+3. スタートメニューから、または `wsl -d cachyos` を実行して CachyOS を起動します。
+
+</Steps>
+
+## 初回セットアップ
+
+初回起動には数分かかる場合があります。pacman のキーリングのセットアップ、ミラーのランキング、最適化されたパッケージへの切り替えが行われ、ユーザーの作成を求められます（作成されたユーザーは `sudo` 権限を持ち、シェルとして `fish` を使用します）。
+
+イメージは定期的にしかビルドされないため、完了したら `sudo pacman -Syu` を実行してください。
+
+## 最適化されたパッケージ
+
+イメージは汎用（generic）であり、どの x86-64 CPU でも動作します。CachyOS インストーラーと同様に、初回セットアップではお使いの CPU に最適な[最適化されたリポジトリ](/ja/features/optimized_repos)（`znver4`、`v4`、または `v3`）に切り替えます。古い CPU では汎用パッケージのまま維持されます。
+
+オフラインであるなどの理由で切り替えに失敗した場合、セットアップは汎用パッケージのまま続行されます。再試行するには以下を実行してください。
+
+```sh
+sudo /usr/lib/wsl/optimize-repos
+```
+
+## 通常のインストールとの違い
+
+WSL は常に Microsoft カーネルを実行するため、`linux-cachyos`、そのスケジューラ、および `sched-ext` は使用されません。また、このイメージにはブートマネージャー、`chwd`、および ZRAM も含まれていません。
+
+## トラブルシューティング
+
+`pacman` で再起動が推奨されると表示された場合は、PowerShell から `wsl --terminate cachyos` を実行してディストリビューションを再起動してください。
+
+最初からやり直すには、`wsl --unregister cachyos` でディストリビューションを削除し、再度インストールしてください。
+
+:::caution
+`wsl --unregister` を実行すると、Linux のホームディレクトリを含め、ディストリビューション内のすべてのデータが永久に削除されます。
+:::
