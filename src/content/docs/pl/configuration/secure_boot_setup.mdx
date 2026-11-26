@@ -1,20 +1,21 @@
 ---
 title: Konfiguracja Secure Boot
 description: Skonfiguruj bezpieczny rozruch za pomocą sbctl po instalacji CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
 ---
 
 import ImageComponent from '~/components/image-component.astro';
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
-# sbctl
-
-[sbctl](https://github.com/Foxboron/sbctl) to przyjazny dla użytkownika menedżer kluczy bezpiecznego rozruchu, który umożliwia konfigurację bezpiecznego rozruchu,
-oferuje możliwości zarządzania kluczami i śledzi pliki, które muszą być podpisane w łańcuchu rozruchowym.
-
-## Instalacja sbctl
-
-```bash
-sudo pacman -S sbctl
-```
+:::tip[Easy Anti-Cheat]
+Aby grać w gry korzystające z Easy Anti-Cheat Linux v2, postępuj zamiast tego zgodnie z [przewodnikiem Easy Anti-Cheat](/pl/configuration/easy_anti_cheat).
+Konfiguruje on Secure Boot od samego początku, więc nie musisz najpierw wykonywać tego przewodnika. Rejestruje twoje własne klucze razem
+z kluczami Microsoftu, dzięki czemu dual boot z systemem Windows nadal działa. Wykorzystuje również jądro i systemd-boot podpisane przez CachyOS, których
+nie wolno podpisywać ponownie własnymi kluczami.
+:::
 
 ## Konfiguracja wstępna
 
@@ -31,7 +32,8 @@ sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=
 Uruchom to polecenie tylko wtedy, gdy naprawdę potrzebujesz bezpiecznego rozruchu.
 :::
 
-### Wejście w tryb konfiguracji (Setup Mode) w UEFI
+### Włączanie trybu konfiguracji (Setup Mode) w UEFI
+
 Najpierw musimy przejść do ustawień oprogramowania układowego (firmware) i ustawić tryb bezpiecznego rozruchu na „Setup Mode”. Możesz ponownie uruchomić system
 z już działającego systemu do ustawień oprogramowania układowego za pomocą następującego polecenia.
 
@@ -45,41 +47,198 @@ systemctl reboot --firmware-setup
 Tak wygląda BIOS na Lenovo Ideapad 5 Pro. Zresetuj do trybu konfiguracji lub przywróć klucze fabryczne i uruchom ponownie
 system.
 
-Jednak niektóre płyty główne MSI nie mają trybu konfiguracji. Aby osiągnąć ten sam efekt, wykonaj dwa kroki z poniższego obrazka:
+#### Automatyczny reset
+
+Na niektórych płytach głównych Gigabyte po opcji „reset to setup mode” natychmiast pojawia się okno dialogowe „reset without saving”
+<ImageComponent imgsrc={import('~/assets/images/gigabyte-reset-without-saving.jpg')} />
+należy je odrzucić, ponieważ spowoduje to reset systemu i wyłączenie trybu konfiguracji (setup mode).
+
+Zamiast tego uruchom system operacyjny bezpośrednio (Save & Exit i wybierz swój program rozruchowy w Boot Override).
+
+#### Brak trybu konfiguracji
+
+Niektóre płyty główne MSI i ASUS nie posiadają trybu konfiguracji (Setup Mode).
+
+##### MSI
+
+Ustaw „Secure Boot Mode” na „custom” i wybierz opcję kompatybilności „maximum security” (to ważne: przy ustawieniu domyślnym uruchomienie CachyOS z programu rozruchowego może być niemożliwe!). Następnie przejdź do „key management” i wykonaj dwa kroki zilustrowane na poniższym obrazku:
 <br />
 <ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
 
-## Konfiguracja sbctl
+##### ASUS
 
-```bash
-sudo sbctl status # Jeśli tryb konfiguracji jest włączony, możemy przejść do następnego kroku
-Installed:      ✘ sbctl is not installed
-Setup Mode:     ✘ Enabled
-Secure Boot     ✘ Disabled
+Przejdź do Boot → Secure Boot, ustaw Secure Boot Mode na Custom, a następnie otwórz Key Management i wybierz „Delete all Secure Boot Variables”.
 
-sudo sbctl create-keys # Utwórz swoje niestandardowe klucze bezpiecznego rozruchu
-Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-Creating secure boot keys...✔
-Secure boot keys created!
+#### Instalacja sbctl i rejestracja kluczy
 
-sudo sbctl enroll-keys --microsoft # Zarejestruj swoje klucze wraz z kluczami Microsoftu
-Enrolling keys to EFI variables...✔
-Enrolled keys to the EFI variables!
+Przed kontynuowaniem upewnij się, czy `sbctl` jest zainstalowany.
 
-sudo sbctl status
-# sbctl powinien być już zainstalowany, możemy przejść do podpisywania obrazów jądra i menedżera rozruchu
-Installed:      ✔ sbctl is installed
-Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-Setup Mode:     ✔ Disabled
-Secure Boot     ✘ Disabled
-Vendor Keys:    microsoft
-```
+[sbctl](https://github.com/Foxboron/sbctl) to przyjazny dla użytkownika menedżer kluczy bezpiecznego rozruchu, który umożliwia konfigurację bezpiecznego rozruchu,
+oferuje możliwości zarządzania kluczami i śledzi pliki, które muszą być podpisane w łańcuchu rozruchowym.
+
+<details>
+    <summary>Jak zainstalować sbctl</summary>
+    ```bash title='Otwórz terminal i uruchom następujące polecenie'
+    sudo pacman -S sbctl
+    ```
+</details>
+
+Teraz, gdy `sbctl` jest zainstalowany, musisz skonfigurować sbctl i zarejestrować swoje klucze w oprogramowaniu układowym. Ten proces jest dość prosty, wystarczy wykonać poniższe kroki.
+
+<Steps>
+1. Sprawdź, czy tryb konfiguracji (Setup Mode) jest włączony:
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>Oczekiwany wynik</summary>
+        ```bash
+        Installed:      ✘ sbctl is not installed
+        Setup Mode:     ✘ Enabled
+        Secure Boot     ✘ Disabled
+        ```
+    </details>
+2. Utwórz swoje niestandardowe klucze bezpiecznego rozruchu:
+    ```bash
+    sudo sbctl create-keys
+    ```
+    <details>
+        <summary>Przykład pomyślnego utworzenia kluczy</summary>
+        ```bash
+        Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Creating secure boot keys...✔
+        Secure boot keys created!
+        ```
+    </details>
+3. Zarejestruj swoje klucze wraz z kluczami Microsoftu i wbudowanymi kluczami oprogramowania układowego OEM:
+    ```bash
+    sudo sbctl enroll-keys --microsoft --firmware-builtin
+    ```
+    <details>
+        <summary>Oczekiwany wynik</summary>
+        ```bash
+        Enrolling keys to EFI variables...✔
+        Enrolled keys to the EFI variables!
+        ```
+    </details>
+
+    :::caution[Płyty główne ASUS / Gigabyte — Nie używaj `--firmware-builtin`]
+    Na niektórych płytach głównych ASUS i Gigabyte użycie flagi `--firmware-builtin` powoduje powstanie zduplikowanych wpisów
+    w zmiennych kluczy EFI (np. wielokrotne pojawienie się `builtin-db` w `Vendor Keys`).
+    Podczas późniejszej aktywacji Secure Boot w ustawieniach UEFI płyta wykrywa tę
+    niespójną strukturę kluczy i zgłasza błąd **Secure Boot Violation** jeszcze przed załadowaniem
+    menedżera rozruchu.
+
+    Na płytach ASUS / Gigabyte używaj wyłącznie `--microsoft`:
+
+    ```bash
+    sudo sbctl enroll-keys --microsoft
+    ```
+
+    Jeśli `Vendor Keys` wyświetla `microsoft builtin-db builtin-db ...`, klucze należy
+    zarejestrować ponownie. Wejdź ponownie w Tryb konfiguracji (Setup Mode) w UEFI (używając usunięcia wszystkich kluczy), a następnie uruchom
+    `sbctl enroll-keys --microsoft` ponownie bez `--firmware-builtin`.
+    :::
+
+
+4. Sprawdź ponownie status sbctl, aby upewnić się, że klucze są zarejestrowane, a tryb konfiguracji jest wyłączony:
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>Oczekiwany wynik</summary>
+        ```bash
+        Installed:      ✔ sbctl is installed
+        Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Setup Mode:     ✔ Disabled
+        Secure Boot     ✘ Disabled
+        Vendor Keys:    microsoft
+        ```
+    </details>
+
+    :::note[Setup Mode pokazuje Enabled?]
+    Jeśli `Setup Mode` pokazuje **Enabled**, przejdź do ustawień oprogramowania układowego i **tymczasowo wyłącz Secure Boot**.
+    Uruchom system ponownie, sprawdź status sbctl raz jeszcze, przejdź do sekcji [Podpisywanie obrazu jądra i menedżera rozruchu](#podpisywanie-obrazu-jądra-i-menedżera-rozruchu)
+    poniżej, a następnie uruchom ponownie komputer i włącz z powrotem Secure Boot w ustawieniach oprogramowania układowego.
+    :::
+
+</Steps>
 
 ## Podpisywanie obrazu jądra i menedżera rozruchu
 
+<Tabs syncKey="boot-manager">
+<TabItem label='Limine'>
+Limine to specjalny menedżer rozruchu, który pozwala na sprawdzanie skrótów (hashy) obrazów jądra
+i innych plików, których Limine używa podczas rozruchu. Jeśli jest to włączone, jakakolwiek
+ręczna konfiguracja wykonana przez użytkownika, np. podpisanie obrazu za pomocą
+`sbctl-batch-sign`, zmodyfikuje skrót odpowiednich plików i
+spowoduje niepowodzenie weryfikacji sum kontrolnych przez Limine.
+
+Jednak podpisywanie tych plików nie jest konieczne w przypadku Limine, ponieważ ma on specjalny
+proces rozruchowy, który omija ładowanie łańcuchowe EFI (chainloading) i sprawdzanie podpisów. Jedyne pliki
+binarne EFI, które muszą być podpisane, to sam Limine.
+
+:::caution[Limine >= 11.2.0]
+Począwszy od Limine 11.2.0, polityki Secure Boot są **ściśle egzekwowane**, gdy aktywny jest UEFI Secure Boot:
+
+- Suma kontrolna konfiguracji BLAKE2B **musi** być zarejestrowana w pliku binarnym EFI Limine, w przeciwnym razie Limine wpadnie w panikę z komunikatem: `SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED`
+- Wszystkie ścieżki plików w `limine.conf` (jądro, initramfs itp.) **muszą** mieć dołączone skróty BLAKE2B (np. `boot():/vmlinuz-linux#<hash>`)
+- Edytor konfiguracji jest bezwarunkowo wyłączony
+- Niezgodności skrótów zawsze powodują panikę
+:::
+
+Aby włączyć automatyczną rejestrację sumy kontrolnej konfiguracji, ustaw następującą opcję w `/etc/default/limine`:
+
+```sh
+ENABLE_ENROLL_LIMINE_CONFIG=yes
+```
+
+Następnie wygeneruj skrót (hash) dla obrazu powitalnego (splash image) Limine:
+
+:::note[Do wykonania poniższych kroków wymagane są uprawnienia roota — przed kontynuowaniem upewnij się, że używasz sudo lub przełączyłeś się na konto root.]
+:::
+
+<Steps>
+
+1. Sprawdź bieżącą nazwę i ścieżkę obrazu powitalnego w pliku konfiguracyjnym:
+    ```sh title="Otwórz terminal i uruchom następujące polecenie:"
+    sudo cat /boot/limine.conf
+    ```
+    Powinieneś zobaczyć linię wyglądającą mniej więcej tak:
+    ```sh
+    wallpaper: boot():/limine-splash.png
+    ```
+2. Wygeneruj skrót BLAKE2B dla obrazu powitalnego i dopisz go do ścieżki w pliku konfiguracyjnym:
+    ```sh title="Uruchom następujące polecenie, zastępując ścieżkę tą znalezioną w poprzednim kroku:"
+    sudo b2sum /boot/limine-splash.png
+    ```
+    Spowoduje to wyświetlenie skrótu podobnego do poniższego przykładu:
+    ```sh
+    75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+3. Po skopiowaniu nowo wygenerowanego skrótu z poprzedniego kroku otwórz plik konfiguracyjny w edytorze tekstu i dopisz skrót do ścieżki obrazu powitalnego w ten sposób:
+    :::note[Nie używaj powyższego przykładowego skrótu — upewnij się, że używasz tego wygenerowanego w poprzednim kroku.]
+    :::
+    ```sh
+    wallpaper: boot():/limine-splash.png#75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+    Jak widać, skrót jest dołączany do ścieżki za pomocą znaku `#`. Zapisz plik po wprowadzeniu zmiany.
+
+</Steps>
+
+Po włączeniu rejestracji sumy kontrolnej konfiguracji i wygenerowaniu skrótu dla obrazu powitalnego uruchom poniższe polecenia, aby zarejestrować sumę kontrolną konfiguracji i podpisać plik binarny EFI Limine:
+
+```sh
+# Użyj limine-enroll-config, aby zarejestrować sumę kontrolną konfiguracji i podpisać plik binarny EFI Limine
+# To używa sbctl pod spodem
+sudo limine-enroll-config
+sudo limine-update
+```
+</TabItem>
+<TabItem label='systemd-boot'>
+
 CachyOS dostarcza [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign),
 skrypt, który pobiera listę plików do podpisania z `sudo sbctl verify` i podpisuje je wszystkie.
-Użytkownicy Limine powinni przejść do [Limine](#Limine).
 
 :::caution
 W systemach z oddzielnym układem partycji `/boot` i `/boot/efi`, `sbctl` może skanować pliki binarne EFI tylko w `/boot/efi`.
@@ -107,7 +266,29 @@ Verifying file database and EFI images in /boot...
 ✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
 ```
 
-Teraz, gdy wszystkie pliki są podpisane. **Uruchom ponownie komputer i przejdź do ustawień UEFI, aby włączyć Bezpieczny rozruch.**
+Teraz, gdy wszystkie pliki są podpisane: **Uruchom ponownie komputer i przejdź do ustawień UEFI, aby włączyć Bezpieczny rozruch.**
+
+:::caution[Płyty główne ASUS — włączanie Secure Boot]
+Niektóre płyty główne ASUS zachowują się inaczej niż u innych producentów podczas włączania Secure Boot:
+
+- **Użyj `Windows UEFI Mode`, a nie `Other OS`:**
+  Nazwa jest myląca — to ustawienie po prostu kontroluje, czy Secure Boot jest egzekwowany.
+  Ustawienie `OS Type` na `Other OS` **aktywnie wyłącza** Secure Boot na płytach ASUS,
+  niezależnie od innych ustawień. Polecenie `sbctl status` będzie nadal pokazywać
+  `Secure Boot: Disabled` nawet po ponownym uruchomieniu.
+
+- **Na niektórych płytach ASUS nie ma osobnego przełącznika włącz/wyłącz dla Secure Boot.**
+  Secure Boot jest aktywowany domyślnie po wybraniu `Windows UEFI Mode`.
+
+Prawidłowa konfiguracja BIOS-u ASUS do aktywacji Secure Boot w takim przypadku to:
+```
+Boot → Secure Boot
+  OS Type          → Windows UEFI Mode
+  Secure Boot Mode → Custom
+```
+:::
+
+Sprawdź [tę sekcję jako odniesienie](/pl/configuration/secure_boot_setup#włączanie-trybu-konfiguracji-setup-mode-w-uefi)
 
 Należy pamiętać, że jest to proces jednorazowy, ponieważ podpisanie plików za pomocą flagi `-s` zapisze te pliki w bazie danych `sbctl`.
 
@@ -116,50 +297,47 @@ Należy pamiętać, że jest to proces jednorazowy, ponieważ podpisanie plików
 podpisze wszystkie nowe pliki po aktualizacji jądra lub menedżera rozruchu.
 :::
 
-### systemd-boot
-
 CachyOS używa `systemd-boot-update.service` dostarczanego przez systemd do aktualizacji menedżera rozruchu przy ponownym uruchomieniu. Oznacza to, że hak pacmana
-`sbctl` **nie** podpisze zaktualizowanych plików binarnych EFI. Jako obejście tego problemu możemy podpisać menedżer rozruchu bezpośrednio.
+`sbctl` **nie** podpisze zaktualizowanych plików binarnych EFI. Jako obejście tego problemu możemy podpisać menedżer rozruchu bezpośrednio
 
 ```sh
 sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
 ```
 
-### Limine
-
-Limine to specjalny menedżer rozruchu, który pozwala na sprawdzanie skrótów (hashy) obrazów jądra
-i innych plików, których Limine używa podczas rozruchu. Jeśli jest to włączone, jakakolwiek
-ręczna konfiguracja wykonana przez użytkownika, np. podpisanie obrazu za pomocą
-`sbctl-batch-sign`, zmodyfikuje skrót odpowiednich plików i
-spowoduje niepowodzenie weryfikacji sum kontrolnych przez Limine.
-
-Jednak podpisywanie tych plików nie jest konieczne w przypadku Limine, ponieważ ma on specjalny
-proces rozruchowy, który omija ładowanie łańcuchowe EFI (chainloading) i sprawdzanie podpisów. Jedyne pliki
-binarne EFI, które muszą być podpisane, to sam Limine.
-
-:::caution[Limine >= 11.2.0]
-Począwszy od Limine 11.2.0, polityki Secure Boot są **ściśle egzekwowane**, gdy aktywny jest UEFI Secure Boot:
-
-- Suma kontrolna konfiguracji BLAKE2B **musi** być zarejestrowana w pliku binarnym EFI Limine, w przeciwnym razie Limine wpadnie w panikę z komunikatem: `SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED`
-- Wszystkie ścieżki plików w `limine.conf` (jądro, initramfs itp.) **muszą** mieć dołączone skróty BLAKE2B (np. `boot():/vmlinuz-linux#<hash>`)
-- Edytor konfiguracji jest bezwarunkowo wyłączony
-- Niezgodności skrótów zawsze powodują panikę
+:::note
+Pomiń ten krok, jeśli korzystasz z [konfiguracji Easy Anti-Cheat](/pl/configuration/easy_anti_cheat). Tam pakiet `systemd-boot-cachyos-signed`
+dostarcza systemd-boot podpisany przez CachyOS.
 :::
+</TabItem>
+<TabItem label='rEFInd'>
 
-Aby włączyć automatyczną rejestrację sumy kontrolnej konfiguracji, ustaw następującą opcję w `/etc/default/limine`:
+rEFInd uruchamia jądra za pośrednictwem oprogramowania układowego, więc to ono sprawdza podpisy rEFInd oraz każdego
+jądra. Te kroki dotyczą instalacji, w których partycja systemowa EFI jest zamontowana w `/boot`, czyli tak, jak
+konfiguruje rEFInd instalator CachyOS. Polecenie `bootctl --print-esp-path` musi wypisać `/boot`.
 
-```sh
-ENABLE_ENROLL_LIMINE_CONFIG=yes
+Podpisz rEFInd oraz swoje jądra. Polecenie `find` pomija jądro dla
+[Easy Anti-Cheat](/pl/configuration/easy_anti_cheat), które jest już podpisane przez CachyOS:
+
+```bash
+sudo sbctl sign -s /boot/EFI/refind/refind_x64.efi
+sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+sudo sbctl verify
 ```
 
-Następnie uruchom:
+`sbctl verify` musi wymienić rEFInd oraz każde z twoich jąder jako podpisane. Jeśli używasz Easy Anti-Cheat, na liście znajdą się także
+`vmlinuz-linux-cachyos-eac` oraz `EFI/cachyos-eac/systemd-bootx64.efi` jako niepodpisane. Jest to oczekiwane — są one
+podpisane przez CachyOS. **Nie podpisuj ich**, w przeciwnym razie EAC przestanie je akceptować. Następnie **uruchom ponownie komputer, wejdź do ustawień UEFI
+i włącz Secure Boot.** W przypadku płyt głównych ASUS zapoznaj się z uwagami w zakładce systemd-boot.
 
-```sh
-# Użyj limine-enroll-config, aby zarejestrować sumę kontrolną konfiguracji i podpisać plik binarny EFI Limine
-# To używa sbctl pod spodem
-sudo limine-enroll-config
-sudo limine-update
+Flaga `-s` zapisuje pliki w bazie danych `sbctl`, a jego hook pacmana ponownie podpisuje jądra po aktualizacjach.
+pacman nie aktualizuje rEFInd na partycji systemowej EFI. Jeśli uruchomisz `refind-install` samodzielnie, podpisz go potem
+ponownie:
+
+```bash
+sudo sbctl sign-all
 ```
+</TabItem>
+</Tabs>
 
 ## Sprawdź, czy bezpieczny rozruch jest włączony
 
@@ -181,6 +359,21 @@ System:
   TPM2 Support: yes
   Measured UKI: no
   Boot into FW: supported
+```
+
+## Fwupd
+
+Aby używać `fwupd` z włączonym Secure Boot, podpisz plik wykonywalny UEFI:
+
+```sh
+sudo sbctl sign -s -o /usr/lib/fwupd/efi/fwupdx64.efi.signed /usr/lib/fwupd/efi/fwupdx64.efi
+```
+
+Oraz dodaj poniższe linie do `/etc/fwupd/fwupd.conf`:
+
+```sh
+[uefi_capsule]
+DisableShimForSecureBoot=true
 ```
 
 ## Linki i podziękowania

@@ -1,6 +1,6 @@
 ---
 title: Systemy plików
-description: Opis i zalecenia dotyczące dostępnych systemów plików. (ext4, f2fs, btrfs, xfs, zfs, bcachefs)
+description: Opis i zalecenia dotyczące dostępnych systemów plików. (ext4, f2fs, btrfs, xfs, zfs)
 ---
 
 CachyOS oferuje 5 różnych systemów plików, aby pozwolić użytkownikowi wybrać ten, który najlepiej odpowiada jego potrzebom. Poniżej omówiono zalety, wady i zalecenia dla każdego z nich. Każdy system plików jest dostarczany z preinstalowanymi w CachyOS wymaganymi narzędziami.

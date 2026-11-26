@@ -14,9 +14,7 @@ Oto lista obecnych kosztów miesięcznych:
 - Serwer pocztowy/mirror 17 €
 - Serwer forum (Netcup VPS) 7 euro
 
-### Patreon
-
-<https://www.patreon.com/CachyOS>
+### [Patreon](<https://www.patreon.com/CachyOS>)
 
 ### Ethereum
 

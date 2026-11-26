@@ -1,18 +1,230 @@
 ---
-title: Automatyczne montowanie dodatkowych dysków przy starcie systemu za pomocą fstab
-description: Montuj dodatkowe dyski statyczne podczas startu systemu, wykorzystując plik znajdujący się w /etc/fstab
+title: Automatyczne montowanie dodatkowych dysków przy starcie systemu
+description: Montuj dodatkowe dyski statyczne podczas startu systemu, wykorzystując montowanie systemd lub plik znajdujący się w /etc/fstab
+ai_translated: true
 ---
 
-Ten poradnik opisuje podstawy wykorzystania pliku fstab, znajdującego się w /etc/, do montowania dysków statycznych podczas startu systemu. Krótko wyjaśnia, jak znaleźć UUID partycji lub dysku, co oznaczają niektóre opcje oraz gdzie szukać dalszych informacji, jeśli podane okażą się niewystarczające.
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+Ten poradnik opisuje podstawy wykorzystania zarówno plików montowania systemd, jak i pliku fstab znajdującego się w /etc/, do montowania dysków statycznych podczas startu systemu. Krótko wyjaśnia, jak znaleźć UUID partycji lub dysku, co oznaczają niektóre opcje oraz gdzie szukać dalszych informacji, jeśli podane okażą się niewystarczające.
 
 ## Wymagania wstępne
 
 - Dostęp do konta root lub sudo
 
-## Dodawanie wpisów do /etc/fstab
-
 :::note[NTFS w systemie Linux]
-System plików NTFS może być niestabilny w systemie Linux, niezależnie od tego, czy używany jest sterownik ntfs3, czy ntfs-3g. Używaj go na własne ryzyko. Dla lepszej stabilności i wydajności rozważ użycie natywnych systemów plików Linuksa, takich jak ext4, xfs lub btrfs.
+System plików NTFS może być niestabilny w systemie Linux, niezależnie od tego, czy używany jest sterownik ntfs, ntfs3 czy ntfs-3g. Używaj go na własne ryzyko. Dla lepszej stabilności i wydajności rozważ użycie natywnych systemów plików Linuksa, takich jak ext4, xfs lub btrfs.
+:::
+
+## Bezpieczniejsza i przyjazna dla początkujących metoda: montowanie dysków za pomocą plików montowania systemd
+
+Zaletą montowania przez systemd jest to, że nawet jeśli popełnisz błąd w pliku montowania, system nadal się uruchomi. Natomiast błąd w pliku fstab może uniemożliwić uruchomienie systemu.
+
+### 1. Wyświetl identyfikatory UUID swoich partycji
+
+```sh title="Otwórz terminal i uruchom następujące polecenie"
+lsblk -f
+```
+
+```sh title="Przykładowe wyjście"
+NAME          FSTYPE FSVER LABEL UUID                                 FSAVAIL   FSUSE% MOUNTPOINTS
+zram0                                                                              [SWAP]
+nvme0n1
+├─nvme0n1p1   vfat   FAT32       E04D-9F05
+├─nvme0n1p2
+├─nvme0n1p3   ntfs               08A24E90A24E81E4                      715.4G   50%
+├─nvme0n1p4   vfat   FAT32       E09C-D4DA                             628.1M   39% /boot
+├─nvme0n1p5   ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G   47% /
+└─nvme0n1p6   ntfs
+nvme1n1
+└─nvme1n1p1   ext4               4e55896f-3f1f-4bc5-aa8a-fec099689cd9  931.5G   0%
+
+```
+
+W tym przykładzie chcemy zamontować dodatkowy dysk świeżo sformatowany jako ext4. Wiemy, że jest to dysk 1TB i nic nie zostało na nim jeszcze zapisane. Dlatego możemy stwierdzić, że partycja do zamontowania to `nvme1n1p1`, która ma UUID `4e55896f-3f1f-4bc5-aa8a-fec099689cd9`.
+
+### 2. Identyfikacja partycji
+
+Często `lsblk -f` dostarczy na tym etapie wszystkich informacji potrzebnych do zamontowania dysku za pomocą systemd. Jeśli nadal nie masz pewności, która partycja jest właściwa, możesz uruchomić następujące polecenie:
+
+```sh
+sudo fdisk -l
+```
+
+```sh title="Przykładowe wyjście"
+Device          Start       End         Sectors     Size    Type
+/dev/nvme0n1p1  2048        206847      204800      100M    EFI System
+/dev/nvme0n1p2  206848      239615      32768       16M     Microsoft reserved
+/dev/nvme0n1p3  239616      2997384182  2997144567  1.4T    Microsoft basic data
+/dev/nvme0n1p4  2997385216  2999482367  2097152     1G      EFI System
+/dev/nvme0n1p5  2999482368  3905454079  905971712   432G    Linux root (x86-64)
+/dev/nvme0n1p6  3905454080  3907026943  1572864     768M    Windows recovery environment
+/dev/nvme1n1p1  2048        1953523711  1953521664  931.5G  Linux filesystem
+
+```
+
+W tym przykładzie znamy już nasz UUID. Jednak `fdisk -l` może nam to nieco bardziej wyjaśnić, pokazując dokładny rozmiar partycji (931.5G) oraz jej typ (Linux filesystem).
+
+To powinno ostatecznie wyjaśnić, że partycja, której szukamy, to `nvme1n1p1` z UUID `4e55896f-3f1f-4bc5-aa8a-fec099689cd9`, jak opisano wcześniej. Wiedzieliśmy to już wcześniej, ale teraz mamy pewność.
+
+Gdy będziesz pewien, że znalazłeś właściwą partycję, skopiuj UUID. Kopiowanie z emulatora terminala zazwyczaj odbywa się za pomocą `ctrl+shift+C`.
+
+### 3. Tworzenie pliku montowania systemd
+Załóżmy, że chcemy używać tego dysku głównie do gier — dobrym miejscem do jego zamontowania jest katalog domowy użytkownika. Może to być dowolne miejsce, ale dla uproszczenia wybierzemy `/home/user` (zastąp `user` swoją nazwą użytkownika w Linuksie). Ma to znaczenie, ponieważ ścieżka montowania decyduje o nazwie pliku montowania systemd. Ponieważ ten dysk jest przeznaczony na gry, zamontujemy go w folderze `games` w katalogu domowym użytkownika: `/home/user/games`.
+
+Dla pliku montowania systemd przekłada się to na `home-$USER-games.mount` (ukośniki `/` są zastępowane myślnikami `-`), a pliki montowania systemd trafiają do `/etc/systemd/system`.
+
+:::tip
+Jeśli chcesz użyć spacji, myślnika, znaku CJK lub znaku diakrytycznego w nazwie folderu montowania, musi on zostać odpowiednio sformatowany. Załóżmy, że chcesz użyć ścieżki folderu `/home/grzegorz/brzęczyszczykiewicz` — uruchom następujące polecenie, aby uzyskać nazwę, której musisz użyć w swoim pliku:
+```bash
+systemd-escape -p --suffix=mount "/home/grzegorz/brzęczyszczykiewicz"
+```
+Ponieważ musisz poprzedzić ukośnikiem wstecznym każdy znak `\`, utworzysz plik montowania jako `/etc/systemd/system/home-grzegorz-brz\\xc4\\x99czyszczykiewicz.mount`
+:::
+
+Możesz użyć dowolnego edytora tekstu; w tym przykładzie użyjemy `micro`.
+
+```sh
+micro /etc/systemd/system/home-$USER-games.mount
+```
+:::note
+Jeśli montujesz w swoim katalogu domowym użytkownika, możesz zostawić powyższe `$USER` w nazwie pliku — twoja nazwa użytkownika automatycznie zajmie jego miejsce.
+:::
+
+Wklej ten szablon do pustego pliku:
+```ini
+[Unit]
+Description=
+
+[Mount]
+What=
+Where=
+Type=
+Options=
+
+[Install]
+WantedBy=multi-user.target
+```
+Poniżej znajdują się opisy każdego pola w pliku:
+
+<Tabs>
+  <TabItem label='Description'>
+  Description (opis) może być dowolny — służy wyłącznie do łatwiejszej identyfikacji przez ciebie.
+  </TabItem>
+  <TabItem label='What'>
+  Wpisz skopiowany wcześniej UUID. Tutaj będzie to `UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9`
+  </TabItem>
+  <TabItem label='Where'>
+  To jest punkt montowania. Folder zostanie utworzony automatycznie, jeśli nie istnieje. Tutaj będzie to `/home/user/games`. Zastąp „user” swoją nazwą użytkownika, jeśli montujesz w swoim katalogu domowym.
+  </TabItem>
+  <TabItem label='Type'>
+  Typ systemu plików — tutaj będzie to `ext4`
+  </TabItem>
+  <TabItem label='Options'>
+  Dowolne opcje montowania, których potrzebujesz. Tutaj użyjemy `defaults,exec,rw,noatime`. Ważne jest, aby nie było tu spacji.
+  </TabItem>
+</Tabs>
+---
+
+Zgodnie z przykładem wypełniony plik montowania powinien wyglądać następująco:
+```ini
+[Unit]
+Description=Mount games drive (/home/user/games)
+
+[Mount]
+What=UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9
+Where=/home/user/games
+Type=ext4
+Options=defaults,exec,rw,noatime
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 4. Zakończenie
+Aby zamontować dysk, dla którego właśnie utworzyliśmy wpis, uruchom następujące polecenia:
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now home-$USER-games.mount
+```
+
+Powinieneś zobaczyć wybrany folder dla punktu montowania i możesz sprawdzić status montowania za pomocą `systemctl status home-$USER-games.mount`:
+
+```sh
+● home-user-games.mount - Mount games drive (/home/user/games)
+     Loaded: loaded (/proc/self/mountinfo; enabled; preset: disabled)
+     Active: active (mounted) since Sat 2026-05-02 13:02:31 CDT; 23h ago
+ Invocation: e52ef8fe3d754c64a3825bc1ee89e7da
+      Where: /home/user/games
+       What: /dev/nvme1n1p1
+      Tasks: 0 (limit: 74118)
+     Memory: 316K (peak: 3.9M)
+        CPU: 5ms
+     CGroup: /system.slice/home-user-games.mount
+
+May 02 13:02:31 cachyos systemd[1]: Mounting Mount games drive (/home/user/games)...
+May 02 13:02:31 cachyos systemd[1]: Mounted Mount games drive (/home/user/games).
+```
+
+### tl;dr (w skrócie)
+
+- Znajdź **UUID** swojej partycji
+
+```sh
+lsblk -f
+```
+
+- Utwórz plik montowania
+
+```sh
+micro /etc/systemd/system/mnt-foo.mount
+```
+
+Zastępując `mnt-foo` pełną ścieżką miejsca, w którym chcesz zamontować dysk, i zamieniając `/` na `-`.
+
+- Wypełnij plik montowania
+
+```sh
+[Unit]
+Description=Mount drive
+
+[Mount]
+What=UUID=<UUID partycji>
+Where=/mnt/foo
+Type=jakisfs
+Options=defaults
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Zastąp `<UUID partycji>`, `/mnt/foo` i `jakisfs` swoim UUID, katalogiem i systemem plików, np. ext4, a także ustaw inne opcje, które chcesz dodać po `defaults`, takie jak `_netdev` dla NAS-a lub `nofail` dla każdego dysku, który nie jest krytyczny.
+
+- Przeładuj demona
+
+```sh
+sudo systemctl daemon-reload
+```
+
+- Zamontuj dysk i ustaw jego montowanie przy starcie systemu
+
+```sh
+sudo systemctl enable --now mnt-foo.mount
+```
+
+### Dodatkowa lektura
+
+- [Standard Hierarchii Systemu Plików](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS o /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Podręcznik dla dump](<https://linux.die.net/man/8/dump>)
+- [Podręcznik dla fsck](https://man.archlinux.org/man/fsck.8)
+- [systemd-mount](https://manual.siduction.org/systemd-mount_en.html)
+
+## Zaawansowana metoda: dodawanie wpisów do /etc/fstab
+
+:::danger
+Plik fstab jest odczytywany podczas uruchamiania systemu i jeśli zawiera błąd, może uniemożliwić uruchomienie systemu. Przed ponownym uruchomieniem dokładnie sprawdź swój wpis pod kątem literówek. Jeśli popełnisz błąd, zazwyczaj możesz go naprawić, uruchamiając środowisko live i [wykonując chroot do swojej instalacji](/pl/features/cachy_chroot), aby edytować plik.
 :::
 
 ### 1. Wyświetl identyfikatory UUID swoich partycji
@@ -21,16 +233,16 @@ System plików NTFS może być niestabilny w systemie Linux, niezależnie od teg
 lsblk -f
 ```
 
-```text title="Przykładowe wyjście"
-# NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
-# zram0                                                                              [SWAP]
-# nvme0n1
-# ├─nvme0n1p1 vfat   FAT32       E04D-9F05
-# ├─nvme0n1p2
-# ├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
-# ├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
-# ├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
-# └─nvme0n1p6 ntfs
+```sh title="Przykładowe wyjście"
+NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+zram0                                                                              [SWAP]
+nvme0n1
+├─nvme0n1p1 vfat   FAT32       E04D-9F05
+├─nvme0n1p2
+├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
+├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
+├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
+└─nvme0n1p6 ntfs
 ```
 
 W naszym przykładzie wiemy, że chcemy zamontować partycję Windows, która ma system plików ntfs. Wiemy również, że około połowa jej miejsca jest dostępna. Dlatego możemy stwierdzić, że partycja, którą chcemy zamontować, to `nvme0n1p3`, a jej UUID to `08A24E90A24E81E4`, z systemem plików `ntfs` w tym przykładzie.
@@ -43,14 +255,14 @@ Często `lsblk -f` dostarczy wszystkich informacji potrzebnych do zamontowania d
 sudo fdisk -l
 ```
 
-```text title="Przykładowe wyjście"
-# Device              Start        End    Sectors  Size Type
-# /dev/nvme0n1p1       2048     206847     204800  100M EFI System
-# /dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
-# /dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
-# /dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
-# /dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
-# /dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
+```sh title="Przykładowe wyjście"
+Device              Start        End    Sectors  Size Type
+/dev/nvme0n1p1       2048     206847     204800  100M EFI System
+/dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
+/dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
+/dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
+/dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
+/dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
 ```
 
 W tym przykładzie znamy już nasz UUID. Jednak `fdisk -l` może nam to nieco bardziej wyjaśnić, pokazując dokładny rozmiar partycji (1.4T) oraz jej typ (Microsoft basic data).
@@ -107,7 +319,7 @@ Struktura tego wpisu wygląda następująco:
 
   - `drugie 0` ustawia kolejność sprawdzania systemów plików podczas startu systemu. Dla partycji root powinno to być 1, chyba że system plików root to btrfs, wtedy powinno być ustawione na 0. Wszystkie inne systemy plików w fstab powinny mieć wartość 0 (wyłączone) lub 2. Więcej informacji [tutaj](https://man.archlinux.org/man/fsck.8).
 
-Aby uzyskać bardziej szczegółowe informacje na temat każdej opcji, odwiedź te dwie strony: [strona man dla fstab](https://man7.org/linux/man-pages/man5/fstab.5.html) i [strona man dla mount](https://man7.org/linux/man-pages/man8/mount.8.html).
+Aby uzyskać bardziej szczegółowe informacje na temat każdej opcji, odwiedź te dwie strony: [strona man dla fstab](https://man7.org/linux/man-pages/man5/fstab.5.html) i [strona man dla mount](https://man7.org/linux/man-pages/man8/mount.8.html)
 
 #### Więcej informacji
 
@@ -121,7 +333,7 @@ i
 
 `UUID=<UUID partycji> /media/foo jakisfs defaults 0 0`
 
-są równoważne. `jakisfs` bez dodatkowych opcji domyślnie oznacza `jakisfs defaults 0 0`.
+są równoważne. `jakisfs` bez dodatkowych opcji domyślnie oznacza `jakisfs defaults 0 0`
 
 ### 4. Zakończenie
 
@@ -175,7 +387,7 @@ ls /media/windows
 # Intel                    'Ship of Harkinian'
  ```
 
-## tl;dr (w skrócie)
+### tl;dr (w skrócie)
 
 - Znajdź **UUID** swojej partycji
 
@@ -211,7 +423,7 @@ sudo mount -a
 
 Ten dysk jest teraz zamontowany i będzie montowany przy każdym starcie systemu.
 
-## Dodatkowa lektura
+### Dodatkowa lektura
 
 - [Standard Hierarchii Systemu Plików](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
 - [FHS o /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)

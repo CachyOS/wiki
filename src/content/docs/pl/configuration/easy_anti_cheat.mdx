@@ -1,0 +1,935 @@
+---
+title: Easy Anti-Cheat (Linux v2)
+description: Uruchom jądro CachyOS EAC z Secure Boot, aby gry korzystające z Easy Anti-Cheat Linux v2 mogły działać
+ai_translated: true
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+[Easy Anti-Cheat Linux v2](https://onlineservices.epicgames.com/news/introducing-easy-anti-cheat-linux-v2)
+pozwala uruchomić grę tylko wtedy, gdy może zweryfikować sposób uruchomienia systemu. Sprawdza ono, czy:
+
+- Secure Boot jest włączony, a jądro jest podpisane kluczem, któremu ufa firma Epic
+- system posiada moduł TPM 2.0, który rejestruje każdy etap rozruchu (measured boot)
+- jądro działa w trybie `lockdown` (`integrity`) i ładuje wyłącznie podpisane moduły
+- IOMMU jest włączone, kexec jest wyłączony, a BPF LSM jest aktywny
+
+CachyOS dostarcza dedykowane jądro `linux-cachyos-eac`, które spełnia te wymagania, oraz program rozruchowy systemd-boot
+podpisany tym samym kluczem. Zachowujesz własne klucze Secure Boot. Jedynym dodatkiem jest certyfikat **CachyOS EAC CA**
+w bazie danych Secure Boot, dzięki któremu oprogramowanie układowe (firmware) akceptuje pliki podpisane przez CachyOS.
+
+Jądro EAC otrzymuje własny wpis rozruchowy. Twoje zwykłe wpisy rozruchowe pozostają bez zmian, więc wpis EAC
+uruchamiasz tylko wtedy, gdy chcesz zagrać w grę korzystającą z EAC.
+
+EAC wymaga menedżera rozruchu, który weryfikuje wszystko, co ładuje, względem bazy danych Secure Boot oraz
+dokonuje pomiarów w układzie TPM. systemd-boot to robi, natomiast Limine nie. rEFInd to robi, ale jest podpisany twoim własnym
+kluczem, którego EAC nie akceptuje — to samo dotyczy GRUB. Użytkownicy Limine, rEFInd i GRUB zachowują więc
+swój menedżer rozruchu jako domyślny i uruchamiają jądro EAC przez podpisany przez CachyOS systemd-boot, który otrzymuje
+własny wpis rozruchowy w firmware i jest używany wyłącznie do rozruchu EAC.
+
+Skrypt [`eac-setup`](#konfiguracja-za-pomocą-eac-setup) wykonuje całą konfigurację za ciebie. Sekcja [Konfiguracja ręczna](#konfiguracja-ręczna)
+opisuje te same kroki do wykonania samodzielnie.
+
+## Wymagania
+
+- CachyOS zainstalowany w trybie UEFI z **systemd-boot**, **Limine** lub **rEFInd** jako menedżerem rozruchu. W przypadku rEFInd
+  partycja systemowa EFI musi być zamontowana w `/boot`, tak jak konfiguruje to instalator CachyOS. **GRUB** jest
+  wspierany eksperymentalnie — zobacz [GRUB (eksperymentalnie)](#grub-eksperymentalnie).
+- Zaktualizowany system (`sudo pacman -Syu`). `eac-setup` wymaga pakietu `cachyos-settings` w wersji 1.4.4 lub nowszej, a `eac-status`
+  oraz obsługa EAC w `sbctl-batch-sign` wymagają wersji 1.4.2 lub nowszej.
+- Moduł **TPM 2.0** włączony w ustawieniach firmware. Programowy TPM w firmware (AMD fTPM, Intel PTT) również jest odpowiedni.
+- **IOMMU** włączone w ustawieniach firmware (AMD-Vi / „IOMMU” na platformach AMD, VT-d na platformach Intel).
+- Karty graficzne NVIDIA: architektura Maxwell lub nowsza (GTX 750, seria GTX 900 i nowsze). Jądro EAC dostarcza moduły NVIDIA jako
+  pakiety: `linux-cachyos-eac-nvidia-open` dla architektury Turing i nowszych (seria GTX 16 / RTX 20 i nowsze),
+  `linux-cachyos-eac-nvidia-580xx` dla architektur Maxwell, Pascal i Volta.
+
+:::caution[Brak modułów DKMS]
+Jądro EAC ładuje wyłącznie moduły podpisane podczas budowania jądra. Moduły NVIDIA, ZFS oraz Realtek r8125
+są dostarczane jako pakiety `linux-cachyos-eac-*`; inne moduły budowane za pomocą DKMS (na przykład
+`virtualbox-host-dkms`) nie załadują się we wpisie rozruchowym EAC. Nie instaluj `linux-cachyos-eac-headers`.
+:::
+
+:::danger[BitLocker i odblokowywanie dysku przez TPM]
+Ta konfiguracja zmienia klucze Secure Boot, co zmienia pomiary wykonywane przez TPM. BitLocker w systemie Windows
+uruchamianym w trybie dual boot może wtedy poprosić o klucz odzyskiwania, a dysk LUKS powiązany samodzielnie z TPM
+poprosi o hasło. Upewnij się, że masz je pod ręką przed rozpoczęciem, w przeciwnym razie możesz utracić dostęp do swoich danych.
+:::
+
+:::danger[Steam Deck]
+Steam Deck nie posiada standardowego przełącznika Secure Boot w ustawieniach firmware i obecnie nie jest obsługiwany. Zapisanie kluczy może sprawić, że urządzenie przestanie się uruchamiać bez prostego sposobu na wyłączenie Secure Boot. Nie stosuj tego poradnika na Steam Decku.
+:::
+
+## Konfiguracja za pomocą eac-setup
+
+Narzędzie `eac-setup` z pakietu `cachyos-settings` przeprowadza konfigurację dla systemd-boot, Limine, rEFInd oraz GRUB. Sprawdza ono, co zostało
+już wykonane, więc możesz uruchomić je ponownie w dowolnym momencie, na przykład w celu naprawy konfiguracji. Jedynie zmiany w ustawieniach
+firmware musisz wykonać samodzielnie.
+
+<Steps>
+
+1. **Przełącz firmware w tryb Setup Mode**
+
+    Pomiń ten krok, jeśli używasz już Secure Boot z kluczami utworzonymi przez `sbctl`, na przykład zgodnie z
+    [poradnikiem Secure Boot](/pl/configuration/secure_boot_setup). `eac-setup` doda wtedy certyfikat CachyOS EAC CA do
+    bazy danych Secure Boot, pozostawiając Secure Boot włączony.
+
+    W przeciwnym razie wykonaj kroki z sekcji [Włączanie trybu Setup Mode w UEFI](/pl/configuration/secure_boot_setup#włączanie-trybu-konfiguracji-setup-mode-w-uefi)
+    i na razie pozostaw Secure Boot **wyłączony**.
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+2. **Uruchom eac-setup**
+
+    ```bash
+    sudo eac-setup
+    ```
+
+    Skrypt zapyta przed zapisaniem kluczy Secure Boot, a pacman poprosi o potwierdzenie przed instalacją pakietów.
+    Wykonuje on następujące kroki:
+
+    - Sprawdza TPM, IOMMU oraz używany menedżer rozruchu.
+    - Zapisuje certyfikat CachyOS EAC CA. W trybie Setup Mode najpierw tworzy twoje własne klucze i zapisuje je razem
+      z kluczami firmy Microsoft.
+    - Instaluje `linux-cachyos-eac`, `systemd-boot-cachyos-signed` oraz pakiety modułów `linux-cachyos-eac-*`
+      pasujące do twojego systemu (NVIDIA, ZFS, r8125).
+    - Podpisuje twoje zwykłe jądra twoim własnym kluczem, a także Limine, rEFInd lub GRUB, aby twój normalny rozruch
+      nadal działał z włączonym Secure Boot.
+    - Chroni pliki podpisane przez CachyOS przed działaniem `sbctl` i przywraca ich podpisy, jeśli `sbctl` podpisał
+      je ponownie.
+    - Tworzy wpis rozruchowy EAC na podstawie opcji jądra aktualnie uruchomionego systemu oraz opcji wymaganych przez EAC.
+      W przypadku Limine, rEFInd i GRUB instaluje również podpisany przez CachyOS systemd-boot z własnym
+      wpisem rozruchowym w firmware o nazwie „CachyOS EAC”.
+
+    Jeśli firmware nie znajduje się w trybie Setup Mode, a twoje klucze nie zostały utworzone przez `sbctl`, skrypt zatrzyma się i
+    poprosi cię o przełączenie firmware w tryb Setup Mode. Zrób to i uruchom skrypt ponownie.
+
+    Wpis EAC wykorzystuje opcje jądra, z którymi uruchomiono system. Jeśli później zmienisz opcje jądra
+    w swoim zwykłym wpisie rozruchowym, uruchom ponownie komputer i jeszcze raz wykonaj `sudo eac-setup`.
+
+3. **Włącz Secure Boot**
+
+    `eac-setup` poinformuje cię na końcu, jeśli Secure Boot jest nadal wyłączony. Jeśli jest już włączony, pomiń ten
+    krok.
+
+    Uruchom komputer ponownie w ustawieniach firmware i włącz Secure Boot. Jeśli twoja płyta główna nie ma
+    przełącznika Secure Boot, zapoznaj się z uwagami dotyczącymi płyt ASUS w
+    [poradniku Secure Boot](/pl/configuration/secure_boot_setup#podpisywanie-obrazu-jądra-i-menedżera-rozruchu).
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+4. **Uruchom system w trybie EAC**
+
+    ```bash
+    sudo eac-setup boot
+    ```
+
+    To polecenie jednorazowo uruchamia ponownie komputer ze wpisu EAC. Kolejny restart po zakończeniu sesji gry uruchomi znów twój zwykły system.
+    W przypadku systemd-boot możesz również wybrać **CachyOS (EAC)** w menu rozruchowym.
+
+    :::caution
+    Menu Limine oraz GRUB również wyświetlają wpis dla `linux-cachyos-eac`. Uruchomienie go przez Limine lub GRUB
+    **nie** przejdzie testów EAC. Zawsze używaj polecenia `sudo eac-setup boot`.
+    :::
+
+    Następnie sprawdź wynik zgodnie z opisem w sekcji [Weryfikacja konfiguracji](#weryfikacja-konfiguracji).
+
+</Steps>
+
+### GRUB (eksperymentalnie)
+
+Obsługa GRUB jest nowa i jak dotąd mało przetestowana. Wymaga pakietu `cachyos-settings` w wersji 1.4.5 lub nowszej.
+Wszelkie problemy zgłaszaj w [systemie śledzenia błędów CachyOS-Settings](https://github.com/CachyOS/CachyOS-Settings/issues).
+
+GRUB konfiguruje się wyłącznie za pomocą `eac-setup` — nie ma dla niego osobnego poradnika ręcznego. Kroki są takie same jak powyżej. Ponadto
+skrypt wprowadza następujące zmiany:
+
+- Ponownie instaluje GRUB z modułem `tpm` i bez blokady shim (`shim_lock`), a następnie podpisuje go twoim własnym kluczem.
+  Bez tego GRUB nie uruchomi twoich zwykłych jąder przy włączonym Secure Boot.
+- Kopiuje jądro EAC i jego initramfs na partycję systemową EFI, ponieważ systemd-boot nie potrafi ich odczytać
+  z `/boot` na głównej partycji systemowej. Zajmują tam około 40 MiB. Skrypt instaluje pakiet
+  `cachyos-eac-grub-hook`, którego hook mkinitcpio aktualizuje tę kopię za każdym razem, gdy zmienia się jądro EAC lub jego initramfs.
+- Ponownie generuje menu GRUB. Menu zawiera wtedy wpis **CachyOS EAC (EFI BootNext)** w sekcji wpisów firmware UEFI,
+  który działa tak samo jak `sudo eac-setup boot`.
+- Jeśli GRUB miałby domyślnie uruchamiać `linux-cachyos-eac`, ustawia `GRUB_TOP_LEVEL` w `/etc/default/grub` na twoje
+  zwykłe jądro. Dzieje się tak, gdy opcja ta nie jest jeszcze ustawiona, ponieważ GRUB sortuje wtedy jądra według nazwy.
+
+:::caution
+Jeśli w `/etc/default/grub` ustawiono `GRUB_SAVEDEFAULT=true`, nie wybieraj wpisu **CachyOS EAC (EFI BootNext)**.
+GRUB zapamiętałby go i uruchamiał EAC przy każdym starcie systemu. Zamiast tego używaj `sudo eac-setup boot`. Jeśli już
+do tego doszło, uruchom ponownie `sudo eac-setup`, co usunie zapisany wpis.
+:::
+
+Szyfrowanie dysku nie jest jeszcze obsługiwane w połączeniu z GRUB. Instalator CachyOS trzyma `/boot` wewnątrz zaszyfrowanej
+partycji głównej i umieszcza klucz dysku w initramfs. Kopia initramfs na niezaszyfrowanej
+partycji systemowej EFI ujawniłaby ten klucz, dlatego `eac-setup` zatrzymuje się, gdy `/boot` jest zaszyfrowane.
+
+## Konfiguracja ręczna
+
+Poniżej znajdują się kroki wykonywane przez `eac-setup` — do przeprowadzenia ręcznie lub w celu sprawdzenia, co zmienia skrypt. Możesz przełączyć się
+na skrypt w dowolnym momencie; będzie on kontynuował od miejsca, w którym zakończyłeś.
+
+:::note[Uruchamiaj polecenia w powłoce bash]
+Polecenia na tej stronie zostały napisane dla powłoki bash. Domyślną powłoką w CachyOS jest fish, który odrzuca niektóre z
+nich, na przykład komunikatem `Unsupported use of '='`. Uruchom najpierw `bash` w terminalu, a następnie wykonaj polecenia.
+:::
+
+### Jeśli korzystasz już z Secure Boot
+
+Jeśli skonfigurowałeś już Secure Boot za pomocą `sbctl`, na przykład zgodnie z [poradnikiem Secure Boot](/pl/configuration/secure_boot_setup),
+nie potrzebujesz trybu Setup Mode. `sbctl` może dodać certyfikat CachyOS EAC CA do bazy danych Secure Boot przy włączonym Secure Boot.
+Podpisuje zmianę twoim własnym kluczem Key Exchange Key (KEK), który jest akceptowany przez firmware.
+
+{/* TODO: only tested in OVMF so far, test on real hardware */}
+
+<Steps>
+
+1. **Sprawdź swoją konfigurację Secure Boot**
+
+    ```bash
+    sudo sbctl status
+    ```
+
+    Wynik musi pokazywać `sbctl is installed`, `Setup Mode: Disabled` oraz `Secure Boot: Enabled`. Jeśli
+    twoje klucze nie zostały utworzone przez `sbctl`, wykonaj zamiast tego konfigurację dla swojego menedżera rozruchu od kroku 1.
+
+2. **Zapisz certyfikat CachyOS EAC CA**
+
+    ```bash
+    sudo pacman -S cachyos-eac-signing-key
+    sudo sbctl enroll-keys --append --partial db --custom --ignore-immutable
+    ```
+
+    Flaga `--append` zachowuje wszystkie już zapisane certyfikaty, `--partial db` modyfikuje tylko bazę danych Secure Boot
+    (`db`), a `--ignore-immutable` pozwala `sbctl` na jej zapis, ponieważ Linux domyślnie oznacza ją jako tylko do odczytu.
+
+    :::caution[Uruchom to tylko raz]
+    `sbctl` nie sprawdza, które certyfikaty są już zapisane. Każde uruchomienie dodaje certyfikat CachyOS EAC CA ponownie,
+    wraz z twoim własnym kluczem Database Key, a firmware ma ograniczoną ilość miejsca na wpisy.
+    :::
+
+    Sprawdź, czy certyfikat został zapisany:
+
+    ```bash
+    sudo sbctl list-enrolled-keys
+    ```
+
+    Sekcja `db` musi zawierać `CachyOS EAC CA` obok twoich wcześniejszych wpisów. Twój własny klucz `Database Key`
+    jest teraz wymieniony dwukrotnie, co jest nieszkodliwe.
+
+    Jeśli `sbctl` zgłosi błąd, firmware nie zaakceptowało zmiany — zazwyczaj dlatego, że zapisany KEK
+    nie jest tym, który znajduje się w katalogu kluczy `sbctl`. W takim przypadku wykonaj konfigurację dla swojego menedżera rozruchu od
+    kroku 1.
+
+3. **Kontynuuj konfigurację dla swojego menedżera rozruchu**
+
+    Wykonaj kroki z sekcji [Konfiguracja dla twojego menedżera rozruchu](#konfiguracja-dla-twojego-menedżera-rozruchu) od kroku 2. Pomiń krok 3 — CA
+    jest już zapisany, a twój menedżer rozruchu jest już podpisany. W kroku 6 Secure Boot jest już włączony, więc musisz
+    jedynie uruchomić wpis EAC.
+
+</Steps>
+
+### Konfiguracja dla twojego menedżera rozruchu
+
+<Tabs syncKey="boot-manager">
+<TabItem label='Limine'>
+
+Limine pozostaje twoim domyślnym menedżerem rozruchu. Podpisany przez CachyOS systemd-boot jest instalowany obok niego, we własnym
+katalogu na partycji systemowej EFI i z własnym wpisem rozruchowym w firmware. Aby zagrać, informujesz firmware, aby
+uruchomiło systemd-boot jednorazowo przy następnym rozruchu (`BootNext`). systemd-boot uruchamia wtedy bezpośrednio jądro EAC.
+Następnie system znów uruchamia Limine jak zazwyczaj.
+
+<Steps>
+
+1. **Przełącz firmware w tryb Setup Mode**
+
+    Jeśli korzystasz już z Secure Boot z `sbctl`, wykonaj najpierw kroki z sekcji [Jeśli korzystasz już z Secure Boot](#jeśli-korzystasz-już-z-secure-boot)
+    i przejdź do kroku 2.
+
+    Wykonaj kroki z sekcji [Włączanie trybu Setup Mode w UEFI](/pl/configuration/secure_boot_setup#włączanie-trybu-konfiguracji-setup-mode-w-uefi)
+    i na razie pozostaw Secure Boot **wyłączony**.
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+2. **Zainstaluj pakiety**
+
+    Jeśli przed przejściem na Limine używałeś systemd-boot zgodnie z [poradnikiem Secure Boot](/pl/configuration/secure_boot_setup),
+    usuń najpierw utworzony wtedy własnoręcznie podpisany plik systemd-boot. W przeciwnym razie pacman odmówi instalacji
+    `systemd-boot-cachyos-signed`, a `sbctl` nadpisze systemd-boot podpisany przez CachyOS:
+
+    ```bash
+    sudo sbctl remove-file /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+    sudo rm -f /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed
+    ```
+
+    Następnie zainstaluj pakiety:
+
+    ```bash
+    sudo pacman -S sbctl sbsigntools tpm2-tools efibootmgr cachyos-eac-signing-key linux-cachyos-eac systemd-boot-cachyos-signed
+    ```
+
+    W systemach z kartą graficzną NVIDIA zainstaluj również `linux-cachyos-eac-nvidia-open` (architektura Turing i nowsze) lub
+    `linux-cachyos-eac-nvidia-580xx` (Maxwell, Pascal i Volta). Jeśli korzystasz z ZFS, zainstaluj także
+    `linux-cachyos-eac-zfs`. Jeśli używasz `r8125-dkms` dla karty sieciowej Realtek 2.5 GbE, zainstaluj również
+    `linux-cachyos-eac-r8125`.
+
+    :::danger
+    **Nie** uruchamiaj `bootctl install`. Spowodowałoby to ustawienie systemd-boot jako domyślnego menedżera rozruchu i zastąpienie
+    zapasowego programu rozruchowego (fallback boot loader) na partycji systemowej EFI.
+    :::
+
+    :::caution
+    Pozostaw `ENABLE_UKI=no` (wartość domyślna) w pliku `/etc/default/limine`. Przy włączonym UKI jądro EAC jest pakowane
+    do nowego obrazu, który `sbctl` podpisuje twoim własnym kluczem, czego EAC nie akceptuje.
+    :::
+
+3. **Zapisz klucze Secure Boot i podpisz Limine**
+
+    Pomiń ten krok, jeśli zapisałeś certyfikat CA zgodnie z opisem w sekcji [Jeśli korzystasz już z Secure Boot](#jeśli-korzystasz-już-z-secure-boot).
+
+    Pakiet `cachyos-eac-signing-key` umieszcza certyfikat CachyOS EAC CA w katalogu `sbctl` dla certyfikatów niestandardowych.
+    Zapisz swoje własne klucze razem z kluczami Microsoftu, wbudowanymi kluczami firmware oraz certyfikatem
+    CachyOS EAC CA.
+
+    :::caution[Płyty główne ASUS i Gigabyte]
+    Na tych płytach uruchom `sudo sbctl enroll-keys --microsoft --custom` jako ostatnie poniższe polecenie, bez flagi
+    `--firmware-builtin`. Na niektórych z nich flaga ta tworzy zduplikowane wpisy kluczy, a płyta zatrzymuje się z błędem
+    **Secure Boot Violation** po włączeniu Secure Boot. Jeśli tak się już stało, usuń wszystkie klucze Secure Boot
+    w ustawieniach firmware, aby ponownie wejść w tryb Setup Mode (zobacz
+    [Włączanie trybu Setup Mode w UEFI](/pl/configuration/secure_boot_setup#włączanie-trybu-konfiguracji-setup-mode-w-uefi)), uruchom
+    CachyOS i wykonaj `sudo sbctl enroll-keys --microsoft --custom`. Nie używaj do tego polecenia z poradnika Secure Boot,
+    ponieważ pomija ono certyfikat CachyOS EAC CA.
+    :::
+
+    ```bash
+    sudo sbctl create-keys
+    sudo sbctl enroll-keys --microsoft --firmware-builtin --custom
+    ```
+
+    Jeśli `sbctl` zatrzyma się z komunikatem `could not enroll built-in firmware keys`, oznacza to, że firmware nie ma wbudowanych kluczy i
+    nic nie zostało jeszcze zapisane. Uruchom ostatnie polecenie ponownie bez `--firmware-builtin`.
+
+    Sprawdź, czy certyfikat został zapisany:
+
+    ```bash
+    sudo sbctl list-enrolled-keys
+    ```
+
+    Sekcja `db` musi zawierać `CachyOS EAC CA`.
+
+    Sam program Limine nadal musi zostać podpisany twoim własnym kluczem, aby twój zwykły rozruch nadal działał z włączonym Secure
+    Boot. Wykonaj instrukcje z zakładki Limine w sekcji
+    [Podpisywanie obrazu jądra i menedżera rozruchu](/pl/configuration/secure_boot_setup#podpisywanie-obrazu-jądra-i-menedżera-rozruchu).
+
+    :::caution
+    Nigdy nie podpisuj jądra EAC ani podpisanego przez CachyOS programu systemd-boot za pomocą `sbctl`. Nie używaj na nich `sbctl-batch-sign`
+    ani `sbctl sign`, nawet jeśli `sbctl verify` pokazuje je jako niepodpisane. Są one podpisane przez CachyOS.
+    :::
+
+4. **Dodaj systemd-boot jako osobny wpis rozruchowy w firmware**
+
+    `sbctl` ponownie podpisuje każdy plik ze swojej bazy danych za każdym razem, gdy aktualizowane jest jądro lub plik binarny EFI. Sprawdź, czy
+    żaden z plików podpisanych przez CachyOS się tam nie znajduje, na przykład po wcześniejszym uruchomieniu `sbctl sign -s`:
+
+    ```bash
+    sudo sbctl list-files
+    ```
+
+    Jeśli któraś z wymienionych ścieżek zawiera `cachyos-eac` lub jest to `/usr/lib/systemd/boot/efi/systemd-bootx64.efi`, usuń ją
+    poleceniem `sudo sbctl remove-file <ścieżka>`. Następnie przeinstaluj pakiety, aby przywrócić podpisy CachyOS:
+
+    ```bash
+    sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
+    ```
+
+    Skopiuj podpisany systemd-boot do jego własnego katalogu na partycji systemowej EFI:
+
+    ```bash
+    ESP="$(bootctl --print-esp-path)"
+    sudo install -Dm644 /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed "$ESP/EFI/cachyos-eac/systemd-bootx64.efi"
+    ```
+
+    Dopóki katalog `EFI/cachyos-eac` istnieje, pakiet `systemd-boot-cachyos-signed` aktualizuje tę kopię automatycznie.
+
+    Następnie utwórz wpis rozruchowy w firmware. Flaga `--create-only` dodaje wpis bez zmiany kolejności rozruchu, więc
+    Limine pozostaje domyślne:
+
+    ```bash
+    ESP_DEV="$(findmnt -no SOURCE "$ESP")"
+    ESP_DISK="/dev/$(lsblk -no PKNAME "$ESP_DEV")"
+    ESP_PART="$(cat "/sys/class/block/$(basename "$ESP_DEV")/partition")"
+    sudo efibootmgr --create-only --disk "$ESP_DISK" --part "$ESP_PART" \
+      --label "CachyOS EAC" --loader '\EFI\cachyos-eac\systemd-bootx64.efi'
+    ```
+
+    Sprawdź, czy nowy wpis jest widoczny na liście oraz czy `BootOrder` nadal zaczyna się od Limine:
+
+    ```bash
+    efibootmgr
+    ```
+
+5. **Utwórz wpis rozruchowy EAC**
+
+    systemd-boot odczytuje swoją konfigurację z partycji systemowej EFI. Hook Limine utrzymuje jądro EAC
+    oraz jego initramfs w aktualnej wersji w katalogu nazwanym identyfikatorem twojej maszyny (machine ID). Sprawdź, czy oba pliki istnieją:
+
+    ```bash
+    ESP="$(bootctl --print-esp-path)"
+    KERNEL="/$(cat /etc/machine-id)/linux-cachyos-eac/vmlinuz"
+    INITRD="/$(cat /etc/machine-id)/linux-cachyos-eac/initramfs"
+    sudo ls -l "$ESP$KERNEL" "$ESP$INITRD"
+    ```
+
+    Następnie zbuduj linię poleceń jądra na podstawie aktualnie działającego systemu oraz opcji EAC:
+
+    ```bash
+    EAC_REQ="lockdown=integrity lsm=landlock,lockdown,yama,integrity,bpf iommu.passthrough=0 intel_iommu=on module.sig_enforce=1 sysctl.kernel.kexec_load_disabled=1"
+    EAC_OPTS="$(sed -E 's/(^| )(BOOT_IMAGE|initrd)=[^ ]*//g' /proc/cmdline) $EAC_REQ"
+    echo "$EAC_OPTS"
+    ```
+
+    Wynik musi zawierać twoją opcję `root=` i kończyć się opcjami EAC. Zapisz wpis i ustaw go jako
+    domyślny, aby systemd-boot uruchamiał go bez wyświetlania menu. Spowoduje to zastąpienie istniejącego pliku
+    `loader/loader.conf`, co w tym przypadku jest w porządku, ponieważ ten systemd-boot uruchamia wyłącznie wpis EAC:
+
+    ```bash
+    printf 'title   CachyOS (EAC)\nlinux   %s\ninitrd  %s\noptions %s\n' "$KERNEL" "$INITRD" "$EAC_OPTS" \
+      | sudo install -Dm644 /dev/stdin "$ESP/loader/entries/cachyos-eac.conf"
+    printf 'default cachyos-eac.conf\ntimeout 0\n' | sudo install -Dm644 /dev/stdin "$ESP/loader/loader.conf"
+    ```
+
+    Aby mimo to zobaczyć menu systemd-boot, przytrzymaj klawisz <kbd>Space</kbd> podczas jego uruchamiania.
+
+    :::caution
+    Menu Limine również wyświetla wpis dla `linux-cachyos-eac`. Uruchomienie go przez Limine **nie**
+    przejdzie testów EAC. Zawsze używaj wpisu firmware „CachyOS EAC”.
+    :::
+
+    {/* TODO: hide the linux-cachyos-eac entry in Limine (limine-entry-tool has no per-kernel exclude yet) */}
+
+6. **Włącz Secure Boot i uruchom system w trybie EAC**
+
+    Jeśli Secure Boot jest już włączony, przejdź od razu do uruchomienia systemu w trybie EAC.
+
+    Uruchom komputer ponownie w ustawieniach firmware i włącz Secure Boot. Jeśli twoja płyta główna nie ma
+    przełącznika Secure Boot, zapoznaj się z uwagami dotyczącymi płyt ASUS w
+    [poradniku Secure Boot](/pl/configuration/secure_boot_setup#podpisywanie-obrazu-jądra-i-menedżera-rozruchu).
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+    Aby uruchomić system w trybie EAC, ustaw wpis „CachyOS EAC” jako `BootNext` i uruchom komputer ponownie. Polecenie `sudo eac-setup boot` robi to
+    samo:
+
+    ```bash
+    EAC_BOOTNUM="$(efibootmgr | sed -n 's/^Boot\([0-9A-F]\{4\}\)\* CachyOS EAC.*/\1/p')"
+    sudo efibootmgr --bootnext "$EAC_BOOTNUM" && systemctl reboot
+    ```
+
+    `BootNext` dotyczy wyłącznie następnego uruchomienia. Kolejny restart po zakończeniu sesji gry uruchomi znów Limine.
+
+</Steps>
+
+</TabItem>
+<TabItem label='systemd-boot'>
+
+<Steps>
+
+1. **Przełącz firmware w tryb Setup Mode**
+
+    Jeśli korzystasz już z Secure Boot z `sbctl`, wykonaj najpierw kroki z sekcji [Jeśli korzystasz już z Secure Boot](#jeśli-korzystasz-już-z-secure-boot)
+    i przejdź do kroku 2.
+
+    Wykonaj kroki z sekcji [Włączanie trybu Setup Mode w UEFI](/pl/configuration/secure_boot_setup#włączanie-trybu-konfiguracji-setup-mode-w-uefi)
+    i na razie pozostaw Secure Boot **wyłączony**.
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+2. **Zainstaluj pakiety**
+
+    Jeśli korzystałeś wcześniej z [poradnika Secure Boot](/pl/configuration/secure_boot_setup), usuń najpierw utworzony wtedy własnoręcznie podpisany
+    plik systemd-boot. Pakiet `systemd-boot-cachyos-signed` zastępuje go, a pacman odmawia instalacji
+    pakietu, dopóki ten plik istnieje. `sbctl` przechowuje go na liście pod ścieżką niepodpisanego pliku i dopóki się
+    tam znajduje, `sbctl` nadpisuje systemd-boot podpisany przez CachyOS plikiem podpisanym twoim własnym kluczem:
+
+    ```bash
+    sudo sbctl remove-file /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+    sudo rm -f /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed
+    ```
+
+    Następnie zainstaluj pakiety:
+
+    ```bash
+    sudo pacman -S sbctl sbsigntools tpm2-tools cachyos-eac-signing-key linux-cachyos-eac systemd-boot-cachyos-signed
+    sudo bootctl install
+    ```
+
+    W systemach z kartą graficzną NVIDIA zainstaluj również `linux-cachyos-eac-nvidia-open` (architektura Turing i nowsze) lub
+    `linux-cachyos-eac-nvidia-580xx` (Maxwell, Pascal i Volta). Jeśli korzystasz z ZFS, zainstaluj także
+    `linux-cachyos-eac-zfs`. Jeśli używasz `r8125-dkms` dla karty sieciowej Realtek 2.5 GbE, zainstaluj również
+    `linux-cachyos-eac-r8125`.
+
+    `bootctl install` instaluje podpisany przez CachyOS systemd-boot na partycji systemowej EFI. Przyszłe
+    aktualizacje systemd-boot również są podpisywane przez CachyOS, więc nie musisz podpisywać ich samodzielnie.
+
+3. **Zapisz klucze Secure Boot**
+
+    Pomiń ten krok, jeśli zapisałeś certyfikat CA zgodnie z opisem w sekcji [Jeśli korzystasz już z Secure Boot](#jeśli-korzystasz-już-z-secure-boot).
+
+    Pakiet `cachyos-eac-signing-key` umieszcza certyfikat CachyOS EAC CA w katalogu `sbctl` dla certyfikatów niestandardowych.
+    `sbctl` tworzy twoje własne klucze (jeśli jeszcze ich nie masz) i zapisuje je razem z
+    kluczami Microsoftu, wbudowanymi kluczami firmware oraz certyfikatem CachyOS EAC CA.
+
+    :::caution[Płyty główne ASUS i Gigabyte]
+    Na tych płytach uruchom `sudo sbctl enroll-keys --microsoft --custom` jako ostatnie poniższe polecenie, bez flagi
+    `--firmware-builtin`. Na niektórych z nich flaga ta tworzy zduplikowane wpisy kluczy, a płyta zatrzymuje się z błędem
+    **Secure Boot Violation** po włączeniu Secure Boot. Jeśli tak się już stało, usuń wszystkie klucze Secure Boot
+    w ustawieniach firmware, aby ponownie wejść w tryb Setup Mode (zobacz
+    [Włączanie trybu Setup Mode w UEFI](/pl/configuration/secure_boot_setup#włączanie-trybu-konfiguracji-setup-mode-w-uefi)), uruchom
+    CachyOS i wykonaj `sudo sbctl enroll-keys --microsoft --custom`. Nie używaj do tego polecenia z poradnika Secure Boot,
+    ponieważ pomija ono certyfikat CachyOS EAC CA.
+    :::
+
+    ```bash
+    sudo sbctl create-keys
+    sudo sbctl enroll-keys --microsoft --firmware-builtin --custom
+    ```
+
+    Jeśli `sbctl` zatrzyma się z komunikatem `could not enroll built-in firmware keys`, oznacza to, że firmware nie ma wbudowanych kluczy i
+    nic nie zostało jeszcze zapisane. Uruchom ostatnie polecenie ponownie bez `--firmware-builtin`.
+
+    Sprawdź, czy certyfikat został zapisany:
+
+    ```bash
+    sudo sbctl list-enrolled-keys
+    ```
+
+    Sekcja `db` musi zawierać `CachyOS EAC CA`.
+
+    Następnie podpisz swoje zwykłe jądra, w przeciwnym razie nie uruchomią się po włączeniu Secure Boot. Polecenie pomija
+    jądro EAC, które jest już podpisane przez CachyOS:
+
+    ```bash
+    sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+    sudo sbctl list-files
+    ```
+
+    Wynik musi pokazywać każde z twoich zwykłych jąder jako podpisane.
+
+4. **Chroń pliki podpisane przez CachyOS przed sbctl**
+
+    Jądro EAC i systemd-boot są już podpisane przez CachyOS. Jeśli `sbctl` podpisze je ponownie twoim
+    własnym kluczem, EAC przestanie je rozpoznawać. Pakiet `cachyos-eac-signing-key` blokuje podpisywanie jądra EAC przez
+    hook initramfs narzędzia `sbctl`, ale `sbctl` nadal podpisuje każdy plik znajdujący się w jego bazie danych, na przykład po uruchomieniu
+    `sbctl-batch-sign` lub `sbctl sign -s`.
+
+    ```bash
+    sudo sbctl list-files
+    ```
+
+    Jeśli na liście znajdują się `vmlinuz-linux-cachyos-eac`, `systemd-bootx64.efi` lub `BOOTX64.EFI`, usuń je i
+    przeinstaluj pakiety, aby przywrócić podpisy CachyOS:
+
+    ```bash
+    sudo sbctl remove-file /boot/vmlinuz-linux-cachyos-eac
+    sudo sbctl remove-file /boot/EFI/systemd/systemd-bootx64.efi
+    sudo sbctl remove-file /boot/EFI/BOOT/BOOTX64.EFI
+    sudo sbctl remove-file /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+    sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
+    sudo bootctl install
+    ```
+
+    Dla plików, których nie ma na liście, `sbctl` wyświetli `doesn't exist in database`, co jest w porządku.
+
+    Sprawdź podpisy. Każdy plik musi mieć dokładnie **jeden** podpis wydany przez `CachyOS EAC CA`,
+    po którym następuje `Signature verification OK`:
+
+    ```bash
+    for f in /boot/vmlinuz-linux-cachyos-eac /boot/EFI/systemd/systemd-bootx64.efi; do
+      sudo sbverify --list "$f"
+      sudo sbverify --cert /usr/share/cachyos-eac/cachyos-eac-ca.crt "$f"
+    done
+    ```
+
+    `sbctl verify` nadal będzie wyświetlać te pliki jako niepodpisane, ponieważ zlicza wyłącznie podpisy wykonane twoim
+    własnym kluczem. Nie podpisuj ich. `sbctl-batch-sign` je pomija.
+
+5. **Utwórz wpis rozruchowy EAC**
+
+    EAC sprawdza linię poleceń jądra pod kątem wymaganych opcji, więc jądro EAC potrzebuje własnego wpisu
+    rozruchowego. Wpis tworzony automatycznie przez `sdboot-manage` („Linux CachyOS Eac”) nie zawiera tych opcji
+    i jest nadpisywany podczas aktualizacji, dlatego utwórz osobny wpis na podstawie linii poleceń aktualnie działającego
+    systemu:
+
+    {/* TODO: replace with automatic entry generation (sdboot-manage or package hook) */}
+
+    ```bash
+    EAC_REQ="lockdown=integrity lsm=landlock,lockdown,yama,integrity,bpf iommu.passthrough=0 intel_iommu=on module.sig_enforce=1 sysctl.kernel.kexec_load_disabled=1"
+    EAC_OPTS="$(sed -E 's/(^| )(BOOT_IMAGE|initrd)=[^ ]*//g' /proc/cmdline) $EAC_REQ"
+    echo "$EAC_OPTS"
+    ```
+
+    Wynik musi zawierać twoją opcję `root=` i kończyć się opcjami EAC. Następnie zapisz wpis:
+
+    ```bash
+    printf 'title   CachyOS (EAC)\nlinux   /vmlinuz-linux-cachyos-eac\ninitrd  /initramfs-linux-cachyos-eac.img\noptions %s\n' "$EAC_OPTS" \
+      | sudo install -Dm644 /dev/stdin /boot/loader/entries/cachyos-eac.conf
+    ```
+
+    :::caution
+    Nie usuwaj żadnej z opcji EAC z tego wpisu. Bez nich EAC odmówi uruchomienia gry.
+    :::
+
+6. **Włącz Secure Boot i uruchom wpis EAC**
+
+    Jeśli Secure Boot jest już włączony, przejdź od razu do uruchomienia wpisu EAC.
+
+    Uruchom komputer ponownie w ustawieniach firmware i włącz Secure Boot. Jeśli twoja płyta główna nie ma
+    przełącznika Secure Boot, zapoznaj się z uwagami dotyczącymi płyt ASUS w
+    [poradniku Secure Boot](/pl/configuration/secure_boot_setup#podpisywanie-obrazu-jądra-i-menedżera-rozruchu).
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+    Aby uruchomić wpis EAC, wybierz **CachyOS (EAC)** w menu systemd-boot lub uruchom:
+
+    ```bash
+    systemctl reboot --boot-loader-entry=cachyos-eac.conf
+    ```
+
+</Steps>
+
+</TabItem>
+<TabItem label='rEFInd'>
+
+rEFInd pozostaje twoim domyślnym menedżerem rozruchu. Podobnie jak w przypadku Limine, podpisany przez CachyOS systemd-boot jest instalowany we własnym
+katalogu na partycji systemowej EFI i otrzymuje własny wpis rozruchowy w firmware. Aby zagrać, informujesz firmware, aby
+uruchomiło systemd-boot jednorazowo przy następnym rozruchu (`BootNext`). systemd-boot uruchamia wtedy bezpośrednio jądro EAC. Następnie
+system znów uruchamia rEFInd jak zazwyczaj.
+
+Te kroki wymagają, aby partycja systemowa EFI była zamontowana w `/boot`, tak jak konfiguruje rEFInd instalator CachyOS.
+Sprawdź to:
+
+```bash
+bootctl --print-esp-path
+```
+
+Wynikiem musi być `/boot`. Inne układy, na przykład partycja systemowa EFI w `/boot/efi` ze starszych
+instalacji, nie są obsługiwane.
+
+<Steps>
+
+1. **Przełącz firmware w tryb Setup Mode**
+
+    Jeśli korzystasz już z Secure Boot z `sbctl`, wykonaj najpierw kroki z sekcji [Jeśli korzystasz już z Secure Boot](#jeśli-korzystasz-już-z-secure-boot)
+    i przejdź do kroku 2.
+
+    Wykonaj kroki z sekcji [Włączanie trybu Setup Mode w UEFI](/pl/configuration/secure_boot_setup#włączanie-trybu-konfiguracji-setup-mode-w-uefi)
+    i na razie pozostaw Secure Boot **wyłączony**.
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+2. **Zainstaluj pakiety**
+
+    Jeśli przed przejściem na rEFInd używałeś systemd-boot zgodnie z [poradnikiem Secure Boot](/pl/configuration/secure_boot_setup),
+    usuń najpierw utworzony wtedy własnoręcznie podpisany plik systemd-boot. W przeciwnym razie pacman odmówi instalacji
+    `systemd-boot-cachyos-signed`, a `sbctl` nadpisze systemd-boot podpisany przez CachyOS:
+
+    ```bash
+    sudo sbctl remove-file /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+    sudo rm -f /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed
+    ```
+
+    Następnie zainstaluj pakiety:
+
+    ```bash
+    sudo pacman -S sbctl sbsigntools tpm2-tools efibootmgr cachyos-eac-signing-key linux-cachyos-eac systemd-boot-cachyos-signed
+    ```
+
+    W systemach z kartą graficzną NVIDIA zainstaluj również `linux-cachyos-eac-nvidia-open` (architektura Turing i nowsze) lub
+    `linux-cachyos-eac-nvidia-580xx` (Maxwell, Pascal i Volta). Jeśli korzystasz z ZFS, zainstaluj także
+    `linux-cachyos-eac-zfs`. Jeśli używasz `r8125-dkms` dla karty sieciowej Realtek 2.5 GbE, zainstaluj również
+    `linux-cachyos-eac-r8125`.
+
+    :::danger
+    **Nie** uruchamiaj `bootctl install`. Spowodowałoby to ustawienie systemd-boot jako domyślnego menedżera rozruchu i zastąpienie
+    zapasowego programu rozruchowego (fallback boot loader) na partycji systemowej EFI.
+    :::
+
+3. **Zapisz klucze Secure Boot i podpisz rEFInd**
+
+    Pomiń ten krok, jeśli zapisałeś certyfikat CA zgodnie z opisem w sekcji [Jeśli korzystasz już z Secure Boot](#jeśli-korzystasz-już-z-secure-boot).
+
+    Pakiet `cachyos-eac-signing-key` umieszcza certyfikat CachyOS EAC CA w katalogu `sbctl` dla certyfikatów niestandardowych.
+    Zapisz swoje własne klucze razem z kluczami Microsoftu, wbudowanymi kluczami firmware oraz certyfikatem
+    CachyOS EAC CA.
+
+    :::caution[Płyty główne ASUS i Gigabyte]
+    Na tych płytach uruchom `sudo sbctl enroll-keys --microsoft --custom` jako ostatnie poniższe polecenie, bez flagi
+    `--firmware-builtin`. Na niektórych z nich flaga ta tworzy zduplikowane wpisy kluczy, a płyta zatrzymuje się z błędem
+    **Secure Boot Violation** po włączeniu Secure Boot. Jeśli tak się już stało, usuń wszystkie klucze Secure Boot
+    w ustawieniach firmware, aby ponownie wejść w tryb Setup Mode (zobacz
+    [Włączanie trybu Setup Mode w UEFI](/pl/configuration/secure_boot_setup#włączanie-trybu-konfiguracji-setup-mode-w-uefi)), uruchom
+    CachyOS i wykonaj `sudo sbctl enroll-keys --microsoft --custom`. Nie używaj do tego polecenia z poradnika Secure Boot,
+    ponieważ pomija ono certyfikat CachyOS EAC CA.
+    :::
+
+    ```bash
+    sudo sbctl create-keys
+    sudo sbctl enroll-keys --microsoft --firmware-builtin --custom
+    ```
+
+    Jeśli `sbctl` zatrzyma się z komunikatem `could not enroll built-in firmware keys`, oznacza to, że firmware nie ma wbudowanych kluczy i
+    nic nie zostało jeszcze zapisane. Uruchom ostatnie polecenie ponownie bez `--firmware-builtin`.
+
+    Sprawdź, czy certyfikat został zapisany:
+
+    ```bash
+    sudo sbctl list-enrolled-keys
+    ```
+
+    Sekcja `db` musi zawierać `CachyOS EAC CA`.
+
+    rEFInd i twoje zwykłe jądra nadal muszą zostać podpisane twoim własnym kluczem, aby twój zwykły rozruch nadal
+    działał z włączonym Secure Boot. Polecenie `find` pomija jądro EAC, które jest już podpisane przez
+    CachyOS:
+
+    ```bash
+    sudo sbctl sign -s /boot/EFI/refind/refind_x64.efi
+    sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+    sudo sbctl list-files
+    ```
+
+    Wynik musi pokazywać rEFInd oraz każde z twoich zwykłych jąder jako podpisane. `sbctl` podpisuje je ponownie
+    po aktualizacjach jądra. pacman nie aktualizuje rEFInd na partycji systemowej EFI. Jeśli samodzielnie uruchomisz
+    `refind-install`, wykonaj później `sudo sbctl sign-all`.
+
+    :::caution
+    Nigdy nie podpisuj jądra EAC ani podpisanego przez CachyOS programu systemd-boot za pomocą `sbctl`. Nie używaj na nich `sbctl-batch-sign`
+    ani `sbctl sign`, nawet jeśli `sbctl verify` pokazuje je jako niepodpisane. Są one podpisane przez CachyOS.
+    :::
+
+4. **Dodaj systemd-boot jako osobny wpis rozruchowy w firmware**
+
+    `sbctl` ponownie podpisuje każdy plik ze swojej bazy danych za każdym razem, gdy aktualizowane jest jądro lub plik binarny EFI. Sprawdź, czy
+    żaden z plików podpisanych przez CachyOS się tam nie znajduje, na przykład po wcześniejszym uruchomieniu `sbctl sign -s`:
+
+    ```bash
+    sudo sbctl list-files
+    ```
+
+    Jeśli któraś z wymienionych ścieżek zawiera `cachyos-eac` lub jest to `/usr/lib/systemd/boot/efi/systemd-bootx64.efi`, usuń ją
+    poleceniem `sudo sbctl remove-file <ścieżka>`. Następnie przeinstaluj pakiety, aby przywrócić podpisy CachyOS:
+
+    ```bash
+    sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
+    ```
+
+    Skopiuj podpisany systemd-boot do jego własnego katalogu na partycji systemowej EFI:
+
+    ```bash
+    ESP="$(bootctl --print-esp-path)"
+    sudo install -Dm644 /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed "$ESP/EFI/cachyos-eac/systemd-bootx64.efi"
+    ```
+
+    Dopóki katalog `EFI/cachyos-eac` istnieje, pakiet `systemd-boot-cachyos-signed` aktualizuje tę kopię automatycznie.
+
+    Następnie utwórz wpis rozruchowy w firmware. Flaga `--create-only` dodaje wpis bez zmiany kolejności rozruchu, więc
+    rEFInd pozostaje domyślny:
+
+    ```bash
+    ESP_DEV="$(findmnt -no SOURCE "$ESP")"
+    ESP_DISK="/dev/$(lsblk -no PKNAME "$ESP_DEV")"
+    ESP_PART="$(cat "/sys/class/block/$(basename "$ESP_DEV")/partition")"
+    sudo efibootmgr --create-only --disk "$ESP_DISK" --part "$ESP_PART" \
+      --label "CachyOS EAC" --loader '\EFI\cachyos-eac\systemd-bootx64.efi'
+    ```
+
+    Sprawdź, czy nowy wpis jest widoczny na liście oraz czy `BootOrder` nadal zaczyna się od rEFInd:
+
+    ```bash
+    efibootmgr
+    ```
+
+5. **Utwórz wpis rozruchowy EAC**
+
+    systemd-boot odczytuje swoją konfigurację z partycji systemowej EFI, na której jądro EAC i jego
+    initramfs już się znajdują. Zbuduj linię poleceń jądra na podstawie aktualnie działającego systemu oraz opcji EAC:
+
+    ```bash
+    EAC_REQ="lockdown=integrity lsm=landlock,lockdown,yama,integrity,bpf iommu.passthrough=0 intel_iommu=on module.sig_enforce=1 sysctl.kernel.kexec_load_disabled=1"
+    EAC_OPTS="$(sed -E 's/(^| )(BOOT_IMAGE|initrd)=[^ ]*//g' /proc/cmdline) $EAC_REQ"
+    echo "$EAC_OPTS"
+    ```
+
+    Wynik musi zawierać twoją opcję `root=` i kończyć się opcjami EAC. Zapisz wpis i ustaw go jako
+    domyślny, aby systemd-boot uruchamiał go bez wyświetlania menu:
+
+    ```bash
+    ESP="$(bootctl --print-esp-path)"
+    printf 'title   CachyOS (EAC)\nlinux   /vmlinuz-linux-cachyos-eac\ninitrd  /initramfs-linux-cachyos-eac.img\noptions %s\n' "$EAC_OPTS" \
+      | sudo install -Dm644 /dev/stdin "$ESP/loader/entries/cachyos-eac.conf"
+    printf 'default cachyos-eac.conf\ntimeout 0\n' | sudo install -Dm644 /dev/stdin "$ESP/loader/loader.conf"
+    ```
+
+    Aby mimo to zobaczyć menu systemd-boot, przytrzymaj klawisz <kbd>Space</kbd> podczas jego uruchamiania.
+
+    rEFInd sam wykrywa jądro EAC oraz systemd-boot i dodaje je do swojego menu. Wszystko uruchomione z
+    menu rEFInd **nie** przejdzie testów EAC, ponieważ rEFInd jest podpisany twoim własnym kluczem. Ukryj oba
+    wpisy:
+
+    ```bash
+    printf '\n# Easy Anti-Cheat: boot these only through the "CachyOS EAC" firmware entry\ndont_scan_files +,vmlinuz-linux-cachyos-eac\ndont_scan_dirs +,EFI/cachyos-eac\n' \
+      | sudo tee -a "$ESP/EFI/refind/refind.conf" >/dev/null
+    ```
+
+    Znak `+` zachowuje pliki i katalogi, które rEFInd już pomija. Od następnego uruchomienia menu rEFInd
+    będzie wyświetlać wyłącznie twoje zwykłe jądra.
+
+6. **Włącz Secure Boot i uruchom system w trybie EAC**
+
+    Jeśli Secure Boot jest już włączony, przejdź od razu do uruchomienia systemu w trybie EAC.
+
+    Uruchom komputer ponownie w ustawieniach firmware i włącz Secure Boot. Jeśli twoja płyta główna nie ma
+    przełącznika Secure Boot, zapoznaj się z uwagami dotyczącymi płyt ASUS w
+    [poradniku Secure Boot](/pl/configuration/secure_boot_setup#podpisywanie-obrazu-jądra-i-menedżera-rozruchu).
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+    Aby uruchomić system w trybie EAC, ustaw wpis „CachyOS EAC” jako `BootNext` i uruchom komputer ponownie. Polecenie `sudo eac-setup boot` robi to
+    samo:
+
+    ```bash
+    EAC_BOOTNUM="$(efibootmgr | sed -n 's/^Boot\([0-9A-F]\{4\}\)\* CachyOS EAC.*/\1/p')"
+    sudo efibootmgr --bootnext "$EAC_BOOTNUM" && systemctl reboot
+    ```
+
+    `BootNext` dotyczy wyłącznie następnego uruchomienia. Kolejny restart po zakończeniu sesji gry uruchomi znów rEFInd.
+
+</Steps>
+
+</TabItem>
+</Tabs>
+
+## Weryfikacja konfiguracji
+
+Po uruchomieniu wpisu EAC uruchom `eac-status` z pakietu `cachyos-settings`:
+
+```bash
+sudo eac-status
+```
+
+Narzędzie sprawdza Secure Boot i tryb Setup Mode, TPM, zapisany certyfikat CachyOS EAC CA, podpisy jądra EAC
+oraz systemd-boot, linię poleceń jądra, tryb lockdown, podpisy modułów, kexec, IOMMU oraz to, których
+certyfikatów użyło firmware do weryfikacji rozruchu (z dziennika zdarzeń TPM). Każdy test musi pokazywać
+`[ OK ]`, a ostatnia linia musi brzmieć `All checks passed`. W twoim zwykłym wpisie rozruchowym sprawdza ono wyłącznie
+firmware i pliki rozruchowe, kończąc komunikatem `The boot files are ready`, jeśli są gotowe.
+
+Testy te dotyczą wyłącznie twojego systemu. To, czy gra się uruchomi, zależy jeszcze od samego Easy Anti-Cheat i danej gry.
+
+Certyfikat firmy Microsoft w dzienniku zdarzeń TPM jest w porządku (używany przez firmware karty graficznej) i nie jest raportowany. Każdy inny
+certyfikat, taki jak twój własny „Database Key”, jest zgłaszany komunikatem `[WARN] Boot was also verified by`.
+
+## Rozwiązywanie problemów
+
+### `eac-status` zgłasza dwa podpisy lub twój własny klucz
+
+Komunikat `has 2 signatures` lub `Boot was also verified by Database Key` oznacza, że `sbctl` ponownie podpisał jądro EAC lub
+systemd-boot twoim własnym kluczem. Wersje `cachyos-eac-signing-key` starsze niż 1-2 pozwalały na to hookowi initramfs narzędzia `sbctl`
+przy każdej przebudowie initramfs, więc najpierw zaktualizuj system:
+
+```bash
+sudo pacman -Syu
+```
+
+Następnie uruchom ponownie `sudo eac-setup`. Usunie to pliki z bazy danych `sbctl` i przywróci podpisy
+CachyOS. Aby zrobić to ręcznie, wykonaj poniższe kroki.
+
+W przypadku systemd-boot powtórz krok 4 z zakładki systemd-boot w sekcji
+[Konfiguracja dla twojego menedżera rozruchu](#konfiguracja-dla-twojego-menedżera-rozruchu), aby usunąć pliki z bazy danych `sbctl` i
+przeinstalować pakiety.
+
+W przypadku Limine lub rEFInd **nie** wykonuj tego kroku. Zawarte tam polecenie `bootctl install` ustawiłoby systemd-boot jako twój
+domyślny menedżer rozruchu i zastąpiło zapasowy program rozruchowy na partycji systemowej EFI. Zamiast tego sprawdź bazę danych `sbctl`:
+
+```bash
+sudo sbctl list-files
+```
+
+Jeśli którakolwiek z wymienionych ścieżek zawiera `cachyos-eac` lub jest to `/usr/lib/systemd/boot/efi/systemd-bootx64.efi` (pozostałość
+po krokach dla systemd-boot z poradnika Secure Boot), usuń ją poleceniem `sudo sbctl remove-file <ścieżka>`. Następnie
+przeinstaluj pakiety i ponownie skopiuj podpisany systemd-boot:
+
+```bash
+sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
+ESP="$(bootctl --print-esp-path)"
+sudo install -Dm644 /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed "$ESP/EFI/cachyos-eac/systemd-bootx64.efi"
+```
+
+### `eac-status` zgłasza, że rozruch nie został zweryfikowany przez CachyOS EAC CA
+
+Jeśli komunikat `Boot was not verified by CachyOS EAC CA` pojawia się razem z niepowodzeniem testów linii poleceń jądra,
+uruchomiono niewłaściwy wpis. Zobacz sekcję [Gra informuje, że system nie jest obsługiwany](#gra-informuje-że-system-nie-jest-obsługiwany).
+
+Jeśli jest to jedyny test zakończony niepowodzeniem, firmware nie zapisało, którego certyfikatu użyło do weryfikacji plików
+rozruchowych. Na płytach głównych MSI najczęstszą przyczyną jest domyślna polityka Secure Boot: firmware uruchamia każdy
+plik rozruchowy bez jego weryfikacji, nawet przy włączonym Secure Boot.
+
+Otwórz stronę Secure Boot w ustawieniach firmware. W zależności od płyty znajduje się ona w
+**Settings > Advanced > Windows OS Configuration > Secure Boot** lub **Settings > Security > Secure Boot**.
+Nazwa opcji zależy od wersji firmware:
+
+| Opcja                  | Wartość                                                      |
+| ---------------------- | ------------------------------------------------------------ |
+| Image Execution Policy | **Deny Execute** dla **Fixed Media** i **Removable Media**   |
+| Secure Boot Preset     | **Maximum Security**                                         |
+| Target OS              | **Windows UEFI OS**                                          |
+
+:::caution
+Nie przełączaj **Secure Boot Mode** na **Standard** i nie przywracaj kluczy fabrycznych. Obie te czynności usuwają
+certyfikat CachyOS EAC CA oraz twoje własne klucze.
+:::
+
+Zapisz zmianę, uruchom wpis EAC i ponownie wykonaj `sudo eac-status`. Jeśli teraz zgłosi, że
+CachyOS EAC CA nie jest zapisany, firmware zresetowało swoje klucze. Uruchom ponownie `sudo eac-setup`.
+
+### Gra informuje, że system nie jest obsługiwany
+
+Uruchom `sudo eac-status` we wpisie EAC i napraw każdy test oznaczony jako `[FAIL]`. Najczęściej uruchomiono niewłaściwy
+wpis, a `eac-status` zgłasza brak opcji EAC w linii poleceń jądra. Uruchom ponownie komputer poleceniem
+`sudo eac-setup boot`. W systemd-boot możesz również wybrać **CachyOS (EAC)**, a nie utworzony automatycznie
+wpis „Linux CachyOS Eac”. W przypadku Limine, rEFInd lub GRUB nie uruchamiaj jądra EAC z menu swojego menedżera
+rozruchu.
+
+### Uruchamia się Limine lub rEFInd zamiast wpisu EAC
+
+Sprawdź, czy `BootNext` zostało ustawione przed ponownym uruchomieniem:
+
+```bash
+efibootmgr | grep -E 'BootNext|CachyOS EAC'
+```
+
+Jeśli brakuje wpisu „CachyOS EAC”, firmware go usunęło, co niektóre płyty robią po aktualizacji lub resecie
+firmware. Uruchom `sudo eac-setup`, aby utworzyć go ponownie, albo powtórz krok 4 z zakładki Limine lub rEFInd w sekcji
+[Konfiguracja dla twojego menedżera rozruchu](#konfiguracja-dla-twojego-menedżera-rozruchu). Możesz też wybrać „CachyOS EAC” w
+jednorazowym menu rozruchowym firmware.
+
+### Moduł nie ładuje się we wpisie EAC
+
+Moduły budowane przez DKMS nie są podpisane kluczem jądra i nie mogą zostać załadowane. Użyj modułów
+dostarczanych dla jądra EAC (`linux-cachyos-eac-nvidia-open`, `linux-cachyos-eac-nvidia-580xx`,
+`linux-cachyos-eac-zfs` lub `linux-cachyos-eac-r8125`), albo uruchom swoje zwykłe jądro do wszystkiego, co wymaga
+modułów DKMS.
