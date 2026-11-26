@@ -23,9 +23,9 @@ EAC-Eintrag also nur, wenn du ein Spiel mit EAC spielen willst.
 
 EAC braucht einen Boot-Manager, der alles, was er lädt, gegen die Secure-Boot-Datenbank prüft und in das TPM misst.
 systemd-boot macht das, Limine nicht. rEFInd macht es zwar, ist aber mit deinem eigenen Schlüssel signiert, und das
-akzeptiert EAC nicht. Wer Limine oder rEFInd nutzt, behält seinen Boot-Manager deshalb als Standard und startet den
-EAC-Kernel über das von CachyOS signierte systemd-boot. Es bekommt einen eigenen Firmware-Booteintrag und wird nur
-für den EAC-Boot verwendet.
+akzeptiert EAC nicht – dasselbe gilt für GRUB. Wer Limine, rEFInd oder GRUB nutzt, behält seinen Boot-Manager deshalb
+als Standard und startet den EAC-Kernel über das von CachyOS signierte systemd-boot. Es bekommt einen eigenen
+Firmware-Booteintrag und wird nur für den EAC-Boot verwendet.
 
 Das [Skript `eac-setup`](#einrichtung-mit-eac-setup) übernimmt die Einrichtung für dich. Die
 [manuelle Einrichtung](#manuelle-einrichtung) beschreibt dieselben Schritte von Hand.
@@ -33,7 +33,8 @@ Das [Skript `eac-setup`](#einrichtung-mit-eac-setup) übernimmt die Einrichtung 
 ## Voraussetzungen
 
 - CachyOS im UEFI-Modus installiert, mit **systemd-boot**, **Limine** oder **rEFInd** als Boot-Manager. Mit rEFInd
-  muss die EFI-Systempartition unter `/boot` eingehängt sein, so wie der CachyOS-Installer sie einrichtet.
+  muss die EFI-Systempartition unter `/boot` eingehängt sein, so wie der CachyOS-Installer sie einrichtet. **GRUB**
+  wird experimentell unterstützt, siehe [GRUB (experimentell)](#grub-experimentell).
 - Ein aktuelles System (`sudo pacman -Syu`). `eac-setup` braucht `cachyos-settings` 1.4.4 oder neuer, `eac-status`
   und die EAC-Unterstützung in `sbctl-batch-sign` brauchen 1.4.2 oder neuer.
 - **TPM 2.0** in den Firmware-Einstellungen aktiviert. Ein Firmware-TPM (AMD fTPM, Intel PTT) reicht aus.
@@ -55,10 +56,14 @@ hast, fragt nach ihrer Passphrase. Halte sie bereit, bevor du anfängst, sonst k
 verlieren.
 :::
 
+:::danger[Steam Deck]
+Das Steam Deck hat keinen standardmäßigen Schalter für Secure Boot in seinen Firmware-Einstellungen und wird derzeit nicht unterstützt. Das Registrieren von Schlüsseln kann dazu führen, dass es nicht mehr startet, ohne einfache Möglichkeit, Secure Boot zu deaktivieren. Folge dieser Anleitung auf dem Steam Deck nicht.
+:::
+
 ## Einrichtung mit eac-setup
 
-`eac-setup` aus `cachyos-settings` übernimmt die Einrichtung für systemd-boot, Limine und rEFInd. Es prüft, was schon
-erledigt ist, du kannst es also jederzeit erneut ausführen, zum Beispiel um die Einrichtung zu reparieren. Nur die
+`eac-setup` aus `cachyos-settings` übernimmt die Einrichtung für systemd-boot, Limine, rEFInd und GRUB. Es prüft, was
+schon erledigt ist, du kannst es also jederzeit erneut ausführen, zum Beispiel um die Einrichtung zu reparieren. Nur die
 Änderungen in den Firmware-Einstellungen musst du selbst vornehmen.
 
 <Steps>
@@ -90,12 +95,12 @@ erledigt ist, du kannst es also jederzeit erneut ausführen, zum Beispiel um die
       sie zusammen mit den Schlüsseln von Microsoft.
     - Es installiert `linux-cachyos-eac`, `systemd-boot-cachyos-signed` und die `linux-cachyos-eac-*`-Modulpakete, die
       zu deinem System passen (NVIDIA, ZFS, r8125).
-    - Es signiert deine normalen Kernel mit deinem eigenen Schlüssel, ebenso Limine oder rEFInd, damit dein normaler
-      Boot mit aktiviertem Secure Boot weiter funktioniert.
+    - Es signiert deine normalen Kernel mit deinem eigenen Schlüssel, ebenso Limine, rEFInd oder GRUB, damit dein
+      normaler Boot mit aktiviertem Secure Boot weiter funktioniert.
     - Es hält `sbctl` von den CachyOS-signierten Dateien fern und stellt ihre Signaturen wieder her, falls `sbctl` sie
       erneut signiert hat.
     - Es erstellt den EAC-Booteintrag aus den Kernel-Optionen deines laufenden Systems und den EAC-Optionen. Mit
-      Limine und rEFInd installiert es außerdem das von CachyOS signierte systemd-boot mit einem eigenen
+      Limine, rEFInd und GRUB installiert es außerdem das von CachyOS signierte systemd-boot mit einem eigenen
       Firmware-Booteintrag „CachyOS EAC“.
 
     Wenn die Firmware nicht im Setup-Modus ist und deine Schlüssel nicht mit `sbctl` erstellt wurden, bricht das
@@ -127,13 +132,43 @@ erledigt ist, du kannst es also jederzeit erneut ausführen, zum Beispiel um die
     System. Mit systemd-boot kannst du auch **CachyOS (EAC)** im Bootmenü auswählen.
 
     :::caution
-    Das Limine-Menü zeigt ebenfalls einen Eintrag für `linux-cachyos-eac`. Wenn du ihn über Limine bootest, besteht
-    er die EAC-Prüfungen **nicht**. Verwende immer `sudo eac-setup boot`.
+    Die Menüs von Limine und GRUB zeigen ebenfalls einen Eintrag für `linux-cachyos-eac`. Wenn du ihn über Limine oder
+    GRUB bootest, besteht er die EAC-Prüfungen **nicht**. Verwende immer `sudo eac-setup boot`.
     :::
 
     Prüfe danach das Ergebnis wie unter [Einrichtung überprüfen](#einrichtung-überprüfen) beschrieben.
 
 </Steps>
+
+### GRUB (experimentell)
+
+Die GRUB-Unterstützung ist neu und wurde bisher wenig getestet. Sie braucht `cachyos-settings` 1.4.5 oder neuer.
+Bitte melde Probleme im [Issue-Tracker von CachyOS-Settings](https://github.com/CachyOS/CachyOS-Settings/issues).
+
+GRUB wird ausschließlich über `eac-setup` eingerichtet, eine manuelle Anleitung gibt es dafür nicht. Die Schritte sind
+dieselben wie oben. Zusätzlich nimmt das Skript diese Änderungen vor:
+
+- Es installiert GRUB mit dem `tpm`-Modul und ohne Shim-Lock neu und signiert es mit deinem eigenen Schlüssel. Ohne
+  das startet GRUB deine normalen Kernel bei aktiviertem Secure Boot nicht.
+- Es kopiert den EAC-Kernel und sein initramfs auf die EFI-Systempartition, weil systemd-boot sie nicht aus `/boot`
+  auf dem Root-Dateisystem lesen kann. Sie brauchen dort etwa 40 MiB. Das Skript installiert `cachyos-eac-grub-hook`,
+  dessen mkinitcpio-Hook die Kopie aktualisiert, sobald sich der EAC-Kernel oder sein initramfs ändert.
+- Es erzeugt das GRUB-Menü neu. Das Menü hat dann unter den UEFI-Firmware-Einträgen den Eintrag
+  **CachyOS EAC (EFI BootNext)**, der dasselbe macht wie `sudo eac-setup boot`.
+- Wenn GRUB standardmäßig `linux-cachyos-eac` starten würde, setzt es `GRUB_TOP_LEVEL` in `/etc/default/grub` auf
+  deinen normalen Kernel. Das passiert, wenn die Option noch nicht gesetzt ist, weil GRUB die Kernel dann nach Namen
+  sortiert.
+
+:::caution
+Wenn `GRUB_SAVEDEFAULT=true` in `/etc/default/grub` gesetzt ist, wähle den Eintrag **CachyOS EAC (EFI BootNext)**
+nicht aus. GRUB würde ihn sich merken und bei jedem Boot EAC starten. Verwende stattdessen `sudo eac-setup boot`.
+Falls es schon passiert ist, führe `sudo eac-setup` erneut aus – es entfernt den gespeicherten Eintrag.
+:::
+
+Festplattenverschlüsselung wird mit GRUB noch nicht unterstützt. Der CachyOS-Installer legt `/boot` innerhalb der
+verschlüsselten Root-Partition ab und speichert den Schlüssel der Festplatte im initramfs. Die Kopie des initramfs
+auf der unverschlüsselten EFI-Systempartition würde diesen Schlüssel offenlegen, daher bricht `eac-setup` ab, wenn
+`/boot` verschlüsselt ist.
 
 ## Manuelle Einrichtung
 
@@ -858,13 +893,41 @@ ESP="$(bootctl --print-esp-path)"
 sudo install -Dm644 /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed "$ESP/EFI/cachyos-eac/systemd-bootx64.efi"
 ```
 
+### `eac-status` meldet, dass der Boot nicht von der CachyOS EAC CA verifiziert wurde
+
+Wenn `Boot was not verified by CachyOS EAC CA` zusammen mit fehlgeschlagenen Prüfungen der Kernel-Kommandozeile
+auftritt, wurde der falsche Eintrag gebootet. Siehe
+[Das Spiel meldet, dass das System nicht unterstützt wird](#das-spiel-meldet-dass-das-system-nicht-unterstützt-wird).
+
+Wenn es die einzige fehlgeschlagene Prüfung ist, hat die Firmware nicht aufgezeichnet, mit welchem Zertifikat sie die
+Boot-Dateien verifiziert hat. Auf MSI-Boards ist die wahrscheinlichste Ursache die Standard-Richtlinie für Secure Boot:
+Die Firmware startet jede Boot-Datei ohne Überprüfung, selbst wenn Secure Boot aktiviert ist.
+
+Öffne die Secure-Boot-Seite in den Firmware-Einstellungen. Je nach Board befindet sie sich unter
+**Settings > Advanced > Windows OS Configuration > Secure Boot** oder **Settings > Security > Secure Boot**.
+Der Name der Option hängt von der Firmware-Version ab:
+
+| Option                 | Wert                                                         |
+| ---------------------- | ------------------------------------------------------------ |
+| Image Execution Policy | **Deny Execute** für **Fixed Media** und **Removable Media** |
+| Secure Boot Preset     | **Maximum Security**                                         |
+| Target OS              | **Windows UEFI OS**                                          |
+
+:::caution
+Stelle **Secure Boot Mode** nicht auf **Standard** um und stelle die Werksschlüssel nicht wieder her. Beides entfernt
+die CachyOS EAC CA und deine eigenen Schlüssel.
+:::
+
+Speichere die Änderung, boote den EAC-Eintrag und führe `sudo eac-status` erneut aus. Wenn es danach meldet, dass die
+CachyOS EAC CA nicht registriert ist, hat die Firmware ihre Schlüssel zurückgesetzt. Führe `sudo eac-setup` erneut aus.
+
 ### Das Spiel meldet, dass das System nicht unterstützt wird
 
 Führe `sudo eac-status` im EAC-Eintrag aus und behebe jede Prüfung, die mit `[FAIL]` markiert ist. Meistens wurde der
 falsche Eintrag gebootet, und `eac-status` meldet, dass die EAC-Optionen in der Kernel-Kommandozeile fehlen. Starte
 mit `sudo eac-setup boot` neu. In systemd-boot kannst du auch **CachyOS (EAC)** auswählen, nicht den automatisch
-erstellten Eintrag „Linux CachyOS Eac“. Mit Limine oder rEFInd starte den EAC-Kernel nicht aus dem Limine- oder
-rEFInd-Menü.
+erstellten Eintrag „Linux CachyOS Eac“. Mit Limine, rEFInd oder GRUB starte den EAC-Kernel nicht aus dem Menü deines
+Boot-Managers.
 
 ### Limine oder rEFInd startet statt des EAC-Eintrags
 

@@ -16,7 +16,6 @@ XFS ist ein Journaling-Dateisystem, das von Silicon Graphics, Inc. erstellt und 
 ### Vorteile
 
 - Bei der Entwicklung von XFS standen von Anfang an Geschwindigkeit und extreme Skalierbarkeit im Vordergrund.
-- Schnell, XFS wurde ursprünglich auf Geschwindigkeit und extreme Skalierbarkeit ausgelegt.
 - Zuverlässig, XFS nutzt verschiedene Technologien, um Datenkorruption zu verhindern.
 - Widerstandsfähig gegen Fragmentierung aufgrund seiner Extent-basierten Natur und der verzögerten Zuweisungsstrategie.
 
