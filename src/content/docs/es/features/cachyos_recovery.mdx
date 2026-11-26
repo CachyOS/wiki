@@ -1,0 +1,391 @@
+---
+title: CachyOS Recovery
+description: Arranca, restaura y repara tu sistema desde un entorno de recuperación en el menú de arranque
+tableOfContents:
+  minHeadingLevel: 2
+  maxHeadingLevel: 3
+ai_translated: true
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+[CachyOS Recovery](https://github.com/CachyOS/cachyos-recovery) es un pequeño sistema de recuperación que se instala
+junto a tus kernels y se inicia desde el menú de arranque. Cuando una actualización o un cambio de configuración daña tu
+sistema, puedes usarlo sin necesidad de un USB live para:
+
+- **arrancar una instantánea Btrfs** para comprobar si funciona, sin modificar tu sistema,
+- **revertir (rollback)** de forma permanente a una instantánea, incluidos los kernels y archivos de arranque
+  correspondientes,
+- **abrir tu sistema instalado en un contenedor** para repararlo manualmente.
+
+El entorno de recuperación ocupa unos 70 MB. No depende del estado de tu sistema instalado, por lo que funciona incluso
+cuando el propio sistema ya no arranca.
+
+:::caution
+Las instantáneas no son una copia de seguridad. Residen en el mismo disco que tu sistema y no te protegen contra fallos
+del disco ni contra el borrado accidental de archivos en `/home`. Mantén copias de seguridad periódicas de tus datos
+importantes.
+:::
+
+## Requisitos
+
+La recuperación se inicia en cualquier instalación de CachyOS con un sistema de archivos raíz Btrfs, ext4, XFS o F2FS.
+Las acciones con instantáneas requieren además:
+
+- Un sistema de archivos raíz **Btrfs** con la raíz en el subvolumen `@`, tal como lo configura el instalador de
+  CachyOS.
+- **Instantáneas de solo lectura** del subvolumen raíz. Snapper las crea de forma predeterminada y, con el paquete
+  `cachyos-snapper-support`, CachyOS las toma automáticamente antes y después de cada transacción de `pacman`. Las
+  instalaciones con systemd-boot todavía no tienen este paquete; consulta
+  ["No snapshots were found"](#no-snapshots-were-found). Consulta también
+  [Snapshots de Btrfs](/es/configuration/btrfs_snapshots).
+- **mkinitcpio** como generador de initramfs, que es el valor predeterminado en CachyOS.
+
+En sistemas UEFI, la partición del sistema EFI debe figurar en `/etc/fstab` con el tipo `vfat` y montada en `/boot`,
+`/efi` o `/boot/efi`.
+
+Si la partición del sistema EFI está montada en `/boot`, una reversión también regenera los kernels, las imágenes
+initramfs y la configuración del gestor de arranque para **Limine**, **systemd-boot** (con `sdboot-manage`) y **GRUB**.
+**rEFInd** no necesita actualizar su configuración. Con la partición del sistema EFI en `/efi` o `/boot/efi`, y en
+sistemas BIOS donde `/boot` forma parte del sistema de archivos raíz, los kernels forman parte de la instantánea y se
+restauran junto con ella.
+
+### Discos cifrados y distribución del teclado
+
+Los discos cifrados con **LUKS** son compatibles. Si tu disco aún no está desbloqueado, la recuperación te pedirá tu
+frase de contraseña LUKS al iniciarse. Ten tu frase de contraseña a mano, incluso si normalmente desbloqueas el disco con
+TPM2 o FIDO2.
+
+La recuperación utiliza siempre la **distribución de teclado de EE. UU. (US)**, también para tu frase de contraseña y para
+iniciar sesión en el chroot. Si tu frase de contraseña o contraseña contiene caracteres que están en otra ubicación en tu
+teclado, escríbelos como en un teclado US.
+
+## Instalación
+
+<Tabs syncKey="firmware">
+  <TabItem label="UEFI">
+    ```bash
+    sudo pacman -S cachyos-recovery
+    ```
+
+    Durante la instalación, un hook de pacman configura todo automáticamente:
+
+    - Copia la imagen de recuperación a `EFI/Linux/cachyos-recovery.efi` en tu partición del sistema EFI.
+    - Escribe la ubicación de tu sistema de archivos raíz (y del dispositivo LUKS, si existe) en un pequeño complemento
+      junto a la imagen: `EFI/Linux/cachyos-recovery.efi.extra.d/root.addon.efi`.
+    - Firma ambos archivos con `sbctl` cuando Secure Boot está configurado con `sbctl` (consulta
+      [Secure Boot](#secure-boot)).
+    - Con **Limine**, añade una entrada **CachyOS Recovery** al menú de arranque.
+    - Con **GRUB**, escribe una entrada **CachyOS Recovery** en `/etc/grub.d/50-cachyos-recovery` y regenera la
+      configuración de GRUB.
+    - Añade una entrada **CachyOS Recovery** al menú de arranque de tu firmware (requiere `efibootmgr`). La entrada se
+      añade al final del orden de arranque, por lo que tu gestor de arranque habitual sigue siendo el predeterminado.
+
+    **systemd-boot** lista automáticamente las imágenes en `EFI/Linux`, y **rEFInd** encuentra la imagen al escanear la
+    partición del sistema EFI. Con otros gestores de arranque, inicia la recuperación desde el menú de arranque de tu
+    firmware.
+  </TabItem>
+  <TabItem label="BIOS">
+    ```bash
+    sudo pacman -S cachyos-recovery-legacy
+    ```
+
+    Durante la instalación, un hook de pacman añade una entrada **CachyOS Recovery** al menú de arranque de **Limine** o
+    **GRUB**. En GRUB, copia el kernel y el initramfs de recuperación a `/boot/cachyos-recovery.vmlinuz` y
+    `/boot/cachyos-recovery.initrd`, escribe la entrada en `/etc/grub.d/50-cachyos-recovery` y regenera la configuración
+    de GRUB.
+
+    `cachyos-recovery` y `cachyos-recovery-legacy` no se pueden instalar al mismo tiempo. No instales `cachyos-recovery`
+    en un sistema BIOS, ya que solo contiene la imagen UEFI.
+  </TabItem>
+</Tabs>
+
+El hook se vuelve a ejecutar con cada actualización del paquete. Si cambias el lugar donde está instalado tu sistema,
+por ejemplo tras moverlo a un nuevo disco o configurar el cifrado, reinstala el paquete para que la recuperación vuelva
+a encontrar tu sistema de archivos raíz: `sudo pacman -S cachyos-recovery` en UEFI, o
+`sudo pacman -S cachyos-recovery-legacy` en BIOS.
+
+Instala y reinstala el paquete desde tu sistema iniciado con normalidad. No puede detectar tu sistema de archivos raíz
+mientras estás iniciado en una instantánea.
+
+### Secure Boot
+
+Si configuraste Secure Boot con `sbctl` como se describe en
+[Configuración del Arranque Seguro](/es/configuration/secure_boot_setup), la imagen de recuperación y su complemento se
+firman automáticamente. Esto ocurre cuando:
+
+- `sbctl` está instalado y ha creado sus claves,
+- Secure Boot está habilitado y el firmware no está en modo de configuración (Setup Mode),
+- tus claves están inscritas.
+
+Puedes comprobar las firmas con:
+
+```bash
+sudo sbctl verify | grep cachyos-recovery
+```
+
+Si los archivos no están firmados, por ejemplo porque habilitaste Secure Boot después de instalar el paquete, elimina la
+imagen de recuperación y reinstala el paquete. Reinstalar sin más no basta, porque el hook no vuelve a copiar ni a
+firmar la imagen si ya está sin cambios en la partición del sistema EFI.
+
+```bash
+sudo rm /boot/EFI/Linux/cachyos-recovery.efi
+sudo pacman -S cachyos-recovery
+```
+
+Ajusta la ruta si tu partición del sistema EFI está montada en `/efi` o `/boot/efi`. El hook firmará entonces ambos
+archivos y, con Limine, actualizará la entrada del menú de arranque.
+
+:::caution
+Con Secure Boot habilitado, el firmware rechaza iniciar una imagen de recuperación sin firmar y Limine muestra un error
+en lugar del menú de recuperación. Si Limine está configurado para recordar la última entrada, selecciona una entrada
+diferente en el menú de arranque para volver a iniciar tu sistema y luego firma los archivos.
+:::
+
+## Iniciar la recuperación
+
+<Steps>
+1. Reinicia tu equipo.
+2. Selecciona **CachyOS Recovery** en tu menú de arranque. Si tu gestor de arranque no tiene esa entrada, abre en su
+   lugar el menú de arranque de tu firmware (normalmente <kbd>F8</kbd>, <kbd>F11</kbd> o <kbd>F12</kbd> durante el
+   encendido) y selecciona **CachyOS Recovery** allí.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-limine-entry.png')} />
+3. Si tu disco está cifrado, introduce tu frase de contraseña LUKS. Tienes cinco intentos.
+4. Se abre el menú de recuperación.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-main-menu.png')} />
+</Steps>
+
+Usa las teclas de flecha y <kbd>Enter</kbd> para seleccionar una entrada, y <kbd>Esc</kbd> para volver atrás. En las
+listas puedes escribir para filtrar las entradas. El cuadro inferior describe la acción seleccionada.
+
+La recuperación monta tu sistema en modo de solo lectura. Nada cambia en tu disco hasta que inicias una reversión o
+realizas cambios dentro del chroot.
+
+| Acción | Qué hace |
+| --- | --- |
+| **Boot Btrfs snapshot** | Arranca una instantánea con una raíz temporal con permisos de escritura. Primer paso recomendado. |
+| **Rollback Btrfs snapshot** | Restaura una instantánea de forma permanente. |
+| **Chroot into target system** | Inicia tu sistema instalado en un contenedor, para usuarios avanzados. |
+| **Reboot** | Reinicia el equipo. |
+
+Las dos acciones de instantáneas solo se muestran cuando tu sistema de archivos raíz es Btrfs.
+
+## Arrancar una instantánea
+
+Arrancar una instantánea es la forma más segura de encontrar un estado funcional. Usas la instantánea como tu sistema
+normal y nada se restaura hasta que decides conservarla.
+
+<Steps>
+1. Selecciona **Boot Btrfs snapshot**.
+2. Selecciona una instantánea. La lista muestra el ID del subvolumen Btrfs y la fecha de creación en UTC. A la derecha
+   puedes ver la ruta de la instantánea y, en las instantáneas de Snapper, su descripción y tipo. Elige una instantánea
+   de tu sistema de archivos raíz. Su ruta tiene el aspecto `.snapshots/<number>/snapshot`.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-snapshot-list.png')} />
+3. Selecciona el kernel que quieres arrancar. Solo se muestran los kernels instalados en esa instantánea.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-kernel-picker.png')} />
+4. La recuperación prepara la instantánea y la inicia. Tu sistema arranca con normalidad. Con un disco cifrado, es
+   posible que se te pida de nuevo tu frase de contraseña.
+</Steps>
+
+Mientras estás iniciado en una instantánea:
+
+- Los cambios en el sistema (todo lo que está en el subvolumen raíz) se mantienen en memoria y se pierden al reiniciar.
+- Otros subvolúmenes y particiones, como `/home`, se montan con normalidad. **Los cambios realizados allí se conservan.**
+- Tus propios parámetros del kernel no se aplican. La instantánea arranca con los parámetros que necesita para encontrar
+  tu sistema.
+
+### Conservar la instantánea
+
+Después de iniciar sesión en tu escritorio, una notificación te pregunta si quieres conservar la instantánea.
+
+<ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-notifier.png')} />
+
+- **Rollback snapshot** abre una terminal y te pide tu contraseña. Tras confirmar con `y`, la instantánea reemplaza tu
+  sistema actual (consulta [Qué hace una reversión](#qué-hace-una-reversión)). Reinicia después.
+- **Stay in snapshot** cierra la notificación. No se restaura nada y tu sistema instalado permanece sin cambios.
+
+Si la notificación no aparece, por ejemplo en un gestor de ventanas sin notificaciones, o si no se abre ninguna terminal,
+inicia la reversión desde una terminal:
+
+```bash
+sudo cachyos-recovery rollback
+```
+
+Este comando solo está disponible mientras estás iniciado en una instantánea desde la recuperación.
+
+:::tip
+Si la instantánea no arranca, por ejemplo porque tu hardware no gestiona bien el reinicio hacia el kernel de la
+instantánea, utiliza **Rollback Btrfs snapshot** desde el menú de recuperación en su lugar.
+:::
+
+## Revertir a una instantánea
+
+Usa esta opción cuando ya sabes qué instantánea funciona o cuando falla el arranque de la instantánea.
+
+<Steps>
+1. Selecciona **Rollback Btrfs snapshot**.
+2. Selecciona la instantánea que deseas restaurar, tal como se describe en
+   [Arrancar una instantánea](#arrancar-una-instantánea).
+3. Confirma con `y` y <kbd>Enter</kbd>.
+4. Espera a que termine la reversión. La recuperación te preguntará entonces si deseas reiniciar.
+5. Selecciona **Yes, reboot** para iniciar el sistema restaurado.
+</Steps>
+
+:::danger[Se elimina el estado actual de tu sistema]
+Una reversión reemplaza tu subvolumen raíz actual y lo elimina cuando la reversión tiene éxito. Solo se puede deshacer
+con una instantánea tomada anteriormente. Tu directorio personal y los demás subvolúmenes no se ven afectados, y tus
+instantáneas existentes se conservan.
+:::
+
+### Qué hace una reversión
+
+<Steps>
+1. Si tu partición del sistema EFI está montada en `/boot`, la recuperación copia los kernels de la instantánea y genera
+   las imágenes initramfs y la configuración del gestor de arranque correspondientes usando las herramientas dentro de
+   la instantánea. Estos archivos se preparan primero en una ubicación temporal, de modo que la partición del sistema
+   EFI aún no se modifica. Los kernels que no existen en la instantánea se eliminan del menú de arranque, y los archivos
+   se firman si Secure Boot está configurado con `sbctl`.
+2. Crea un nuevo subvolumen raíz a partir de la instantánea y lo intercambia con tu raíz actual.
+3. Mueve los subvolúmenes anidados, como `/.snapshots`, de la raíz antigua a la nueva para que tus instantáneas sigan
+   disponibles.
+4. Copia los archivos de arranque preparados a la partición del sistema EFI.
+5. Elimina el subvolumen raíz antiguo.
+</Steps>
+
+Si algún paso falla antes de copiar los archivos de arranque, la recuperación devuelve tu raíz antigua y deja la
+partición del sistema EFI sin cambios.
+
+Con la partición del sistema EFI en `/efi` o `/boot/efi`, los kernels forman parte de la propia instantánea, por lo que
+los pasos 1 y 4 se omiten.
+
+:::caution[Secure Boot e instantáneas antiguas]
+Los nuevos archivos de arranque se firman con la instalación de `sbctl` **dentro de la instantánea**. Si reviertes a una
+instantánea tomada antes de configurar Secure Boot, nada se firmará y el sistema no arrancará con Secure Boot
+habilitado. La recuperación no te avisa de esto. Tus claves de `sbctl` en `/var/lib/sbctl` también se eliminan junto con
+la raíz antigua.
+
+La propia imagen de recuperación sigue firmada. Si una instantánea más reciente todavía contiene `sbctl` y sus claves,
+inicia **CachyOS Recovery** desde el menú de arranque de tu firmware y revierte a esa instantánea. La reversión volverá
+a firmar los archivos de arranque.
+
+De lo contrario, deshabilita Secure Boot en el firmware e inicia el sistema. Instala `sbctl` y vuelve a copiar
+`/var/lib/sbctl` desde una instantánea más reciente en `/.snapshots`. Luego firma tus kernels y tu gestor de arranque
+como se describe en
+[Firmando la Imagen del Kernel y el Gestor de Arranque](/es/configuration/secure_boot_setup#firmando-la-imagen-del-kernel-y-el-gestor-de-arranque)
+y vuelve a habilitar Secure Boot. Si ninguna instantánea más reciente contiene `/var/lib/sbctl`, sigue
+[Configuración del Arranque Seguro](/es/configuration/secure_boot_setup) desde el principio para crear e inscribir
+claves nuevas.
+:::
+
+:::note[Kernel Easy Anti-Cheat]
+Una reversión no firma el kernel `linux-cachyos-eac` con tu propia clave, por lo que conserva la firma de CachyOS que
+necesita la entrada de arranque de [Easy Anti-Cheat](/es/configuration/easy_anti_cheat). Si la entrada de Easy
+Anti-Cheat no arranca después de una reversión, vuelve a copiar el kernel firmado por CachyOS a `/boot` reinstalando
+`linux-cachyos-eac`, o en Limine ejecutando `sudo limine-mkinitcpio`.
+:::
+
+## Chroot en el sistema
+
+**Chroot into target system** inicia tu sistema instalado en un contenedor con `systemd-nspawn`. Obtienes un indicador
+de inicio de sesión de tu sistema instalado y puedes iniciar sesión con tu nombre de usuario y contraseña. En este modo
+tu sistema de archivos raíz permite escritura, por lo que los cambios que hagas se conservan.
+
+Úsalo para reparaciones sin conexión en el sistema de archivos raíz, por ejemplo para corregir un archivo de
+configuración dañado en `/etc` o deshabilitar un servicio que impide el arranque. El contenedor **no tiene acceso a la
+red** y solo está montado tu sistema de archivos raíz. En Btrfs, otros subvolúmenes como `/home`, `/var/cache` y
+`/var/log`, así como otras particiones incluida la partición del sistema EFI, pueden no estar disponibles. Para
+reparaciones que los necesiten, como instalar o reinstalar paquetes, usa [cachy-chroot](/es/features/cachy_chroot)
+desde una ISO live.
+
+Para salir del contenedor y volver al menú de recuperación, pulsa <kbd>Ctrl</kbd>+<kbd>]</kbd> tres veces en menos de
+un segundo.
+
+## Eliminar CachyOS Recovery
+
+<Tabs syncKey="firmware">
+  <TabItem label="UEFI">
+    ```bash
+    sudo pacman -Rns cachyos-recovery
+    ```
+
+    Un hook de pacman elimina la imagen de recuperación y su complemento de la partición del sistema EFI, la entrada del
+    menú de arranque de Limine o GRUB y la entrada **CachyOS Recovery** en el menú de arranque de tu firmware.
+  </TabItem>
+  <TabItem label="BIOS">
+    ```bash
+    sudo pacman -Rns cachyos-recovery-legacy
+    ```
+
+    Un hook de pacman elimina la entrada del menú de arranque de Limine o, con GRUB, el kernel y el initramfs de
+    recuperación copiados y la entrada en `/etc/grub.d`, y regenera la configuración de GRUB.
+  </TabItem>
+</Tabs>
+
+## Solución de problemas
+
+### No hay ninguna entrada de CachyOS Recovery en el menú de arranque
+
+Reinstala el paquete (`cachyos-recovery` en UEFI, `cachyos-recovery-legacy` en BIOS) y revisa la salida del paso
+**Installing system recovery image...**:
+
+```bash
+sudo pacman -S cachyos-recovery
+```
+
+La entrada de Limine necesita `limine-entry-tool` y la entrada del firmware necesita `efibootmgr`. Con systemd-boot, la
+imagen debe estar en la misma partición del sistema EFI donde está instalado systemd-boot.
+
+### La recuperación no se inicia con Secure Boot habilitado
+
+La imagen de recuperación o su complemento no están firmados. Compruébalos y fírmalos como se describe en
+[Secure Boot](#secure-boot).
+
+### "No snapshots were found"
+
+La recuperación solo muestra instantáneas de solo lectura. Comprueba que Snapper está creando instantáneas de tu sistema
+de archivos raíz:
+
+```bash
+sudo snapper list
+```
+
+Si el comando indica que la configuración `root` no existe, Snapper no está configurado. Esto ocurre en instalaciones
+con **systemd-boot**, donde el instalador aún no configura Snapper. Instala `cachyos-snapper-support`, que crea la
+configuración de Snapper para tu sistema de archivos raíz e instala `snap-pac` para tomar instantáneas antes y después
+de cada transacción de `pacman`:
+
+```bash
+sudo pacman -S cachyos-snapper-support
+```
+
+La recuperación podrá usar las instantáneas que se tomen a partir de ese momento.
+
+### El arranque de la instantánea falla o la pantalla se queda en negro
+
+Iniciar directamente el kernel de la instantánea desde la recuperación no funciona en todos los dispositivos. Usa
+**Rollback Btrfs snapshot** para restaurar la instantánea en su lugar.
+
+### "No ESP partition was found"
+
+Tanto la instalación del paquete como la reversión leen la ubicación de la partición del sistema EFI desde `/etc/fstab`
+(durante una reversión, desde el `/etc/fstab` dentro de la instantánea). La partición debe figurar allí con el tipo
+`vfat` y montada en `/boot`, `/efi` o `/boot/efi`.
+
+### La reversión se detiene con un error
+
+Lee el error que aparece encima del mensaje. Si la recuperación no pudo preparar los archivos de arranque, no se cambió
+nada y tu sistema anterior sigue intacto.
+
+Si el mensaje indica que la instantánea se restauró pero `/boot` es inconsistente, la instantánea se restauró pero
+falló la copia de los archivos de arranque. Arranca una ISO live, entra en tu sistema con
+[cachy-chroot](/es/features/cachy_chroot) y regenera los archivos de arranque:
+
+- Con **Limine**, ejecuta `limine-mkinitcpio`.
+- Con otros gestores de arranque, reinstala tus paquetes de kernel, por ejemplo `pacman -S linux-cachyos`. Esto funciona
+  cuando la versión instalada del kernel aún está en la caché de paquetes. Si pacman no puede descargarla, actualiza todo
+  el sistema con `pacman -Syu`.
