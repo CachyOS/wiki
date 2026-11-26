@@ -190,6 +190,7 @@ export default defineConfig({
               translations: {
                 de: 'ISO-Änderungsprotokolle',
                 el: 'Αρχεία αλλαγών ISO',
+                es: 'Registros de cambios de ISO',
                 ja: 'ISO 更新ログ',
                 ru: 'Журналы изменений ISO',
                 bg: 'Списък на промените',
@@ -704,6 +705,7 @@ export default defineConfig({
               translations: {
                 de: 'Desktopumgebungen',
                 el: 'Επιφάνειες εργασίας',
+                es: 'Entornos de escritorio',
                 ja: 'デスクトップ環境',
                 ru: 'Окружения рабочего стола',
                 bg: 'Графични среди',
@@ -718,6 +720,7 @@ export default defineConfig({
           translations: {
             de: 'Virtualisierung',
             el: 'Εικονικοποίηση',
+            es: 'Virtualización',
             ja: '仮想化',
             pt: 'Virtualização',
             ru: 'Виртуализация',
@@ -730,6 +733,7 @@ export default defineConfig({
               translations: {
                 de: 'QEMU- und VMM-Einrichtung',
                 el: 'Ρύθμιση των QEMU και VMM',
+                es: 'Configuración de QEMU y VMM',
                 ja: 'QEMU と VMM のセットアップ',
                 pt: 'Configuração do QEMU e VMM',
                 ru: 'Настройка QEMU и VMM',
@@ -743,6 +747,7 @@ export default defineConfig({
               translations: {
                 de: 'QEMU-User-Session',
                 el: 'Συνεδρία χρήστη QEMU',
+                es: 'Sesión de usuario de QEMU',
                 ja: 'QEMU ユーザーセッション',
                 pt: 'Sessão de Utilizador QEMU',
                 ru: 'Пользовательская сессия QEMU',
@@ -756,6 +761,7 @@ export default defineConfig({
               translations: {
                 de: 'EGL-Headless',
                 el: 'EGL Headless',
+                es: 'EGL Headless',
                 ja: 'EGL ヘッドレス',
                 pt: 'EGL Headless',
                 ru: 'Безэкранный EGL',
@@ -769,6 +775,7 @@ export default defineConfig({
               translations: {
                 de: 'Virtio-Venus',
                 el: 'Virtio-Venus',
+                es: 'Virtio-Venus',
                 ja: 'Virtio-Venus',
                 pt: 'Virtio-Venus',
                 ru: 'Virtio-Venus',
@@ -781,6 +788,7 @@ export default defineConfig({
               label: 'CachyOS on WSL',
               translations: {
                 de: 'CachyOS unter WSL',
+                es: 'CachyOS en WSL',
               },
               link: 'virtualization/wsl',
             },

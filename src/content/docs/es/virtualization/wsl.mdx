@@ -1,0 +1,62 @@
+---
+title: CachyOS en WSL
+description: Instala y usa CachyOS en el Subsistema de Windows para Linux
+ai_translated: true
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+CachyOS ofrece una imagen para el [Subsistema de Windows para Linux](https://learn.microsoft.com/en-us/windows/wsl/about) (WSL). Se mantiene en el repositorio [cachyos-wsl](https://github.com/CachyOS/cachyos-wsl), donde también puedes informar sobre errores específicos de la imagen.
+
+## Instalación
+
+Necesitas WSL 2 versión `2.4.4` o superior, que puedes actualizar con `wsl --update`. Para versiones anteriores, consulta el [README de cachyos-wsl](https://github.com/CachyOS/cachyos-wsl#wsl-prior-to-244).
+
+<Steps>
+
+1. Descarga la imagen `.wsl` desde el [último lanzamiento](https://github.com/CachyOS/cachyos-wsl/releases/latest), o en PowerShell:
+
+   ```powershell
+   $v = (Invoke-RestMethod https://api.github.com/repos/CachyOS/cachyos-wsl/releases/latest).tag_name
+   Invoke-WebRequest "https://github.com/CachyOS/cachyos-wsl/releases/download/$v/cachyos-$v.wsl" -OutFile "$env:TEMP\cachyos.wsl"
+   ```
+
+2. Instálala haciendo doble clic en el archivo, o en PowerShell:
+
+   ```powershell
+   wsl --install --from-file "$env:TEMP\cachyos.wsl"
+   ```
+
+3. Inicia CachyOS desde el menú Inicio, o con `wsl -d cachyos`.
+
+</Steps>
+
+## Configuración inicial
+
+El primer inicio puede tardar unos minutos. Configura el anillo de claves de pacman, clasifica los espejos, cambia a los paquetes optimizados y te pide que crees tu usuario, que tiene acceso a `sudo` y usa `fish` como su shell.
+
+Las imágenes solo se compilan periódicamente, así que ejecuta `sudo pacman -Syu` una vez que haya terminado.
+
+## Paquetes optimizados
+
+La imagen es genérica y se ejecuta en cualquier CPU x86-64. Al igual que el instalador de CachyOS, la configuración inicial cambia a los mejores [repositorios optimizados](/es/features/optimized_repos) para tu CPU: `znver4`, `v4` o `v3`. Las CPU más antiguas permanecen con los paquetes genéricos.
+
+Si el cambio falla, por ejemplo porque estás sin conexión, la configuración continúa con los paquetes genéricos. Para intentarlo de nuevo:
+
+```sh
+sudo /usr/lib/wsl/optimize-repos
+```
+
+## Diferencias respecto a una instalación normal
+
+WSL siempre ejecuta el kernel de Microsoft, por lo que no se utilizan `linux-cachyos`, sus planificadores ni `sched-ext`. La imagen tampoco incluye gestor de arranque, `chwd` ni zram.
+
+## Solución de problemas
+
+Si pacman indica que se recomienda reiniciar, reinicia la distribución desde PowerShell con `wsl --terminate cachyos`.
+
+Para empezar de nuevo, elimina la distribución con `wsl --unregister cachyos` e instálala otra vez.
+
+:::caution
+`wsl --unregister` elimina de forma permanente todo lo que hay dentro de la distribución, incluido tu directorio personal de Linux.
+:::
