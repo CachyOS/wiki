@@ -31,8 +31,10 @@ The recovery starts on any CachyOS installation with a Btrfs, ext4, XFS or F2FS 
 actions additionally need:
 
 - A **Btrfs** root filesystem with the root on the subvolume `@`, as the CachyOS installer sets it up.
-- **Read-only snapshots** of the root subvolume. Snapper creates these by default, and CachyOS takes them
-  automatically before and after every `pacman` transaction. See [Btrfs Snapshots](/configuration/btrfs_snapshots).
+- **Read-only snapshots** of the root subvolume. Snapper creates these by default, and with the
+  `cachyos-snapper-support` package CachyOS takes them automatically before and after every `pacman` transaction.
+  Installations with systemd-boot do not have this package yet, see
+  ["No snapshots were found"](#no-snapshots-were-found). See also [Btrfs Snapshots](/configuration/btrfs_snapshots).
 - **mkinitcpio** as initramfs generator, which is the CachyOS default.
 
 On UEFI systems, the EFI system partition has to be listed in `/etc/fstab` with the type `vfat` and mounted at
@@ -45,8 +47,8 @@ need a configuration update. With the EFI system partition at `/efi` or `/boot/e
 
 ### Encrypted disks and keyboard layout
 
-Disks encrypted with **LUKS** are supported. The recovery asks for your LUKS passphrase when it starts. Unlocking
-with TPM2 or FIDO2 is not used, so you need to know your passphrase.
+Disks encrypted with **LUKS** are supported. If your disk is not unlocked yet, the recovery asks for your LUKS
+passphrase when it starts. Keep your passphrase at hand, even if you normally unlock the disk with TPM2 or FIDO2.
 
 The recovery always uses the **US keyboard layout**, also for your passphrase and for logging in to the chroot. If
 your passphrase or password contains characters that are in different places on your keyboard, type them as on a
@@ -70,8 +72,9 @@ US keyboard.
     - It adds a **CachyOS Recovery** entry to your firmware's boot menu (requires `efibootmgr`). The entry is added
       at the end of the boot order, so your normal boot manager stays the default.
 
-    **systemd-boot** lists images in `EFI/Linux` automatically. With **GRUB** or **rEFInd**, start the recovery from
-    your firmware's boot menu.
+    **systemd-boot** lists images in `EFI/Linux` automatically, and **rEFInd** finds the image when it scans the
+    EFI system partition. **GRUB** lists it when `os-prober` is enabled (`GRUB_DISABLE_OS_PROBER=false` in
+    `/etc/default/grub`). Otherwise, start the recovery from your firmware's boot menu.
   </TabItem>
   <TabItem label="BIOS">
     ```bash
@@ -249,20 +252,25 @@ step 4 are skipped.
 :::caution[Secure Boot and older snapshots]
 The new boot files are signed with the `sbctl` installation **inside the snapshot**. When you roll back to a
 snapshot that was taken before you set up Secure Boot, nothing is signed and the system does not boot with
-Secure Boot enabled. Your `sbctl` keys in `/var/lib/sbctl` are also removed together with the old root.
+Secure Boot enabled. The recovery does not warn you about this. Your `sbctl` keys in `/var/lib/sbctl` are also
+removed together with the old root.
 
-To get Secure Boot back after such a rollback, disable Secure Boot in the firmware and boot the system. Install
+The recovery image itself stays signed. If a newer snapshot still contains `sbctl` and its keys, start
+**CachyOS Recovery** from your firmware's boot menu and roll back to that snapshot. The rollback signs the boot
+files again.
+
+Otherwise, disable Secure Boot in the firmware and boot the system. Install
 `sbctl` and copy `/var/lib/sbctl` back from a newer snapshot in `/.snapshots`. Then sign your kernels and boot manager
 as described in [Signing the Kernel Image and Boot Manager](/configuration/secure_boot_setup#signing-the-kernel-image-and-boot-manager)
 and enable Secure Boot again. If no newer snapshot contains `/var/lib/sbctl`, follow
 [Secure Boot Setup](/configuration/secure_boot_setup) from the beginning to create and enroll new keys.
 :::
 
-:::caution[Easy Anti-Cheat kernel]
-With Secure Boot set up, a rollback signs every kernel in `/boot` with your own key, including `linux-cachyos-eac`.
-The [Easy Anti-Cheat](/configuration/easy_anti_cheat) boot entry then no longer works. After the rollback, copy the
-CachyOS-signed kernel to `/boot` again by reinstalling `linux-cachyos-eac`, or with Limine by running
-`sudo limine-mkinitcpio`.
+:::note[Easy Anti-Cheat kernel]
+A rollback does not sign the `linux-cachyos-eac` kernel with your own key, so it keeps the CachyOS signature that
+the [Easy Anti-Cheat](/configuration/easy_anti_cheat) boot entry needs. If the Easy Anti-Cheat entry does not
+boot after a rollback, copy the CachyOS-signed kernel to `/boot` again by reinstalling `linux-cachyos-eac`, or with
+Limine by running `sudo limine-mkinitcpio`.
 :::
 
 ## Chroot into the system
@@ -282,52 +290,22 @@ second.
 
 ## Remove CachyOS Recovery
 
-Uninstalling the package does not remove the recovery files it copied or the boot entries it created.
-
 <Tabs syncKey="firmware">
   <TabItem label="UEFI">
-    <Steps>
-    1. Remove the package:
-       ```bash
-       sudo pacman -Rns cachyos-recovery
-       ```
-    2. With Limine, remove the boot menu entry:
-       ```bash
-       sudo limine-entry-tool --remove-efi /boot/EFI/Linux/cachyos-recovery.efi
-       ```
-    3. Remove the image and its add-on:
-       ```bash
-       sudo rm -rf /boot/EFI/Linux/cachyos-recovery.efi /boot/EFI/Linux/cachyos-recovery.efi.extra.d
-       ```
-    4. List the firmware boot entries:
-       ```bash
-       sudo efibootmgr
-       ```
-       Find the line with **CachyOS Recovery**, for example `Boot0005* CachyOS Recovery`, and remove the entry with
-       the four-digit number after `Boot` (here `0005`):
-       ```bash
-       sudo efibootmgr -b 0005 -B
-       ```
-    </Steps>
+    ```bash
+    sudo pacman -Rns cachyos-recovery
+    ```
 
-    Adjust the paths if your EFI system partition is mounted at `/efi` or `/boot/efi`.
+    A pacman hook removes the recovery image and its add-on from the EFI system partition, the Limine boot menu
+    entry and the **CachyOS Recovery** entry in your firmware's boot menu.
   </TabItem>
   <TabItem label="BIOS">
-    <Steps>
-    1. Remove the package:
-       ```bash
-       sudo pacman -Rns cachyos-recovery-legacy
-       ```
-    2. With Limine, remove the boot menu entry:
-       ```bash
-       sudo limine-entry-tool --remove-kernel cachyos-recovery
-       ```
-    3. With GRUB, remove the entry and the copied images, then regenerate the configuration:
-       ```bash
-       sudo rm -f /etc/grub.d/50-cachyos-recovery /boot/cachyos-recovery.vmlinuz /boot/cachyos-recovery.initrd
-       sudo grub-mkconfig -o /boot/grub/grub.cfg
-       ```
-    </Steps>
+    ```bash
+    sudo pacman -Rns cachyos-recovery-legacy
+    ```
+
+    A pacman hook removes the Limine boot menu entry, or with GRUB the copied recovery kernel and initramfs and the
+    entry in `/etc/grub.d`, and regenerates the GRUB configuration.
   </TabItem>
 </Tabs>
 
@@ -357,12 +335,23 @@ The recovery only lists read-only snapshots. Check that Snapper creates snapshot
 sudo snapper list
 ```
 
+If the command reports that the configuration `root` does not exist, Snapper is not set up. This is the case on
+installations with **systemd-boot**, where the installer does not set up Snapper yet. Install
+`cachyos-snapper-support`, which creates the Snapper configuration for your root filesystem and pulls in `snap-pac`
+to take snapshots before and after every `pacman` transaction:
+
+```bash
+sudo pacman -S cachyos-snapper-support
+```
+
+The recovery can use the snapshots that are taken from then on.
+
 ### Booting the snapshot fails or the screen stays black
 
 Starting the snapshot kernel directly from the recovery does not work on every device. Use
 **Rollback Btrfs snapshot** to restore the snapshot instead.
 
-### "No ESP partition was found to mount"
+### "No ESP partition was found"
 
 The package installation and the rollback both read the location of the EFI system partition from `/etc/fstab`
 (during a rollback, from the `/etc/fstab` inside the snapshot). The partition has to be listed there with the type
