@@ -1,0 +1,373 @@
+---
+title: CachyOS Recovery
+description: Boot, restore and repair your system from a recovery environment in the boot menu
+tableOfContents:
+  minHeadingLevel: 2
+  maxHeadingLevel: 3
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+[CachyOS Recovery](https://github.com/CachyOS/cachyos-recovery) is a small recovery system that is installed next to
+your kernels and started from the boot menu. When an update or a configuration change breaks your system, you can
+use it without a live USB to:
+
+- **boot a Btrfs snapshot** to check whether it works, without changing your system,
+- **roll back** to a snapshot permanently, including the matching kernels and boot files,
+- **open your installed system in a container** to fix it by hand.
+
+The recovery environment takes about 70 MB. It does not depend on the state of your installed system, so it also
+works when the system itself no longer boots.
+
+:::caution
+Snapshots are not a backup. They live on the same disk as your system and do not protect you from disk failures or
+accidental deletion of files in `/home`. Keep regular backups of your important data.
+:::
+
+## Requirements
+
+The recovery starts on any CachyOS installation with a Btrfs, ext4, XFS or F2FS root filesystem. The snapshot
+actions additionally need:
+
+- A **Btrfs** root filesystem with the root on the subvolume `@`, as the CachyOS installer sets it up.
+- **Read-only snapshots** of the root subvolume. Snapper creates these by default, and with the
+  `cachyos-snapper-support` package CachyOS takes them automatically before and after every `pacman` transaction.
+  Installations with systemd-boot do not have this package yet, see
+  ["No snapshots were found"](#no-snapshots-were-found). See also [Btrfs Snapshots](/configuration/btrfs_snapshots).
+- **mkinitcpio** as initramfs generator, which is the CachyOS default.
+
+On UEFI systems, the EFI system partition has to be listed in `/etc/fstab` with the type `vfat` and mounted at
+`/boot`, `/efi` or `/boot/efi`.
+
+If the EFI system partition is mounted at `/boot`, a rollback also regenerates the kernels, initramfs images and
+boot manager configuration for **Limine**, **systemd-boot** (with `sdboot-manage`) and **GRUB**. **rEFInd** does not
+need a configuration update. With the EFI system partition at `/efi` or `/boot/efi`, and on BIOS systems where
+`/boot` is part of the root filesystem, the kernels are part of the snapshot and are restored with it.
+
+### Encrypted disks and keyboard layout
+
+Disks encrypted with **LUKS** are supported. If your disk is not unlocked yet, the recovery asks for your LUKS
+passphrase when it starts. Keep your passphrase at hand, even if you normally unlock the disk with TPM2 or FIDO2.
+
+The recovery always uses the **US keyboard layout**, also for your passphrase and for logging in to the chroot. If
+your passphrase or password contains characters that are in different places on your keyboard, type them as on a
+US keyboard.
+
+## Installation
+
+<Tabs syncKey="firmware">
+  <TabItem label="UEFI">
+    ```bash
+    sudo pacman -S cachyos-recovery
+    ```
+
+    During the installation, a pacman hook sets everything up:
+
+    - It copies the recovery image to `EFI/Linux/cachyos-recovery.efi` on your EFI system partition.
+    - It writes the location of your root filesystem (and LUKS device, if any) into a small add-on next to the image,
+      `EFI/Linux/cachyos-recovery.efi.extra.d/root.addon.efi`.
+    - It signs both files with `sbctl` when Secure Boot is set up with `sbctl` (see [Secure Boot](#secure-boot)).
+    - With **Limine**, it adds a **CachyOS Recovery** entry to the boot menu.
+    - With **GRUB**, it writes a **CachyOS Recovery** entry to `/etc/grub.d/50-cachyos-recovery` and regenerates the
+      GRUB configuration.
+    - It adds a **CachyOS Recovery** entry to your firmware's boot menu (requires `efibootmgr`). The entry is added
+      at the end of the boot order, so your normal boot manager stays the default.
+
+    **systemd-boot** lists images in `EFI/Linux` automatically, and **rEFInd** finds the image when it scans the
+    EFI system partition. With other boot managers, start the recovery from your firmware's boot menu.
+  </TabItem>
+  <TabItem label="BIOS">
+    ```bash
+    sudo pacman -S cachyos-recovery-legacy
+    ```
+
+    During the installation, a pacman hook adds a **CachyOS Recovery** entry to the boot menu of **Limine** or
+    **GRUB**. For GRUB, it copies the recovery kernel and initramfs to `/boot/cachyos-recovery.vmlinuz` and
+    `/boot/cachyos-recovery.initrd`, writes the entry to `/etc/grub.d/50-cachyos-recovery` and regenerates the GRUB
+    configuration.
+
+    `cachyos-recovery` and `cachyos-recovery-legacy` cannot be installed at the same time. Do not install
+    `cachyos-recovery` on a BIOS system, it only contains the UEFI image.
+  </TabItem>
+</Tabs>
+
+The hook runs again with every update of the package. If you change where your system is installed, for example
+after moving to a new disk or setting up encryption, reinstall the package so that the recovery finds your root
+filesystem again: `sudo pacman -S cachyos-recovery` on UEFI, `sudo pacman -S cachyos-recovery-legacy` on BIOS.
+
+Install and reinstall the package from your normally booted system. It cannot detect your root filesystem while you
+are booted into a snapshot.
+
+### Secure Boot
+
+If you set up Secure Boot with `sbctl` as described in [Secure Boot Setup](/configuration/secure_boot_setup), the
+recovery image and its add-on are signed automatically. This happens when:
+
+- `sbctl` is installed and has created its keys,
+- Secure Boot is enabled and the firmware is not in setup mode,
+- your keys are enrolled.
+
+You can check the signatures with:
+
+```bash
+sudo sbctl verify | grep cachyos-recovery
+```
+
+If the files are not signed, for example because you enabled Secure Boot after installing the package, remove the
+recovery image and reinstall the package. Reinstalling alone is not enough, because the hook does not copy and sign
+the image again when it is already on the EFI system partition unchanged.
+
+```bash
+sudo rm /boot/EFI/Linux/cachyos-recovery.efi
+sudo pacman -S cachyos-recovery
+```
+
+Adjust the path if your EFI system partition is mounted at `/efi` or `/boot/efi`. The hook then signs both files and,
+with Limine, updates the boot menu entry.
+
+:::caution
+With Secure Boot enabled, the firmware refuses to start an unsigned recovery image, and Limine shows an error
+instead of the recovery menu. If Limine is set to remember the last entry, select a different entry in the boot
+menu to boot your system again, then sign the files.
+:::
+
+## Starting the recovery
+
+<Steps>
+1. Restart your computer.
+2. Select **CachyOS Recovery** in your boot menu. If your boot manager has no entry, open your firmware's boot menu
+   instead (usually <kbd>F8</kbd>, <kbd>F11</kbd> or <kbd>F12</kbd> during startup) and select **CachyOS Recovery**
+   there.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-limine-entry.png')} />
+3. If your disk is encrypted, enter your LUKS passphrase. You have five attempts.
+4. The recovery menu opens.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-main-menu.png')} />
+</Steps>
+
+Use the arrow keys and <kbd>Enter</kbd> to select an entry, and <kbd>Esc</kbd> to go back. In lists, you can type to
+filter the entries. The box at the bottom describes the selected action.
+
+The recovery mounts your system read-only. Nothing on your disk changes until you start a rollback or make changes
+in the chroot.
+
+| Action | What it does |
+| --- | --- |
+| **Boot Btrfs snapshot** | Boots a snapshot with a temporary, writable root. Recommended first step. |
+| **Rollback Btrfs snapshot** | Restores a snapshot permanently. |
+| **Chroot into target system** | Starts your installed system in a container, for experienced users. |
+| **Reboot** | Restarts the computer. |
+
+The two snapshot actions are only shown when your root filesystem is Btrfs.
+
+## Boot a snapshot
+
+Booting a snapshot is the safest way to find a working state. You use the snapshot like your normal system, and
+nothing is restored until you decide to keep it.
+
+<Steps>
+1. Select **Boot Btrfs snapshot**.
+2. Select a snapshot. The list shows the Btrfs subvolume ID and the creation time in UTC. On the right, you can see
+   the snapshot's path and, for Snapper snapshots, its description and type. Pick a snapshot of your root
+   filesystem. Its path looks like `.snapshots/<number>/snapshot`.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-snapshot-list.png')} />
+3. Select the kernel to boot. Only kernels that are installed in this snapshot are listed.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-kernel-picker.png')} />
+4. The recovery prepares the snapshot and starts it. Your system boots as usual. With an encrypted disk, you may be
+   asked for your passphrase again.
+</Steps>
+
+While you are booted into a snapshot:
+
+- Changes to the system (everything on the root subvolume) are kept in memory and are lost when you reboot.
+- Other subvolumes and partitions, for example `/home`, are mounted as usual. **Changes there are kept.**
+- Your own kernel parameters are not applied. The snapshot boots with the parameters it needs to find your system.
+
+### Keep the snapshot
+
+After you log in to your desktop, a notification asks whether you want to keep the snapshot.
+
+<ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-notifier.png')} />
+
+- **Rollback snapshot** opens a terminal and asks for your password. After you confirm with `y`, the snapshot
+  replaces your current system (see [what a rollback does](#what-a-rollback-does)). Reboot afterwards.
+- **Stay in snapshot** closes the notification. Nothing is restored, and your installed system stays unchanged.
+
+If the notification does not appear, for example in a window manager without notifications, or if no terminal
+opens, start the rollback from a terminal:
+
+```bash
+sudo cachyos-recovery rollback
+```
+
+This command is only available while you are booted into a snapshot from the recovery.
+
+:::tip
+If the snapshot does not boot, for example because your hardware does not handle the restart into the snapshot
+kernel, use **Rollback Btrfs snapshot** from the recovery menu instead.
+:::
+
+## Roll back a snapshot
+
+Use this when you know which snapshot works, or when booting the snapshot fails.
+
+<Steps>
+1. Select **Rollback Btrfs snapshot**.
+2. Select the snapshot to restore, as described in [Boot a snapshot](#boot-a-snapshot).
+3. Confirm with `y` and <kbd>Enter</kbd>.
+4. Wait for the rollback to finish. The recovery then asks whether to reboot.
+5. Select **Yes, reboot** to start the restored system.
+</Steps>
+
+:::danger[Your current system state is deleted]
+A rollback replaces your current root subvolume and deletes it when the rollback succeeds. It can only be undone
+with a snapshot that was taken before. Your home directory and the other subvolumes are not affected, and your
+existing snapshots are kept.
+:::
+
+### What a rollback does
+
+<Steps>
+1. If your EFI system partition is mounted at `/boot`, the recovery copies the snapshot's kernels and generates the
+   matching initramfs images and boot manager configuration, using the tools inside the snapshot. These files are
+   first prepared in a temporary location, so the EFI system partition is not changed yet. Kernels that do not
+   exist in the snapshot are removed from the boot menu, and the files are signed when Secure Boot is set up with
+   `sbctl`.
+2. It creates a new root subvolume from the snapshot and swaps it with your current root.
+3. It moves nested subvolumes, for example `/.snapshots`, from the old root to the new one, so your snapshots stay
+   available.
+4. It copies the prepared boot files to the EFI system partition.
+5. It deletes the old root subvolume.
+</Steps>
+
+If a step fails before the boot files are copied, the recovery returns your old root and leaves the EFI system
+partition unchanged.
+
+With the EFI system partition at `/efi` or `/boot/efi`, the kernels are part of the snapshot itself, so step 1 and
+step 4 are skipped.
+
+:::caution[Secure Boot and older snapshots]
+The new boot files are signed with the `sbctl` installation **inside the snapshot**. When you roll back to a
+snapshot that was taken before you set up Secure Boot, nothing is signed and the system does not boot with
+Secure Boot enabled. The recovery does not warn you about this. Your `sbctl` keys in `/var/lib/sbctl` are also
+removed together with the old root.
+
+The recovery image itself stays signed. If a newer snapshot still contains `sbctl` and its keys, start
+**CachyOS Recovery** from your firmware's boot menu and roll back to that snapshot. The rollback signs the boot
+files again.
+
+Otherwise, disable Secure Boot in the firmware and boot the system. Install
+`sbctl` and copy `/var/lib/sbctl` back from a newer snapshot in `/.snapshots`. Then sign your kernels and boot manager
+as described in [Signing the Kernel Image and Boot Manager](/configuration/secure_boot_setup#signing-the-kernel-image-and-boot-manager)
+and enable Secure Boot again. If no newer snapshot contains `/var/lib/sbctl`, follow
+[Secure Boot Setup](/configuration/secure_boot_setup) from the beginning to create and enroll new keys.
+:::
+
+:::note[Easy Anti-Cheat kernel]
+A rollback does not sign the `linux-cachyos-eac` kernel with your own key, so it keeps the CachyOS signature that
+the [Easy Anti-Cheat](/configuration/easy_anti_cheat) boot entry needs. If the Easy Anti-Cheat entry does not
+boot after a rollback, copy the CachyOS-signed kernel to `/boot` again by reinstalling `linux-cachyos-eac`, or with
+Limine by running `sudo limine-mkinitcpio`.
+:::
+
+## Chroot into the system
+
+**Chroot into target system** starts your installed system in a container with `systemd-nspawn`. You get a login
+prompt for your installed system and can log in with your user name and password. Your root filesystem is writable
+in this mode, so changes you make are kept.
+
+Use this for offline repairs on the root filesystem, for example to fix a broken configuration file in `/etc` or to
+disable a service that prevents booting. The container has **no network access**, and only your root filesystem is
+mounted. On Btrfs, other subvolumes such as `/home`, `/var/cache` and `/var/log`, and other partitions including the
+EFI system partition may not be available. For repairs that need them, like installing or reinstalling packages,
+use [cachy-chroot](/features/cachy_chroot) from a live ISO.
+
+To leave the container and return to the recovery menu, press <kbd>Ctrl</kbd>+<kbd>]</kbd> three times within one
+second.
+
+## Remove CachyOS Recovery
+
+<Tabs syncKey="firmware">
+  <TabItem label="UEFI">
+    ```bash
+    sudo pacman -Rns cachyos-recovery
+    ```
+
+    A pacman hook removes the recovery image and its add-on from the EFI system partition, the Limine or GRUB boot
+    menu entry and the **CachyOS Recovery** entry in your firmware's boot menu.
+  </TabItem>
+  <TabItem label="BIOS">
+    ```bash
+    sudo pacman -Rns cachyos-recovery-legacy
+    ```
+
+    A pacman hook removes the Limine boot menu entry, or with GRUB the copied recovery kernel and initramfs and the
+    entry in `/etc/grub.d`, and regenerates the GRUB configuration.
+  </TabItem>
+</Tabs>
+
+## Troubleshooting
+
+### There is no CachyOS Recovery entry in the boot menu
+
+Reinstall the package (`cachyos-recovery` on UEFI, `cachyos-recovery-legacy` on BIOS) and read the output of the
+**Installing system recovery image...** step:
+
+```bash
+sudo pacman -S cachyos-recovery
+```
+
+The Limine entry needs `limine-entry-tool`, and the firmware entry needs `efibootmgr`. With systemd-boot, the image
+has to be on the EFI system partition that systemd-boot is installed on.
+
+### The recovery does not start with Secure Boot enabled
+
+The recovery image or its add-on is not signed. Check and sign them as described in [Secure Boot](#secure-boot).
+
+### "No snapshots were found"
+
+The recovery only lists read-only snapshots. Check that Snapper creates snapshots of your root filesystem:
+
+```bash
+sudo snapper list
+```
+
+If the command reports that the configuration `root` does not exist, Snapper is not set up. This is the case on
+installations with **systemd-boot**, where the installer does not set up Snapper yet. Install
+`cachyos-snapper-support`, which creates the Snapper configuration for your root filesystem and pulls in `snap-pac`
+to take snapshots before and after every `pacman` transaction:
+
+```bash
+sudo pacman -S cachyos-snapper-support
+```
+
+The recovery can use the snapshots that are taken from then on.
+
+### Booting the snapshot fails or the screen stays black
+
+Starting the snapshot kernel directly from the recovery does not work on every device. Use
+**Rollback Btrfs snapshot** to restore the snapshot instead.
+
+### "No ESP partition was found"
+
+The package installation and the rollback both read the location of the EFI system partition from `/etc/fstab`
+(during a rollback, from the `/etc/fstab` inside the snapshot). The partition has to be listed there with the type
+`vfat` and mounted at `/boot`, `/efi` or `/boot/efi`.
+
+### The rollback stops with an error
+
+Read the error above the message. If the recovery could not prepare the boot files, nothing was changed and your
+old system is still in place.
+
+If the message says that the snapshot is restored but `/boot` is inconsistent, the snapshot was restored, but
+copying the boot files failed. Boot a live ISO, enter your system with [cachy-chroot](/features/cachy_chroot) and
+regenerate the boot files:
+
+- With **Limine**, run `limine-mkinitcpio`.
+- With other boot managers, reinstall your kernel packages, for example `pacman -S linux-cachyos`. This works when
+  the installed kernel version is still in the package cache. If pacman cannot download it, update the whole
+  system with `pacman -Syu` instead.

@@ -402,6 +402,10 @@ export default defineConfig({
               },
             },
             {
+              label: 'CachyOS Recovery',
+              link: 'features/cachyos_recovery',
+            },
+            {
               label: 'CachyOS Hardware Detection (chwd)',
               items: [{ autogenerate: { directory: 'features/chwd' } }],
               translations: {
