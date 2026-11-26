@@ -9,6 +9,10 @@ tableOfContents:
 import ImageComponent from '~/components/image-component.astro';
 import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
+:::tip[Easy Anti-Cheat]
+Easy Anti-Cheat Linux v2 を使用するゲームをプレイする場合は、このガイドではなく [Easy Anti-Cheat ガイド](/ja/configuration/easy_anti_cheat) にしたがってください。最初からセキュアブートを設定するため、先にこのガイドを進める必要はありません。Microsoft のキーと一緒に独自のキーを登録するため、Windows とのデュアルブートも引き続き動作します。また、CachyOS によって署名されたカーネルと systemd-boot を使用するため、独自のキーで再署名しないでください。
+:::
+
 ## 事前準備
 
 ### GRUB ブートマネージャー
@@ -149,7 +153,7 @@ Boot → Secure Boot に移動し、セキュアブートモードを Custom に
 
 ## カーネルイメージとブートマネージャーへの署名
 
-<Tabs>
+<Tabs syncKey="boot-manager">
 <TabItem label='Limine'>
 Limine は特殊なブートマネージャーで、ブート時に使用するカーネルイメージやその他のファイルのハッシュを検証できます。この機能が有効な場合、`sbctl-batch-sign` による署名など、ユーザーが手動で行った変更はファイルのハッシュを変更するため、Limine のチェックサム検証の失敗につながります。
 
@@ -274,6 +278,30 @@ CachyOS は systemd の `systemd-boot-update.service` を使って再起動時�
 ```sh
 sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
 ```
+
+:::note
+[Easy Anti-Cheat の設定](/ja/configuration/easy_anti_cheat) を使用している場合は、この手順をスキップしてください。そちらでは、`systemd-boot-cachyos-signed` によって CachyOS が署名した systemd-boot が提供されます。
+:::
+</TabItem>
+<TabItem label='rEFInd'>
+
+rEFInd はファームウェア経由でカーネルを起動するため、ファームウェアは rEFInd と各カーネルの両方の署名を検証します。以下の手順は、EFI システムパーティションが `/boot` にマウントされている環境向けです (CachyOS インストーラーで rEFInd を設定した場合はこの構成になります)。`bootctl --print-esp-path` の出力が `/boot` であることを確認してください。
+
+rEFInd とカーネルに署名します。以下の `find` コマンドは、すでに CachyOS によって署名されている [Easy Anti-Cheat](/ja/configuration/easy_anti_cheat) 用のカーネルをスキップします。
+
+```bash
+sudo sbctl sign -s /boot/EFI/refind/refind_x64.efi
+sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+sudo sbctl verify
+```
+
+`sbctl verify` の出力で、rEFInd と各カーネルが署名済みとして表示される必要があります。Easy Anti-Cheat を使用している場合は、`vmlinuz-linux-cachyos-eac` と `EFI/cachyos-eac/systemd-bootx64.efi` が未署名として表示されます。これらは CachyOS によって署名されているため、これが正常な状態です。**これらには署名しないでください**。署名してしまうと EAC に受け入れられなくなります。その後、**システムを再起動して UEFI 設定画面に入り、セキュアブートを有効にしてください。** ASUS 製マザーボードを使用している場合は、systemd-boot タブ内の注意事項を参照してください。
+
+`-s` フラグを付けることでファイルが `sbctl` のデータベースに保存され、アップデート時には pacman フックによってカーネルが自動的に再署名されます。ただし、pacman は EFI システムパーティション上の rEFInd を更新しません。ご自身で `refind-install` を実行した場合は、その後に再度署名を行ってください。
+
+```bash
+sudo sbctl sign-all
+```
 </TabItem>
 </Tabs>
 
@@ -297,6 +325,21 @@ System:
   TPM2 Support: yes
   Measured UKI: no
   Boot into FW: supported
+```
+
+## Fwupd
+
+セキュアブートを有効にした状態で `fwupd` を使用するには、UEFI 実行ファイルに署名してください。
+
+```sh
+sudo sbctl sign -s -o /usr/lib/fwupd/efi/fwupdx64.efi.signed /usr/lib/fwupd/efi/fwupdx64.efi
+```
+
+さらに、`/etc/fwupd/fwupd.conf` に以下を追記してください。
+
+```sh
+[uefi_capsule]
+DisableShimForSecureBoot=true
 ```
 
 ## リンクとクレジット

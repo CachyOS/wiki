@@ -45,7 +45,7 @@ CachyOS のインストーラーでは、デスクトップ環境、パッケー
 
 - [デスクトップ環境](/ja/installation/desktop_environments/)
 - [ブートマネージャー](/ja/installation/boot_managers/)
-- [カーネルフレーバー](/ja/features/kernel#variants)
+- [カーネルフレーバー](/ja/features/kernel#バリアント)
 - [ファイルシステム](/ja/installation/filesystem)
 - [カスタムパッケージの自動インストール](https://github.com/CachyOS/cachyos-calamares/blob/cachyos-limine-qt6/src/modules/netinstall/netinstall.yaml)
 
