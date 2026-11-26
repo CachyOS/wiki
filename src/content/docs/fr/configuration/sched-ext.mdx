@@ -4,15 +4,21 @@ description: Tutoriel sur la façon d'utiliser le framework et informations dive
 tableOfContents:
   minHeadingLevel: 1
   maxHeadingLevel: 5
+ai_translated: true
 ---
 
-import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
-import { Icon } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem, Icon } from '@astrojs/starlight/components';
 import ImageComponent from '~/components/image-component.astro';
 
 La classe d'ordonnanceur extensible (mieux connue sous le nom de `sched-ext`) est une fonctionnalité du noyau Linux qui permet d'implémenter des ordonnanceurs de threads du noyau en
 BPF (Berkeley Package Filter) et de les charger dynamiquement. Essentiellement, cela permet aux utilisateurs finaux de changer leurs ordonnanceurs dans l'espace utilisateur sans
 avoir besoin de recompiler un autre noyau juste pour avoir un ordonnanceur différent.
+
+:::note
+L'utilisation de n'importe quel ordonnanceur sched-ext détachera temporairement l'ordonnanceur par défaut du noyau. Lorsqu'un ordonnanceur sched-ext est arrêté, l'ordonnanceur par défaut du noyau reprendra le contrôle.
+
+Exemple : EEVDF ou BORE.
+:::
 
 :::tip[Prenez contact avec les développeurs sur leur [serveur Discord](https://discord.gg/b2J8DrWa7t)]
 :::
@@ -137,7 +143,7 @@ Consultez la **[page du Wiki Arch pour référence.](https://wiki.archlinux.org/
 
 *Comme son nom l'indique, c'est un utilitaire qui fonctionne comme un chargeur et un gestionnaire pour le framework sched-ext en utilisant l'interface D-Bus.*
 
-*Bien qu'il не nécessite pas systemd, il peut tout de même être utilisé conjointement avec lui.* [Consultez le guide de transition pour référence](/fr/configuration/sched-ext#transition-de-scxservice-à-scx_loader--un-guide-complet).
+*Bien qu'il ne nécessite pas systemd, il peut tout de même être utilisé conjointement avec lui.* [Consultez le guide de transition pour référence](/fr/configuration/sched-ext#transition-de-scxservice-à-scx_loader--un-guide-complet).
 
 - A la capacité d'arrêter, démarrer, redémarrer, lire des informations sur un ordonnanceur scx et plus encore.
   - *Vous pouvez utiliser des outils comme `dbus-send` ou `gdbus` pour communiquer avec lui.*
@@ -182,7 +188,7 @@ Exemple : LAVD fonctionnant en Mode 1 est l'équivalent de `scx_lavd --performan
 
 *En bref : Chaque mode est un ensemble d'options différentes destinées à améliorer le cas d'utilisation prévu.*
 
-[Pour un aperçu plus détaillé de ce que ces Modes changent sur chaque ordonnanceur](<https://github.com/sched-ext/scx-loader/blob/122cdb289d09fc960ba7e24dc6bec10326b424e9/crates/scx_loader/src/config.rs#L193>)
+[Pour un aperçu plus détaillé de ce que ces Modes changent sur chaque ordonnanceur](<https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/src/config.rs#L193>)
 :::
 
 </TabItem>
@@ -234,9 +240,30 @@ N'hésitez pas à signaler tout problème ou à donner votre avis sur le dépôt
 
 Utilisez `scx_nomduplanificateur --help` pour voir les options disponibles et une brève description de ce qu'elles font.
 
-```sh title='Exemple pour obtenir de l'aide pour scx_rusty'
+```sh title="Exemple pour obtenir de l'aide pour scx_rusty"
 scx_rusty --help
 ```
+
+### [scx_beerland](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_beerland)
+
+**Développé par : Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Prêt pour la production ? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+scx_beerland est un planificateur conçu pour prioriser la localité et la scalabilité.
+
+Il priorise le maintien des tâches sur le même CPU pour préserver la localité du cache, tout en assurant une bonne scalabilité sur de nombreux CPUs en utilisant des DSQ locaux (files d'attente par CPU) lorsque le système n'est pas saturé.
+
+- Cas d'utilisation :
+  - Charges de travail intensives en cache
+  - Systèmes avec un grand nombre de CPUs
+  - Jeux vidéo : Fonctionne étonnamment bien dans certains jeux, bien que les résultats puissent varier.
+  - Serveur : Bon pour les charges de travail de serveur à usage général en raison de ses optimisations de scalabilité et de localité.
+  - Peut également être utilisé pour une utilisation bureautique.
+
+#### Modes du planificateur
+
+Aucun pour le moment.
 
 ### [scx_bpfland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_bpfland>)
 
@@ -273,46 +300,113 @@ Lorsque Bpfland prend des décisions sur les cœurs à utiliser, il prend en con
 * **Options de ligne de commande :** `-s 20000 -S`
 * **Description :** Priorise les tâches avec une affinité stricte. Cette option peut augmenter le débit au détriment de la latence et est plus adaptée aux charges de travail de serveur.
 
-### [scx_beerland](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_beerland)
+### [scx_cake](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cake)
+
+**Développé par : RitzDaCat (RitzDaCat [GitHub](<https://github.com/RitzDaCat>))**
+
+- Prêt pour la production ? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+
+`scx_cake` est un ordonnanceur CPU BPF expérimental qui adapte l'algorithme réseau DRR++ (Deficit Round Robin++) de [CAKE](https://www.bufferbloat.net/projects/codel/wiki/Cake/) à l'ordonnancement CPU.
+- Classification à 4 niveaux — Les tâches sont triées par moyenne mobile exponentielle (EWMA `avg_runtime`) en Critique / Interactif / Trame / Masse
+- Zéro opération atomique globale — Les tableaux BSS par CPU avec écritures protégées MESI éliminent le verrouillage du bus
+- Sélection d'inactivité déléguée au noyau — `scx_bpf_select_cpu_dfl()` pour une sélection de CPU fiable et sans données obsolètes
+- Partitionnement DSQ par LLC — Élimine la contention de verrouillage inter-CCD sur les CPUs multi-chiplet
+- Suivi de déficit DRR++ — L'algorithme d'équité de flux du CAKE réseau adapté à l'ordonnancement des tâches CPU
+
+Conçu pour les charges de travail de jeu sur le matériel moderne AMD et Intel.
+
+- Cas d'utilisation :
+  - Jeux vidéo
+
+#### Système à 4 niveaux
+
+`scx_cake` classe chaque tâche dans l'un des quatre niveaux en fonction de son temps d'exécution **EWMA** (Exponential Weighted Moving Average). La classification est automatique et continue — les tâches changent de niveau à mesure que leur comportement évolue.
+
+##### Seuils des niveaux
+
+| Niveau | Nom        | avg_runtime | Charge de travail typique                                     | Quantum | Famine     |
+| :----- | :--------- | :---------- | :------------------------------------------------------------ | :------ | :--------- |
+| **T0** | Critique   | < 100µs     | Gestionnaires IRQ, pilotes d'entrée, audio (PipeWire), réseau | 0.5ms   | 3ms        |
+| **T1** | Interactif | < 2ms       | Compositeurs, physique de jeu, IA de jeu, tâches courtes      | 2.0ms   | 8ms        |
+| **T2** | Trame      | < 8ms       | Threads de rendu de jeu, encodage vidéo                       | 4.0ms   | 40ms       |
+| **T3** | Masse      | ≥ 8ms       | Compilation, indexation en arrière-plan, tâches par lots      | 8.0ms   | 100ms      |
+
+:::tip
+**Aucune tâche de jeu ne devrait se trouver en T3**. Les threads de rendu de jeu s'exécutent 2 à 8 ms par trame → T2. La physique et l'IA s'exécutent 0,5 à 2 ms → T1. Les gestionnaires d'entrée s'exécutent en < 100 µs → T0. Seules les tâches effectuant un travail CPU ininterrompu de plus de 8 ms (compilation de shaders, écrans de chargement) atterrissent en T3.
+:::
+
+##### Fonctionnement de la classification
+
+1. **Placement initial** : Basé sur la valeur `nice` — `nice < 0` → T0, `nice 0-10` → T1, `nice > 10` → T3
+2. **Autorité du temps d'exécution** : Après environ 3 arrêts, l'EWMA `avg_runtime` devient prépondérant. Une tâche avec `nice -5` qui s'exécute par rafales de 50 ms sera reclassée en T3 quelle que soit sa valeur `nice`.
+3. **Hystérésis** : Une bande morte de 10 % empêche les oscillations aux frontières des niveaux. Une promotion nécessite un `avg_runtime` nettement inférieur au seuil ; la rétrogradation est immédiate.
+4. **Espacement progressif** : Une fois qu'un niveau est stable pendant 3 arrêts consécutifs ou plus, la fréquence de reclassification diminue par niveau : T0 revérifie tous les 1024 arrêts, T3 tous les 16 arrêts. Toute instabilité réinitialise la vérification à pleine fréquence.
+
+##### Suivi de déficit DRR++
+
+Adapté de l'équité de flux du CAKE réseau :
+
+- Chaque tâche commence avec un **déficit** (quantum + bonus de nouveau flux ≈ 10 ms de crédit)
+- Chaque phase d'exécution consomme du déficit proportionnellement au temps d'exécution
+- Lorsque le déficit est épuisé → le bonus de nouveau flux est retiré → la tâche entre en concurrence normalement
+- Cela donne aux threads nouvellement créés (un jeu qui lance un worker) une réactivité instantanée qui décroît naturellement
+
+##### DVFS (Mise à l'échelle de fréquence CPU)
+
+Chaque niveau correspond à une cible de performance CPU via une table de correspondance RODATA :
+
+| Niveau | Cible                   | Justification                                                                |
+| :----- | :---------------------- | :--------------------------------------------------------------------------- |
+| T0-T2  | 100 % (fréquence max)   | Les charges de jeu nécessitent des performances maximales                    |
+| T3     | 75 %                    | Les tâches d'arrière-plan peuvent tourner un peu plus lentement pour économiser l'énergie |
+
+Sur les CPUs hybrides Intel (`has_hybrid = true`), les cibles sont mises à l'échelle selon le `cpuperf_cap` de chaque cœur afin d'éviter de demander une fréquence excessive sur les E-cores.
+
+#### Arguments CLI
+
+| Argument        | Défaut  | Description                                  |
+| :-------------- | :------ | :------------------------------------------- |
+| `--verbose, -v` | `false` | Active l'affichage TUI des statistiques en direct |
+
+### [scx_cosmos](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cosmos)
 
 **Développé par : Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
 
-Prêt pour la production ? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+- Prêt pour la production ? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
 
-scx_beerland est un planificateur conçu pour prioriser la localité et la scalabilité.
+Planificateur léger optimisé pour préserver la localité tâche-CPU.
 
-Il priorise le maintien des tâches sur le même CPU pour préserver la localité du cache, tout en assurant une bonne scalabilité sur de nombreux CPUs en utilisant des DSQ locaux (files d'attente par CPU) lorsque le système n'est pas saturé.
+Lorsque le système n'est pas saturé, le planificateur priorise le maintien des tâches sur le même CPU en utilisant des DSQ locaux. Cela maintient non seulement la localité, mais réduit également la contention de verrouillage par rapport aux DSQ partagés, permettant une bonne scalabilité sur de nombreux CPUs.
 
 - Cas d'utilisation :
-  - Charges de travail intensives en cache
-  - Systèmes avec un grand nombre de CPUs
-  - Jeux vidéo : Il est connu pour fonctionner étonnamment bien dans certains jeux, bien que les résultats puissent varier
-  - Serveur : Bon pour les charges de travail de serveur à usage général en raison de ses optimisations de scalabilité et de localité.
-  - Peut également être utilisé pour une utilisation bureautique.
+  - Planificateur à usage général : le planificateur devrait s'adapter aussi bien aux charges de travail de serveur qu'à celles de bureau.
 
 #### Modes du planificateur
 
-Aucun pour le moment.
+##### Auto
 
-### [scx_rustland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland>)
+* **Options de ligne de commande :** Aucune.
+* **Description :**
 
-**Développé par : Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+##### Jeux vidéo
 
-Prêt pour la production ? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+* **Options de ligne de commande :** `-s 700 -S`
+* **Description :** Sacrifie le débit pour une meilleure constance des performances en jeu en réduisant la contention sur les cœurs SMT partagés.
 
-Pour les scénarios de production critiques en termes de performance, d'autres planificateurs sont susceptibles d'offrir de meilleures performances, car le déport de toutes les décisions de planification vers l'espace utilisateur a un certain coût (même s'il est minime).
+##### Économie d'Énergie
 
-Cependant, un planificateur entièrement implémenté en espace utilisateur offre le potentiel d'une intégration transparente avec des bibliothèques sophistiquées, des outils de traçage, des services externes (par ex., l'IA), etc.
+* **Options de ligne de commande :** `-m powersave`
+* **Description :** Priorise l'efficacité énergétique. Favorise les cœurs moins performants (par ex., les E-cores sur Intel).
 
-Par conséquent, il peut y avoir des situations où les avantages l'emportent sur la surcharge, justifiant l'utilisation de ce planificateur dans un environnement de production.
+##### Faible Latence
 
-Partage des similitudes avec bpfland, conçu dans l'intention d'être facile à lire et à comprendre grâce à son implémentation en espace utilisateur.
+* **Options de ligne de commande :** `-s 700 -S -m performance -w`
+* **Description :** Vise à réduire la latence au détriment du débit. Convient aux applications temps réel souples comme le traitement audio et le multimédia. Assure une répartition plus uniforme de la charge sur les cœurs disponibles au prix d'une moindre efficacité énergétique.
 
-Gardez à l'esprit qu'il y a un léger désavantage de débit lors de l'utilisation d'un planificateur en espace utilisateur.
+##### Serveur
 
-- Cas d'utilisation :
-  - Charges de travail à faible latence (Jeux vidéo, visioconférences et streaming en direct)
-  - Utilisation bureautique
+* **Options de ligne de commande :** `-s 20000 -c 75 -p 250`
+* **Description :** Active l'affinité d'espace d'adressage pour améliorer la localité et les performances dans certaines charges de travail sensibles au cache. La durée de tranche est fixée à 20 ms et l'intervalle d'interrogation contrôle la fréquence à laquelle l'ordonnanceur compare l'utilisation du CPU au seuil d'occupation pour décider si le système est occupé.
 
 ### [scx_flash](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_flash>)
 
@@ -355,45 +449,108 @@ Les tâches qui libèrent le CPU prématurément reçoivent un poids de latence 
 * **Options de ligne de commande :** `-m all -s 20000 -S 1000 -I -1 -D -L`
 * **Description :** Réglé pour les charges de travail de serveur. Échange la réactivité contre le débit.
 
-### [scx_cosmos](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cosmos)
+### [scx_flow](https://github.com/sched-ext/scx/tree/main/scheds/experimental/scx_flow)
+
+**Développé par : Galih Tama (galpt [GitHub](https://github.com/galpt))**
+
+Prêt pour la production ? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+scx_flow est un ordonnanceur basé sur le budget qui trie les tâches dans l'un des quatre niveaux FIFO O(1) selon le budget qu'il leur reste. Pas d'heuristiques, pas d'algorithmes de notation, pas de réglage adaptatif — chaque décision provient d'un seul nombre : le *budget restant*.
+
+- Cas d'utilisation :
+  - Multitâche généraliste sur ordinateur de bureau et station de travail
+  - Jeux vidéo avec des applications ouvertes en arrière-plan
+  - Travail de développement avec des compilations, des tests ou des conteneurs en cours d'exécution
+  - Tout scénario où la réactivité interactive sous charge mixte est importante
+  - Systèmes nécessitant un ordonnancement déterministe et explicable (contrôle embarqué, robotique, avionique)
+
+#### Fonctionnement — le budget
+
+Imaginez chaque tâche comme disposant d'un « budget de réactivité ». Lorsqu'une tâche dort (en attente de quelque chose à faire), elle accumule du budget. Lorsqu'elle se réveille et s'exécute, elle le dépense. Les tâches qui se réveillent en ayant encore du budget sont un signe d'interactivité — elles sont immédiatement distribuées au dernier CPU sur lequel elles se sont exécutées, contournant entièrement le système de niveaux. Les tâches qui épuisent leur budget sont remises en file d'attente dans l'un des quatre niveaux FIFO.
+
+##### Les quatre niveaux de distribution
+
+Lorsqu'une tâche est remise en file d'attente (et non lors d'un réveil), son budget restant détermine le niveau dans lequel elle atterrit :
+
+| Niveau       | Seuil de budget | Types de tâches qui y atterrissent                            |
+| ------------ | --------------- | ------------------------------------------------------------- |
+| **Priority** | ≥ 1,5 ms        | Tâches interactives qui dorment souvent et s'exécutent brièvement |
+| **Normal**   | ≥ 1 ms          | Tâches typiques avec un budget restant correct                |
+| **Low**      | ≥ 0,5 ms        | Tâches à court de budget                                      |
+| **Deficit**  | < 0,5 ms        | Tâches de masse, processus gourmands en CPU, tâches de fond   |
+
+Chaque niveau est une simple file FIFO — mise en file en O(1), retrait de file en O(1). Aucun parcours d'arbre, aucun recalcul de priorité.
+
+##### Aucune famine, aucune inversion de priorité
+
+La fonction de distribution ne se contente pas de vider Priority en premier à chaque fois. Elle fait tourner le niveau de départ à chaque appel — `gen & 3` décide par où commencer. Ainsi, le niveau Deficit n'attend jamais plus de 3 cycles de distribution avant d'être servi en premier. Cela signifie que les tâches de masse progressent même sous une forte charge interactive, et il n'y a aucune inversion de priorité car aucun niveau ne peut monopoliser le CPU.
+
+##### Les réveils passent directement devant la file
+
+Lorsqu'une tâche se réveille (elle dormait et a maintenant quelque chose à faire), elle n'attend dans aucune file de niveau. Elle va directement sur le CPU où elle s'est exécutée en dernier via `SCX_DSQ_LOCAL_ON` — avec un cache chaud et de façon immédiate. C'est ce qui maintient la réactivité des tâches interactives : un onglet Discord ou de navigateur en veille se réveille avec du budget et est distribué en quelques microsecondes, pas en millisecondes.
+
+##### Les tâches épinglées passent toujours en premier
+
+Les tâches qui ne peuvent pas migrer entre les CPUs (setaffinity) disposent de leur propre file FIFO par CPU qui a la priorité absolue sur n'importe quel niveau. Elles sont distribuées avant que quoi que ce soit du système de niveaux ne s'exécute sur ce CPU.
+
+##### Le résultat
+
+Les tâches interactives (saisie clavier, mises à jour d'interface, threads audio, interrogation réseau) se réveillent presque toujours avec du budget et empruntent la voie rapide. Les travaux par lots gourmands en CPU (compilation, téléchargements, indexation en arrière-plan) épuisent leur budget et s'installent dans le niveau Deficit, où ils continuent de progresser grâce à la rotation de la distribution. Aucun réglage nécessaire.
+
+##### Aucun profil, aucun réglage automatique, aucun mode
+
+scx_flow ne dispose **pas** de modes Gaming, Économie d'énergie ou Faible latence — et contrairement aux versions précédentes, il ne possède pas non plus de boucle de contrôle adaptative. La distribution rotative par niveaux et les seuils de budget sont des constantes de compilation. Ce que vous obtenez est ce qui s'exécute : déterministe, explicable et identique sur chaque système. Si une tâche a du budget, elle obtient la priorité. Si elle n'en a pas, elle partage équitablement le niveau Deficit. C'est toute la politique.
+
+#### Interface Web
+
+Lorsque scx_flow démarre, il sert automatiquement un tableau de bord de métriques en direct à l'adresse **[http://localhost:50005](http://localhost:50005)**. Ouvrez-le dans n'importe quel navigateur — aucune option supplémentaire n'est nécessaire.
+
+Le tableau de bord affiche :
+- Le nombre de distributions passées par chaque niveau (Priority / Normal / Low / Deficit)
+- Les informations système : tâches en cours d'exécution, temps de disponibilité, nombre total de distributions
+- Une barre de répartition des niveaux pour voir d'un coup d'œil si le travail interactif ou de masse domine
+- Chaque carte de métrique est cliquable — ouvre une fenêtre d'historique avec des graphiques sparkline et un diagramme à barres
+- Toutes les valeurs sont mises à jour chaque seconde par interrogation — aucun rafraîchissement de page nécessaire
+
+Si la page ne se charge pas, il se peut que l'ordonnanceur se soit arrêté (le noyau revient à l'ordonnanceur intégré EEVDF).
+
+```sh
+# Désactiver l'interface web si vous n'en avez pas besoin :
+sudo scx_flow --no-webui
+```
+
+Lorsque `scx_loader` s'exécute avec un durcissement systemd qui restreint les familles de sockets (`RestrictAddressFamilies`, `SocketBindDeny`), la liaison TCP est bloquée et scx_flow se rabat sur un socket Unix à `/tmp/scx_flow.sock`. Dans ce cas, le navigateur ne peut pas atteindre directement le tableau de bord — exécutez temporairement `sudo scx_flow --no-webui` pour supprimer les erreurs si vous n'avez pas besoin de l'interface.
+
+#### Arguments CLI
+
+| Argument        | Description                                  |
+| --------------- | -------------------------------------------- |
+| `--no-webui`    | Désactiver l'interface web intégrée          |
+| `-d, --debug`   | Activer la journalisation de niveau débogage |
+| `-V, --version` | Afficher la version de l'ordonnanceur et quitter |
+
+:::note
+scx_flow ne possède **pas** de modes de profil scx_loader (Gaming, Économie d'énergie, Faible latence, Serveur). Chaque décision d'ordonnancement est dérivée directement du budget de la tâche — aucun profil n'est nécessaire.
+:::
+
+### [scx_forge](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_forge>)
 
 **Développé par : Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
 
-- Prêt pour la production ? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+- Prêt pour la production ? <Icon name="close" color="var(--sl-color-text-accent)" size="2rem" />
 
-Planificateur léger optimisé pour préserver la localité tâche-CPU.
+scx_forge se compose de deux parties :
 
-Lorsque le système n'est pas saturé, le planificateur priorise le maintien des tâches sur le même CPU en utilisant des DSQ locaux. Cela maintient non seulement la localité, mais réduit également la contention de verrouillage par rapport aux DSQ partagés, permettant une bonne scalabilité sur de nombreux CPUs.
+1. Un ordonnanceur de base orienté IA conçu pour être utilisé conjointement avec la seconde partie.
+2. Un agent destiné à être utilisé avec l'ordonnanceur de base pour fournir une expérience d'ordonnancement plus orientée IA, ainsi qu'une optimisation sur place par l'agent lui-même.
 
-- Cas d'utilisation :
-  - Planificateur à usage général : le planificateur devrait s'adapter aussi bien aux charges de travail de serveur qu'à celles de bureau.
+L'agent permet de configurer votre modèle d'IA, la charge de travail que vous souhaitez optimiser et l'objectif global que vous souhaitez atteindre. L'agent tentera ensuite d'optimiser l'ordonnanceur pour votre charge de travail et votre objectif spécifiques.
 
-#### Modes du planificateur
+Comment ? Via le [fichier spec.toml](https://github.com/sched-ext/scx/blob/main/tools/scx_forge_agent/spec.toml) qui sert à démarrer la boucle d'optimisation.
 
-##### Auto
+En résumé, cet ordonnanceur est parfait pour ceux qui veulent optimiser une charge de travail spécifique à l'aide d'un agent IA.
 
-* **Options de ligne de commande :** `-d`
-* **Description :** Désactive les réveils différés. Réduit le débit et les performances pour certaines charges de travail tout en diminuant la consommation d'énergie.
-
-##### Jeux vidéo
-
-* **Options de ligne de commande :** `-c 0 -p 0`
-* **Description :** Désactive le suivi de la charge du CPU et impose toujours une planification basée sur l'échéance pour améliorer la réactivité.
-
-##### Économie d'Énergie
-
-* **Options de ligne de commande :** `-m powersave -d -p 5000`
-* **Description :** Priorise l'efficacité énergétique. Favorise les cœurs moins performants (par ex., les E-cores sur Intel) et désactive les réveils différés, réduisant le débit tout en augmentant l'efficacité énergétique. La consultation de la charge du CPU est augmentée à 5 ms.
-
-##### Faible Latence
-
-* **Options de ligne de commande :** `-m performance -c 0 -p 0 -w`
-* **Description :** Vise à réduire la latence au détriment du débit. Convient aux applications temps réel souples comme le traitement audio et le multimédia. Impose toujours une planification basée sur l'échéance et des optimisations de réveil synchrone pour améliorer la prévisibilité des performances.
-
-##### Serveur
-
-* **Options de ligne de commande :** `-s 20000`
-* **Description :** Active l'affinité d'espace d'adressage pour améliorer la localité et les performances dans certaines charges de travail sensibles au cache. La consultation est augmentée à 20 ms.
+Pour en savoir plus, consultez le [README de scx_forge_agent](https://github.com/sched-ext/scx/tree/main/tools/scx_forge_agent).
 
 ### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>)
 
@@ -430,23 +587,33 @@ L'une des capacités principales et impressionnantes de LAVD est le **Compactage
 * **Options de ligne de commande :** `--powersave`
 * **Description :** Minimise la consommation d'énergie tout en maintenant des performances raisonnables. Priorise les cœurs et les threads efficaces par rapport aux cœurs physiques.
 
-### [scx_rusty](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rusty>)
+### [scx_pandemonium](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_pandemonium)
 
-**Développé par : David Vernet (Byte-Lab [GitHub](<https://github.com/Byte-Lab>))**
+**Développé par : Will Clingan (willclngn [GitHub](https://github.com/wllclngn/))**
 
-- Prêt pour la production ? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
-  - Oui. S'il est correctement réglé.
-
-Rusty offre une large gamme de fonctionnalités qui améliorent ses capacités, offrant une plus grande flexibilité pour divers cas d'utilisation.
-L'une de ces fonctionnalités est la possibilité de le régler, vous permettant de personnaliser Rusty en fonction de vos préférences et de vos besoins spécifiques.
+*Un ordonnanceur à classification comportementale avec placement sensible à la topologie. Une notation basée sur EWMA (fréquence de réveil, taux de changement de contexte, variance du temps d'exécution) classe les tâches en trois niveaux — LAT_CRITICAL, INTERACTIVE, BATCH — chacun ayant son propre quantum, ses règles de préemption et son routage DSQ. Le placement est guidé par la résistance effective (R_eff) sur le graphe de topologie CPU, dérivée d'un pseudo-inverse laplacien ; les DSQ par CPU font l'objet d'un vol de travail dans l'ordre de R_eff pour garder les tâches chaudes en cache. Chaque constante temporelle — secours de séjour, cible CoDel, plafond vtime, seuil de longue durée — dérive d'une unique valeur tau (l'inverse de la valeur propre de Fiedler), permettant à l'ordonnanceur de s'auto-calibrer des portables 2 cœurs aux serveurs 32 cœurs et plus sans réglage. Un oscillateur harmonique amorti adapte la cible de blocage CoDel à partir de la pression de secours à chaque tick. Une boucle de contrôle adaptative en Rust à 1 Hz (mise à jour par poids multiplicatifs sur six profils experts) ajuste les paramètres d'ordonnancement à partir de la télémétrie d'histogramme BPF, synchronisée avec l'état de l'oscillateur BPF pour éviter la double correction. Une base de données persistante des processus apprend les classifications des tâches d'un redémarrage à l'autre. Compatible NUMA et hotplug.*
 
 - Cas d'utilisation :
-  - Jeux vidéo
-  - Charges de travail sensibles à la latence
-  - Utilisation bureautique
-  - Production multimédia/audio
-  - Grande interactivité sous des charges de travail intensives
-  - Économie d'énergie
+    - Jeux vidéo
+    - Utilisation bureautique
+    - Production multimédia/audio
+    - Compilation de code
+    - Charges de travail intensives en ZFS / stockage
+    - Charges de travail mixtes
+    - Interactivité sous saturation CPU prolongée
+
+##### Modes du planificateur
+Par défaut (Adaptatif)
+- **Options de ligne de commande :** (aucune — s'exécute en mode adaptatif par défaut)
+- **Description :** Mode adaptatif complet. La boucle de contrôle Rust détecte le régime de charge (LIGHT / MIXED / HEAVY) et ajuste les paramètres d'ordonnancement en temps réel. Idéal pour un usage bureautique général et les jeux vidéo.
+
+###### BPF uniquement
+- **Options de ligne de commande :** `--no-adaptive`
+- **Description :** Désactive la boucle de contrôle adaptative Rust. L'ordonnanceur BPF s'exécute avec des paramètres statiques. Surcharge réduite, utile pour les benchmarks ou si la couche adaptative sur-corrige votre charge de travail.
+
+###### Verbeux / Débogage
+- **Options de ligne de commande :** `-v` ou `--verbose`
+- **Description :** Active une sortie de télémétrie détaillée incluant le nombre de distributions par niveau, les temps de séjour et les statistiques de classification comportementale. Utile pour diagnostiquer le comportement de l'ordonnancement.
 
 ### [scx_p2dq](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_p2dq>)
 
@@ -528,6 +695,44 @@ Le planificateur fonctionne en routant tous les événements de planification à
 * **Options de ligne de commande :** `-f 100`
 * **Description :** Réduit la fréquence à laquelle le planificateur vérifie la contention du CPU pour améliorer le débit au détriment de la réactivité.
 
+### [scx_rustland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland>)
+
+**Développé par : Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Prêt pour la production ? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+
+Pour les scénarios de production critiques en termes de performance, d'autres planificateurs sont susceptibles d'offrir de meilleures performances, car le déport de toutes les décisions de planification vers l'espace utilisateur a un certain coût (même s'il est minime).
+
+Cependant, un planificateur entièrement implémenté en espace utilisateur offre le potentiel d'une intégration transparente avec des bibliothèques sophistiquées, des outils de traçage, des services externes (par ex., l'IA), etc.
+
+Par conséquent, il peut y avoir des situations où les avantages l'emportent sur la surcharge, justifiant l'utilisation de ce planificateur dans un environnement de production.
+
+Partage des similitudes avec bpfland, conçu dans l'intention d'être facile à lire et à comprendre grâce à son implémentation en espace utilisateur.
+
+Gardez à l'esprit qu'il y a un léger désavantage de débit lors de l'utilisation d'un planificateur en espace utilisateur.
+
+- Cas d'utilisation :
+  - Charges de travail à faible latence (Jeux vidéo, visioconférences et streaming en direct)
+  - Utilisation bureautique
+
+### [scx_rusty](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rusty>)
+
+**Développé par : David Vernet (Byte-Lab [GitHub](<https://github.com/Byte-Lab>))**
+
+- Prêt pour la production ? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+  - Oui. S'il est correctement réglé.
+
+Rusty offre une large gamme de fonctionnalités qui améliorent ses capacités, offrant une plus grande flexibilité pour divers cas d'utilisation.
+L'une de ces fonctionnalités est la possibilité de le régler, vous permettant de personnaliser Rusty en fonction de vos préférences et de vos besoins spécifiques.
+
+- Cas d'utilisation :
+  - Jeux vidéo
+  - Charges de travail sensibles à la latence
+  - Utilisation bureautique
+  - Production multimédia/audio
+  - Grande interactivité sous des charges de travail intensives
+  - Économie d'énergie
+
 ## Configuration et tests de performance
 
 ### LAVD Autopilot & Autopower
@@ -604,7 +809,7 @@ Les benchmarks suivants sont inclus :
 - **Comparer les performances des ordonnanceurs**
   - Évaluer les différences de performance entre les ordonnanceurs. Par ex. `BPFLAND vs LAVD`
 - **Mesurer l'effet des mises à jour du noyau ou de l'ordonnanceur**
-  - Comparer les exécutions avant and après l'application de correctifs ou de changements de version pour vérifier les régressions ou les améliorations de performance.
+  - Comparer les exécutions avant et après l'application de correctifs ou de changements de version pour vérifier les régressions ou les améliorations de performance.
 - **Tester les ajustements de configuration**
   - Évaluer l'impact des changements tels que les paramètres du gouverneur CPU, l'activation/désactivation du SMT, ou les drapeaux modifiés de l'ordonnanceur.
 
@@ -833,6 +1038,54 @@ Cliquez ensuite sur le bouton `New benchmark` et remplissez les informations req
 - Accepte les journaux MangoHud et Afterburner.
 - Permet la recherche par titre ou description.
 
+## Configuration de scx_loader
+
+### Définir un ordonnanceur par défaut (au démarrage)
+
+Pour configurer un ordonnanceur afin qu'il démarre automatiquement au lancement de `scx_loader` (par ex., au démarrage du système), suivez ces étapes :
+
+<Steps>
+1. **Copiez le fichier de configuration d'exemple** vers le répertoire de configuration :
+   ```sh
+   sudo mkdir -p /etc/scx_loader
+   sudo cp /usr/share/scx_loader/config.toml /etc/scx_loader/config.toml
+   ```
+
+2. **Modifiez le fichier de configuration** avec votre éditeur préféré :
+   ```sh
+   sudo nano /etc/scx_loader/config.toml
+   ```
+
+3. **Définissez l'ordonnanceur et le mode par défaut**. Par exemple, pour configurer `scx_pandemonium` en mode `Auto` :
+   ```toml
+   # Ce champ spécifie l'ordonnanceur qui sera démarré automatiquement au lancement de scx_loader (par ex., au démarrage).
+   default_sched = "scx_pandemonium"
+
+   # Ce champ spécifie le mode qui sera utilisé au lancement de scx_loader (par ex., au démarrage).
+   default_mode = "Auto"
+   ```
+
+4. **Activez et démarrez le service** :
+   ```sh
+   sudo systemctl enable --now scx_loader.service
+   ```
+</Steps>
+
+#### Ordre de recherche de la configuration
+
+`scx_loader` recherche le fichier de configuration dans l'ordre suivant :
+
+1. `/etc/scx_loader/config.toml` (Recommandé)
+2. `/etc/scx_loader.toml`
+3. `/usr/share/scx_loader/config.toml` (Modèle par défaut)
+4. `/usr/share/scx_loader.toml`
+
+### Personnaliser les arguments de l'ordonnanceur
+
+Vous pouvez personnaliser les arguments passés à chaque ordonnanceur pour différents modes en ajoutant une section `[scheds.scx_name]` à votre fichier de configuration.
+
+Pour des informations détaillées et des exemples sur la configuration des arguments par ordonnanceur, veuillez consulter la [documentation de configuration de scx_loader](https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/configuration.md).
+
 ## Transition de scx.service à scx_loader : Un guide complet
 
 :::caution
@@ -924,6 +1177,14 @@ auto_mode = ["--performance"]
 </Tabs>
 
 ## FAQ
+
+### Il y a tellement d'options... pourquoi ne pas simplement créer un seul ordonnanceur qui soit bon en tout ?
+
+La raison principale est qu'il n'existe pas de solution universelle en matière d'ordonnancement CPU. Différentes charges de travail ont des exigences et des priorités différentes, et un ordonnanceur optimisé pour un type de charge de travail peut ne pas être performant pour un autre.
+
+Vous pouvez voir les ordonnanceurs CPU comme différentes paires de chaussures, chacune conçue pour une activité spécifique. Par exemple, exécuter un jeu sur un ordonnanceur optimisé pour les charges de travail de serveur peut entraîner des performances sous-optimales et une latence accrue, tandis que l'utilisation d'un ordonnanceur conçu pour le jeu sur un serveur peut entraîner une utilisation inefficace des ressources et une baisse du débit.
+
+C'est toute la magie de sched-ext. Les limitations ne sont plus un problème.
 
 ### Pourquoi l'ordonnanceur X est-il moins performant que l'autre ?
 

@@ -1,16 +1,27 @@
 ---
 title: Configuration du démarrage sécurisé
 description: Configurer le démarrage sécurisé avec sbctl après avoir installé CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
 ---
 
 import ImageComponent from '~/components/image-component.astro';
-import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+:::tip[Easy Anti-Cheat]
+Pour jouer à des jeux utilisant Easy Anti-Cheat Linux v2, suivez plutôt le [guide Easy Anti-Cheat](/fr/configuration/easy_anti_cheat).
+Il configure le démarrage sécurisé dès le départ, vous n'avez donc pas besoin de ce guide au préalable. Il enregistre vos propres clés avec
+celles de Microsoft, afin qu'un double démarrage Windows continue de fonctionner. Il utilise également le noyau et systemd-boot signés par CachyOS, qui
+ne doivent pas être signés à nouveau avec vos propres clés.
+:::
 
 ## Pré-configuration
 
 ### Gestionnaire de démarrage GRUB
 
-Si vous utilisez GRUB, exécutez la commande suivante pour activer la prise en charge du **démarrage sécurisé** (Secure Boot) sur GRUB en utilisant les clés CA.
+Si vous utilisez GRUB, exécutez la commande suivante pour activer la prise en charge du démarrage sécurisé sur GRUB en utilisant les clés CA.
 
 ```bash
 sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
@@ -21,8 +32,9 @@ Charger des modules inutiles dans votre gestionnaire de démarrage peut présent
 N'exécutez cette commande que si vous avez réellement besoin du démarrage sécurisé.
 :::
 
-### Accéder au mode de configuration (Setup Mode) dans l'UEFI
-Tout d'abord, nous devons aller dans les paramètres du microprogramme (firmware) et régler le mode de démarrage sur « Setup Mode ». Vous pouvez redémarrer
+### Activer le mode de configuration (Setup Mode) dans l'UEFI
+
+Tout d'abord, nous devons aller dans les paramètres du microprogramme (firmware) et régler le mode de démarrage sécurisé sur « Setup Mode ». Vous pouvez redémarrer
 depuis un système déjà en cours d'exécution vers les paramètres du microprogramme avec la commande suivante.
 
 ```bash
@@ -32,55 +44,89 @@ systemctl reboot --firmware-setup
 <br />
 <ImageComponent imgsrc={import('~/assets/images/ideapad-bios-secure-boot.jpg')} />
 
-Voici à quoi ressemble le BIOS sur un Lenovo Ideapad 5 Pro. Réinitialisez en mode configuration et redémarrez dans le système.
+Voici à quoi ressemble le BIOS sur un Lenovo Ideapad 5 Pro. Réinitialisez en mode configuration ou restaurez les clés d'usine et redémarrez dans le système.
 
-Cependant, certaines cartes mères MSI n'ont pas de mode de configuration. Pour obtenir le même effet, réglez le mode de démarrage sécurisé (Secure Boot Mode) sur « custom » (ceci est important car avec le mode par défaut vous risquez de ne pas pouvoir démarrer CachyOS via le chargeur d'amorçage !). Ensuite, accédez à la section « gestion des clés » et suivez les deux étapes illustrées dans l'image ci-dessous :
+#### Réinitialisation automatique
+
+Sur certaines cartes mères Gigabyte, « reset to setup mode » est immédiatement suivi d'une boîte de dialogue « reset without saving »
+<ImageComponent imgsrc={import('~/assets/images/gigabyte-reset-without-saving.jpg')} />
+celle-ci doit être refusée car elle provoquera une réinitialisation du système puis désactivera le mode de configuration.
+
+À la place, démarrez directement le système d'exploitation (Save & Exit, puis sélectionnez votre chargeur d'amorçage dans Boot Override).
+
+#### Aucun mode de configuration
+
+Certaines cartes mères MSI et ASUS ne disposent pas d'un mode de configuration (Setup Mode).
+
+##### MSI
+
+Réglez le mode de démarrage sécurisé (Secure Boot Mode) sur « custom » et sélectionnez l'option de compatibilité « maximum security » (ceci est important : avec le mode par défaut, vous risquez de ne pas pouvoir démarrer CachyOS depuis votre gestionnaire de démarrage !). Ensuite, accédez à « key management » (gestion des clés) et suivez les deux étapes illustrées dans l'image ci-dessous :
 <br />
 <ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
 
-Certaines cartes mères Asus présentent un comportement similaire à celui des cartes mères MSI mentionnées ci-dessus, car elles ne disposent pas d'un mode de configuration dédié.
+##### ASUS
 
-Accédez au Démarrage (Boot) → Démarrage sécurisé (Secure Boot), réglez le mode de démarrage sur Custom, puis ouvrez la gestion des clés (Key Management) et sélectionnez « Delete all Secure Boot variables ».
+accédez à Boot → Secure Boot, réglez Secure Boot Mode sur Custom, puis ouvrez Key Management et sélectionnez « Delete all Secure Boot Variables ».
 
-## Installation de sbctl & clés d'enregistrement
-[sbctl](https://github.com/Foxboron/sbctl) est un gestionnaire de clés de démarrage sécurisé et convivial, capable de configurer le démarrage sécurisé,
-offrant des fonctionnalités de gestion des clés et assurant le suivi des fichiers qui doivent être signés dans la chaîne de démarrage.
+#### Installation de sbctl et enregistrement des clés
 
-```bash title="Ouvrez un terminal et exécutez la commande suivante"
-sudo pacman -S sbctl
-```
+Avant de continuer, assurez-vous de vérifier si `sbctl` est installé.
 
-### Configuration de sbctl
+[sbctl](https://github.com/Foxboron/sbctl) est un gestionnaire de clés de démarrage sécurisé convivial, capable de configurer le démarrage sécurisé,
+d'offrir des fonctionnalités de gestion des clés et d'assurer le suivi des fichiers qui doivent être signés dans la chaîne de démarrage.
+
+<details>
+    <summary>Comment installer sbctl</summary>
+    ```bash title='Ouvrez un terminal et exécutez la commande suivante'
+    sudo pacman -S sbctl
+    ```
+</details>
+
+Maintenant que `sbctl` est installé, vous devez configurer sbctl et enregistrer vos clés dans le microprogramme. Ce processus est assez simple, suivez simplement les étapes ci-dessous.
+
 <Steps>
-
 1. Vérifiez si le mode de configuration est activé :
     ```bash
     sudo sbctl status
-    Installed:      ✘ sbctl is not installed
-    Setup Mode:     ✘ Enabled
-    Secure Boot     ✘ Disabled
     ```
-
+    <details>
+        <summary>Sortie attendue</summary>
+        ```bash
+        Installed:      ✘ sbctl is not installed
+        Setup Mode:     ✘ Enabled
+        Secure Boot     ✘ Disabled
+        ```
+    </details>
 2. Créez vos clés de démarrage sécurisé personnalisées :
     ```bash
     sudo sbctl create-keys
-    Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-    Creating secure boot keys...✔
-    Secure boot keys created!
     ```
-
-3. Enregistrez vos clés avec les clés de Microsoft et micrologiciel FOE (OEM) :
+    <details>
+        <summary>Exemple de création de clés réussie</summary>
+        ```bash
+        Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Creating secure boot keys...✔
+        Secure boot keys created!
+        ```
+    </details>
+3. Enregistrez vos clés avec les clés de Microsoft et les clés intégrées du microprogramme OEM :
     ```bash
     sudo sbctl enroll-keys --microsoft --firmware-builtin
-    Enrolling keys to EFI variables...✔
-    Enrolled keys to the EFI variables!
     ```
+    <details>
+        <summary>Sortie attendue</summary>
+        ```bash
+        Enrolling keys to EFI variables...✔
+        Enrolled keys to the EFI variables!
+        ```
+    </details>
+
     :::caution[Cartes mères ASUS / Gigabyte — Ne pas utiliser `--firmware-builtin`]
-    Sur certaines cartes mères ASUS et Gigabyte, l'utilisation de la commande `--firmware-builtin` entraîne
+    Sur certaines cartes mères ASUS et Gigabyte, l'utilisation de l'option `--firmware-builtin` entraîne
     la création de doublons dans les variables de clés EFI (p. ex. `builtin-db` apparaît plusieurs
     fois dans `Vendor Keys`).
     Lorsque vous activez ensuite le démarrage sécurisé dans les paramètres UEFI, la carte détecte
-    cette structure de clés incohérente et indique une **Violation** avant que le gestionnaire
+    cette structure de clés incohérente et déclenche une **Secure Boot Violation** avant que le gestionnaire
     de démarrage ne puisse se charger.
 
     Utilisez uniquement `--microsoft` sur les cartes mères ASUS / Gigabyte :
@@ -89,30 +135,38 @@ sudo pacman -S sbctl
     sudo sbctl enroll-keys --microsoft
     ```
 
-    Si `Vendor Keys` affiche `icrosoft builtin-db builtin-db ...`, les clés doivent être
+    Si `Vendor Keys` affiche `microsoft builtin-db builtin-db ...`, les clés doivent être
     réenregistrées. Repassez en mode configuration dans l'UEFI (en supprimant toutes les clés), puis exécutez
     à nouveau `sbctl enroll-keys --microsoft` sans `--firmware-builtin`.
     :::
 
-4. Vérifiez à nouveau l'état de sbctl pour vous assurer que les clés ont bien été enregistrées et que le mode de configuration est désactivé:
+
+4. Vérifiez à nouveau l'état de sbctl pour vous assurer que les clés sont enregistrées et que le mode de configuration est désactivé :
     ```bash
     sudo sbctl status
-    Installed:      ✔ sbctl is installed
-    Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-    Setup Mode:     ✔ Disabled
-    Secure Boot     ✘ Disabled
-    Vendor Keys:    microsoft
     ```
+    <details>
+        <summary>Sortie attendue</summary>
+        ```bash
+        Installed:      ✔ sbctl is installed
+        Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Setup Mode:     ✔ Disabled
+        Secure Boot     ✘ Disabled
+        Vendor Keys:    microsoft
+        ```
+    </details>
 
     :::note[Le mode de configuration indique Activé ?]
-    Si le `mode de configuration` (Setup Mode) montre qu'il est **Activé** (Enabled), accédez aux paramètres du microprogramme et **désactivez temporairement le démarrage sécurisé**. 
-    Redémarrez le système, vérifiez à nouveau l'état de sbctl, continuez avec la [Signature de l'image du noyau et du gestionnaire de démarrage](#signature-de-limage-du-noyau-et-du-gestionnaire-de-démarrage) 
-    (voir ci-dessous), puis redémarrez et réactivez le démarrage sécurisé dans les paramètres du microprogramme.
+    Si `Setup Mode` indique **Enabled** (Activé), accédez aux paramètres du microprogramme et **désactivez temporairement le démarrage sécurisé**.
+    Redémarrez dans le système, vérifiez à nouveau l'état de sbctl, poursuivez avec la [Signature de l'image du noyau et du gestionnaire de démarrage](#signature-de-limage-du-noyau-et-du-gestionnaire-de-démarrage)
+    ci-dessous, puis redémarrez et réactivez le démarrage sécurisé dans les paramètres du microprogramme.
     :::
+
 </Steps>
 
 ## Signature de l'image du noyau et du gestionnaire de démarrage
-<Tabs>
+
+<Tabs syncKey="boot-manager">
 <TabItem label='Limine'>
 Limine est un gestionnaire de démarrage spécial qui permet de vérifier le hachage des images du noyau
 et d'autres fichiers que Limine utilise au démarrage. Si cette option est activée, toute
@@ -139,54 +193,47 @@ Pour activer l'enregistrement automatique de la somme de contrôle de configurat
 ENABLE_ENROLL_LIMINE_CONFIG=yes
 ```
 
-Généreration d'un hachage pour l'image d'accueil de Limine:
-:::note[Si cette étape est ignoré et que le fond d'écran n'est pas haché Limine sera blanc avec un constraste élevé. Les droits d'administrateur sont nécessaires pour effectuer les étapes suivantes. Veillez à utiliser la commande « sudo » ou à passer en mode administrateur avant de continuer.]
+Procédez à la génération d'un hachage pour l'image d'accueil de Limine :
+
+:::note[Des permissions root sont requises pour effectuer les étapes suivantes, assurez-vous d'utiliser sudo ou de passer à l'utilisateur root avant de continuer.]
 :::
 
 <Steps>
 
-1. Vérifiez le nom et le chemin d'accès actuels de l'image de démarrage dans le fichier de configuration :
-    ```sh title="Ouvrez un terminal et exécutez la commande suivante:"
+1. Vérifiez le nom et le chemin d'accès actuels de l'image d'accueil dans le fichier de configuration :
+    ```sh title="Ouvrez un terminal et exécutez la commande suivante :"
     sudo cat /boot/limine.conf
     ```
     Vous devriez voir apparaître une ligne comme celle-ci :
     ```sh
     wallpaper: boot():/limine-splash.png
     ```
-2. Générez un hachage BLAKE2B pour l'image d'accueil et ajoutez-le à la fin du chemin d'accès dans le fichier de configuration :
+2. Générez un hachage BLAKE2B pour l'image d'accueil et ajoutez-le au chemin d'accès dans le fichier de configuration :
     ```sh title="Exécutez la commande suivante en remplaçant le chemin d'accès par celui que vous avez trouvé à l'étape précédente :"
     sudo b2sum /boot/limine-splash.png
     ```
-    Cela produira un hachage similaire à celui de l'exemple ci-dessous :
+    Cela produira un hachage comme dans cet exemple :
     ```sh
-    # Le code suivant est un exemple
     75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
     ```
-3. Après avoir copié le hachage nouvellement généré à l'étape précédente, ouvrez le fichier de configuration à l'aide d'un éditeur de texte (ex : `sudo nano /boot/limine.conf` CTRL + O pour sauvegarder, Entrée pour valider, CTRL + X pour fermer) et ajoutez le hachage à la fin du chemin d'accès de l'image d'accueil, comme suit :
+3. Après avoir copié le hachage nouvellement généré à l'étape précédente, ouvrez le fichier de configuration avec un éditeur de texte et ajoutez le hachage au chemin d'accès de l'image d'accueil, comme ceci :
     :::note[N'utilisez pas l'exemple de hachage ci-dessus ; veillez à utiliser celui que vous avez généré à l'étape précédente.]
     :::
     ```sh
     wallpaper: boot():/limine-splash.png#75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
     ```
-    Le hachage est ajouté à la fin du chemin d'accès à l'aide du symbole `#`. Enregistrez le fichier après avoir effectué cette modification.
+    Comme vous pouvez le voir, le hachage est ajouté au chemin d'accès à l'aide du symbole `#`. Enregistrez le fichier après avoir effectué cette modification.
 
 </Steps>
 
-Après avoir activé l'enregistrement de la somme de contrôle de configuration et généré le hachage de l'image de démarrage, exécutez les commandes suivantes pour enregistrer la somme de contrôle de configuration et signer le fichier binaire EFI de Limine :
+Après avoir activé l'enregistrement de la somme de contrôle de configuration et généré le hachage de l'image d'accueil, exécutez les commandes suivantes pour enregistrer la somme de contrôle de configuration et signer le binaire EFI de Limine :
 
 ```sh
 # Utilisez limine-enroll-config pour enregistrer la somme de contrôle de configuration et signer le binaire EFI de Limine
 # Ceci utilise sbctl en arrière-plan
 sudo limine-enroll-config
 sudo limine-update
-
-# En cas de problème et malgré le fait que Limine possède un processus de démarrage différent, dans certains cas l'erreur "Secure Boot Violation - Invalid signature detected" peut survenir. Cela est possiblement dû à BOOTX64.EFI qui n'est pas signé :
-sudo sbctl verify # Pour vérifier
-sudo sbctl sign -s /boot/EFI/BOOT/BOOTX64.EFI # Pour signer BOOTX64.EFI
 ```
-
-Maintenant que tous les fichiers sont signés. **Redémarrez votre système et allez dans vos paramètres UEFI pour activer le démarrage sécurisé.**
-
 </TabItem>
 <TabItem label='systemd-boot'>
 
@@ -221,27 +268,27 @@ Verifying file database and EFI images in /boot...
 
 Maintenant que tous les fichiers sont signés. **Redémarrez votre système et allez dans vos paramètres UEFI pour activer le démarrage sécurisé.**
 
-:::caution[Cartes mères ASUS — Activaction du démarrage sécurisé]
+:::caution[Cartes mères ASUS — Activation du démarrage sécurisé]
 Certaines cartes mères ASUS se comportent différemment de celles d'autres fabricants lors de l'activation du démarrage sécurisé :
 
-- **Utilisez le `Mode UEFI Windows`, et non `Autre SE` :**
-  Ce nom est trompeur : ce paramètre sert simplement à déterminer si le démarrage sécurisé est activé.
-  Paramétrez le `Type de SE` à `Autre SE` **désactive activement** le démarrage sécurisé sur les cartes mères ASUS,
+- **Utilisez `Windows UEFI Mode`, et non `Other OS` :**
+  Ce nom est trompeur : ce paramètre détermine simplement si le démarrage sécurisé est appliqué.
+  Régler `OS Type` sur `Other OS` **désactive activement** le démarrage sécurisé sur les cartes mères ASUS,
   quels que soient les autres paramètres. `sbctl status` continuera d'afficher
   `Secure Boot: Disabled` même après un redémarrage.
 
-- Certaines cartes mères ASUS **ne disposent pas d'un bouton dédié pour activer ou désactiver le démarrage sécurisé**.
-  Le démarrage sécurisé est activé implicitement en sélectionnant « Mode Windows UEFI ».
+- **Il n'y a pas de bouton marche/arrêt distinct pour le démarrage sécurisé** sur certaines cartes mères ASUS.
+  Le démarrage sécurisé est activé implicitement en sélectionnant `Windows UEFI Mode`.
 
-Dans ce cas, la configuration correcte du BIOS ASUS pour activer le démarrage sécurisé est la suivante :
+Dans ce cas, la configuration correcte du BIOS ASUS pour activer le démarrage sécurisé est :
 ```
-Démarrage → Démarrage sécurisé
-  Type de système d'exploitation  → Mode UEFI Windows
-  Secure Boot Mode                → Custom
+Boot → Secure Boot
+  OS Type          → Windows UEFI Mode
+  Secure Boot Mode → Custom
 ```
 :::
 
-Consultez [cette partie comme référence](/configuration/secure_boot_setup/#accéder-au-mode-de-configuration-setup-mode-dans-luefi)
+Consultez [cette partie comme référence](/fr/configuration/secure_boot_setup#activer-le-mode-de-configuration-setup-mode-dans-luefi)
 
 Notez qu'il s'agit d'un processus unique, car la signature des fichiers avec l'option `-s` enregistrera ces fichiers dans la base de données de `sbctl`.
 
@@ -251,12 +298,44 @@ tous les nouveaux fichiers lors d'une mise à jour du noyau ou du gestionnaire d
 :::
 
 CachyOS utilise `systemd-boot-update.service` fourni par systemd pour mettre à jour le gestionnaire de démarrage au redémarrage. Cela signifie que le hook pacman
-de `sbctl` ne signera **pas** les binaires EFI mis à jour. Pour contourner ce problème, nous pouvons signer le gestionnaire de démarrage directement.
+de `sbctl` ne signera **pas** les binaires EFI mis à jour. Pour contourner ce problème, nous pouvons signer le gestionnaire de démarrage directement
 
 ```sh
 sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
 ```
 
+:::note
+Ignorez cette étape si vous utilisez la [configuration Easy Anti-Cheat](/fr/configuration/easy_anti_cheat). Dans ce cas, `systemd-boot-cachyos-signed`
+fournit un systemd-boot signé par CachyOS.
+:::
+</TabItem>
+<TabItem label='rEFInd'>
+
+rEFInd démarre les noyaux via le microprogramme, le microprogramme vérifie donc les signatures de rEFInd et de chaque
+noyau. Ces étapes concernent les installations où la partition système EFI est montée sur `/boot`, ce qui correspond à la façon dont
+l'installateur de CachyOS configure rEFInd. `bootctl --print-esp-path` doit afficher `/boot`.
+
+Signez rEFInd et vos noyaux. La commande `find` ignore le noyau pour
+[Easy Anti-Cheat](/fr/configuration/easy_anti_cheat), qui est déjà signé par CachyOS :
+
+```bash
+sudo sbctl sign -s /boot/EFI/refind/refind_x64.efi
+sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+sudo sbctl verify
+```
+
+`sbctl verify` doit indiquer que rEFInd et chacun de vos noyaux sont signés. Si vous utilisez Easy Anti-Cheat, il indique également
+`vmlinuz-linux-cachyos-eac` et `EFI/cachyos-eac/systemd-bootx64.efi` comme non signés. C'est normal, ils sont
+signés par CachyOS. **Ne les signez pas**, sinon EAC ne les acceptera plus. Ensuite, **redémarrez dans vos paramètres UEFI
+et activez le démarrage sécurisé.** Sur les cartes mères ASUS, consultez les notes dans l'onglet systemd-boot.
+
+L'option `-s` enregistre les fichiers dans la base de données de `sbctl`, et son hook pacman signe à nouveau les noyaux après les mises à jour.
+pacman ne met pas à jour rEFInd sur la partition système EFI. Si vous exécutez `refind-install` vous-même, signez-le à nouveau
+ensuite :
+
+```bash
+sudo sbctl sign-all
+```
 </TabItem>
 </Tabs>
 
@@ -280,6 +359,21 @@ System:
   TPM2 Support: yes
   Measured UKI: no
   Boot into FW: supported
+```
+
+## Fwupd
+
+Pour utiliser `fwupd` avec le démarrage sécurisé activé, signez l'exécutable UEFI :
+
+```sh
+sudo sbctl sign -s -o /usr/lib/fwupd/efi/fwupdx64.efi.signed /usr/lib/fwupd/efi/fwupdx64.efi
+```
+
+Et ajoutez ce qui suit à `/etc/fwupd/fwupd.conf` :
+
+```sh
+[uefi_capsule]
+DisableShimForSecureBoot=true
 ```
 
 ## Liens et crédits

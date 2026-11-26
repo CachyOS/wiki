@@ -1,6 +1,6 @@
 ---
 title: Systèmes de fichiers
-description: Description et recommandations pour les systèmes de fichiers disponibles. (ext4, f2fs, btrfs, xfs, zfs, bcachefs)
+description: Description et recommandations pour les systèmes de fichiers disponibles. (ext4, f2fs, btrfs, xfs, zfs)
 ---
 
 CachyOS propose 5 systèmes de fichiers différents pour permettre à l'utilisateur de choisir celui qui correspond le mieux à ses besoins. Ce qui suit présentera les avantages, les inconvénients et les recommandations pour chaque système de fichiers. Chaque système de fichiers est fourni avec ses prérequis/utilitaires préinstallés sur CachyOS.
@@ -153,5 +153,4 @@ L'utilitaire principal pour f2fs est `f2fs-tools`
 
 ## En résumé
 
-Utilisez le système de fichiers par défaut **BTRFS** car il est considéré comme stable et possède de nombreuses fonctionnalités intéressantes (instantanés, compression, etc). Utilisez **XFS** ou **EXT4** pour un système de fichiers simple
-et rapide.
+Utilisez le système de fichiers par défaut **BTRFS** car il est considéré comme stable et possède de nombreuses fonctionnalités intéressantes (instantanés, compression, etc.). Utilisez **XFS** ou **EXT4** pour un système de fichiers simple et rapide.
