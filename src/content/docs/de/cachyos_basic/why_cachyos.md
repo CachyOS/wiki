@@ -20,7 +20,7 @@ Für einen tieferen Einblick in unsere optimierten Repositories, schau dir unser
 
 Neben dem CachyOS-Basiskernel-Patch-Set, das verschiedene Kernel-Parameter anpasst, um die Reaktionsfähigkeit des Desktops zu verbessern, pickt sich CachyOS gezielt Patch-Sets heraus, die noch nicht im Mainline-Kernel gelandet sind oder nicht in der stabilen Version des Kernels enthalten sind.
 
-Deshalb durchlaufen diese Patches interne Tests, bevor sie an die Nutzer freigegeben werden, um sicherzustellen, dass die Stabilität nicht beeinträchtigt wird. Eine vollständige Liste der von CachyOS bereitgestellten Patches findest du unter [Kernel](/features/kernel).
+Deshalb durchlaufen diese Patches interne Tests, bevor sie an die Nutzer freigegeben werden, um sicherzustellen, dass die Stabilität nicht beeinträchtigt wird. Eine vollständige Liste der von CachyOS bereitgestellten Patches findest du unter [Kernel](/de/features/kernel).
 
 ### Unterstützung für fortschrittliche CPU-Scheduler
 
@@ -45,7 +45,7 @@ Der CachyOS-Installer lässt dich dein System anpassen, indem du die Desktop-Umg
 
 - [Desktop-Umgebungen](/de/installation/desktop_environments/)
 - [Boot-Manager](/de/installation/boot_managers/)
-- [Kernel-Varianten](/de/features/kernel#variants)
+- [Kernel-Varianten](/de/features/kernel#varianten)
 - [Dateisysteme](/de/installation/filesystem)
 - [Benutzerdefinierte Pakete, die während der Installation eingeschlossen werden sollen](https://github.com/CachyOS/cachyos-calamares/blob/cachyos-limine-qt6/src/modules/netinstall/netinstall.yaml)
 

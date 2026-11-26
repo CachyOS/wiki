@@ -308,6 +308,34 @@ sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/
 Dort stellt `systemd-boot-cachyos-signed` ein von CachyOS signiertes systemd-boot bereit.
 :::
 </TabItem>
+<TabItem label='rEFInd'>
+
+rEFInd startet die Kernel über die Firmware, sodass die Firmware die Signaturen von rEFInd und jedem einzelnen
+Kernel überprüft. Diese Schritte gelten für Installationen, bei denen die EFI-Systempartition unter `/boot` eingehängt ist, was der
+Standardeinrichtung von rEFInd durch den CachyOS-Installer entspricht. `bootctl --print-esp-path` muss `/boot` ausgeben.
+
+Signiere rEFInd und deine Kernel. Der `find`-Befehl überspringt den Kernel für
+[Easy Anti-Cheat](/de/configuration/easy_anti_cheat), der bereits von CachyOS signiert ist:
+
+```bash
+sudo sbctl sign -s /boot/EFI/refind/refind_x64.efi
+sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+sudo sbctl verify
+```
+
+`sbctl verify` muss rEFInd und jeden deiner Kernel als signiert auflisten. Wenn du Easy Anti-Cheat verwendest, werden außerdem
+`vmlinuz-linux-cachyos-eac` und `EFI/cachyos-eac/systemd-bootx64.efi` als nicht signiert aufgeführt. Das ist zu erwarten, da sie
+von CachyOS signiert sind. **Signiere sie nicht**, da EAC sie sonst nicht mehr akzeptiert. **Starte anschließend dein System neu,
+gehe in deine UEFI-Einstellungen und aktiviere Secure Boot.** Bei ASUS-Mainboards beachte die Hinweise im Tab systemd-boot.
+
+Das `-s`-Flag speichert die Dateien in der Datenbank von `sbctl`, und der zugehörige Pacman-Hook signiert die Kernel nach Updates erneut.
+pacman aktualisiert rEFInd auf der EFI-Systempartition nicht. Wenn du `refind-install` selbst ausführst, signiere es
+anschließend erneut:
+
+```bash
+sudo sbctl sign-all
+```
+</TabItem>
 </Tabs>
 
 ## Secure Boot Status prüfen

@@ -5,7 +5,7 @@ description: Binde zusätzliche statische Laufwerke beim Start ein, indem du ent
 
 import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
-Diese Anleitung beschreibt die Grundlagen der Verwendung von sowohl Systemd Mount-Dateien, als auch der fstab-Datei in /etc/, um statische Laufwerke beim Hochfahren einzubinden. Sie erklärt kurz, wie du die UUID einer Partition oder eines Laufwerks findest, was einige Optionen bewirken und wo du weiterlesen kannst, falls die bereitgestellten Informationen nicht ausreichen.
+Diese Anleitung beschreibt die Grundlagen der Verwendung sowohl von Systemd-Mount-Dateien als auch der fstab-Datei in /etc/, um statische Laufwerke beim Hochfahren einzubinden. Sie erklärt kurz, wie du die UUID einer Partition oder eines Laufwerks findest, was einige Optionen bewirken und wo du weiterlesen kannst, falls die bereitgestellten Informationen nicht ausreichen.
 
 ## Voraussetzungen
 
@@ -15,7 +15,7 @@ Diese Anleitung beschreibt die Grundlagen der Verwendung von sowohl Systemd Moun
 Das NTFS-Dateisystem kann unter Linux instabil sein, egal ob du den ntfs-, ntfs3- oder ntfs-3g-Treiber verwendest. Die Nutzung erfolgt auf eigene Gefahr. Für bessere Stabilität und Leistung solltest du native Linux-Dateisysteme wie ext4, xfs oder btrfs in Betracht ziehen.
 :::
 
-## 1. Die sicherere und einsteigerfreundlichere Methode: Laufwerke mit Systemd Mount-Dateien einbinden
+## Sicherere und einsteigerfreundlichere Methode: Laufwerke mit Systemd-Mount-Dateien einbinden
 
 Der Vorteil des Einbindens über Systemd ist, dass selbst wenn du etwas falsch in deiner Mount-Datei machst, dein System trotzdem startet. Ein Fehler in der fstab-Datei hingegen kann dein System unstartbar machen.
 
@@ -71,10 +71,10 @@ Sobald du dir sicher bist, die richtige Partition gefunden zu haben, kopiere die
 ### 3. Erstellen der Systemd Mount-Datei
 Angenommen, wir möchten dieses Laufwerk hauptsächlich für Spiele nutzen, wäre ein geeigneter Einhängepunkt dafür das Home-Verzeichnis des Benutzers. Der Ort ist zwar frei wählbar, aber der Einfachheit halber entscheiden wir uns für `/home/user` (ersetze dabei `user` durch deinen Linux-Benutzernamen). Dies ist wichtig, da der Pfad des Einhängepunkts den Namen der Systemd Mount-Datei bestimmt. Da das Laufwerk für Spiele gedacht ist, binden wir es in den Ordner `games` im Home-Verzeichnis ein: `/home/user/games`.
 
-Für Systemd bedeutet dies, dass die Mount-Datei `home-user-games.mount` heißen muss (Schrägstriche `/` werden durch Bindestriche `-` ersetzt). Systemd Mount-Dateien werden immer im Verzeichnis `/etc/systemd/system` abgelegt.
+Für Systemd bedeutet dies, dass die Mount-Datei `home-$USER-games.mount` heißen muss (Schrägstriche `/` werden durch Bindestriche `-` ersetzt). Systemd-Mount-Dateien werden immer im Verzeichnis `/etc/systemd/system` abgelegt.
 
 :::tip
-Wenn du im Namen deines Mount-Ordners ein Leerzeichen, einen Bindestrich, ein CJK-Zeichen oder ein Zeichen mit Akzent verwenden möchten, muss dieser anders formatiert werden. Angenommen du möchtest den Ordnerpfad `/home/grzegorz/brzęczyszczykiewicz` verwenden, führe das folgende Kommando aus, um den Namen zu erhalten, den du für die Datei benötigst:
+Wenn du im Namen deines Mount-Ordners ein Leerzeichen, einen Bindestrich, ein CJK-Zeichen oder ein Zeichen mit Akzent verwenden möchtest, muss dieser anders formatiert werden. Angenommen du möchtest den Ordnerpfad `/home/grzegorz/brzęczyszczykiewicz` verwenden, führe das folgende Kommando aus, um den Namen zu erhalten, den du für die Datei benötigst:
 ```bash
 systemd-escape -p --suffix=mount "/home/grzegorz/brzęczyszczykiewicz"
 ```
@@ -91,7 +91,7 @@ Wenn du das Verzeichnis in deinem Benutzer-Home-Verzeichnis einbindest, kannst d
 :::
 
 Kopiere diese Vorlage in die leere Datei:
-```
+```ini
 [Unit]
 Description=
 
@@ -114,7 +114,7 @@ Unten findest du Beschreibungen für jedes Feld in der Datei:
   Füge die zuvor kopierte UUID ein. Hier lautet sie `UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9`.
   </TabItem>
   <TabItem label= 'Where'>
-  Dies ist der Einhängepunkt. Falls der Ordner noch nicht existiert, wird er erstellt. In diesem Fall lautet der Pfad `/home/user/games`. Ersetze "user" mit deinem Benutzernamen, wenn dein Home Ordner der Einhängepunkt ist.
+  Dies ist der Einhängepunkt. Falls der Ordner noch nicht existiert, wird er erstellt. In diesem Fall lautet der Pfad `/home/user/games`. Ersetze "user" durch deinen Benutzernamen, wenn du das Laufwerk in deinem Home-Ordner einbindest.
   </TabItem>
   <TabItem label= 'Type'>
   Typ des Dateisystems, in diesem Fall `ext4`.
@@ -126,9 +126,9 @@ Unten findest du Beschreibungen für jedes Feld in der Datei:
 ---
 
 Wenn wir dem Beispiel folgen, sollte die ausgefüllte Mount-Datei wie folgt aussehen:
-```
+```ini
 [Unit]
-Description="games" Festplatte einhängen (/home/user/games)
+Description=Mount games drive (/home/user/games)
 
 [Mount]
 What=UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9
@@ -143,14 +143,14 @@ WantedBy=multi-user.target
 ### 4. Fertigstellung
 Um die Festplatte, für die wir gerade den Eintrag erstellt haben, einzuhängen, führe die folgenden Kommandos aus:
 
-```
-1. sudo systemctl daemon-reload
-2. sudo systemctl enable --now home-§USER-games.mount
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now home-$USER-games.mount
 ```
 
-Du solltest den Ordner sehen, den Du als Einhängepunkt gewählt hast und kannst den Status des Einhängepunkts mit `systemctl status home-$USER-games.mount` überprüfen:
+Du solltest den Ordner sehen, den du als Einhängepunkt gewählt hast, und kannst den Status des Einhängepunkts mit `systemctl status home-$USER-games.mount` überprüfen:
 
-```
+```sh
 ● home-user-games.mount - Mount games drive (/home/user/games)
      Loaded: loaded (/proc/self/mountinfo; enabled; preset: disabled)
      Active: active (mounted) since Sat 2026-05-02 13:02:31 CDT; 23h ago
@@ -174,7 +174,7 @@ May 02 13:02:31 cachyos systemd[1]: Mounted Mount games drive (/home/user/games)
 lsblk -f
 ```
 
-- Erstelle die Mount-File
+- Erstelle die Mount-Datei
 
 ```sh
 micro /etc/systemd/system/mnt-foo.mount
@@ -182,11 +182,11 @@ micro /etc/systemd/system/mnt-foo.mount
 
 Ersetze `mnt-foo` durch den vollständigen Pfad des Einhängepunkts, wobei du den Schrägstrich `/` durch einen Bindestrich `-` ersetzen musst.
 
-- Fülle die Mount-File aus
+- Fülle die Mount-Datei aus
 
 ```sh
 [Unit]
-Description=Mount-Drive
+Description=Mount drive
 
 [Mount]
 What=UUID=<partition UUID>
@@ -200,7 +200,7 @@ WantedBy=multi-user.target
 
 Ersetze `<partition UUID>`, `/mnt/foo` und `somefs` durch deine UUID, dein Verzeichnis und dein Dateisystem (z. B. ext4) und füge nach `defaults` bei Bedarf weitere Optionen hinzu, wie etwa `_netdev` für ein NAS oder `nofail` für nicht kritische Laufwerke.
 
-- Starte den daemon neu
+- Lade deinen Daemon neu
 
 ```sh
 sudo systemctl daemon-reload
@@ -215,15 +215,15 @@ sudo systemctl enable --now mnt-foo.mount
 ### Zusätzliche Lektüre
 
 - [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
-- [FHS on /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
-- [Manual for dump](<https://linux.die.net/man/8/dump>)
-- [Manual for fsck](https://man.archlinux.org/man/fsck.8)
+- [FHS zu /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Handbuch für dump](<https://linux.die.net/man/8/dump>)
+- [Handbuch für fsck](https://man.archlinux.org/man/fsck.8)
 - [systemd-mount](https://manual.siduction.org/systemd-mount_en.html)
 
 ## Methode für Fortgeschrittene: Einträge zu /etc/fstab hinzufügen
 
 :::danger
-Die Datei „fstab“ wird beim Systemstart eingelesen; enthält sie Fehler, kann dies dazu führen, dass das System nicht mehr startet. Überprüfe den Eintrag daher unbedingt sorgfältig auf Tippfehler, bevor du das System neustartest. Sollte dir dennoch ein Fehler unterlaufen, lässt sich dieser normalerweise beheben, indem du eine Live-Umgebung startest und per [chroot auf deine Installation zugreifst](/features/cachy_chroot), um die Datei zu bearbeiten.
+Die Datei „fstab“ wird beim Systemstart eingelesen; enthält sie Fehler, kann dies dazu führen, dass das System nicht mehr startet. Überprüfe den Eintrag daher unbedingt sorgfältig auf Tippfehler, bevor du das System neustartest. Sollte dir dennoch ein Fehler unterlaufen, lässt sich dieser normalerweise beheben, indem du eine Live-Umgebung startest und per [chroot auf deine Installation zugreifst](/de/features/cachy_chroot), um die Datei zu bearbeiten.
 :::
 
 ### 1. Liste die UUIDs deiner Partitionen auf
