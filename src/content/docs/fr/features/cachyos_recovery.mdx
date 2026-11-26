@@ -1,0 +1,387 @@
+---
+title: CachyOS Recovery
+description: Démarrez, restaurez et réparez votre système depuis un environnement de récupération dans le menu de démarrage
+tableOfContents:
+  minHeadingLevel: 2
+  maxHeadingLevel: 3
+ai_translated: true
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+[CachyOS Recovery](https://github.com/CachyOS/cachyos-recovery) est un petit système de récupération installé à côté de
+vos noyaux et lancé depuis le menu de démarrage. Lorsqu'une mise à jour ou une modification de configuration casse votre
+système, vous pouvez l'utiliser sans clé USB live pour :
+
+- **démarrer un instantané Btrfs** afin de vérifier s'il fonctionne, sans modifier votre système,
+- **restaurer** un instantané de manière permanente, y compris les noyaux et fichiers de démarrage correspondants,
+- **ouvrir votre système installé dans un conteneur** pour le réparer manuellement.
+
+L'environnement de récupération occupe environ 70 Mo. Il ne dépend pas de l'état de votre système installé, et fonctionne
+donc même lorsque le système lui-même ne démarre plus.
+
+:::caution
+Les instantanés ne sont pas des sauvegardes. Ils résident sur le même disque que votre système et ne vous protègent pas
+contre les pannes matérielles ou la suppression accidentelle de fichiers dans `/home`. Effectuez régulièrement des
+sauvegardes de vos données importantes.
+:::
+
+## Prérequis
+
+La récupération démarre sur toute installation CachyOS disposant d'un système de fichiers racine Btrfs, ext4, XFS ou F2FS.
+Les actions liées aux instantanés nécessitent en plus :
+
+- Un système de fichiers racine **Btrfs** avec la racine sur le sous-volume `@`, tel que configuré par l'installateur de CachyOS.
+- Des **instantanés en lecture seule** du sous-volume racine. Snapper les crée par défaut, et grâce au paquet
+  `cachyos-snapper-support`, CachyOS en prend automatiquement avant et après chaque transaction `pacman`. Les installations
+  avec systemd-boot ne disposent pas encore de ce paquet, consultez
+  ["No snapshots were found"](#no-snapshots-were-found). Voir également [Instantanés Btrfs](/fr/configuration/btrfs_snapshots).
+- **mkinitcpio** comme générateur d'initramfs, ce qui est la valeur par défaut sur CachyOS.
+
+Sur les systèmes UEFI, la partition système EFI doit être listée dans `/etc/fstab` avec le type `vfat` et montée sur
+`/boot`, `/efi` ou `/boot/efi`.
+
+Si la partition système EFI est montée sur `/boot`, une restauration régénère également les noyaux, les images initramfs
+et la configuration du gestionnaire de démarrage pour **Limine**, **systemd-boot** (avec `sdboot-manage`) et **GRUB**.
+**rEFInd** ne nécessite pas de mise à jour de configuration. Lorsque la partition système EFI est montée sur `/efi` ou
+`/boot/efi`, ainsi que sur les systèmes BIOS où `/boot` fait partie du système de fichiers racine, les noyaux sont
+inclus dans l'instantané et sont restaurés avec celui-ci.
+
+### Disques chiffrés et disposition du clavier
+
+Les disques chiffrés avec **LUKS** sont pris en charge. Si votre disque n'est pas encore déverrouillé, la récupération
+vous demandera votre phrase secrète LUKS au démarrage. Gardez votre phrase secrète à portée de main, même si vous
+déverrouillez habituellement le disque via TPM2 ou FIDO2.
+
+La récupération utilise toujours la **disposition de clavier américaine (US)**, y compris pour votre phrase secrète et
+pour vous connecter au chroot. Si votre phrase secrète ou votre mot de passe contient des caractères situés à des
+emplacements différents sur votre clavier, saisissez-les comme sur un clavier US.
+
+## Installation
+
+<Tabs syncKey="firmware">
+  <TabItem label="UEFI">
+    ```bash
+    sudo pacman -S cachyos-recovery
+    ```
+
+    Lors de l'installation, un hook pacman configure l'ensemble automatiquement :
+
+    - Il copie l'image de récupération vers `EFI/Linux/cachyos-recovery.efi` sur votre partition système EFI.
+    - Il écrit l'emplacement de votre système de fichiers racine (et du périphérique LUKS, le cas échéant) dans un petit
+      module complémentaire à côté de l'image, `EFI/Linux/cachyos-recovery.efi.extra.d/root.addon.efi`.
+    - Il signe les deux fichiers avec `sbctl` lorsque le démarrage sécurisé est configuré avec `sbctl` (voir [Démarrage sécurisé](#démarrage-sécurisé)).
+    - Avec **Limine**, il ajoute une entrée **CachyOS Recovery** au menu de démarrage.
+    - Avec **GRUB**, il écrit une entrée **CachyOS Recovery** dans `/etc/grub.d/50-cachyos-recovery` et régénère la
+      configuration de GRUB.
+    - Il ajoute une entrée **CachyOS Recovery** au menu de démarrage de votre microprogramme (nécessite `efibootmgr`).
+      L'entrée est ajoutée à la fin de l'ordre de démarrage afin que votre gestionnaire de démarrage habituel reste celui par défaut.
+
+    **systemd-boot** liste automatiquement les images présentes dans `EFI/Linux`, et **rEFInd** détecte l'image lorsqu'il
+    analyse la partition système EFI. Avec d'autres gestionnaires de démarrage, lancez la récupération depuis le menu de
+    démarrage de votre microprogramme.
+  </TabItem>
+  <TabItem label="BIOS">
+    ```bash
+    sudo pacman -S cachyos-recovery-legacy
+    ```
+
+    Lors de l'installation, un hook pacman ajoute une entrée **CachyOS Recovery** au menu de démarrage de **Limine** ou
+    **GRUB**. Pour GRUB, il copie le noyau et l'initramfs de récupération vers `/boot/cachyos-recovery.vmlinuz` et
+    `/boot/cachyos-recovery.initrd`, écrit l'entrée dans `/etc/grub.d/50-cachyos-recovery` et régénère la configuration
+    de GRUB.
+
+    `cachyos-recovery` et `cachyos-recovery-legacy` ne peuvent pas être installés simultanément. N'installez pas
+    `cachyos-recovery` sur un système BIOS, car il ne contient que l'image UEFI.
+  </TabItem>
+</Tabs>
+
+Le hook s'exécute à nouveau à chaque mise à jour du paquet. Si vous modifiez l'emplacement d'installation de votre
+système, par exemple après un transfert vers un nouveau disque ou la mise en place d'un chiffrement, réinstallez le paquet
+afin que la récupération retrouve votre système de fichiers racine : `sudo pacman -S cachyos-recovery` sur UEFI,
+`sudo pacman -S cachyos-recovery-legacy` sur BIOS.
+
+Installez et réinstallez le paquet depuis votre système démarré normalement. Il ne peut pas détecter votre système de
+fichiers racine lorsque vous êtes démarré dans un instantané.
+
+### Démarrage sécurisé
+
+Si vous avez configuré le démarrage sécurisé (Secure Boot) avec `sbctl` comme décrit dans [Configuration du démarrage sécurisé](/fr/configuration/secure_boot_setup),
+l'image de récupération et son module complémentaire sont signés automatiquement. Cela se produit lorsque :
+
+- `sbctl` est installé et a créé ses clés,
+- le démarrage sécurisé est activé et le microprogramme n'est pas en mode configuration (Setup Mode),
+- vos clés sont enregistrées.
+
+Vous pouvez vérifier les signatures avec :
+
+```bash
+sudo sbctl verify | grep cachyos-recovery
+```
+
+Si les fichiers ne sont pas signés, par exemple parce que vous avez activé le démarrage sécurisé après avoir installé le
+paquet, supprimez l'image de récupération et réinstallez le paquet. Une simple réinstallation ne suffit pas, car le hook
+ne recopie pas et ne resigne pas l'image si elle est déjà présente et inchangée sur la partition système EFI.
+
+```bash
+sudo rm /boot/EFI/Linux/cachyos-recovery.efi
+sudo pacman -S cachyos-recovery
+```
+
+Adaptez le chemin si votre partition système EFI est montée sur `/efi` ou `/boot/efi`. Le hook signe alors les deux
+fichiers et, avec Limine, met à jour l'entrée du menu de démarrage.
+
+:::caution
+Lorsque le démarrage sécurisé est activé, le microprogramme refuse de démarrer une image de récupération non signée et
+Limine affiche une erreur au lieu du menu de récupération. Si Limine est configuré pour mémoriser la dernière entrée
+sélectionnée, choisissez une autre entrée dans le menu de démarrage pour démarrer votre système à nouveau, puis signez
+les fichiers.
+:::
+
+## Démarrer la récupération
+
+<Steps>
+1. Redémarrez votre ordinateur.
+2. Sélectionnez **CachyOS Recovery** dans votre menu de démarrage. Si votre gestionnaire de démarrage ne propose pas cette
+   entrée, ouvrez le menu de démarrage de votre microprogramme (généralement <kbd>F8</kbd>, <kbd>F11</kbd> ou <kbd>F12</kbd>
+   au démarrage) et sélectionnez **CachyOS Recovery** à cet endroit.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-limine-entry.png')} />
+3. Si votre disque est chiffré, saisissez votre phrase secrète LUKS. Vous disposez de cinq tentatives.
+4. Le menu de récupération s'ouvre.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-main-menu.png')} />
+</Steps>
+
+Utilisez les touches fléchées et <kbd>Enter</kbd> pour sélectionner une entrée, et <kbd>Esc</kbd> pour revenir en arrière.
+Dans les listes, vous pouvez saisir du texte pour filtrer les entrées. Le cadre en bas décrit l'action sélectionnée.
+
+La récupération monte votre système en lecture seule. Rien sur votre disque n'est modifié tant que vous ne lancez pas une
+restauration ou n'effectuez pas de modifications dans le chroot.
+
+| Action | Ce qu'elle fait |
+| --- | --- |
+| **Boot Btrfs snapshot** | Démarre un instantané avec une racine temporaire accessible en écriture. Première étape recommandée. |
+| **Rollback Btrfs snapshot** | Restaure un instantané de façon permanente. |
+| **Chroot into target system** | Lance votre système installé dans un conteneur, pour les utilisateurs expérimentés. |
+| **Reboot** | Redémarre l'ordinateur. |
+
+Les deux actions liées aux instantanés ne s'affichent que lorsque votre système de fichiers racine est en Btrfs.
+
+## Démarrer un instantané
+
+Démarrer un instantané est le moyen le plus sûr de retrouver un état fonctionnel. Vous utilisez l'instantané comme votre
+système normal, et rien n'est restauré tant que vous n'avez pas décidé de le conserver.
+
+<Steps>
+1. Sélectionnez **Boot Btrfs snapshot**.
+2. Sélectionnez un instantané. La liste affiche l'identifiant du sous-volume Btrfs et la date de création en UTC. À droite,
+   vous pouvez voir le chemin de l'instantané et, pour les instantanés Snapper, sa description et son type. Choisissez un
+   instantané de votre système de fichiers racine. Son chemin ressemble à `.snapshots/<number>/snapshot`.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-snapshot-list.png')} />
+3. Sélectionnez le noyau à démarrer. Seuls les noyaux installés dans cet instantané sont listés.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-kernel-picker.png')} />
+4. La récupération prépare l'instantané et le démarre. Votre système démarre comme d'habitude. Avec un disque chiffré,
+   il se peut que votre phrase secrète vous soit demandée une nouvelle fois.
+</Steps>
+
+Lorsque vous êtes démarré dans un instantané :
+
+- Les modifications apportées au système (tout ce qui se trouve sur le sous-volume racine) sont conservées en mémoire et
+  sont perdues au redémarrage.
+- Les autres sous-volumes et partitions, par exemple `/home`, sont montés normalement. **Les modifications qui y sont apportées sont conservées.**
+- Vos propres paramètres du noyau ne sont pas appliqués. L'instantané démarre avec les paramètres dont il a besoin pour
+  trouver votre système.
+
+### Conserver l'instantané
+
+Une fois connecté à votre bureau, une notification vous demande si vous souhaitez conserver l'instantané.
+
+<ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-notifier.png')} />
+
+- **Rollback snapshot** ouvre un terminal et vous demande votre mot de passe. Après avoir confirmé avec `y`, l'instantané
+  remplace votre système actuel (voir [ce que fait une restauration](#ce-que-fait-une-restauration)). Redémarrez ensuite.
+- **Stay in snapshot** ferme la notification. Rien n'est restauré et votre système installé reste inchangé.
+
+Si la notification n'apparaît pas, par exemple dans un gestionnaire de fenêtres sans service de notifications, ou si aucun
+terminal ne s'ouvre, lancez la restauration depuis un terminal :
+
+```bash
+sudo cachyos-recovery rollback
+```
+
+Cette commande n'est disponible que lorsque vous êtes démarré dans un instantané depuis la récupération.
+
+:::tip
+Si l'instantané ne démarre pas, par exemple parce que votre matériel ne gère pas le redémarrage vers le noyau de
+l'instantané, utilisez plutôt **Rollback Btrfs snapshot** depuis le menu de récupération.
+:::
+
+## Restaurer un instantané
+
+Utilisez cette option lorsque vous savez quel instantané fonctionne, ou lorsque le démarrage de l'instantané échoue.
+
+<Steps>
+1. Sélectionnez **Rollback Btrfs snapshot**.
+2. Sélectionnez l'instantané à restaurer, comme décrit dans [Démarrer un instantané](#démarrer-un-instantané).
+3. Confirmez avec `y` puis <kbd>Enter</kbd>.
+4. Attendez la fin de la restauration. La récupération vous demande alors si vous souhaitez redémarrer.
+5. Sélectionnez **Yes, reboot** pour démarrer le système restauré.
+</Steps>
+
+:::danger[L'état actuel de votre système est supprimé]
+Une restauration remplace votre sous-volume racine actuel et le supprime lorsque la restauration réussit. Elle ne peut
+être annulée qu'à l'aide d'un instantané pris auparavant. Votre répertoire personnel et les autres sous-volumes ne sont pas
+affectés, et vos instantanés existants sont conservés.
+:::
+
+### Ce que fait une restauration
+
+<Steps>
+1. Si votre partition système EFI est montée sur `/boot`, la récupération copie les noyaux de l'instantané et génère
+   les images initramfs ainsi que la configuration du gestionnaire de démarrage correspondantes, en utilisant les outils
+   présents dans l'instantané. Ces fichiers sont d'abord préparés dans un emplacement temporaire, de sorte que la partition
+   système EFI n'est pas encore modifiée. Les noyaux qui n'existent pas dans l'instantané sont retirés du menu de démarrage,
+   et les fichiers sont signés lorsque le démarrage sécurisé est configuré avec `sbctl`.
+2. Elle crée un nouveau sous-volume racine à partir de l'instantané et l'échange avec votre racine actuelle.
+3. Elle déplace les sous-volumes imbriqués, par exemple `/.snapshots`, de l'ancienne racine vers la nouvelle, afin que vos
+   instantanés restent disponibles.
+4. Elle copie les fichiers de démarrage préparés vers la partition système EFI.
+5. Elle supprime l'ancien sous-volume racine.
+</Steps>
+
+Si une étape échoue avant la copie des fichiers de démarrage, la récupération rétablit votre ancienne racine et laisse la
+partition système EFI inchangée.
+
+Lorsque la partition système EFI est montée sur `/efi` ou `/boot/efi`, les noyaux font partie de l'instantané lui-même ;
+les étapes 1 et 4 sont donc ignorées.
+
+:::caution[Démarrage sécurisé et anciens instantanés]
+Les nouveaux fichiers de démarrage sont signés avec l'installation de `sbctl` **présente dans l'instantané**. Lorsque vous
+restaurez un instantané pris avant d'avoir configuré le démarrage sécurisé, rien n'est signé et le système ne démarre pas
+avec le démarrage sécurisé activé. La récupération ne vous avertit pas de cette situation. Vos clés `sbctl` dans
+`/var/lib/sbctl` sont également supprimées avec l'ancienne racine.
+
+L'image de récupération elle-même reste signée. Si un instantané plus récent contient toujours `sbctl` et ses clés,
+démarrez **CachyOS Recovery** depuis le menu de démarrage de votre microprogramme et restaurez cet instantané. La
+restauration signera à nouveau les fichiers de démarrage.
+
+Sinon, désactivez le démarrage sécurisé dans le microprogramme et démarrez le système. Installez `sbctl` et copiez
+`/var/lib/sbctl` depuis un instantané plus récent dans `/.snapshots`. Signez ensuite vos noyaux et votre gestionnaire de
+démarrage comme indiqué dans [Signature de l'image du noyau et du gestionnaire de démarrage](/fr/configuration/secure_boot_setup#signature-de-limage-du-noyau-et-du-gestionnaire-de-démarrage)
+et réactivez le démarrage sécurisé. Si aucun instantané plus récent ne contient `/var/lib/sbctl`, suivez
+[Configuration du démarrage sécurisé](/fr/configuration/secure_boot_setup) depuis le début pour créer et enregistrer de
+nouvelles clés.
+:::
+
+:::note[Noyau Easy Anti-Cheat]
+Une restauration ne signe pas le noyau `linux-cachyos-eac` avec votre propre clé, afin de conserver la signature CachyOS
+dont l'entrée de démarrage [Easy Anti-Cheat](/fr/configuration/easy_anti_cheat) a besoin. Si l'entrée Easy Anti-Cheat ne
+démarre pas après une restauration, copiez à nouveau le noyau signé par CachyOS vers `/boot` en réinstallant
+`linux-cachyos-eac`, ou avec Limine en exécutant `sudo limine-mkinitcpio`.
+:::
+
+## Chroot dans le système
+
+**Chroot into target system** lance votre système installé dans un conteneur avec `systemd-nspawn`. Vous obtenez une
+invite de connexion pour votre système installé et pouvez vous connecter avec votre nom d'utilisateur et votre mot de
+passe. Votre système de fichiers racine est accessible en écriture dans ce mode, les modifications effectuées sont donc
+conservées.
+
+Utilisez ce mode pour des réparations hors ligne sur le système de fichiers racine, par exemple pour corriger un fichier de
+configuration cassé dans `/etc` ou désactiver un service qui empêche le démarrage. Le conteneur n'a **aucun accès réseau**,
+et seul votre système de fichiers racine est monté. Sur Btrfs, les autres sous-volumes tels que `/home`, `/var/cache` et
+`/var/log`, ainsi que d'autres partitions dont la partition système EFI, peuvent ne pas être disponibles. Pour les
+réparations qui en ont besoin, comme l'installation ou la réinstallation de paquets, utilisez [cachy-chroot](/fr/features/cachy_chroot)
+depuis un ISO live.
+
+Pour quitter le conteneur et revenir au menu de récupération, appuyez sur <kbd>Ctrl</kbd>+<kbd>]</kbd> trois fois en moins
+d'une seconde.
+
+## Supprimer CachyOS Recovery
+
+<Tabs syncKey="firmware">
+  <TabItem label="UEFI">
+    ```bash
+    sudo pacman -Rns cachyos-recovery
+    ```
+
+    Un hook pacman supprime l'image de récupération et son module complémentaire de la partition système EFI, l'entrée du
+    menu de démarrage Limine ou GRUB ainsi que l'entrée **CachyOS Recovery** dans le menu de démarrage de votre
+    microprogramme.
+  </TabItem>
+  <TabItem label="BIOS">
+    ```bash
+    sudo pacman -Rns cachyos-recovery-legacy
+    ```
+
+    Un hook pacman supprime l'entrée du menu de démarrage de Limine, ou avec GRUB le noyau et l'initramfs de récupération
+    copiés ainsi que l'entrée dans `/etc/grub.d`, puis régénère la configuration de GRUB.
+  </TabItem>
+</Tabs>
+
+## Dépannage
+
+### Aucune entrée CachyOS Recovery n'apparaît dans le menu de démarrage
+
+Réinstallez le paquet (`cachyos-recovery` sur UEFI, `cachyos-recovery-legacy` sur BIOS) et lisez la sortie de l'étape
+**Installing system recovery image...** :
+
+```bash
+sudo pacman -S cachyos-recovery
+```
+
+L'entrée Limine nécessite `limine-entry-tool`, et l'entrée du microprogramme nécessite `efibootmgr`. Avec systemd-boot,
+l'image doit se trouver sur la partition système EFI sur laquelle systemd-boot est installé.
+
+### La récupération ne démarre pas avec le démarrage sécurisé activé
+
+L'image de récupération ou son module complémentaire n'est pas signé. Vérifiez et signez-les comme indiqué dans [Démarrage sécurisé](#démarrage-sécurisé).
+
+### "No snapshots were found"
+
+La récupération ne liste que les instantanés en lecture seule. Vérifiez que Snapper crée des instantanés de votre système
+de fichiers racine :
+
+```bash
+sudo snapper list
+```
+
+Si la commande indique que la configuration `root` n'existe pas, Snapper n'est pas configuré. C'est le cas sur les
+installations avec **systemd-boot**, où l'installateur ne configure pas encore Snapper. Installez `cachyos-snapper-support`,
+qui crée la configuration Snapper pour votre système de fichiers racine et installe `snap-pac` afin de prendre des
+instantanés avant et après chaque transaction `pacman` :
+
+```bash
+sudo pacman -S cachyos-snapper-support
+```
+
+La récupération pourra utiliser les instantanés pris à partir de ce moment.
+
+### Le démarrage de l'instantané échoue ou l'écran reste noir
+
+Le démarrage direct du noyau de l'instantané depuis la récupération ne fonctionne pas sur tous les appareils. Utilisez
+plutôt **Rollback Btrfs snapshot** pour restaurer l'instantané.
+
+### "No ESP partition was found"
+
+L'installation du paquet et la restauration lisent toutes deux l'emplacement de la partition système EFI dans `/etc/fstab`
+(lors d'une restauration, depuis le `/etc/fstab` présent dans l'instantané). La partition doit y être listée avec le type
+`vfat` et montée sur `/boot`, `/efi` ou `/boot/efi`.
+
+### La restauration s'arrête avec une erreur
+
+Lisez l'erreur affichée au-dessus du message. Si la récupération n'a pas pu préparer les fichiers de démarrage, rien n'a
+été modifié et votre ancien système est toujours en place.
+
+Si le message indique que l'instantané est restauré mais que `/boot` est incohérent, l'instantané a bien été restauré,
+mais la copie des fichiers de démarrage a échoué. Démarrez sur un ISO live, entrez dans votre système avec [cachy-chroot](/fr/features/cachy_chroot)
+et régénérez les fichiers de démarrage :
+
+- Avec **Limine**, exécutez `limine-mkinitcpio`.
+- Avec d'autres gestionnaires de démarrage, réinstallez vos paquets de noyau, par exemple `pacman -S linux-cachyos`. Cela
+  fonctionne lorsque la version du noyau installée est encore présente dans le cache des paquets. Si pacman ne parvient pas
+  à la télécharger, mettez plutôt à jour tout le système avec `pacman -Syu`.

@@ -36,11 +36,11 @@ Les dirigeant·e·s de la communauté ont le droit et la responsabilité de supp
 
 ## Portée d'application
 
-Ce code de conduite s'applique à la fois au sein des espaces du projet ainsi que dans les espaces publics lorsqu'un individu représente officiellement le projet ou sa communauté. Font parties des exemples de représentation d'un projet ou d'une communauté l'utilisation d'une adresse électronique officielle, la publication sur les réseaux sociaux à l'aide d'un compte officiel ou le fait d'agir en tant que représentant·e désigné·e lors d'un événement en ligne ou hors-ligne.
+Ce code de conduite s'applique à la fois au sein des espaces du projet ainsi que dans les espaces publics lorsqu'un individu représente officiellement le projet ou sa communauté. Font partie des exemples de représentation d'un projet ou d'une communauté l'utilisation d'une adresse électronique officielle, la publication sur les réseaux sociaux à l'aide d'un compte officiel ou le fait d'agir en tant que représentant·e désigné·e lors d'un événement en ligne ou hors-ligne.
 
 ## Application
 
-Les cas de comportements abusifs, harcelants ou tout autre comportement inacceptables peuvent être signalés aux dirigeant·e·s de la communauté responsables de l'application du code de conduite à <admin@cachyos.org>. Toutes les plaintes seront examinées et feront l'objet d'une enquête rapide et équitable.
+Les cas de comportements abusifs, harcelants ou tout autre comportement inacceptable peuvent être signalés aux dirigeant·e·s de la communauté responsables de l'application du code de conduite à <admin@cachyos.org>. Toutes les plaintes seront examinées et feront l'objet d'une enquête rapide et équitable.
 
 Tou·te·s les dirigeant·e·s de la communauté sont tenu·e·s de respecter la vie privée et la sécurité des personnes ayant signalé un incident.
 
@@ -74,15 +74,14 @@ Les dirigeant·e·s de communauté suivront ces directives d'application sur l'i
 
 ## Attributions
 
-Ce code de conduite est adapté du [Contributor Covenant](https://www.contributor-covenant.org), version 2.0, disponible à [https://www.contributor-covenant.org/version/2/0/code_of_conduct.html][v2.0].
+Ce code de conduite est adapté du [Contributor Covenant](https://www.contributor-covenant.org),
+version 2.0, disponible à
+[https://www.contributor-covenant.org/version/2/0/code_of_conduct.html](<https://www.contributor-covenant.org/version/2/0/code_of_conduct.html>).
 
-Les Directives d'application ont été inspirées par le [Code of conduct enforcement ladder][Mozilla CoC] de Mozilla.
+Les Directives d'application ont été inspirées par le [Code of conduct
+enforcement ladder de Mozilla](https://github.com/mozilla/diversity).
 
-Pour obtenir des réponses aux questions courantes sur ce code de conduite, consultez la FAQ à [https://www.contributor-covenant.org/faq][FAQ]. Les traductions sont disponibles sur [https://www.contributor-covenant.org/translations][translations].
-
-[homepage]: https://www.contributor-covenant.org
-[v2.0]: https://www.contributor-covenant.org/version/2/0/code_of_conduct.html
-[Mozilla CoC]: https://github.com/mozilla/diversity
-[FAQ]: https://www.contributor-covenant.org/faq
-[translations]: https://www.contributor-covenant.org/translations
+Pour obtenir des réponses aux questions courantes sur ce code de conduite, consultez la FAQ à
+[FAQ](<https://www.contributor-covenant.org/faq>). Les traductions sont disponibles sur
+[https://www.contributor-covenant.org/translations](<https://www.contributor-covenant.org/translations>).
 

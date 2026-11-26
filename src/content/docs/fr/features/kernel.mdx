@@ -4,6 +4,7 @@ description: Fonctionnalités et changements du noyau CachyOS
 tableOfContents:
   minHeadingLevel: 1
   maxHeadingLevel: 4
+ai_translated: true
 ---
 
 Le noyau CachyOS est un noyau personnalisé qui utilise des améliorations, des configurations et des patchs issus de l'amont (upstream).
@@ -13,42 +14,55 @@ Le noyau CachyOS est un noyau personnalisé qui utilise des améliorations, des 
 ### Optimisations des performances
 
 - **Compilation avancée** : PKGBUILD hautement personnalisable avec prise en charge des compilateurs GCC et Clang
-- **Link Time Optimization (LTO)** : Thin LTO activé par défaut pour de meilleures performances
-- **Profile-Guided Optimization (PGO)** : Profilage AutoFDO pour une génération de code optimale ([En savoir plus](https://cachyos.org/blog/2411-kernel-autofdo/))
+- **Link Time Optimization (LTO)** : Clang Thin LTO activé par défaut sur le paquet principal `linux-cachyos`
+- **Distributed ThinLTO** : Prise en charge des compilations Clang ThinLTO distribuées pour accélérer la compilation du noyau
+- **Profile-Guided Optimization** : Profilage AutoFDO sur le noyau par défaut pour une génération de code optimale ([En savoir plus](https://cachyos.org/blog/2411-kernel-autofdo/))
 - **Kernel Control Flow Integrity (kCFI)** : Disponible lors de l'utilisation de LLVM pour une sécurité renforcée
-- **Options de fréquence du timer** : Configurable entre 300Hz, 500Hz, 600Hz, 750Hz, et 1000Hz (défaut : 1000Hz)
-- **Optimisations d'architecture** : Prise en charge des builds spécifiques pour x86-64-v3, x86-64-v4, et AMD Zen4
+- **Options de fréquence du timer** : Configurable entre 100Hz, 250Hz, 300Hz, 500Hz, 600Hz, 750Hz et 1000Hz (défaut : 1000Hz)
+- **Optimisations d'architecture** : Prise en charge des builds spécifiques pour x86-64-v3, x86-64-v4 et AMD Zen4
 - **Optimisations du compilateur** : Flags GCC avancés incluant `-fivopts` et `-fmodulo-sched`
+- **PREEMPT_DYNAMIC** : Modes de préemption sélectionnables à l'exécution (full, lazy, voluntary, none)
 
 ### Améliorations du CPU
 
-- **Ordonnanceurs multiples** : Ordonnanceurs BORE, EEVDF, et BMQ pour l'optimisation de différentes charges de travail
-- **Améliorations AMD P-State** : Prise en charge du "Preferred Core" et dernières améliorations d'amd-pstate issues de linux-next
-- **Prise en charge temps réel** : Builds de noyau RT disponibles avec l'intégration de l'ordonnanceur BORE
+- **Ordonnanceurs multiples** : Ordonnanceurs BORE, EEVDF et BMQ pour l'optimisation de différentes charges de travail
+- **[POC Selector](https://github.com/masahitoS/scx_cake)** : Sélecteur rapide de CPU inactif (Piece-Of-Cake) inspiré de scx_cake, réduisant la latence de réveil
 - **CachyOS Sauce** : Configuration personnalisée `CONFIG_CACHY` avec des ajustements de l'ordonnanceur et du système
+- **Améliorations AMD P-State** : Prise en charge du « Preferred Core » et dernières améliorations d'amd-pstate issues de linux-next
+- **Prise en charge temps réel** : Builds de noyau RT disponibles avec l'intégration de l'ordonnanceur BORE
 - **Optimisations à faible latence** : Patchs pour une réactivité améliorée et une gigue réduite
+- **sched/wait LIFO accept()** : Appels socket `accept()` traités dans l'ordre LIFO pour une meilleure efficacité du cache
+
+### Réseau
+
+- **[BBR3 TCP](https://github.com/google/bbr)** : Contrôle de congestion BBRv3 disponible sous forme de module séparé aux côtés de BBRv1
 
 ### Système de fichiers & Mémoire
 
 - **Prise en charge ZFS** : Support intégré du système de fichiers ZFS avec des modules précompilés
+- **Améliorations NTFS** : Correctifs du pilote NTFS amont pour la validation du miroir MFT, la vérification des limites d'attributs et la gestion du fichier journal (logfile)
+- **Améliorations MGLRU** : Gestion améliorée de la réécriture des pages sales (dirty writeback), statistiques de récupération vmscan simplifiées et réglages MM Cachy Sauce (protection du working set LRU-gen, ajustements compaction/watermark, récupération des hugepages)
 - **Intégration NVIDIA** :
   - Modules de pilote propriétaire NVIDIA avec patchs
   - Prise en charge du pilote NVIDIA open-source
   - Modules prêts à l'emploi dans le dépôt
 - **Améliorations de l'ordonnanceur d'E/S** :
   - Performance améliorée pour BFQ et mq-deadline
-  - Prise en charge de l'ordonnanceur d'E/S alternatif [ADIOS](https://github.com/firelzrd/adios)
-- **Gestion de la mémoire** :
-  - Patch [le9uo](https://github.com/firelzrd/le9uo) pour prévenir le "page thrashing" en cas de forte pression mémoire
-  - Ajustements de gestion mémoire de Zen-kernel (compaction, optimisation du watermark)
+  - Prise en charge de l'ordonnanceur d'E/S multi-files d'attente [ADIOS](https://github.com/firelzrd/adios) v3.2.0
+- **VRAM Cgroup (DMEM)** : Contrôleur de mémoire de périphérique permettant de restreindre l'utilisation de la VRAM GPU par cgroup dans le sous-système DRM
 
 ### Fonctionnalités supplémentaires
 
 #### Support matériel
-- **Matériel de jeu** : Patchs pour Steam Deck (Audio, HW Quirks, HID) et prise en charge de ROG Ally
-- **Matériel Apple** : Prise en charge des MacBook T2 incluse par défaut
+- **AMD ISP4** : Nouveau pilote de caméra AMD ISP 4 pour les plateformes prises en charge
+- **Matériel de jeu** : Patchs pour Steam Deck (Audio, HW Quirks, HID), prise en charge de la ROG Ally et pilote HID pour MSI Claw (deckify)
+- **Matériel Apple** : Prise en charge des MacBook T2 avec le pilote apple-bce en staging
 - **Matériel ASUS** : Patchs étendus pour la compatibilité du matériel ASUS
+- **Matériel Lenovo** : Limitation de charge de la batterie via WMI, attributs réglables GPU/CPU et debugfs capdata
+- **Matériel HP** : Prise en charge des ordinateurs portables OMEN Slim et OMEN MAX via hp-wmi
 - **Graphismes** : Prise en charge du HDR activée, contournement du min_powercap d'AMDGPU (`amdgpu_ignore_min_pcap`)
+- **Affichage** : HDMI VRR sur AMD, propriétés de connecteur ALLM et VRR passif, analyse des bits par pixel VESA DSC depuis l'EDID
+- **Codecs audio** : Prise en charge des codecs HDA secondaires AW88399 et MAX98390
 
 #### Améliorations système
 - **Multimédia** : Modules v4l2loopback inclus par défaut
@@ -97,7 +111,6 @@ est compilée avec [clang](https://clang.llvm.org/) au lieu de [GCC](https://gcc
     - `Ne prend pas en charge sched-ext.`
 - **linux-cachyos-rc**
   - Basé sur le dernier noyau mainline de [l'arbre de Linus](https://github.com/torvalds/linux/).
-  - Utilise l'ordonnanceur [BORE](https://github.com/firelzrd/bore-scheduler).
   - Noyau principal pour introduire de nouvelles fonctionnalités dans notre patchset.
 - **linux-cachyos-server**
   - Optimisé pour les charges de travail de serveur par rapport à une utilisation de bureau.
@@ -144,7 +157,7 @@ les dernières fonctionnalités et correctifs amont pour garantir la compatibili
 
 CachyOS fournit des versions précompilées des modules de noyau à source fermée et [open-source](https://github.com/NVIDIA/open-gpu-kernel-modules/). En raison du développement
 du module de noyau de NVIDIA étant hors de l'arborescence principale (out-of-tree) et ne suivant donc pas le rythme de sortie du noyau, la configuration de base peut parfois être incompatible avec le dernier
-noyau. Pour contourner ce problème, CachyOS patche les modules with des patchs créés par la communauté ou partagés directement par NVIDIA.
+noyau. Pour contourner ce problème, CachyOS patche les modules avec des patchs créés par la communauté ou partagés directement par NVIDIA.
 
 ## FAQ
 
@@ -162,5 +175,5 @@ Pour plus d'informations sur AutoFDO, cliquez [ici.](https://cachyos.org/blog/24
 
 ### Le noyau temps réel améliore-t-il les performances de jeu ?
 
-Non. Le noyau temps réel rend beaucoup plus de code préemptible par rapport à un noyau normal entièrement préemptible. Cela signifie que beaucoup plus de tâches (y compris les processus de jeu)
+Non. Le noyau temps réel rend beaucoup plus de code préemptible par rapport à un noyau préemptible normal (PREEMPT). Cela signifie que beaucoup plus de tâches (y compris les processus de jeu)
 sont fréquemment préemptées et céderont de force les ressources système, entraînant de moins bonnes performances.

@@ -1,6 +1,7 @@
 ---
 title: Configuration de QEMU et VMM
 description: Étapes nécessaires pour faire fonctionner ces deux programmes sur CachyOS
+ai_translated: true
 tableOfContents:
   minHeadingLevel: 1
   maxHeadingLevel: 3
@@ -16,6 +17,8 @@ Pour installer et faire fonctionner **VMM** (Virtual Machine Manager) et **QEMU*
 ```sh
 # Ceci installera les paquets nécessaires (notez la remarque sur "Windows 11" ci-dessous) :
 sudo pacman -S qemu-full virt-manager swtpm
+# Forcer libvirt à utiliser iptables
+echo 'firewall_backend = "iptables"' | sudo tee -a /etc/libvirt/network.conf
 # Ceci ajoutera l'utilisateur au groupe "libvirt" pour qu'il puisse l'utiliser :
 sudo usermod -aG libvirt $USER
 # Backend LXC (optionnel, pour les conteneurs linux, l'activation des deux backends n'entre pas en conflit) :
@@ -24,6 +27,8 @@ systemctl enable --now libvirtd.service
 systemctl enable --now libvirtd.socket
 # Ceci activera Internet dans une VM chaque fois qu'elle démarre :
 sudo virsh net-autostart default
+# Et pour permettre à l'ensemble du réseau de VM de disposer d'un transit sans restriction : (Envisagez des règles de pare-feu plus granulaires en fonction de votre cas d'usage et de votre posture de sécurité)
+sudo ufw route allow from 192.168.122.0/24
 ```
 
 :::note[Windows 11]
@@ -48,7 +53,7 @@ Avant de continuer, vous voudrez peut-être consulter brièvement la section [Se
 7. À l'étape 4, vous pouvez choisir de créer un espace de stockage virtuel (cela crée un fichier **.qcow2**), ou un chemin que la VM utilisera.
 8. À l'étape 5, cochez `Personnaliser la configuration avant l'installation -> Terminer`.
 9. Vous arriverez alors ici : <ImageComponent imgsrc={import('~/assets/images/vmmprevminstall.png')} />
-Il y a quelques points à vérifier ici si vous installez une VM Linux. Dans `Aperçu`, confirmez que le chipset est **Q35** et que le firmware est **UEFI**. Sauf si vous installez quelque chose de vraiment ancien ou faites quelque chose de farfelu, vous ne voulez jamais une autre configuration. Si vous créez une VM `Windows 11`, allez dans `Ajouter un matériel -> TPM`, puis sélectionnez soit Émulé, soit Passthrough (voir la note en haut de page) et `Terminer` pour fermer le sous-menu.
+Il y a quelques points à vérifier ici si vous installez une VM Linux. Dans `Aperçu`, confirmez que le chipset est **Q35** et que le firmware est **UEFI**. Sauf si vous installez quelque chose de vraiment ancien ou faites quelque chose de farfelu, vous ne voulez jamais une autre configuration. Si vous créez une VM Windows 11, vérifiez si le module TPM a été ajouté, sinon allez dans `Ajouter un matériel -> TPM`, puis sélectionnez soit Émulé, soit Passthrough (voir la note en haut de page) et cliquez sur `Terminer` pour fermer le sous-menu.
 
 10. Cliquez maintenant sur `Commencer l'installation`.
 11. Si vous êtes dans une VM **Linux** (ou un autre SE qui utilise OpenGL et/ou fournit libvulkan), consultez respectivement [EGL Headless](/fr/virtualization/egl_headless) et/ou [Virtio-Venus](/fr/virtualization/virtio-venus).

@@ -20,7 +20,7 @@ Pour un aperçu plus détaillé de nos dépôts optimisés, consultez notre guid
 
 En plus de l'ensemble de patchs de base du noyau CachyOS qui ajuste divers paramètres du noyau pour améliorer la réactivité du bureau, CachyOS sélectionne soigneusement des ensembles de patchs qui n'ont pas encore été intégrés à la branche principale ou qui ne sont pas inclus dans la version stable du noyau.
 
-Par conséquent, ces patchs subissent des tests internes avant d'être mis à la disposition des utilisateurs afin de s'assurer que la stabilité n'est pas affectée. Pour une liste complète des patchs fournis par CachyOS, voir [Noyau](/features/kernel).
+Par conséquent, ces patchs subissent des tests internes avant d'être mis à la disposition des utilisateurs afin de s'assurer que la stabilité n'est pas affectée. Pour une liste complète des patchs fournis par CachyOS, voir [Noyau](/fr/features/kernel).
 
 ### Support d'Ordonnanceurs de Processeur Avancés
 
