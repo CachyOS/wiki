@@ -846,6 +846,7 @@ export default defineConfig({
                 ko: 'WSL에서 CachyOS 사용',
                 pl: 'CachyOS w WSL',
                 ru: 'CachyOS в WSL',
+                zh: 'WSL 上的 CachyOS',
               },
               link: 'virtualization/wsl',
             },

@@ -16,7 +16,7 @@ CachyOS（"我们"、"我们的"）运营可通过 cachyos.org 及相关子域�
 
 ### 1.3. 访问服务条款
 
-最新版本的服務条款可随时在我们的网站上访问：<https://wiki.cachyos.org/policy/terms_of_service>。
+最新版本的服务条款可随时在我们的网站上访问：<https://wiki.cachyos.org/policy/terms_of_service>。
 
 ## 2. 注册、合同订立及标的
 

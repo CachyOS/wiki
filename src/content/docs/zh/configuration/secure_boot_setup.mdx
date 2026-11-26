@@ -1,6 +1,6 @@
 ---
-title: Secure Boot Setup
-description: Set up secure boot with sbctl after installing CachyOS
+title: 安全启动设置
+description: 在安装 CachyOS 后使用 sbctl 设置安全启动
 tableOfContents:
   minHeadingLevel: 1
   maxHeadingLevel: 4
@@ -9,6 +9,11 @@ ai_translated: true
 
 import ImageComponent from '~/components/image-component.astro';
 import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+:::tip[Easy Anti-Cheat]
+要游玩使用 Easy Anti-Cheat Linux v2 的游戏，请改为遵循 [Easy Anti-Cheat 指南](/zh/configuration/easy_anti_cheat)。
+该指南会从头开始设置安全启动（Secure Boot），因此你无需先执行本指南。它会将你自己的密钥与 Microsoft 的密钥一起注册，从而使 Windows 双系统保持正常工作。它还使用由 CachyOS 签名的内核和 systemd-boot，这些文件绝不能再用你自己的密钥重新签名。
+:::
 
 ## 设置前
 
@@ -151,7 +156,7 @@ systemctl reboot --firmware-setup
 
     :::note[Setup Mode 显示 Enabled？]
     如果 `Setup Mode` 显示 **Enabled**，请进入固件设置并**临时禁用 Secure Boot**。
-    启动回系统，再次检查 sbctl 的状态，继续下面的 [Signing the Kernel Image and Boot Manager](#signing-the-kernel-image-and-boot-manager)，
+    启动回系统，再次检查 sbctl 的状态，继续下面的 [签名内核映像和引导管理器](#签名内核映像和引导管理器)，
     然后重启并在固件设置中重新启用 Secure Boot。
     :::
 
@@ -159,7 +164,7 @@ systemctl reboot --firmware-setup
 
 ## 签名内核映像和引导管理器
 
-<Tabs>
+<Tabs syncKey="boot-manager">
 <TabItem label='Limine'>
 Limine 是一个特殊的引导管理器，允许检查内核
 映像和 Limine 在引导期间使用的其他文件的哈希。如果启用了此功能，任何
@@ -281,7 +286,7 @@ Boot → Secure Boot
 ```
 :::
 
-查看 [此部分作为参考](/zh/configuration/secure_boot_setup#enabling-setup-mode-in-uefi)
+查看 [此部分作为参考](/zh/configuration/secure_boot_setup#在-uefi-中启用-setup-mode)
 
 请注意，这是一次性过程，因为使用 `-s` 标志签名文件会将这些文件保存到 `sbctl` 的数据库中。
 
@@ -295,6 +300,31 @@ pacman hook **不会**签名更新的 EFI 二进制文件。作为解决方法�
 
 ```sh
 sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+```
+
+:::note
+如果你使用 [Easy Anti-Cheat 设置](/zh/configuration/easy_anti_cheat)，请跳过此步骤。在该方案中，`systemd-boot-cachyos-signed`
+提供了由 CachyOS 签名的 systemd-boot。
+:::
+</TabItem>
+<TabItem label='rEFInd'>
+
+rEFInd 通过固件启动内核，因此固件会检查 rEFInd 以及每个内核的签名。以下步骤适用于 EFI 系统分区挂载在 `/boot` 的安装方式，这也是 CachyOS 安装器设置 rEFInd 的方式。`bootctl --print-esp-path` 的输出必须为 `/boot`。
+
+为 rEFInd 和你的内核签名。下面的 `find` 命令会跳过用于 [Easy Anti-Cheat](/zh/configuration/easy_anti_cheat) 的内核，该内核已由 CachyOS 签名：
+
+```bash
+sudo sbctl sign -s /boot/EFI/refind/refind_x64.efi
+sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+sudo sbctl verify
+```
+
+`sbctl verify` 必须将 rEFInd 和你的每个内核都列为已签名（signed）。如果你使用 Easy Anti-Cheat，它还会将 `vmlinuz-linux-cachyos-eac` 和 `EFI/cachyos-eac/systemd-bootx64.efi` 列为未签名。这是正常现象，它们由 CachyOS 签名。**不要对它们签名**，否则 EAC 将不再接受它们。然后**重启进入你的 UEFI 设置并启用安全启动（Secure Boot）。** 对于 ASUS 主板，请参阅 systemd-boot 选项卡中的说明。
+
+`-s` 标志会将这些文件保存到 `sbctl` 的数据库中，其 pacman hook 会在内核更新后自动重新为内核签名。pacman 不会更新 EFI 系统分区上的 rEFInd。如果你自己运行了 `refind-install`，请在之后重新签名：
+
+```bash
+sudo sbctl sign-all
 ```
 </TabItem>
 </Tabs>
@@ -319,6 +349,21 @@ System:
   TPM2 Support: yes
   Measured UKI: no
   Boot into FW: supported
+```
+
+## Fwupd
+
+要在启用安全启动（Secure Boot）的情况下使用 `fwupd`，请签名其 UEFI 可执行文件：
+
+```sh
+sudo sbctl sign -s -o /usr/lib/fwupd/efi/fwupdx64.efi.signed /usr/lib/fwupd/efi/fwupdx64.efi
+```
+
+并将以下内容添加到 `/etc/fwupd/fwupd.conf`：
+
+```sh
+[uefi_capsule]
+DisableShimForSecureBoot=true
 ```
 
 ## 链接与致谢
