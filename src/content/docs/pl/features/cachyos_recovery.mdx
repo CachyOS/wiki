@@ -1,0 +1,288 @@
+---
+title: CachyOS Recovery
+description: Uruchamiaj, przywracaj i naprawiaj system ze środowiska ratunkowego w menu rozruchu
+tableOfContents:
+  minHeadingLevel: 2
+  maxHeadingLevel: 3
+ai_translated: true
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+[CachyOS Recovery](https://github.com/CachyOS/cachyos-recovery) to niewielki system ratunkowy instalowany obok jąder i uruchamiany z menu rozruchu. Gdy aktualizacja lub zmiana konfiguracji uszkodzi twój system, możesz użyć go bez nośnika live USB, aby:
+
+- **uruchomić migawkę Btrfs**, aby sprawdzić, czy działa, bez wprowadzania zmian w systemie,
+- **przywrócić system** do migawki na stałe, wraz z pasującymi jądrami i plikami rozruchowymi,
+- **otworzyć zainstalowany system w kontenerze**, aby naprawić go ręcznie.
+
+Środowisko ratunkowe zajmuje około 70 MB. Nie zależy od stanu zainstalowanego systemu, więc działa również wtedy, gdy sam system nie chce się już uruchomić.
+
+:::caution
+Migawki nie są kopią zapasową. Znajdują się na tym samym dysku co system i nie chronią przed awarią dysku ani przypadkowym usunięciem plików w katalogu `/home`. Rób regularnie kopie zapasowe swoich ważnych danych.
+:::
+
+## Wymagania
+
+Środowisko ratunkowe uruchamia się na każdej instalacji CachyOS z głównym systemem plików Btrfs, ext4, XFS lub F2FS. Operacje na migawkach wymagają dodatkowo:
+
+- Głównego systemu plików **Btrfs** z katalogiem głównym na podwoluminie `@`, tak jak konfiguruje to instalator CachyOS.
+- **Migawek tylko do odczytu** głównego podwoluminu. Snapper tworzy je domyślnie, a dzięki pakietowi `cachyos-snapper-support` CachyOS wykonuje je automatycznie przed każdą transakcją programu `pacman` i po niej. Instalacje z systemd-boot nie mają jeszcze tego pakietu — zobacz sekcję [„Nie znaleziono migawek”](#nie-znaleziono-migawek). Zobacz też [Migawki Btrfs](/pl/configuration/btrfs_snapshots).
+- Generatora initramfs **mkinitcpio**, który jest domyślny w CachyOS.
+
+W systemach UEFI partycja systemowa EFI musi być wymieniona w pliku `/etc/fstab` z typem `vfat` i zamontowana w `/boot`, `/efi` lub `/boot/efi`.
+
+Jeśli partycja systemowa EFI jest zamontowana w `/boot`, przywrócenie migawki regeneruje również jądra, obrazy initramfs oraz konfigurację menedżera rozruchu dla **Limine**, **systemd-boot** (za pomocą `sdboot-manage`) i **GRUB**. **rEFInd** nie wymaga aktualizacji konfiguracji. Gdy partycja systemowa EFI znajduje się w `/efi` lub `/boot/efi`, a także w systemach BIOS, gdzie `/boot` jest częścią głównego systemu plików, jądra są częścią migawki i są przywracane razem z nią.
+
+### Zaszyfrowane dyski i układ klawiatury
+
+Dyski zaszyfrowane za pomocą **LUKS** są obsługiwane. Jeśli twój dysk nie jest jeszcze odblokowany, środowisko ratunkowe poprosi o hasło LUKS podczas uruchamiania. Miej swoje hasło pod ręką, nawet jeśli zazwyczaj odblokowujesz dysk za pomocą TPM2 lub FIDO2.
+
+Środowisko ratunkowe zawsze używa **amerykańskiego układu klawiatury (US)**, również przy wpisywaniu hasła LUKS i logowaniu w trybie chroot. Jeśli twoje hasło zawiera znaki, które znajdują się w innych miejscach na twojej klawiaturze, wpisuj je tak, jak na klawiaturze US.
+
+## Instalacja
+
+<Tabs syncKey="firmware">
+  <TabItem label="UEFI">
+    ```bash
+    sudo pacman -S cachyos-recovery
+    ```
+
+    Podczas instalacji hak pacmana konfiguruje wszystko automatycznie:
+
+    - Kopiuje obraz ratunkowy do `EFI/Linux/cachyos-recovery.efi` na partycji systemowej EFI.
+    - Zapisuje lokalizację głównego systemu plików (oraz urządzenia LUKS, jeśli istnieje) w niewielkim dodatku obok obrazu: `EFI/Linux/cachyos-recovery.efi.extra.d/root.addon.efi`.
+    - Podpisuje oba pliki za pomocą `sbctl`, jeśli Secure Boot jest skonfigurowany z użyciem `sbctl` (zobacz [Secure Boot](#secure-boot)).
+    - W przypadku **Limine** dodaje wpis **CachyOS Recovery** do menu rozruchu.
+    - W przypadku **GRUB** zapisuje wpis **CachyOS Recovery** w `/etc/grub.d/50-cachyos-recovery` i regeneruje konfigurację GRUB.
+    - Dodaje wpis **CachyOS Recovery** do menu rozruchu firmware'u (wymaga `efibootmgr`). Wpis jest dodawany na końcu kolejności rozruchu, więc twój zwykły menedżer rozruchu pozostaje domyślny.
+
+    **systemd-boot** automatycznie wykrywa obrazy w `EFI/Linux`, a **rEFInd** znajduje obraz podczas skanowania partycji systemowej EFI. W przypadku innych menedżerów rozruchu uruchom środowisko ratunkowe z menu rozruchu firmware'u.
+  </TabItem>
+  <TabItem label="BIOS">
+    ```bash
+    sudo pacman -S cachyos-recovery-legacy
+    ```
+
+    Podczas instalacji hak pacmana dodaje wpis **CachyOS Recovery** do menu rozruchu **Limine** lub **GRUB**. W przypadku GRUB kopiuje jądro ratunkowe i initramfs do `/boot/cachyos-recovery.vmlinuz` oraz `/boot/cachyos-recovery.initrd`, zapisuje wpis w `/etc/grub.d/50-cachyos-recovery` i regeneruje konfigurację GRUB.
+
+    Pakiety `cachyos-recovery` i `cachyos-recovery-legacy` nie mogą być zainstalowane jednocześnie. Nie instaluj `cachyos-recovery` w systemie BIOS — zawiera on wyłącznie obraz UEFI.
+  </TabItem>
+</Tabs>
+
+Hak uruchamia się ponownie przy każdej aktualizacji pakietu. Jeśli zmienisz miejsce instalacji systemu, na przykład po przeniesieniu na nowy dysk lub skonfigurowaniu szyfrowania, zainstaluj pakiet ponownie, aby środowisko ratunkowe znów wykryło główny system plików: `sudo pacman -S cachyos-recovery` na UEFI lub `sudo pacman -S cachyos-recovery-legacy` na BIOS.
+
+Instaluj i przeinstalowuj pakiet ze swojego normalnie uruchomionego systemu. Nie wykryje on głównego systemu plików, gdy system jest uruchomiony z migawki.
+
+### Secure Boot
+
+Jeśli skonfigurowałeś Secure Boot za pomocą `sbctl` zgodnie z opisem w [Konfiguracji Secure Boot](/pl/configuration/secure_boot_setup), obraz ratunkowy i jego dodatek zostaną podpisane automatycznie. Dzieje się tak, gdy:
+
+- `sbctl` jest zainstalowany i utworzył swoje klucze,
+- Secure Boot jest włączony, a firmware nie znajduje się w trybie konfiguracji (Setup Mode),
+- twoje klucze są zarejestrowane.
+
+Możesz sprawdzić podpisy za pomocą polecenia:
+
+```bash
+sudo sbctl verify | grep cachyos-recovery
+```
+
+Jeśli pliki nie są podpisane, na przykład dlatego, że włączyłeś Secure Boot już po zainstalowaniu pakietu, usuń obraz ratunkowy i zainstaluj pakiet ponownie. Sama reinstalacja nie wystarczy, ponieważ hak nie kopiuje i nie podpisuje obrazu ponownie, gdy ten znajduje się już na partycji systemowej EFI w niezmienionej postaci.
+
+```bash
+sudo rm /boot/EFI/Linux/cachyos-recovery.efi
+sudo pacman -S cachyos-recovery
+```
+
+Dostosuj ścieżkę, jeśli twoja partycja systemowa EFI jest zamontowana w `/efi` lub `/boot/efi`. Hak podpisze wtedy oba pliki, a w przypadku Limine zaktualizuje wpis w menu rozruchu.
+
+:::caution
+Gdy Secure Boot jest włączony, firmware odmawia uruchomienia niepodpisanego obrazu ratunkowego, a Limine wyświetla błąd zamiast menu ratunkowego. Jeśli Limine ma ustawione zapamiętywanie ostatniego wpisu, wybierz inny wpis w menu rozruchu, aby ponownie uruchomić system, a następnie podpisz pliki.
+:::
+
+## Uruchamianie środowiska ratunkowego
+
+<Steps>
+1. Uruchom ponownie komputer.
+2. Wybierz **CachyOS Recovery** w menu rozruchu. Jeśli twój menedżer rozruchu nie ma takiego wpisu, otwórz menu rozruchu firmware'u (zazwyczaj <kbd>F8</kbd>, <kbd>F11</kbd> lub <kbd>F12</kbd> podczas startu) i wybierz tam **CachyOS Recovery**.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-limine-entry.png')} />
+3. Jeśli twój dysk jest zaszyfrowany, wpisz swoje hasło LUKS. Masz pięć prób.
+4. Otworzy się menu ratunkowe.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-main-menu.png')} />
+</Steps>
+
+Użyj klawiszy strzałek i <kbd>Enter</kbd>, aby wybrać opcję, oraz <kbd>Esc</kbd>, aby wrócić. Na listach możesz pisać, aby filtrować wpisy. Ramka na dole opisuje wybraną akcję.
+
+Środowisko ratunkowe montuje twój system w trybie tylko do odczytu. Nic na dysku nie ulega zmianie, dopóki nie rozpoczniesz przywracania migawki lub nie wprowadzisz zmian w trybie chroot.
+
+| Akcja | Co robi |
+| --- | --- |
+| **Boot Btrfs snapshot** | Uruchamia migawkę z tymczasowym, zapisywalnym katalogiem głównym. Zalecany pierwszy krok. |
+| **Rollback Btrfs snapshot** | Przywraca migawkę na stałe. |
+| **Chroot into target system** | Uruchamia zainstalowany system w kontenerze — dla zaawansowanych użytkowników. |
+| **Reboot** | Uruchamia ponownie komputer. |
+
+Dwie opcje związane z migawkami są wyświetlane tylko wtedy, gdy głównym systemem plików jest Btrfs.
+
+## Uruchamianie migawki
+
+Uruchomienie migawki to najbezpieczniejszy sposób na znalezienie działającego stanu systemu. Korzystasz z migawki jak ze zwykłego systemu, a nic nie jest przywracane, dopóki nie zdecydujesz się jej zachować.
+
+<Steps>
+1. Wybierz **Boot Btrfs snapshot**.
+2. Wybierz migawkę. Lista pokazuje ID podwoluminu Btrfs oraz czas utworzenia w strefie UTC. Po prawej stronie widać ścieżkę migawki, a w przypadku migawek Snappera także jej opis i typ. Wybierz migawkę głównego systemu plików. Jej ścieżka wygląda jak `.snapshots/<number>/snapshot`.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-snapshot-list.png')} />
+3. Wybierz jądro do uruchomienia. Wyświetlane są tylko jądra zainstalowane w tej migawce.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-kernel-picker.png')} />
+4. Środowisko ratunkowe przygotowuje migawkę i ją uruchamia. System startuje jak zwykle. W przypadku zaszyfrowanego dysku możesz zostać poproszony o hasło ponownie.
+</Steps>
+
+Podczas pracy w uruchomionej migawce:
+
+- Zmiany w systemie (wszystko w głównym podwoluminie) są przechowywane w pamięci i znikają po ponownym uruchomieniu.
+- Inne podwoluminy i partycje, na przykład `/home`, są montowane jak zwykle. **Zmiany w nich są zachowywane.**
+- Twoje własne parametry jądra nie są stosowane. Migawka uruchamia się z parametrami potrzebnymi do odnalezienia systemu.
+
+### Zachowanie migawki
+
+Po zalogowaniu się do pulpitu powiadomienie zapyta, czy chcesz zachować migawkę.
+
+<ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-notifier.png')} />
+
+- **Rollback snapshot** otwiera terminal i prosi o podanie hasła. Po potwierdzeniu przez `y` migawka zastępuje obecny system (zobacz [co robi przywrócenie migawki](#co-robi-przywrócenie-migawki)). Następnie uruchom ponownie komputer.
+- **Stay in snapshot** zamyka powiadomienie. Nic nie jest przywracane, a zainstalowany system pozostaje bez zmian.
+
+Jeśli powiadomienie się nie pojawi, na przykład w menedżerze okien bez obsługi powiadomień, lub jeśli terminal się nie otworzy, uruchom przywracanie z terminala:
+
+```bash
+sudo cachyos-recovery rollback
+```
+
+To polecenie jest dostępne tylko wtedy, gdy system został uruchomiony z migawki przez środowisko ratunkowe.
+
+:::tip
+Jeśli migawka nie uruchamia się, na przykład dlatego, że twój sprzęt nie obsługuje ponownego uruchomienia w jądro migawki, użyj zamiast tego opcji **Rollback Btrfs snapshot** z menu ratunkowego.
+:::
+
+## Przywracanie migawki
+
+Użyj tej opcji, gdy wiesz, która migawka działa, lub gdy uruchomienie migawki kończy się niepowodzeniem.
+
+<Steps>
+1. Wybierz **Rollback Btrfs snapshot**.
+2. Wybierz migawkę do przywrócenia, zgodnie z opisem w sekcji [Uruchamianie migawki](#uruchamianie-migawki).
+3. Potwierdź klawiszem `y` i <kbd>Enter</kbd>.
+4. Poczekaj na zakończenie przywracania. Następnie środowisko ratunkowe zapyta, czy uruchomić komputer ponownie.
+5. Wybierz **Yes, reboot**, aby uruchomić przywrócony system.
+</Steps>
+
+:::danger[Twój obecny stan systemu zostanie usunięty]
+Przywrócenie zastępuje obecny główny podwolumin i usuwa go po pomyślnym zakończeniu operacji. Można je cofnąć tylko za pomocą migawki utworzonej wcześniej. Twój katalog domowy i pozostałe podwoluminy nie są naruszane, a istniejące migawki zostają zachowane.
+:::
+
+### Co robi przywrócenie migawki
+
+<Steps>
+1. Jeśli partycja systemowa EFI jest zamontowana w `/boot`, środowisko ratunkowe kopiuje jądra z migawki i generuje pasujące obrazy initramfs oraz konfigurację menedżera rozruchu, korzystając z narzędzi wewnątrz migawki. Pliki te są najpierw przygotowywane w lokalizacji tymczasowej, więc partycja systemowa EFI nie jest jeszcze modyfikowana. Jądra, które nie istnieją w migawce, są usuwane z menu rozruchu, a pliki są podpisywane, jeśli Secure Boot jest skonfigurowany z użyciem `sbctl`.
+2. Tworzy nowy główny podwolumin z migawki i zamienia go z obecnym podwoluminem głównym.
+3. Przenosi zagnieżdżone podwoluminy, na przykład `/.snapshots`, ze starego katalogu głównego do nowego, aby migawki pozostały dostępne.
+4. Kopiuje przygotowane pliki rozruchowe na partycję systemową EFI.
+5. Usuwa stary główny podwolumin.
+</Steps>
+
+Jeśli któryś krok zakończy się błędem przed skopiowaniem plików rozruchowych, środowisko ratunkowe przywraca stary katalog główny i pozostawia partycję systemową EFI bez zmian.
+
+Gdy partycja systemowa EFI znajduje się w `/efi` lub `/boot/efi`, jądra są częścią samej migawki, więc kroki 1 i 4 są pomijane.
+
+:::caution[Secure Boot i starsze migawki]
+Nowe pliki rozruchowe są podpisywane za pomocą instalacji `sbctl` **wewnątrz migawki**. Gdy przywrócisz migawkę utworzoną przed skonfigurowaniem Secure Boot, nic nie zostanie podpisane i system nie uruchomi się z włączonym Secure Boot. Środowisko ratunkowe nie ostrzega przed tym. Twoje klucze `sbctl` w `/var/lib/sbctl` również zostaną usunięte wraz ze starym katalogiem głównym.
+
+Sam obraz ratunkowy pozostaje podpisany. Jeśli nowsza migawka nadal zawiera `sbctl` i jego klucze, uruchom **CachyOS Recovery** z menu rozruchu firmware'u i przywróć tamtą migawkę. Przywrócenie ponownie podpisze pliki rozruchowe.
+
+W przeciwnym razie wyłącz Secure Boot w firmware i uruchom system. Zainstaluj `sbctl` i skopiuj `/var/lib/sbctl` z nowszej migawki w `/.snapshots`. Następnie podpisz jądra i menedżer rozruchu zgodnie z opisem w sekcji [Podpisywanie obrazu jądra i menedżera rozruchu](/pl/configuration/secure_boot_setup#podpisywanie-obrazu-jądra-i-menedżera-rozruchu) i ponownie włącz Secure Boot. Jeśli żadna nowsza migawka nie zawiera `/var/lib/sbctl`, przejdź przez [Konfigurację Secure Boot](/pl/configuration/secure_boot_setup) od początku, aby utworzyć i zarejestrować nowe klucze.
+:::
+
+:::note[Jądro Easy Anti-Cheat]
+Przywrócenie migawki nie podpisuje jądra `linux-cachyos-eac` twoim własnym kluczem, dzięki czemu zachowuje ono podpis CachyOS wymagany przez wpis rozruchowy [Easy Anti-Cheat](/pl/configuration/easy_anti_cheat). Jeśli wpis Easy Anti-Cheat nie uruchamia się po przywróceniu migawki, skopiuj jądro podpisane przez CachyOS z powrotem do `/boot`, reinstalując `linux-cachyos-eac`, lub w przypadku Limine uruchamiając `sudo limine-mkinitcpio`.
+:::
+
+## Chroot do systemu
+
+**Chroot into target system** uruchamia zainstalowany system w kontenerze za pomocą `systemd-nspawn`. Pojawi się monit logowania do zainstalowanego systemu, gdzie możesz zalogować się swoją nazwą użytkownika i hasłem. Główny system plików jest w tym trybie zapisywalny, więc wprowadzone zmiany są zachowywane.
+
+Używaj tego trybu do napraw offline głównego systemu plików, na przykład do naprawy uszkodzonego pliku konfiguracyjnego w `/etc` lub wyłączenia usługi, która uniemożliwia uruchomienie systemu. Kontener **nie ma dostępu do sieci**, a zamontowany jest tylko główny system plików. Na Btrfs inne podwoluminy, takie jak `/home`, `/var/cache` i `/var/log`, oraz inne partycje, w tym partycja systemowa EFI, mogą nie być dostępne. Do napraw, które ich wymagają — takich jak instalacja lub reinstalacja pakietów — użyj [cachy-chroot](/pl/features/cachy_chroot) z obrazu live ISO.
+
+Aby opuścić kontener i wrócić do menu ratunkowego, naciśnij <kbd>Ctrl</kbd>+<kbd>]</kbd> trzy razy w ciągu jednej sekundy.
+
+## Usuwanie CachyOS Recovery
+
+<Tabs syncKey="firmware">
+  <TabItem label="UEFI">
+    ```bash
+    sudo pacman -Rns cachyos-recovery
+    ```
+
+    Hak pacmana usuwa obraz ratunkowy i jego dodatek z partycji systemowej EFI, wpis z menu rozruchu Limine lub GRUB oraz wpis **CachyOS Recovery** z menu rozruchu firmware'u.
+  </TabItem>
+  <TabItem label="BIOS">
+    ```bash
+    sudo pacman -Rns cachyos-recovery-legacy
+    ```
+
+    Hak pacmana usuwa wpis z menu rozruchu Limine, a w przypadku GRUB także skopiowane jądro ratunkowe, initramfs oraz wpis w `/etc/grub.d`, po czym regeneruje konfigurację GRUB.
+  </TabItem>
+</Tabs>
+
+## Rozwiązywanie problemów
+
+### Brak wpisu CachyOS Recovery w menu rozruchu
+
+Zainstaluj pakiet ponownie (`cachyos-recovery` na UEFI, `cachyos-recovery-legacy` na BIOS) i przeczytaj wynik kroku **Installing system recovery image...**:
+
+```bash
+sudo pacman -S cachyos-recovery
+```
+
+Wpis Limine wymaga `limine-entry-tool`, a wpis w firmware wymaga `efibootmgr`. W przypadku systemd-boot obraz musi znajdować się na tej samej partycji systemowej EFI, na której zainstalowany jest systemd-boot.
+
+### Środowisko ratunkowe nie uruchamia się z włączonym Secure Boot
+
+Obraz ratunkowy lub jego dodatek nie jest podpisany. Sprawdź i podpisz je zgodnie z opisem w sekcji [Secure Boot](#secure-boot).
+
+### „Nie znaleziono migawek”
+
+Środowisko ratunkowe wyświetla tylko migawki tylko do odczytu. Sprawdź, czy Snapper tworzy migawki głównego systemu plików:
+
+```bash
+sudo snapper list
+```
+
+Jeśli polecenie zgłosi, że konfiguracja `root` nie istnieje, Snapper nie jest skonfigurowany. Dzieje się tak w instalacjach z **systemd-boot**, gdzie instalator nie konfiguruje jeszcze Snappera. Zainstaluj pakiet `cachyos-snapper-support`, który tworzy konfigurację Snappera dla głównego systemu plików i doinstalowuje `snap-pac`, aby wykonywać migawki przed każdą transakcją `pacman` i po niej:
+
+```bash
+sudo pacman -S cachyos-snapper-support
+```
+
+Środowisko ratunkowe będzie mogło korzystać z migawek tworzonych od tego momentu.
+
+### Uruchomienie migawki nie udaje się lub ekran pozostaje czarny
+
+Bezpośrednie uruchomienie jądra migawki ze środowiska ratunkowego nie działa na każdym urządzeniu. Użyj zamiast tego opcji **Rollback Btrfs snapshot**, aby przywrócić migawkę.
+
+### „Nie znaleziono partycji ESP”
+
+Zarówno instalacja pakietu, jak i przywracanie migawki odczytują lokalizację partycji systemowej EFI z pliku `/etc/fstab` (podczas przywracania — z `/etc/fstab` wewnątrz migawki). Partycja musi być tam wymieniona z typem `vfat` i zamontowana w `/boot`, `/efi` lub `/boot/efi`.
+
+### Przywracanie zatrzymuje się z błędem
+
+Przeczytaj błąd wyświetlony nad komunikatem. Jeśli środowisko ratunkowe nie mogło przygotować plików rozruchowych, nic nie zostało zmienione i twój stary system nadal jest na miejscu.
+
+Jeśli komunikat informuje, że migawka została przywrócona, ale `/boot` jest niespójny, migawka została przywrócona, lecz skopiowanie plików rozruchowych nie powiodło się. Uruchom system z live ISO, wejdź do swojego systemu za pomocą [cachy-chroot](/pl/features/cachy_chroot) i wygeneruj pliki rozruchowe ponownie:
+
+- W przypadku **Limine** uruchom `limine-mkinitcpio`.
+- W przypadku innych menedżerów rozruchu zainstaluj ponownie pakiety jądra, na przykład `pacman -S linux-cachyos`. Działa to, jeśli zainstalowana wersja jądra nadal znajduje się w pamięci podręcznej pakietów. Jeśli pacman nie może jej pobrać, zaktualizuj zamiast tego cały system za pomocą `pacman -Syu`.

@@ -1,0 +1,62 @@
+---
+title: CachyOS w WSL
+description: Instalacja i korzystanie z CachyOS w podsystemie Windows dla systemu Linux (WSL)
+ai_translated: true
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+CachyOS udostępnia obraz dla [Podsystemu Windows dla systemu Linux](https://learn.microsoft.com/en-us/windows/wsl/about) (WSL). Jest on utrzymywany w repozytorium [cachyos-wsl](https://github.com/CachyOS/cachyos-wsl), gdzie możesz również zgłaszać błędy specyficzne dla tego obrazu.
+
+## Instalacja
+
+Potrzebujesz WSL 2 w wersji `2.4.4` lub nowszej, który możesz zaktualizować za pomocą `wsl --update`. W przypadku starszych wersji zapoznaj się z [plikiem README repozytorium cachyos-wsl](https://github.com/CachyOS/cachyos-wsl#wsl-prior-to-244).
+
+<Steps>
+
+1. Pobierz obraz `.wsl` z [najnowszego wydania](https://github.com/CachyOS/cachyos-wsl/releases/latest) lub w PowerShell:
+
+   ```powershell
+   $v = (Invoke-RestMethod https://api.github.com/repos/CachyOS/cachyos-wsl/releases/latest).tag_name
+   Invoke-WebRequest "https://github.com/CachyOS/cachyos-wsl/releases/download/$v/cachyos-$v.wsl" -OutFile "$env:TEMP\cachyos.wsl"
+   ```
+
+2. Zainstaluj go, klikając dwukrotnie plik lub w PowerShell:
+
+   ```powershell
+   wsl --install --from-file "$env:TEMP\cachyos.wsl"
+   ```
+
+3. Uruchom CachyOS z menu Start lub poleceniem `wsl -d cachyos`.
+
+</Steps>
+
+## Pierwsza konfiguracja
+
+Pierwsze uruchomienie może potrwać kilka minut. Konfiguruje ono pęk kluczy pacmana, ocenia serwery lustrzane, przełącza się na zoptymalizowane pakiety i prosi o utworzenie użytkownika, który ma dostęp do `sudo` oraz używa `fish` jako swojej powłoki.
+
+Obrazy są budowane tylko okresowo, więc po zakończeniu uruchom `sudo pacman -Syu`.
+
+## Zoptymalizowane pakiety
+
+Obraz jest generyczny i działa na dowolnym procesorze x86-64. Podobnie jak instalator CachyOS, pierwsza konfiguracja przełącza się następnie na najlepsze [zoptymalizowane repozytoria](/pl/features/optimized_repos) dla twojego procesora: `znver4`, `v4` lub `v3`. Starsze procesory pozostają na pakietach generycznych.
+
+Jeśli przełączenie się nie powiedzie, na przykład z powodu braku dostępu do internetu, konfiguracja będzie kontynuowana z pakietami generycznymi. Aby spróbować ponownie:
+
+```sh
+sudo /usr/lib/wsl/optimize-repos
+```
+
+## Różnice względem standardowej instalacji
+
+WSL zawsze uruchamia jądro Microsoftu, więc `linux-cachyos`, jego planisty (schedulery) oraz `sched-ext` nie są używane. Obraz nie zawiera również menedżera rozruchu, `chwd` ani zram.
+
+## Rozwiązywanie problemów
+
+Jeśli pacman poinformuje, że zalecane jest ponowne uruchomienie, zrestartuj dystrybucję z poziomu PowerShell poleceniem `wsl --terminate cachyos`.
+
+Aby zacząć od nowa, usuń dystrybucję poleceniem `wsl --unregister cachyos` i zainstaluj ją ponownie.
+
+:::caution
+`wsl --unregister` trwale usuwa wszystko wewnątrz dystrybucji, w tym twój katalog domowy systemu Linux.
+:::

@@ -37,7 +37,7 @@ Użytkownicy innych dystrybucji **NIE SĄ WSPIERANI** i **ZDECYDOWANIE ODRADZA S
 - Parabola
 - Użytkowników wszelkich innych dystrybucji Linuksa, które nie zostały wyraźnie wymienione w sekcji „Wspierani Użytkownicy”.
 
-## 5. Redystrybucja Repozytorium
+## 6. Redystrybucja Repozytorium
 
 Niniejsza polityka definiuje „redystrybucję” jako działania polegające na włączeniu repozytorium CachyOS (i jego mirrorów) lub pakietów uzyskanych z repozytorium CachyOS jako część dystrybuowanego obrazu systemu operacyjnego lub sysrootów.
 Redystrybucja obejmuje również działania **dystrybucji Linuksa** polegające na dostarczaniu narzędzi, które umożliwiają korzystanie z repozytorium CachyOS z wyboru użytkownika, lub dostarczanie jakichkolwiek dystrybuowanych lub oficjalnych dokumentów, które instruują użytkowników, jak włączyć repozytorium CachyOS
@@ -45,7 +45,7 @@ Redystrybucja obejmuje również działania **dystrybucji Linuksa** polegające 
 
 Redystrybucja repozytorium CachyOS jest dozwolona wyłącznie zespołowi CachyOS.
 
-## 6. Zabroniona Redystrybucja
+## 7. Zabroniona Redystrybucja
 
 Redystrybucja repozytorium CachyOS (i jego mirrorów) w jakiejkolwiek nieautoryzowanej dystrybucji Linuksa, w tym w innych dystrybucjach opartych na Archu, jest **SUROWO ZABRONIONA**. Dotyczy to między innymi:
 
@@ -55,29 +55,29 @@ Redystrybucja repozytorium CachyOS (i jego mirrorów) w jakiejkolwiek nieautoryz
 - Parabola
 - Wszelkich innych dystrybucji Linuksa, które nie zostały wyraźnie wymienione w sekcji „Redystrybucja Repozytorium”.
 
-## 7. Mirrory
+## 8. Mirrory
 
 Dozwolone jest tworzenie mirrorów repozytorium za pomocą rsync i syncthing. Zewnętrzne mirrory mogą tworzyć kopie lustrzane repozytorium i udostępniać je na serwerze WWW, o ile zapewnią, że dane repozytorium pozostaną niezmienione.
 
-## 8. Zgodność i Monitorowanie
+## 9. Zgodność i Monitorowanie
 
 Zastrzegamy sobie prawo do monitorowania wykorzystania naszego repozytorium w celu zapewnienia zgodności z niniejszą polityką. Każde nieautoryzowane użycie może skutkować cofnięciem dostępu.
 
-## 9. Zgłaszanie Naruszeń
+## 10. Zgłaszanie Naruszeń
 
 Jeśli podejrzewasz, że niniejsza polityka jest naruszana, prosimy o zgłoszenie tego na adres [admin@cachyos.org].
 
-## 10. Zmiany w Polityce
+## 11. Zmiany w Polityce
 
 CachyOS zastrzega sobie prawo do zmiany niniejszej polityki w dowolnym momencie. Zmiany będą komunikowane za pośrednictwem naszych oficjalnych kanałów.
 
-## 11. Informacje Kontaktowe
+## 12. Informacje Kontaktowe
 
 W przypadku jakichkolwiek pytań lub wątpliwości dotyczących niniejszej polityki, prosimy o kontakt pod adresem:
 
-- E-mail: <admin@cachyos.org>
-- Strona internetowa: <https://cachyos.org>
+- E-mail: [admin@cachyos.org](mailto:admin@cachyos.org)
+- Strona internetowa: [https://cachyos.org](https://cachyos.org)
 
-## 12. Potwierdzenie
+## 13. Potwierdzenie
 
 Korzystając z repozytorium CachyOS (i jego mirrorów), potwierdzasz, że przeczytałeś, zrozumiałeś i zgadzasz się przestrzegać niniejszej polityki.

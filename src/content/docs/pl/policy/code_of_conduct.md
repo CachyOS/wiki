@@ -117,12 +117,12 @@ społeczności.
 
 Niniejszy Kodeks Postępowania jest adaptacją [Contributor Covenant][homepage],
 wersja 2.0, dostępnego pod adresem
-<https://www.contributor-covenant.org/version/2/0/code_of_conduct.html>.
+[https://www.contributor-covenant.org/version/2/0/code_of_conduct.html](<https://www.contributor-covenant.org/version/2/0/code_of_conduct.html>).
 
 Wytyczne Dotyczące Wpływu na Społeczność zostały zainspirowane przez [drabinę egzekwowania kodeksu postępowania Mozilli](https://github.com/mozilla/diversity).
 
 [homepage]: https://www.contributor-covenant.org
 
-Odpowiedzi na często zadawane pytania dotyczące tego kodeksu postępowania znajdują się w FAQ pod adresem
-<https://www.contributor-covenant.org/faq>. Tłumaczenia są dostępne pod adresem
-<https://www.contributor-covenant.org/translations>.
+Odpowiedzi na często zadawane pytania dotyczące tego kodeksu postępowania znajdują się w
+[FAQ](<https://www.contributor-covenant.org/faq>). Tłumaczenia są dostępne pod adresem
+[https://www.contributor-covenant.org/translations](<https://www.contributor-covenant.org/translations>).

@@ -1,6 +1,7 @@
 ---
 title: Jądro CachyOS
 description: Funkcje i zmiany w jądrze CachyOS
+ai_translated: true
 tableOfContents:
   minHeadingLevel: 1
   maxHeadingLevel: 4
@@ -10,45 +11,59 @@ Jądro CachyOS to spersonalizowane jądro, które wykorzystuje ulepszenia, konfi
 
 ## Funkcje
 
+
 ### Optymalizacje wydajności
 
 - **Zaawansowana kompilacja**: wysoce konfigurowalny plik PKGBUILD z obsługą kompilatorów GCC i Clang
-- **Optymalizacja w czasie konsolidacji (LTO)**: domyślnie włączone Thin LTO dla lepszej wydajności
-- **Optymalizacja sterowana profilem (PGO)**: profilowanie AutoFDO dla optymalnego generowania kodu ([Dowiedz się więcej](https://cachyos.org/blog/2411-kernel-autofdo/))
+- **Optymalizacja w czasie konsolidacji (LTO)**: domyślnie włączone Clang Thin LTO w głównym pakiecie `linux-cachyos`
+- **Rozproszone ThinLTO**: wsparcie dla rozproszonych kompilacji Clang ThinLTO w celu przyspieszenia kompilacji jądra
+- **Optymalizacja sterowana profilem (PGO)**: profilowanie AutoFDO w domyślnym jądrze dla optymalnego generowania kodu ([Dowiedz się więcej](https://cachyos.org/blog/2411-kernel-autofdo/))
 - **Integralność przepływu sterowania jądra (kCFI)**: dostępna przy użyciu LLVM dla zwiększonego bezpieczeństwa
-- **Opcje częstotliwości zegara**: konfigurowalne między 300Hz, 500Hz, 600Hz, 750Hz i 1000Hz (domyślnie: 1000Hz)
+- **Opcje częstotliwości zegara**: konfigurowalne między 100Hz, 250Hz, 300Hz, 500Hz, 600Hz, 750Hz i 1000Hz (domyślnie: 1000Hz)
 - **Optymalizacje architektury**: wsparcie dla specyficznych kompilacji x86-64-v3, x86-64-v4 i AMD Zen4
 - **Optymalizacje kompilatora**: zaawansowane flagi GCC, w tym `-fivopts` i `-fmodulo-sched`
+- **PREEMPT_DYNAMIC**: tryby wywłaszczania wybierane w czasie działania (`full`, `lazy`, `voluntary`, `none`)
 
 ### Ulepszenia procesora
 
 - **Wiele harmonogramów**: harmonogramy BORE, EEVDF i BMQ do optymalizacji różnych obciążeń
+- **[POC Selector](https://github.com/masahitoS/scx_cake)**: szybki selektor bezczynnego CPU Piece-Of-Cake inspirowany scx_cake, redukujący opóźnienia wybudzania
+- **CachyOS Sauce**: niestandardowa konfiguracja `CONFIG_CACHY` z poprawkami harmonogramu i systemu
 - **Ulepszenia AMD P-State**: wsparcie dla Preferred Core i najnowsze ulepszenia amd-pstate z linux-next
 - **Wsparcie dla czasu rzeczywistego**: dostępne kompilacje jądra RT z integracją harmonogramu BORE
-- **CachyOS Sauce**: niestandardowa konfiguracja `CONFIG_CACHY` z poprawkami harmonogramu i systemu
 - **Optymalizacje niskiego opóźnienia**: łatki poprawiające responsywność i redukujące jitter
+- **sched/wait LIFO accept()**: wywołania `accept()` dla gniazd przetwarzane w kolejności LIFO dla lepszej wydajności pamięci podręcznej
+
+### Sieć
+
+- **[BBR3 TCP](https://github.com/google/bbr)**: algorytm kontroli przeciążeń BBRv3 dostępny jako osobny moduł obok BBRv1
 
 ### System plików i pamięć
 
 - **Wsparcie dla ZFS**: wbudowane wsparcie dla systemu plików ZFS z prekompilowanymi modułami
+- **Ulepszenia NTFS**: poprawki sterownika NTFS z projektu nadrzędnego dotyczące walidacji lustra MFT, sprawdzania granic atrybutów i obsługi pliku dziennika
+- **Ulepszenia MGLRU**: usprawniona obsługa zapisu brudnych stron, uproszczone statystyki odzyskiwania vmscan oraz dostrajanie MM w Cachy Sauce (ochrona zbioru roboczego LRU-gen, poprawki kompaktowania/watermark, odzyskiwanie hugepage)
 - **Integracja z NVIDIA**:
   - Moduły własnościowego sterownika NVIDIA z łatkami
   - Wsparcie dla otwartego sterownika NVIDIA
   - Gotowe do użycia moduły w repozytorium
 - **Ulepszenia harmonogramu I/O**:
   - Ulepszona wydajność BFQ i mq-deadline
-  - Wsparcie dla alternatywnego harmonogramu I/O [ADIOS](https://github.com/firelzrd/adios)
-- **Zarządzanie pamięcią**:
-  - Łatka [le9uo](https://github.com/firelzrd/le9uo) zapobiegająca gwałtownemu stronicowaniu pamięci pod dużym obciążeniem
-  - Poprawki zarządzania pamięcią z Zen-kernel (kompaktowanie, optymalizacja watermark)
+  - Wsparcie dla wielokolejkowego harmonogramu I/O [ADIOS](https://github.com/firelzrd/adios) v3.2.0
+- **VRAM Cgroup (DMEM)**: kontroler pamięci urządzenia umożliwiający ograniczanie użycia pamięci VRAM GPU dla poszczególnych grup cgroup w podsystemie DRM
 
 ### Dodatkowe funkcje
 
 #### Wsparcie sprzętowe
-- **Sprzęt do gier**: łatki dla Steam Deck (dźwięk, dziwactwa sprzętowe, HID) i wsparcie dla ROG Ally
-- **Sprzęt Apple**: wsparcie dla MacBooka T2 domyślnie zawarte
+- **AMD ISP4**: nowy sterownik kamery AMD ISP 4 dla obsługiwanych platform
+- **Sprzęt do gier**: łatki dla Steam Deck (dźwięk, dziwactwa sprzętowe, HID), wsparcie dla ROG Ally oraz sterownik HID dla MSI Claw (deckify)
+- **Sprzęt Apple**: wsparcie dla MacBooka T2 ze sterownikiem apple-bce w staging
 - **Sprzęt ASUS**: rozszerzone łatki kompatybilności dla sprzętu ASUS
+- **Sprzęt Lenovo**: ograniczanie ładowania baterii przez WMI, konfigurowalne atrybuty GPU/CPU oraz capdata debugfs
+- **Sprzęt HP**: wsparcie dla laptopów OMEN Slim i OMEN MAX poprzez hp-wmi
 - **Grafika**: włączone wsparcie dla HDR, nadpisanie min_powercap dla AMDGPU (`amdgpu_ignore_min_pcap`)
+- **Wyświetlanie**: HDMI VRR na AMD, właściwości złącza ALLM i pasywnego VRR, parsowanie VESA DSC bits-per-pixel z EDID
+- **Kodeki audio**: wsparcie dla pobocznych kodeków HDA AW88399 i MAX98390
 
 #### Ulepszenia systemowe
 - **Multimedia**: moduły v4l2loopback domyślnie zawarte
@@ -97,7 +112,6 @@ jest zbudowany przy użyciu [clang](https://clang.llvm.org/) zamiast [GCC](https
     - `Nie obsługuje sched-ext.`
 - **linux-cachyos-rc**
   - Oparte na najnowszym jądrze mainline z [drzewa Linusa](https://github.com/torvalds/linux/).
-  - Używa harmonogramu [BORE](https://github.com/firelzrd/bore-scheduler).
   - Główne jądro do wprowadzania nowych funkcji w naszym zestawie łatek.
 - **linux-cachyos-server**
   - Dostosowane do obciążeń serwerowych w porównaniu do użytku na komputerach stacjonarnych.
@@ -162,5 +176,5 @@ Aby uzyskać więcej informacji na temat AutoFDO, kliknij [tutaj.](https://cachy
 
 ### Czy jądro czasu rzeczywistego poprawia wydajność w grach?
 
-Nie, nie poprawia. Jądro czasu rzeczywistego sprawia, że znacznie więcej kodu można wywłaszczać w porównaniu do normalnego jądra w pełni wywłaszczalnego. Oznacza to, że znacznie więcej zadań (w tym procesy gier)
+Nie, nie poprawia. Jądro czasu rzeczywistego sprawia, że znacznie więcej kodu można wywłaszczać w porównaniu do zwykłego jądra wywłaszczalnego (PREEMPT). Oznacza to, że znacznie więcej zadań (w tym procesy gier)
 jest często wywłaszczanych i będzie zmuszonych do oddawania zasobów systemowych, co prowadzi do gorszej wydajności.

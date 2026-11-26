@@ -4,9 +4,10 @@ description: Rzeczy, które możesz zrobić, aby dostosować system po instalacj
 tableOfContents:
   minHeadingLevel: 1
   maxHeadingLevel: 4
+ai_translated: true
 ---
 
-import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+import { Tabs, TabItem, Steps, LinkButton, Icon } from '@astrojs/starlight/components';
 import ImageComponent from '~/components/image-component.astro';
 
 ## Modyfikacje wydajności dla AMD
@@ -45,11 +46,11 @@ Możesz również przełączać się między trybami działania w czasie rzeczyw
    echo passive | sudo tee /sys/devices/system/cpu/amd_pstate/status
    ```
 
-Więcej informacji:
+Więcej szczegółowych informacji:
 
-*   [https://www.kernel.org/doc/html/v6.9/admin-guide/pm/amd-pstate.html](https://www.kernel.org/doc/html/v6.9/admin-guide/pm/amd-pstate.html)
-*   [https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/](https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/)
-*   [https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/](https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/)
+<LinkButton icon="external" href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html">Dokumentacja AMD P-State</LinkButton>
+<LinkButton icon="external" href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html#amd-pstate-driver-operation-modes">Tryby działania sterownika AMD P-State</LinkButton>
+<LinkButton icon="external" href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html#user-space-interface-in-sysfs-per-policy-control">Interfejs przestrzeni użytkownika AMD P-State</LinkButton>
 
 ### Konfiguracja AMD P-State EPP
 
@@ -67,8 +68,7 @@ echo power | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_pr
 
 Dostępne preferencje: `performance`, `power`, `balance_power`, `balance_performance`
 
-Benchmarki dla każdej preferencji można znaleźć tutaj:
-[https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/](https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/)
+<LinkButton icon="external" href="https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/">Oficjalne benchmarki dla każdej preferencji</LinkButton>
 
 ### Optymalizator AMD 3D V-Cache
 
@@ -103,9 +103,7 @@ AMD Core Performance Boost, znane również jako AMD Turbo Core, to technologia 
 procesorowi dynamicznie dostosowywać i kontrolować częstotliwość pracy w niektórych wersjach swoich procesorów,
 co pozwala na zwiększoną wydajność w razie potrzeby przy jednoczesnym zachowaniu niższych parametrów mocy i termicznych podczas normalnej pracy.
 
-Od wersji `linux-cachyos` 6.9.6, jądro jest załatane wsparciem dla CPB dla sterowników p-state AMD (w tym `passive`, `active` i `guided`).
-Użytkownicy mogą zmieniać stan boost każdego rdzenia procesora za pomocą pliku boost w sysfs `/sys/devices/system/cpu/cpuX/cpufreq/boost`
-(X odnosi się do numeru rdzenia, np. cpu0 to pierwszy rdzeń, cpu1 drugi, itd.).
+Aby zarządzać AMD CPB w CachyOS, możesz użyć następujących poleceń:
 
 ```sh
 ❯ echo 0 | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/boost # Wyłącz boost dla wszystkich rdzeni
@@ -139,9 +137,9 @@ Stworzony przez [firelzrd](https://github.com/firelzrd)
 :::note
 CachyOS zawiera stabilną gałąź ADIOS w jądrze.
 
-Obecna wersja w **linux-cachyos**: `3.1.7`
+Obecna wersja w **linux-cachyos**: `3.2.0`
 
-Obecna wersja w **linux-cachyos-rc**: `3.1.7`
+Obecna wersja w **linux-cachyos-rc**: `3.2.0`
 :::
 
 Krótkie wprowadzenie z pliku README:
@@ -201,7 +199,7 @@ FAQ:
 ### NVIDIA Smooth Motion (serie RTX 40xx i 50xx)
 
 :::note[Kompatybilność z grami.]
-Gry działające na DX11, DX12 i Vulkan.
+Gry działające na DX11, DX12 i Vulkan. Zobacz sekcję FAQ, aby poznać obejście dla OpenGL.
 
 Zarówno DXVK, jak i VKD3D działają poprawnie.
 
@@ -240,8 +238,43 @@ FAQ:
   - Nie. Wbudowany w grze ogranicznik powinien działać poprawnie.
 - Czy Smooth Motion można łączyć z DLSS Frame Generation?
   - Nie. Tylko jedna metoda generowania klatek może być aktywna w danym momencie.
+- Czy Smooth Motion można używać z aplikacjami OpenGL?
+  - Nie bezpośrednio, ponieważ jest zaimplementowany jako warstwa Vulkan, ale jest to możliwe poprzez wykorzystanie [Zink](https://docs.mesa3d.org/drivers/zink.html) do tłumaczenia wywołań OpenGL na Vulkan:
+    ```text
+    NVPRESENT_ENABLE_SMOOTH_MOTION=1 zink-run <command>
+    ```
+    :::note
+    Korzystanie z Zink prawdopodobnie wpłynie na wydajność i może powodować błędy graficzne w niektórych grach.
+
+    Użytkownicy konfiguracji z dwoma kartami graficznymi muszą ustawić `DRI_PRIME=1`, aby korzystać z dedykowanej karty NVIDIA zamiast bardziej typowych metod wyboru GPU.
+    :::
 
 ## Modyfikacje oszczędzania energii
+
+### thermald
+
+`thermald` to demon zarządzania temperaturą dla systemów Intel. Monitoruje on czujniki temperatury i podejmuje działania chłodzące, takie jak ograniczanie mocy procesora lub zmiany stanów wydajności, zanim oprogramowanie układowe będzie musiało zastosować bardziej agresywny throttling.
+
+Jest on przydatny głównie w laptopach, urządzeniach konwertowalnych, tabletach, handheldach oraz kompaktowych komputerach PC z procesorami Intel, które udostępniają kontrolki termiczne Intela przez `/sys/class/thermal`. Obsługiwane systemy zazwyczaj korzystają z czujników temperatury procesorów Intel, Intel P-state, Intel power clamp, RAPL, `INT340X` lub tabel ACPI DPTF / adaptacyjnych tabel termicznych. Procesory AMD nie są obsługiwane przez `thermald`.
+
+Zainstaluj i włącz go za pomocą:
+
+```sh
+sudo pacman -S thermald
+sudo systemctl enable --now thermald.service
+```
+
+Sprawdź, czy uruchomił się poprawnie:
+
+```sh
+systemctl status thermald.service
+journalctl -u thermald.service -b
+```
+
+Więcej informacji:
+
+<LinkButton icon="external" href="https://github.com/intel/thermal_daemon">Repozytorium upstream thermald</LinkButton>
+<LinkButton icon="external" href="https://man.archlinux.org/man/thermald.8">Strona podręcznika man dla thermald</LinkButton>
 
 ### Włącz RCU Lazy
 
@@ -255,19 +288,6 @@ rcutree.enable_rcu_lazy=1
 ```
 
 ## Rozwiązywanie problemów z NVIDIA
-
-### Wyłączanie backendu Wayland dla SDDM
-
-:::note
-Począwszy od wersji cachyos-kde-settings 4.3, SDDM domyślnie używa KWin jako kompozytora Wayland.
-:::
-
-Chociaż jest to miły krok naprzód, może to wprowadzić pewne niedogodności, takie jak problemy z podkręcaniem za pomocą nvidia-settings lub powodować niekompatybilność ze starszymi kartami graficznymi, które mają problemy z Waylandem.
-
-Aby cofnąć tę zmianę, usuń pakiet cachyos-kde-settings:
-```sh
-sudo pacman -R cachyos-kde-settings
-```
 
 ### Oprogramowanie układowe NVIDIA GSP
 
@@ -388,13 +408,13 @@ Ten przewodnik zakłada, że masz domyślną konfigurację CachyOS z włączonym
         ```text
         systemd.zram=0
         ```
-    2. Utwórz pusty plik nadpisujący, aby wyłączyć [regułę udev CachyOS](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/30-zram.rules), która wyłącza Zswap:
-        ```bash
-        sudo touch /etc/udev/rules.d/30-zram.rules
-        ```
-    3. Włącz Zswap, dodając następujący parametr jądra:
+    2. Włącz Zswap, dodając następujący parametr jądra:
         ```text
         zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=30
+        ```
+    3. Utwórz pusty plik nadpisujący, aby wyłączyć [regułę udev CachyOS](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/30-zram.rules), która wyłącza Zswap:
+        ```bash
+        sudo touch /etc/udev/rules.d/30-zram.rules
         ```
     4. Utwórz plik wymiany (swap) dla Zswap.
         <details>
@@ -414,7 +434,7 @@ Ten przewodnik zakłada, że masz domyślną konfigurację CachyOS z włączonym
                         ```
                     4. Dodaj plik wymiany do `/etc/fstab`, aby był on trwały po ponownym uruchomieniu systemu:
                         ```bash
-                        sudo echo "/swap/swapfile none swap defaults 0 0" >> /etc/fstab
+                        echo "/swap/swapfile none swap defaults 0 0" | sudo tee -a /etc/fstab
                         ```
                 </Steps>
         </details>
@@ -435,7 +455,7 @@ Ten przewodnik zakłada, że masz domyślną konfigurację CachyOS z włączonym
                     ```
                 4. Dodaj plik wymiany do `/etc/fstab`, aby był on trwały po ponownym uruchomieniu systemu:
                     ```bash
-                    sudo echo "/swapfile none swap defaults 0 0" >> /etc/fstab
+                    echo "/swapfile none swap defaults 0 0" | sudo tee -a /etc/fstab
                     ```
                 5. Aktywuj plik wymiany:
                     ```
@@ -443,7 +463,17 @@ Ten przewodnik zakłada, że masz domyślną konfigurację CachyOS z włączonym
                     ```
             </Steps>
         </details>
-    5. Przebuduj swój initramfs, aby zastosować zmiany. Polecenie różni się w zależności od twojego bootloadera:
+    5. Dodaj moduł kompresji lz4 do pliku konfiguracyjnego `mkinitcpio.conf`:
+        1. Otwórz plik w edytorze tekstu:
+            ```bash
+            sudo nano /etc/mkinitcpio.conf
+            ```
+        2. Znajdź tablicę `MODULES` i dodaj do niej `lz4`. Powinna wyglądać mniej więcej tak:
+            ```text
+            MODULES=(... lz4)
+            ```
+        3. Zapisz plik, naciskając `Ctrl + O` i `Enter`, aby potwierdzić, a następnie zamknij edytor za pomocą `Ctrl + X`.
+    6. Przebuduj swój initramfs, aby zastosować zmiany. Polecenie różni się w zależności od twojego bootloadera:
         <details>
             <summary>systemd-boot</summary>
             ```bash
@@ -462,5 +492,5 @@ Ten przewodnik zakłada, że masz domyślną konfigurację CachyOS z włączonym
             sudo limine-mkinitcpio
             ```
         </details>
-    6. Uruchom ponownie system, aby zastosować wszystkie zmiany.
+    7. Uruchom ponownie system, aby zastosować wszystkie zmiany.
 </Steps>
