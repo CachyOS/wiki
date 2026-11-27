@@ -449,33 +449,43 @@ If the snapshot you want to restore from involved a kernel update, you won't be 
                 import('~/assets/images/limine-snapshotMenu-2.jpg'),
                 import('~/assets/images/limine-snapshotMenu-3.jpg')]}
             />
-        3. Your system is now in `read-only mode`. A pop up notification should appear indicating that a snapshot was detected asking to restore from it:
+        3. Your system now boots with an overlay as the root filesystem: it looks writable, but everything written under `/` (`/etc`, `/usr`, `/var` except the separately-mounted subvolumes) is kept in RAM and is lost at the next reboot. Do not install packages or edit system configuration in this session - restore first. A pop up notification should appear indicating that a snapshot was detected asking to restore from it:
             <ImageComponent imgsrc={import('~/assets/images/kde-snapshot-popup.png')} />
-        4. Click on `Restore now`. A terminal window will open with a prompt and ask for some confirmations:
+        4. Click on `Restore now`. A terminal window will open with a prompt:
             ```bash title="Example Restore Prompt"
-            Snapshot ID    : 2
-            Date           : 2026-01-26 11:19:14
-            Description    : nc-git
-            Restore method : replace
+            Select snapshot to restore (method: replace)
+            [<n>] select | type [ID] | [c] cancel
 
-            Confirm restore of snapshot 2 using the "replace" method?
-            Type [y]es to restore, [l]ist to display all snapshots, or [c]ancel to abort.
+            Your input: 106
 
-            Your input: yes
+            Restore snapshot 106 (method: replace)?
+             [r] restore | [l] list | [c] cancel
 
-            Enter a description for the "backup" of the subvolume: @
-
-            Your input: @
+            Your input: r
             ```
-          5. Type `yes` and optionally add a description for the backup snapshot.
-          6. The restoration process will begin. Once completed, Type yes once again in the new prompt to reboot your system:
+          5. The snapshot ID goes in at the first prompt; `[r]` is only valid at the second.
+          6. The restoration process will begin. Once completed, confirm the reboot in the new prompt:
               ```bash
-              The restore is complete. Please reboot now:
-              Type [y]es to reboot, [n]o or [c]ancel to abort rebooting.
+              Restore complete. Reboot now? [Y/n]:
 
-              Your input: yes
+              Your input: y
               ```
     </Steps>
+
+    :::caution Getting back to the normal boot
+    If the boot default is a snapshot entry, the reboot above can go straight back into the snapshot and the pop-up returns. Two mechanisms are behind this, each worth knowing:
+
+    - The pop-up is triggered by the kernel command line (`rootflags=...snapshot`), so it appears on *every* snapshot boot, restored or not.
+    - If `/boot/limine.conf` contains `remember_last_entry: yes`, Limine re-pins the entry it booted last. That takes precedence over `default_entry` (UEFI only), so choosing the OS entry once at the menu fixes exactly one boot.
+
+    To break the cycle, back up `/boot/limine.conf` and set:
+
+    ```bash
+    remember_last_entry: no
+    ```
+
+    The next boot comes up on the normal entry with no keys pressed, and `snapper`, `btrfs subvolume list /` and the snapshot tooling work again. Note that `default_entry` is 1-based.
+    :::
 </details>
 
 <details>
