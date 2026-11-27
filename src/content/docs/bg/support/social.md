@@ -1,6 +1,6 @@
 ---
 title: Официална общност на CachyOS
-description: Discord, Reddit, X, Forum, Mastodon
+description: Discord, Reddit, X, Форум, Mastodon
 ---
 
 Следните социални медии се поддържат от екипа на CachyOS.
@@ -11,6 +11,6 @@ description: Discord, Reddit, X, Forum, Mastodon
 
 - [Discord](<https://discord.gg/cachyos-862292009423470592>)
 - [Reddit](<https://www.reddit.com/r/cachyos>)
-- [Forum](<https://discuss.cachyos.org>)
-- [X](<https://x.com/cachyos>) - `Изолиран от молби за помощ.`
-- [Mastodon](<https://fosstodon.org/@CachyOS>) - `Изолиран от молби за помощ.`
+- [Форум](<https://discuss.cachyos.org>)
+- [X](<https://x.com/cachyos>) - `Не е предназначен за търсене на помощ.`
+- [Mastodon](<https://fosstodon.org/@CachyOS>) - `Не е предназначен за търсене на помощ.`

@@ -1,87 +1,88 @@
 ---
-title: General System Tweaks
-description: Things you can do to tweak after installing
+title: Общи системни настройки
+description: Неща, които можете да направите за фина настройка след инсталирането
 tableOfContents:
   minHeadingLevel: 1
   maxHeadingLevel: 4
+ai_translated: true
 ---
 
 import { Tabs, TabItem, Steps, LinkButton, Icon } from '@astrojs/starlight/components';
 import ImageComponent from '~/components/image-component.astro';
 
-## AMD Performance Tweaks
+## Оптимизации на производителността за AMD
 
-### AMD P-State Driver
+### Драйвер AMD P-State
 ---------------------------
 
-`amd-pstate` is the AMD CPU performance scaling driver that introduces a new CPU frequency control mechanism on modern AMD APU and CPU series in the Linux kernel. The new mechanism is based on Collaborative Processor Performance Control (CPPC) which provides finer grain frequency management than legacy ACPI hardware P-States.
+`amd-pstate` е драйвер за мащабиране на производителността на процесорите AMD, който въвежда нов механизъм за управление на честотата на процесора в Linux ядрото за съвременните серии APU и CPU на AMD. Новият механизъм се базира на Collaborative Processor Performance Control (CPPC), който осигурява по-прецизно управление на честотата в сравнение с остарелите хардуерни ACPI P-States.
 
-Current AMD CPU/APU platforms are using the ACPI P-states driver to manage CPU frequency and clocks with switching only in 3 P-states. CPPC replaces the ACPI P-states controls and allows a flexible, low-latency interface for the Linux kernel to directly communicate the performance hints to hardware.
+Настоящите платформи с AMD CPU/APU използват драйвера ACPI P-states за управление на честотата и тактовите цикли на процесора с превключване само между 3 P-състояния (P-states). CPPC заменя контролите на ACPI P-states и предоставя гъвкав интерфейс с ниска латентност, чрез който Linux ядрото директно подава насоки за производителността към хардуера.
 
-Below are 3 operation modes of the `amd_pstate` driver and kernel cmdline entries to use them on boot:
+По-долу са описани 3-те режима на работа на драйвера `amd_pstate` и параметрите на ядрото (cmdline), чрез които можете да ги използвате при стартиране:
 
-- AMD P-State (Non-Autonomous Mode): `amd_pstate=passive`
-- AMD P-State Guided (Guided Autonomous Mode): `amd_pstate=guided`
-- AMD P-State EPP (Autonomous Mode): `amd_pstate=active`
+- AMD P-State (неавтономен режим): `amd_pstate=passive`
+- AMD P-State Guided (насочван автономен режим): `amd_pstate=guided`
+- AMD P-State EPP (автономен режим): `amd_pstate=active`
 
 :::note
-The AMD P-State EPP Driver is used by default when no explicit configuration is made.
+Драйверът AMD P-State EPP се използва по подразбиране, когато не е зададена изрична конфигурация.
 :::
 
-You can also switch between operation modes at runtime to test the options:
+Можете също така да превключвате между режимите на работа по време на работа на системата, за да тествате отделните опции:
 
-- **Autonomous mode**: platform considers only the values set for Minimum performance, Maximum performance, and Energy Performance Preference.
+- **Автономен режим**: платформата взема предвид само стойностите, зададени за минимална производителност, максимална производителност и предпочитание за енергийна ефективност (Energy Performance Preference).
    ```sh
    echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status
    ```
 
-- **Guided-autonomous mode**: platform sets operating performance level according to the current workload and within limits set by the OS through minimum and maximum performance registers.
+- **Насочван автономен режим**: платформата задава работното ниво на производителност според текущото натоварване и в рамките на ограниченията, определени от ОС чрез регистрите за минимална и максимална производителност.
    ```sh
    echo guided | sudo tee /sys/devices/system/cpu/amd_pstate/status
    ```
 
-- **Non-autonomous mode**: platform gets desired performance level from OS directly through Desired Performance Register.
+- **Неавтономен режим**: платформата получава желаното ниво на производителност директно от ОС чрез регистъра за желана производителност (Desired Performance Register).
    ```sh
    echo passive | sudo tee /sys/devices/system/cpu/amd_pstate/status
    ```
 
-For more in-depth information:
+За по-подробна информация:
 
-<LinkButton icon="external" href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html">AMD P-State Documentation</LinkButton>
-<LinkButton icon="external" href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html#amd-pstate-driver-operation-modes">AMD P-State Driver Operation Modes</LinkButton>
-<LinkButton icon="external" href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html#user-space-interface-in-sysfs-per-policy-control">AMD P-State User Space Interface</LinkButton>
+<LinkButton icon="external" href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html">Документация за AMD P-State</LinkButton>
+<LinkButton icon="external" href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html#amd-pstate-driver-operation-modes">Режими на работа на драйвера AMD P-State</LinkButton>
+<LinkButton icon="external" href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html#user-space-interface-in-sysfs-per-policy-control">Потребителски интерфейс на AMD P-State в sysfs</LinkButton>
 
-### Configuring AMD P-State EPP
+### Конфигуриране на AMD P-State EPP
 
-To use the P-State EPP, there are two CPU frequency scaling governors available: `powersave` and `performance`. It is recommended to use the powersave governor and set a preference.
+За да използвате P-State EPP, са налични два регулатора (governor) за мащабиране на честотата на процесора: `powersave` и `performance`. Препоръчително е да използвате регулатора `powersave` и да зададете предпочитание.
 
-*   Set powersave governor: `sudo cpupower frequency-set -g powersave`
-*   Set performance governor: `sudo cpupower frequency-set -g performance`
+*   Задаване на регулатор `powersave`: `sudo cpupower frequency-set -g powersave`
+*   Задаване на регулатор `performance`: `sudo cpupower frequency-set -g performance`
 
-To set a preference, run the following command with the desired preference:
+За да зададете предпочитание, изпълнете следната команда с желаната от вас стойност:
 
 ```sh
 echo power | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
 ```
 
-Available preferences: `performance`, `power`, `balance_power`, `balance_performance`
+Налични предпочитания: `performance`, `power`, `balance_power`, `balance_performance`
 
-<LinkButton icon="external" href="https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/">Official Benchmark for each preference</LinkButton>
+<LinkButton icon="external" href="https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/">Официални бенчмаркове за всяко предпочитание</LinkButton>
 
-### AMD 3D V-Cache Optimizer
+### Оптимизатор за AMD 3D V-Cache
 
-AMD posted a patch to optimize the Cache Scheduling on Dual CCD 3D CPUs, like 7950X3D and 7900X3D.
-You need to set in the BIOS under the CPPC Option to the "Driver" Option. This will allow to override with the sysfs the used mode.
+AMD публикува пач за оптимизиране на планирането на кеша при процесори с два CCD и 3D V-Cache, като 7950X3D и 7900X3D.
+В BIOS, под опцията CPPC, трябва да изберете стойност „Driver“. Това ще позволи да презаписвате използвания режим чрез sysfs.
 
-There are two modes:
+Налични са два режима:
 
-1. Frequency
-2. Cache
+1. Frequency (Честота)
+2. Cache (Кеш)
 
-If `cache` is set, the driver will try to put the tasks first on the CCD with the higher Cache, this is mainly profitable on games.
-The `frequency` option will try to put the tasks on the second CCD, which has a higher frequency than the 3D Cache CCD.
+Когато е зададено `cache`, драйверът ще се опитва да разпределя задачите първо към CCD с по-големия кеш, което е особено полезно при игри.
+Опцията `frequency` ще се опитва да насочва задачите към втория CCD, който работи на по-висока честота в сравнение с CCD с 3D кеша.
 
-Frequency (Default):
+Frequency (по подразбиране):
 ```sh
 echo frequency | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
 ```
@@ -91,28 +92,26 @@ Cache:
 echo cache | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
 ```
 
-After you changed the modes, the amd preferred core stats should provide a different ranking. You can read it out with:
+След като смените режима, статистиката за предпочитаните ядра на AMD трябва да показва различно подреждане (ranking). Можете да я проверите с:
 ```sh
 grep -v /sys/devices/system/cpu/cpu*/cpufreq/amd_pstate_prefcore_ranking
 ```
 
 ### AMD P-State Core Performance Boost
 
-AMD Core Performance Boost aka AMD Turbo Core is a dynamic frequency scaling technology by AMD that allows the
-processor to dynamically adjust and control the processor operating frequency in certain version of its processors
-which allows for increased performance when needed while maintaining lower power and thermal parameters during normal operation.
+AMD Core Performance Boost, известен още като AMD Turbo Core, е технология на AMD за динамично мащабиране на честотата, която позволява на процесора динамично да регулира и управлява работната си честота при определени модели процесори. Това осигурява по-висока производителност при нужда, като същевременно поддържа по-ниска консумация на енергия и по-добри температурни параметри при нормална работа.
 
-To manage AMD CPB on CachyOS, you can use the following commands:
+За да управлявате AMD CPB в CachyOS, можете да използвате следните команди:
 
 ```sh
-❯ echo 0 | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/boost # Disable boost for all cores
-❯ lscpu -ae # This shows that AMD CPB is disabled globally
+❯ echo 0 | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/boost # Деактивиране на boost за всички ядра
+❯ lscpu -ae # Това показва, че AMD CPB е деактивиран глобално
 CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
   0    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1212.8250
   1    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1394.2180
   2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 1204.4600
 
-❯ echo 1 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/boost # Enables boost on cpu0
+❯ echo 1 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/boost # Активира boost за cpu0
 ❯ lscpu -ae
 CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
   0    0      0    0 0:0:0:0          yes 4564.0000 400.0000 1393.2380
@@ -120,53 +119,52 @@ CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
   2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 2157.8469
 ```
 
-CachyOS also provides a version of `power-profiles-daemon` that backports a commit which enables
-support for AMD CPB. AMD CPB will be disabled if the `powersave` profile is being used, and will be enabled on `balanced` or `performance`.
+CachyOS предоставя и версия на `power-profiles-daemon` с обратно приложен (backported) комит, който активира поддръжката на AMD CPB. При използване на профила `powersave` AMD CPB ще бъде деактивиран, а при `balanced` или `performance` ще бъде активиран.
 
-For more information see:
+За повече информация вижте:
 - https://lore.kernel.org/linux-pm/1a78eeaa-fadd-4734-aaeb-2fe11e96e198@amd.com/T/#m4a0c8917ea8fb033504055bd61512c80c85410c8
 - https://lore.kernel.org/linux-pm/20240624213400.67773-1-mario.limonciello@amd.com/
 
-## Performance Improvements
+## Подобрения на производителността
 
-### [ADIOS I/O Scheduler](https://github.com/firelzrd/adios)
+### [Входно-изходен планировчик ADIOS](https://github.com/firelzrd/adios)
 
-Created by [firelzrd](https://github.com/firelzrd)
+Създаден от [firelzrd](https://github.com/firelzrd)
 
 :::note
-CachyOS includes the stable branch of ADIOS in the kernel.
+CachyOS включва стабилния клон на ADIOS в ядрото.
 
-Current version in **linux-cachyos**: `3.2.0`
+Текуща версия в **linux-cachyos**: `3.2.0`
 
-Current version in **linux-cachyos-rc**: `3.2.0`
+Текуща версия в **linux-cachyos-rc**: `3.2.0`
 :::
 
-Brief introduction from README:
+Кратко въведение от README:
 
-- *ADIOS (Adaptive Deadline I/O Scheduler) is a block layer I/O scheduler for the Linux kernel, designed for modern multi-queue block devices (blk-mq). It aims to provide low latency for I/O operations by combining deadline scheduling principles with a learning-based adaptive latency control mechanism.*
-  - *Inspired by and builds upon concepts from the mq-deadline and Kyber I/O schedulers. Its core feature is the ability to predict I/O completion latency based on past performance and request characteristics (operation type, size) and use this prediction to dynamically adjust request deadlines and batching behavior.*
+- *ADIOS (Adaptive Deadline I/O Scheduler) е входно-изходен (I/O) планировчик на ниво блоков слой за Linux ядрото, проектиран за съвременни многоопашкови блокови устройства (blk-mq). Целта му е да осигури ниска латентност за I/O операциите, като комбинира принципите на планиране по краен срок (deadline scheduling) с адаптивен механизъм за контрол на латентността, базиран на обучение.*
+  - *Вдъхновен е от и надгражда концепции от планировчиците mq-deadline и Kyber. Основната му функция е способността да предвижда латентността при завършване на I/O операциите въз основа на предходната производителност и характеристиките на заявката (тип операция, размер) и да използва тази прогноза за динамично регулиране на крайните срокове на заявките и групирането им (batching).*
 
-TLDR: ADIOS works by learning the latency profile of your storage device and using that knowledge to dynamically set deadlines for I/O requests. It prioritizes requests into four tiers, from critical system operations (Tier 0) to background tasks (Tier 3), to ensure a smooth user experience. While it focuses on responsiveness, its behavior can be fine-tuned via sysfs settings to balance latency and throughput.
+Накратко: ADIOS работи, като изучава профила на латентност на вашето устройство за съхранение и използва тези данни за динамично определяне на крайните срокове за I/O заявките. Той приоритизира заявките в четири нива — от критични системни операции (Ниво 0) до фонови задачи (Ниво 3) — за да гарантира плавно потребителско изживяване. Макар да е фокусиран върху отзивчивостта, поведението му може да се настройва фино чрез sysfs параметри за баланс между латентност и пропускателна способност.
 
-For a live demo, you can watch this [video](https://www.youtube.com/watch?v=L9WDcEeHgy4)
+За демонстрация на живо можете да гледате това [видео](https://www.youtube.com/watch?v=L9WDcEeHgy4)
 
-#### How to enable ADIOS
+#### Как да активирате ADIOS
 
 <Tabs>
-    <TabItem label='Temporarily (takes effect at runtime)'>
-        This method sets the scheduler for the current session. The change will be lost on reboot.
+    <TabItem label='Временно (влиза в сила веднага)'>
+        Този метод задава планировчика за текущата сесия. Промяната ще бъде загубена след рестартиране.
         ```sh
         sync && echo adios | sudo tee /sys/block/<yourdrive>/queue/scheduler
-            # Replace <yourdrive> with the actual drive identifier (e.g. sda, sdb, nvme0n1)
+            # Заменете <yourdrive> с реалния идентификатор на диска (напр. sda, sdb, nvme0n1)
         ```
     </TabItem>
-    <TabItem label='Persistent after reboot'>
+    <TabItem label='Постоянно след рестартиране'>
         <Steps>
-            1. Open or create a new udev rules file in your preferred text editor (e.g., nano, micro, vim)
-                ```sh title='Example'
+            1. Отворете или създайте нов файл с udev правила в предпочитания от вас текстов редактор (напр. nano, micro, vim)
+                ```sh title='Пример'
                 sudo nano /etc/udev/rules.d/60-ioschedulers.rules
                 ```
-            2. Add the following rules to the file. These rules automatically apply a specific I/O scheduler based on the drive type (HDD, SSD, or NVMe).
+            2. Добавете следните правила във файла. Тези правила автоматично прилагат конкретен I/O планировчик в зависимост от типа на устройството (HDD, SSD или NVMe).
                 ```text
                 # HDD
                 ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", \
@@ -180,8 +178,8 @@ For a live demo, you can watch this [video](https://www.youtube.com/watch?v=L9WD
                 ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", \
                     ATTR{queue/scheduler}="adios"
                 ```
-              3.  Save the file and close the editor.
-              4.  Reload the `udev` rules to apply the changes immediately without a reboot.
+              3.  Запазете файла и затворете редактора.
+              4.  Презаредете `udev` правилата, за да приложите промените веднага без рестартиране.
                   ```sh
                   sudo udevadm control --reload-rules
                   sudo udevadm trigger
@@ -190,267 +188,289 @@ For a live demo, you can watch this [video](https://www.youtube.com/watch?v=L9WD
     </TabItem>
 </Tabs>
 
-FAQ:
+Често задавани въпроси (FAQ):
 
-- If it improves responsiveness, why isn't it enabled by default?
-  - ADIOS is still under active development and continuous testing. While it offers significant benefits for desktop responsiveness, it is not yet considered stable enough to be the default for all workloads and hardware types. In some edge cases, bugs could lead to issues like system lockups. For this reason, it is an optional feature for users who wish to test and benefit from its latest improvements.
+- Щом подобрява отзивчивостта, защо не е активиран по подразбиране?
+  - ADIOS все още е в активна разработка и подлежи на непрекъснато тестване. Макар да предлага значителни предимства за отзивчивостта на работния плот, все още не се счита за достатъчно стабилен, за да бъде по подразбиране за всички натоварвания и типове хардуер. В някои гранични случаи грешки могат да доведат до проблеми като замръзване на системата. Поради тази причина той е допълнителна (опционална) функция за потребители, които желаят да тестват и да се възползват от най-новите му подобрения.
 
-### NVIDIA Smooth Motion (RTX 40xx & 50xx Series)
+### NVIDIA Smooth Motion (серия RTX 40xx и 50xx)
 
-:::note[Game Compatibility.]
-Games that run on DX11, DX12 and Vulkan.
+:::note[Съвместимост с игри]
+Игри, които работят на DX11, DX12 и Vulkan. Вижте често задаваните въпроси за заобиколно решение при OpenGL.
 
-Both DXVK and VKD3D work fine.
+Както DXVK, така и VKD3D работят безпроблемно.
 
-**Only 64bit applications are supported. Smooth Motion will not work with 32bit applications (e.g. old DX11 games).**
+**Поддържат се само 64-битови приложения. Smooth Motion няма да работи с 32-битови приложения (напр. стари DX11 игри).**
 
 :::
 
-Direct quote from NVIDIA's documentation:
+Директен цитат от документацията на NVIDIA:
 
-*NVIDIA Smooth Motion is a new driver-based AI model that delivers smoother gameplay by inferring an additional frame between two rendered frames. For games without DLSS Frame Generation, NVIDIA Smooth Motion is a new option for enhancing your experience on GeForce RTX 40 Series and newer GPUs.*
+*NVIDIA Smooth Motion е нов AI модел на ниво драйвер, който осигурява по-плавен геймплей чрез генериране на допълнителен кадър между два рендирани кадъра. За игри без DLSS Frame Generation, NVIDIA Smooth Motion е нова опция за подобряване на изживяването при видеокарти от серия GeForce RTX 40 и по-нови.*
 
-- How to enable NVIDIA Smooth Motion for a game:
-  - Add the following environment variable:
+- Как да активирате NVIDIA Smooth Motion за дадена игра:
+  - Добавете следната променлива на средата:
     ```text
     NVPRESENT_ENABLE_SMOOTH_MOTION=1
     ```
 
-FAQ:
+Често задавани въпроси (FAQ):
 
-- Why use Smooth Motion over DLSS Frame Generation?
-  - When a game lacks support for DLSS Frame Generation, Smooth motion serves as an alternative thanks to its driver-based AI model.
-- Is there any drawback to using Smooth Motion?
-  - Yes, enabling Smooth Motion may introduce a slight input lag due to the additional frame inference process.
-  - Prone to cause issues with third party overlays. In order to avoid this. Include the following environment variable:
+- Защо да използвам Smooth Motion вместо DLSS Frame Generation?
+  - Когато дадена игра не поддържа DLSS Frame Generation, Smooth Motion служи като алтернатива благодарение на своя AI модел в драйвера.
+- Има ли някакви недостатъци при използването на Smooth Motion?
+  - Да, активирането на Smooth Motion може да въведе леко забавяне при вход (input lag) поради процеса на генериране на допълнителния кадър.
+  - Възможно е да причинява проблеми с наслагвания (overlays) от трети страни. За да избегнете това, добавете следната променлива на средата:
     ```text
     NVPRESENT_QUEUE_FAMILY=1
     ```
-    :::note[A performance impact may be observed when using this variable.]
+    :::note[При използване на тази променлива може да се наблюдава влияние върху производителността.]
     :::
-- Why MangoHud is not reporting the increased framerate?
-  - Currently, MangoHud does not account for the additional frames generated by Smooth Motion, leading to a misleading reported framerate.
-    - Using a monitor's built in FPS counter will provide the correct framerate.
-- How's the image quality compared to DLSS Frame Generation?
-  - Image quality is not as good and may introduce artifacts, especially during fast motion scenes.
-- Is it compatible with external frame capping tools? Example: MangoHud.
-  - No. In-game cap should work fine.
-- Can Smooth Motion be combined with DLSS Frame Generation?
-  - No. Only one frame generation method can be active at a time.
+- Защо MangoHud не отчита увеличената кадрова честота?
+  - Към момента MangoHud не отчита допълнителните кадри, генерирани от Smooth Motion, което води до подвеждащо отчитане на кадрите в секунда.
+    - Използването на вградения FPS брояч на монитора ще покаже правилната кадрова честота.
+- Какво е качеството на изображението в сравнение с DLSS Frame Generation?
+  - Качеството на изображението не е толкова добро и може да се появят артефакти, особено при сцени с бързо движение.
+- Съвместим ли е с външни инструменти за ограничаване на кадрите (напр. MangoHud)?
+  - Не. Вграденият в играта ограничител на кадри би трябвало да работи нормално.
+- Може ли Smooth Motion да се комбинира с DLSS Frame Generation?
+  - Не. В даден момент може да бъде активен само един метод за генериране на кадри.
+- Може ли Smooth Motion да се използва с OpenGL приложения?
+  - Не директно, тъй като е реализиран като Vulkan слой, но е възможно чрез използване на [Zink](https://docs.mesa3d.org/drivers/zink.html) за превод на OpenGL извикванията към Vulkan:
+    ```text
+    NVPRESENT_ENABLE_SMOOTH_MOTION=1 zink-run <command>
+    ```
+    :::note
+    Използването на Zink вероятно ще окаже влияние върху производителността и може да доведе до графични артефакти в някои игри.
 
-## Power Saving Tweaks
+    Потребителите с две видеокарти трябва да зададат `DRI_PRIME=1`, за да използват дискретната видеокарта на Nvidia, вместо по-обичайните методи за избор на видеокарта.
+    :::
 
-### Enable RCU Lazy
+## Оптимизации за пестене на енергия
 
-RCU Lazy helps reducing the power usage at idle or lightly loaded systems. This can be useful for laptops and handheld devices.
-The improvement is between 5-10% in terms of power savings. However, it's important to note that this power saving feature may come at the cost of slightly reduced performance depending on the scenario.
-The linux-cachyos-deckify kernel will have this option enabled by default, since power saving is key and necessary for these devices.
+### thermald
 
-To enable RCU Lazy, add the following parameter to your kernel [cmdline](/configuration/boot_manager_configuration/) parameters list:
+`thermald` е демон за термично управление за системи с Intel. Той следи температурните сензори и прилага действия за охлаждане, като ограничения на мощността на процесора или промени в състоянията на производителност (performance-state), преди фърмуерът да се наложи да прибегне до по-агресивен throttling.
+
+Основно е полезен за лаптопи с Intel, хибридни устройства (convertibles), таблети, портативни конзоли (handhelds) и компактни компютри (SFF), които предоставят термични контроли на Intel чрез `/sys/class/thermal`. Поддържаните системи обикновено използват температурни сензори за процесори Intel, Intel P-state, Intel power clamp, RAPL, `INT340X` или ACPI DPTF / адаптивни термични таблици. Процесорите на AMD не се поддържат от `thermald`.
+
+Инсталирайте и го активирайте чрез:
+
+```sh
+sudo pacman -S thermald
+sudo systemctl enable --now thermald.service
+```
+
+Проверете дали се е стартирал правилно:
+
+```sh
+systemctl status thermald.service
+journalctl -u thermald.service -b
+```
+
+За повече информация:
+
+<LinkButton icon="external" href="https://github.com/intel/thermal_daemon">Официално хранилище на thermald</LinkButton>
+<LinkButton icon="external" href="https://man.archlinux.org/man/thermald.8">Ръководство (man страница) за thermald</LinkButton>
+
+### Активиране на RCU Lazy
+
+RCU Lazy помага за намаляване на консумацията на енергия при неактивни или слабо натоварени системи. Това може да бъде полезно за лаптопи и портативни устройства.
+Подобрението е между 5 и 10% по отношение на пестенето на енергия. Важно е обаче да се отбележи, че тази функция за пестене на енергия може да доведе до леко понижаване на производителността в зависимост от сценария.
+При ядрото `linux-cachyos-deckify` тази опция е активирана по подразбиране, тъй като пестенето на енергия е ключово и необходимо за тези устройства.
+
+За да активирате RCU Lazy, добавете следния параметър към списъка с параметри на ядрото ([cmdline](/bg/configuration/boot_manager_configuration/)):
 ```text
 rcutree.enable_rcu_lazy=1
 ```
 
-## NVIDIA Troubleshooting
+## Отстраняване на проблеми с NVIDIA
 
-### Disabling SDDM Wayland Backend
+### NVIDIA GSP фърмуер
 
-:::note
-Starting from cachyos-kde-settings 4.3, SDDM uses KWin as it's Wayland compositor by default.
-:::
-
-While this a nice step forward, it might introduce some annoyances such as breaking support for overclocking using nvidia-settings or cause incompatibility with older GPUs which struggle under Wayland.
-
-In order to revert this change. Remove the cachyos-kde-settings package:
-```sh
-sudo pacman -R cachyos-kde-settings
-```
-
-### NVIDIA GSP Firmware
-
-The NVIDIA GSP Firmware can **"in some cases"** lead to decreased performance. While the 555.58.02 NVIDIA Driver has largely addressed this issue, it may persist on certain systems.
-If you are facing hiccups in KDE or bad performance in some cases, you can disable the GSP Firmware with the following config file:
+Фърмуерът NVIDIA GSP може **„в някои случаи“** да доведе до понижена производителност. Въпреки че драйверът на NVIDIA 555.58.02 до голяма степен отстрани този проблем, той може да продължи да се проявява на определени системи.
+Ако изпитвате насичания в KDE или слаба производителност в определени случаи, можете да деактивирате GSP фърмуера със следния конфигурационен файл:
 `/etc/modprobe.d/nvidia-gsp.conf`
 
 ```text
 options nvidia NVreg_EnableGpuFirmware=0
 ```
 
-After creating the file, execute the following command:
+След като създадете файла, изпълнете следната команда:
 ```sh
 sudo mkinitcpio -P
 ```
 
 :::note
-NVIDIA's [open kernel modules](https://github.com/NVIDIA/open-gpu-kernel-modules) are based on GSP firmware. Due to this, GSP cannot be disabled and this modprobe option will be ignored when using them. Use `linux-cachyos-nvidia` or `nvidia-dkms`.
+Отворените модули на ядрото на NVIDIA ([open kernel modules](https://github.com/NVIDIA/open-gpu-kernel-modules)) са базирани на GSP фърмуера. Поради това GSP не може да бъде деактивиран и тази modprobe опция ще бъде игнорирана при използването им. Използвайте `linux-cachyos-nvidia` или `nvidia-dkms`.
 :::
 
-It's generally recommended to test the GSP firmware after each new NVIDIA driver installation, as it often introduces beneficial features. Moreover, NVIDIA primarily started conducting QA testing using the GSP firmware.
+Като цяло е препоръчително да тествате GSP фърмуера след всяка нова инсталация на драйвер на NVIDIA, тъй като той често въвежда полезни функции. Освен това NVIDIA вече провежда основните си QA тестове именно с GSP фърмуера.
 
-## Audio and Software Enhancements
+## Подобрения на звука и софтуера
 
-### Enhancing Laptop Speaker Sound
+### Подобряване на звука от високоговорителите на лаптопа
 
-Laptop speakers often produce thin and underwhelming sound due to their compact size and limited hardware capabilities. [EasyEffects](https://wiki.archlinux.org/title/PipeWire#EasyEffects) can significantly enhance the sound quality of your laptop's built-in speakers by applying various audio effects and custom configurations.
+Високоговорителите на лаптопите често възпроизвеждат плосък и слаб звук поради компактния си размер и ограничените хардуерни възможности. [EasyEffects](https://wiki.archlinux.org/title/PipeWire#EasyEffects) може значително да подобри качеството на звука от вградените високоговорители на вашия лаптоп чрез прилагане на различни аудио ефекти и персонализирани конфигурации.
 
-To get started you need to install EasyEffects and the required dependencies:
+За да започнете, трябва да инсталирате EasyEffects и необходимите зависимости:
 
 ```bash
-# Install EasyEffects
+# Инсталиране на EasyEffects
 sudo pacman -S easyeffects
-# Install additional plugins for more effects
+# Инсталиране на допълнителни плъгини за повече ефекти
 sudo pacman -S lsp-plugins-lv2
 sudo pacman -S zam-plugins
 sudo pacman -S calf
 sudo pacman -S mda.lv2
 ```
 
-#### Configuration
+#### Конфигурация
 
-Follow these steps to configure EasyEffects:
+Следвайте тези стъпки, за да конфигурирате EasyEffects:
 
-1. Launch EasyEffects from your application menu or by typing `easyeffects` in the terminal.
-2. Navigate to the **Output** tab to manage effects applied to your speaker audio.
-3. Switch to the **Effects** tab to add, modify, or adjust audio effects.
+1. Стартирайте EasyEffects от менюто с приложения или като въведете `easyeffects` в терминала.
+2. Отидете в раздела **Output**, за да управлявате ефектите, прилагани към звука на вашите високоговорители.
+3. Преминете към раздела **Effects**, за да добавяте, променяте или настройвате аудио ефекти.
 
 <ImageComponent imgsrc={import('~/assets/images/easyeffects.png')} />
 
-##### Using Community Presets
+##### Използване на профили от общността (Community Presets)
 
-For a quick and effective setup, start with **community-created presets** tailored for various audio scenarios:
+За бърза и ефективна настройка започнете с **профили (presets), създадени от общността**, съобразени с различни аудио сценарии:
 
-1. Download presets from the [EasyEffects Community Presets](https://github.com/wwmm/easyeffects/wiki/Community-presets) repository.
-2. In EasyEffects, click the **Presets** button and choose **"Import preset from local storage"**.
-3. Locate and select the downloaded preset file.
-4. Once imported, the preset will appear in your list—click **"Load"** to apply it to your audio output.
+1. Изтеглете профили от хранилището [EasyEffects Community Presets](https://github.com/wwmm/easyeffects/wiki/Community-presets).
+2. В EasyEffects натиснете бутона **Presets** и изберете **„Import preset from local storage“**.
+3. Намерете и изберете изтегления файл с профила.
+4. След като бъде импортиран, профилът ще се появи в списъка ви — натиснете **„Load“**, за да го приложите към вашия аудио изход.
 
 <ImageComponent imgsrc={import('~/assets/images/easyeffects-presets.png')} />
 
-##### Creating a Custom Profile
+##### Създаване на собствен профил
 
-For a more personalized audio experience, create a custom profile tailored to your laptop's speakers:
+За по-персонализирано аудио изживяване създайте собствен профил, съобразен с високоговорителите на вашия лаптоп:
 
-1. Click the **"+"** button in the Presets menu to create a new preset (e.g., name it **"Laptop Speakers"**).
-2. Select **"Load"** to activate the new preset.
-3. Add and configure effects in the **Output** > **Effects** tab, experimenting with options like equalizers, bass enhancers, or stereo wideners.
+1. Натиснете бутона **„+“** в менюто Presets, за да създадете нов профил (напр. наименувайте го **„Laptop Speakers“**).
+2. Изберете **„Load“**, за да активирате новия профил.
+3. Добавете и конфигурирайте ефекти в раздела **Output** > **Effects**, като експериментирате с опции като еквалайзери, усилватели на басите (bass enhancers) или разширители на стерео картината (stereo wideners).
 
-##### Using the Convolver Effect (Dolby Atmos Laptops)
+##### Използване на ефекта Convolver (лаптопи с Dolby Atmos)
 
-The **Convolver effect** can dramatically improve sound by applying impulse responses that simulate high-quality audio environments. However, it requires precise setup:
+Ефектът **Convolver** може драстично да подобри звука, като прилага импулсни отговори (impulse responses), които симулират висококачествени аудио среди. Това обаче изисква прецизна настройка:
 
-1. Add the **Convolver** effect to your effects chain in the **Effects** tab.
-2. Load an impulse response file (in `.wav` format) specific to your laptop model, if available. You can search for these files online at resources like:
+1. Добавете ефекта **Convolver** към веригата от ефекти в раздела **Effects**.
+2. Заредете файл с импулсен отговор (във формат `.wav`), специфичен за вашия модел лаптоп, ако има такъв. Можете да потърсите такива файлове онлайн в ресурси като:
    - https://wiki.archlinux.org/title/Lenovo_ThinkPad_T14_(AMD)_Gen_4#Speakers
    - https://github.com/m4tx/thinkpad-p14s-g4-linux/#sound
    - https://github.com/shuhaowu/linux-thinkpad-speaker-improvements/
-3. **Prevent clipping**: The Convolver effect may increase volume significantly. Add a **Limiter** effect after the Convolver in your effects chain to control peaks and avoid distortion.
+3. **Предотвратяване на изкривявания (clipping)**: Ефектът Convolver може значително да увеличи силата на звука. Добавете ефект **Limiter** след Convolver във вашата верига от ефекти, за да контролирате пиковете и да избегнете изкривявания.
 
 <ImageComponent imgsrc={import('~/assets/images/easyeffects-convolver.png')} />
 
-#### Tips for Optimal Results
+#### Съвети за оптимални резултати
 
-- **Experiment** with different presets to identify the best match for your specific laptop model and personal sound preferences.
-- **Make incremental adjustments** to individual effects to prevent distortion or unnatural sound output.
-- **Compare with toggle**: Frequently toggle EasyEffects **on/off** to evaluate the improvements against the default audio.
-- Search for **device-specific presets or Convolver impulse responses** for popular laptop models like **Framework Laptop 13** or **ThinkPad T14** to achieve tailored results.
-- **Automate startup**: Configure EasyEffects to launch automatically at startup through the app's preferences to ensure your custom profile is always applied.
-- **Autoload presets for multiple devices**: Use the **PipeWire** > **Presets Autoloading** tab to associate specific presets with different output devices (e.g., Speakers vs. Headphones) for seamless switching. <ImageComponent imgsrc={import('~/assets/images/easyeffects-autoloading.png')} />
+- **Експериментирайте** с различни профили, за да намерите най-доброто съчетание за конкретния модел лаптоп и вашите лични звукови предпочитания.
+- **Правете постепенни корекции** на отделните ефекти, за да предотвратите изкривявания или неестествено звучене.
+- **Сравнявайте чрез включване и изключване**: Често превключвайте EasyEffects между **включено/изключено**, за да оцените подобренията спрямо звука по подразбиране.
+- Потърсете **специфични за устройството профили или Convolver импулсни отговори** за популярни модели лаптопи като **Framework Laptop 13** или **ThinkPad T14**, за да постигнете оптимални резултати.
+- **Автоматизирайте стартирането**: Настройте EasyEffects да се стартира автоматично при пускане на системата чрез настройките на приложението, за да сте сигурни, че вашият профил винаги се прилага.
+- **Автоматично зареждане на профили за множество устройства**: Използвайте раздела **PipeWire** > **Presets Autoloading**, за да свържете конкретни профили с различни изходни устройства (напр. високоговорители срещу слушалки) за плавно превключване. <ImageComponent imgsrc={import('~/assets/images/easyeffects-autoloading.png')} />
 
-#### Alternative to EasyEffects
+#### Алтернатива на EasyEffects
 
-As an alternative you can try using [JDSP4Linux](https://github.com/Audio4Linux/JDSP4Linux), which is an audio effect processor for PipeWire and PulseAudio clients.
+Като алтернатива можете да опитате [JDSP4Linux](https://github.com/Audio4Linux/JDSP4Linux), който представлява процесор за аудио ефекти за клиенти на PipeWire и PulseAudio.
 
 ### OBS Studio
 
-We provide a custom obs-studio-browser package in our repository that is recommended over the standard `obs-studio` package. It contains patches to fix some of the common issues like cuda-errors and virtual camera problems.
+В нашето хранилище предоставяме персонализиран пакет `obs-studio-browser`, който е препоръчителен пред стандартния пакет `obs-studio`. Той съдържа пачове за отстраняване на някои често срещани проблеми, като грешки с CUDA и проблеми с виртуалната камера.
 
-```sh title='Open a terminal and run the following command'
+```sh title='Отворете терминал и изпълнете следната команда'
 sudo pacman -S obs-studio-browser
-# If you previously had the obs-studio installed then pacman is going to ask you if
-# you want to replace it, if so enter "Y".
+# Ако преди това сте имали инсталиран obs-studio, pacman ще ви попита дали
+# искате да го замените – в такъв случай въведете "Y".
 ```
 
-## Swap Configuration
+## Конфигурация на Swap
 
-### Switching from ZRam to Zswap
+### Преминаване от ZRam към Zswap
 
-By default, CachyOS uses ZRam for swap management. However, if you prefer to use Zswap instead, you can easily switch by following these steps:
+По подразбиране CachyOS използва ZRam за управление на swap паметта. Ако обаче предпочитате да използвате Zswap вместо това, можете лесно да превключите, като следвате тези стъпки:
 
 :::note
-This guide assumes you have the default CachyOS setup with ZRam enabled and no swap partition or file was created during installation.
+Това ръководство предполага, че използвате конфигурацията по подразбиране на CachyOS с активиран ZRam и без създаден swap дял или swap файл по време на инсталацията.
 :::
 
 <Steps>
-    1. Disable ZRam by adding a kernel parameter. [Edit your bootloader configuration](/configuration/boot_manager_configuration) and add the following line:
+    1. Деактивирайте ZRam, като добавите параметър на ядрото. [Редактирайте конфигурацията на вашия мениджър за зареждане](/bg/configuration/boot_manager_configuration) и добавете следния ред:
         ```text
         systemd.zram=0
         ```
-    2. Enable Zswap by adding the following kernel parameter:
+    2. Активирайте Zswap, като добавите следния параметър на ядрото:
         ```text
         zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=30
         ```
-    3. Create an empty override file to disable [CachyOS's udev rule](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/30-zram.rules) which disables Zswap:
+    3. Създайте празен файл за презаписване (override), за да деактивирате [udev правилото на CachyOS](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/30-zram.rules), което изключва Zswap:
         ```bash
         sudo touch /etc/udev/rules.d/30-zram.rules
         ```
-    4. Create a swap file for Zswap.
+    4. Създайте swap файл за Zswap.
         <details>
-            <summary>If you're using Btrfs:</summary>
+            <summary>Ако използвате Btrfs:</summary>
                 <Steps>
-                    1. Create a Btrfs subvolume for the swap file:
+                    1. Създайте Btrfs подтом (subvolume) за swap файла:
                         ```bash
                         sudo btrfs subvolume create /swap
                         ```
-                    2. Create a swap file with your desired size (e.g., 8GB) by changing the `--size` parameter:
+                    2. Създайте swap файл с желания от вас размер (напр. 8GB), като промените параметъра `--size`:
                         ```bash "--size"
                         sudo btrfs filesystem mkswapfile --size 4g --uuid clear /swap/swapfile
                         ```
-                    3. Activate the swap file:
+                    3. Активирайте swap файла:
                         ```bash
                         sudo swapon /swap/swapfile
                         ```
-                    4. Add the swap file to `/etc/fstab` to make it persistent across reboots:
+                    4. Добавете swap файла към `/etc/fstab`, за да се запазва след рестартиране:
                         ```bash
                         echo "/swap/swapfile none swap defaults 0 0" | sudo tee -a /etc/fstab
                         ```
                 </Steps>
         </details>
         <details>
-            <summary>If you're not using Btrfs:</summary>
+            <summary>Ако не използвате Btrfs:</summary>
             <Steps>
-                1. Create a swap file with your desired size (e.g., 8GB) by changing the `count=` parameter:
+                1. Създайте swap файл с желания от вас размер (напр. 8GB), като промените параметъра `count=`:
                     ```bash "count=8"
                     sudo dd if=/dev/zero of=/swapfile bs=1G count=8
                     ```
-                2. Set the correct permissions for the swap file:
+                2. Задайте правилните права за достъп до swap файла:
                     ```bash
                     sudo chmod 0600 /swapfile
                     ```
-                3. Format the swap file:
+                3. Форматирайте swap файла:
                     ```bash
                     sudo mkswap /swapfile
                     ```
-                4. Add the swap file to `/etc/fstab` to make it persistent across reboots:
+                4. Добавете swap файла към `/etc/fstab`, за да се запазва след рестартиране:
                     ```bash
                     echo "/swapfile none swap defaults 0 0" | sudo tee -a /etc/fstab
                     ```
-                5. Activate the swap file:
-                    ```
+                5. Активирайте swap файла:
+                    ```bash
                     sudo swapon /swapfile
                     ```
             </Steps>
         </details>
-    5. Add the lz4 compression module to the `mkinitcpio.conf` configuration file:
-        1. Open the file with a text editor:
+    5. Добавете модула за компресия `lz4` към конфигурационния файл `mkinitcpio.conf`:
+        1. Отворете файла с текстов редактор:
             ```bash
             sudo nano /etc/mkinitcpio.conf
             ```
-        2. Find the `MODULES` array and add `lz4` to it. It should look something like this:
+        2. Намерете масива `MODULES` и добавете `lz4` към него. Трябва да изглежда приблизително така:
             ```text
             MODULES=(... lz4)
             ```
-        3. Save the file by pressing `Ctrl + O` and `Enter` to confirm, then exit the editor with `Ctrl + X`.
-    6. Rebuild your initramfs to apply the changes. The command varies depending on your bootloader:
+        3. Запазете файла, като натиснете `Ctrl + O` и `Enter` за потвърждение, след което излезте от редактора с `Ctrl + X`.
+    6. Пресъздайте вашия initramfs, за да приложите промените. Командата зависи от вашия мениджър за зареждане:
         <details>
             <summary>systemd-boot</summary>
             ```bash
@@ -469,5 +489,5 @@ This guide assumes you have the default CachyOS setup with ZRam enabled and no s
             sudo limine-mkinitcpio
             ```
         </details>
-    7. Reboot your system to apply all changes.
+    7. Рестартирайте системата си, за да приложите всички промени.
 </Steps>
