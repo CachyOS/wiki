@@ -26,6 +26,20 @@ If you are using GRUB, run the following command to enable secure boot support o
 sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
 ```
 
+    :::caution[MSI Motherboards — Might need extra option`--removable`]
+    Some UEFI firmwares (e.g. MSI motherboards) require a bootable file at a known location before they will show UEFI NVRAM boot entries. 
+    If this is the case, grub-install will claim efibootmgr has added an entry to boot GRUB, however the entry will not show up in the VisualBIOS boot order selector. 
+    The solution is to install GRUB at the default/fallback boot path:
+    ```bash
+    sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" \
+    --disable-shim-lock --removable
+    ```
+    Failure to use `--removable` flag will cause grub fail to load on boot. For example
+    ```
+    error: kern/dl.c:grub_dl_resolve_symbols:403:symbol ‘grub_user_error’ not found
+    ```
+    :::
+
 :::note
 Loading unnecessary modules in your boot manager has the potential to present a security risk.
 Only run this command if you actually need secure boot.
@@ -121,14 +135,14 @@ Now that `sbctl` is installed, you have to setup sbctl and enroll your keys to t
         ```
     </details>
 
-    :::caution[ASUS / Gigabyte Motherboards — Do not use `--firmware-builtin`]
-    On some ASUS and Gigabyte motherboards using the `--firmware-builtin` flag causes duplicate entries
+    :::caution[ASUS / Gigabyte / MSI Motherboards — Do not use `--firmware-builtin`]
+    On some ASUS, Gigabyte and MSI motherboards using the `--firmware-builtin` flag causes duplicate entries
     in the EFI key variables (e.g. `builtin-db` appearing multiple times in `Vendor Keys`).
     When activating Secure Boot in the UEFI settings afterwards, the board detects this
     inconsistent key structure and throws a **Secure Boot Violation** before the boot
     manager can load.
 
-    Use only `--microsoft` on ASUS / Gigabyte boards:
+    Use only `--microsoft` on ASUS / Gigabyte / MSI boards:
 
     ```bash
     sudo sbctl enroll-keys --microsoft
@@ -335,6 +349,26 @@ afterwards:
 ```bash
 sudo sbctl sign-all
 ```
+</TabItem>
+<TabItem label='GRUB'>
+Sign the grub bootloader
+```bash
+sudo sbctl sign -s /boot/efi/EFI/cachyos/grubx64.efi
+sudo sbctl sign -s /boot/efi/EFI/boot/bootx64.efi
+```
+
+Sign all kernels
+```bash
+sudo sh -c 'ls -l /boot/vmlinuz-* >/dev/null && for f in /boot/vmlinuz-*; do echo "signing $f"; sbctl sign -s "$f"; done'
+```
+
+Verify signed targets
+```bash
+sudo sbctl verify
+```
+
+Reboot and enable secure boot from BIOS
+
 </TabItem>
 </Tabs>
 
