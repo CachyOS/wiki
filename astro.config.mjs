@@ -118,6 +118,7 @@ export default defineConfig({
           translations: {
             cs: 'Začínáme',
             de: 'Erste Schritte',
+            nl: 'Aan de slag',
             el: 'Εισαγωγή',
             es: 'Empezando',
             fr: 'Bien Débuter',
@@ -136,6 +137,7 @@ export default defineConfig({
               translations: {
                 cs: 'Jak se orientovat v wiki',
                 de: 'Wie man das Wiki navigiert',
+                nl: 'Hoe navigeer je door de wiki',
                 el: 'Πλοήγηση στο wiki',
                 es: 'Cómo navegar por la wiki',
                 fr: 'Bien utiliser le wiki',
@@ -155,6 +157,7 @@ export default defineConfig({
               translations: {
                 cs: 'Proč CachyOS?',
                 de: 'Warum CachyOS?',
+                nl: 'Waarom CachyOS?',
                 el: 'Γιατί να επιλέξω το CachyOS;',
                 es: '¿Por qué CachyOS?',
                 fr: 'Pourquoi CachyOS',
@@ -174,6 +177,7 @@ export default defineConfig({
               translations: {
                 cs: 'Stažení a ověření ISO',
                 de: 'ISO herunterladen & verifizieren',
+                nl: 'ISO downloaden & verifiëren',
                 el: 'Λήψη και επαλήθευση ISO',
                 es: 'Descargar y verificar ISO',
                 fr: 'Télécharger et vérifier l’ISO',
@@ -194,6 +198,7 @@ export default defineConfig({
               translations: {
                 cs: 'Seznamy změn ISO',
                 de: 'ISO-Änderungsprotokolle',
+                nl: 'ISO-changelogs',
                 el: 'Αρχεία αλλαγών ISO',
                 es: 'Registros de cambios de ISO',
                 fr: 'Journaux des modifications ISO',
@@ -211,6 +216,7 @@ export default defineConfig({
               translations: {
                 cs: 'FAQ a řešení problémů',
                 de: 'FAQ & Fehlerbehebung',
+                nl: 'FAQ & probleemoplossing',
                 el: 'Συχνές ερωτήσεις και επίλυση προβλημάτων',
                 es: 'FAQ y solución de problemas',
                 fr: 'FAQ & Guide de dépannage',
@@ -232,6 +238,7 @@ export default defineConfig({
           translations: {
             cs: 'Instalace',
             de: 'Installation',
+            nl: 'Installatie',
             el: 'Εγκατάσταση',
             es: 'Instalación',
             fr: 'Installation',
@@ -250,6 +257,7 @@ export default defineConfig({
               translations: {
                 cs: 'Požadavky a příprava USB',
                 de: 'Anforderungen & USB-Vorbereitung',
+                nl: 'Vereisten & USB-voorbereiding',
                 el: 'Απαιτήσεις και προετοιμασία USB',
                 es: 'Requisitos y preparación de USB',
                 fr: 'Exigences & Préinstallation',
@@ -269,6 +277,7 @@ export default defineConfig({
               translations: {
                 cs: 'Správci zavádění',
                 de: 'Bootmanager',
+                nl: 'Bootmanagers',
                 el: 'Διαχειριστές εκκίνησης',
                 es: 'Gestores de arranque',
                 fr: "Gestionnaire d'amorçage",
@@ -288,6 +297,7 @@ export default defineConfig({
               translations: {
                 cs: 'Souborový systém',
                 de: 'Dateisystem',
+                nl: 'Bestandssysteem',
                 el: 'Σύστημα αρχείων',
                 es: 'Sistema de archivos',
                 fr: 'Système de fichier',
@@ -307,6 +317,7 @@ export default defineConfig({
               translations: {
                 cs: 'Desktop prostředí',
                 de: 'Desktopumgebungen',
+                nl: 'Bureaubladomgevingen',
                 el: 'Περιβάλλοντα επιφάνειας εργασίας',
                 es: 'Entornos de escritorio',
                 fr: 'Environnements de bureau',
@@ -326,6 +337,7 @@ export default defineConfig({
               translations: {
                 cs: 'Průvodce',
                 de: 'Anleitungen',
+                nl: 'Handleidingen',
                 el: 'Οδηγοί',
                 es: 'Guías',
                 fr: 'Guides',
@@ -344,6 +356,7 @@ export default defineConfig({
                   translations: {
                     cs: 'Desktop verze',
                     de: 'Desktopedition',
+                    nl: 'Desktop Edition',
                     el: 'Έκδοση Desktop',
                     es: 'Edición de escritorio',
                     fr: 'Edition Desktop',
@@ -363,6 +376,7 @@ export default defineConfig({
                   translations: {
                     cs: 'Handheld verze',
                     de: 'Handheldedition',
+                    nl: 'Handheld Edition',
                     el: 'Έκδοση Handheld',
                     es: 'Edición para dispositivos portátiles',
                     fr: 'Edition Handheld',
@@ -390,6 +404,7 @@ export default defineConfig({
           translations: {
             cs: 'Funkce CachyOS',
             de: 'CachyOS Features',
+            nl: 'CachyOS-functies',
             el: 'Λειτουργίες του CachyOS',
             es: 'Funciones de CachyOS',
             fr: 'Fonctionnalités de CachyOS',
@@ -409,6 +424,7 @@ export default defineConfig({
               translations: {
                 cs: 'Pomůcka pro chroot CachyOS (cachy-chroot)',
                 de: 'CachyOS chroot-Helfer (cachy-chroot)',
+                nl: 'CachyOS chroot-hulpmiddel (cachy-chroot)',
                 el: 'Βοηθός chroot του CachyOS (cachy-chroot)',
                 es: 'CachyOS chroot asistente (cachy-chroot)',
                 fr: 'CachyOS chroot assistant (cachy-chroot)',
@@ -432,6 +448,7 @@ export default defineConfig({
               translations: {
                 cs: 'Detekce hardwaru CachyOS (chwd)',
                 de: 'CachyOS Hardwareerkennung (chwd)',
+                nl: 'CachyOS-hardwaredetectie (chwd)',
                 el: 'Εντοπισμός υλικού στο CachyOS (chwd)',
                 es: 'CachyOS detección de hardware (chwd)',
                 fr: 'CachyOS Détection de Matériel (chwd)',
@@ -450,6 +467,7 @@ export default defineConfig({
               translations: {
                 cs: 'Jádro CachyOS',
                 de: 'CachyOS-Kernel',
+                nl: 'CachyOS-kernel',
                 el: 'Πυρήνας CachyOS',
                 es: 'Kernel CachyOS',
                 fr: 'Noyau CachyOS',
@@ -469,6 +487,7 @@ export default defineConfig({
               translations: {
                 cs: 'Správce jader',
                 de: 'Kernelmanager',
+                nl: 'Kernel Manager',
                 el: 'Διαχειριστής πυρήνα',
                 es: 'Gestor de núcleos',
                 fr: 'Gestion de Noyaux',
@@ -488,6 +507,7 @@ export default defineConfig({
               translations: {
                 cs: 'Nastavení CachyOS',
                 de: 'CachyOS-Einstellungen',
+                nl: 'CachyOS Settings',
                 el: 'Ρυθμίσεις του CachyOS',
                 es: 'Ajustes de CachyOS',
                 fr: 'Paramètres de CachyOS',
@@ -507,6 +527,7 @@ export default defineConfig({
               translations: {
                 cs: 'Optimalizované repozitáře',
                 de: 'Optimierte Repositories',
+                nl: 'Geoptimaliseerde repositories',
                 el: 'Βελτιστοποιημένα αποθετήρια',
                 es: 'Repositorios optimizados',
                 fr: 'Dépôts Optimisés',
@@ -528,6 +549,7 @@ export default defineConfig({
           translations: {
             cs: 'Nastavení',
             de: 'Konfiguration',
+            nl: 'Configuratie',
             el: 'Διαμόρφωση',
             es: 'Configuración',
             fr: 'Configuration',
@@ -546,6 +568,7 @@ export default defineConfig({
               translations: {
                 cs: 'Nastavení zabezpečeného spouštění',
                 de: 'Secure-Boot-Einrichtung',
+                nl: 'Secure Boot instellen',
                 el: 'Ρύθμιση του Secure Boot',
                 es: 'Configuración de arranque seguro',
                 fr: 'Configuration de Secure Boot',
@@ -569,6 +592,7 @@ export default defineConfig({
               translations: {
                 cs: 'Návrhy po instalaci',
                 de: 'Post-Install-Empfehlungen',
+                nl: 'Aanbevelingen na de installatie',
                 el: 'Προτάσεις μετά την εγκατάσταση',
                 es: 'Recomendaciones post-instalación',
                 fr: 'Recommendations Post-Installation',
@@ -588,6 +612,7 @@ export default defineConfig({
               translations: {
                 cs: 'Konfigurace správce spouštění',
                 de: 'Bootmanager-Konfiguration',
+                nl: 'Configuratie van de bootmanager',
                 el: 'Ρύθμιση διαχειριστή εκκίνησης',
                 es: 'Configuración del gestor de arranque',
                 fr: "Configuration du gestionnaire d'amorçage",
@@ -607,6 +632,7 @@ export default defineConfig({
               translations: {
                 cs: 'Btrfs snapshoty',
                 de: 'Btrfs-Snapshots',
+                nl: 'Btrfs-snapshots',
                 el: 'Στιγμιότυπα Btrfs',
                 es: 'Snapshots de Btrfs',
                 fr: 'Snapshots Btrfs',
@@ -626,6 +652,7 @@ export default defineConfig({
               translations: {
                 cs: 'Dvojité GPU',
                 de: 'Doppelte GPU',
+                nl: 'Dual GPU',
                 el: 'Διπλή GPU',
                 es: 'GPU dual',
                 fr: 'Double GPU',
@@ -646,6 +673,7 @@ export default defineConfig({
               translations: {
                 cs: 'Hraní her',
                 de: 'Gaming',
+                nl: 'Gaming',
                 el: 'Παιχνίδια',
                 es: 'Juegos',
                 fr: 'Gaming',
@@ -664,6 +692,7 @@ export default defineConfig({
               translations: {
                 cs: 'Obecné úpravy systému',
                 de: 'Allgemeine Systemanpassungen',
+                nl: 'Algemene systeemtweaks',
                 el: 'Γενικές προσαρμογές συστήματος',
                 es: 'Ajustes generales del sistema',
                 fr: 'Ajustements généraux du système',
@@ -683,6 +712,7 @@ export default defineConfig({
               translations: {
                 cs: 'sched-ext Tutoriál',
                 de: 'sched-ext-Anleitung',
+                nl: 'sched-ext-tutorial',
                 el: 'Οδηγός για το sched-ext',
                 es: 'Tutorial de sched-ext',
                 fr: 'Tutorial sur sched-ext',
@@ -702,6 +732,7 @@ export default defineConfig({
               translations: {
                 cs: 'Automatické připojování dalších disků',
                 de: 'Automatisches Einhängen zusätzlicher Laufwerke',
+                nl: 'Extra schijven automatisch mounten',
                 el: 'Αυτόματη προσάρτηση πρόσθετων μονάδων',
                 es: 'Montaje automático de unidades adicionales',
                 fr: 'Montage automatique de disques supplémentaires',
@@ -721,6 +752,7 @@ export default defineConfig({
               translations: {
                 cs: 'Povolení hardwarové akcelerace v Google Chrome',
                 de: 'Hardwarebeschleunigung in Google Chrome aktivieren',
+                nl: 'Hardwareversnelling inschakelen in Google Chrome',
                 el: 'Ενεργοποίηση επιτάχυνσης υλικού στο Google Chrome',
                 es: 'Habilitar la aceleración por hardware en Google Chrome',
                 fr: "Activer l'accélération matérielle sur Google Chrome",
@@ -741,6 +773,7 @@ export default defineConfig({
               translations: {
                 cs: 'Desktopová prostředí',
                 de: 'Desktopumgebungen',
+                nl: 'Bureaubladomgevingen',
                 el: 'Επιφάνειες εργασίας',
                 es: 'Entornos de escritorio',
                 fr: 'Environnements de bureau',
@@ -761,6 +794,7 @@ export default defineConfig({
           translations: {
             cs: 'Virtualizace',
             de: 'Virtualisierung',
+            nl: 'Virtualisatie',
             el: 'Εικονικοποίηση',
             es: 'Virtualización',
             fr: 'Virtualisation',
@@ -779,6 +813,7 @@ export default defineConfig({
               translations: {
                 cs: 'Nastavení QEMU a VMM',
                 de: 'QEMU- und VMM-Einrichtung',
+                nl: 'QEMU en VMM instellen',
                 el: 'Ρύθμιση των QEMU και VMM',
                 es: 'Configuración de QEMU y VMM',
                 fr: 'Configuration de QEMU et VMM',
@@ -798,6 +833,7 @@ export default defineConfig({
               translations: {
                 cs: 'Uživatelská relace QEMU',
                 de: 'QEMU-User-Session',
+                nl: 'QEMU User Session',
                 el: 'Συνεδρία χρήστη QEMU',
                 es: 'Sesión de usuario de QEMU',
                 fr: 'Session utilisateur QEMU',
@@ -817,6 +853,7 @@ export default defineConfig({
               translations: {
                 cs: 'EGL Headless',
                 de: 'EGL-Headless',
+                nl: 'EGL Headless',
                 el: 'EGL Headless',
                 es: 'EGL Headless',
                 fr: 'EGL Headless',
@@ -836,6 +873,7 @@ export default defineConfig({
               translations: {
                 cs: 'Virtio-Venus',
                 de: 'Virtio-Venus',
+                nl: 'Virtio-Venus',
                 el: 'Virtio-Venus',
                 es: 'Virtio-Venus',
                 fr: 'Virtio-Venus',
@@ -855,6 +893,7 @@ export default defineConfig({
               translations: {
                 cs: 'CachyOS ve WSL',
                 de: 'CachyOS unter WSL',
+                nl: 'CachyOS op WSL',
                 es: 'CachyOS en WSL',
                 fr: 'CachyOS sur WSL',
                 ja: 'WSL 上の CachyOS',
@@ -875,6 +914,7 @@ export default defineConfig({
           translations: {
             cs: 'Podpora',
             de: 'Unterstützung',
+            nl: 'Ondersteuning',
             el: 'Υποστήριξη',
             es: 'Soporte',
             fr: 'Support',
@@ -893,6 +933,7 @@ export default defineConfig({
               translations: {
                 cs: 'Dobrovolné příspěvky',
                 de: 'Spenden',
+                nl: 'Donatie',
                 el: 'Δωρεές',
                 es: 'Donación',
                 fr: 'Donations',
@@ -912,6 +953,7 @@ export default defineConfig({
               translations: {
                 cs: 'Sociální sítě',
                 de: 'Soziale-Medien',
+                nl: 'Sociale media',
                 el: 'Κοινωνικά δίκτυα',
                 es: 'Redes sociales',
                 fr: 'Réseaux Sociaux',
@@ -933,6 +975,7 @@ export default defineConfig({
           translations: {
             cs: 'Podmínky',
             de: 'Regeln',
+            nl: 'Beleid',
             el: 'Πολιτικές',
             es: 'Política',
             fr: 'Politique',
@@ -951,6 +994,7 @@ export default defineConfig({
               translations: {
                 cs: 'Pravidla komunity',
                 de: 'Gemeinschaftsregeln',
+                nl: 'Communityregels',
                 el: 'Κανόνες κοινότητας',
                 es: 'Reglas de la comunidad',
                 fr: 'Règles de la communauté',
@@ -970,6 +1014,7 @@ export default defineConfig({
               translations: {
                 cs: 'Kodex chování',
                 de: 'Verhaltenskodex',
+                nl: 'Gedragscode',
                 el: 'Κώδικας δεοντολογίας',
                 es: 'Código de conducta',
                 fr: 'Code de Conduite',
@@ -989,6 +1034,7 @@ export default defineConfig({
               translations: {
                 cs: 'Obchodní podmínky',
                 de: 'Nutzungsbedingungen',
+                nl: 'Servicevoorwaarden',
                 el: 'Όροι χρήσης',
                 es: 'Términos de servicio',
                 fr: "Conditions générales d'utilisation",
@@ -1008,6 +1054,7 @@ export default defineConfig({
               translations: {
                 cs: 'Zásady ochrany osobních údajů',
                 de: 'Datenschutz-Bestimmungen',
+                nl: 'Privacybeleid',
                 el: 'Πολιτική απορρήτου',
                 es: 'Política de privacidad',
                 fr: 'Vie Privée',
@@ -1027,6 +1074,7 @@ export default defineConfig({
               translations: {
                 cs: 'Repozitářní politika',
                 de: 'Repository-Regeln',
+                nl: 'Repositorybeleid',
                 el: 'Πολιτική αποθετηρίων',
                 es: 'Política de repositorios',
                 fr: 'Politique des dépôts',
@@ -1046,6 +1094,7 @@ export default defineConfig({
               translations: {
                 cs: 'Zásady ochranné známky',
                 de: 'Markenrichtlinie',
+                nl: 'Merkenbeleid',
                 el: 'Πολιτική εμπορικών σημάτων',
                 es: 'Política de marcas',
                 fr: 'Politique des marques',

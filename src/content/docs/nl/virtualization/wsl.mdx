@@ -1,0 +1,62 @@
+---
+title: CachyOS op WSL
+description: CachyOS installeren en gebruiken op het Windows Subsystem for Linux
+ai_translated: true
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+CachyOS biedt een image voor het [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/about) (WSL). Deze wordt onderhouden in de [cachyos-wsl](https://github.com/CachyOS/cachyos-wsl)-repository, waar je ook bugs kunt melden die specifiek voor de image zijn.
+
+## Installatie
+
+Je hebt WSL 2 versie `2.4.4` of nieuwer nodig, die je kunt bijwerken met `wsl --update`. Voor oudere versies, zie de [cachyos-wsl README](https://github.com/CachyOS/cachyos-wsl#wsl-prior-to-244).
+
+<Steps>
+
+1. Download de `.wsl`-image van de [nieuwste release](https://github.com/CachyOS/cachyos-wsl/releases/latest), of in PowerShell:
+
+   ```powershell
+   $v = (Invoke-RestMethod https://api.github.com/repos/CachyOS/cachyos-wsl/releases/latest).tag_name
+   Invoke-WebRequest "https://github.com/CachyOS/cachyos-wsl/releases/download/$v/cachyos-$v.wsl" -OutFile "$env:TEMP\cachyos.wsl"
+   ```
+
+2. Installeer deze door op het bestand te dubbelklikken, of in PowerShell:
+
+   ```powershell
+   wsl --install --from-file "$env:TEMP\cachyos.wsl"
+   ```
+
+3. Start CachyOS vanuit het Startmenu, of met `wsl -d cachyos`.
+
+</Steps>
+
+## Eerste installatie
+
+De eerste keer opstarten kan een paar minuten duren. Daarbij wordt de pacman-keyring ingesteld, worden de mirrors gerangschikt, wordt overgeschakeld naar de geoptimaliseerde pakketten en wordt je gevraagd een gebruiker aan te maken. Deze gebruiker heeft `sudo`-toegang en gebruikt `fish` als shell.
+
+Images worden maar af en toe gebouwd, dus voer `sudo pacman -Syu` uit zodra dit klaar is.
+
+## Geoptimaliseerde pakketten
+
+De image is generiek en draait op elke x86-64-CPU. Net als het CachyOS-installatieprogramma schakelt de eerste installatie daarna over naar de beste [geoptimaliseerde repositories](/nl/features/optimized_repos) voor je CPU: `znver4`, `v4` of `v3`. Oudere CPU's blijven op de generieke pakketten.
+
+Als het overschakelen mislukt, bijvoorbeeld omdat je offline bent, gaat de installatie verder met de generieke pakketten. Om het opnieuw te proberen:
+
+```sh
+sudo /usr/lib/wsl/optimize-repos
+```
+
+## Verschillen met een gewone installatie
+
+WSL draait altijd de Microsoft-kernel, dus `linux-cachyos`, de bijbehorende schedulers en `sched-ext` worden niet gebruikt. De image heeft ook geen bootmanager, `chwd` of zram.
+
+## Probleemoplossing
+
+Als pacman aangeeft dat een herstart wordt aanbevolen, herstart de distributie dan vanuit PowerShell met `wsl --terminate cachyos`.
+
+Om opnieuw te beginnen, verwijder je de distributie met `wsl --unregister cachyos` en installeer je deze opnieuw.
+
+:::caution
+`wsl --unregister` verwijdert permanent alles binnen de distributie, inclusief je Linux-homedirectory.
+:::

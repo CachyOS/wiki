@@ -1,0 +1,97 @@
+---
+title: Overstappen tussen NVIDIA- en AMD-GPU's
+description: Instructies voor het overstappen van NVIDIA naar AMD (en andersom) op CachyOS.
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+ai_translated: true
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::note[Deze handleiding is van toepassing als je je GPU vervangt (NVIDIA ↔ AMD) op een bestaande CachyOS-installatie.]
+:::
+
+## Vereisten
+  - Je vervangende GPU is correct geïnstalleerd en aangesloten.
+  - Zorg ervoor dat je systeem volledig up-to-date is
+    ```bash
+    sudo pacman -Syu
+    ```
+
+### Migratiestappen
+
+<Tabs>
+    <TabItem label='Van NVIDIA naar AMD'>
+        Hoewel de AMD-stuurprogramma's in de Linux-kernel zijn opgenomen, moet je mogelijk de oude NVIDIA-configuratie opruimen en ervoor zorgen dat de benodigde AMD-pakketten zijn geïnstalleerd.
+        <Steps>
+            0. Noteer de gebruikersnaam en het wachtwoord van je account. Je hebt deze mogelijk nodig om via een TTY in te loggen.
+            1. Controleer welk NVIDIA-stuurprogrammaprofiel momenteel is geïnstalleerd:
+                ```bash
+                sudo chwd --list-installed
+                ```
+            2. Verwijder het specifieke profiel met de vlag `-r`:
+                ```bash
+                sudo chwd -r <profile-name>
+                ```
+            3. Sluit je systeem af en installeer je AMD-GPU.
+                > Als het systeem na het installeren van de GPU opstart naar een zwart scherm, druk dan op CTRL+ALT+F3 om naar een TTY te gaan.
+                > Voer je gebruikersnaam en wachtwoord in (let op NUMLOCK).
+            4. Na het opstarten: gebruik chwd om je GPU automatisch te detecteren en de juiste AMD-pakketten te installeren.
+                ```bash
+                sudo chwd -a
+                ```
+            5. Werk na het installeren van de nieuwe stuurprogramma's je initramfs en bootloaderconfiguratie bij
+                > CachyOS bevat een pacman-hook die de initramfs automatisch opnieuw bouwt wanneer stuurprogramma's worden toegevoegd of verwijderd.
+                > Dit zorgt ervoor dat de juiste stuurprogramma's bij het opstarten worden geladen.
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            6. Start opnieuw op om de wijzigingen toe te passen.
+                ```bash
+                sudo reboot
+                ```
+            7. Controleer na het herstarten of de AMD-stuurprogramma's actief zijn.
+                ```bash
+                vulkaninfo | grep "deviceName"
+                ```
+                of
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                Als je AMD-GPU wordt weergegeven, werken de stuurprogramma's correct.
+        </Steps>
+    </TabItem>
+    <TabItem label='Van AMD naar NVIDIA'>
+        <Steps>
+            1. Ruim de resterende AMD-pakketten op.
+                ```bash
+                sudo chwd -r amd
+                ```
+            2. Sluit je systeem af en installeer je NVIDIA-GPU.
+            3. Na het opstarten: gebruik chwd om je GPU automatisch te detecteren en de juiste NVIDIA-pakketten te installeren.
+                ```bash
+                sudo chwd -a
+                ```
+            4. Werk na het installeren van de nieuwe stuurprogramma's je initramfs en bootloaderconfiguratie bij
+                > CachyOS bevat een pacman-hook die de initramfs automatisch opnieuw bouwt wanneer stuurprogramma's worden toegevoegd of verwijderd.
+                > Dit zorgt ervoor dat de juiste stuurprogramma's bij het opstarten worden geladen.
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            5. Start opnieuw op om de wijzigingen toe te passen.
+                ```bash
+                sudo reboot
+                ```
+            6. Controleer na het herstarten of de NVIDIA-stuurprogramma's actief zijn.
+                ```bash
+                nvidia-smi
+                ```
+                of
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                Als je NVIDIA-GPU wordt weergegeven, werken de stuurprogramma's correct.
+        </Steps>
+    </TabItem>
+</Tabs>

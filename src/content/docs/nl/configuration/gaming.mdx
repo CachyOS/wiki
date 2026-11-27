@@ -1,0 +1,683 @@
+---
+title: Handleiding voor gamen met CachyOS
+description: 'Behandelt de installatie van essentiële pakketten, gamen op Steam met Proton, verschillende Proton-versies, Lutris als centrale plek voor al je games en installatiescripts voor populaire games.'
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import MultipleImageComponent from '~/components/multiple-images-component.astro';
+import { Tabs, TabItem, Steps, LinkButton, Icon } from '@astrojs/starlight/components';
+
+Welkom bij de handleiding voor gamen op CachyOS! Deze handleiding leidt je door alles wat je moet weten om je systeem klaar te maken om te gamen.
+
+*Begrijp allereerst dat een verbetering van de FPS met dubbele cijfers niet altijd mogelijk is. Soms leiden optimalisaties maar tot kleine verbeteringen, of zelfs helemaal geen, afhankelijk van de game en de hardwareconfiguratie.*
+
+*Je kunt niet verwachten dat software-optimalisaties werken als een gratis hardware-upgrade.*
+
+<ImageComponent imgsrc={import('~/assets/images/gaming-meme.jpeg')} />
+
+## Vereisten
+
+:::caution
+Zorg er voordat je verdergaat voor dat de stuurprogramma's van je grafische kaart zijn geïnstalleerd en correct werken; anders kun je problemen krijgen bij het spelen van games.
+:::
+
+### Essentiële pakketten
+
+Om het instellen van CachyOS voor gaming te vereenvoudigen, zijn alle benodigde gamingpakketten gebundeld in één metapakket met alle afhankelijkheden en bibliotheken die nodig zijn om op Linux te gamen, plus een apart metapakket voor populaire hulpmiddelen en winkels/launchers.
+
+*Als je merkt dat er pakketten ontbreken, laat het het CachyOS-team dan gerust weten.*
+
+Volg de onderstaande stappen om te beginnen met de gamingconfiguratie.
+<Tabs>
+  <TabItem label='CachyOS Hello'>
+    - Open CachyOS Hello. Ga naar **Apps/Tweaks** en klik op `Install Gaming packages`.
+    <ImageComponent imgsrc={import('~/assets/images/cachyos_hello-gaming.png')} />
+    *CachyOS Hello installeert zowel `cachyos-gaming-meta` als `cachyos-gaming-applications`.*
+  </TabItem>
+  <TabItem label='Metapakket'>
+    Het metapakket `cachyos-gaming-meta` bevat veel bibliotheken die met gaming te maken hebben.
+    ```sh
+    sudo pacman -S cachyos-gaming-meta
+    ```
+  </TabItem>
+  <TabItem label='Hulpmiddelen & winkels'>
+    Het metapakket `cachyos-gaming-applications` bevat het volgende:
+    - Hulpmiddelen
+      - Gamescope, GOverlay, MangoHud
+    - Launchers
+      - Steam, Heroic Games Launcher, Lutris, Faugus Launcher
+    ```sh
+    sudo pacman -S cachyos-gaming-applications
+    ```
+  </TabItem>
+</Tabs>
+
+## Proton-CachyOS
+
+Proton-CachyOS is gebaseerd op de `bleeding-edge`-tak van Proton en past daarbovenop een aantal wijzigingen toe.
+- **Wine-staging-patches**
+- **Wine Fullscreen FSR**
+- **Bevat video- en audiocodecs voor tussenfilmpjes in games**
+- **Ondersteuning voor umu-launcher inclusief UMU-Protonfixes**
+- **Voegt vroege hotfixes/workarounds voor games toe**
+
+:::note[NTSync is standaard ingeschakeld]
+Je kunt het uitschakelen door de omgevingsvariabele `PROTON_NO_NTSYNC=1` in te stellen
+:::
+
+### Hoe stel je meerdere startopties correct in
+
+De startopties in Steam worden opgebouwd volgens het volgende patroon.
+
+```bash
+[env variables] [wrappers] %command% [application arguments]
+```
+
+- **`[env variables]`**: Dit zijn opties in de vorm `VARIABLE=value`
+  ```bash title="Voorbeelden"
+  PROTON_DXVK_D3D8=1
+  # Of
+  DXVK_HUD="fps,memory,version,api"
+  ```
+
+- **`[wrappers]`**: Dit zijn applicaties en scripts die bepalen hoe de eigenlijke applicatie wordt uitgevoerd. Argumenten voor de wrapper komen meestal na het uitvoerbare bestand van de wrapper.
+  ```bash title="Voorbeelden"
+  mangohud --dlsym
+  # Of
+  gamescope -W 1680 -H 1050 -w 1280 -h 720 -S fit -F fsr --mangoapp --
+  ```
+
+- **`%command%`**: Dit is de eigenlijke applicatie. Dit moet precies zo worden opgegeven; Steam vervangt het door het juiste commando wanneer de applicatie wordt gestart.
+
+- **`[application arguments]`**: Dit zijn diverse argumenten voor de eigenlijke applicatie; ze zijn afhankelijk van de applicatie.
+  ```bash title="Voorbeeld"
+  %command% -dx11
+  ```
+
+**Voorbeeld van een volledige startoptie die alle elementen combineert:**
+```bash
+__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1 prime-run game-performance %command% -dx11
+```
+
+:::caution
+Voeg niet meerdere keren `%command%` toe door ze als scheidingsteken tussen startopties te gebruiken.
+
+Voorbeeld: `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1 %command% game-performance %command% prime-run %command%`
+
+In dit geval wordt alles na de eerste `%command%` genegeerd, omdat het als argumenten voor de game wordt behandeld. Daardoor wordt alleen `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1` als startoptie herkend.
+:::
+
+#### Omgevingsvariabelen
+:::note
+Aangepaste Proton-versies hebben standaard instabiele configuratieopties. Raadpleeg hun documentatie voor de nieuwste informatie over hun configuratieopties.
+
+Links naar documenten van Proton-CachyOS:
+
+<LinkButton icon="external" href="https://github.com/CachyOS/proton-cachyos/blob/cachyos_main/README.md#proton-cachyos-config-options">Readme</LinkButton>
+<LinkButton icon="external" href="https://github.com/CachyOS/proton-cachyos/blob/cachyos_main/CHANGELOG.md">Changelog</LinkButton>
+
+Links naar documenten van Proton-EM:
+
+<LinkButton icon="external" href="https://github.com/Etaash-mathamsetty/Proton/blob/em-11-hdr/README.md">Readme</LinkButton>
+<LinkButton icon="external" href="https://github.com/Etaash-mathamsetty/Proton/blob/em-10-hdrtest/docs/EM-ADDITIONS.md">EM-ADDITIONS</LinkButton>
+<LinkButton icon="external" href="https://github.com/Etaash-mathamsetty/Proton/blob/em-10-hdrtest/docs/FSR4.md">FSR4</LinkButton>
+<LinkButton icon="external" href="https://github.com/Etaash-mathamsetty/Proton/blob/em-10-hdrtest/docs/CHANGES.md">Winewayland</LinkButton>
+:::
+
+### Proton-CachyOS instellen met Lutris en Heroic
+
+Zorg dat umu-launcher van CachyOS op je systeem is geïnstalleerd. Installeer het met het volgende commando.
+```sh
+sudo pacman -S cachyos/umu-launcher
+```
+
+<Tabs>
+  <TabItem label='Lutris Global'>
+    <Steps>
+      1. Klik in het hoofdscherm van Lutris op het tandwielicoon naast Wine.
+      2. Ga naar het tabblad **Runner Options** en controleer of je instellingen overeenkomen met het volgende:
+          - **Wine version** = `proton-cachyos-slr` of `proton-cachyos-native`
+          - **Use System winetricks** = *Disabled*
+          - **Graphics**
+          - **Enable DXVK** = `Enabled`
+            - Let op: door de gebruiker gekozen versies van **DXVK**, **VKD3D** en **DXVK-NVAPI** worden niet toegepast bij gebruik van `umu-launcher`.
+      3. Ga naar het tabblad **System Options**.
+          - **Lutris**
+          - **Disable Lutris Runtime** = `Enabled`
+          - **Prefer system libraries** = `Enabled`
+      4. Scrol verder naar beneden naar de sectie **Game execution** en zoek de tabel **Environment variables**.
+      5. Voeg de volgende omgevingsvariabelen toe:
+          - **Key**: `PROTON_VERB` *optioneel*
+          - **Value**: `waitforexitandrun`
+            - *Hierdoor kan protonfixes werken met een bijbehorende GAMEID.*
+      6. Klik op **Save** om de wijzigingen toe te passen.
+    </Steps>
+  </TabItem>
+  <TabItem label='Lutris per game'>
+    <Steps>
+      1. Klik met de rechtermuisknop op de game die je wilt configureren en klik daarna op **Configure**.
+      2. Ga naar het tabblad **Runner Options** en controleer of je instellingen overeenkomen met het volgende:
+          - **Wine version** = `proton-cachyos-slr` of `proton-cachyos-native`
+          - **Use System winetricks** = *Disabled*
+          - **Graphics**
+          - **Enable DXVK** = `Enabled`
+            - Let op: door de gebruiker gekozen versies van **DXVK**, **VKD3D** en **DXVK-NVAPI** worden niet toegepast bij gebruik van `umu-launcher`.
+      3. Ga naar het tabblad **System Options**.
+          - **Lutris**
+          - **Disable Lutris Runtime** = `Enabled`
+          - **Prefer system libraries** = `Enabled`
+      4. Scrol verder naar beneden naar de sectie **Game execution** en zoek de tabel **Environment variables**.
+      5. Voeg de volgende omgevingsvariabelen toe:
+          - **Key**: `PROTON_VERB` *optioneel*
+          - **Value**: `waitforexitandrun`
+            - *Hierdoor kan protonfixes werken met een bijbehorende GAMEID.*
+      6. Klik op **Save** om de wijzigingen toe te passen.
+    </Steps>
+  </TabItem>
+  <TabItem label='Heroic Games Launcher'>
+    <Steps>
+      1. Klik bij de game die je wilt starten op de knop `Configure` naast de knop `Play Now`.
+      2. Stel op het tabblad `WINE` de Wine Version in op `Proton - proton-cachyos-slr`.
+    </Steps>
+  </TabItem>
+</Tabs>
+
+### Ondersteuning voor anti-cheat
+
+:::caution[Belangrijk]
+Als je problemen hebt met games die **Easy Anti-Cheat** (EAC) of **BattlEye** (BE) gebruiken, bijvoorbeeld omdat inloggen op gameservers wordt geweigerd, kun je de versie van [Proton-CachyOS gebouwd met Steam Linux Runtime](https://github.com/CachyOS/proton-cachyos/releases) gebruiken, ook bekend als **proton-cachyos-slr**.
+:::
+
+### proton-cachyos-slr installeren
+
+:::note[Deze stap is alleen nodig als het pakket cachyos-gaming-meta niet is geïnstalleerd. Als het wel is geïnstalleerd, sla dit deel dan over.]
+:::
+
+<Tabs>
+
+  <TabItem label='pacman'>
+    ```sh title='Voer het volgende commando uit'
+    sudo pacman -S proton-cachyos-slr
+    ```
+  </TabItem>
+
+  <TabItem label='protonup'>
+
+    <Steps>
+      1. Open een terminal en installeer `protonup`.
+          ```sh
+          sudo pacman -S protonup-qt
+          ```
+      2. Open **protonup-qt** en volg de screenshot:
+          <ImageComponent imgsrc={import('~/assets/images/steam-protonup.png')} />
+          :::note
+          Kies de versie `x86-64_v3` als je CPU **[AVX2](/nl/installation/installation_prepare#ondersteuning-voor-x86_64-microarchitectuurniveaus)** ondersteunt.
+          Download anders de versie die eindigt op `x86-64`.
+          :::
+      3. Herstart Steam als je het open had.
+    </Steps>
+  </TabItem>
+
+</Tabs>
+
+<details>
+  <summary>Handmatige installatie (geavanceerd)</summary>
+
+  <Steps>
+    1. Download de nieuwste versie [hier](https://github.com/CachyOS/proton-cachyos/releases) (scrol naar beneden naar **Assets**).
+        :::note
+        Download de versie die eindigt op `x86-64`. Dit is de versie die de meeste gebruikers zouden moeten kiezen.
+        Kies de versie die eindigt op `x86-64_v3` alleen als je CPU **[AVX2](/nl/installation/installation_prepare#ondersteuning-voor-x86_64-microarchitectuurniveaus)** ondersteunt en je wilt experimenteren.
+        :::
+    2. Pak het bestand uit en verplaats de map naar `~/.steam/steam/compatibilitytools.d/`
+    3. Herstart Steam als je het open had.
+  </Steps>
+
+</details>
+
+## Wine-CachyOS
+
+Dit is dezelfde `Wine` die de kern vormt van `Proton-CachyOS`, maar dan als los pakket. Het kan worden gebruikt in Lutris, Heroic, Bottles en andere. **Houd er rekening mee dat het niet bedoeld is voor gebruik met Steam.**
+
+- **Alle Wine-wijzigingen die in Proton-CachyOS zitten**
+- **Voegt vroege hotfixes/workarounds voor games toe**
+
+:::note
+In de CachyOS-repositories wordt **Wine-CachyOS** via twee verschillende pakketten aangeboden. `wine-cachyos` installeert het als standaard systeem-Wine en vervangt `wine` of `wine-staging`. `wine-cachyos-opt` installeert het op een andere locatie, waardoor meerdere wine-versies naast elkaar op het systeem kunnen bestaan.
+:::
+
+:::caution
+**Wine-CachyOS** is in de eerste plaats bedoeld voor **gaming**. Hoewel het als systeem-Wine met desktopapplicaties kan worden gebruikt, kan het door de op gaming gerichte wijzigingen leiden tot onverwacht gedrag en problemen.
+
+Als je desktopapplicaties wilt gebruiken, raden we aan `wine` of `wine-staging` als systeem-Wine te gebruiken en `wine-cachyos-opt` te installeren voor gaming.
+:::
+
+**Extra configuratieopties**
+
+- `WINE_WMCLASS="[name]"`: Stelt de `WM_CLASS` van alle Wine-vensters in, zodat de window manager de Wine-vensters via regels kan aansturen.
+- `WINEUSERSANDBOX=1`: Schakelt het aanmaken van symlinks uit van Wine-gebruikersmappen (zoals Documents en Pictures) naar de overeenkomstige mappen in de `HOME`-directory van de gebruiker.
+- `WINE_NO_WM_DECORATION=1`: Schakelt vensterdecoraties uit. Dit kan problemen oplossen met **borderless fullscreen** en met muisklikken die door het venster heen gaan.
+- `WINE_PREFER_SDL_INPUT=1`: Workaround voor problemen met het detecteren van controllers
+
+### wine-cachyos-opt gebruiken
+
+<Tabs>
+  <TabItem label='Los'>
+    Normaal gesproken is het voldoende om `/opt/wine-cachyos/bin/wine` uit te voeren in plaats van alleen `wine` om een applicatie met `wine-cachyos-opt` te laten draaien.
+
+    Als een strengere configuratie nodig is, kan die er zo uitzien:
+    ```sh
+    export PATH="/opt/wine-cachyos/bin/:$PATH"
+    export WINEDLLPATH="/opt/wine-cachyos/lib/wine:/opt/wine-cachyos/lib32/wine:$WINEDLLPATH"
+    export LD_LIBRARY_PATH="/opt/wine-cachyos/lib/:/opt/wine-cachyos/lib32/:$LD_LIBRARY_PATH"
+    ```
+
+    Als je `winetricks` met `wine-cachyos-opt` wilt gebruiken, kun je het zo aanroepen:
+    ```sh
+    WINE=/opt/wine-cachyos/bin/wine WINEPREFIX=[your prefix] winetricks [verb]
+    ```
+  </TabItem>
+  <TabItem label='Lutris'>
+    :::note
+    De tweede afbeelding geldt ook voor het instellen per game.
+    :::
+    <MultipleImageComponent
+      images={[import('~/assets/images/lutris-guide-1.png'), import('~/assets/images/lutris-guide-2.png')]}
+    />
+  </TabItem>
+  <TabItem label='Heroic Games Launcher'>
+    <MultipleImageComponent
+      images={[import('~/assets/images/heroic-wine.png'), import('~/assets/images/heroic-wine-2.png'), import('~/assets/images/heroic-wine-3.png')]}
+    />
+  </TabItem>
+</Tabs>
+
+## Steam: FAQ & tips
+
+:::note
+Laptopgebruikers met een aparte Nvidia-GPU kunnen de [handleiding voor laptops met twee GPU's](/nl/configuration/dual_gpu/) raadplegen.
+:::
+
+:::tip
+CachyOS levert verschillende Proton-versies die zijn gebouwd en worden onderhouden voor extra prestatieverbeteringen:
+- `proton-cachyos` (onderdeel van het pakket `cachyos-gaming-meta`) wordt ontwikkeld met extra wijzigingen voor gebruiksgemak, geselecteerde patches, enz.
+:::
+
+:::tip
+Om te controleren of een game compatibel is met Linux, of hoe die op Linux draait, bezoek je
+**[ProtonDB](https://www.protondb.com/)** ,
+**[Are We Anti-Cheat Yet?](https://areweanticheatyet.com/)**
+of **[de anti-cheatsectie van Gaming On Linux](https://www.gamingonlinux.com/anticheat/)**
+:::
+
+### Aangepaste Proton-versies instellen in Steam
+
+:::caution[Het wordt STERK AANBEVOLEN om de Proton van Valve als globale standaard te houden.]
+:::
+
+- Om een aangepaste Proton voor een specifieke game in te stellen, ga je naar de bibliotheek, klik je met de rechtermuisknop op de game
+en ga je naar **Properties** > **Compatibility**
+
+vink het vakje `Force the use of a specific Steam Play compatibility tool` aan
+en selecteer de gewenste proton-versie.
+
+- Om de Proton van Valve als globale standaard in te stellen, ga je naar **Settings** > **Compatibility** > **Default Compatibility tool**
+en stel je de nieuwste stabiele release van Valve's proton of Proton Experimental in.
+
+### Welke Proton-versie moet ik gebruiken in Steam?
+
+:::tip
+Voor nieuwe gebruikers raden we de Proton van Valve of Proton Experimental aan.
+:::
+
+Officiële Proton-versies:
+
+**Proton Experimental:** is de bleeding-edge-release van **Valve**. Gebruik deze als de game die je wilt spelen relatief nieuw is, niet goed werkt met de huidige stabiele release van Proton, of als mensen het aanraden op **[ProtonDB](https://www.protondb.com/)**.
+
+**Proton 11.0:** is de stabiele release van **Valve**. Gebruik deze als bekend is dat de game die je wilt spelen er goed mee werkt.
+
+**Proton 10.0 of lager:** zijn de stabiele releases van **Valve**. *Gebruik deze als de game die je wilt spelen alleen werkt met een eerdere release van Proton.*
+
+:::tip
+Voor ervaren gebruikers die willen experimenteren met extra functies, Proton buiten Steam willen gebruiken of fixes nodig hebben die niet in de Proton van Valve zitten, zijn er heel wat aangepaste Proton-varianten. Houd er rekening mee dat deze niet door Valve worden ondersteund; het zijn initiatieven van de community en ze zijn van nature experimenteel.
+:::
+
+Proton-forks van derden:
+
+**Proton-CachyOS:**
+Gebouwd en onderhouden door [CachyOS](https://github.com/CachyOS/proton-cachyos); bevat extra functies voor gebruiksgemak, fixes en experimentele wijzigingen.
+
+In de CachyOS-repositories vind je twee varianten: [`proton-cachyos-native`](https://packages.cachyos.org/package/cachyos/x86_64/proton-cachyos-native) en [`proton-cachyos-slr`](https://packages.cachyos.org/package/cachyos/x86_64/proton-cachyos-slr).
+
+We raden aan het pakket `proton-cachyos-slr` te gebruiken in plaats van `proton-cachyos-native`.
+
+**Proton-EM:**
+Een op ontwikkeling gerichte aangepaste build gemaakt door [Etaash-mathamsetty](https://github.com/Etaash-mathamsetty/Proton). Het is een zeer goede optie als je **winewayland** en **FSR4** wilt gebruiken zonder de extra's die Proton-CachyOS biedt. Het is ook de bron van diverse verbeteringen die Proton-CachyOS bevat.
+
+*Als je geïnteresseerd bent in het allernieuwste op het gebied van **winewayland**-ontwikkeling, dan is dit iets voor jou.*
+
+**dwproton:**
+Een aangepaste build gemaakt door [Dawn Winery](https://dawn.wine/dawn-winery/dwproton); het is een fork van Proton-CachyOS met **extra fixes en patches voor bepaalde anime-games**.
+
+Als je met andere Proton-varianten problemen hebt met zulke games, is **dwproton** je beste optie.
+
+**Proton-GE**:
+Een aangepaste build gemaakt door [GloriousEggroll](https://github.com/GloriousEggroll/proton-ge-custom). Bevat diverse fixes en kan in bepaalde situaties handig zijn.
+
+### Oplossing voor H264-video's die niet afspelen of kleurbalken tonen in games met de Proton van Valve
+:::caution
+Dit is optioneel. Gebruik het alleen als je dit probleem hebt.
+:::
+Start Steam met het volgende commando. Wacht tot het geladen is, sluit Steam dan af en start het normaal.
+
+```sh
+ steam steam://unlockh264/
+```
+
+### Oplossing voor haperingen door de functie Game Recorder van Steam
+
+:::caution
+Het toevoegen van deze omgevingsvariabele zorgt ervoor dat de **overlay van Steam** niet meer werkt.
+:::
+
+Voeg de volgende startoptie toe aan je game.
+
+```sh
+LD_PRELOAD="" %command%
+```
+
+### Proton-logs vastleggen en delen
+
+:::note
+Upload logs die je met CachyOS deelt naar **[paste-cachyos](https://paste.cachyos.org/)** in plaats van ze direct te plaatsen.
+
+Je kunt het logbestand gewoon naar de website slepen en daarna de gegenereerde link delen.
+:::
+
+Om logging van Proton voor een game in te schakelen:
+
+<Steps>
+  1. Klik in Steam met de rechtermuisknop op je game en selecteer **Properties**.
+  2. Stel onder **Launch Options** de omgevingsvariabele `PROTON_LOG` in:
+      ```sh
+      PROTON_LOG=1 %command%
+      ```
+      Dit maakt in je homedirectory een logbestand aan met de naam `steam-[AppID].log` (Counter Strike 2 gebruikt bijvoorbeeld AppID **730**, dus het bestand heet dan `steam-730.log`).
+</Steps>
+
+<details>
+  <summary>Eigen map voor logs</summary>
+
+  Om een eigen map voor logs in te stellen, gebruik je `PROTON_LOG_DIR`:
+
+  ```sh title='Voorbeeld'
+  PROTON_LOG=1 PROTON_LOG_DIR=/home/cachyos/steam-logs %command%
+  ```
+</details>
+
+### Shaders vooraf cachen met Proton-CachyOS, -GE en -EM
+
+:::note
+Het wordt aangeraden de functie van Steam voor het vooraf cachen van shaders uit te schakelen wanneer je Proton-CachyOS, Proton-GE of Proton-EM gebruikt. Deze bevatten al alle codecs die nodig zijn om video's in games af te spelen, en tegenwoordig zou een redelijk moderne combinatie van GPU en CPU het compileren van shaders tijdens het spelen ruimschoots aan moeten kunnen.
+
+Als je tijd over hebt, kun je deze tip negeren en Steam een aantal shaders voor je game vooraf laten compileren.
+
+**Houd er rekening mee dat niet alles tijdens dit proces wordt gecachet, en dat updates van de Proton-versie die is gebruikt om de shaders te compileren een volledige hercompilatie van de shaders kunnen vereisen.**
+:::
+
+#### Deze functie uitschakelen in Steam
+
+Klik in Steam op `Steam`->`Settings`, ga naar `Downloads` en vink deze instellingen uit:
+- **Allow background processing of Vulkan shaders**
+- **Enable Shader Pre-caching**
+
+:::note
+Het wordt sterk aanbevolen om [de maximale grootte van je shadercache te verhogen](#de-maximale-grootte-van-de-shadercache-verhogen) nadat je het vooraf cachen van shaders in Steam hebt uitgeschakeld.
+:::
+
+### Een Windows NTFS-partitie met games hergebruiken
+
+:::caution
+Vermijd het gebruik van Proton op NTFS-schijven. Valve ondersteunt deze configuratie niet en het kan ervoor zorgen dat games zich onvoorspelbaar gedragen.
+
+Als je toch wilt doorgaan, volg dan hun **[onofficiële handleiding](https://github.com/ValveSoftware/Proton/wiki/Using-a-NTFS-disk-with-Linux-and-Windows)**.
+:::
+
+### Opstarten in een gamescope-sessie
+
+Gamescope Session start je bureaublad binnen gamescope en biedt een speciale gamingomgeving op volledig scherm met verbeterde beeldafhandeling, invoerbeheer en prestatie-optimalisaties.
+
+Het is ideaal voor op gaming gerichte systemen of handheld-apparaten en biedt een console-achtige ervaring, terwijl je zo nodig nog steeds toegang hebt tot je bureaubladsessie.
+
+Installeer om het te gebruiken het pakket `gamescope-session-cachyos` (`pacman -S gamescope-session-cachyos`) en stel de standaardsessie in op gamescope.
+
+## [Lutris](https://lutris.net/)
+
+Lutris is een gamelauncher op CachyOS. Met Lutris kun je eenvoudig je game-runners beheren, waaronder Wine, Proton en emulators.
+
+- Start games via Lutris door simpelweg op de knop **Play** te klikken.
+- Voeg elke gewenste game toe door op de **+** in de linkerbovenhoek te klikken.
+- Stel een winkel in via Sources in het linkerpaneel en koppel je account. Lutris installeert die winkel dan, waarna je games vanuit de winkel kunt starten, net als op Windows.
+- En meer!
+
+*Gamewinkels die in Lutris worden ondersteund:*
+
+- [EA App](https://lutris.net/games/ea-app/)
+- [Epic Games Store](https://lutris.net/games/epic-games-store/)
+- [GOG Galaxy](https://lutris.net/games/gog-galaxy/)
+- [Steam](https://lutris.net/games/steam/)
+- [Ubisoft Connect](https://lutris.net/games/ubisoft-connect/)
+
+### Meerdere startopties en omgevingsvariabelen correct instellen in Lutris
+
+- Startopties zoals `-dx11` of `-fullscreen` voeg je toe in het veld **Arguments** op het tabblad **Game options**, met een spatie als scheidingsteken.
+- Command-wrappers, bijvoorbeeld `mangohud --dlsym` of `game-performance`, voeg je toe in het veld **Command prefix** op het tabblad **System options**, met een spatie als scheidingsteken.
+- Omgevingsvariabelen zoals `DXVK_HDR=1` voeg je toe in de tabel **Environment variables** op het tabblad **System options**, met de knop `+` om een nieuw item toe te voegen.
+:::note
+Zet geen `=` in het veld Key. Dat veld mag alleen de naam van de variabele bevatten.
+:::
+
+### Logs correct genereren in Lutris
+- Stel Output debugging info in op `Inherit from environment`.
+- Voeg in Environment variables `PROTON_LOG` toe met de waarde `1`.
+
+
+## Tips voor prestaties & overig
+
+### Combineer gamemode en ananicy-cpp niet
+
+Omdat `gamemode` en `ananicy-cpp` allebei tegelijk de niceness van een proces proberen aan te passen, kan dit leiden tot conflicten en onverwacht gedrag. Als je gamemode wilt gebruiken, wordt aanbevolen ananicy-cpp eerst uit te schakelen of te stoppen.
+
+Voer het volgende commando uit om ananicy-cpp te stoppen:
+
+```sh
+systemctl stop ananicy-cpp
+```
+
+### Op verzoek wisselen van energieprofiel
+
+:::note
+Dit gedrag verschilt iets bij `intel_pstate`. Op Intel blijft de governor op powersave staan, maar worden de EPP/EPB-waarden aangepast voor prestaties.
+:::
+
+:::caution[game-performance levert op oude CPU's mogelijk geen enkel voordeel op.]
+:::
+
+CachyOS bevat een wrapperscript [game-performance](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/game-performance)
+dat `power-profiles-daemon` gebruikt om het energieprofiel tijdelijk naar `performance` te schakelen.
+Het profiel verhoogt de vermogensniveaus van het systeem, zet de CPU-governor op `performance` en schakelt een eventueel actieve scx-scheduler over naar zijn gamingprofiel (indien beschikbaar).
+
+Wanneer je het gebruikt om een game te starten, blijft het systeem in **performance-modus** totdat de game wordt afgesloten; daarna wordt het vorige profiel hersteld.
+
+[Feral's GameMode](https://github.com/FeralInteractive/gamemode)
+biedt vergelijkbare functionaliteit.
+
+### game-performance toevoegen aan Steam, Lutris en Heroic Games Launcher
+
+<Tabs>
+
+  <TabItem label='Steam'>
+
+    <Steps>
+        1. Open je `Steam Library`.
+        2. Klik met de rechtermuisknop op de titel van de game en selecteer `Properties`.
+        3. Op het tabblad `General` vind je de sectie `Launch Options`.
+        4. Voeg de volgende startoptie toe:
+            ```sh
+            game-performance %command%
+            ```
+    </Steps>
+
+  </TabItem>
+
+  <TabItem label='Heroic Games Launcher'>
+
+    <Steps>
+        1. Open `Settings` in het linkerpaneel.
+        2. Ga naar `Game defaults` en klik daarna op `Advanced`.
+        3. Voeg in de sectie `wrapper` command de volgende regel toe, zonder argumenten:
+            ```sh
+            game-performance
+            ```
+        4. Klik op het `+`-teken om de wijzigingen op te slaan.
+    </Steps>
+
+  </TabItem>
+
+  <TabItem label='Lutris'>
+
+    <Steps>
+      1. Open rechtsboven het `hamburgermenu`.
+      2. Ga naar `Preferences/Global options`.
+      3. Schakel rechtsboven `Advanced Mode` in.
+      4. Scrol naar beneden naar `Command prefix` en voeg de volgende regel toe:
+          ```sh
+          game-performance
+          ```
+      5. Sla de wijzigingen op.
+    </Steps>
+
+  </TabItem>
+
+</Tabs>
+
+### De maximale grootte van de shadercache verhogen
+
+Shaders van games worden tijdens het spelen automatisch gecompileerd, wat de eerste keer dat je ze tegenkomt lange laadtijden en haperingen kan veroorzaken. Deze shaders worden op je systeem opgeslagen om zo nodig opnieuw te worden gebruikt.
+
+Er is echter een maximale bestandsgrootte voor de shadercache, waardoor oude shaders worden vergeten wanneer de standaardgrootte wordt overschreden. Dit kan een probleem zijn, omdat grote games meer dan 1GB aan shaders kunnen hebben, waardoor shaders bij elke start opnieuw worden gecompileerd.
+
+Om lange laadtijden en haperingen te voorkomen, kunnen we de globale grootte van de shadercache verhogen:
+
+<Steps>
+
+  1. Open een terminal.
+  2. Maak een map `environment.d` aan in je configuratiemap als die nog niet bestaat:
+      ```sh
+      mkdir -p ~/.config/environment.d
+      ```
+  3. Maak een nieuw configuratiebestand aan:
+      ```sh
+      touch ~/.config/environment.d/gaming.conf
+      ```
+  4. Open het bestand met **Micro** (een teksteditor).
+      ```sh
+      micro ~/.config/environment.d/gaming.conf
+      ```
+      En plak het volgende, afhankelijk van de fabrikant van je GPU:
+      <details>
+        <summary>AMD</summary>
+        ```sh
+        # Verhoog de grootte van de shadercache van AMD naar 12GB
+        MESA_SHADER_CACHE_MAX_SIZE=12G
+        ```
+      </details>
+      <details>
+        <summary>NVIDIA</summary>
+        ```sh
+        # Verhoog de grootte van de shadercache van Nvidia naar 12GB
+        __GL_SHADER_DISK_CACHE_SIZE=12000000000
+        ```
+      </details>
+  5. Sla het bestand op door op `CTRL+S` te drukken en sluit Micro af met `CTRL+Q`. Start je systeem opnieuw op.
+
+</Steps>
+
+Na het herstarten zou de maximale grootte van de shadercache blijvend verhoogd moeten zijn. Met dank aan [de shader booster van psygreg](https://github.com/psygreg/shader-booster/) voor de hulp bij deze handleiding.
+
+### De nieuwste DLSS-preset afdwingen
+
+#### dlss-swapper toevoegen aan Steam, Lutris en Heroic Games Launcher
+
+<Tabs>
+
+  <TabItem label='Steam'>
+
+    <Steps>
+      1. Open je `Steam Library`.
+      2. Klik met de rechtermuisknop op de titel van de game en selecteer `Properties`.
+      3. Op het tabblad `General` vind je de sectie `Launch Options`.
+      4. Voeg de volgende startoptie toe:
+          ```sh
+          dlss-swapper %command%
+          ```
+    </Steps>
+
+  </TabItem>
+
+  <TabItem label='Heroic Games Launcher'>
+
+    <Steps>
+      1. Open `Settings` in het linkerpaneel.
+      2. Ga naar `Game defaults` en klik daarna op `Advanced`.
+      3. Voeg in de sectie `wrapper` command de volgende regel toe, zonder argumenten:
+          ```sh
+          dlss-swapper
+          ```
+      4. Klik op het `+`-teken om de wijzigingen op te slaan.
+    </Steps>
+
+  </TabItem>
+
+  <TabItem label='Lutris'>
+
+    <Steps>
+      1. Open rechtsboven het `hamburgermenu`.
+      2. Ga naar `Preferences/Global options`.
+      3. Schakel rechtsboven `Advanced Mode` in.
+      4. Scrol naar beneden naar `Command prefix` en voeg de volgende regel toe:
+          ```sh
+          dlss-swapper
+          ```
+      5. Sla de wijzigingen op.
+    </Steps>
+
+  </TabItem>
+
+</Tabs>
+
+<details>
+  <summary>Methode met handmatige vervanging van de DLL</summary>
+
+  Als `dlss-swapper` niet werkt of problemen veroorzaakt, probeer dan de DLSS-implementatie van de game handmatig bij te werken door `nvngx_dlss.dll` te vervangen door een actuele versie en in plaats daarvan het wrapperscript `dlss-swapper-dll` te gebruiken.
+</details>
+
+### Ondersteuning voor ray tracing
+De Arch Wiki biedt al uitgebreide instructies voor het inschakelen van [ray tracing](https://wiki.archlinux.org/title/Hardware_raytracing) op verschillende hardwareplatforms.
+- [Ray tracing op Nvidia](https://wiki.archlinux.org/title/Hardware_raytracing#NVIDIA)
+- [Ray tracing op AMD](https://wiki.archlinux.org/title/Hardware_raytracing#AMD)
+- [Ray tracing op Intel](https://wiki.archlinux.org/title/Hardware_raytracing#Intel)
+
+### Prestatieverlies op Nvidia in DirectX12-games
+
+Sommige gebruikers melden dat het probleem te maken heeft met hoe de Linux-stuurprogramma's van Nvidia de GPU-scheduling afhandelen, anders dan op Windows, waar correcte scheduling wordt afgedwongen. Er is hierover nog geen officiële verklaring van Nvidia. Er is momenteel geen bekende workaround voor dit probleem. Nvidia werkt naar verluidt aan een oplossing, maar het is niet duidelijk wanneer die wordt uitgebracht.
+
+**Het heeft niets met CachyOS te maken.**
+
+In sommige titels is het prestatieverlies minder merkbaar dan in andere. Bekijk deze [video met een vergelijkende benchmark](https://www.youtube.com/watch?v=SU2mFqCOh5A) ter referentie.
+
+Volg de [Nvidia-thread](https://forums.developer.nvidia.com/t/directx12-performance-is-terrible-on-linux/303207/488) voor meer informatie over dit probleem.

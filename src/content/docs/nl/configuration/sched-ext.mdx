@@ -1,0 +1,1240 @@
+---
+title: sched-ext-tutorial
+description: Tutorial over het gebruik van het framework en overige informatie
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 5
+ai_translated: true
+---
+
+import { Steps, Tabs, TabItem, Icon } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+Extensible Scheduler Class (beter bekend als `sched-ext`) is een functie van de Linux-kernel waarmee kernelthread-schedulers kunnen worden geïmplementeerd in
+BPF (Berkeley Package Filter) en dynamisch kunnen worden geladen. In wezen kunnen eindgebruikers hiermee hun scheduler vanuit userspace wijzigen, zonder
+dat ze een andere kernel hoeven te bouwen om een andere scheduler te krijgen.
+
+:::note
+Het gebruik van een van de sched-ext-schedulers koppelt de standaard kernelscheduler tijdelijk los. Wanneer een sched-ext-scheduler wordt gestopt, neemt de standaard kernelscheduler het weer over.
+
+Voorbeeld: EEVDF of BORE.
+:::
+
+:::tip[Neem contact op met de ontwikkelaars op hun [Discord-server](https://discord.gg/b2J8DrWa7t)]
+:::
+
+- *De schedulers zijn te vinden in de pakketten `scx-scheds` en `scx-scheds-git`.*
+  ```sh
+  # Stabiele tak + de hulpmiddelen scx_loader en scxctl.
+  sudo pacman -S scx-scheds scx-tools
+
+  # Bleeding-edge-tak (deze tak bevat de nieuwste wijzigingen uit de master-tak) + de hulpmiddelen scx_loader en scxctl.
+  sudo pacman -S scx-scheds-git scx-tools-git
+  ```
+
+  :::note
+  Het pakket `scx-scheds-git` bevat mogelijk niet elke experimentele scheduler, omdat sommige worden ontwikkeld in aparte feature-takken die nog niet in de master-tak zijn samengevoegd.
+  :::
+
+## De scheduler starten en beheren
+
+:::note
+Zowel `scxctl` als `scx_loader` hebben administratorrechten nodig om schedulers te starten/stoppen/wisselen.
+
+Je moet ze daarom uitvoeren met `sudo` of via een polkit-agent die de benodigde rechten verleent.
+
+Zonder `sudo` vragen scxctl/scx_loader om authenticatie via een polkit-agent.
+:::
+
+<Tabs>
+
+<TabItem label='Terminal'>
+
+- *Om de scheduler te starten, open je je terminal en voer je het volgende commando in:*
+  ```sh title='Voorbeeld van het starten van rusty'
+  sudo scx_rusty
+  ```
+
+*Dit start de rusty-scheduler en koppelt de standaardscheduler los.*
+
+Om de scheduler te stoppen, druk je op `CTRL + C`. De scheduler wordt dan gestopt en de standaard kernelscheduler neemt het weer over.
+
+</TabItem>
+
+<TabItem label='scxctl'>
+
+:::note[Onderdeel van de pakketten `scx-tools` en `scx-tools-git`]
+:::
+
+:::caution[Vereist een werkende polkit-agent om goed te functioneren.]
+Bekijk de volgende **[Arch Wiki-pagina ter referentie.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+`scxctl` is een CLI-DBUS-client om met `scx_loader` te communiceren.
+
+- Functies:
+  - De huidige scheduler en modus opvragen
+  - Alle beschikbare schedulers weergeven
+  - Een scheduler starten in een bepaalde modus of met bepaalde argumenten
+  - Wisselen tussen schedulers en modi
+  - De draaiende scheduler stoppen
+  - De draaiende scheduler herstarten
+
+<Tabs>
+    <TabItem label='Een scheduler starten'>
+          ```sh title='scx_flash starten in Gaming-modus'
+          scxctl start --sched flash --mode gaming
+          ```
+    </TabItem>
+    <TabItem label='Een scheduler stoppen'>
+          ```sh title='Stopping the currently running scheduler'
+          scxctl stop
+          ```
+    </TabItem>
+    <TabItem label='Standaardscheduler herstellen'>
+          ```sh title='Herstelt de standaardscheduler die in het configuratiebestand van scx_loader is ingesteld'
+          scxctl restore
+          ```
+    </TabItem>
+    <TabItem label='Van scheduler wisselen'>
+          ```sh title='Wisselen naar scx_bpfland in Gaming-modus'
+          scxctl switch --sched bpfland --mode gaming
+          ```
+    </TabItem>
+    <TabItem label='Starten & wisselen met eigen argumenten'>
+          :::note[Zet een komma tussen elk argument]
+          Voorbeeld: `--args="-c,75,-m,0-15"` = argument, waarde
+          :::
+          ```sh title='scx_cosmos starten met eigen argumenten'
+          scxctl start --sched cosmos --args="-c,75,-m,0-15"
+          ```
+          ```sh title='Wisselen naar scx_flash met eigen argumenten'
+          scxctl switch --sched flash --args="-s,20000"
+          ```
+    </TabItem>
+</Tabs>
+
+```sh
+$ scxctl --help
+Usage: scxctl <COMMAND>
+
+Commands:
+  get      Get the info on the running scheduler
+  list     List all supported schedulers
+  start    Start a scheduler in a mode or with arguments
+  switch   Switch schedulers or modes, optionally with arguments
+  stop     Stop the current scheduler
+  restart  Restart the current scheduler with original configuration
+  restore  Restore the default scheduler from configuration
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
+```
+
+</TabItem>
+
+<TabItem label='scx_loader (DBus)'>
+
+:::caution[Vereist een werkende polkit-agent om goed te functioneren.]
+Bekijk de volgende **[Arch Wiki-pagina ter referentie.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+*Zoals de naam al aangeeft, is het een hulpprogramma dat via de D-Bus-interface fungeert als loader en beheerder voor het sched-ext-framework.*
+
+*Hoewel het geen systemd vereist, kan het er wel samen mee worden gebruikt.* [Bekijk de overstaphandleiding ter referentie](/nl/configuration/sched-ext#overstappen-van-scxservice-naar-scx_loader-een-uitgebreide-handleiding).
+
+- Kan een scx-scheduler stoppen, starten, herstarten, informatie erover uitlezen en meer.
+  - *Je kunt hulpmiddelen zoals `dbus-send` of `gdbus` gebruiken om ermee te communiceren.*
+- Deze handleiding legt uit hoe je scx_loader gebruikt met het commando dbus-send.
+  - ```sh title='scx_rusty starten met de standaardargumenten'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartScheduler string:scx_rusty uint32:0
+    ```
+  - ```sh title='Een scheduler starten met argumenten'
+    # Dit voorbeeld start scx_bpfland met de volgende flags: -k -c 0
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StartSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title='Stopping the currently running scheduler'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.StopScheduler
+    ```
+  - ```sh title='Wisselen naar de standaardscheduler'
+    # scx_loader wisselt naar de standaardscheduler die in het configuratiebestand van scx_loader is ingesteld
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.RestoreDefault
+    ```
+  - ```sh title='Wisselen naar een andere scheduler in modus 2'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchScheduler string:scx_lavd uint32:2
+    # Dit wisselt naar scx_lavd met schedulermodus 2, wat betekent dat LAVD in energiebesparende modus start
+    ```
+  - ```sh title='Wisselen naar een andere scheduler met argumenten'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.scx.Loader.SwitchSchedulerWithArgs string:scx_bpfland array:string:"-k","-c","0"
+    ```
+  - ```sh title='De momenteel draaiende scheduler opvragen'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:CurrentScheduler
+    ```
+  - ```sh title='Een lijst met ondersteunde schedulers opvragen'
+    dbus-send --system --print-reply --dest=org.scx.Loader /org/scx/Loader org.freedesktop.DBus.Properties.Get string:org.scx.Loader string:SupportedSchedulers
+    ```
+:::tip
+Hier is een uitleg van wat elke modus in scx_loader betekent:
+
+- Mode 0 = `Default scheduler flags`
+- Mode 1 = `Gaming`
+- Mode 2 = `Power Saving`
+- Mode 3 = `Low Latency`
+- Mode 4 = `Server`
+
+Voorbeeld: LAVD in modus 1 is het equivalent van `scx_lavd --performance`
+
+*TLDR: Elke modus is een set verschillende flags die bedoeld zijn om de beoogde toepassing te verbeteren.*
+
+[Voor een meer diepgaande blik op wat deze modi bij elke scheduler veranderen](<https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/src/config.rs#L193>)
+:::
+
+</TabItem>
+
+<TabItem label='CachyOS Kernel Manager'>
+
+:::caution[Vereist een werkende polkit-agent om goed te functioneren.]
+Bekijk de volgende **[Arch Wiki-pagina ter referentie.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+Je kunt ze openen en configureren via de knop `sched-ext scheduler config`.
+
+</TabItem>
+
+<TabItem label='SCX Manager'>
+
+:::caution[Vereist een werkende polkit-agent om goed te functioneren.]
+Bekijk de volgende **[Arch Wiki-pagina ter referentie.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+SCX Manager is een op zichzelf staand GUI-hulpmiddel dat is afgeleid van de CachyOS Kernel Manager. Hiermee kunnen gebruikers het sched-ext-framework en de schedulers beheren via `scx_loader`.
+
+Functies:
+- Controleren welke scheduler momenteel actief is
+- Een scheduler of profiel selecteren: (Auto, Gaming, Power save, Low Latency of Server)
+- Extra flags instellen
+- De huidige scheduler uitschakelen
+
+<details>
+<summary>Screenshot</summary>
+
+<ImageComponent imgsrc={import('~/assets/images/scx-manager-main.png')} />
+
+</details>
+
+</TabItem>
+
+</Tabs>
+
+## Scheduler-handleiding: profielen en toepassingen
+
+Omdat er veel schedulers zijn om uit te kiezen, willen we een korte introductie geven van de beschikbare schedulers.
+
+:::note
+Deze schedulers worden voortdurend ontwikkeld terwijl ze worden getest, dus verwacht dat sommige functies/flags kunnen veranderen.
+:::
+
+Meld problemen of feedback gerust in de repository van de betreffende scheduler.
+
+Gebruik `scx_schedulername --help` om de beschikbare flags en een korte beschrijving van wat ze doen te zien.
+
+```sh title='Voorbeeld van het opvragen van hulp voor scx_rusty'
+scx_rusty --help
+```
+
+### [scx_beerland](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_beerland)
+
+**Ontwikkeld door: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Klaar voor productie? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+scx_beerland is een scheduler die is ontworpen om voorrang te geven aan lokaliteit en schaalbaarheid.
+
+Geeft voorrang aan het houden van taken op dezelfde CPU om de cachelokaliteit te behouden, en zorgt tegelijk voor goede schaalbaarheid over veel CPU's door lokale DSQ's (runqueues per CPU) te gebruiken wanneer het systeem niet verzadigd is.
+
+- Toepassingen:
+  - Cache-intensieve workloads
+  - Systemen met een groot aantal CPU's
+  - Gaming: werkt verrassend goed in bepaalde games, al kan je ervaring verschillen.
+  - Server: goed voor algemene serverworkloads dankzij de optimalisaties voor schaalbaarheid en lokaliteit.
+  - Kan ook voor desktopgebruik worden gebruikt.
+
+#### Schedulermodi
+
+Voorlopig geen.
+
+### [scx_bpfland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_bpfland>)
+
+**Ontwikkeld door: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Klaar voor productie? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Een op vruntime gebaseerde sched_ext-scheduler die voorrang geeft aan interactieve workloads. Zeer flexibel en eenvoudig aan te passen.
+
+Bij het bepalen welke cores worden gebruikt, houdt bpfland rekening met hun cache-indeling en met welke cores dezelfde L2/L3-cache delen. Dit leidt tot minder cache misses = meer prestaties.
+
+- Toepassingen:
+  - Gaming
+  - Desktopgebruik
+  - Multimedia-/audioproductie
+  - Uitstekende interactiviteit bij intensieve workloads
+  - Energiebesparing
+  - Server
+
+#### Schedulermodi
+
+##### Low Latency
+
+* **Commandoregelflags:** `-m performance -w`
+* **Beschrijving:** Bedoeld om de latentie te verlagen ten koste van de doorvoer. Geschikt voor soft-real-time-applicaties zoals audioverwerking en multimedia.
+
+##### Power Save
+
+* **Commandoregelflags:** `-s 20000 -m powersave -I 100 -t 100`
+* **Beschrijving:** Geeft voorrang aan energie-efficiëntie. Geeft de voorkeur aan minder krachtige cores (bijv. E-cores bij Intel).
+
+##### Server
+
+* **Commandoregelflags:** `-s 20000 -S`
+* **Beschrijving:** Geeft voorrang aan taken met strikte affiniteit. Deze optie kan de doorvoer verhogen ten koste van de latentie en is geschikter voor serverworkloads.
+
+### [scx_cake](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cake)
+
+**Ontwikkeld door: RitzDaCat (RitzDaCat [GitHub](<https://github.com/RitzDaCat>))**
+
+- Klaar voor productie? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+
+`scx_cake` is een experimentele BPF-CPU-scheduler die DRR++ (Deficit Round Robin++) uit het netwerkalgoritme [CAKE](https://www.bufferbloat.net/projects/codel/wiki/Cake/) aanpast voor CPU-scheduling.
+- Classificatie in 4 niveaus: taken worden op basis van EWMA avg_runtime ingedeeld in Critical / Interactive / Frame / Bulk
+- Geen globale atomics: BSS-arrays per CPU met door MESI bewaakte schrijfacties voorkomen bus locking
+- Aan de kernel gedelegeerde selectie van inactieve CPU's: scx_bpf_select_cpu_dfl() voor gezaghebbende CPU-selectie zonder verouderde gegevens
+- DSQ-sharding per LLC: voorkomt lock-contentie tussen CCD's op CPU's met meerdere chiplets
+- DRR++-deficitregistratie: het algoritme voor flow-eerlijkheid van netwerk-CAKE, aangepast voor het schedulen van CPU-taken
+
+Ontworpen voor gamingworkloads op moderne AMD- en Intel-hardware.
+
+- Toepassingen:
+  - Gaming
+
+#### Systeem met 4 niveaus
+
+`scx_cake` deelt elke taak in een van vier niveaus in op basis van de **EWMA** (Exponential Weighted Moving Average) van de runtime. De classificatie is automatisch en doorlopend. Taken verschuiven tussen niveaus wanneer hun gedrag verandert.
+
+##### Niveaugrenzen
+
+| Niveau | Naam        | avg_runtime | Typische workload                                      | Quantum | Starvation |
+| :----- | :---------- | :---------- | :----------------------------------------------------- | :------ | :--------- |
+| **T0** | Critical    | < 100µs     | IRQ-handlers, invoerstuurprogramma's, audio (PipeWire), netwerk | 0.5ms   | 3ms        |
+| **T1** | Interactive | < 2ms       | Compositors, gamefysica, game-AI, korte workers        | 2.0ms   | 8ms        |
+| **T2** | Frame       | < 8ms       | Renderthreads van games, video-encodering              | 4.0ms   | 40ms       |
+| **T3** | Bulk        | ≥ 8ms       | Compilatie, indexeren op de achtergrond, batchtaken    | 8.0ms   | 100ms      |
+
+:::tip
+**Geen enkele gametaak zou in T3 moeten zitten**. Renderthreads van games draaien 2-8ms per frame → T2. Fysica/AI draaien 0.5-2ms → T1. Invoerhandlers draaien < 100µs → T0. Alleen taken die 8ms+ ononderbroken CPU-werk doen (shadercompilatie, laadschermen) belanden in T3.
+:::
+
+##### Hoe de classificatie werkt
+
+1. **Eerste plaatsing**: Op basis van de `nice`-waarde: `nice < 0` → T0, `nice 0-10` → T1, `nice > 10` → T3
+2. **Runtime is leidend**: Na ~3 stops wordt de EWMA avg_runtime leidend. Een taak met nice -5 die in bursts van 50ms draait, wordt opnieuw ingedeeld in T3, ongeacht de nice-waarde.
+3. **Hysterese**: Een dode zone van 10% voorkomt schommelingen rond de niveaugrenzen. Promotie vereist dat avg_runtime duidelijk onder de grens ligt; degradatie gebeurt direct.
+4. **Geleidelijke terugschaling**: Zodra een niveau 3+ opeenvolgende stops stabiel is, daalt de frequentie van herclassificatie per niveau: T0 controleert opnieuw bij elke 1024e stop, T3 bij elke 16e. Instabiliteit zet de controle terug naar volle frequentie.
+
+##### DRR++-deficitregistratie
+
+Aangepast van de flow-eerlijkheid van netwerk-CAKE:
+
+- Elke taak begint met een **deficit** (quantum + bonus voor nieuwe flows ≈ 10ms tegoed)
+- Elke uitvoeringsronde verbruikt deficit in verhouding tot de runtime
+- Wanneer het deficit op is → bonus voor nieuwe flows vervalt → de taak concurreert normaal
+- Dit geeft nieuw gestarte threads (een game die een worker start) direct responsiviteit, die vanzelf afneemt
+
+##### DVFS (CPU-frequentieschaling)
+
+Elk niveau is via een RODATA-opzoektabel gekoppeld aan een prestatiedoel voor de CPU:
+
+| Niveau | Doel                | Motivatie                                             |
+| :---- | :------------------- | :---------------------------------------------------- |
+| T0-T2 | 100% (max. frequentie) | Gamingworkloads hebben volledige prestaties nodig   |
+| T3    | 75%                  | Achtergrondwerk mag iets langzamer om energie te besparen |
+
+Op hybride Intel-CPU's (`has_hybrid = true`) worden de doelen geschaald met de `cpuperf_cap` van elke core, om te voorkomen dat er op E-cores te veel frequentie wordt gevraagd.
+
+#### CLI-argumenten
+
+| Argument                  | Standaard | Beschrijving                         |
+| :------------------------ | :------- | :------------------------------------ |
+| `--verbose, -v`           | `false`  | Live weergave van TUI-statistieken inschakelen |
+
+### [scx_cosmos](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_cosmos)
+
+**Ontwikkeld door: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+- Klaar voor productie? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Lichtgewicht scheduler die is geoptimaliseerd om de lokaliteit van taken op CPU's te behouden.
+
+Wanneer het systeem niet verzadigd is, geeft de scheduler voorrang aan het houden van taken op dezelfde CPU met lokale DSQ's. Dit behoudt niet alleen de lokaliteit, maar vermindert ook lock-contentie ten opzichte van gedeelde DSQ's, wat goede schaalbaarheid over veel CPU's mogelijk maakt.
+
+- Toepassingen:
+  - Scheduler voor algemeen gebruik: de scheduler zou zich zowel aan serverworkloads als aan desktopworkloads moeten aanpassen.
+
+#### Schedulermodi
+
+##### Auto
+
+* **Commandoregelflags:** Geen.
+* **Beschrijving:**
+
+##### Gaming
+
+* **Commandoregelflags:** `-s 700 -S`
+* **Beschrijving:** Offert doorvoer op voor consistentere gamingprestaties door contentie op gedeelde SMT-cores te verminderen.
+
+##### Power Save
+
+* **Commandoregelflags:** `-m powersave`
+* **Beschrijving:** Geeft voorrang aan energie-efficiëntie. Geeft de voorkeur aan minder krachtige cores (bijv. E-cores bij Intel).
+
+##### Low Latency
+
+* **Commandoregelflags:** `-s 700 -S -m performance -w`
+* **Beschrijving:** Bedoeld om de latentie te verlagen ten koste van de doorvoer. Geschikt voor soft-real-time-applicaties zoals audioverwerking en multimedia. Zorgt voor een gelijkmatigere verdeling van de belasting over de beschikbare cores, ten koste van de efficiëntie.
+
+##### Server
+
+* **Commandoregelflags:** `-s 20000 -c 75 -p 250`
+* **Beschrijving:** Schakelt adresruimte-affiniteit in om de lokaliteit en prestaties te verbeteren bij bepaalde cachegevoelige workloads. De slice-duur wordt ingesteld op 20ms, evenals de polling die bepaalt hoe vaak de scheduler het CPU-gebruik vergelijkt met de drempel voor een drukke CPU om te bepalen wanneer het systeem druk is.
+
+### [scx_flash](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_flash>)
+
+**Ontwikkeld door: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Klaar voor productie? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Een scheduler die zich richt op eerlijkheid tussen taken en voorspelbare prestaties.
+
+Hij werkt met een [earliest deadline first (EDF)-beleid](https://www.geeksforgeeks.org/operating-systems/earliest-deadline-first-edf-cpu-scheduling-algorithm/), waarbij elke taak een "latentie"-gewicht krijgt. Dit gewicht wordt dynamisch aangepast op basis van hoe vaak een taak de CPU vrijgeeft voordat de volledige timeslice is gebruikt.
+
+Taken die de CPU vroeg vrijgeven, krijgen een hoger latentiegewicht, waardoor ze voorrang krijgen boven taken die hun timeslice volledig opgebruiken.
+
+- Toepassingen:
+  - Gaming
+  - Latentiegevoelige workloads, zoals multimedia of realtime audioverwerking
+  - Behoefte aan responsiviteit in zwaar belaste situaties
+  - Consistente prestaties
+  - Server
+
+#### Schedulermodi
+
+##### Low Latency
+
+* **Commandoregelflags:** `-m performance -w -C 0`
+* **Beschrijving:** Bedoeld om de latentie te verlagen ten koste van de doorvoer. Geschikt voor soft-real-time-applicaties zoals audioverwerking en multimedia.
+
+##### Gaming
+
+* **Commandoregelflags:** `-m all`
+* **Beschrijving:** Optimaliseert voor hoge prestaties in games.
+
+##### Power Save
+
+* **Commandoregelflags:** `-m powersave -I 10000 -t 10000 -s 10000 -S 1000`
+* **Beschrijving:** Geeft voorrang aan energie-efficiëntie. Geeft de voorkeur aan minder krachtige cores (bijv. E-cores bij Intel) en voegt elke 10ms een geforceerde inactieve cyclus toe om meer energie te besparen.
+
+##### Server
+
+* **Commandoregelflags:** `-m all -s 20000 -S 1000 -I -1 -D -L`
+* **Beschrijving:** Afgestemd op serverworkloads. Ruilt responsiviteit in voor doorvoer.
+
+### [scx_flow](https://github.com/sched-ext/scx/tree/main/scheds/experimental/scx_flow)
+
+**Ontwikkeld door: Galih Tama (galpt [GitHub](https://github.com/galpt))**
+
+Klaar voor productie? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+scx_flow is een op budget gebaseerde scheduler die taken indeelt in een van vier O(1) FIFO-niveaus op basis van hoeveel budget ze nog hebben. Geen heuristieken, geen scoringsalgoritmen, geen adaptieve afstemming. Elke beslissing komt voort uit één getal: *het resterende budget*.
+
+- Toepassingen:
+  - Multitasken op desktops en workstations voor algemeen gebruik
+  - Gamen met applicaties op de achtergrond open
+  - Ontwikkelwerk terwijl builds, tests of containers draaien
+  - Elk scenario waarin interactieve responsiviteit onder gemengde belasting belangrijk is
+  - Systemen die deterministische, verklaarbare scheduling nodig hebben (embedded besturing, robotica, luchtvaartelektronica)
+
+#### Hoe het werkt: het budget
+
+Zie elke taak als iets met een "responsiviteitsbudget". Terwijl een taak slaapt (wacht op werk), bouwt die budget op. Wanneer de taak wakker wordt en draait, geeft die het uit. Taken die wakker worden en nog budget hebben, zijn een teken van interactiviteit. Ze worden direct naar de CPU gestuurd waarop ze het laatst draaiden, waarbij het niveausysteem volledig wordt omzeild. Taken die hun budget opmaken, worden opnieuw in een van de vier FIFO-niveaus geplaatst.
+
+##### De vier dispatch-niveaus
+
+Wanneer een taak opnieuw in de wachtrij wordt geplaatst (geen wakeup), bepaalt het resterende budget in welk niveau die belandt:
+
+| Niveau | Budgetdrempel | Wat voor taken hier belanden |
+|---|---|---|
+| **Priority** | ≥ 1.5ms | Interactieve taken die vaak slapen en kort draaien |
+| **Normal** | ≥ 1ms | Gewone taken met nog redelijk wat budget |
+| **Low** | ≥ 0.5ms | Taken met weinig budget over |
+| **Deficit** | < 0.5ms | Bulkworkers, CPU-vreters, achtergrondtaken |
+
+Elk niveau is een eenvoudige FIFO-wachtrij: O(1) enqueue, O(1) dequeue. Geen boomdoorlopen, geen herberekening van prioriteiten.
+
+##### Geen starvation, geen prioriteitsinversie
+
+De dispatchfunctie leegt niet elke keer eerst Priority. Bij elke aanroep wordt het startniveau gerouleerd: `gen & 3` bepaalt waar wordt begonnen. Het Deficit-niveau wacht dus nooit meer dan 3 dispatchcycli voordat het als eerste aan de beurt is. Hierdoor boeken bulkworkers vooruitgang, zelfs onder zware interactieve belasting, en is er geen prioriteitsinversie, omdat geen enkel niveau de CPU kan monopoliseren.
+
+##### Wakeups slaan de rij helemaal over
+
+Wanneer een taak wakker wordt (hij sliep en heeft nu iets te doen), wacht die in geen enkele niveauwachtrij. Hij gaat via `SCX_DSQ_LOCAL_ON` direct naar de CPU waarop hij het laatst draaide, direct en met een warme cache. Dit houdt interactieve taken vlot: een slapende Discord of browsertab wordt wakker met budget en wordt in microseconden gedispatcht, niet in milliseconden.
+
+##### Vastgezette taken gaan altijd voor
+
+Taken die niet tussen CPU's kunnen migreren (setaffinity), krijgen een eigen FIFO-wachtrij per CPU die absolute voorrang heeft boven elk niveau. Ze worden gedispatcht voordat er iets uit het niveausysteem op die CPU draait.
+
+##### Het resultaat
+
+Interactieve taken (toetsenbordinvoer, UI-updates, audiothreads, netwerkpolling) worden bijna altijd wakker met budget en krijgen de snelle rijstrook. CPU-zwaar batchwerk (compilatie, downloads, indexeren op de achtergrond) verbruikt zijn budget en komt in het Deficit-niveau terecht, waar het dankzij de roulerende dispatch toch vooruitgang boekt. Geen afstemming nodig.
+
+##### Geen profielen, geen automatische afstemming, geen modi
+
+scx_flow heeft **geen** modi Gaming, Power Save of Low Latency, en anders dan eerdere versies ook geen adaptieve regellus. De roulerende niveaudispatch en de budgetdrempels zijn constanten die bij het compileren vastliggen. Wat je krijgt, is wat er draait: deterministisch, verklaarbaar en identiek op elk systeem. Heeft een taak budget, dan krijgt die voorrang. Zo niet, dan deelt die eerlijk het Deficit-niveau. Dat is het hele beleid.
+
+#### Web-UI
+
+Wanneer scx_flow start, biedt het automatisch een live dashboard met statistieken aan op **[http://localhost:50005](http://localhost:50005)**. Open het in een willekeurige browser. Er zijn geen extra flags nodig.
+
+Het dashboard toont:
+- Hoeveel dispatches via elk niveau zijn gegaan (Priority / Normal / Low / Deficit)
+- Systeeminformatie: draaiende taken, uptime, totaal aantal dispatches
+- Een balk met de verdeling over de niveaus, zodat je in één oogopslag ziet of interactief werk of bulkwerk overheerst
+- Elke statistiekkaart is klikbaar en opent een venster met de geschiedenis, met sparklines en een staafdiagram
+- Alle waarden worden elke seconde bijgewerkt via polling, dus de pagina hoeft niet te worden vernieuwd
+
+Als de pagina niet laadt, is de scheduler mogelijk gestopt (de kernel valt dan terug op de ingebouwde EEVDF).
+
+```sh
+# Schakel de web-UI uit als je die niet nodig hebt:
+sudo scx_flow --no-webui
+```
+
+Wanneer `scx_loader` draait met systemd-hardening die socketfamilies beperkt (`RestrictAddressFamilies`, `SocketBindDeny`), wordt TCP-binding geblokkeerd en valt scx_flow terug op een Unix-socket op `/tmp/scx_flow.sock`. In dat geval kan de browser het dashboard niet direct bereiken. Voer tijdelijk `sudo scx_flow --no-webui` uit om de foutmeldingen te onderdrukken als je de UI niet nodig hebt.
+
+#### CLI-argumenten
+
+| Argument | Beschrijving |
+|---|---|
+| `--no-webui` | De ingebouwde web-UI uitschakelen |
+| `-d, --debug` | Logging op debugniveau inschakelen |
+| `-V, --version` | Versie van de scheduler tonen en afsluiten |
+
+:::note
+scx_flow heeft **geen** profielmodi van scx_loader (Gaming, Power Save, Low Latency, Server). Elke schedulingbeslissing wordt rechtstreeks afgeleid van het budget van de taak, dus profielen zijn niet nodig.
+:::
+
+### [scx_forge](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_forge>)
+
+**Ontwikkeld door: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+- Klaar voor productie? <Icon name="close" color="var(--sl-color-text-accent)" size="2rem" />
+
+scx_forge bestaat uit twee delen:
+
+1. Een op AI gerichte basisscheduler die is ontworpen om samen met het tweede deel te worden gebruikt.
+2. Een agent die bedoeld is om met de basisscheduler te worden gebruikt voor een meer op AI gerichte scheduling, plus optimalisatie ter plekke door de agent zelf.
+
+Met de agent kun je je AI-model instellen, de workload waarvoor je wilt optimaliseren en het algemene doel dat je wilt bereiken. De agent probeert de scheduler dan te optimaliseren voor jouw specifieke workload en doel.
+
+Hoe? Via het [bestand spec.toml](https://github.com/sched-ext/scx/blob/main/tools/scx_forge_agent/spec.toml), dat wordt gebruikt om de optimalisatielus te starten.
+
+Kort gezegd is deze scheduler ideaal voor wie een specifieke workload door een AI-agent wil laten optimaliseren.
+
+Bekijk voor meer informatie de [README van scx_forge_agent](https://github.com/sched-ext/scx/tree/main/tools/scx_forge_agent).
+
+### [scx_lavd](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_lavd>)
+
+**Ontwikkeld door: Changwoo Min (multics69 [GitHub](<https://github.com/multics69>)).**
+
+- Klaar voor productie? <Icon name="approve-check" color="var(--sl-color-text-accent)" size="2rem" />
+
+Korte introductie van LAVD door Changwoo:
+
+*LAVD is een nieuw schedulingalgoritme dat nog in ontwikkeling is. Het is
+geïnspireerd door gamingworkloads, die latentiekritisch zijn en
+veel communicatie vereisen. Het doel is latentiepieken te minimaliseren en tegelijk
+een goede algehele doorvoer en een eerlijke verdeling van CPU-tijd tussen taken te behouden.*
+
+- Toepassingen:
+  - Gaming
+  - Audioproductie
+  - Latentiegevoelige workloads
+  - Desktopgebruik
+  - Uitstekende interactiviteit bij intensieve workloads
+  - Energiebesparing
+
+Een van de belangrijkste en geweldigste mogelijkheden van LAVD is **Core Compaction**. Zonder op technische details in te gaan: wanneer het CPU-gebruik < 50% is, draaien de actieve cores langer en op een hogere frequentie. Ondertussen blijven inactieve cores veel langer in een C-State (slaap), wat het totale stroomverbruik verlaagt.
+
+##### Schedulermodi
+
+##### Gaming & Low Latency
+
+* **Commandoregelflags:** `--performance`
+* **Beschrijving:** Maximaliseert de prestaties door alle beschikbare cores te gebruiken, met voorrang voor fysieke cores.
+
+##### Power Save
+
+* **Commandoregelflags:** `--powersave`
+* **Beschrijving:** Minimaliseert het stroomverbruik met behoud van redelijke prestaties. Geeft voorrang aan efficiënte cores en threads boven fysieke cores.
+
+### [scx_pandemonium](https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_pandemonium)
+
+**Ontwikkeld door: Will Clingan (willclngn [GitHub](https://github.com/wllclngn/))**
+
+*Een scheduler die taken classificeert op gedrag, met plaatsing die rekening houdt met de topologie. Een op EWMA gebaseerde score (wakeup-frequentie, aantal contextwisselingen, variatie in runtime) deelt taken in drie niveaus in (LAT_CRITICAL, INTERACTIVE, BATCH), elk met een eigen slice, eigen regels voor preemption en eigen DSQ-routering. De plaatsing wordt bepaald door de effectieve weerstand (R_eff) op de topologiegraaf van de CPU, afgeleid van een Laplace-pseudo-inverse; DSQ's per CPU worden in R_eff-volgorde work-stolen, zodat cache-warm werk cache-warm blijft. Elke timingconstante (sojourn rescue, CoDel-doel, vtime-plafond, longrun-drempel) wordt afgeleid van één tau-waarde (het omgekeerde van de Fiedler-eigenwaarde), zodat de scheduler zichzelf zonder afstemming kalibreert, van laptops met 2 cores tot servers met 32+ cores. Een gedempte harmonische oscillator past het CoDel-stall-doel bij elke tick aan op basis van de rescue-druk. Een adaptieve regellus in Rust op 1Hz (multiplicative weights update over zes expertprofielen) stemt de schedulinginstellingen af op basis van telemetrie uit BPF-histogrammen, gesynchroniseerd met de toestand van de BPF-oscillator om dubbele correctie te voorkomen. Een persistente procesdatabase leert de classificaties van taken over herstarts heen. NUMA-bewust, correct bij hotplug.*
+
+- Toepassingen:
+    - Gaming
+    - Desktopgebruik
+    - Multimedia-/audioproductie
+    - Compileren van codebases
+    - ZFS / opslagintensieve workloads
+    - Gemengde workloads
+    - Interactiviteit bij aanhoudende CPU-verzadiging
+
+##### Schedulermodi
+Standaard (adaptief)
+- **Commandoregelflags:** (geen, draait standaard adaptief)
+- **Beschrijving:** Volledig adaptieve modus. De regellus in Rust detecteert het workloadregime (LIGHT / MIXED / HEAVY) en past de schedulingparameters in realtime aan. Het beste voor algemeen desktopgebruik en gaming.
+
+###### Alleen BPF
+- **Commandoregelflags:** `--no-adaptive`
+- **Beschrijving:** Schakelt de adaptieve regellus in Rust uit. De BPF-scheduler draait met statische instellingen. Minder overhead; nuttig voor benchmarks of als de adaptieve laag bij jouw workload overcorrigeert.
+
+###### Verbose / Debug
+- **Commandoregelflags:** `-v` of `--verbose`
+- **Beschrijving:** Schakelt gedetailleerde telemetrie-uitvoer in, inclusief aantallen dispatches per niveau, sojourn-tijden en statistieken over de gedragsclassificatie. Nuttig om schedulinggedrag te diagnosticeren.
+
+
+### [scx_p2dq](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_p2dq>)
+
+- Klaar voor productie? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+  - Ja, als het correct is afgestemd op je specifieke workload en hardware.
+
+**Ontwikkeld door: Daniel Hodges (hodgesds [GitHub](<https://github.com/hodgesds>))**
+
+Een scheduler voor algemeen gebruik die zich richt op pick-two-loadbalancing tussen
+LLC's. Behoudt een hoge cachelokaliteit en work conservation en biedt daarbij
+een redelijke latentie.
+
+- Toepassingen:
+  - Server
+  - Bureaubladomgevingen
+  - Gaming (met wat handmatige afstemming)
+
+#### Schedulermodi
+
+##### Gaming
+
+* **Commandoregelflags:** `--task-slice true -f --sched-mode performance`
+* **Beschrijving:** Verbetert de consistentie van gamingprestaties en geeft meer voorkeur aan scheduling op krachtigere cores.
+
+##### Low Latency
+
+* **Commandoregelflags:** `-y -f --task-slice true`
+* **Beschrijving:** Verlaagt de latentie door interactieve taken meer bij de toegewezen CPU te houden en de stabiliteit van de slice-tijd te verhogen.
+
+##### Power Save
+
+* **Commandoregelflags:** `--sched-mode efficiency`
+* **Beschrijving:** Verbetert de energie-efficiëntie door voorrang te geven aan energiezuinige cores.
+
+##### Server
+
+* **Commandoregelflags:** `--keep-running`
+* **Beschrijving:** Verbetert serverworkloads door taken langer dan hun slice te laten draaien als de CPU verder inactief is.
+
+### [scx_tickless](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_tickless>)
+
+**Ontwikkeld door: Andrea Righi (arighi [Github](<https://github.com/arighi>))**
+
+- Klaar voor productie? <Icon name="close" color="var(--sl-color-text-accent)" size="2rem" />
+  - Deze scheduler is nog experimenteel en wordt niet aanbevolen voor productiegebruik.
+
+:::note
+Om ticks op de "tickless" CPU's effectief uit te schakelen, moet de kernel worden opgestart met `nohz_full`. Houd er rekening mee dat `nohz_full` extra overhead bij syscalls geeft, waardoor latentiegevoelige workloads slechter kunnen presteren.
+:::
+
+scx_tickless is een op servers gerichte scheduler, ontworpen voor cloudcomputing, virtualisatie en high-performance computing.
+
+De scheduler werkt door alle schedulinggebeurtenissen via een pool van primaire CPU's te leiden die deze gebeurtenissen afhandelen. Hierdoor kan de tick van de scheduler op andere CPU's worden uitgeschakeld, wat ruis van het besturingssysteem vermindert.
+
+- Toepassingen:
+  - Cloudcomputing
+  - Virtualisatie
+  - High-performance computing
+  - Server
+
+#### Schedulermodi
+
+##### Gaming
+
+* **Commandoregelflags:** `-f 5000 -s 5000`
+* **Beschrijving:** Verhoogt de gamingprestaties door de scheduler vaker CPU-contentie te laten detecteren en contextwisselingen met een kortere timeslice te laten uitvoeren.
+
+##### Power Save
+
+* **Commandoregelflags:** `-f 50`
+* **Beschrijving:** Verbetert de energie-efficiëntie door minder vaak op contentie te controleren.
+
+##### Low Latency
+* **Commandoregelflags:** `-f 5000 -s 1000`
+* **Beschrijving:** Vergelijkbaar met het gamingprofiel, maar met een nog kortere slice.
+
+##### Server
+
+* **Commandoregelflags:** `-f 100`
+* **Beschrijving:** Laat de scheduler minder vaak op CPU-contentie controleren om de doorvoer te verbeteren ten koste van de responsiviteit.
+
+### [scx_rustland](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rustland>)
+
+**Ontwikkeld door: Andrea Righi (arighi [GitHub](<https://github.com/arighi>))**
+
+Klaar voor productie? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+
+Voor prestatiekritieke productiescenario's presteren andere schedulers waarschijnlijk beter, omdat het overdragen van alle schedulingbeslissingen aan userspace een zekere prijs heeft (ook al is die minimaal).
+
+Een scheduler die volledig in userspace is geïmplementeerd, kan echter naadloos integreren met geavanceerde bibliotheken, tracinghulpmiddelen, externe diensten (bijv. AI), enz.
+
+Er kunnen dus situaties zijn waarin de voordelen opwegen tegen de overhead, wat het gebruik van deze scheduler in een productieomgeving rechtvaardigt.
+
+Vertoont overeenkomsten met bpfland; gemaakt met de bedoeling dat het makkelijk te lezen en te begrijpen is hoe het werkt, dankzij de implementatie in userspace.
+
+Houd er rekening mee dat er een klein nadeel in doorvoer is bij het gebruik van een scheduler in userspace.
+
+- Toepassingen:
+  - Workloads met lage latentie (gaming, videoconferenties en livestreaming)
+  - Desktopgebruik
+
+### [scx_rusty](<https://github.com/sched-ext/scx/tree/main/scheds/rust/scx_rusty>)
+
+**Ontwikkeld door: David Vernet (Byte-Lab [GitHub](<https://github.com/Byte-Lab>))**
+
+- Klaar voor productie? <Icon name="information" color="var(--sl-color-text-accent)" size="2rem" />
+  - Ja, als het correct is afgestemd.
+
+Rusty biedt een breed scala aan functies die de mogelijkheden uitbreiden en meer flexibiliteit bieden voor verschillende toepassingen.
+Een van die functies is de afstembaarheid, waarmee je Rusty kunt aanpassen aan je voorkeuren en specifieke eisen.
+
+- Toepassingen:
+  - Gaming
+  - Latentiegevoelige workloads
+  - Desktopgebruik
+  - Multimedia-/audioproductie
+  - Uitstekende interactiviteit bij intensieve workloads
+  - Energiebesparing
+
+## Configuratie en prestatietests
+
+### LAVD Autopilot & Autopower
+
+*Citaten van Changwoo Min:*
+- In de autopilot-modus past de scheduler zijn energiemodus `Powersave, Balanced of Performance` aan op basis van de systeembelasting, specifiek het CPU-gebruik
+
+- Autopower: Bepaalt de energiemodus van de scheduler automatisch op basis van het energieprofiel van het systeem, ook wel EPP (Energy Performance Preference).
+
+```sh
+# Autopower kan worden geactiveerd met de volgende flag:
+--autopower
+# bijv.:
+scx_lavd --autopower
+```
+
+### ananicy-cpp & sched-ext
+
+:::note[Update over ananicy-cpp en sched-ext]
+Na verdere ontwikkeling van de schedulers kan ananicy-cpp er meestal prima naast worden gebruikt. Als je echter vastlopers of instabiliteit ervaart, overweeg dan het uit te schakelen als stap bij de probleemoplossing.
+:::
+
+Voer het volgende commando uit om ananicy-cpp uit te schakelen/te stoppen:
+
+```sh
+systemctl disable --now ananicy-cpp
+```
+
+### Wisselen van energieprofiel met scx_loader
+
+Geïmplementeerd in het pakket `power-profiles-daemon` van CachyOS, dat een [eigen patch](https://github.com/CachyOS/CachyOS-PKGBUILDS/blob/master/power-profiles-daemon/0001-Add-support-for-scx_loader-modes-switching.patch) bevat om het wisselen van energieprofiel met `scx_loader` te ondersteunen.
+
+- Als `scx_loader` draait en [game-performance](/nl/configuration/gaming#op-verzoek-wisselen-van-energieprofiel) wordt gebruikt, schakelt het de actieve scheduler automatisch over naar het profiel `Gaming` wanneer een game wordt gestart, en terug naar het standaardprofiel wanneer de game wordt afgesloten.
+- Bij het wisselen tussen energieprofielen, bijv. in KDE Plasma of GNOME met de profielwisselaar, schakelt `scx_loader` automatisch over naar het bijbehorende schedulerprofiel:
+
+| Energieprofiel      | Schedulerprofiel   |
+| ------------------- | ------------------ |
+| Power Saver         | Power Save         |
+| Balanced            | Auto               |
+| Performance         | Gaming             |
+
+### Schedulers benchmarken en vergelijken met cachyos-benchmarker
+
+Het hulpmiddel [cachyos-benchmarker](https://github.com/CachyOS/cachyos-benchmarker) biedt een eenvoudige manier om de prestaties van verschillende CPU-schedulers te beoordelen en te vergelijken.
+
+Het voert een uitgebreide reeks benchmarks uit om de prestaties van de CPU, het geheugen en het systeem als geheel te meten onder verschillende workloads.
+
+De volgende benchmarks zijn inbegrepen:
+
+| Test                        | Meet                                     | Hulpmiddel   |
+| --------------------------- | ---------------------------------------- | ------------ |
+| **stress-ng cpu-cache-mem** | Prestaties van CPU, cache en geheugen    | `stress-ng`  |
+| **FFmpeg compilation**      | Prestaties van parallel bouwen           | `make`       |
+| **x265 encoding**           | Doorvoer van video-encodering            | `x265`       |
+| **argon2 hashing**          | Wachtwoord-hashing met meerdere threads  | `argon2`     |
+| **perf sched msg**          | Prestaties van contextwisselingen en IPC | `perf`       |
+| **perf memcpy**             | Geheugendoorvoer `memcpy()`              | `perf`       |
+| **prime calculation**       | Rekenen met gehele getallen en parallellisme | `primesieve` |
+| **NAMD**                    | Moleculaire dynamica (wetenschappelijke workload) | `namd3`      |
+| **Blender render**          | 3D-rendering alleen op de CPU            | `blender`    |
+| **xz compression**          | Doorvoer van compressie                  | `xz`         |
+| **Kernel defconfig build**  | Prestaties van het compileren van de kernel | `make`       |
+| **y-cruncher**              | Wiskundige precisie en geheugenbelasting | `y-cruncher` |
+
+`cachyos-benchmarker` kan voor verschillende doeleinden worden gebruikt, waaronder:
+
+- **De stabiliteit van schedulers testen**
+  Voer de volledige benchmarkreeks uit om vastlopers, crashes of regressies te detecteren die door wijzigingen aan de scheduler zijn ontstaan.
+  Als je `scx_loader` gebruikt, kun je bij een vastloper of crash logs verzamelen met:
+  ```bash
+  journalctl --unit scx_loader.service --boot 0 > crash.log
+  ```
+  Dit maakt in je huidige map een bestand aan met de naam `crash.log`.
+- **De prestaties van schedulers vergelijken**
+  - Beoordeel prestatieverschillen tussen schedulers, bijv. `BPFLAND vs LAVD`
+- **Het effect van kernel- of schedulerupdates meten**
+  - Vergelijk runs vóór en na het toepassen van patches of versiewijzigingen om te controleren op prestatieregressies of -verbeteringen.
+- **Configuratietweaks testen**
+  - Beoordeel de impact van wijzigingen zoals instellingen van de CPU-governor, het in-/uitschakelen van SMT of aangepaste schedulerflags.
+
+#### Vereisten
+- 4 GB RAM of meer
+- Minimaal 8 GB vrije opslagruimte
+- Tijd en geduld - **de volledige benchmark kan op langzamere systemen meer dan een uur duren**
+
+#### Installatie
+
+Voer het volgende commando uit om `cachyos-benchmarker` te installeren:
+```bash
+sudo pacman -S cachyos-benchmarker
+```
+
+#### De benchmark uitvoeren
+
+<Steps>
+    1. Voer `cachyos-benchmarker` uit:
+        ```bash
+        cachyos-benchmarker ~/cachyos-benchmarker/
+        # Je kunt ~/cachyos-benchmarker/ vervangen door elke map waarin je de logs wilt opslaan.
+        ```
+    2. Wacht tot de voorbereidende stappen klaar zijn.
+    3. Volg de prompts:
+        - `Do you want to drop page cache now? Root privileges needed! (y/N) y`
+        - `Please enter a name for this run, or leave empty for default:`
+    4. Wacht tot de tests klaar zijn.
+    5. Na afloop gebeurt het volgende:
+        - Er wordt een logbestand aangemaakt met een naam als `benchie_<name>_<DATE>.log`, met gedetailleerde informatie over de benchmarkrun.
+          - Voorbeeld: `benchie_p2dq_2025-09-29-2115.log`
+          - Het script `benchmark_scraper.py` wordt automatisch uitgevoerd om een samenvattend rapport in HTML-formaat te genereren.
+          - Wat doet het script?:
+            - Leest alle `benchie_*.log`-bestanden in de opgegeven map.
+            - Haalt de namen, tijden en scores van de benchmarks eruit.
+            - Sorteert of combineert ze.
+            - Toont een overzichtelijke samenvatting van de resultaten in je terminal en maakt een HTML-bestand aan dat in een browser kan worden geopend.
+                <details>
+                <summary>Voorbeeld van terminaluitvoer:</summary>
+                ```text
+                stress-ng cpu-cache-mem: 15.26
+                y-cruncher pi 1b: 31.23
+                perf sched msg fork thread: 8.892
+                perf memcpy: 13.53
+                namd 92K atoms: 53.54
+                calculating prime numbers: 11.126
+                argon2 hashing: 6.62
+                ffmpeg compilation: 53.38
+                xz compression: 61.13
+                kernel defconfig: 130.73
+                blender render: 96.29
+                x265 encoding: 24.99
+
+                Total time (s): 506.72
+                Total score: 70.71
+
+                Name: p2dq
+                Date: 2025-09-29-2115
+
+                System:    Kernel: 6.17.0-1.1-cachyos-p2dq arch: x86_64 bits: 64
+                           Desktop: KDE Plasma v: 6.4.5 Distro: CachyOS
+                Memory:    System RAM: total: 32 GiB available: 30.61 GiB used: 7.54 GiB (24.6%)
+                           Device-1: Channel-A DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                           Device-2: Channel-B DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                           Device-3: Channel-C DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                           Device-4: Channel-D DIMM 0 type: LPDDR5 size: 8 GiB speed: 7500 MT/s
+                CPU:       Info: 8-core model: AMD Ryzen 7 8845HS w/ Radeon 780M Graphics bits: 64 type: MT MCP cache: L2: 8 MiB
+                           Speed (MHz): avg: 3366 min/max: 419/5138 cores: 1: 3366 2: 3366 3: 3366 4: 3366 5: 3366 6: 3366 7: 3366 8: 3366 9: 3366 10: 3366 11: 3366 12: 3366 13: 3366 14: 3366 15: 3366 16: 3366
+
+                SCX Scheduler: p2dq_1.0.21_gf90c2aa1_dirty_x86_64_unknown_linux_gnu
+
+                SCX Version: p2dq_1.0.21_gf90c2aa1_dirty_x86_64_unknown_linux_gnu
+
+                 Version         : 0.5.1-1
+                ```
+                </details>
+                <details>
+                <summary>HTML-voorbeeld van een testresultaat dat twee verschillende takken van dezelfde scheduler vergelijkt:</summary>
+                <ImageComponent imgsrc={import('~/assets/images/cachyos-benchmarker-example.png')} />
+                </details>
+    6. Om twee of meer runs te vergelijken, plaats je de `.log`-bestanden in dezelfde map voordat je `benchmark_scraper.py` uitvoert. Het hulpmiddel detecteert en vergelijkt ze automatisch in het HTML-rapport.
+</Steps>
+
+### De latentie van schedulers testen met schbench
+
+schbench is een schedulerbenchmark die is ontworpen om de latentie van de scheduler te meten onder een gesimuleerde serverachtige workload. Het start een instelbaar aantal "worker"- en "message"-threads, waarbij messages herhaaldelijk workers wakker maken. Door de verdeling van de latentie te meten van het wakker worden tot het uitvoeren van deze workerthreads, geeft het cruciaal inzicht in hoe goed een kernel thread-wakeups, balancing en CPU-contentie afhandelt, vooral onder belasting.
+
+#### Toepassingen
+
+Je kunt `schbench` gebruiken om:
+
+- **De latentie van de scheduler te beoordelen:** Bepaal hoe snel threads worden ingepland nadat ze wakker zijn geworden.
+- **De wakeup-prestaties van schedulers te vergelijken:** Detecteer verbeteringen of regressies in contextwisselingen en wakeup-latentie.
+- **Het effect van kernel- of schedulerpatches te testen:** Beoordeel of afstemming of updates invloed hebben op de eerlijkheid en responsiviteit van de scheduling.
+
+#### Installatie
+
+`schbench` is beschikbaar in de CachyOS-repositories:
+```bash
+sudo pacman -S schbench
+```
+
+#### De benchmark uitvoeren
+
+Een eenvoudige manier om `schbench` uit te voeren voor een algemene latentietest is:
+```bash
+schbench -m 2 -t 8 -r 60
+```
+
+Dit voorbeeld draait:
+- 2 message-threads (`-m 2`)
+- 8 worker-threads per message-thread (`-t 8`)
+- gedurende in totaal 60 seconden (`-r 60`)
+
+Je kunt deze waarden aanpassen aan het aantal cores van je CPU en het gewenste belastingsniveau.
+
+Hier is een tabel met uitleg over enkele belangrijke opties:
+
+| Optie                        | Beschrijving                                                    |
+| ---------------------------- | --------------------------------------------------------------- |
+| `-C, --calibrate`            | Kalibratie uitvoeren en timing rapporteren (geen benchmark).    |
+| `-L, --no-locking`           | Spinlocks uitschakelen tijdens CPU-werk (standaard: locking ingeschakeld). |
+| `-m, --message-threads <n>`  | Aantal message-threads (standaard: 1).                          |
+| `-t, --threads <n>`          | Worker-threads per message-thread (standaard: aantal CPU's).    |
+| `-r, --runtime <sec>`        | Duur van de benchmark (standaard: 30).                          |
+| `-F, --cache_footprint <KB>` | Grootte van de cache-footprint (standaard: 256).                |
+| `-n, --operations <count>`   | Aantal uit te voeren "think time"-bewerkingen (standaard: 5).   |
+| `-A, --auto-rps`             | RPS automatisch verhogen tot het doel voor CPU-gebruik is bereikt. |
+| `-R, --rps <count>`          | Modus met verzoeken per seconde.                                |
+| `-p, --pipe <bytes>`         | Een test met overdracht via een pipe simuleren.                 |
+| `-w, --warmuptime <sec>`     | Opwarmduur voordat statistieken worden verzameld (standaard: 0). |
+| `-i, --intervaltime <sec>`   | Interval voor het tonen van latenties (standaard: 10).          |
+| `-z, --zerotime <sec>`       | Interval voor het op nul zetten van latentiestatistieken (standaard: nooit). |
+
+#### De uitvoer begrijpen
+
+Na elke run toont `schbench` latentiepercentielen zoals:
+
+<details>
+    <summary>Voorbeelduitvoer</summary>
+    ```bash
+    Wakeup Latencies percentiles (usec) runtime 10 (s) (2406 total samples)
+	  50.0th: 60         (648 samples)
+	  90.0th: 2034       (968 samples)
+	* 99.0th: 4104       (211 samples)
+	  99.9th: 10128      (22 samples)
+	  min=1, max=10308
+    Request Latencies percentiles (usec) runtime 10 (s) (2394 total samples)
+	  50.0th: 49216      (726 samples)
+	  90.0th: 69760      (954 samples)
+	* 99.0th: 166656     (212 samples)
+	  99.9th: 273920     (21 samples)
+	  min=11770, max=334247
+    RPS percentiles (requests) runtime 10 (s) (11 total samples)
+	  20.0th: 234        (3 samples)
+	* 50.0th: 238        (3 samples)
+	  90.0th: 241        (4 samples)
+	  min=230, max=248
+    current rps: 230.99
+    Wakeup Latencies percentiles (usec) runtime 10 (s) (2406 total samples)
+	  50.0th: 60         (648 samples)
+	  90.0th: 2034       (968 samples)
+	* 99.0th: 4104       (211 samples)
+	  99.9th: 10128      (22 samples)
+	  min=1, max=10308
+    Request Latencies percentiles (usec) runtime 10 (s) (2406 total samples)
+	  50.0th: 49216      (729 samples)
+	  90.0th: 69760      (956 samples)
+	* 99.0th: 165632     (212 samples)
+	  99.9th: 273920     (22 samples)
+	  min=11770, max=334247
+    RPS percentiles (requests) runtime 10 (s) (11 total samples)
+	  20.0th: 234        (3 samples)
+	* 50.0th: 238        (3 samples)
+	  90.0th: 241        (4 samples)
+	  min=230, max=248
+    average rps: 240.60
+    ```
+</details>
+
+##### De resultaten interpreteren
+
+- **Wakeup Latencies:**
+  - Meet hoe snel threads wakker worden nadat ze een signaal hebben gekregen.
+    - Lagere waarden hier (vooral het **99e percentiel**) betekenen dat de scheduler responsiever is.
+- **Request Latencies:**
+  - Geeft de tijd weer die nodig is om verzoeken tussen threads af te handelen.
+    - Een lagere latentie wijst op betere communicatie tussen threads en efficiëntere scheduling.
+- **RPS (Requests Per Second):**
+  - Toont de aanhoudende doorvoer:
+    - Een hogere **gemiddelde RPS** geeft aan dat de scheduler bij de gegeven configuratie meer werk per seconde aankan.
+
+Conclusie:
+- Een **goede scheduler** laat **lage wakeup- en request-latenties** zien met een **consistente RPS**.
+- Een **minder efficiënte scheduler** kan na verloop van tijd **hoge latentiepieken** of **instabiele RPS-waarden** vertonen.
+
+:::note
+Deze resultaten kunnen variëren afhankelijk van de CPU, het aantal cores, de systeembelasting en of de scheduler efficiënt met jouw CPU-architectuur kan omgaan.
+:::
+
+### Aanbevelingen voor het benchmarken van games
+
+Als je games wilt benchmarken om te vergelijken hoe verschillende schedulers presteren, zijn hier enkele tips voor zo nauwkeurig mogelijke resultaten:
+
+- **Gebruik ingebouwde benchmarks:** Veel moderne games hebben ingebouwde benchmarkhulpmiddelen. Die zijn ontworpen om consistente resultaten te geven door elke keer dezelfde reeks gebeurtenissen af te spelen.
+  - Bekijk deze [website](https://www.pcgamingwiki.com/wiki/List_of_games_with_built-in_benchmarks) voor een lijst met games met ingebouwde benchmarks.
+- **Consistente instellingen:** Zorg ervoor dat de game-instellingen (resolutie, grafische kwaliteit, enz.) bij elke testrun hetzelfde zijn.
+- **Sluit achtergrondapplicaties:** Andere applicaties die op de achtergrond draaien, kunnen de prestaties beïnvloeden. Sluit onnodige programma's om hun invloed te minimaliseren.
+- Als je geen ingebouwde benchmark gebruikt, probeer dan bij elke testrun dezelfde acties in de game uit te voeren. Bijvoorbeeld dezelfde route volgen, vergelijkbare gevechtsscenario's aangaan of dezelfde taken uitvoeren.
+  - Zelfs niet op dezelfde plek richten kan tot andere prestatieresultaten leiden.
+- **Meerdere runs:** Voer de benchmark meerdere keren uit en neem het gemiddelde om rekening te houden met variatie.
+- **Gebruik hulpmiddelen voor prestatiemonitoring:** Hulpmiddelen zoals MangoHud of GOverlay kunnen realtime prestatiegegevens tonen, zoals FPS, frametijden en CPU-/GPU-gebruik.
+- **Maak gebruik van sneltoetsen of macro's:**
+  - Een voorbeeld is een sneltoets maken waarmee je tijdens het spelen direct tussen verschillende schedulers kunt wisselen of hun modus kunt wijzigen.
+    - Dit kan met een hulpmiddel zoals [scxctl](/nl/configuration/sched-ext#de-scheduler-starten-en-beheren) of met eigen scripts die de actieve scheduler en de modus wijzigen.
+
+#### Je benchmarks uploaden en delen
+
+Deze [website](https://flightlesssomething.ambrosia.one/benchmarks) bevat een lijst met benchmarks die de community heeft uitgevoerd met verschillende schedulers of instellingen.
+
+Om je eigen benchmarks te uploaden, moet je je Discord-account aan de website koppelen; daarna kun je je eigen benchmarks indienen.
+
+Klik vervolgens op de knop `New benchmark` en vul de gevraagde informatie in.
+
+- Je kunt meerdere resultaten voor dezelfde game uploaden met verschillende schedulers of instellingen.
+- Accepteert logs van zowel MangoHud als Afterburner.
+- Je kunt zoeken op titel of beschrijving.
+
+## Configuratie van scx_loader
+
+### Een scheduler als standaard instellen (bij het opstarten)
+
+Om een scheduler automatisch te laten starten wanneer `scx_loader` start (bijv. bij het opstarten), volg je deze stappen:
+
+<Steps>
+1. **Kopieer het voorbeeldconfiguratiebestand** naar de configuratiemap:
+   ```sh
+   sudo mkdir -p /etc/scx_loader
+   sudo cp /usr/share/scx_loader/config.toml /etc/scx_loader/config.toml
+   ```
+
+2. **Bewerk het configuratiebestand** met je favoriete editor:
+   ```sh
+   sudo nano /etc/scx_loader/config.toml
+   ```
+
+3. **Stel de standaardscheduler en -modus in**. Bijvoorbeeld om `scx_pandemonium` in de modus `Auto` in te stellen:
+   ```toml
+   # Dit veld geeft de scheduler aan die automatisch wordt gestart wanneer scx_loader start (bijv. bij het opstarten).
+   default_sched = "scx_pandemonium"
+
+   # Dit veld geeft de modus aan die wordt gebruikt wanneer scx_loader start (bijv. bij het opstarten).
+   default_mode = "Auto"
+   ```
+
+4. **Schakel de service in en start deze**:
+   ```sh
+   sudo systemctl enable --now scx_loader.service
+   ```
+</Steps>
+
+#### Volgorde waarin de configuratie wordt gezocht
+
+`scx_loader` zoekt in de volgende volgorde naar het configuratiebestand:
+
+1. `/etc/scx_loader/config.toml` (voorkeur)
+2. `/etc/scx_loader.toml`
+3. `/usr/share/scx_loader/config.toml` (standaardsjabloon)
+4. `/usr/share/scx_loader.toml`
+
+### Argumenten van de scheduler aanpassen
+
+Je kunt de argumenten die per modus aan elke scheduler worden doorgegeven aanpassen door een sectie `[scheds.scx_name]` aan je configuratiebestand toe te voegen.
+
+Voor gedetailleerde informatie en voorbeelden over het configureren van argumenten per scheduler, zie de [configuratiedocumentatie van scx_loader](https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/configuration.md).
+
+## Overstappen van scx.service naar scx_loader: een uitgebreide handleiding
+
+:::caution
+Probeer scx_loader.service niet naast scx.service te draaien; anders start de loader-service wel, maar doet die niets.
+
+Dit conflict ontstaat omdat beide services niet van elkaar weten, vooral niet welke van de twee de schedulers beheert.
+:::
+
+:::tip
+De CachyOS Kernel Manager bevat al een [GUI voor het beheren van scx_loader.](/nl/features/kernel_manager#beheer-van-het-sched-ext-framework)
+:::
+
+Laten we beginnen met een nauwkeurige vergelijking tussen de bestandsstructuur van scx.service en die van het configuratiebestand van scx_loader.
+
+*Als je eerder LAVD draaide met de oude scx.service, zoals in het onderstaande voorbeeld:*
+
+```sh title='Bestandsstructuur van scx.service'
+# List of scx_schedulers: scx_bpfland scx_central scx_flash scx_lavd scx_layered scx_nest scx_qmap scx_rlfifo scx_rustland scx_rusty scx_simple scx_userland
+SCX_SCHEDULER=scx_lavd
+
+# Eigen flags instellen voor de scheduler
+SCX_FLAGS='--performance'
+```
+
+Dan ziet het equivalent in het configuratiebestand van scx_loader er zo uit:
+
+```sh title='Bestandsstructuur van scx_loader'
+default_sched = "scx_lavd"
+default_mode = "Auto"
+
+[scheds.scx_lavd]
+auto_mode = ["--performance"]
+```
+
+[Voor meer informatie over het configureren van het scx_loader-bestand](https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/configuration.md#scx_loader-configuration-file)
+
+  Volg de onderstaande handleiding voor een eenvoudige overstap van de `scx systemd service` naar het nieuwe hulpprogramma `scx_loader`.
+  <Steps>
+  1. ```sh title='scx.service uitschakelen ten gunste van scx_loader.service'
+      systemctl disable --now scx.service && systemctl enable --now scx_loader.service
+      ```
+  2. ```sh title='Het configuratiebestand voor scx_loader aanmaken en de standaardstructuur toevoegen'
+     # De editor Micro maakt een nieuw bestand aan.
+     sudo micro /etc/scx_loader.toml
+     # Voeg de volgende regels toe:
+
+     default_sched = "scx_bpfland" # Pas deze regel aan naar de scheduler die scx_loader bij het opstarten moet starten
+     default_mode = "Auto" # Mogelijke waarden: "Auto", "Gaming", "LowLatency", "PowerSave".
+
+     # Druk op CTRL + S om de wijzigingen op te slaan en op CTRL + Q om Micro af te sluiten.
+     ```
+  3. ```sh title='scx_loader herstarten'
+     systemctl restart scx_loader.service
+     ```
+     - Klaar, scx_loader laadt en start nu de gewenste scheduler.
+
+  </Steps>
+
+### Debuggen in scx_loader
+
+<Tabs>
+<TabItem label='Eenvoudige logging'>
+
+  - ```sh title='De status van de service controleren'
+    systemctl status scx_loader.service
+    ```
+  - ```sh title='Alle logregels van de service bekijken'
+    journalctl -u scx_loader.service
+    ```
+  - ```sh title='Alleen de logs van de huidige sessie bekijken.'
+    journalctl -u scx_loader.service -b 0
+    ```
+</TabItem>
+<TabItem label='Uitgebreide logging'>
+
+*Volg deze stappen om een gedetailleerder log te krijgen.*
+  - ```sh title='Bewerk het servicebestand'
+     sudo systemctl edit scx_loader.service
+     ```
+  - ```sh title='Voeg de volgende regel toe onder de sectie [Service]'
+     Environment=RUST_LOG=trace
+     ```
+  - ```sh title='Herstart de service'
+     sudo systemctl restart scx_loader.service
+     ```
+  - Bekijk de logs opnieuw voor meer gedetailleerde debuginformatie.
+</TabItem>
+
+</Tabs>
+
+## FAQ
+
+### Er zijn zoveel opties... waarom maak je niet gewoon één scheduler die overal goed in is?
+
+De belangrijkste reden is dat er geen oplossing bestaat die voor iedereen past als het gaat om CPU-scheduling. Verschillende workloads hebben verschillende eisen en prioriteiten, en een scheduler die voor het ene type workload is geoptimaliseerd, presteert mogelijk niet goed bij een ander type.
+
+Je kunt CPU-schedulers zien als verschillende paren schoenen, elk ontworpen voor een specifieke activiteit. Een game draaien op een scheduler die is geoptimaliseerd voor serverworkloads kan bijvoorbeeld leiden tot suboptimale prestaties en hogere latentie, terwijl een scheduler die voor gaming is ontworpen op een server kan leiden tot inefficiënt gebruik van middelen en een lagere doorvoer.
+
+Dat is de magie van sched-ext. Beperkingen zijn geen probleem meer.
+
+### Waarom presteert scheduler X slechter dan de andere?
+
+- Er zijn veel variabelen om rekening mee te houden bij het vergelijken. Hoe meten ze bijvoorbeeld het gewicht van een taak? Geven ze voorrang aan interactieve taken boven niet-interactieve?
+  Uiteindelijk hangt het af van hun ontwerpkeuzes.
+
+### Waarom zegt iedereen dat scheduler X de beste is voor situatie X, terwijl die bij mij niet zo goed presteert?
+
+- Net als bij het vorige antwoord kunnen de keuze van de CPU en het ontwerp ervan, zoals de indeling van de cores, hoe de cache tussen de cores wordt gedeeld en andere gerelateerde factoren, ervoor zorgen dat de scheduler minder efficiënt werkt.
+- Daarom is keuzevrijheid een van de hoogtepunten van het sched-ext-framework, dus wees niet bang om er een te proberen en te kijken welke het beste werkt voor jouw situatie. `Voorbeelden: stabiliteit van de fps, maximale prestaties, responsiviteit onder intensieve workloads enz.`
+
+### De toepassingen van deze schedulers lijken erg op elkaar... hoe komt dat?
+
+Vooral omdat het schedulers voor meerdere doeleinden zijn, wat betekent dat ze uiteenlopende workloads aankunnen, ook al blinken ze niet op elk gebied uit.
+
+- Om te bepalen welke scheduler het beste bij je past, is er geen beter advies dan het zelf uit te proberen.
+
+### Waarom mis ik een scheduler die sommige gebruikers noemen of testen op de Discord-server van CachyOS?
+Zorg ervoor dat je de bleeding-edge-versie van het pakket scx-scheds gebruikt, genaamd `scx-scheds-git`
+
+- Een van de redenen kan zijn dat deze scheduler heel nieuw is en momenteel door gebruikers wordt getest, waardoor die nog niet aan het pakket `scx-scheds-git` is toegevoegd.
+
+### Waarom crashte de scheduler ineens? Is die instabiel?
+
+- *Er kunnen een paar redenen zijn waarom dit gebeurde:*
+  - Een van de meest voorkomende redenen is dat je ananicy-cpp naast de scheduler gebruikte. Daarom hebben we deze [waarschuwing](/nl/configuration/sched-ext#ananicy-cpp--sched-ext) toegevoegd
+  - Een andere reden kan zijn dat de workload die je draaide de grenzen en capaciteit van de scheduler overschreed, waardoor die vastliep.
+    - Voorbeeld van een onredelijke workload: `hackbench`
+  - Of de meer voor de hand liggende reden: je hebt een bug in de scheduler gevonden. Meld die dan als issue op hun [GitHub](https://github.com/sched-ext/scx/issues) of laat het ze weten
+    in het Discord-kanaal `sched-ext` van CachyOS
+
+### Ik heb eerder scx_loader gebruikt in de GUI van de Kernel Manager. Moet ik de overstapstappen nog volgen?
+
+- In dit specifieke geval niet, omdat de Kernel Manager het overstapproces al afhandelt.
+  - *Tenzij je eerder eigen flags hebt toegevoegd in `/etc/default/scx` en die nog steeds wilt gebruiken.*
+
+## Meer informatie
+
+:::note[Dankbetuiging]
+Sommige van de onderstaande links werden oorspronkelijk vermeld in de [sched-ext GitHub-repository](https://github.com/sched-ext/scx?tab=readme-ov-file#sched_ext-schedulers-and-tools).
+Alle eer gaat naar de beheerders en bijdragers van sched-ext voor het verzamelen en delen van deze uitstekende bronnen.
+:::
+
+- [Sched_ext YT playlist](https://youtube.com/playlist?list=PLLLT4NxU7U1TnhgFH6k57iKjRu6CXJ3yB&si=DETiqpfwMoj8Anvl)
+- [LWN: The extensible scheduler class (February, 2023)](https://lwn.net/Articles/922405/)
+- [arighi's blog: Implement your own kernel CPU scheduler in Ubuntu with sched_ext (July, 2023)](https://arighi.blogspot.com/2023/07/implement-your-own-cpu-scheduler-in.html)
+- [David Vernet's talk : Kernel Recipes 2023 - sched_ext: pluggable scheduling in the Linux kernel (September, 2023)](https://youtu.be/8kAcnNVSAdI?si=F5Q-dkSS_sG9BTXA)
+- [Changwoo's blog: sched_ext: a BPF-extensible scheduler class (Part 1) (December, 2023)](https://blogs.igalia.com/changwoo/sched-ext-a-bpf-extensible-scheduler-class-part-1/)
+- [arighi's blog: Getting started with sched_ext development (April, 2024)](https://arighi.blogspot.com/2024/04/getting-started-with-sched-ext.html)
+- [Changwoo's blog: sched_ext: scheduler architecture and interfaces (Part 2) (June, 2024)](https://blogs.igalia.com/changwoo/sched-ext-scheduler-architecture-and-interfaces-part-2/)
+- [arighi's YT channel: scx_bpfland Linux scheduler demo: topology awareness (August, 2024)](https://youtu.be/R-FEZOveG-I)
+- [David Vernet's talk: Kernel Recipes 2024 - Scheduling with superpowers: Using sched_ext to get big perf gains (September, 2024)](https://youtu.be/Cy7-oqdcUCs?si=bjKu3uidOdIzzAWv)

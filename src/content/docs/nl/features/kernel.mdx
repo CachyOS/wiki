@@ -1,0 +1,180 @@
+---
+title: CachyOS-kernel
+description: Functies en wijzigingen in de CachyOS-kernel
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
+---
+
+De CachyOS-kernel is een aangepaste kernel die gebruikmaakt van verbeteringen, configuraties en patches van upstream.
+
+## Functies
+
+
+### Prestatie-optimalisaties
+
+- **Geavanceerde compilatie**: Zeer aanpasbare PKGBUILD met ondersteuning voor zowel de GCC- als de Clang-compiler
+- **Link Time Optimization (LTO)**: Clang Thin LTO standaard ingeschakeld voor het hoofdpakket `linux-cachyos`
+- **Distributed ThinLTO**: Ondersteuning voor gedistribueerde Clang ThinLTO-builds om het compileren van de kernel te versnellen
+- **Profile-Guided Optimization**: AutoFDO-profilering van de standaardkernel voor optimale codegeneratie ([Meer informatie](https://cachyos.org/blog/2411-kernel-autofdo/))
+- **Kernel Control Flow Integrity (kCFI)**: Beschikbaar bij gebruik van LLVM voor betere beveiliging
+- **Opties voor timerfrequentie**: Instelbaar tussen 100Hz, 250Hz, 300Hz, 500Hz, 600Hz, 750Hz en 1000Hz (standaard: 1000Hz)
+- **Architectuuroptimalisaties**: Ondersteuning voor specifieke builds voor x86-64-v3, x86-64-v4 en AMD Zen4
+- **Compileroptimalisaties**: Geavanceerde GCC-flags, waaronder `-fivopts` en `-fmodulo-sched`
+- **PREEMPT_DYNAMIC**: Tijdens runtime te kiezen preemption-modi (full, lazy, voluntary, none)
+
+### CPU-verbeteringen
+
+- **Meerdere schedulers**: BORE-, EEVDF- en BMQ-schedulers voor optimalisatie van verschillende workloads
+- **[POC Selector](https://github.com/masahitoS/scx_cake)**: Piece-Of-Cake, een snelle selector voor inactieve CPU's, geïnspireerd door scx_cake, die de wakeup-latentie vermindert
+- **CachyOS Sauce**: Aangepaste `CONFIG_CACHY`-configuratie met scheduler- en systeemtweaks
+- **AMD P-State-verbeteringen**: Ondersteuning voor Preferred Core en de nieuwste amd-pstate-verbeteringen uit linux-next
+- **Real-time-ondersteuning**: RT-kernelbuilds beschikbaar met integratie van de BORE-scheduler
+- **Low-latency-optimalisaties**: Patches voor betere responsiviteit en minder jitter
+- **sched/wait LIFO accept()**: Socket accept() wordt verwerkt in LIFO-volgorde voor een betere cache-efficiëntie
+
+### Netwerken
+
+- **[BBR3 TCP](https://github.com/google/bbr)**: BBRv3-congestiecontrole beschikbaar als aparte module naast BBRv1
+
+### Bestandssysteem & geheugen
+
+- **ZFS-ondersteuning**: Ingebouwde ondersteuning voor het ZFS-bestandssysteem met voorgecompileerde modules
+- **NTFS-verbeteringen**: Upstream fixes voor het NTFS-stuurprogramma voor validatie van de MFT-mirror, controle van attribuutgrenzen en afhandeling van het logbestand
+- **MGLRU-verbeteringen**: Verbeterde afhandeling van dirty writeback, vereenvoudigde vmscan-reclaimstatistieken en Cachy Sauce MM-tuning (bescherming van de working set via LRU-gen, tweaks voor compaction/watermarks, hugepage-reclaim)
+- **NVIDIA-integratie**:
+  - Propriëtaire NVIDIA-stuurprogrammamodules met patches
+  - Ondersteuning voor het opensource NVIDIA-stuurprogramma
+  - Kant-en-klare modules in de repository
+- **Verbeteringen aan de I/O-scheduler**:
+  - Verbeterde prestaties van BFQ en mq-deadline
+  - Ondersteuning voor de multi-queue I/O-scheduler [ADIOS](https://github.com/firelzrd/adios) v3.2.0
+- **VRAM Cgroup (DMEM)**: Controller voor apparaatgeheugen om het VRAM-gebruik van de GPU per cgroup te beperken in het DRM-subsysteem
+
+### Extra functies
+
+#### Hardwareondersteuning
+- **AMD ISP4**: Nieuw AMD ISP 4-camerastuurprogramma voor ondersteunde platforms
+- **Gaminghardware**: Steam Deck-patches (audio, HW-quirks, HID), ondersteuning voor ROG Ally en het MSI Claw HID-stuurprogramma (deckify)
+- **Apple-hardware**: Ondersteuning voor T2 MacBook met het apple-bce-stuurprogramma in staging
+- **ASUS-hardware**: Uitgebreide compatibiliteitspatches voor ASUS-hardware
+- **Lenovo-hardware**: WMI-laadlimiet voor de batterij, instelbare GPU/CPU-attributen en capdata debugfs
+- **HP-hardware**: Ondersteuning voor OMEN Slim- en OMEN MAX-laptops via hp-wmi
+- **Graphics**: HDR-ondersteuning ingeschakeld, AMDGPU min_powercap-override (`amdgpu_ignore_min_pcap`)
+- **Beeldscherm**: HDMI VRR op AMD, ALLM- en passieve VRR-connectoreigenschappen, parsing van VESA DSC bits-per-pixel uit EDID
+- **Audiocodecs**: Ondersteuning voor de HDA-side-codecs AW88399 en MAX98390
+
+#### Systeemverbeteringen
+- **Multimedia**: v4l2loopback-modules standaard meegeleverd
+- **Virtualisatie**: Ondersteuning voor ACS Override voor VFIO/GPU passthrough
+- **Upstream-integratie**: Geselecteerde patches (cherry-picked) uit Clear Linux en linux-next
+
+#### Overig
+
+De CachyOS-kernel heeft ook nog enkele andere opvallende functies die subtiel zijn, maar de gebruikerservaring verbeteren:
+
+- Bevat een debugvariant van de kernel die een niet-gestripte kernelbinary levert voor debugdoeleinden. Dit pakket is nodig om de kernel te profileren met AutoFDO.
+- [Binder](https://developer.android.com/reference/android/os/Binder), de module die nodig is voor [Waydroid](https://waydro.id/), is standaard ingeschakeld in de kernelconfiguratie
+en al [ingesteld](https://github.com/CachyOS/linux-cachyos/blob/2f380e2b35c4ad9acda98296f638f93af3742533/linux-cachyos/config#L11037).
+
+## Varianten
+
+CachyOS biedt een gevarieerd aanbod aan kernelopties. Alle kernels die we leveren, worden geleverd met de [CachyOS Base Patchset](https://github.com/CachyOS/kernel-patches).
+Voor elk van de kernels is er een [bijbehorende -lto-variant](#naamgeving-van-pakketten) die
+is gebouwd met [clang](https://clang.llvm.org/) in plaats van [GCC](https://gcc.gnu.org/).
+
+- **linux-cachyos**
+  - De standaardkernel. Dit is de aanbevolen kernel als je niet zeker weet welke je moet gebruiken.
+  - 1000Hz tickrate voor betere responsiviteit.
+  - Gebouwd met Clang en ThinLTO.
+  - Geprofileerd met ons eigen [AutoFDO](https://cachyos.org/blog/2411-kernel-autofdo/)-profiel voor betere prestaties. [Script](https://github.com/CachyOS/cachyos-benchmarker/blob/master/kernel-autofdo.sh) dat is gebruikt om de kernel te profileren.
+- **linux-cachyos-bore**
+  - Gebruikt de [BORE](https://github.com/firelzrd/bore-scheduler)-scheduler.
+- **linux-cachyos-bmq**
+  - Gebruikt de BMQ-scheduler uit [Project C](https://gitlab.com/alfredchen/projectc/) van Alfred Chen.
+    - `Ondersteunt sched-ext niet.`
+- **linux-cachyos-deckify**
+  - De standaardkernel voor handhelds. Het gebruik van een andere kernel op handhelds wordt **niet aanbevolen** en **niet ondersteund**.
+  - Gebruikt de [BORE](https://github.com/firelzrd/bore-scheduler)-scheduler.
+  - Handheld-specifieke patches bovenop de base patchset om de compatibiliteit en de algehele ervaring op handheld-apparaten te verbeteren.
+- **linux-cachyos-eevdf**
+  - Past de standaard kernelscheduler aan voor betere responsiviteit.
+- **linux-cachyos-lts**
+  - Gebaseerd op de nieuwste Long Term Support-kernel.
+  - Gebruikt de [BORE](https://github.com/firelzrd/bore-scheduler)-scheduler.
+  - Minimaal gepatcht in vergelijking met andere kernels om maximale stabiliteit te garanderen.
+- **linux-cachyos-hardened**
+  - Gebruikt de [BORE](https://github.com/firelzrd/bore-scheduler)-scheduler.
+  - Bevat de [linux-hardened](https://github.com/anthraxx/linux-hardened)-patchset.
+  - Kernelconfiguratie gebaseerd op de [linux-hardened-configuratie](https://gitlab.archlinux.org/archlinux/packaging/packages/linux-hardened/-/blob/main/config).
+    - Bevat zeer agressieve hardening die de prestaties en gebruikerservaring aanzienlijk beperkt.
+    - `Ondersteunt sched-ext niet.`
+- **linux-cachyos-rc**
+  - Gebaseerd op de nieuwste mainline-kernel uit [de tree van Linus](https://github.com/torvalds/linux/).
+  - De belangrijkste kernel om nieuwe functies in onze patchset te introduceren.
+- **linux-cachyos-server**
+  - Afgestemd op serverworkloads in plaats van desktopgebruik.
+    - 300Hz tickrate.
+    - Geen preemption.
+    - Standaard EEVDF.
+- **linux-cachyos-rt-bore**
+  - Real-time preemption.
+  - Gebruikt de [BORE](https://github.com/firelzrd/bore-scheduler)-scheduler.
+
+:::note
+Tenzij anders vermeld, kun je ervan uitgaan dat alle andere kernelvarianten
+dezelfde configuratie hebben als de standaardkernel.
+:::
+
+Open een issue op [linux-cachyos GitHub](https://github.com/CachyOS/linux-cachyos) voor suggesties en verbeteringen die aan de standaardkernel kunnen worden toegevoegd.
+
+### Naamgeving van pakketten
+
+```sh
+linux-cachyos # Basiskernelpakket voor de standaardkernel. Gecompileerd met Clang en ThinLTO
+linux-cachyos-hardened # Basiskernelpakket voor de hardened kernel. Gecompileerd met GCC
+linux-cachyos-hardened-lto # Met clang gecompileerde tegenhanger van linux-cachyos-hardened
+linux-cachyos-hardened-{,lto-}headers
+linux-cachyos-hardened-{,lto-}nvidia
+linux-cachyos-hardened-{,lto-}nvidia-open
+linux-cachyos-hardened-{,lto-}zfs
+linux-cachyos-hardened-{,lto-}dbg
+```
+
+## Voorgebouwde kernelmodules
+
+Om een grotere gebruikersgroep te bedienen, levert CachyOS een aantal bekende en veelgebruikte kernelmodules mee met de kernel. Dit betekent dat gebruikers
+die modules niet meer na elke kernelupdate of bij elke nieuwe kernelinstallatie opnieuw hoeven te compileren, maar ze alleen uit de repository hoeven te installeren, omdat ze
+al voorgecompileerd zijn. Hierdoor worden `-dkms`-pakketten die dezelfde module als de voorgecompileerde versie leveren in feite overbodig.
+
+### ZFS
+
+[ZFS](https://openzfs.org/wiki/Main_Page) is een van de vele bestandssystemen die in CachyOS worden ondersteund. Omdat het gelicentieerd is onder
+[CDDL](https://opensource.org/license/cddl-1-0), is het niet compatibel met de licentie van de Linux-kernel en kan het daarom niet in-tree worden opgenomen. De meegeleverde module bevat
+de nieuwste upstream-functies en -fixes om compatibiliteit met de nieuwste kernel te garanderen.
+
+### NVIDIA
+
+CachyOS levert voorgecompileerde versies van zowel de closed-source als de [opensource](https://github.com/NVIDIA/open-gpu-kernel-modules/) kernelmodules. Omdat de ontwikkeling
+van de kernelmodule van NVIDIA out-of-tree plaatsvindt en dus niet het releaseritme van de kernel volgt, kan de standaardconfiguratie soms niet compatibel zijn met de nieuwste
+kernel. Als workaround patcht CachyOS de modules met patches die door de community zijn gemaakt of rechtstreeks door NVIDIA zijn gedeeld.
+
+## FAQ
+
+### Waarom wordt AutoFDO niet gebruikt voor alle andere kernelvarianten?
+
+Omdat het duur is om te bouwen: het vereist in feite dat de kernel twee keer wordt gebouwd, wat meer tijd en middelen kost voor de compilatie. Het bouwen van een kernel met AutoFDO bestaat uit de volgende stappen:
+
+1) Bouw de kernel met AutoFDO en debugmogelijkheden ingeschakeld.
+2) Maak een profiel, wat betekent dat je workloads uitvoert om profileringsgegevens te verzamelen voor de mogelijke optimalisaties.
+3) Bouw de kernel opnieuw met het AutoFDO-profiel.
+
+Daarom is het voorlopig alleen aanwezig in de variant [linux-cachyos](/nl/features/kernel#varianten).
+
+Klik [hier](https://cachyos.org/blog/2411-kernel-autofdo/) voor meer informatie over AutoFDO.
+
+### Verbetert de realtime-kernel de gamingprestaties?
+
+Nee. De realtime-kernel maakt veel meer code preemptible dan een normale preemptible (PREEMPT)-kernel. Dit betekent dat veel meer taken (inclusief gameprocessen)
+vaak worden onderbroken en gedwongen systeembronnen moeten afstaan, wat leidt tot slechtere prestaties.

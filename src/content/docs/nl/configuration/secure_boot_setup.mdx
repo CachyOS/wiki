@@ -1,0 +1,386 @@
+---
+title: Secure Boot instellen
+description: Secure Boot instellen met sbctl na het installeren van CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+:::tip[Easy Anti-Cheat]
+Om games te spelen die Easy Anti-Cheat Linux v2 gebruiken, volg je in plaats daarvan de [Easy Anti-Cheat-handleiding](/nl/configuration/easy_anti_cheat).
+Die stelt Secure Boot vanaf het begin in, dus je hebt deze handleiding niet eerst nodig. Die schrijft je eigen sleutels samen
+met die van Microsoft in, zodat een dual boot met Windows blijft werken. Ook gebruikt die de door CachyOS ondertekende kernel en systemd-boot, die
+niet opnieuw met je eigen sleutels mogen worden ondertekend.
+:::
+
+## Voorbereiding
+
+### GRUB-bootmanager
+
+Als je GRUB gebruikt, voer dan het volgende commando uit om ondersteuning voor Secure Boot in GRUB in te schakelen met CA-sleutels.
+
+```bash
+sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
+```
+
+:::note
+Het laden van onnodige modules in je bootmanager kan een beveiligingsrisico vormen.
+Voer dit commando alleen uit als je Secure Boot echt nodig hebt.
+:::
+
+### Setup Mode inschakelen in UEFI
+
+Allereerst moeten we naar de firmware-instellingen gaan en de Secure Boot-modus op "Setup Mode" zetten. Je kunt vanuit een
+draaiend systeem opnieuw opstarten naar de firmware-instellingen met het volgende commando.
+
+```bash
+systemctl reboot --firmware-setup
+```
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/ideapad-bios-secure-boot.jpg')} />
+
+Zo ziet het BIOS eruit op een Lenovo Ideapad 5 Pro. Zet het terug naar setup mode of herstel de fabriekssleutels en start opnieuw op
+naar het systeem.
+
+#### Automatische reset
+
+Op sommige Gigabyte-moederborden wordt "reset to setup mode" direct gevolgd door een dialoogvenster "reset without saving"
+<ImageComponent imgsrc={import('~/assets/images/gigabyte-reset-without-saving.jpg')} />
+dit moet je weigeren, omdat het een systeemreset veroorzaakt en daarna setup mode uitschakelt.
+
+Start in plaats daarvan direct het besturingssysteem op (Save & Exit, en selecteer je bootloader in Boot Override).
+
+#### Geen setup mode
+
+Sommige MSI- en ASUS-moederborden hebben geen Setup Mode.
+
+##### MSI
+
+Zet de Secure Boot Mode op "custom" en selecteer de compatibiliteitsoptie "maximum security" (dit is belangrijk: met de standaardmodus kun je mogelijk niet vanuit je bootloader opstarten naar CachyOS!). Ga daarna naar "key management" en volg de twee stappen die in de onderstaande afbeelding worden getoond:
+<br />
+<ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
+
+##### ASUS
+
+Ga naar Boot → Secure Boot, zet Secure Boot Mode op Custom, open daarna Key Management en selecteer "Delete all Secure Boot Variables".
+
+#### sbctl installeren en sleutels inschrijven
+
+Controleer voordat je verdergaat of `sbctl` is geïnstalleerd.
+
+[sbctl](https://github.com/Foxboron/sbctl) is een gebruiksvriendelijke beheerder voor Secure Boot-sleutels die Secure Boot kan instellen,
+sleutelbeheer biedt en bijhoudt welke bestanden in de opstartketen moeten worden ondertekend.
+
+<details>
+    <summary>Hoe installeer je sbctl</summary>
+    ```bash title='Open een terminal en voer het volgende commando uit'
+    sudo pacman -S sbctl
+    ```
+</details>
+
+Nu `sbctl` is geïnstalleerd, moet je sbctl instellen en je sleutels in de firmware inschrijven. Dit proces is vrij eenvoudig; volg gewoon de onderstaande stappen.
+
+<Steps>
+1. Controleer of Setup Mode is ingeschakeld:
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>Verwachte uitvoer</summary>
+        ```bash
+        Installed:      ✘ sbctl is not installed
+        Setup Mode:     ✘ Enabled
+        Secure Boot     ✘ Disabled
+        ```
+    </details>
+2. Maak je eigen Secure Boot-sleutels aan:
+    ```bash
+    sudo sbctl create-keys
+    ```
+    <details>
+        <summary>Voorbeeld van het succesvol aanmaken van sleutels</summary>
+        ```bash
+        Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Creating secure boot keys...✔
+        Secure boot keys created!
+        ```
+    </details>
+3. Schrijf je sleutels in samen met de sleutels van Microsoft en de ingebouwde sleutels van de OEM-firmware:
+    ```bash
+    sudo sbctl enroll-keys --microsoft --firmware-builtin
+    ```
+    <details>
+        <summary>Verwachte uitvoer</summary>
+        ```bash
+        Enrolling keys to EFI variables...✔
+        Enrolled keys to the EFI variables!
+        ```
+    </details>
+
+    :::caution[ASUS-/Gigabyte-moederborden: gebruik geen `--firmware-builtin`]
+    Op sommige ASUS- en Gigabyte-moederborden zorgt de vlag `--firmware-builtin` voor dubbele items
+    in de EFI-sleutelvariabelen (bijv. `builtin-db` die meerdere keren in `Vendor Keys` voorkomt).
+    Wanneer je daarna Secure Boot activeert in de UEFI-instellingen, detecteert het bord deze
+    inconsistente sleutelstructuur en geeft het een **Secure Boot Violation** voordat de boot-
+    manager kan laden.
+
+    Gebruik op ASUS-/Gigabyte-borden alleen `--microsoft`:
+
+    ```bash
+    sudo sbctl enroll-keys --microsoft
+    ```
+
+    Als `Vendor Keys` `microsoft builtin-db builtin-db ...` toont, moeten de sleutels
+    opnieuw worden ingeschreven. Ga opnieuw naar Setup Mode in de UEFI (met delete all keys) en voer
+    daarna `sbctl enroll-keys --microsoft` opnieuw uit zonder `--firmware-builtin`.
+    :::
+
+
+4. Controleer de status van sbctl opnieuw om er zeker van te zijn dat de sleutels zijn ingeschreven en setup mode is uitgeschakeld:
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>Verwachte uitvoer</summary>
+        ```bash
+        Installed:      ✔ sbctl is installed
+        Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Setup Mode:     ✔ Disabled
+        Secure Boot     ✘ Disabled
+        Vendor Keys:    microsoft
+        ```
+    </details>
+
+    :::note[Setup Mode toont Enabled?]
+    Als `Setup Mode` **Enabled** toont, ga dan naar de firmware-instellingen en **schakel Secure Boot tijdelijk uit**.
+    Start weer op in het systeem, controleer de status van sbctl opnieuw, ga verder met [De kernelimage en bootmanager ondertekenen](#de-kernelimage-en-bootmanager-ondertekenen)
+    hieronder, start daarna opnieuw op en schakel Secure Boot weer in via de firmware-instellingen.
+    :::
+    
+</Steps>
+
+## De kernelimage en bootmanager ondertekenen
+
+<Tabs syncKey="boot-manager">
+<TabItem label='Limine'>
+Limine is een bijzondere bootmanager waarmee de hash van kernel-
+images en andere bestanden die Limine tijdens het opstarten gebruikt, kan worden gecontroleerd. Als dit is ingeschakeld, wijzigt elke
+vorm van handmatige configuratie door de gebruiker, bijv. het ondertekenen van de image via
+`sbctl-batch-sign`, de hash van de betreffende bestanden, waardoor
+de checksumverificatie van Limine mislukt.
+
+Het ondertekenen van deze bestanden is bij Limine echter niet nodig, omdat het een speciaal
+opstartproces heeft dat EFI-chainloading en handtekeningcontroles omzeilt. De enige EFI-
+binaries die moeten worden ondertekend, zijn die van Limine zelf.
+
+:::caution[Limine >= 11.2.0]
+Vanaf Limine 11.2.0 worden Secure Boot-regels **strikt gehandhaafd** wanneer UEFI Secure Boot actief is:
+
+- Er **moet** een BLAKE2B-configuratiechecksum zijn ingeschreven in de Limine EFI-binary, anders geeft Limine een panic met: `SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED`
+- Aan alle bestandspaden in `limine.conf` (kernel, initramfs, enz.) **moeten** BLAKE2B-hashes zijn toegevoegd (bijv. `boot():/vmlinuz-linux#<hash>`)
+- De configuratie-editor is altijd uitgeschakeld
+- Niet-overeenkomende hashes veroorzaken altijd een panic
+:::
+
+Om het automatisch inschrijven van de configuratiechecksum in te schakelen, stel je het volgende in in `/etc/default/limine`:
+
+```sh
+ENABLE_ENROLL_LIMINE_CONFIG=yes
+```
+
+Genereer vervolgens een hash voor de splash-afbeelding van Limine:
+
+:::note[Voor de volgende stappen zijn rootrechten nodig; gebruik sudo of schakel over naar de root-gebruiker voordat je verdergaat.]
+:::
+
+<Steps>
+
+1. Controleer de huidige naam en het pad van de splash-afbeelding in het configuratiebestand:
+    ```sh title="Open een terminal en voer het volgende commando uit:"
+    sudo cat /boot/limine.conf
+    ```
+    Je zou een regel als deze moeten zien:
+    ```sh
+    wallpaper: boot():/limine-splash.png
+    ```
+2. Genereer een BLAKE2B-hash voor de splash-afbeelding en voeg deze toe aan het pad in het configuratiebestand:
+    ```sh title="Voer het volgende commando uit en vervang het pad door het pad dat je in de vorige stap hebt gevonden:"
+    sudo b2sum /boot/limine-splash.png
+    ```
+    Dit geeft een hash zoals in dit voorbeeld:
+    ```sh
+    75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+3. Kopieer de nieuw gegenereerde hash uit de vorige stap. Open het configuratiebestand met een teksteditor en voeg de hash toe aan het pad van de splash-afbeelding, zoals hier:
+    :::note[Gebruik niet de voorbeeldhash van hierboven, maar de hash die je in de vorige stap hebt gegenereerd.]
+    :::
+    ```sh
+    wallpaper: boot():/limine-splash.png#75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+    Zoals je ziet, wordt de hash met een `#`-teken aan het pad toegevoegd. Sla het bestand op nadat je de wijziging hebt gemaakt.
+
+</Steps>
+
+Voer, nadat je het inschrijven van de configuratiechecksum hebt ingeschakeld en de hash voor de splash-afbeelding hebt gegenereerd, de volgende commando's uit om de configuratiechecksum in te schrijven en de EFI-binary van Limine te ondertekenen:
+
+```sh
+# Gebruik limine-enroll-config om de configuratiechecksum in te schrijven en de EFI-binary van Limine te ondertekenen
+# Dit gebruikt achter de schermen sbctl
+sudo limine-enroll-config
+sudo limine-update
+```
+</TabItem>
+<TabItem label='systemd-boot'>
+
+CachyOS levert [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign),
+een script dat de lijst met te ondertekenen bestanden uit `sudo sbctl verify` haalt en ze allemaal ondertekent.
+
+:::caution
+Op systemen met een aparte partitie-indeling voor `/boot` en `/boot/efi` scant `sbctl` mogelijk alleen naar EFI-binaries in `/boot/efi`.
+Hierdoor worden kernel-images in `/boot` niet gedetecteerd. `sbctl-batch-sign` omzeilt dit door **altijd**
+`/boot` te scannen op `vmlinuz-*`-bestanden.
+:::
+
+```bash
+sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is not signed
+✘ /boot/EFI/BOOT/BOOTX64.EFI is not signed
+✘ /boot/EFI/systemd/systemd-bootx64.efi is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is not signed
+✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is not signed
+
+sudo sbctl-batch-sign
+
+sudo sbctl verify
+Verifying file database and EFI images in /boot...
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is signed
+✔ /boot/EFI/BOOT/BOOTX64.EFI is signed
+✔ /boot/EFI/systemd/systemd-bootx64.efi is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is signed
+✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
+```
+
+Nu alle bestanden zijn ondertekend: **start je systeem opnieuw op en ga naar je UEFI-instellingen om Secure Boot in te schakelen.**
+
+:::caution[ASUS-moederborden: Secure Boot inschakelen]
+Sommige ASUS-moederborden gedragen zich anders dan die van andere fabrikanten bij het inschakelen van Secure Boot:
+
+- **Gebruik `Windows UEFI Mode`, niet `Other OS`:**
+  De naam is misleidend; deze instelling bepaalt simpelweg of Secure Boot wordt afgedwongen.
+  `OS Type` op `Other OS` zetten **schakelt Secure Boot actief uit** op ASUS-borden,
+  ongeacht andere instellingen. `sbctl status` blijft dan
+  `Secure Boot: Disabled` tonen, ook na een herstart.
+
+- **Er is geen aparte aan/uit-schakelaar voor Secure Boot** op sommige ASUS-borden.
+  Secure Boot wordt impliciet geactiveerd door `Windows UEFI Mode` te selecteren.
+
+De juiste ASUS-BIOS-configuratie om Secure Boot in dit geval te activeren is:
+```
+Boot → Secure Boot
+  OS Type          → Windows UEFI Mode
+  Secure Boot Mode → Custom
+```
+:::
+
+Bekijk [dit deel ter referentie](/nl/configuration/secure_boot_setup#setup-mode-inschakelen-in-uefi)
+
+Merk op dat dit een eenmalig proces is, omdat het ondertekenen van bestanden met de vlag `-s` die bestanden opslaat in de database van `sbctl`.
+
+:::tip[Herinnering]
+`sbctl` wordt geleverd met een [pacman-hook](https://wiki.archlinux.org/title/Pacman_hook), wat betekent dat het
+alle nieuwe bestanden automatisch ondertekent bij een update van de kernel of bootmanager.
+:::
+
+CachyOS gebruikt de door systemd geleverde `systemd-boot-update.service` om de bootmanager bij een herstart bij te werken. Dit betekent dat de pacman-hook van `sbctl`
+de bijgewerkte EFI-binaries **niet** ondertekent. Als workaround kunnen we de bootmanager direct ondertekenen
+
+```sh
+sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+```
+
+:::note
+Sla deze stap over als je de [Easy Anti-Cheat-opstelling](/nl/configuration/easy_anti_cheat) gebruikt. Daar levert `systemd-boot-cachyos-signed`
+een door CachyOS ondertekende systemd-boot.
+:::
+</TabItem>
+<TabItem label='rEFInd'>
+
+rEFInd start de kernels via de firmware, dus de firmware controleert de handtekeningen van rEFInd en van elke
+kernel. Deze stappen zijn bedoeld voor installaties waarbij de EFI-systeempartitie op `/boot` is gemount; zo
+stelt het CachyOS-installatieprogramma rEFInd in. `bootctl --print-esp-path` moet `/boot` weergeven.
+
+Onderteken rEFInd en je kernels. Het commando `find` slaat de kernel voor
+[Easy Anti-Cheat](/nl/configuration/easy_anti_cheat) over, die al door CachyOS is ondertekend:
+
+```bash
+sudo sbctl sign -s /boot/EFI/refind/refind_x64.efi
+sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+sudo sbctl verify
+```
+
+`sbctl verify` moet rEFInd en elk van je kernels als ondertekend weergeven. Als je Easy Anti-Cheat gebruikt, worden ook
+`vmlinuz-linux-cachyos-eac` en `EFI/cachyos-eac/systemd-bootx64.efi` als niet ondertekend weergegeven. Dat is te verwachten; ze zijn
+door CachyOS ondertekend. **Onderteken ze niet**, anders accepteert EAC ze niet meer. **Start daarna opnieuw op naar je UEFI-instellingen
+en schakel Secure Boot in.** Zie bij ASUS-moederborden de opmerkingen in het tabblad systemd-boot.
+
+De vlag `-s` slaat de bestanden op in de database van `sbctl`, en de pacman-hook ondertekent de kernels na updates opnieuw.
+pacman werkt rEFInd op de EFI-systeempartitie niet bij. Als je zelf `refind-install` uitvoert, onderteken het dan daarna
+opnieuw:
+
+```bash
+sudo sbctl sign-all
+```
+</TabItem>
+</Tabs>
+
+## Status van Secure Boot controleren
+
+Om te controleren of Secure Boot inderdaad is ingeschakeld, kun je een van de volgende commando's uitvoeren
+
+```bash
+sudo sbctl status
+Installed:      ✓ sbctl is installed
+Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+Setup Mode:     ✓ Disabled
+Secure Boot:    ✓ Enabled
+Vendor Keys:    microsoft
+
+bootctl
+System:
+      Firmware: UEFI 2.80 (INSYDE Corp. 28724.16435)
+ Firmware Arch: x64
+   Secure Boot: enabled (user)
+  TPM2 Support: yes
+  Measured UKI: no
+  Boot into FW: supported
+```
+
+## Fwupd
+
+Om `fwupd` te gebruiken met Secure Boot ingeschakeld, onderteken je het UEFI-uitvoerbare bestand:
+
+```sh
+sudo sbctl sign -s -o /usr/lib/fwupd/efi/fwupdx64.efi.signed /usr/lib/fwupd/efi/fwupdx64.efi
+```
+
+En voeg het volgende toe aan `/etc/fwupd/fwupd.conf`:
+
+```sh
+[uefi_capsule]
+DisableShimForSecureBoot=true
+```
+
+## Links en dankbetuigingen
+
+- [The Arch Wiki](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
+legde de basis voor deze handleiding. Het meeste hier is daarvandaan overgenomen.
+- [sbctl](https://github.com/Foxboron/sbctl) - Deze eenvoudige handleiding om Secure Boot in te schakelen was niet mogelijk geweest zonder
+het geweldige werk dat is verricht om deze software te maken.
+- [Improving the Secure Boot Experience by Morten linderud](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) - Blogpost van Morten
+"Foxboron" Linderud over hoe ingewikkeld Secure Boot was vóór `sbctl`.

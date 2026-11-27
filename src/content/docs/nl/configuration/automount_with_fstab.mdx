@@ -1,0 +1,433 @@
+---
+title: Extra schijven automatisch mounten bij het opstarten
+description: Extra vaste schijven mounten bij het opstarten met systemd-mounts of met het bestand /etc/fstab
+ai_translated: true
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+Deze tutorial beschrijft de basis van het gebruik van zowel systemd-mountbestanden als het fstab-bestand in /etc/ om vaste schijven tijdens het opstarten te mounten. Er wordt kort uitgelegd hoe je de UUID van een partitie of schijf vindt, wat sommige opties doen, en waar je meer kunt lezen als de gegeven informatie niet voldoende is.
+
+## Vereisten
+
+- Root- of sudo-toegang
+
+:::note[NTFS op Linux]
+Het NTFS-bestandssysteem kan onder Linux instabiel zijn, of je nu het stuurprogramma ntfs, ntfs3 of ntfs-3g gebruikt. Gebruik het op eigen risico. Overweeg voor betere stabiliteit en prestaties native Linux-bestandssystemen zoals ext4, xfs of btrfs.
+:::
+
+## Veiligere en beginnersvriendelijke methode: schijven mounten met systemd-mountbestanden
+
+Het voordeel van mounten via systemd is dat je systeem nog steeds opstart, zelfs als je iets fout doet in je mountbestand. Een fout in de fstab kan er daarentegen voor zorgen dat je systeem niet meer opstart.
+
+### 1. De UUID's van je partities weergeven
+
+```sh title="Open een terminal en voer het volgende commando uit"
+lsblk -f
+```
+
+```sh title="Voorbeelduitvoer"
+NAME          FSTYPE FSVER LABEL UUID                                 FSAVAIL   FSUSE% MOUNTPOINTS
+zram0                                                                              [SWAP]
+nvme0n1
+├─nvme0n1p1   vfat   FAT32       E04D-9F05
+├─nvme0n1p2
+├─nvme0n1p3   ntfs               08A24E90A24E81E4                      715.4G   50%
+├─nvme0n1p4   vfat   FAT32       E09C-D4DA                             628.1M   39% /boot
+├─nvme0n1p5   ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G   47% /
+└─nvme0n1p6   ntfs
+nvme1n1
+└─nvme1n1p1   ext4               4e55896f-3f1f-4bc5-aa8a-fec099689cd9  931.5G   0%
+
+```
+
+In dit voorbeeld willen we een extra schijf mounten die net als ext4 is geformatteerd. We weten dat het een schijf van 1TB is en dat er nog niets op staat. Daaruit kunnen we afleiden dat de te mounten partitie `nvme1n1p1` is, met de UUID `4e55896f-3f1f-4bc5-aa8a-fec099689cd9`.
+
+### 2. Je partitie identificeren
+
+Vaak geeft `lsblk -f` je op dit punt al alle informatie die je nodig hebt om je schijf met systemd te mounten. Als je nog niet zeker weet welke partitie de juiste is, kun je het volgende commando uitvoeren:
+
+```sh
+sudo fdisk -l
+```
+
+```sh title="Voorbeelduitvoer"
+Device          Start       End         Sectors     Size    Type
+/dev/nvme0n1p1  2048        206847      204800      100M    EFI System
+/dev/nvme0n1p2  206848      239615      32768       16M     Microsoft reserved
+/dev/nvme0n1p3  239616      2997384182  2997144567  1.4T    Microsoft basic data
+/dev/nvme0n1p4  2997385216  2999482367  2097152     1G      EFI System
+/dev/nvme0n1p5  2999482368  3905454079  905971712   432G    Linux root (x86-64)
+/dev/nvme0n1p6  3905454080  3907026943  1572864     768M    Windows recovery environment
+/dev/nvme1n1p1  2048        1953523711  1953521664  931.5G  Linux filesystem
+
+```
+
+In dit voorbeeld kennen we onze UUID al. `fdisk -l` kan het echter wat duidelijker maken door de exacte grootte van de partitie (931.5G) en het type (Linux filesystem) te tonen.
+
+Daarmee is overduidelijk dat de partitie die we willen `nvme1n1p1` is, met de UUID `4e55896f-3f1f-4bc5-aa8a-fec099689cd9`, zoals eerder beschreven. We wisten het al, maar nu weten we het zeker.
+
+Zodra je zeker weet dat je de juiste partitie hebt gevonden, kopieer je de UUID. Kopiëren uit de terminalemulator gaat meestal met `ctrl+shift+C`.
+
+### 3. Het systemd-mountbestand aanmaken
+Stel dat we deze schijf vooral voor games willen gebruiken; een goede plek om die te mounten is dan in je homedirectory. Het kan overal zijn waar je wilt, maar voor de eenvoud kiezen we voor /home/user (vervang user door je Linux-gebruikersnaam). Dit is belangrijk, omdat het mountpad de naam van het systemd-mountbestand bepaalt. Omdat deze schijf bedoeld is voor games, mounten we hem op de map games in de homedirectory, `/home/user/games`.
+
+Voor een systemd-mountbestand wordt dat home-$USER-games.mount (schuine strepen `/` worden vervangen door koppeltekens `-`), en systemd-mountbestanden horen in /etc/systemd/system.
+
+:::tip
+Als je een spatie, een koppelteken, een CJK-teken of een teken met een accent in de naam van je mountmap wilt gebruiken, moet het anders worden opgemaakt. Stel dat je het mappad `/home/grzegorz/brzęczyszczykiewicz` wilt gebruiken; voer dan het volgende commando uit om de naam te krijgen die je voor je bestand moet gebruiken:
+```bash
+systemd-escape -p --suffix=mount "/home/grzegorz/brzęczyszczykiewicz"
+```
+Omdat je elke `\` moet escapen, maak je het mountbestand aan als `/etc/systemd/system/home-grzegorz-brz\\xc4\\x99czyszczykiewicz.mount`
+:::
+
+Gebruik gerust de teksteditor van je keuze; in dit voorbeeld gebruiken we `micro`.
+
+```sh
+micro /etc/systemd/system/home-$USER-games.mount
+```
+:::note
+Als je in je homedirectory mount, kun je de bovenstaande $USER in de bestandsnaam laten staan; je gebruikersnaam wordt dan automatisch ingevuld.
+:::
+
+Plak dit sjabloon in het lege bestand:
+```ini
+[Unit]
+Description=
+
+[Mount]
+What=
+Where=
+Type=
+Options=
+
+[Install]
+WantedBy=multi-user.target
+```
+Hieronder staan beschrijvingen van elk veld in het bestand:
+
+<Tabs>
+  <TabItem label='Description'>
+  Description kan alles zijn wat je wilt; het is bedoeld om het zelf te herkennen.
+  </TabItem>
+  <TabItem label= 'What'>
+  Vul de UUID in die je eerder hebt gekopieerd. Hier is dat `UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9`
+  </TabItem>
+  <TabItem label= 'Where'>
+  Dit is het mountpoint. Er wordt een map aangemaakt als die nog niet bestaat. Hier is dat `/home/user/games`. Vervang "user" door je gebruikersnaam als je in je homemap mount.
+  </TabItem>
+  <TabItem label= 'Type'>
+  Type bestandssysteem; hier is dat `ext4`
+  </TabItem>
+  <TabItem label= 'Options'>
+  Alle mountopties die je wilt. Hier gebruiken we `defaults,exec,rw,noatime`. Het is belangrijk dat er geen spaties in staan.
+  </TabItem>
+</Tabs>
+---
+
+Volgens het voorbeeld ziet het ingevulde mountbestand er zo uit:
+```ini
+[Unit]
+Description=Mount games drive (/home/user/games)
+
+[Mount]
+What=UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9
+Where=/home/user/games
+Type=ext4
+Options=defaults,exec,rw,noatime
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 4. Afronden
+Om de schijf te mounten waarvoor we zojuist een item hebben aangemaakt, voer je het volgende uit:
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now home-$USER-games.mount
+```
+
+Je zou nu de map moeten zien die je als mountpoint hebt gekozen, en je kunt de status van de mount controleren met `systemctl status home-$USER-games.mount`:
+
+```sh
+● home-user-games.mount - Mount games drive (/home/user/games)
+     Loaded: loaded (/proc/self/mountinfo; enabled; preset: disabled)
+     Active: active (mounted) since Sat 2026-05-02 13:02:31 CDT; 23h ago
+ Invocation: e52ef8fe3d754c64a3825bc1ee89e7da
+      Where: /home/user/games
+       What: /dev/nvme1n1p1
+      Tasks: 0 (limit: 74118)
+     Memory: 316K (peak: 3.9M)
+        CPU: 5ms
+     CGroup: /system.slice/home-user-games.mount
+
+May 02 13:02:31 cachyos systemd[1]: Mounting Mount games drive (/home/user/games)...
+May 02 13:02:31 cachyos systemd[1]: Mounted Mount games drive (/home/user/games).
+```
+
+### tl;dr
+
+- Zoek de **UUID** van je partitie
+
+```sh
+lsblk -f
+```
+
+- Maak het mountbestand aan
+
+```sh
+micro /etc/systemd/system/mnt-foo.mount
+```
+
+Vervang `mnt-foo` door het volledige pad waar je wilt mounten, waarbij je de `/` vervangt door `-`.
+
+- Vul het mountbestand in
+
+```sh
+[Unit]
+Description=Mount drive
+
+[Mount]
+What=UUID=<partition UUID>
+Where=/mnt/foo
+Type=somefs
+Options=defaults
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Vervang `<partition UUID>`, `/mnt/foo` en `somefs` door je UUID, map en bestandssysteem (bijv. ext4), en stel eventuele andere opties in die je wilt na defaults, zoals `_netdev` voor een NAS of `nofail` voor een niet-kritieke schijf.
+
+- Herlaad de daemon
+
+```sh
+sudo systemctl daemon-reload
+```
+
+- Mount je schijf en stel in dat deze bij het opstarten wordt gemount
+
+```sh
+sudo systemctl enable --now mnt-foo.mount
+```
+
+### Meer lezen
+
+- [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS over /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Handleiding voor dump](<https://linux.die.net/man/8/dump>)
+- [Handleiding voor fsck](https://man.archlinux.org/man/fsck.8)
+- [systemd-mount](https://manual.siduction.org/systemd-mount_en.html)
+
+## Geavanceerde methode: items toevoegen aan /etc/fstab
+
+:::danger
+Het fstab-bestand wordt tijdens het opstarten gelezen, en als er een fout in het bestand staat, kan je systeem daardoor niet meer opstarten. Controleer je item zorgvuldig op typfouten voordat je opnieuw opstart. Als je toch een fout maakt, kun je die meestal herstellen door op te starten in een live-omgeving en [een chroot naar je installatie uit te voeren](/nl/features/cachy_chroot) om het bestand te bewerken.
+:::
+
+### 1. De UUID's van je partities weergeven
+
+```sh title="Open een terminal en voer het volgende commando uit"
+lsblk -f
+```
+
+```sh title="Voorbeelduitvoer"
+NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+zram0                                                                              [SWAP]
+nvme0n1
+├─nvme0n1p1 vfat   FAT32       E04D-9F05
+├─nvme0n1p2
+├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
+├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
+├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
+└─nvme0n1p6 ntfs
+```
+
+In ons voorbeeld weten we dat we een Windows-partitie willen mounten, die ntfs is. We weten ook dat ongeveer de helft van de ruimte beschikbaar is. Daaruit kunnen we afleiden dat de partitie die we willen mounten `nvme0n1p3` is, met de UUID `08A24E90A24E81E4` en in dit voorbeeld het bestandssysteem `ntfs`.
+
+### 2. Je partitie identificeren
+
+Vaak geeft `lsblk -f` je op dit punt al alle informatie die je nodig hebt om je schijf via /etc/fstab te mounten. Als je nog niet zeker weet welke partitie de juiste is, kun je het volgende commando uitvoeren:
+
+```sh
+sudo fdisk -l
+```
+
+```sh title="Voorbeelduitvoer"
+Device              Start        End    Sectors  Size Type
+/dev/nvme0n1p1       2048     206847     204800  100M EFI System
+/dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
+/dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
+/dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
+/dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
+/dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
+```
+
+In dit voorbeeld kennen we onze UUID al. `fdisk -l` kan het echter wat duidelijker maken door de exacte grootte van de partitie (1.4T) en het type (Microsoft basic data) te tonen.
+
+Daarmee is overduidelijk dat de partitie die we willen `nvme0n1p3` is, met de UUID `08A24E90A24E81E4`, zoals eerder beschreven. We wisten het al, maar nu weten we het zeker.
+
+Zodra je zeker weet dat je de juiste partitie hebt gevonden, kopieer je de UUID. Kopiëren uit de terminalemulator gaat meestal met `ctrl+shift+C`.
+
+### 3. Een item toevoegen aan /etc/fstab
+
+Nu we de UUID van onze partitie hebben, is het tijd om het fstab-bestand te openen.
+
+Gebruik gerust de teksteditor van je keuze. In dit voorbeeld gebruiken we nano. Om het fstab-bestand te bewerken, moet het als root worden geopend:
+
+```sh
+sudo nano /etc/fstab
+```
+
+Navigeer met de pijltjestoetsen naar het einde van het fstab-bestand en maak ons nieuwe item aan op een lege nieuwe regel:
+
+```sh
+UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000 0 0
+```
+
+:::note
+`/media/windows` moet op je bestandssysteem bestaan. Gebruik `mkdir` om de map aan te maken als die niet bestaat.
+:::
+
+Dit item is als volgt opgebouwd:
+
+- `UUID=08A24E90A24E81E4` is het bestandssysteem dat we willen mounten, aangeduid met de UUID. Er zijn andere methoden om je bestandssysteem aan te duiden, maar UUID is meestal het veiligst. Andere methoden staan [hier](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems).
+
+- `/media/windows` is het mountpoint van onze schijf. De [Linux Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html) zegt dat `/media/` de juiste locatie is om verwisselbare schijven te mounten. `windows` geeft de map aan waarop we onze schijf willen mounten. Elke schijf die we willen mounten, heeft een eigen map nodig.
+
+- `ntfs3` is het type bestandssysteem dat moet worden gebruikt. In ons voorbeeld gebruiken we expliciet het ntfs3-kernelstuurprogramma. Andere voorbeelden zijn `ext4`, `xfs` of iets vergelijkbaars. Deze expliciete opgave van het bestandssysteemtype kan worden vervangen door `auto`, zodat het mount-commando zelf een zo goed mogelijke inschatting maakt.
+
+- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000`: Dit zijn mountopties:
+
+  - `defaults`: een standaardset opties, waaronder `rw, suid, dev, exec, auto, nouser, and async.`
+
+  - `nofail`: laat het opstartproces doorgaan, zelfs als deze mount mislukt.
+
+  - `uid=1000` en `gid=1000`: stelt de gebruiker en groep die eigenaar zijn van de gemounte bestanden in op de gebruiker en groep met ID 1000.
+
+  - `rw`: mount het bestandssysteem met lees- en schrijfrechten.
+
+  - `user`: staat een gebruiker die geen root is toe het bestandssysteem te mounten.
+
+  - `exec`: staat het uitvoeren van binaries op het gemounte bestandssysteem toe.
+
+  - `umask=000`: stelt het masker voor bestandsrechten zo in dat iedereen lees-, schrijf- en uitvoerrechten heeft.
+
+  - `de eerste 0` (dump) is op moderne systemen meestal verouderd. Dit op 0 laten kan geen kwaad. Je kunt er [hier](https://linux.die.net/man/8/dump) meer over lezen.
+
+  - `de tweede 0` bepaalt de volgorde van bestandssysteemcontroles bij het opstarten. Voor een rootpartitie moet dit 1 zijn, tenzij je root-bestandssysteem btrfs is; dan moet het op 0 staan. Alle andere bestandssystemen in je fstab moeten op 0 (uitgeschakeld) of 2 staan. Meer informatie [hier](https://man.archlinux.org/man/fsck.8).
+
+Voor een meer diepgaande uitleg van elke optie, bekijk deze twee pagina's: de [man-pagina van fstab](https://man7.org/linux/man-pages/man5/fstab.5.html) en de [man-pagina van mount](https://man7.org/linux/man-pages/man8/mount.8.html)
+
+#### Meer informatie
+
+Ter zijde: alle opties na de opgave van het bestandssysteemtype zijn optioneel als je ze niet wijzigt ten opzichte van de standaard.
+
+Dus
+
+`UUID=<partition UUID> /media/foo somefs`
+
+en
+
+`UUID=<partition UUID> /media/foo somefs defaults 0 0`
+
+zijn gelijkwaardig. `somefs` zonder iets erachter is impliciet `somefs defaults 0 0`
+
+### 4. Afronden
+
+Als je de schijf waarvoor je een item hebt aangemaakt nu wilt mounten, moet je het volgende uitvoeren:
+
+```sh
+sudo systemctl daemon-reload
+```
+
+en daarna:
+
+```sh
+sudo mount -a
+```
+
+Je schijf zou nu onder `/media/windows` moeten verschijnen en zal daar na elke herstart verschijnen.
+
+```sh
+ls /media/windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+# 'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
+ ```
+
+ Als je in je homedirectory een link naar je nieuw gemounte schijf wilt maken, kun je het volgende uitvoeren:
+
+ ```sh
+ ln -s /media/windows ~/Windows
+ ```
+
+ Om te laten zien dat het werkte:
+
+ ```sh
+ ls ~/Windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+#'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
+ ```
+
+### tl;dr
+
+- Zoek de **UUID** van je partitie
+
+```sh
+lsblk -f
+```
+
+- Open `/etc/fstab`
+
+```sh
+sudo nano /etc/fstab
+```
+
+- Maak een item aan onderaan het bestand
+
+```sh
+UUID=<partition UUID> /media/foo somefs defaults 0 0
+```
+
+Vervang `<partition UUID>`, `foo` en `somefs` door je UUID, map en bestandssysteem (bijv. ext4), en stel eventuele andere opties in die je wilt na defaults, zoals `_netdev` voor een NAS of `nofail` voor een niet-kritieke schijf.
+
+- Herlaad de daemon
+
+```sh
+sudo systemctl daemon-reload
+```
+
+- Mount je schijf
+
+```sh
+sudo mount -a
+```
+
+Deze schijf is nu gemount en wordt voortaan ook bij het opstarten gemount.
+
+### Meer lezen
+
+- [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS over /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Handleiding voor dump](<https://linux.die.net/man/8/dump>)
+- [Handleiding voor fsck](https://man.archlinux.org/man/fsck.8)
+- [Man-pagina van fstab](https://man.archlinux.org/man/fstab.5.en)
+- [Arch Linux Wiki-artikel over fstab](https://wiki.archlinux.org/title/Fstab)

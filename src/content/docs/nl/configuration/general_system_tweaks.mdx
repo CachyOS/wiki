@@ -1,0 +1,496 @@
+---
+title: Algemene systeemtweaks
+description: Dingen die je na de installatie kunt aanpassen
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
+---
+
+import { Tabs, TabItem, Steps, LinkButton, Icon } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+## Prestatietweaks voor AMD
+
+### AMD P-State-stuurprogramma
+---------------------------
+
+`amd-pstate` is het stuurprogramma voor prestatieschaling van AMD-CPU's dat een nieuw mechanisme voor CPU-frequentieregeling introduceert op moderne AMD-APU- en CPU-series in de Linux-kernel. Het nieuwe mechanisme is gebaseerd op Collaborative Processor Performance Control (CPPC), dat een fijnmaziger frequentiebeheer biedt dan de oudere ACPI-hardware-P-States.
+
+Huidige AMD-CPU/APU-platforms gebruiken het ACPI P-states-stuurprogramma om de CPU-frequentie en klokken te beheren, waarbij maar tussen 3 P-states wordt gewisseld. CPPC vervangt de ACPI P-states-besturing en biedt een flexibele interface met lage latentie waarmee de Linux-kernel prestatiehints rechtstreeks aan de hardware kan doorgeven.
+
+Hieronder staan de 3 werkingsmodi van het stuurprogramma `amd_pstate` en de bijbehorende kernel-cmdline-items om ze bij het opstarten te gebruiken:
+
+- AMD P-State (Non-Autonomous Mode): `amd_pstate=passive`
+- AMD P-State Guided (Guided Autonomous Mode): `amd_pstate=guided`
+- AMD P-State EPP (Autonomous Mode): `amd_pstate=active`
+
+:::note
+Het AMD P-State EPP-stuurprogramma wordt standaard gebruikt als er geen expliciete configuratie is ingesteld.
+:::
+
+Je kunt ook tijdens runtime tussen werkingsmodi wisselen om de opties te testen:
+
+- **Autonome modus**: het platform houdt alleen rekening met de waarden die zijn ingesteld voor Minimum performance, Maximum performance en Energy Performance Preference.
+   ```sh
+   echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+- **Begeleid autonome modus**: het platform stelt het prestatieniveau in op basis van de huidige workload en binnen de grenzen die het besturingssysteem via de registers voor minimale en maximale prestaties instelt.
+   ```sh
+   echo guided | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+- **Niet-autonome modus**: het platform krijgt het gewenste prestatieniveau rechtstreeks van het besturingssysteem via het Desired Performance Register.
+   ```sh
+   echo passive | sudo tee /sys/devices/system/cpu/amd_pstate/status
+   ```
+
+Voor meer diepgaande informatie:
+
+<LinkButton icon="external" href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html">Documentatie van AMD P-State</LinkButton>
+<LinkButton icon="external" href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html#amd-pstate-driver-operation-modes">Werkingsmodi van het AMD P-State-stuurprogramma</LinkButton>
+<LinkButton icon="external" href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html#user-space-interface-in-sysfs-per-policy-control">Userspace-interface van AMD P-State</LinkButton>
+
+### AMD P-State EPP configureren
+
+Voor het gebruik van P-State EPP zijn er twee governors voor CPU-frequentieschaling beschikbaar: `powersave` en `performance`. Het wordt aanbevolen de powersave-governor te gebruiken en een voorkeur in te stellen.
+
+*   Powersave-governor instellen: `sudo cpupower frequency-set -g powersave`
+*   Performance-governor instellen: `sudo cpupower frequency-set -g performance`
+
+Om een voorkeur in te stellen, voer je het volgende commando uit met de gewenste voorkeur:
+
+```sh
+echo power | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
+```
+
+Beschikbare voorkeuren: `performance`, `power`, `balance_power`, `balance_performance`
+
+<LinkButton icon="external" href="https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/">Officiële benchmark voor elke voorkeur</LinkButton>
+
+### AMD 3D V-Cache Optimizer
+
+AMD heeft een patch gepubliceerd om de cache-scheduling te optimaliseren op 3D-CPU's met twee CCD's, zoals de 7950X3D en 7900X3D.
+Je moet in het BIOS bij de CPPC-optie de optie "Driver" instellen. Daarmee kun je de gebruikte modus via sysfs overschrijven.
+
+Er zijn twee modi:
+
+1. Frequency
+2. Cache
+
+Als `cache` is ingesteld, probeert het stuurprogramma taken eerst op de CCD met de grotere cache te plaatsen; dit is vooral voordelig bij games.
+De optie `frequency` probeert taken op de tweede CCD te plaatsen, die een hogere frequentie heeft dan de CCD met 3D-cache.
+
+Frequency (standaard):
+```sh
+echo frequency | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
+```
+
+Cache:
+```sh
+echo cache | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
+```
+
+Nadat je de modus hebt gewijzigd, zouden de statistieken van AMD preferred core een andere rangschikking moeten geven. Je kunt die uitlezen met:
+```sh
+grep -v /sys/devices/system/cpu/cpu*/cpufreq/amd_pstate_prefcore_ranking
+```
+
+### AMD P-State Core Performance Boost
+
+AMD Core Performance Boost, ook wel AMD Turbo Core, is een technologie van AMD voor dynamische frequentieschaling waarmee de
+processor bij bepaalde versies van zijn processors de werkfrequentie dynamisch kan aanpassen en regelen.
+Dit zorgt voor hogere prestaties wanneer nodig, terwijl het stroomverbruik en de temperatuur bij normaal gebruik laag blijven.
+
+Om AMD CPB op CachyOS te beheren, kun je de volgende commando's gebruiken:
+
+```sh
+❯ echo 0 | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/boost # Boost uitschakelen voor alle cores
+❯ lscpu -ae # Dit laat zien dat AMD CPB globaal is uitgeschakeld
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
+  0    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1212.8250
+  1    0      0    0 0:0:0:0          yes 3301.0000 400.0000 1394.2180
+  2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 1204.4600
+
+❯ echo 1 | sudo tee /sys/devices/system/cpu/cpu0/cpufreq/boost # Schakelt boost in op cpu0
+❯ lscpu -ae
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
+  0    0      0    0 0:0:0:0          yes 4564.0000 400.0000 1393.2380
+  1    0      0    0 0:0:0:0          yes 3301.0000 400.0000  400.0000
+  2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 2157.8469
+```
+
+CachyOS levert ook een versie van `power-profiles-daemon` met een gebackporte commit die
+ondersteuning voor AMD CPB inschakelt. AMD CPB wordt uitgeschakeld als het profiel `powersave` wordt gebruikt, en ingeschakeld bij `balanced` of `performance`.
+
+Zie voor meer informatie:
+- https://lore.kernel.org/linux-pm/1a78eeaa-fadd-4734-aaeb-2fe11e96e198@amd.com/T/#m4a0c8917ea8fb033504055bd61512c80c85410c8
+- https://lore.kernel.org/linux-pm/20240624213400.67773-1-mario.limonciello@amd.com/
+
+## Prestatieverbeteringen
+
+### [ADIOS I/O Scheduler](https://github.com/firelzrd/adios)
+
+Gemaakt door [firelzrd](https://github.com/firelzrd)
+
+:::note
+CachyOS bevat de stabiele tak van ADIOS in de kernel.
+
+Huidige versie in **linux-cachyos**: `3.2.0`
+
+Huidige versie in **linux-cachyos-rc**: `3.2.0`
+:::
+
+Korte introductie uit de README:
+
+- *ADIOS (Adaptive Deadline I/O Scheduler) is een I/O-scheduler voor de block layer van de Linux-kernel, ontworpen voor moderne multi-queue blokapparaten (blk-mq). Het doel is een lage latentie voor I/O-bewerkingen te bieden door principes van deadline-scheduling te combineren met een lerend, adaptief mechanisme voor latentieregeling.*
+  - *Geïnspireerd door en voortbouwend op concepten uit de I/O-schedulers mq-deadline en Kyber. De kernfunctie is het vermogen om de voltooiingslatentie van I/O te voorspellen op basis van eerdere prestaties en kenmerken van verzoeken (type bewerking, grootte), en deze voorspelling te gebruiken om de deadlines en het batchgedrag van verzoeken dynamisch aan te passen.*
+
+TLDR: ADIOS leert het latentieprofiel van je opslagapparaat en gebruikt die kennis om dynamisch deadlines voor I/O-verzoeken in te stellen. Het verdeelt verzoeken in vier prioriteitsniveaus, van kritieke systeembewerkingen (Tier 0) tot achtergrondtaken (Tier 3), om een soepele gebruikerservaring te garanderen. Hoewel het zich richt op responsiviteit, kan het gedrag via sysfs-instellingen worden bijgesteld om een balans te vinden tussen latentie en doorvoer.
+
+Voor een live demo kun je deze [video](https://www.youtube.com/watch?v=L9WDcEeHgy4) bekijken
+
+#### ADIOS inschakelen
+
+<Tabs>
+    <TabItem label='Tijdelijk (direct tijdens runtime van kracht)'>
+        Deze methode stelt de scheduler in voor de huidige sessie. De wijziging gaat verloren bij een herstart.
+        ```sh
+        sync && echo adios | sudo tee /sys/block/<yourdrive>/queue/scheduler
+            # Vervang <yourdrive> door de werkelijke aanduiding van de schijf (bijv. sda, sdb, nvme0n1)
+        ```
+    </TabItem>
+    <TabItem label='Blijvend na herstart'>
+        <Steps>
+            1. Open of maak een nieuw bestand met udev-regels in je favoriete teksteditor (bijv. nano, micro, vim)
+                ```sh title='Voorbeeld'
+                sudo nano /etc/udev/rules.d/60-ioschedulers.rules
+                ```
+            2. Voeg de volgende regels toe aan het bestand. Deze regels passen automatisch een specifieke I/O-scheduler toe op basis van het type schijf (HDD, SSD of NVMe).
+                ```text
+                # HDD
+                ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", \
+                    ATTR{queue/scheduler}="bfq"
+
+                # SSD
+                ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="adios"
+
+                # NVMe SSD
+                ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="adios"
+                ```
+              3.  Sla het bestand op en sluit de editor.
+              4.  Herlaad de `udev`-regels om de wijzigingen direct toe te passen zonder herstart.
+                  ```sh
+                  sudo udevadm control --reload-rules
+                  sudo udevadm trigger
+                  ```
+        </Steps>
+    </TabItem>
+</Tabs>
+
+FAQ:
+
+- Als het de responsiviteit verbetert, waarom is het dan niet standaard ingeschakeld?
+  - ADIOS wordt nog actief ontwikkeld en voortdurend getest. Hoewel het aanzienlijke voordelen biedt voor de responsiviteit van het bureaublad, wordt het nog niet stabiel genoeg geacht om de standaard te zijn voor alle workloads en hardwaretypes. In sommige randgevallen kunnen bugs leiden tot problemen zoals een vastlopend systeem. Daarom is het een optionele functie voor gebruikers die de nieuwste verbeteringen willen testen en ervan willen profiteren.
+
+### NVIDIA Smooth Motion (RTX 40xx- & 50xx-serie)
+
+:::note[Compatibiliteit met games.]
+Games die draaien op DX11, DX12 en Vulkan. Zie de FAQ voor een workaround voor OpenGL.
+
+Zowel DXVK als VKD3D werken prima.
+
+**Alleen 64-bit-applicaties worden ondersteund. Smooth Motion werkt niet met 32-bit-applicaties (bijv. oude DX11-games).**
+
+:::
+
+Direct citaat uit de documentatie van NVIDIA:
+
+*NVIDIA Smooth Motion is een nieuw AI-model in het stuurprogramma dat voor soepelere gameplay zorgt door een extra frame tussen twee gerenderde frames af te leiden. Voor games zonder DLSS Frame Generation is NVIDIA Smooth Motion een nieuwe optie om je ervaring te verbeteren op GPU's uit de GeForce RTX 40-serie en nieuwer.*
+
+- NVIDIA Smooth Motion inschakelen voor een game:
+  - Voeg de volgende omgevingsvariabele toe:
+    ```text
+    NVPRESENT_ENABLE_SMOOTH_MOTION=1
+    ```
+
+FAQ:
+
+- Waarom Smooth Motion gebruiken in plaats van DLSS Frame Generation?
+  - Wanneer een game DLSS Frame Generation niet ondersteunt, dient Smooth Motion als alternatief dankzij het AI-model in het stuurprogramma.
+- Heeft het gebruik van Smooth Motion nadelen?
+  - Ja, het inschakelen van Smooth Motion kan een kleine invoervertraging veroorzaken door het extra proces van frame-inferentie.
+  - Kan problemen veroorzaken met overlays van derden. Voeg de volgende omgevingsvariabele toe om dit te voorkomen:
+    ```text
+    NVPRESENT_QUEUE_FAMILY=1
+    ```
+    :::note[Bij gebruik van deze variabele kan er een prestatie-impact merkbaar zijn.]
+    :::
+- Waarom toont MangoHud de hogere framerate niet?
+  - MangoHud houdt momenteel geen rekening met de extra frames die Smooth Motion genereert, waardoor de getoonde framerate misleidend is.
+    - De ingebouwde FPS-teller van een monitor geeft de juiste framerate.
+- Hoe is de beeldkwaliteit in vergelijking met DLSS Frame Generation?
+  - De beeldkwaliteit is minder goed en kan artefacten veroorzaken, vooral bij snelle bewegingen.
+- Is het compatibel met externe hulpmiddelen om de framerate te begrenzen? Bijvoorbeeld: MangoHud.
+  - Nee. Een begrenzing in de game zelf zou prima moeten werken.
+- Kan Smooth Motion worden gecombineerd met DLSS Frame Generation?
+  - Nee. Er kan maar één methode voor framegeneratie tegelijk actief zijn.
+- Kan Smooth Motion worden gebruikt met OpenGL-applicaties?
+  - Niet direct, omdat het is geïmplementeerd als een Vulkan-laag, maar het is mogelijk door [Zink](https://docs.mesa3d.org/drivers/zink.html) te gebruiken om OpenGL-aanroepen naar Vulkan te vertalen:
+    ```text
+    NVPRESENT_ENABLE_SMOOTH_MOTION=1 zink-run <command>
+    ```
+    :::note
+    Het gebruik van Zink heeft waarschijnlijk invloed op de prestaties en kan in sommige games grafische fouten veroorzaken.
+
+    Gebruikers met twee GPU's moeten `DRI_PRIME=1` instellen om de Nvidia-dGPU te gebruiken, in plaats van de gebruikelijkere methoden voor GPU-selectie.
+    :::
+
+## Tweaks voor energiebesparing
+
+### thermald
+
+`thermald` is een daemon voor thermisch beheer op Intel-systemen. Het bewaakt temperatuursensoren en voert koelmaatregelen uit, zoals vermogenslimieten voor de CPU of wijzigingen in de prestatiestatus, voordat de firmware agressievere throttling moet toepassen.
+
+Het is vooral nuttig op Intel-laptops, convertibles, tablets, handhelds en compacte pc's die Intel-temperatuurregelingen beschikbaar maken via `/sys/class/thermal`. Ondersteunde systemen gebruiken meestal Intel-CPU-temperatuursensoren, Intel P-state, Intel power clamp, RAPL, `INT340X` of ACPI DPTF/adaptieve thermische tabellen. AMD-CPU's worden niet ondersteund door `thermald`.
+
+Installeer en schakel het in met:
+
+```sh
+sudo pacman -S thermald
+sudo systemctl enable --now thermald.service
+```
+
+Controleer of het correct is gestart:
+
+```sh
+systemctl status thermald.service
+journalctl -u thermald.service -b
+```
+
+Voor meer informatie:
+
+<LinkButton icon="external" href="https://github.com/intel/thermal_daemon">Upstream-repository van thermald</LinkButton>
+<LinkButton icon="external" href="https://man.archlinux.org/man/thermald.8">Handleidingpagina van thermald</LinkButton>
+
+### RCU Lazy inschakelen
+
+RCU Lazy helpt het stroomverbruik te verminderen bij systemen die inactief zijn of licht worden belast. Dit kan nuttig zijn voor laptops en handheld-apparaten.
+De verbetering ligt tussen de 5-10% aan energiebesparing. Het is echter belangrijk te weten dat deze energiebesparende functie, afhankelijk van het scenario, ten koste kan gaan van iets lagere prestaties.
+De kernel linux-cachyos-deckify heeft deze optie standaard ingeschakeld, omdat energiebesparing voor deze apparaten essentieel en noodzakelijk is.
+
+Om RCU Lazy in te schakelen, voeg je de volgende parameter toe aan de lijst met [cmdline](/nl/configuration/boot_manager_configuration/)-parameters van je kernel:
+```text
+rcutree.enable_rcu_lazy=1
+```
+
+## Probleemoplossing voor NVIDIA
+
+### NVIDIA GSP-firmware
+
+De NVIDIA GSP-firmware kan **"in sommige gevallen"** tot lagere prestaties leiden. Hoewel het NVIDIA-stuurprogramma 555.58.02 dit probleem grotendeels heeft opgelost, kan het op bepaalde systemen blijven bestaan.
+Als je haperingen in KDE of in sommige gevallen slechte prestaties ervaart, kun je de GSP-firmware uitschakelen met het volgende configuratiebestand:
+`/etc/modprobe.d/nvidia-gsp.conf`
+
+```text
+options nvidia NVreg_EnableGpuFirmware=0
+```
+
+Voer na het aanmaken van het bestand het volgende commando uit:
+```sh
+sudo mkinitcpio -P
+```
+
+:::note
+De [open kernelmodules](https://github.com/NVIDIA/open-gpu-kernel-modules) van NVIDIA zijn gebaseerd op GSP-firmware. Daarom kan GSP niet worden uitgeschakeld en wordt deze modprobe-optie genegeerd wanneer je ze gebruikt. Gebruik `linux-cachyos-nvidia` of `nvidia-dkms`.
+:::
+
+Het wordt over het algemeen aanbevolen om de GSP-firmware na elke nieuwe installatie van het NVIDIA-stuurprogramma te testen, omdat deze vaak nuttige functies introduceert. Bovendien is NVIDIA zijn QA-tests voornamelijk met de GSP-firmware gaan uitvoeren.
+
+## Verbeteringen voor audio en software
+
+### Het geluid van laptopluidsprekers verbeteren
+
+Laptopluidsprekers produceren vaak een dun en tegenvallend geluid vanwege hun compacte formaat en beperkte hardware. [EasyEffects](https://wiki.archlinux.org/title/PipeWire#EasyEffects) kan de geluidskwaliteit van de ingebouwde luidsprekers van je laptop aanzienlijk verbeteren door verschillende audio-effecten en aangepaste configuraties toe te passen.
+
+Om te beginnen moet je EasyEffects en de benodigde afhankelijkheden installeren:
+
+```bash
+# EasyEffects installeren
+sudo pacman -S easyeffects
+# Extra plugins installeren voor meer effecten
+sudo pacman -S lsp-plugins-lv2
+sudo pacman -S zam-plugins
+sudo pacman -S calf
+sudo pacman -S mda.lv2
+```
+
+#### Configuration
+
+Volg deze stappen om EasyEffects te configureren:
+
+1. Start EasyEffects vanuit je applicatiemenu of door `easyeffects` in de terminal te typen.
+2. Ga naar het tabblad **Output** om de effecten te beheren die op het geluid van je luidsprekers worden toegepast.
+3. Ga naar het tabblad **Effects** om audio-effecten toe te voegen, te wijzigen of aan te passen.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects.png')} />
+
+##### Communitypresets gebruiken
+
+Voor een snelle en effectieve configuratie begin je met **presets die door de community zijn gemaakt** en zijn afgestemd op verschillende audioscenario's:
+
+1. Download presets uit de repository [EasyEffects Community Presets](https://github.com/wwmm/easyeffects/wiki/Community-presets).
+2. Klik in EasyEffects op de knop **Presets** en kies **"Import preset from local storage"**.
+3. Zoek en selecteer het gedownloade presetbestand.
+4. Na het importeren verschijnt de preset in je lijst. Klik op **"Load"** om deze op je audio-uitvoer toe te passen.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects-presets.png')} />
+
+##### Een eigen profiel maken
+
+Voor een meer persoonlijke audio-ervaring maak je een eigen profiel dat is afgestemd op de luidsprekers van je laptop:
+
+1. Klik op de knop **"+"** in het menu Presets om een nieuwe preset te maken (noem deze bijv. **"Laptop Speakers"**).
+2. Selecteer **"Load"** om de nieuwe preset te activeren.
+3. Voeg effecten toe en configureer ze in het tabblad **Output** > **Effects**, en experimenteer met opties zoals equalizers, basversterkers of stereoverbreders.
+
+##### Het Convolver-effect gebruiken (laptops met Dolby Atmos)
+
+Het **Convolver-effect** kan het geluid drastisch verbeteren door impulsresponsen toe te passen die hoogwaardige audio-omgevingen simuleren. Het vereist echter een nauwkeurige configuratie:
+
+1. Voeg het effect **Convolver** toe aan je effectketen in het tabblad **Effects**.
+2. Laad een impulsresponsbestand (in `.wav`-formaat) dat specifiek is voor jouw laptopmodel, als dat beschikbaar is. Je kunt online naar deze bestanden zoeken op bronnen zoals:
+   - https://wiki.archlinux.org/title/Lenovo_ThinkPad_T14_(AMD)_Gen_4#Speakers
+   - https://github.com/m4tx/thinkpad-p14s-g4-linux/#sound
+   - https://github.com/shuhaowu/linux-thinkpad-speaker-improvements/
+3. **Voorkom clipping**: Het Convolver-effect kan het volume aanzienlijk verhogen. Voeg na de Convolver een **Limiter**-effect toe aan je effectketen om pieken te beheersen en vervorming te voorkomen.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects-convolver.png')} />
+
+#### Tips voor optimale resultaten
+
+- **Experimenteer** met verschillende presets om te bepalen wat het best past bij jouw specifieke laptopmodel en persoonlijke geluidsvoorkeuren.
+- **Pas effecten stapsgewijs aan** om vervorming of onnatuurlijk geluid te voorkomen.
+- **Vergelijk door aan/uit te schakelen**: Schakel EasyEffects regelmatig **aan/uit** om de verbeteringen te vergelijken met het standaardgeluid.
+- Zoek naar **apparaatspecifieke presets of Convolver-impulsresponsen** voor populaire laptopmodellen zoals de **Framework Laptop 13** of **ThinkPad T14** voor resultaten op maat.
+- **Automatisch starten**: Stel in de voorkeuren van de app in dat EasyEffects automatisch start bij het opstarten, zodat je eigen profiel altijd wordt toegepast.
+- **Presets automatisch laden voor meerdere apparaten**: Gebruik het tabblad **PipeWire** > **Presets Autoloading** om specifieke presets aan verschillende uitvoerapparaten te koppelen (bijv. luidsprekers vs. koptelefoon), zodat je naadloos kunt wisselen. <ImageComponent imgsrc={import('~/assets/images/easyeffects-autoloading.png')} />
+
+#### Alternatief voor EasyEffects
+
+Als alternatief kun je [JDSP4Linux](https://github.com/Audio4Linux/JDSP4Linux) proberen; dit is een processor voor audio-effecten voor PipeWire- en PulseAudio-clients.
+
+### OBS Studio
+
+We bieden in onze repository een aangepast pakket obs-studio-browser aan dat wordt aanbevolen boven het standaardpakket `obs-studio`. Het bevat patches die enkele veelvoorkomende problemen verhelpen, zoals cuda-fouten en problemen met de virtuele camera.
+
+```sh title='Open een terminal en voer het volgende commando uit'
+sudo pacman -S obs-studio-browser
+# Als je eerder obs-studio had geïnstalleerd, vraagt pacman of je het
+# wilt vervangen; typ in dat geval "Y".
+```
+
+## Swapconfiguratie
+
+### Overstappen van ZRam naar Zswap
+
+Standaard gebruikt CachyOS ZRam voor swapbeheer. Als je liever Zswap gebruikt, kun je eenvoudig overstappen door deze stappen te volgen:
+
+:::note
+Deze handleiding gaat ervan uit dat je de standaardopstelling van CachyOS hebt, met ZRam ingeschakeld, en dat er tijdens de installatie geen swappartitie of -bestand is aangemaakt.
+:::
+
+<Steps>
+    1. Schakel ZRam uit door een kernelparameter toe te voegen. [Bewerk de configuratie van je bootloader](/nl/configuration/boot_manager_configuration) en voeg de volgende regel toe:
+        ```text
+        systemd.zram=0
+        ```
+    2. Schakel Zswap in door de volgende kernelparameter toe te voegen:
+        ```text
+        zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=30
+        ```
+    3. Maak een leeg override-bestand aan om [de udev-regel van CachyOS](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/30-zram.rules) uit te schakelen, die Zswap uitschakelt:
+        ```bash
+        sudo touch /etc/udev/rules.d/30-zram.rules
+        ```
+    4. Maak een swapbestand aan voor Zswap.
+        <details>
+            <summary>Als je Btrfs gebruikt:</summary>
+                <Steps>
+                    1. Maak een Btrfs-subvolume aan voor het swapbestand:
+                        ```bash
+                        sudo btrfs subvolume create /swap
+                        ```
+                    2. Maak een swapbestand aan met de gewenste grootte (bijv. 8GB) door de parameter `--size` aan te passen:
+                        ```bash "--size"
+                        sudo btrfs filesystem mkswapfile --size 4g --uuid clear /swap/swapfile
+                        ```
+                    3. Activeer het swapbestand:
+                        ```bash
+                        sudo swapon /swap/swapfile
+                        ```
+                    4. Voeg het swapbestand toe aan `/etc/fstab` zodat het na een herstart behouden blijft:
+                        ```bash
+                        echo "/swap/swapfile none swap defaults 0 0" | sudo tee -a /etc/fstab
+                        ```
+                </Steps>
+        </details>
+        <details>
+            <summary>Als je geen Btrfs gebruikt:</summary>
+            <Steps>
+                1. Maak een swapbestand aan met de gewenste grootte (bijv. 8GB) door de parameter `count=` aan te passen:
+                    ```bash "count=8"
+                    sudo dd if=/dev/zero of=/swapfile bs=1G count=8
+                    ```
+                2. Stel de juiste rechten in voor het swapbestand:
+                    ```bash
+                    sudo chmod 0600 /swapfile
+                    ```
+                3. Formatteer het swapbestand:
+                    ```bash
+                    sudo mkswap /swapfile
+                    ```
+                4. Voeg het swapbestand toe aan `/etc/fstab` zodat het na een herstart behouden blijft:
+                    ```bash
+                    echo "/swapfile none swap defaults 0 0" | sudo tee -a /etc/fstab
+                    ```
+                5. Activeer het swapbestand:
+                    ```
+                    sudo swapon /swapfile
+                    ```
+            </Steps>
+        </details>
+    5. Voeg de lz4-compressiemodule toe aan het configuratiebestand `mkinitcpio.conf`:
+        1. Open het bestand met een teksteditor:
+            ```bash
+            sudo nano /etc/mkinitcpio.conf
+            ```
+        2. Zoek de array `MODULES` en voeg `lz4` toe. Het zou er ongeveer zo uit moeten zien:
+            ```text
+            MODULES=(... lz4)
+            ```
+        3. Sla het bestand op door op `Ctrl + O` en ter bevestiging op `Enter` te drukken, en sluit de editor af met `Ctrl + X`.
+    6. Bouw je initramfs opnieuw om de wijzigingen toe te passen. Het commando verschilt per bootloader:
+        <details>
+            <summary>systemd-boot</summary>
+            ```bash
+            sudo sdboot-manage gen
+            ```
+        </details>
+        <details>
+            <summary>GRUB</summary>
+            ```bash
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+        </details>
+        <details>
+            <summary>Limine</summary>
+            ```bash
+            sudo limine-mkinitcpio
+            ```
+        </details>
+    7. Start je systeem opnieuw op om alle wijzigingen toe te passen.
+</Steps>

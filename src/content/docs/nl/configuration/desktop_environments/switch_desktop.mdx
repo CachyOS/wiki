@@ -1,0 +1,121 @@
+---
+title: Een andere DE/WM installeren met CachyOS Settings
+description: Handleiding voor het installeren van een andere DE/WM in een bestaande CachyOS-installatie met behulp van de meegeleverde instellingen
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+## Waar je rekening mee moet houden voordat je een andere bureaubladomgeving installeert
+
+- Meerdere DE's/WM's tegelijk geïnstalleerd hebben kan tot conflicten leiden, vooral met instellingenbeheerders, standaardapplicaties en uiterlijkconfiguraties zoals thema's en iconen in GTK- of QT-apps.
+- De twee grootste boosdoeners als het gaat om conflicten zijn GNOME en KDE Plasma, omdat ze twee totaal verschillende toolkits gebruiken (respectievelijk GTK en QT) en veel achtergrondservices draaien die andere DE's/WM's kunnen verstoren.
+  - Dit betekent niet dat je ze niet samen geïnstalleerd kunt hebben; wees je er alleen van bewust dat je tegen problemen aan kunt lopen.
+- Pakketbloat: gangbare DE's zoals GNOME en KDE Plasma kunnen honderden pakketten meebrengen die je misschien niet nodig hebt of wilt.
+- Je kunt veel window managers zonder veel problemen combineren met verschillende DE's. Je kunt bijvoorbeeld KDE Plasma en Hyprland samen installeren en bij het inloggen kiezen welke je gebruikt.
+- De DE's/WM's die CachyOS aanbiedt, hebben elk hun eigen `-settings`-pakket. Bijvoorbeeld: `cachyos-i3wm-settings`
+  - Wat betekent dit? Als je een andere DE/WM wilt installeren en hetzelfde uiterlijk of dezelfde set wijzigingen wilt die wij leveren, moet je het bijbehorende `-settings`-pakket installeren.
+  - Deze pakketten plaatsen configuratiebestanden in `/etc/skel/`, dat dient als sjabloon voor nieuwe gebruikersaccounts.
+  - Belangrijk: voor bestaande gebruikers worden deze instellingen **NIET automatisch toegepast**, om te voorkomen dat je persoonlijke configuraties worden overschreven.
+
+## Een andere DE/WM installeren met CachyOS-instellingen
+
+:::note
+Je hebt twee keuzes bij het installeren van een andere DE of WM:
+1. **Je huidige configuratiebestanden behouden** en bestanden uit `/etc/skel` naar behoefte handmatig aanpassen of kopiëren.
+  - Bijvoorbeeld: als je alleen de configuratiebestanden van i3wm wilt maar je huidige GTK-thema wilt behouden, kun je alleen de i3wm-bestanden uit `/etc/skel/.config/i3` naar je homedirectory kopiëren.
+2. **Je huidige configuratiebestanden overschrijven** met de nieuwe uit `/etc/skel/`
+  - Dit geeft je de volledige CachyOS-ervaring, maar vervangt je huidige instellingen.
+:::
+
+:::tip
+Maak gebruik van de Arch Wiki voor de betreffende DE of WM voor meer diepgaande informatie.
+:::
+
+<Steps>
+1. Maak een back-up van je huidige configuratiebestanden in je homedirectory:
+    ```bash
+    mkdir -p ~/config-backup
+    cp -r ~/.config ~/config-backup/
+    cp -r ~/.local ~/config-backup/
+    ```
+2. Verwijder het huidige `-settings`-pakket als je er een hebt geïnstalleerd. Als je bijvoorbeeld KDE gebruikt, voer je uit:
+    ```bash
+    sudo pacman -R cachyos-kde-settings
+    ```
+    :::note
+    Het verwijderen van dit pakket verwijdert geen van je huidige DE/WM-configuraties. Het verwijdert alleen de bestanden die in `/etc/skel` staan
+    :::
+3. Installeer de nieuwe DE/WM samen met het bijbehorende `-settings`-pakket. Bijvoorbeeld om i3wm te installeren:
+    ```bash
+    sudo pacman -Syu i3-wm cachyos-i3wm-settings
+    ```
+    :::tip
+    Je kunt de lijst met beschikbare DE's/WM's en hun bijbehorende `-settings`-pakketten bekijken in de [CachyOS PKGBUILDs GitHub-repository](https://github.com/CachyOS/CachyOS-PKGBUILDS)
+    :::
+    Of met de bestandsbeheerder van je keuze.
+4. Kopieer de nieuwe configuratiebestanden uit `/etc/skel` naar je homedirectory:
+    - Bijvoorbeeld: het pakket `cachyos-i3wm-settings` bevat configuratie voor Kvantum, dunst, GTK, i3, polybar, QT5 en rofi.
+    - Zo doe je dit met een bestandsbeheerder:
+        <Steps>
+        1. Open je bestandsbeheerder (Dolphin, Nautilus, Thunar, enz.)
+        2. Schakel het weergeven van verborgen bestanden in:
+            - **De meeste bestandsbeheerders**: `Ctrl+H` of via een menu: `View` → `Show Hidden Files`
+        3. Navigeer in de bestandsbeheerder naar `/etc/skel`.
+        4. Selecteer alle bestanden en mappen (`Ctrl+A`)
+        5. Kopieer ze (`Ctrl+C`)
+        6. Navigeer naar je homedirectory
+        7. Plak de bestanden (`Ctrl+V`)
+        8. Als er wordt gevraagd of je wilt overschrijven, kies dan:
+            - **"Merge"** of **"Apply to All"** voor mappen
+            - **"Replace"** voor afzonderlijke bestanden die je wilt bijwerken
+            :::caution
+            Wees voorzichtig bij het vervangen van bestanden. Dit overschrijft je huidige configuraties!
+            :::
+        </Steps>
+        - Of gebruik gewoon een terminal als je daarmee bekend bent.
+</Steps>
+
+Log na het installeren van de nieuwe DE/WM en het kopiëren van de configuratiebestanden uit je huidige sessie. Selecteer op het inlogscherm de nieuw geïnstalleerde DE/WM in de sessie-opties voordat je weer inlogt.
+
+### FAQ
+
+#### Hoe ga ik terug naar mijn vorige DE/WM-configuratie?
+
+- Zet de back-up terug die je hebt gemaakt:
+  ```bash
+  cp -r ~/config-backup/.config/* ~/.config/
+  cp -r ~/config-backup/.local/* ~/.local/
+  ```
+  Of gebruik een bestandsbeheerder.
+
+#### Hoe zit het met nieuwe updates van het `-settings`-pakket?
+
+- Wanneer een `-settings`-pakket wordt bijgewerkt, worden de nieuwe bestanden in `/etc/skel/` geplaatst, maar je gebruikersconfiguratie in `/home/` blijft ongewijzigd. Om updates toe te passen, moet je de bijgewerkte bestanden opnieuw handmatig uit `/etc/skel/` kopiëren.
+
+Je moet de GitHub-repository van de betreffende DE/WM in de gaten houden voor wijzigingen.
+
+Hier is een lijst van alle repositories van verschillende DE's en WM's die door CachyOS worden onderhouden:
+- [KDE Plasma](https://github.com/CachyOS/cachyos-kde-settings)
+- [GNOME](https://github.com/CachyOS/cachyos-gnome-settings)
+- [Niri](https://github.com/cachyos/cachyos-niri-noctalia)
+- [Hyprland](https://github.com/CachyOS/cachyos-hypr-noctalia)
+- [MangoWM](https://github.com/CachyOS/cachyos-mangowc-dms)
+- [i3](https://github.com/CachyOS/cachyos-i3wm-settings)
+- [Qtile](https://github.com/CachyOS/cachyos-qtile-settings)
+- [Wayfire](https://github.com/CachyOS/cachyos-wayfire-settings)
+
+Alle andere DE's en WM's die we aanbieden bij het installeren van CachyOS hebben op dit moment geen eigen `-settings`-pakket. Dat betekent dat het gewoon de vanilla-versies zijn.
+
+#### Kan ik meerdere DE/WM-settingspakketten tegelijk geïnstalleerd hebben?
+
+- Ja en nee. Je kunt meerdere DE's/WM's geïnstalleerd hebben, maar het wordt aanbevolen om maar één `-settings`-pakket tegelijk te installeren om conflicten in `/etc/skel/` te voorkomen. Anders kan pacman klagen over bestandsconflicten wanneer je een ander `-settings`-pakket probeert te installeren.
+
+#### Wat zijn "CachyOS Settings"?
+
+"CachyOS Settings" zijn handige configuratiepakketten voor verschillende bureaubladomgevingen en window managers. Ze bieden vooraf ingestelde instellingen, thema's en tweaks, afhankelijk van de DE/WM die je kiest.
+
+Wanneer je een van deze pakketten installeert, worden ook automatisch extra afhankelijkheden geïnstalleerd die geen deel uitmaken van de vanilla DE/WM, zoals thema's, iconen, achtergronden en extra applicaties. In `cachyos-i3wm-settings` installeren we bijvoorbeeld `rofi`, `dunst`, `picom`, `lxappearance` en meer.

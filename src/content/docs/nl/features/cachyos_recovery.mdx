@@ -1,0 +1,372 @@
+---
+title: CachyOS Recovery
+description: Je systeem opstarten, herstellen en repareren vanuit een herstelomgeving in het opstartmenu
+tableOfContents:
+  minHeadingLevel: 2
+  maxHeadingLevel: 3
+ai_translated: true
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+[CachyOS Recovery](https://github.com/CachyOS/cachyos-recovery) is een klein herstelsysteem dat naast je
+kernels wordt geïnstalleerd en vanuit het opstartmenu wordt gestart. Als een update of een configuratiewijziging je systeem
+kapotmaakt, kun je het zonder live-USB gebruiken om:
+
+- **een Btrfs-snapshot op te starten** om te controleren of die werkt, zonder je systeem te wijzigen,
+- permanent **terug te gaan** naar een snapshot, inclusief de bijbehorende kernels en opstartbestanden,
+- **je geïnstalleerde systeem in een container te openen** om het handmatig te repareren.
+
+De herstelomgeving neemt ongeveer 70 MB in beslag. Ze is niet afhankelijk van de toestand van je geïnstalleerde systeem, dus ze
+werkt ook wanneer het systeem zelf niet meer opstart.
+
+:::caution
+Snapshots zijn geen back-up. Ze staan op dezelfde schijf als je systeem en beschermen je niet tegen defecte schijven of
+het per ongeluk verwijderen van bestanden in `/home`. Maak regelmatig back-ups van je belangrijke gegevens.
+:::
+
+## Vereisten
+
+De herstelomgeving start op elke CachyOS-installatie met een Btrfs-, ext4-, XFS- of F2FS-root-bestandssysteem. De
+snapshotacties hebben daarnaast nodig:
+
+- Een **Btrfs**-root-bestandssysteem met de root op het subvolume `@`, zoals het CachyOS-installatieprogramma dat instelt.
+- **Read-only snapshots** van het root-subvolume. Snapper maakt deze standaard aan, en met het pakket
+  `cachyos-snapper-support` maakt CachyOS ze automatisch vóór en na elke `pacman`-transactie.
+  Installaties met systemd-boot hebben dit pakket nog niet; zie
+  ["No snapshots were found"](#no-snapshots-were-found). Zie ook [Btrfs-snapshots](/nl/configuration/btrfs_snapshots).
+- **mkinitcpio** als initramfs-generator; dit is de standaard bij CachyOS.
+
+Op UEFI-systemen moet de EFI-systeempartitie in `/etc/fstab` staan met het type `vfat` en gemount zijn op
+`/boot`, `/efi` of `/boot/efi`.
+
+Als de EFI-systeempartitie op `/boot` is gemount, genereert een rollback ook de kernels, initramfs-images en
+bootmanagerconfiguratie opnieuw voor **Limine**, **systemd-boot** (met `sdboot-manage`) en **GRUB**. **rEFInd** heeft
+geen configuratie-update nodig. Met de EFI-systeempartitie op `/efi` of `/boot/efi`, en op BIOS-systemen waar
+`/boot` deel uitmaakt van het root-bestandssysteem, maken de kernels deel uit van de snapshot en worden ze daarmee hersteld.
+
+### Versleutelde schijven en toetsenbordindeling
+
+Schijven die met **LUKS** zijn versleuteld, worden ondersteund. Als je schijf nog niet is ontgrendeld, vraagt de herstelomgeving bij het starten om je LUKS-
+wachtwoordzin. Houd je wachtwoordzin bij de hand, ook als je de schijf normaal gesproken met TPM2 of FIDO2 ontgrendelt.
+
+De herstelomgeving gebruikt altijd de **Amerikaanse (US) toetsenbordindeling**, ook voor je wachtwoordzin en voor het inloggen in de chroot. Als
+je wachtwoordzin of wachtwoord tekens bevat die op jouw toetsenbord op een andere plek zitten, typ ze dan zoals op een
+US-toetsenbord.
+
+## Installatie
+
+<Tabs syncKey="firmware">
+  <TabItem label="UEFI">
+    ```bash
+    sudo pacman -S cachyos-recovery
+    ```
+
+    Tijdens de installatie stelt een pacman-hook alles in:
+
+    - Hij kopieert de herstelimage naar `EFI/Linux/cachyos-recovery.efi` op je EFI-systeempartitie.
+    - Hij schrijft de locatie van je root-bestandssysteem (en eventueel het LUKS-apparaat) naar een kleine add-on naast de image,
+      `EFI/Linux/cachyos-recovery.efi.extra.d/root.addon.efi`.
+    - Hij ondertekent beide bestanden met `sbctl` wanneer Secure Boot is ingesteld met `sbctl` (zie [Secure Boot](#secure-boot)).
+    - Met **Limine** voegt hij een item **CachyOS Recovery** toe aan het opstartmenu.
+    - Met **GRUB** schrijft hij een item **CachyOS Recovery** naar `/etc/grub.d/50-cachyos-recovery` en genereert hij de
+      GRUB-configuratie opnieuw.
+    - Hij voegt een item **CachyOS Recovery** toe aan het opstartmenu van je firmware (vereist `efibootmgr`). Het item wordt
+      aan het einde van de opstartvolgorde toegevoegd, zodat je normale bootmanager de standaard blijft.
+
+    **systemd-boot** toont images in `EFI/Linux` automatisch, en **rEFInd** vindt de image wanneer het de
+    EFI-systeempartitie scant. Start de herstelomgeving bij andere bootmanagers vanuit het opstartmenu van je firmware.
+  </TabItem>
+  <TabItem label="BIOS">
+    ```bash
+    sudo pacman -S cachyos-recovery-legacy
+    ```
+
+    Tijdens de installatie voegt een pacman-hook een item **CachyOS Recovery** toe aan het opstartmenu van **Limine** of
+    **GRUB**. Voor GRUB kopieert hij de herstelkernel en initramfs naar `/boot/cachyos-recovery.vmlinuz` en
+    `/boot/cachyos-recovery.initrd`, schrijft hij het item naar `/etc/grub.d/50-cachyos-recovery` en genereert hij de GRUB-
+    configuratie opnieuw.
+
+    `cachyos-recovery` en `cachyos-recovery-legacy` kunnen niet tegelijk worden geïnstalleerd. Installeer
+    `cachyos-recovery` niet op een BIOS-systeem; het bevat alleen de UEFI-image.
+  </TabItem>
+</Tabs>
+
+De hook wordt bij elke update van het pakket opnieuw uitgevoerd. Als je wijzigt waar je systeem is geïnstalleerd, bijvoorbeeld
+na een overstap naar een nieuwe schijf of na het instellen van versleuteling, installeer het pakket dan opnieuw zodat de herstelomgeving je root-
+bestandssysteem weer vindt: `sudo pacman -S cachyos-recovery` op UEFI, `sudo pacman -S cachyos-recovery-legacy` op BIOS.
+
+Installeer en herinstalleer het pakket vanuit je normaal opgestarte systeem. Het kan je root-bestandssysteem niet detecteren terwijl je
+bent opgestart in een snapshot.
+
+### Secure Boot
+
+Als je Secure Boot met `sbctl` hebt ingesteld zoals beschreven in [Secure Boot instellen](/nl/configuration/secure_boot_setup), worden de
+herstelimage en de add-on automatisch ondertekend. Dit gebeurt wanneer:
+
+- `sbctl` is geïnstalleerd en zijn sleutels heeft aangemaakt,
+- Secure Boot is ingeschakeld en de firmware niet in setup mode staat,
+- je sleutels zijn ingeschreven (enrolled).
+
+Je kunt de handtekeningen controleren met:
+
+```bash
+sudo sbctl verify | grep cachyos-recovery
+```
+
+Als de bestanden niet zijn ondertekend, bijvoorbeeld omdat je Secure Boot hebt ingeschakeld na het installeren van het pakket, verwijder dan de
+herstelimage en installeer het pakket opnieuw. Alleen opnieuw installeren is niet genoeg, omdat de hook de image niet opnieuw kopieert en ondertekent
+als deze al ongewijzigd op de EFI-systeempartitie staat.
+
+```bash
+sudo rm /boot/EFI/Linux/cachyos-recovery.efi
+sudo pacman -S cachyos-recovery
+```
+
+Pas het pad aan als je EFI-systeempartitie op `/efi` of `/boot/efi` is gemount. De hook ondertekent dan beide bestanden en
+werkt, bij Limine, het item in het opstartmenu bij.
+
+:::caution
+Met Secure Boot ingeschakeld weigert de firmware een niet-ondertekende herstelimage te starten, en toont Limine een foutmelding
+in plaats van het herstelmenu. Als Limine is ingesteld om het laatste item te onthouden, selecteer dan een ander item in het opstart-
+menu om je systeem weer op te starten en onderteken daarna de bestanden.
+:::
+
+## De herstelomgeving starten
+
+<Steps>
+1. Start je computer opnieuw op.
+2. Selecteer **CachyOS Recovery** in je opstartmenu. Als je bootmanager geen item heeft, open dan in plaats daarvan het opstartmenu van je firmware
+   (meestal <kbd>F8</kbd>, <kbd>F11</kbd> of <kbd>F12</kbd> tijdens het opstarten) en selecteer daar **CachyOS Recovery**.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-limine-entry.png')} />
+3. Als je schijf is versleuteld, voer dan je LUKS-wachtwoordzin in. Je hebt vijf pogingen.
+4. Het herstelmenu wordt geopend.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-main-menu.png')} />
+</Steps>
+
+Gebruik de pijltjestoetsen en <kbd>Enter</kbd> om een item te selecteren en <kbd>Esc</kbd> om terug te gaan. In lijsten kun je typen om
+de items te filteren. Het vak onderaan beschrijft de geselecteerde actie.
+
+De herstelomgeving mount je systeem read-only. Er verandert niets op je schijf totdat je een rollback start of wijzigingen aanbrengt
+in de chroot.
+
+| Actie | Wat het doet |
+| --- | --- |
+| **Boot Btrfs snapshot** | Start een snapshot op met een tijdelijke, schrijfbare root. Aanbevolen eerste stap. |
+| **Rollback Btrfs snapshot** | Herstelt een snapshot permanent. |
+| **Chroot into target system** | Start je geïnstalleerde systeem in een container, voor ervaren gebruikers. |
+| **Reboot** | Start de computer opnieuw op. |
+
+De twee snapshotacties worden alleen getoond als je root-bestandssysteem Btrfs is.
+
+## Een snapshot opstarten
+
+Een snapshot opstarten is de veiligste manier om een werkende toestand te vinden. Je gebruikt de snapshot zoals je normale systeem, en
+er wordt niets hersteld totdat je besluit hem te behouden.
+
+<Steps>
+1. Selecteer **Boot Btrfs snapshot**.
+2. Selecteer een snapshot. De lijst toont het ID van het Btrfs-subvolume en het tijdstip van aanmaken in UTC. Rechts zie je
+   het pad van de snapshot en, bij Snapper-snapshots, de beschrijving en het type. Kies een snapshot van je root-
+   bestandssysteem. Het pad ziet eruit als `.snapshots/<number>/snapshot`.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-snapshot-list.png')} />
+3. Selecteer de kernel die je wilt opstarten. Alleen kernels die in deze snapshot zijn geïnstalleerd, worden getoond.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-kernel-picker.png')} />
+4. De herstelomgeving bereidt de snapshot voor en start deze. Je systeem start zoals gewoonlijk op. Bij een versleutelde schijf kan
+   opnieuw om je wachtwoordzin worden gevraagd.
+</Steps>
+
+Terwijl je bent opgestart in een snapshot:
+
+- Worden wijzigingen aan het systeem (alles op het root-subvolume) in het geheugen bewaard en gaan ze verloren wanneer je opnieuw opstart.
+- Worden andere subvolumes en partities, bijvoorbeeld `/home`, zoals gewoonlijk gemount. **Wijzigingen daar blijven behouden.**
+- Worden je eigen kernelparameters niet toegepast. De snapshot start op met de parameters die nodig zijn om je systeem te vinden.
+
+### De snapshot behouden
+
+Nadat je bent ingelogd op je bureaublad, vraagt een melding of je de snapshot wilt behouden.
+
+<ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-notifier.png')} />
+
+- **Rollback snapshot** opent een terminal en vraagt om je wachtwoord. Nadat je hebt bevestigd met `y`, vervangt de snapshot
+  je huidige systeem (zie [wat een rollback doet](#wat-een-rollback-doet)). Start daarna opnieuw op.
+- **Stay in snapshot** sluit de melding. Er wordt niets hersteld en je geïnstalleerde systeem blijft ongewijzigd.
+
+Als de melding niet verschijnt, bijvoorbeeld in een window manager zonder meldingen, of als er geen terminal
+opent, start de rollback dan vanuit een terminal:
+
+```bash
+sudo cachyos-recovery rollback
+```
+
+Dit commando is alleen beschikbaar terwijl je vanuit de herstelomgeving bent opgestart in een snapshot.
+
+:::tip
+Als de snapshot niet opstart, bijvoorbeeld omdat je hardware de herstart naar de snapshot-
+kernel niet aankan, gebruik dan in plaats daarvan **Rollback Btrfs snapshot** in het herstelmenu.
+:::
+
+## Een snapshot terugzetten
+
+Gebruik dit wanneer je weet welke snapshot werkt, of wanneer het opstarten van de snapshot mislukt.
+
+<Steps>
+1. Selecteer **Rollback Btrfs snapshot**.
+2. Selecteer de snapshot die je wilt herstellen, zoals beschreven in [Een snapshot opstarten](#een-snapshot-opstarten).
+3. Bevestig met `y` en <kbd>Enter</kbd>.
+4. Wacht tot de rollback klaar is. De herstelomgeving vraagt daarna of je opnieuw wilt opstarten.
+5. Selecteer **Yes, reboot** om het herstelde systeem te starten.
+</Steps>
+
+:::danger[De huidige toestand van je systeem wordt verwijderd]
+Een rollback vervangt je huidige root-subvolume en verwijdert het wanneer de rollback slaagt. Dit kan alleen ongedaan worden gemaakt
+met een snapshot die eerder is gemaakt. Je homedirectory en de andere subvolumes worden niet beïnvloed, en je
+bestaande snapshots blijven behouden.
+:::
+
+### Wat een rollback doet
+
+<Steps>
+1. Als je EFI-systeempartitie op `/boot` is gemount, kopieert de herstelomgeving de kernels van de snapshot en genereert zij de
+   bijbehorende initramfs-images en bootmanagerconfiguratie, met de hulpmiddelen binnen de snapshot. Deze bestanden worden
+   eerst op een tijdelijke locatie voorbereid, zodat de EFI-systeempartitie nog niet wordt gewijzigd. Kernels die niet
+   in de snapshot bestaan, worden uit het opstartmenu verwijderd, en de bestanden worden ondertekend wanneer Secure Boot is ingesteld met
+   `sbctl`.
+2. Ze maakt een nieuw root-subvolume aan op basis van de snapshot en verwisselt het met je huidige root.
+3. Ze verplaatst geneste subvolumes, bijvoorbeeld `/.snapshots`, van de oude root naar de nieuwe, zodat je snapshots
+   beschikbaar blijven.
+4. Ze kopieert de voorbereide opstartbestanden naar de EFI-systeempartitie.
+5. Ze verwijdert het oude root-subvolume.
+</Steps>
+
+Als een stap mislukt voordat de opstartbestanden zijn gekopieerd, zet de herstelomgeving je oude root terug en laat zij de EFI-systeem-
+partitie ongewijzigd.
+
+Met de EFI-systeempartitie op `/efi` of `/boot/efi` maken de kernels deel uit van de snapshot zelf, dus worden stap 1 en
+stap 4 overgeslagen.
+
+:::caution[Secure Boot en oudere snapshots]
+De nieuwe opstartbestanden worden ondertekend met de `sbctl`-installatie **binnen de snapshot**. Wanneer je teruggaat naar een
+snapshot die is gemaakt voordat je Secure Boot hebt ingesteld, wordt er niets ondertekend en start het systeem niet op met
+Secure Boot ingeschakeld. De herstelomgeving waarschuwt je hier niet voor. Je `sbctl`-sleutels in `/var/lib/sbctl` worden ook
+samen met de oude root verwijderd.
+
+De herstelimage zelf blijft ondertekend. Als een nieuwere snapshot nog `sbctl` en de sleutels bevat, start dan
+**CachyOS Recovery** vanuit het opstartmenu van je firmware en ga terug naar die snapshot. De rollback ondertekent de opstart-
+bestanden dan opnieuw.
+
+Schakel anders Secure Boot uit in de firmware en start het systeem op. Installeer
+`sbctl` en kopieer `/var/lib/sbctl` terug vanuit een nieuwere snapshot in `/.snapshots`. Onderteken daarna je kernels en bootmanager
+zoals beschreven in [De kernelimage en bootmanager ondertekenen](/nl/configuration/secure_boot_setup#de-kernelimage-en-bootmanager-ondertekenen)
+en schakel Secure Boot weer in. Als geen enkele nieuwere snapshot `/var/lib/sbctl` bevat, volg dan
+[Secure Boot instellen](/nl/configuration/secure_boot_setup) vanaf het begin om nieuwe sleutels aan te maken en in te schrijven.
+:::
+
+:::note[Easy Anti-Cheat-kernel]
+Een rollback ondertekent de kernel `linux-cachyos-eac` niet met je eigen sleutel, zodat deze de CachyOS-handtekening behoudt die
+het opstartitem voor [Easy Anti-Cheat](/nl/configuration/easy_anti_cheat) nodig heeft. Als het Easy Anti-Cheat-item na een rollback niet
+opstart, kopieer de door CachyOS ondertekende kernel dan opnieuw naar `/boot` door `linux-cachyos-eac` opnieuw te installeren, of bij
+Limine door `sudo limine-mkinitcpio` uit te voeren.
+:::
+
+## Een chroot naar het systeem
+
+**Chroot into target system** start je geïnstalleerde systeem in een container met `systemd-nspawn`. Je krijgt een inlog-
+prompt voor je geïnstalleerde systeem en kunt inloggen met je gebruikersnaam en wachtwoord. Je root-bestandssysteem is in deze modus schrijfbaar,
+dus wijzigingen die je aanbrengt, blijven behouden.
+
+Gebruik dit voor offline reparaties aan het root-bestandssysteem, bijvoorbeeld om een kapot configuratiebestand in `/etc` te repareren of om
+een service uit te schakelen die het opstarten verhindert. De container heeft **geen netwerktoegang** en alleen je root-bestandssysteem is
+gemount. Op Btrfs zijn andere subvolumes zoals `/home`, `/var/cache` en `/var/log`, en andere partities, inclusief de
+EFI-systeempartitie, mogelijk niet beschikbaar. Voor reparaties waarvoor die nodig zijn, zoals het installeren of opnieuw installeren van pakketten,
+gebruik je [cachy-chroot](/nl/features/cachy_chroot) vanaf een live-ISO.
+
+Om de container te verlaten en terug te keren naar het herstelmenu, druk je binnen één seconde drie keer op <kbd>Ctrl</kbd>+<kbd>]</kbd>.
+
+## CachyOS Recovery verwijderen
+
+<Tabs syncKey="firmware">
+  <TabItem label="UEFI">
+    ```bash
+    sudo pacman -Rns cachyos-recovery
+    ```
+
+    Een pacman-hook verwijdert de herstelimage en de add-on van de EFI-systeempartitie, het item in het opstartmenu van Limine of GRUB
+    en het item **CachyOS Recovery** in het opstartmenu van je firmware.
+  </TabItem>
+  <TabItem label="BIOS">
+    ```bash
+    sudo pacman -Rns cachyos-recovery-legacy
+    ```
+
+    Een pacman-hook verwijdert het item in het opstartmenu van Limine, of bij GRUB de gekopieerde herstelkernel en initramfs en het
+    item in `/etc/grub.d`, en genereert de GRUB-configuratie opnieuw.
+  </TabItem>
+</Tabs>
+
+## Probleemoplossing
+
+### Er staat geen item CachyOS Recovery in het opstartmenu
+
+Installeer het pakket opnieuw (`cachyos-recovery` op UEFI, `cachyos-recovery-legacy` op BIOS) en lees de uitvoer van de
+stap **Installing system recovery image...**:
+
+```bash
+sudo pacman -S cachyos-recovery
+```
+
+Het Limine-item vereist `limine-entry-tool` en het firmware-item vereist `efibootmgr`. Bij systemd-boot moet de image
+op de EFI-systeempartitie staan waarop systemd-boot is geïnstalleerd.
+
+### De herstelomgeving start niet met Secure Boot ingeschakeld
+
+De herstelimage of de add-on is niet ondertekend. Controleer en onderteken ze zoals beschreven in [Secure Boot](#secure-boot).
+
+### "No snapshots were found"
+
+De herstelomgeving toont alleen read-only snapshots. Controleer of Snapper snapshots van je root-bestandssysteem maakt:
+
+```bash
+sudo snapper list
+```
+
+Als het commando meldt dat de configuratie `root` niet bestaat, is Snapper niet ingesteld. Dit is het geval bij
+installaties met **systemd-boot**, waar het installatieprogramma Snapper nog niet instelt. Installeer
+`cachyos-snapper-support`; dit maakt de Snapper-configuratie voor je root-bestandssysteem aan en installeert `snap-pac`
+om vóór en na elke `pacman`-transactie snapshots te maken:
+
+```bash
+sudo pacman -S cachyos-snapper-support
+```
+
+De herstelomgeving kan de snapshots gebruiken die vanaf dat moment worden gemaakt.
+
+### Het opstarten van de snapshot mislukt of het scherm blijft zwart
+
+Het rechtstreeks starten van de snapshotkernel vanuit de herstelomgeving werkt niet op elk apparaat. Gebruik in plaats daarvan
+**Rollback Btrfs snapshot** om de snapshot te herstellen.
+
+### "No ESP partition was found"
+
+Zowel de pakketinstallatie als de rollback lezen de locatie van de EFI-systeempartitie uit `/etc/fstab`
+(tijdens een rollback uit de `/etc/fstab` binnen de snapshot). De partitie moet daar vermeld staan met het type
+`vfat` en gemount zijn op `/boot`, `/efi` of `/boot/efi`.
+
+### De rollback stopt met een foutmelding
+
+Lees de foutmelding boven het bericht. Als de herstelomgeving de opstartbestanden niet kon voorbereiden, is er niets gewijzigd en staat je
+oude systeem er nog.
+
+Als het bericht zegt dat de snapshot is hersteld maar dat `/boot` inconsistent is, dan is de snapshot hersteld, maar is het
+kopiëren van de opstartbestanden mislukt. Start op vanaf een live-ISO, ga je systeem binnen met [cachy-chroot](/nl/features/cachy_chroot) en
+genereer de opstartbestanden opnieuw:
+
+- Bij **Limine** voer je `limine-mkinitcpio` uit.
+- Bij andere bootmanagers installeer je je kernelpakketten opnieuw, bijvoorbeeld `pacman -S linux-cachyos`. Dit werkt wanneer
+  de geïnstalleerde kernelversie nog in de pakketcache staat. Als pacman deze niet kan downloaden, werk dan in plaats daarvan het hele
+  systeem bij met `pacman -Syu`.
