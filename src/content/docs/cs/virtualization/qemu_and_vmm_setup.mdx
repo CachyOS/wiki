@@ -1,0 +1,68 @@
+---
+title: Nastavení QEMU a VMM
+description: Nezbytné kroky pro zprovoznění obou programů na CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+ai_translated: true
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import { Steps } from '@astrojs/starlight/components';
+
+## Instalace
+Chcete-li na **CachyOS** nainstalovat a zprovoznit **VMM** (Virtual Machine Manager) a **QEMU**, postupujte takto:
+
+```sh
+# Nainstaluje potřebné balíčky (viz poznámku „Windows 11“ níže):
+sudo pacman -S qemu-full virt-manager swtpm
+# Vynutí použití iptables pro libvirt
+echo 'firewall_backend = "iptables"' | sudo tee -a /etc/libvirt/network.conf
+# Přidá uživatele do skupiny „libvirt“, aby jej mohl používat:
+sudo usermod -aG libvirt $USER
+# Backend LXC (volitelné, pro linuxové kontejnery; povolení obou backendů nekoliduje):
+systemctl enable --now libvirtd.service
+# Backend QEMU (pro virtuální stroje):
+systemctl enable --now libvirtd.socket
+# Zajistí spuštění internetu ve virtuálním stroji při každém jeho startu:
+sudo virsh net-autostart default
+# Povolí celé síti virtuálních strojů neomezený průchod: (Zvažte, zda na základě vašeho použití a bezpečnostních požadavků nepotřebujete jemnější pravidla firewallu)
+sudo ufw route allow from 192.168.122.0/24
+```
+
+:::note[Windows 11]
+Pokud do virtuálního stroje instalujete **Windows 11**, budete muset buď později v kroku konfigurace předat kompatibilní modul TPM, nebo nainstalovat `swtpm`, pokud žádný nemáte.
+:::
+
+## Základy vytvoření virtuálního stroje
+:::note[Uživatelská relace]
+Než budete pokračovat, můžete se nejprve krátce podívat na stránku [Uživatelská relace QEMU](/cs/virtualization/qemu_user_session).
+:::
+
+<Steps>
+
+1. Nejprve spusťte **VMM**; jako první vás přivítá navazování těchto připojení: <ImageComponent imgsrc={import('~/assets/images/vmmstart.png')} />
+2. Dále klikněte na `Edit -> Preferences -> ✅ Enable XML editing` a toto podmenu zavřete.
+3. Nyní můžete vytvořit nový virtuální stroj, buď kliknutím na **ikonu obrazovky s hvězdičkou a symbolem přehrávání**, nebo přes `File -> New Virtual Machine`.
+4. Otevře se průvodce vytvořením virtuálního stroje; vedle `Connection:` uvidíte rozbalovací nabídku, klikněte na ni, vyberte příslušnou možnost a pokračujte kliknutím na `Forward`. <ImageComponent imgsrc={import('~/assets/images/vmmcreatestep1.png')} />
+5. Budete vyzváni k nalezení obrazu `.iso` staženého operačního systému; klikněte na `Browse...` a vyhledejte jej. Můžete také přidat nebo vytvořit vyhrazený adresář pro ukládání souborů `.iso` kliknutím na tlačítko `+ (Add Pool)`. Pokud chcete pro tento účel znovu použít cestu pro `User Session`, nachází se v `~/.config/libvirt/`. <ImageComponent imgsrc={import('~/assets/images/vmmcreatestep2browse.png')} />
+**Pokud váš operační systém není automaticky rozpoznán**, jednoduše zrušte zaškrtnutí automatické detekce a vyberte nejbližší shodu ručně, `příklad: CachyOS = Arch Linux`.
+
+6. Krok 3 je přímočarý – jednoduše přidělte virtuálnímu stroji tolik paměti RAM a jader procesoru, kolik chcete; tato hodnota není pevně daná a lze ji snadno změnit.
+7. V kroku 4 můžete zvolit vytvoření virtuálního úložiště (tím se vytvoří soubor **.qcow2**), nebo zadat cestu, kterou má virtuální stroj použít.
+8. V kroku 5 zaškrtněte `Customize configuration before install -> Finish`.
+9. Nyní se dostanete sem: <ImageComponent imgsrc={import('~/assets/images/vmmprevminstall.png')} />
+Pokud instalujete linuxový virtuální stroj, měli byste zde zkontrolovat několik věcí: v sekci `Overview` ověřte, že čipová sada je **Q35** a firmware je **UEFI**. Pokud neinstalujete něco opravdu prastarého nebo neděláte něco nestandardního, nikdy zde nebudete chtít jinou variantu. Pokud vytváříte virtuální stroj s Windows 11, zkontrolujte, zda byl přidán modul TPM; jinak přejděte na Add Hardware -> TPM, vyberte buď Emulated, nebo Passthrough (viz poznámku na začátku) a kliknutím na Finish podmenu zavřete.
+
+10. Nyní klikněte na `Begin Installation`.
+11. Pokud používáte virtuální stroj s **Linuxem** (nebo jiný operační systém, který používá OpenGL a/nebo obsahuje `libvulkan`), pokračujte na [EGL Headless](/cs/virtualization/egl_headless) a/nebo [Virtio-Venus](/cs/virtualization/virtio-venus).
+
+</Steps>
+
+### Závěrečná poznámka
+Pokud jste ve virtuálním stroji s `Windows 11`, pro zlepšení výkonu můžete:
+- nainstalovat do hostovaného systému ovladače **Virtio-Win** od společnosti RedHat
+- pokud máte integrované GPU od Intelu (iGPU), můžete se místo toho podívat na **GVT-g** a **MDEV**
+- pokud máte integrované GPU od Intelu (iGPU) a dedikované GPU (dGPU), můžete se místo toho podívat na **GVT-d**
+- pokud máte iGPU a dGPU nebo 2 a více dGPU a chcete místo toho předat dGPU,
+můžete se podívat na **VFIO**

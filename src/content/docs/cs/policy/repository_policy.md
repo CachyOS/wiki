@@ -10,7 +10,7 @@ Repozitář CachyOS je navržen tak, aby poskytoval vysoce kvalitní, optimalizo
 
 ## 2. Zřeknutí se záruky
 
-Pokud to nevyžaduje platný zákon nebo není písemně dohodnuto jinak, tým CachyOS poskytuje repozitář na **„TAK JAK JE“ ZÁKLADĚ BEZ JAKÝCHKOLIV ZÁRUK NEBO PODMÍNEK**, ať už výslovných nebo předpokládaných, včetně mimo jiné jakýchkoli záruk nebo podmínek **VLASTNICTVÍ, NEPORUŠENÍ PRÁV, OBCHODOVATELNOSTI NEBO VHODNOSTI PRO KONKRÉTNÍ ÚČEL**. Jako uživatelé repozitáře jste výhradně zodpovědní za určení vhodnosti jeho používání a nesete všechna rizika spojená s jeho použitím.
+Pokud to nevyžaduje platný zákon nebo není písemně dohodnuto jinak, tým CachyOS poskytuje repozitář na **ZÁKLADĚ „TAK, JAK JE“, BEZ JAKÝCHKOLIV ZÁRUK ČI PODMÍNEK**, ať už výslovných nebo předpokládaných, včetně mimo jiné jakýchkoli záruk nebo podmínek **VLASTNICTVÍ, NEPORUŠENÍ PRÁV, OBCHODOVATELNOSTI NEBO VHODNOSTI PRO KONKRÉTNÍ ÚČEL**. Jako uživatelé repozitáře jste výhradně zodpovědní za určení vhodnosti jeho používání a nesete všechna rizika spojená s jeho použitím.
 
 ## 3. Omezení odpovědnosti
 
@@ -25,31 +25,30 @@ Repozitář CachyOS (a jeho zrcadla) poskytuje podporu výhradně těmto uživat
 
 ## 5. Nepodporovaní uživatelé
 
-Uživatelé jiných distribucí **NEJSOU PODPOROVÁNI** a **NENÍ DOPORUČENO** používat repozitář CachyOS (a jeho zrcadla). To zahrnuje mimo jiné:
+Uživatelé jiných distribucí **NEJSOU PODPOROVÁNI** a používání repozitáře CachyOS (a jeho zrcadel) se jim **DŮRAZNĚ NEDOPORUČUJE**. To zahrnuje mimo jiné:
 
 - Manjaro
 - EndeavourOS
 - ArcoLinux
 - Parabola
-- Uživatelé jakékoli jiné Linuxové distribuce, která není výslovně zmíněna v sekci „Podporovaní uživatelé“.
+- Uživatelé jakékoli jiné linuxové distribuce, která není výslovně zmíněna v sekci „Podporovaní uživatelé“.
 
 ## 6. Redistribuce repozitáře
 
-Tato pravidla definují „redistribuci“ jako zahrnutí repozitáře CachyOS (a jeho zrcadel) nebo balíčků získaných z repozitáře CachyOS jako součást distribučního obrazu operačního systému nebo systémových kořenů.  
-Redistribuce zahrnuje také činnosti **Linuxových distribucí**, které umožňují uživatelům přidat repozitář CachyOS dle jejich volby, nebo poskytují jakoukoli distribuovanou či oficiální dokumentaci, která uživatele navádí k přidání repozitáře CachyOS (a jeho zrcadel).  
-Koncoví uživatelé a zrcadla třetích stran nepodléhají pravidlům o redistribuci.
+Tato pravidla definují „redistribuci“ jako zahrnutí repozitáře CachyOS (a jeho zrcadel) nebo balíčků získaných z repozitáře CachyOS jako součást distribuovaného obrazu operačního systému nebo systémových kořenů (sysroots).
+Redistribuce zahrnuje také činnosti **linuxových distribucí**, které poskytují nástroje umožňující uživatelům povolit repozitář CachyOS dle jejich volby, nebo poskytují jakoukoli distribuovanou či oficiální dokumentaci, která uživatele navádí k povolení repozitáře CachyOS (a jeho zrcadel) vlastními prostředky. Koncoví uživatelé a zrcadla třetích stran nepodléhají pravidlům o redistribuci.
 
-Redistribuce repozitáře CachyOS je výhradně autorizována pouze týmem CachyOS.
+Redistribuce repozitáře CachyOS je povolena výhradně týmu CachyOS.
 
 ## 7. Zakázaná redistribuce
 
-Redistribuce repozitáře CachyOS (a jeho zrcadel) v jakékoli neautorizované Linuxové distribuci, včetně dalších distribucí založených na Archu, je **PŘÍSNĚ ZAKÁZÁNA**. To zahrnuje mimo jiné:
+Redistribuce repozitáře CachyOS (a jeho zrcadel) v jakékoli neautorizované linuxové distribuci, včetně dalších distribucí založených na Archu, je **PŘÍSNĚ ZAKÁZÁNA**. To zahrnuje mimo jiné:
 
 - Manjaro
 - EndeavourOS
 - ArcoLinux
 - Parabola
-- Jakoukoli jinou Linuxovou distribuci, která není výslovně zmíněna v sekci „Redistribuce repozitáře“.
+- Jakoukoli jinou linuxovou distribuci, která není výslovně zmíněna v sekci „Redistribuce repozitáře“.
 
 ## 8. Zrcadlení
 
@@ -71,8 +70,8 @@ CachyOS si vyhrazuje právo tato pravidla kdykoli změnit. Změny budou oznámen
 
 Pro jakékoli dotazy nebo obavy týkající se těchto pravidel nás prosím kontaktujte:
 
-- E-mail: admin@cachyos.org
-- Web: https://cachyos.org
+- E-mail: [admin@cachyos.org](mailto:admin@cachyos.org)
+- Web: [https://cachyos.org](https://cachyos.org)
 
 ## 13. Potvrzení
 

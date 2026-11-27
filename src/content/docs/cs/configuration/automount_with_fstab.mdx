@@ -1,0 +1,433 @@
+---
+title: Automatické připojení dalších disků při spuštění systému
+description: Připojení dalších statických disků při spuštění systému pomocí jednotek systemd mount nebo souboru /etc/fstab
+ai_translated: true
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+Tento návod popisuje základy použití jak jednotkových souborů systemd mount, tak souboru fstab v adresáři `/etc/` pro připojení statických disků během spouštění systému. Stručně vysvětluje, jak najít UUID oddílu nebo disku, co znamenají jednotlivé volby a kde hledat další informace, pokud by poskytnuté údaje nestačily.
+
+## Předpoklady
+
+- Přístup s právy root nebo sudo
+
+:::note[NTFS v Linuxu]
+Souborový systém NTFS může být pod Linuxem nestabilní, ať už používáte ovladač ntfs, ntfs3 nebo ntfs-3g. Používejte jej na vlastní riziko. Pro lepší stabilitu a výkon zvažte nativní linuxové souborové systémy, jako jsou ext4, xfs nebo btrfs.
+:::
+
+## Bezpečnější metoda pro začátečníky: Připojení disků pomocí souborů Systemd Mount
+
+Výhodou připojování přes systemd je, že i když v souboru mount uděláte chybu, váš systém se stále spustí. Naproti tomu chyba v souboru fstab může způsobit, že se systém nespustí.
+
+### 1. Vypište UUID vašich oddílů
+
+```sh title="Otevřete terminál a spusťte následující příkaz"
+lsblk -f
+```
+
+```sh title="Ukázkový výstup"
+NAME          FSTYPE FSVER LABEL UUID                                 FSAVAIL   FSUSE% MOUNTPOINTS
+zram0                                                                              [SWAP]
+nvme0n1
+├─nvme0n1p1   vfat   FAT32       E04D-9F05
+├─nvme0n1p2
+├─nvme0n1p3   ntfs               08A24E90A24E81E4                      715.4G   50%
+├─nvme0n1p4   vfat   FAT32       E09C-D4DA                             628.1M   39% /boot
+├─nvme0n1p5   ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G   47% /
+└─nvme0n1p6   ntfs
+nvme1n1
+└─nvme1n1p1   ext4               4e55896f-3f1f-4bc5-aa8a-fec099689cd9  931.5G   0%
+
+```
+
+V tomto příkladu chceme připojit další disk čerstvě naformátovaný jako ext4. Víme, že jde o 1TB disk, a víme, že na něm ještě nic není uloženo. Proto můžeme určit, že oddíl, který chceme připojit, je `nvme1n1p1` s UUID `4e55896f-3f1f-4bc5-aa8a-fec099689cd9`.
+
+### 2. Identifikace vašeho oddílu
+
+Často vám `lsblk -f` v tomto kroku poskytne všechny informace potřebné k připojení disku přes systemd. Pokud si stále nejste jisti, který oddíl je ten správný, můžete spustit následující příkaz:
+
+```sh
+sudo fdisk -l
+```
+
+```sh title="Ukázkový výstup"
+Device          Start       End         Sectors     Size    Type
+/dev/nvme0n1p1  2048        206847      204800      100M    EFI System
+/dev/nvme0n1p2  206848      239615      32768       16M     Microsoft reserved
+/dev/nvme0n1p3  239616      2997384182  2997144567  1.4T    Microsoft basic data
+/dev/nvme0n1p4  2997385216  2999482367  2097152     1G      EFI System
+/dev/nvme0n1p5  2999482368  3905454079  905971712   432G    Linux root (x86-64)
+/dev/nvme0n1p6  3905454080  3907026943  1572864     768M    Windows recovery environment
+/dev/nvme1n1p1  2048        1953523711  1953521664  931.5G  Linux filesystem
+
+```
+
+V tomto příkladu již své UUID známe. Příkaz `fdisk -l` nám to však může ještě více objasnit tím, že ukáže přesnou velikost oddílu (931.5G) i jeho typ (Linux filesystem).
+
+To by nám mělo naprosto jasně ukázat, že hledaný oddíl je `nvme1n1p1` s UUID `4e55896f-3f1f-4bc5-aa8a-fec099689cd9`, jak bylo popsáno dříve. Věděli jsme to už předtím, ale teď to víme s jistotou.
+
+Jakmile jste si jisti, že jste našli správný oddíl, zkopírujte UUID. Kopírování z emulátoru terminálu se obvykle provádí pomocí `ctrl+shift+C`.
+
+### 3. Vytvoření souboru Systemd Mount
+Řekněme, že chceme tento disk používat především pro hry; dobrým místem pro připojení je váš domovský adresář. Může to být kdekoli chcete, ale pro jednoduchost zvolíme `/home/user` (nahraďte `user` vaším linuxovým uživatelským jménem). Na tom záleží, protože cesta přípojného bodu určuje název souboru systemd mount. Protože je tento disk určen pro hry, připojíme jej do složky games v domovském adresáři uživatele, tedy `/home/user/games`.
+
+Pro soubor systemd mount se tato cesta přeloží na `home-$USER-games.mount` (dopředná lomítka `/` jsou nahrazena spojovníky `-`) a soubory systemd mount se ukládají do `/etc/systemd/system`.
+
+:::tip
+Pokud chcete v názvu složky přípojného bodu použít mezeru, spojovník, znak CJK nebo znak s diakritikou, musí být název naformátován jinak. Řekněme, že chcete použít cestu ke složce `/home/grzegorz/brzęczyszczykiewicz` – spusťte následující příkaz, abyste získali název, který je třeba použít pro váš soubor:
+```bash
+systemd-escape -p --suffix=mount "/home/grzegorz/brzęczyszczykiewicz"
+```
+Protože je nutné escapovat každé `\`, vytvořili byste soubor mount jako `/etc/systemd/system/home-grzegorz-brz\\xc4\\x99czyszczykiewicz.mount`
+:::
+
+Neváhejte použít textový editor dle vašeho výběru; v tomto příkladu použijeme `micro`.
+
+```sh
+micro /etc/systemd/system/home-$USER-games.mount
+```
+:::note
+Pokud disk připojujete do svého domovského adresáře, můžete v názvu souboru ponechat výše uvedené `$USER` – automaticky se nahradí vaším uživatelským jménem.
+:::
+
+Vložte do prázdného souboru tuto šablonu:
+```ini
+[Unit]
+Description=
+
+[Mount]
+What=
+Where=
+Type=
+Options=
+
+[Install]
+WantedBy=multi-user.target
+```
+Níže jsou uvedeny popisy jednotlivých polí v souboru:
+
+<Tabs>
+  <TabItem label='Description'>
+  Popis (Description) může být jakýkoli, slouží pro vaše vlastní rozlišení.
+  </TabItem>
+  <TabItem label='What'>
+  Sem vložte UUID, které jste zkopírovali dříve. Zde to bude `UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9`
+  </TabItem>
+  <TabItem label='Where'>
+  Toto je přípojný bod (mount point). Pokud složka neexistuje, bude vytvořena. Zde to bude `/home/user/games`. Pokud připojujete do své domovské složky, nahraďte „user“ svým uživatelským jménem.
+  </TabItem>
+  <TabItem label='Type'>
+  Typ souborového systému, zde to bude `ext4`
+  </TabItem>
+  <TabItem label='Options'>
+  Jakékoli požadované volby připojení. Zde použijeme `defaults,exec,rw,noatime`. Je důležité nepoužívat mezery.
+  </TabItem>
+</Tabs>
+---
+
+Podle tohoto příkladu by měl vyplněný soubor mount vypadat takto:
+```ini
+[Unit]
+Description=Mount games drive (/home/user/games)
+
+[Mount]
+What=UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9
+Where=/home/user/games
+Type=ext4
+Options=defaults,exec,rw,noatime
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 4. Dokončení
+Pro připojení disku, pro který jste právě vytvořili záznam, spusťte následující příkazy:
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now home-$USER-games.mount
+```
+
+Měli byste vidět složku, kterou jste zvolili jako přípojný bod, a stav připojení můžete zkontrolovat pomocí `systemctl status home-$USER-games.mount`:
+
+```sh
+● home-user-games.mount - Mount games drive (/home/user/games)
+     Loaded: loaded (/proc/self/mountinfo; enabled; preset: disabled)
+     Active: active (mounted) since Sat 2026-05-02 13:02:31 CDT; 23h ago
+ Invocation: e52ef8fe3d754c64a3825bc1ee89e7da
+      Where: /home/user/games
+       What: /dev/nvme1n1p1
+      Tasks: 0 (limit: 74118)
+     Memory: 316K (peak: 3.9M)
+        CPU: 5ms
+     CGroup: /system.slice/home-user-games.mount
+
+May 02 13:02:31 cachyos systemd[1]: Mounting Mount games drive (/home/user/games)...
+May 02 13:02:31 cachyos systemd[1]: Mounted Mount games drive (/home/user/games).
+```
+
+### tl;dr
+
+- Najděte **UUID** vašeho oddílu
+
+```sh
+lsblk -f
+```
+
+- Vytvořte soubor mount
+
+```sh
+micro /etc/systemd/system/mnt-foo.mount
+```
+
+Nahraďte `mnt-foo` celou cestou k místu, kam chcete disk připojit, přičemž `/` zaměňte za `-`.
+
+- Vyplňte soubor mount
+
+```sh
+[Unit]
+Description=Mount drive
+
+[Mount]
+What=UUID=<UUID oddílu>
+Where=/mnt/foo
+Type=somefs
+Options=defaults
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Nahraďte `<UUID oddílu>`, `/mnt/foo` a `somefs` vaším UUID, adresářem a souborovým systémem (např. ext4) a nastavte případné další volby za `defaults`, jako je `_netdev` pro NAS nebo `nofail` pro jakýkoli nekritický disk.
+
+- Znovu načtěte démona
+
+```sh
+sudo systemctl daemon-reload
+```
+
+- Připojte disk a nastavte jeho připojování při spuštění systému
+
+```sh
+sudo systemctl enable --now mnt-foo.mount
+```
+
+### Další čtení
+
+- [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS o /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Manuál pro dump](<https://linux.die.net/man/8/dump>)
+- [Manuál pro fsck](https://man.archlinux.org/man/fsck.8)
+- [systemd-mount](https://manual.siduction.org/systemd-mount_en.html)
+
+## Pokročilá metoda: Přidání záznamů do /etc/fstab
+
+:::danger
+Soubor fstab se čte během spouštění systému a pokud je v něm chyba, může způsobit, že se systém nespustí. Před restartem si svůj záznam pečlivě zkontrolujte, zda neobsahuje překlepy. Pokud přece jen uděláte chybu, můžete ji obvykle opravit spuštěním z live prostředí a připojením [pomocí chroot do vaší instalace](/cs/features/cachy_chroot), kde soubor upravíte.
+:::
+
+### 1. Vypište UUID vašich oddílů
+
+```sh title="Otevřete terminál a spusťte následující příkaz"
+lsblk -f
+```
+
+```sh title="Ukázkový výstup"
+NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+zram0                                                                              [SWAP]
+nvme0n1
+├─nvme0n1p1 vfat   FAT32       E04D-9F05
+├─nvme0n1p2
+├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
+├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
+├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
+└─nvme0n1p6 ntfs
+```
+
+V našem příkladu víme, že chceme připojit oddíl s Windows, který je typu ntfs. Také víme, že je na něm volná zhruba polovina místa. Z toho můžeme určit, že oddíl, který chceme připojit, je `nvme0n1p3` a jeho UUID je `08A24E90A24E81E4`, se souborovým systémem `ntfs` v tomto příkladu.
+
+### 2. Identifikace vašeho oddílu
+
+Často vám `lsblk -f` v tomto kroku poskytne všechny informace potřebné k připojení disku přes `/etc/fstab`. Pokud si stále nejste jisti, který oddíl je ten správný, můžete spustit následující příkaz:
+
+```sh
+sudo fdisk -l
+```
+
+```sh title="Ukázkový výstup"
+Device              Start        End    Sectors  Size Type
+/dev/nvme0n1p1       2048     206847     204800  100M EFI System
+/dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
+/dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
+/dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
+/dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
+/dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
+```
+
+V tomto příkladu již své UUID známe. Příkaz `fdisk -l` nám to však může ještě více objasnit tím, že ukáže přesnou velikost oddílu (1.4T) i jeho typ (Microsoft basic data).
+
+To by nám mělo naprosto jasně ukázat, že hledaný oddíl je `nvme0n1p3` s UUID `08A24E90A24E81E4`, jak bylo popsáno dříve. Věděli jsme to už předtím, ale teď to víme s jistotou.
+
+Jakmile jste si jisti, že jste našli správný oddíl, zkopírujte UUID. Kopírování z emulátoru terminálu se obvykle provádí pomocí `ctrl+shift+C`.
+
+### 3. Přidání záznamu do /etc/fstab
+
+Nyní, když jsme získali UUID našeho oddílu, je čas otevřít soubor fstab.
+
+Neváhejte použít textový editor dle vašeho výběru. V tomto příkladu použijeme nano. Aby bylo možné soubor fstab upravovat, musí být otevřen jako root:
+
+```sh
+sudo nano /etc/fstab
+```
+
+Pomocí šipek přejděte na konec souboru fstab a poté na novém prázdném řádku vytvořte náš nový záznam:
+
+```sh
+UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000 0 0
+```
+
+:::note
+Adresář `/media/windows` musí na vašem souborovém systému existovat. Pokud neexistuje, vytvořte jej pomocí příkazu `mkdir`.
+:::
+
+Rozpis tohoto záznamu je následující:
+
+- `UUID=08A24E90A24E81E4` je souborový systém, který chceme připojit, identifikovaný podle jeho UUID. Existují i jiné metody identifikace souborového systému, ačkoli UUID bývá nejbezpečnější. Další metody jsou uvedeny [zde](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems).
+
+- `/media/windows` je přípojný bod našeho disku. [Linux Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html) uvádí, že `/media/` je správné místo pro připojování vyměnitelných disků. `windows` označuje adresář, do kterého chceme náš disk připojit. Každý disk, který chceme připojit, bude potřebovat svůj vlastní adresář.
+
+- `ntfs3` je typ souborového systému, který se má použít. V našem příkladu explicitně používáme ovladač jádra ntfs3. Jinými příklady by byly `ext4`, `xfs` nebo podobné. Toto explicitní určení typu souborového systému může být nahrazeno `auto`, aby příkaz mount mohl provést nejlepší odhad.
+
+- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000`: Toto jsou volby připojení:
+
+  - `defaults`: standardní sada voleb zahrnující `rw, suid, dev, exec, auto, nouser a async.`
+
+  - `nofail`: umožní procesu spouštění pokračovat, i když toto připojení selže.
+
+  - `uid=1000` a `gid=1000`: nastavuje vlastnictví uživatele a skupiny připojených souborů na uživatele a skupinu s ID 1000.
+
+  - `rw`: připojí souborový systém pro čtení i zápis.
+
+  - `user`: umožní připojit souborový systém i uživateli bez práv root.
+
+  - `exec`: umožní spouštění spustitelných souborů na připojeném souborovém systému.
+
+  - `umask=000`: nastaví masku oprávnění souborů tak, aby umožnila oprávnění ke čtení, zápisu i spouštění pro všechny.
+
+  - `první 0` dump je v moderních systémech obvykle zastaralý. Ponechání této hodnoty na 0 ničemu neuškodí. Více si o tom můžete přečíst [zde](https://linux.die.net/man/8/dump).
+
+  - `druhá 0` nastavuje pořadí pro kontrolu souborového systému při spouštění. Pro kořenový oddíl by to mělo být 1, pokud váš kořenový souborový systém není btrfs, u kterého by mělo být nastaveno na 0. Všechny ostatní souborové systémy ve vašem fstab by měly mít buď 0 (vypnuto), nebo 2. Více informací [zde](https://man.archlinux.org/man/fsck.8).
+
+Podrobnější popis každé volby najdete v těchto dvou manuálových stránkách: [man stránka fstab](https://man7.org/linux/man-pages/man5/fstab.5.html) a [man stránka mount](https://man7.org/linux/man-pages/man8/mount.8.html)
+
+#### Další info
+
+Mimochodem, všechny volby za deklarací typu souborového systému jsou volitelné, pokud je neměníte z výchozího nastavení.
+
+Tedy
+
+`UUID=<UUID oddílu> /media/foo somefs`
+
+a
+
+`UUID=<UUID oddílu> /media/foo somefs defaults 0 0`
+
+jsou ekvivalentní. `somefs` následované ničím je implicitně `somefs defaults 0 0`
+
+### 4. Dokončení
+
+Pokud si přejete nyní připojit disk, pro který jste vytvořili záznam, musíte spustit následující příkaz:
+
+```sh
+sudo systemctl daemon-reload
+```
+
+a poté:
+
+```sh
+sudo mount -a
+```
+
+Váš disk by se nyní měl objevit pod `/media/windows` a bude se tam objevovat po každém restartu.
+
+```sh
+ls /media/windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+# 'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
+ ```
+
+ Pokud si přejete vytvořit odkaz na váš nově připojený disk ve vašem domovském adresáři, můžete spustit následující příkaz:
+
+ ```sh
+ ln -s /media/windows ~/Windows
+ ```
+
+ Pro ověření, že to fungovalo:
+
+ ```sh
+ ls ~/Windows
+# '$Recycle.Bin'             Linux                  SteamLibrary
+# AMD                       Modding                swapfile.sys
+# Apps                      pagefile.sys          'System Volume Information'
+# bootTel.dat               PerfLogs               Users
+# Development               ProgramData            WiiU
+#'Documents and Settings'  'Program Files'         Windows
+# DumpStack.log.tmp        'Program Files (x86)'   XboxGames
+# FanControl                Recovery               xiv_modding
+# Games                     RetroArch-Win64
+# Intel                    'Ship of Harkinian'
+ ```
+
+### tl;dr
+
+- Najděte **UUID** vašeho oddílu
+
+```sh
+lsblk -f
+```
+
+- Otevřete `/etc/fstab`
+
+```sh
+sudo nano /etc/fstab
+```
+
+- Vytvořte záznam na konci souboru
+
+```sh
+UUID=<UUID oddílu> /media/foo somefs defaults 0 0
+```
+
+Nahraďte `<UUID oddílu>`, `foo` a `somefs` vaším UUID, adresářem a souborovým systémem (např. ext4) a nastavte případné další volby, které byste mohli chtít za `defaults`, jako je `_netdev` pro NAS nebo `nofail` pro jakýkoli nekritický disk.
+
+- Znovu načtěte démona
+
+```sh
+sudo systemctl daemon-reload
+```
+
+- Připojte váš disk
+
+```sh
+sudo mount -a
+```
+
+Tento disk je nyní připojen a bude se připojovat při každém spuštění systému.
+
+### Další čtení
+
+- [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS o /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Manuál pro dump](<https://linux.die.net/man/8/dump>)
+- [Manuál pro fsck](https://man.archlinux.org/man/fsck.8)
+- [Manuálová stránka pro fstab](https://man.archlinux.org/man/fstab.5.en)
+- [Záznam pro fstab na Arch Linux Wiki](https://wiki.archlinux.org/title/Fstab)

@@ -1,106 +1,113 @@
 ---
-title: Notebook s Dvojicí GPU - Příručka
+title: Průvodce nastavením dvou GPU
+ai_translated: true
 ---
 
 import ImageComponent from '~/components/image-component.astro';
 
-## Co jsou hybridní grafiky?
+## Co je hybridní grafika?
 
-Hybridní grafiky jsou hardwarová konfigurace, ve které máte dvě grafické karty, které mohou pracovat společně. Tento přístup se nejčastěji vyskytuje v noteboocích, kde máte integrovanou grafiku (iGPU) procesoru a dedikovanou grafiku (dGPU). Hlavní výhodou je, že integrovaná grafika by měla být (ale není to nutné) používána pouze pro méně náročné úkoly, jako je prohlížení internetu, sledování videí apod. Na druhou stranu, dedikovaná grafika se používá pro vysoce výkonné úlohy, jako je hraní her, editace videí, 3D modelování a podobně. Pokud tedy dvě GPU sdílejí „velké“ a „malé“ úkoly, pak pokud právě probíhají pouze „malé“ úkoly, není nutné používat dGPU, takže může být jednoduše deaktivováno (jako by spalo), což výrazně snižuje spotřebu energie. Takto, když je dGPU opět potřeba (spustíme aplikaci, která ji využívá), probudí se a začne pracovat.
+Hybridní grafika je hardwarová konfigurace, ve které máte dvě grafické karty schopné pracovat společně. Tento přístup se nejčastěji vyskytuje u notebooků, kde máte integrovanou grafiku (iGPU) procesoru a dedikovanou grafiku (dGPU).
+
+Hlavní výhodou je, že integrovaná grafika by měla být (ale nemusí být) používána pouze pro méně náročné úlohy, jako je prohlížení internetu, sledování videí apod. Na druhou stranu se dedikovaná grafika používá pro výkonnostně náročné činnosti, jako je hraní her, střih videa, 3D modelování a podobně.
+
+Pokud si tedy dvě GPU rozdělí „velké“ a „malé“ úlohy, pak v situaci, kdy právě běží pouze „malé“ úlohy, není potřeba dGPU používat, takže ji lze jednoduše deaktivovat (jako by spala), což výrazně snižuje spotřebu energie. Jakmile je pak dGPU znovu potřeba (spustíme aplikaci, která ji využívá), probudí se a začne pracovat.
 
 ## Co je PRIME Offload?
 
-PRIME je sjednocující technologie pro práci s různými sadami hybridních grafik na Linuxu, jako je NVIDIA Optimus/AMD Dynamic Switchable Graphics. PRIME Offload je implementace myšlenky přesunu vykreslování z jednoho GPU na druhé v Linuxu. Podpora PRIME v uzavřeném ovladači NVIDIA začala až s ovladačem verze 435.17. Pokud tedy používáte zastaralé větve ovladačů 390xx nebo dokonce 340xx, PRIME Offload pro vás nebude fungovat. Také důrazně nedoporučujeme používat zastaralé způsoby práce s hybridními grafikami, jako je nvidia-xrun nebo Bumblebee. Tyto technologie jsou zastaralé, nepodporované (Bumblebee nebyl aktualizován více než 8 let), fungují pouze na hackech a mají nízký výkon. Zároveň ovladač Nouveau podporuje PRIME Offload, což může být alternativou pro starší dGPU.
+PRIME je sjednocující technologie pro práci s různými sadami hybridní grafiky v Linuxu, jako je NVIDIA Optimus nebo AMD Dynamic Switchable Graphics. PRIME Offload je implementace myšlenky přesunu vykreslování z jednoho GPU na druhé v Linuxu.
 
-V CachyOS **není potřeba nic konfigurovat, aby PRIME Offload fungoval**. S balíčkem nvidia-utils a cachyos-settings již máte vše, co potřebujete k použití PRIME Offload.
+Podpora PRIME v uzavřeném ovladači NVIDIA začala až s ovladačem verze 435.17. Pokud tedy používáte zastaralé větve ovladačů 390xx nebo dokonce 340xx, PRIME Offload vám nebude fungovat. Upozorňujeme také, že důrazně nedoporučujeme používat zastaralé způsoby správy hybridní grafiky, jako jsou nvidia-xrun nebo Bumblebee. Jsou zastaralé a nepodporované (Bumblebee nebyl aktualizován více než 8 let), fungují pouze pomocí obejití a mají nízký výkon. Zároveň otevřený ovladač Nouveau podporuje PRIME Offload, což může být alternativou pro starší dGPU.
 
-Vyhněte se také používání nástrojů jako optimus-manager. Mohou se vám zdát užitečné, ale věřte nám, mohou způsobit spoustu problémů, a pokud vaše dGPU podporuje PRIME Offload a dynamickou správu napájení, skutečně je nepotřebujete.
+V CachyOS **není potřeba nic konfigurovat, aby PRIME Offload fungoval**. S balíčkem nvidia-utils a cachyos-settings již máte vše, co potřebujete k používání PRIME Offload.
+
+Vyhněte se také používání nástrojů jako optimus-manager. Mohou se zdát docela praktické, ale věřte nám, mohou způsobit spoustu problémů, a pokud vaše dGPU podporuje PRIME Offload a dynamickou správu napájení, opravdu je nepotřebujete.
 
 ### Jak používat PRIME Offload
 
-Abyste PRIME naznačili, že chcete používat dedikovanou grafiku místo integrované grafiky, musíte před spuštěním programu nastavit několik proměnných prostředí:
+Abyste technologii PRIME sdělili, že chcete místo integrované grafiky použít dedikovanou grafiku, musíte před spuštěním programu zadat několik proměnných prostředí:
 
 ```bash
 __NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia <program>
 ```
 
-Tato sada proměnných vypadá velmi neohrabaně a je snadné na ni zapomenout, proto si můžete nainstalovat balíček ``nvidia-prime`` (``sudo pacman -S nvidia-prime``), který obsahuje skript-alias pro všechny tyto proměnné. Pak spustit aplikaci s tímto nastavením bude vypadat takto:
+Tato sada proměnných vypadá velmi neohrabaně a snadno se zapomíná, proto si můžete nainstalovat balíček `nvidia-prime` (`sudo pacman -S nvidia-prime`), který obsahuje skript-alias pro všechny tyto proměnné. Spuštění aplikace s jeho použitím pak bude vypadat takto:
 
 ```bash
 prime-run <program>
 ```
 
-Kde ``<program>`` je název příkazu, který spouští vaši aplikaci.
+Kde `<program>` je název příkazu, který spouští vaši aplikaci.
 
 :::note
-Některé hry s DX12 mají potíže s výběrem dGPU, i když používáte `prime-run`.
-Pro řešení tohoto problému přidejte proměnnou prostředí `VK_DRIVER_FILES=/usr/share/vulkan/icd.d/nvidia_icd.json` před volání skriptu prime-run.
+Některé hry s DX12 mají potíže s výběrem dGPU i při použití `prime-run`.
+Pro obejití tohoto problému přidejte proměnnou prostředí `VK_DRIVER_FILES=/usr/share/vulkan/icd.d/nvidia_icd.json` před wrapper skript `prime-run`.
 :::
 
-Pro konfigurace, kde jsou obě grafické karty spravovány otevřenými ovladači Mesa (např. AMD+AMD, AMD+Intel nebo dokonce Intel+NVIDIA, kde je NVIDIA spravována otevřeným ovladačem Nouveau), není třeba nic konfigurovat a pro použití dedikované grafiky stačí před spuštěním aplikací nebo her nastavit proměnnou prostředí ``DRI_PRIME=1``, podobně jako u proměnných popsaných výše pro NVIDIA.
+Pro konfigurace, kde jsou obě grafické karty spravovány otevřenými ovladači Mesa (např. AMD+AMD, AMD+Intel nebo dokonce Intel+NVIDIA, kde je dedikovaná grafika NVIDIA spravována otevřeným ovladačem Nouveau), není třeba nic konfigurovat a pro použití dedikované grafiky stačí před spuštěním aplikací nebo her zadat proměnnou prostředí `DRI_PRIME=1`, podobně jako u proměnných popsaných výše pro NVIDIA, nebo použít hotové grafické metody popsané níže.
 
 ## Grafická metoda
 
-Spouštění všech potřebných aplikací přes terminál pomocí ``prime-run`` může být nepohodlné. Naštěstí některé aplikace a pracovní prostředí poskytují nástroje pro ovládání, která GPU se použije pro konkrétní aplikace.
+Spouštění všech potřebných aplikací přes terminál pomocí `prime-run` vám může připadat nepohodlné. Naštěstí některé aplikace a pracovní prostředí poskytují nástroje pro ovládání, které GPU se použije pro konkrétní aplikace.
 
 ### Lutris
 
-Chcete-li nakonfigurovat hry, aby běžely s dedikovanou grafikou v Lutris, přejděte do nastavení (tři čárky v pravém dolním rohu okna a tlačítko „Preferences“). Poté přejděte na *„Global Options“* -> *„Display“*. Zde můžete vybrat GPU, na kterém bude hra běžet.
+Chcete-li v Lutrisu nastavit spouštění her s dedikovanou grafikou, přejděte do nastavení (tři čárky v pravém dolním rohu okna a tlačítko „Preferences“). Dále přejděte do *„Global Options“* -> *„Display“*. Zde můžete vybrat GPU, na kterém hra poběží.
 
 <br />
 <ImageComponent imgsrc={import('~/assets/images/lutris-prime.png')} />
 
 ### Steam
 
-Steam nemá konkrétní nastavení pro vynucení použití dedikované grafiky u hry. Můžete však přistoupit k vlastnostem hry kliknutím na ikonu ozubeného kola před spuštěním. Do pole "Launch options" můžete přidat příkaz prime-run nebo proměnné prostředí.
+Steam nemá konkrétní nastavení pro vynucení použití dedikované grafiky u hry. Můžete však přejít do vlastností hry kliknutím na ikonu ozubeného kola před spuštěním. Do pole „Launch options“ (Možnosti spuštění) můžete přidat příkaz `prime-run` nebo proměnné prostředí.
 Příklad:
 
 ```bash
 prime-run %command%
 ```
 
-Ujistěte se, že po ``prime-run`` přidáte ``%command%``. Nezapomeňte, že možnosti hry přicházejí až za tímto zástupcem, zatímco proměnné prostředí nebo příkazy by měly být před ním.
+Nezapomeňte za `prime-run` přidat `%command%`. Pamatujte, že možnosti hry patří až za tento zástupný symbol, zatímco systémové proměnné prostředí nebo příkazy by měly být před ním.
+
+Chcete-li místo toho spustit hru na integrované grafice, použijte následující možnost spuštění jako příklad pro integrovanou grafiku Radeon. To může být vhodné pro delší výdrž baterie a nižší hlučnost ventilátorů u méně náročných her.
+
+```bash
+VK_DRIVER_FILES=/usr/share/vulkan/icd.d/radeon_icd.x86_64.json:/usr/share/vulkan/icd.d/radeon_icd.i686.json %command%
+```
 
 <br />
 <ImageComponent imgsrc={import('~/assets/images/steam-prime.png')} />
 
 ### KDE Plasma
 
-Plasma má velmi praktický způsob nastavení spouštění aplikací s dedikovanou grafikou. Tato metoda však funguje pouze v případě, že je na vašem systému nainstalován balíček switcheroo-control a jeho odpovídající služba.
+Plasma nabízí velmi praktický způsob, jak nastavit spouštění aplikací s dedikovanou grafikou. Tato metoda však funguje pouze v případě, že jsou ve vašem systému nainstalovány balíček switcheroo-control a jeho odpovídající služba.
 
-V nové instalaci CachyOS by měl být tento balíček a služba již výchozí nastaveny pomocí chwd.
+V čisté instalaci CachyOS by tento balíček i služba již měly být ve výchozím nastavení povoleny pomocí chwd.
 
 ```bash
 sudo pacman -S switcheroo-control
 sudo systemctl enable --now switcheroo-control
 ```
 
-Po provedení obou příkazů klikněte pravým tlačítkem myši na zástupce aplikace na ploše nebo v aplikačním menu, poté přejděte na *„Properties“* -> *„Application“* -> *„Advanced Options“*.
+Po provedení obou příkazů klikněte pravým tlačítkem myši na požadovaného zástupce aplikace na ploše nebo v nabídce aplikací a poté přejděte na *„Properties“* -> *„Application“* -> *„Advanced Options“* (*„Vlastnosti“* -> *„Aplikace“* -> *„Pokročilé možnosti“*).
 
-Měli byste mít zaškrtnuto políčko *„Run using dedicated graphics card“*.
+Měli byste mít zaškrtnuté políčko *„Run using dedicated graphics card“* (*„Spustit pomocí vyhrazené grafické karty“*).
 
 <br />
 <ImageComponent imgsrc={import('~/assets/images/plasma-prime.jpg')} />
 
 :::note
-Použití switcheroo-control umožňuje fungování těchto políček na všech PRIME konfiguracích, které nemají ani NVIDIA dGPU, jako například AMD-APU+AMD-Dedicated.
+Použití switcheroo-control umožňuje fungování těchto zaškrtávacích políček na všech konfiguracích PRIME, i na těch, které nemají dGPU NVIDIA, jako například AMD-APU+AMD-Dedicated.
 :::
 
 ### GNOME
 
-V GNOME byste měli také nainstalovat switcheroo-control, jak je uvedeno výše, a kliknout pravým tlačítkem na ikonu aplikace a vybrat *„Run using discrete graphics“*. Upozorňujeme však, že GNOME si tuto volbu pro příště nepamatuje, a příště, když aplikaci spustíte z ikony, poběží s integrovanou grafikou místo dedikované.
+V GNOME byste měli také nainstalovat switcheroo-control, jak je uvedeno výše, a poté kliknout pravým tlačítkem na ikonu aplikace a vybrat *„Run using discrete graphics“* (*„Spustit pomocí diskrétní grafiky“*). Upozorňujeme však, že GNOME si tuto volbu pro příště nepamatuje, takže při dalším spuštění aplikace z ikony se spustí na integrované grafice místo dedikované.
 
 ### Cinnamon
 
-Podobně jako Plasma umožňuje Cinnamon také výběr GPU pro konkrétní aplikace. Klikněte pravým tlačítkem na zástupce aplikace na ploše, přejděte do Vlastností a povolte příslušnou možnost.
+Podobně jako Plasma umožňuje i Cinnamon výběr GPU pro konkrétní aplikace. Klikněte pravým tlačítkem na zástupce aplikace na ploše, přejděte do Vlastností a povolte příslušnou možnost.
 
 <br />
 <ImageComponent imgsrc={import('~/assets/images/cinnamon-prime.png')} />
 
-Pokud není dostupná, ujistěte se, že máte nainstalován ``switcheroo-control`` a povolenu jeho službu, protože všechna pracovní prostředí na něm tuto funkcionalitu zakládají.
-
-## Řešení problémů
-
-### „Můj externí monitor je velmi pomalý s PRIME“
-
-Jedná se o známý problém ovladače NVIDIA. Měli byste mít nainstalovaný nejnovější ovladač NVIDIA a používat Wayland s kompozitorem, který podporuje explicitní synchronizaci. Pro GNOME byl tento problém vyřešen ve verzi 46.2. Pro Plasmu 6 bude pravděpodobně vyřešen ve verzi 6.1, i když někteří uživatelé hlásí normální výkon již ve verzi 6.0. Ostatní prostředí/spravci oken tento problém stále mají, takže je potřeba přejít na nejnovější verzi GNOME nebo Plasmy k jeho vyřešení.
+Pokud tato možnost není k dispozici, ujistěte se, že máte nainstalovaný `switcheroo-control` a povolenou jeho službu, protože všechna pracovní prostředí na něm tuto funkci staví.

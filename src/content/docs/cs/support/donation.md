@@ -1,9 +1,11 @@
 ---
 title: Podpora
 description: Způsoby, jak nás podpořit
+ai_translated: true
 ---
 
-Pokud chcete podpořit naši práci, můžete nám přispět a pomoci pokrýt náklady na naše buildservery. Každý dárce získá hodnost Dárce na našem Discordu.
+Pokud chcete podpořit naši práci, můžete nám přispět a pomoci pokrýt náklady na naše buildservery.
+Každý dárce získá hodnost Dárce na našem Discordu.
 
 Zde je seznam aktuálních nákladů za měsíc:
 
@@ -13,13 +15,7 @@ Zde je seznam aktuálních nákladů za měsíc:
 - Mailserver/zrcadlo 17 €
 - Server fóra (Netcup VPS) 7 €
 
-### Patreon
-
-https://www.patreon.com/CachyOS
-
-### PayPal
-
-https://paypal.me/pttrr
+### [Patreon](<https://www.patreon.com/CachyOS>)
 
 ### Ethereum
 

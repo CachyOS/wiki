@@ -1,0 +1,222 @@
+---
+title: Nabízené zavaděče
+description: Popis a doporučení pro aktuálně nabízené zavaděče
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+ai_translated: true
+---
+
+Abychom nabídli nejlepší zážitek na široké škále zařízení, CachyOS v současné době nabízí následující zavaděče: **systemd-boot, rEFInd, GRUB a Limine**.
+
+Tento wiki článek popisuje sadu funkcí každého zavaděče a obsahuje naše doporučení, kdy si který z nich vybrat.
+Pro konfiguraci se prosím podívejte na [Konfigurace zavaděčů](/cs/configuration/boot_manager_configuration).
+
+:::caution
+**Důležité upozornění:** Některé základní desky MSI mají firmware UEFI, který plně neodpovídá specifikaci UEFI. To může vést k problémům s kompatibilitou u některých zavaděčů, včetně GRUBu a rEFIndu.
+
+Pokud se s takovými problémy setkáte, zvažte použití `systemd-boot` nebo `Limine`.
+:::
+
+---
+
+## Rychlé srovnání funkcí
+
+<style>{`
+  .bm-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .bm-table th, .bm-table td {
+    padding: 8px 10px;
+    vertical-align: top;
+    word-break: break-word;
+  }
+  /* vertical separators between boot-manager columns */
+  .bm-table th:not(:first-child),
+  .bm-table td:not(:first-child) {
+    border-left: 2px solid var(--ifm-table-border-color, #e5e7eb);
+  }
+  /* bottom rule under header */
+  .bm-table thead th {
+    border-bottom: 2px solid var(--ifm-table-border-color, #e5e7eb);
+  }
+`}</style>
+
+<table className="bm-table">
+  <thead>
+    <tr>
+      <th>Funkce</th>
+      <th><strong>systemd-boot</strong></th>
+      <th><strong>rEFInd</strong></th>
+      <th><strong>GRUB</strong></th>
+      <th><strong>Limine</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Podpora firmwaru</strong></td>
+      <td>Pouze UEFI (bez BIOS/MBR)</td>
+      <td>Pouze UEFI</td>
+      <td>UEFI &amp; BIOS</td>
+      <td>UEFI &amp; BIOS</td>
+    </tr>
+    <tr>
+      <td><strong>Podpora souborového systému pro <code>/boot</code></strong></td>
+      <td>Podle podpory firmwaru (obvykle FAT12/16/32); více pomocí ovladačů EFI</td>
+      <td>Podle firmwaru, ext2, ext3, ext4, btrfs, ISO-9660, HFS+ a NTFS; více pomocí ovladačů EFI</td>
+      <td>Široká podpora souborových systémů (ext*, Btrfs, XFS atd.)</td>
+      <td>FAT12/16/32, ISO9660 pro <code>/boot</code></td>
+    </tr>
+    <tr>
+      <td><strong>Dual-boot s Windows</strong></td>
+      <td>Automaticky detekuje Windows Boot Manager na stejném ESP</td>
+      <td>Automaticky detekuje EFI zavaděče a jádra</td>
+      <td>Podporováno přes <code>os-prober</code> nebo ruční konfiguraci</td>
+      <td>Podporováno; položky Windows Boot Manageru lze přidat pomocí <code>limine-scan</code></td>
+    </tr>
+    <tr>
+      <td><strong>Integrace snímků Btrfs</strong></td>
+      <td>Možná s vlastním nastavením (není poskytováno v CachyOS)</td>
+      <td>Možná s vlastním nastavením (není poskytováno v CachyOS)</td>
+      <td><strong>Podporováno v CachyOS přes</strong> <code>grub-btrfs-support</code></td>
+      <td><strong>Podporováno v CachyOS přes</strong> <code>limine-snapper-sync</code></td>
+    </tr>
+    <tr>
+      <td><strong>Šifrování celého disku (FDE)</strong></td>
+      <td>Možné (kořenový oddíl šifrovaný; <code>/boot</code> musí zůstat nešifrovaný)</td>
+      <td>Možné (kořenový oddíl šifrovaný; <code>/boot</code> musí zůstat nešifrovaný)</td>
+      <td>Plně podporováno, včetně šifrovaného <code>/boot</code> přes <code>cryptodisk</code> (pouze LUKS1/PBKDF2; podpora LUKS2 omezená / vyžaduje náhradní řešení)</td>
+      <td>Možné (kořenový oddíl šifrovaný; <code>/boot</code> musí zůstat nešifrovaný)</td>
+    </tr>
+    <tr>
+      <td><strong>Motivy / UI</strong></td>
+      <td>Minimální, bez motivů</td>
+      <td>Grafické rozhraní s podporou motivů</td>
+      <td>Klasické rozhraní s podporou motivů</td>
+      <td>Nabídka s podporou motivů (skiny)</td>
+    </tr>
+    <tr>
+      <td><strong>Snadnost nastavení v CachyOS</strong></td>
+      <td>Velmi snadné (CachyOS ho automaticky nakonfiguruje ve výchozím nastavení)</td>
+      <td>Snadné nastavení s automatickou detekcí OS a jader</td>
+      <td>Zjednodušeno pomocí hooků/skriptů CachyOS (zahrnuje snímky Btrfs v nabídce)</td>
+      <td>Zjednodušeno pomocí nástrojů CachyOS (pomocníci pro položky + integrace nabídky snímků)</td>
+    </tr>
+    <tr>
+      <td><strong>Problémy s MSI UEFI</strong></td>
+      <td>Funguje spolehlivě</td>
+      <td>Může mít problémy (vyžaduje náhradní řešení)</td>
+      <td>Může mít problémy</td>
+      <td>Funguje spolehlivě</td>
+    </tr>
+    <tr>
+      <td><strong>TPM PCR Measured Boot</strong></td>
+      <td>Ano, <a href="https://systemd.io/TPM2_PCR_MEASUREMENTS/" target="_blank">vestavěno</a></td>
+      <td>Možné pomocí systemd-ukify</td>
+      <td>Ano, <a href="https://www.gnu.org/software/grub/manual/grub/html_node/Measured-Boot.html" target="_blank">vestavěno</a></td>
+      <td><a href="https://github.com/fwupd/fwupd/discussions/9568" target="_blank">Možné pomocí systemd-ukify</a></td>
+    </tr>
+    <tr>
+      <td><strong>Nejlepší použití</strong></td>
+      <td>Rychlé/jednoduché sestavy s UEFI; záložní řešení při problémech s MSI</td>
+      <td>Multi-boot s uhlazeným uživatelským rozhraním</td>
+      <td>Nutné pro šifrovaný <strong>/boot</strong>, BIOS nebo nejširší podporu FS</td>
+      <td>Moderní sestavy vyžadující bootování ze snímků + BIOS &amp; UEFI + řetězení zavaděčů</td>
+    </tr>
+  </tbody>
+</table>
+
+## Podrobnosti o zavaděčích
+
+### systemd-boot
+
+Jako součást rodiny systemd byl systemd-boot vytvořen tak, aby byl co nejjednodušší. Proto podporuje pouze systémy založené na UEFI. Tento jednoduchý, ale efektivní design zajišťuje jeho spolehlivost a rychlost, což však přichází na úkor pokročilých funkcí podporovaných jinými zavaděči.
+
+#### Výhody
+- Velmi jednoduchá konfigurace.
+- Spouštěcí položky jsou rozděleny do více souborů, což usnadňuje jejich správu.
+- Zajišťuje kompatibilitu s některými základními deskami MSI, které se potýkají s problémy s UEFI při použití jiných zavaděčů.
+- V CachyOS je konfigurace po instalaci generována automaticky.
+- Během spouštění jsou měřeny registry TPM PCR.
+
+#### Nevýhody
+- Žádná podpora pro BIOS/MBR.
+- Velmi základní: bez motivů nebo možností přizpůsobení.
+- Pokud používáte spouštěcí souborový systém nad rámec výchozích systémů podporovaných firmwarem (FAT12/16/32), je nutné ručně přidat samostatné oddíly ESP a [XBOOTLDR](https://wiki.archlinux.org/title/Systemd-boot#Installation_using_XBOOTLDR) a také ovladače EFI.
+- Nedokáže najít spouštěcí obrazy na jiných oddílech než na vlastním oddílu ESP nebo XBOOTLDR.
+- Konfigurace se negeneruje automaticky, pokud není takto nakonfigurována.
+- Žádná nativní podpora pro návrat ke snímkům Btrfs kvůli požadavku ukládat obrazy jádra na spouštěcí oddíl namísto kořenového.
+  - Spouštění snímků je možné pouze s vlastním nastavením (není poskytováno v CachyOS).
+
+---
+
+### rEFInd
+
+Jako fork rEFIt byl rEFInd původně vytvořen, aby usnadnil multi-boot uživatelům macOS. Nicméně rEFInd se vyvinul v hardwarově nezávislý nástroj, což z něj činí skvělou volbu pro multi-booting na jakémkoli systému. Hlavní výhodou rEFInd je jeho schopnost prohledat všechna úložná zařízení při startu a odpovídajícím způsobem zobrazit položky pro každý nalezený OS/jádro.
+
+#### Výhody
+- Automaticky detekuje všechny operační systémy a jádra na úložných zařízeních.
+- Vyžaduje minimální nebo žádnou ruční konfiguraci.
+- Grafické uživatelské rozhraní připomínající výběr spouštění v macOS.
+- Skvělá podpora motivů s volitelnou podporou dotykové obrazovky.
+- Dokáže číst spouštěcí obrazy ze souborových systémů EFI (FAT12/16/32) i z EXT4 a BTRFS. Podporu pro další souborové systémy lze povolit instalací EFI ovladačů z balíčku `efifs`.
+
+#### Nevýhody
+- Žádná podpora pro systémy BIOS.
+- Nekompatibilní s některými základními deskami MSI (kvůli porušení specifikace UEFI).
+  - Lze opravit pomocí náhradního řešení, ale vyžaduje další kroky.
+- Registry TPM PCR nejsou měřeny. <a href="https://github.com/fwupd/fwupd/wiki/TPM-PCR0-differs-from-reconstruction">Selže v testu rekonstrukce TPM PCR0</a>.
+  - Lze opravit spuštěním UKI, které používá systemd-stub jako UEFI stub. To lze vytvořit pomocí systemd-ukify.
+  - Dalším řešením je zřetězit jiný zavaděč, který měří TPM PCR (např. systemd-boot, GRUB).
+---
+
+### GRUB
+
+GRUB je nejstarší z dostupných zavaděčů. Má velmi rozsáhlou sadu funkcí, funguje téměř na každém stroji a zůstává nejpoužívanějším linuxovým zavaděčem.
+
+#### Výhody
+- Podporuje téměř všechny linuxové souborové systémy.
+- Široce používaný — dokumentace a komunitní podpora jsou bohaté.
+- Podporuje šifrované oddíly `/boot`.
+- Podporuje spouštění ze snímků Btrfs (v CachyOS přes `grub-btrfs-support`).
+- Podporuje systémy BIOS i UEFI.
+- Podpora motivů je k dispozici, navzdory poněkud zastaralému rozhraní.
+- Během spouštění jsou měřeny registry TPM PCR.
+
+#### Nevýhody
+- Rozsáhlý a složitý, s mnoha ovladači souborových systémů.
+- Znatelně pomalejší než systemd-boot, rEFInd a Limine.
+- Nekompatibilní s některými základními deskami MSI (porušení specifikace UEFI).
+
+---
+
+### Limine
+
+Limine je moderní, pokročilý a přenosný víceprotokolový zavaděč. Slouží jako referenční implementace pro spouštěcí protokol Limine a podporuje spouštění Linuxu i řetězení jiných zavaděčů.
+
+#### Výhody
+- Podporuje více spouštěcích protokolů, včetně Multiboot2 a linuxového spouštěcího protokolu.
+- Dokáže bootovat jak na systémech UEFI, tak BIOS.
+- Má možnosti motivů podobné GRUBu.
+- Podporuje snímky Btrfs přes `limine-snapper-sync`, ve výchozím nastavení povoleno v CachyOS s Btrfs.
+
+#### Nevýhody
+- `/boot` musí používat FAT12/16/32 nebo ISO9660. Jiné souborové systémy vyžadují dodatečné nastavení.
+- Nepřidává automaticky položku do UEFI NVRAM. To je nutné provést ručně pomocí `efibootmgr`, nebo to automaticky zajistí `limine-entry-tool` (v CachyOS předinstalován).
+- Nefunguje s UFS (Universal Flash Storage), používaným např. v některých Chromeboocích.
+- Registry TPM PCR nejsou měřeny. <a href="https://github.com/fwupd/fwupd/wiki/TPM-PCR0-differs-from-reconstruction">Selže v testu rekonstrukce TPM PCR0</a>.
+  - Lze opravit spuštěním UKI, které používá systemd-stub jako UEFI stub. To lze vytvořit pomocí systemd-ukify (<a href="https://github.com/fwupd/fwupd/discussions/9568" target="_blank">viz zde</a>).
+  - Dalším řešením je zřetězit jiný zavaděč, který měří TPM PCR (např. systemd-boot, GRUB).
+
+---
+
+## Shrnutí
+
+- Zvolte GRUB, pokud potřebujete šifrovaný `/boot`, kompatibilitu s BIOSem nebo chcete snímky Btrfs se stabilním, osvědčeným zavaděčem.
+
+- Zvolte Limine, pokud chcete moderní zavaděč s integrací snímků Btrfs ihned po instalaci, podporou pro BIOS i UEFI a dual-bootem s Windows (přes **limine-scan**).
+
+- Zvolte rEFInd, pokud chcete uhlazené grafické rozhraní a automatickou detekci multi-bootu na systémech UEFI.
+
+- Zvolte systemd-boot, pokud preferujete nejjednodušší nastavení a nepotřebujete snímky ani pokročilé funkce. Je to také nejspolehlivější záložní řešení pro základní desky MSI s problémy s UEFI.

@@ -1,0 +1,931 @@
+---
+title: Časté dotazy a průvodce řešením problémů v CachyOS
+description: Často kladené otázky a tipy
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 5
+ai_translated: true
+---
+
+import ImageComponent from '~/components/image-component.astro';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::note
+Následující otázky a odpovědi se vztahují na CachyOS a distribuce založené na Arch Linuxu.
+
+**Tento průvodce nenahrazuje informace na Arch Linux Wiki.**
+:::
+
+:::tip
+Sledujte oficiální oznámení týmu CachyOS na našem [fóru](https://discuss.cachyos.org/c/announcements/5), v příspěvcích na našem [oficiálním subredditu](https://www.reddit.com/r/cachyos/) nebo na Discordu v kanálech [#announcements](https://discord.com/channels/862292009423470592/873309651364610118) a [#updates-repo](https://discord.com/channels/862292009423470592/871739561364033566), kde informujeme o známých problémech s balíčky nebo aktualizacích vyžadujících ruční zásah.
+:::
+
+:::danger
+Buďte opatrní při spoléhání se na rady a příkazy poskytnuté modely AI (například ChatGPT), aniž byste si informace ověřili z oficiálních zdrojů. Modely AI mohou někdy poskytovat nesprávné nebo zavádějící informace, zejména v technických souvislostech. Vždy si údaje ověřujte v důvěryhodné dokumentaci nebo komunitních zdrojích.
+
+V opačném případě byste mohli skončit se zcela nefunkčním systémem nebo problém ještě zhoršit.
+:::
+
+
+## Jak nahlásit problém nebo chybu v CachyOS
+
+*Pamatujte si: Ve světě Linuxu platí skvělé přísloví: „S největší pravděpodobností měl ten samý problém už někdo před vámi.“ Před nahlášením problému proto prosím použijte vyhledávání na Googlu, Arch Wiki nebo na fóru či Discordu CachyOS, protože řešení už může existovat.*
+
+Nezapomeňte používat příkaz `tldr` pro zobrazení zjednodušené verze manuálových stránek k příkazům, které neznáte. Příklad:
+
+Některé z nejběžnějších příkazů a popisů pro git:
+```bash
+tldr git
+```
+
+Příkaz `tldr` můžete také zkombinovat s konkrétním příkazem gitu a získat podrobnější informace o parametrech, například:
+```bash
+tldr git add
+```
+
+### Kde hlásit problémy
+
+- [GitHub](https://github.com/CachyOS/distribution)
+- [Fórum](https://discuss.cachyos.org/c/feedback/bugreports/10)
+- [Discord: Fórum podpory](https://discord.com/channels/862292009423470592/1400865136373403708)
+  - Před vytvořením nového příspěvku si přečtěte [pravidla podpory (support-guidelines)](https://discord.com/channels/862292009423470592/1522310323250397274) připnutá v kanálu.
+    - Nebo pokud si myslíte, že váš problém lze vyřešit rychle, použijte kanál [#support](https://discord.com/channels/862292009423470592/862294383470051348)
+- [Reddit](https://www.reddit.com/r/cachyos/)
+
+### Buďte trpěliví a zdvořilí
+
+Tým CachyOS a komunita jsou dobrovolníci, kteří na projektu pracují ve svém volném čase. Při komunikaci s nimi buďte prosím trpěliví a zdvořilí. Kvalitní hlášení chyby je nejlepší způsob, jak problém vyřešit co nejrychleji.
+
+Pokud položíte vágní dotaz nebo poskytnete nedostatečné informace, můžete dostat stejně vágní odpověď, případně vůbec žádnou.
+
+Zde je příklad:
+
+- **Dobrý dotaz:**
+  - Po nedávné aktualizaci (poslední aktualizace proběhla dne DATUM) se můj systém nespustí a zobrazí černou obrazovku. Mám grafickou kartu NVIDIA (model). Zkusil jsem provést downgrade balíčku `linux-cachyos` na předchozí verzi, ale problém přetrvává. Zde je výstup příkazů `journalctl -b -1` a `dmesg` z live prostředí.
+- **Špatný nebo vágní dotaz:**
+  - Můj systém je rozbitý, prosím pomozte mi.
+  <details>
+  <summary>Jinak byste mohli dopadnout jako Abraham z tohoto memu:</summary>
+   <ImageComponent imgsrc={import('~/assets/images/abraham-meme.jpg')} />
+  </details>
+
+### Popište svůj problém
+
+Zde je několik otázek, které byste si měli položit:
+
+- Co nefunguje?
+- Vyřeší problém downgrade balíčku X?
+- Mají tento problém i ostatní uživatelé / byl již dříve vyřešen? (použijte funkci vyhledávání)
+- Objevil se problém po aktualizaci?
+- Provedli jste v systému vlastní úpravy?
+  - Příklad: přidání dalšího příznaku do souboru modprobe
+- Souvisí problém s hardwarem? (např. GPU, Wi-Fi)
+- Souvisí problém se softwarem? (např. konkrétní aplikace, desktopové prostředí)
+- Jedná se o čerstvou instalaci, nebo se problém objevil až po určité době používání?
+
+## Jak shromáždit protokoly (logy)
+
+Existuje mnoho způsobů, jak ze systému shromáždit protokoly. Zde je několik příkladů a nástrojů, které můžete použít:
+
+### Vytvoření obecného hlášení chyby
+CachyOS poskytuje skvělý nástroj pro sběr systémových protokolů nazvaný `cachyos-bugreport.sh`.
+Tento nástroj shromáždí protokoly z:
+  - `dmesg`
+  - `journalctl`
+  - `inxi` (pro shromáždění informací o hardwaru)
+
+Po shromáždění protokolů budete dotázáni, zda je chcete nahrát na náš web pro sdílení textů (paste).
+
+Chcete-li tento skript spustit, zadejte do terminálu následující příkaz a vygenerovaný odkaz sdílejte ve svém hlášení:
+  ```sh
+  sudo cachyos-bugreport.sh
+  ```
+
+### Sběr protokolů z programu, který se nespouští
+Existuje mnoho důvodů, proč se grafický program nemusí spustit. Nejlepším způsobem, jak pro takový problém získat protokoly, je spustit program z terminálu. Uvidíte tak případné chybové hlášky nebo výstup, který může pomoci s diagnostikou problému.
+
+Například pokud se Firefox nespustí úplně, zkuste jej spustit z terminálu a sledujte chybové hlášky:
+  ```sh
+  firefox
+  ```
+
+:::tip
+  Pokud chcete výstup uložit do textového souboru pro snazší sdílení, můžete výstup přesměrovat takto:
+    ```sh
+    firefox &> firefox-log.txt
+    ```
+  Nezapomeňte stisknout `CTRL + C` pro ukončení procesu poté, co se nespustí, aby terminál zapsal výstup do souboru.
+:::
+
+### Kontrola naposledy aktualizovaných balíčků v pacmanu
+
+Chcete-li získat seznam naposledy aktualizovaných balíčků ve vašem systému, můžete použít následující příkaz:
+
+```bash
+grep "\[ALPM\] upgraded" /var/log/pacman.log | tail -n 50
+```
+
+ :::tip
+Upravte parametr `-n` příkazu tail pro zobrazení většího nebo menšího počtu řádků.
+:::
+
+### Klávesové zkratky pro pohyb v journalctl a dmesg
+
+Nejběžnější klávesové zkratky pro procházení protokolů v programu less nebo v režimu čitelném pro člověka:
+
+`Šipka nahoru & Šipka dolů nebo J & K` pro posun nahoru nebo dolů po řádcích.
+
+`PageUp & PageDown nebo Ctrl + B/D` pro posun nahoru nebo dolů o jednu stránku.
+
+`G nebo Home` pro skok na začátek protokolu.
+
+`Shift + G nebo End` pro skok na konec protokolu.
+
+### Použití journalctl ke shromáždění systémových protokolů
+
+Příkaz `journalctl` je mimořádně užitečný nástroj pro prohlížení systémových protokolů. Zde jsou některé z nejběžnějších a nejužitečnějších kombinací příkazů.
+
+#### Základní použití a běžné příklady
+
+:::tip
+Kombinujte více možností pro přesnější filtrování.
+:::
+
+<details>
+<summary>Zobrazit celý protokol (od nejstarších po nejnovější):</summary>
+```bash
+journalctl
+```
+</details>
+
+<details>
+<summary>Zobrazit protokoly pouze z aktuálního spuštění systému:</summary>
+```bash
+journalctl -b
+```
+</details>
+
+<details>
+<summary>Problémy se zabezpečením a ověřováním:</summary>
+```bash
+journalctl -u sshd -u polkit -b -0 | grep -i "fail\|error\|denied"
+```
+Vyhledejte chyby ověřování a zamítnutí zásad zabezpečení.
+</details>
+
+<details>
+<summary>Sledovat protokoly v reálném čase:</summary>
+```bash
+journalctl -f
+```
+:::tip
+Zkombinujte to s dalšími filtry. Například:
+```bash
+# Sledování protokolů služby Adguard Home:
+journalctl -u adguardhome -f
+```
+:::
+</details>
+
+<details>
+<summary>Problémy se zvukem z aktuálního spuštění systému:</summary>
+```bash
+journalctl --user -u pipewire -u pipewire-pulse -u wireplumber -b 0
+```
+Zobrazí protokoly zvukových služeb pro řešení potíží se zvukem.
+</details>
+
+<details>
+<summary>Chyby paměti (RAM):</summary>
+```bash
+journalctl -k | grep -i "memory\|ram"
+```
+Vyhledejte poškození paměti nebo problémy s detekcí.
+</details>
+
+<details>
+<summary>Problémy s Bluetooth:</summary>
+```bash
+# Z aktuálního spuštění systému:
+journalctl -u bluetooth -b 0
+# Z předchozího spuštění systému:
+journalctl -u bluetooth -b -1
+```
+</details>
+
+##### Filtrování podle času
+<details>
+
+<summary>Zobrazit protokoly za posledních několik minut/hodin:</summary>
+```bash
+journalctl --since "10 minutes ago"
+journalctl --since "1 hour ago"
+journalctl --since "2024-01-15 14:30:00"
+```
+</details>
+
+<details>
+<summary>Zobrazit protokoly z konkrétního časového rozmezí:</summary>
+```bash
+journalctl --since "09:00" --until "10:00"
+```
+</details>
+
+##### Filtrování podle priority a služby nebo programu
+
+Možné úrovně priority jsou: `debug`, `info`, `notice`, `warning`, `err`, `crit`, `alert`, `emerg`.
+
+Nebo pomocí čísel:
+
+`0` odpovídá `emerg`
+
+`1` odpovídá `alert`
+
+`2` odpovídá `crit`
+
+`3` odpovídá `err`
+
+`4` odpovídá `warning`
+
+`5` odpovídá `notice`
+
+`6` odpovídá `info`
+
+a `7` odpovídá `debug`.
+
+<details>
+<summary>Zobrazit pouze chybové, kritické a nouzové zprávy:</summary>
+```bash
+journalctl -p err..emerg
+```
+:::tip
+Toto můžete zkombinovat s předchozími příklady:
+
+Příklad:
+```bash
+journalctl -p err..emerg --since "9:00" --until "10:00"
+```
+:::
+</details>
+
+<details>
+<summary>Zobrazit protokoly z konkrétní systémové služby:</summary>
+```bash title='Příklady'
+# Zobrazit protokoly ze služby NetworkManager:
+journalctl -u NetworkManager
+# Zobrazit protokoly ze služby GDM (GNOME Display Manager):
+journalctl -u gdm
+# Zobrazit protokoly ze služby SDDM (Simple Desktop Display Manager):
+journalctl -u sddm
+```
+</details>
+
+<details>
+<summary>Zobrazit protokoly z konkrétního ID procesu (PID):</summary>
+```bash
+journalctl _PID=pid
+# Příklad:
+journalctl _PID=3344
+```
+</details>
+
+<details>
+<summary>Zobrazit protokoly z konkrétního spustitelného souboru:</summary>
+```bash
+journalctl path/to/executable
+# Příklad:
+journalctl /usr/bin/firefox
+```
+</details>
+
+### Použití journalctl ke kontrole zpráv jádra
+
+:::note
+Kdy použít `journalctl -k` oproti `dmesg`:
+
+- `journalctl -k` přistupuje ke zprávám jádra uloženým v žurnálu systemd (jsou trvalé napříč restarty, pokud je to nakonfigurováno, a nabízí lepší integraci s časovým filtrováním a funkcemi žurnálu).
+- `dmesg` čte aktuální kruhový buffer jádra (dočasný, po restartu se ztratí).
+:::
+
+<details>
+<summary>Základní zobrazení zpráv jádra:</summary>
+```bash
+journalctl -k
+```
+Zobrazí všechny zprávy jádra ze žurnálu, což je ekvivalent `dmesg`, ale z pohledu žurnálu.
+</details>
+
+<details>
+<summary>Pouze zprávy jádra z aktuálního spuštění systému:</summary>
+```bash
+journalctl -k -b 0
+```
+Zobrazí zprávy jádra pouze z aktuální relace spuštění systému.
+</details>
+
+<details>
+<summary>Zprávy jádra z předchozího spuštění systému:</summary>
+```bash
+journalctl -k -b -1
+```
+Zobrazí zprávy jádra z předchozího spuštění systému. Užitečné pro diagnostiku selhání spuštění nebo pádů systému.
+</details>
+
+<details>
+<summary>Sledovat nové zprávy jádra v reálném čase:</summary>
+```bash
+journalctl -k -f
+```
+Sleduje zprávy jádra v okamžiku jejich vzniku, což je skvělé pro monitorování hardwarových událostí nebo načítání ovladačů.
+</details>
+
+<details>
+<summary>Hledat zprávy konkrétních ovladačů:</summary>
+```bash
+# Příklady:
+# Zprávy související s GPU:
+journalctl -k | grep -i "nvidia\|amd\|intel"
+# Zprávy zařízení USB:
+journalctl -k | grep -i "usb\|pci"
+```
+</details>
+
+<details>
+<summary>Časové filtrování zpráv jádra:</summary>
+```bash
+journalctl -k --since "1 hour ago"
+journalctl -k --since "09:00" --until "10:00"
+```
+Zobrazí zprávy jádra z konkrétních časových období.
+</details>
+
+### Použití dmesg pro zprávy jádra
+
+Příkaz `dmesg` zobrazuje kruhový buffer jádra, který obsahuje zprávy jádra o detekci hardwaru, inicializaci ovladačů a systémových událostech.
+
+#### Základní použití a formátování
+
+<details>
+<summary>Zobrazit celý buffer zpráv jádra:</summary>
+```bash
+dmesg
+```
+</details>
+
+<details>
+<summary>Zobrazit s časovými značkami čitelnými pro člověka:</summary>
+```bash
+dmesg -T
+```
+</details>
+
+<details>
+<summary>Zobrazit ve stránkovači pro snadnější čtení:</summary>
+```bash
+dmesg | less
+```
+</details>
+
+#### Filtrování podle úrovně priority
+
+Podobně jako `journalctl` umožňuje `dmesg` filtrovat zprávy podle úrovně priority.
+
+<details>
+<summary>Zobrazit pouze chyby a kritické zprávy:</summary>
+```bash
+dmesg -l err,crit,alert,emerg
+```
+Možné úrovně priority jsou: `debug`, `info`, `notice`, `warning`, `err`, `crit`, `alert`, `emerg`.
+
+Nebo pomocí čísel:
+
+`0` odpovídá `emerg`
+
+`1` odpovídá `alert`
+
+`2` odpovídá `crit`
+
+`3` odpovídá `err`
+
+`4` odpovídá `warning`
+
+`5` odpovídá `notice`
+
+`6` odpovídá `info`
+
+a `7` odpovídá `debug`.
+</details>
+
+<details>
+<summary>Zobrazit nejnovější zprávy jádra:</summary>
+```bash
+dmesg -w
+```
+</details>
+
+<details>
+<summary>Hledat zprávy konkrétního hardwaru nebo ovladače:</summary>
+```bash
+# Příklady:
+# Vyhledání zpráv souvisejících s USB:
+dmesg | grep -i usb | less
+# Zařízení Bluetooth:
+dmesg | grep -i bluetooth
+# Související s NVIDIA:
+dmesg | grep -i nvidia | less
+# Zařízení, která se nepodařilo inicializovat:
+dmesg | grep -i "error\|failed" | less
+```
+</details>
+
+##### Běžné příklady pro konkrétní problémy pomocí dmesg
+
+<details>
+<summary>Když není rozpoznáno USB zařízení:</summary>
+```bash
+dmesg -w | grep -i usb
+```
+Poté připojte zařízení a sledujte nové zprávy.
+</details>
+
+<details>
+<summary>Problémy s inicializací GPU:</summary>
+```bash
+dmesg | grep -i "nvidia\|amd\|intel\|radeon\|drm\|gpu" | less
+```
+</details>
+
+<details>
+<summary>Problémy s Wi-Fi nebo síťovým adaptérem:</summary>
+```bash
+dmesg | grep -i "wlan\|wifi\|network\|firmware" | tail -20
+```
+Zkontrolujte, zda nechybí načtení firmwaru nebo se neobjevují chyby ovladače, které brání bezdrátové kartě v práci.
+</details>
+
+<details>
+<summary>Problémy s detekcí HDD/SSD:</summary>
+```bash
+dmesg | grep -i "sda\|sdb\|nvme\|scsi\|disk" | head -30
+```
+Použijte, pokud úložné zařízení není detekováno nebo při spuštění systému vykazuje chyby.
+</details>
+
+<details>
+<summary>Zamrzání systému nebo paniky jádra (kernel panic):</summary>
+```bash
+dmesg -T -l emerg,alert,crit,err | tail -30
+```
+Zkontrolujte nejzávažnější zprávy jádra, které nastaly před pádem nebo zamrznutím systému.
+</details>
+
+<details>
+<summary>Chyby paměti (RAM):</summary>
+```bash
+dmesg | grep -i "memory\|ram"
+```
+Vyhledejte hlášení o poškození paměti, problémech s detekcí nebo chybách ECC.
+</details>
+
+<details>
+<summary>Události zvukových zařízení:</summary>
+```bash
+dmesg | grep -i "audio\|snd\|hda" | grep -i "error\|fail\|card"
+```
+Zkontrolujte, zda je vaše zvuková karta správně detekována a zda se ovladače správně načítají.
+</details>
+
+<details>
+<summary>Selhání načítání modulů jádra:</summary>
+```bash
+dmesg | grep -i "module\|init" | grep -i "error\|fail"
+```
+Když se nenačítají konkrétní hardwarové ovladače nebo selhává jejich inicializace.
+</details>
+
+<details>
+<summary>Sledování hardwarových událostí v reálném čase:</summary>
+```bash
+dmesg -w -l warn,err,crit,alert,emerg -T
+```
+Průběžně sledujte nové důležité zprávy jádra při reprodukování problému.
+</details>
+
+<details>
+<summary>Problémy s BIOS/UEFI a firmwarem:</summary>
+```bash
+dmesg | grep -i "bios\|uefi\|firmware\|efi"
+```
+Zkontrolujte problémy s kompatibilitou mezi firmwarem vašeho hardwaru a linuxovým jádrem.
+</details>
+
+## Instalace a live prostředí
+
+### Proč CachyOS live ISO obsahuje pouze KDE Plasma?
+
+Rozhodli jsme se soustředit naše úsilí při vývoji a údržbě výhradně na desktopové prostředí KDE Plasma. Díky tomu můžeme na našem live ISO poskytovat propracovanější, stabilnější a konzistentnější uživatelský zážitek.
+
+Live prostředí je primárně určeno k instalaci CachyOS nebo k použití `cachy-chroot` pro obnovu systému. Pro bezpečný způsob, jak **vyzkoušet** jiná desktopová prostředí nebo správce oken, vřele doporučujeme otestovat je ve virtuálním stroji (VM).
+
+### Proč trvá tak dlouho, než se instalátor spustí po kliknutí na „Launch Installer“?
+
+:::caution
+Ujistěte se, že máte aktivní/funkční internetové připojení, jinak se po stisknutí tohoto tlačítka nic nestane.
+:::
+
+Instalátor není zamrzlý. Na pozadí běží nezbytný skript, který připravuje váš systém k instalaci. Tento proces zajišťuje, že klíčové svazky a systémové hodiny jsou aktuální, což pomáhá předcházet běžným instalačním problémům.
+
+[Prohlédněte si skript na GitHubu](https://github.com/CachyOS/CachyOS-Live-ISO/blob/master/archiso/airootfs/usr/local/bin/calamares-online.sh), abyste lépe pochopili, co dělá.
+<Steps>
+  1. Odstraní staré soubory klíčového svazku.
+  2. Aktualizuje balíčky klíčového svazku Arch Linuxu a CachyOS na nejnovější verzi.
+  3. Inicializuje a naplní klíčový svazek pacmanu.
+  4. Povolí synchronizaci síťového času.
+  5. Zkontroluje typ spouštění vašeho systému (UEFI nebo BIOS/MBR), aby uživatele vyzval k výběru zavaděče podle daného typu.
+</Steps>
+
+### Proč se instalace zasekla na 33 %
+
+K tomu dochází, když má instalátor potíže se stahováním balíčků. Obvykle je to známka velmi pomalého nebo nestabilního internetového připojení. Zkontrolujte prosím své síťové připojení a zkuste to znovu.
+
+## Obnova zavaděče
+
+:::note
+V případě smazaného oddílu `/boot` vytvořte prosím nový podle příslušného [schématu rozdělení disku](/cs/installation/installation_on_root#ruční-rozdělení-disku) od kroku 5.
+:::
+
+### Postup obnovy zavaděče
+
+Užitečné v případech, kdy po aktualizaci BIOSu zmizí položky zavaděče nebo kdykoli je potřeba jej obnovit.
+
+:::tip
+Pokud si nejste jisti, jak používat `cachy-chroot`, přečtěte si nejprve dokumentaci [CachyOS chroot Helper](/cs/features/cachy_chroot).
+:::
+
+<Steps>
+    1. Spusťte CachyOS Live ISO.
+    2. Otevřete terminál a přihlaste se pomocí chrootu do nainstalovaného systému příkazem `cachy-chroot`.
+
+        ```bash
+        sudo cachy-chroot
+        ```
+        Pokud systém používá BTRFS s naší předvolbou, zadejte při výzvě `y`:
+         ```bash title='Příklad'
+         Do you want to use CachyOS BTRFS preset to auto mount root subvolume? y
+         Do you want to mount additional partitions? · yes
+         Enter the mount point for additional partition (e.g. /boot) type 'skip' to cancel:
+         # Zadejte /boot pro systemd-boot, Limine nebo rEFInd
+         # Zadejte /boot/efi pro GRUB
+         ```
+    3. Postupujte podle níže uvedených pokynů pro nainstalovaný zavaděč a typ systému (UEFI nebo MBR/BIOS).
+        <Tabs>
+            <TabItem label='Limine'>
+                Přeinstalujte Limine následujícím příkazem:
+                <Tabs>
+                    <TabItem label='UEFI'>
+                        ```bash
+                        sudo limine-install
+                        ```
+                    </TabItem>
+                    <TabItem label='MBR/BIOS'>
+                        ```bash
+                        sudo limine bios-install /dev/sdX # Nahraďte sdX vaším diskem, např. sda
+                        ```
+                    </TabItem>
+                </Tabs>
+            </TabItem>
+            <TabItem label='GRUB'>
+                Přeinstalujte GRUB následujícím příkazem:
+                <Tabs>
+                    <TabItem label='UEFI'>
+                        ```bash
+                        sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos
+                        ```
+                    </TabItem>
+                    <TabItem label='MBR/BIOS'>
+                        ```bash
+                        sudo grub-install --target=i386-pc /dev/sdX # Nahraďte sdX vaším diskem, např. sda
+                        ```
+                    </TabItem>
+                </Tabs>
+            </TabItem>
+            <TabItem label='systemd-boot (pouze UEFI)'>
+                Přeinstalujte systemd-boot následujícím příkazem:
+                ```bash
+                sudo bootctl install
+                ```
+            </TabItem>
+            <TabItem label='rEFInd (pouze UEFI)'>
+                Přeinstalujte rEFInd následujícím příkazem:
+                ```bash
+                sudo refind-install
+                ```
+            </TabItem>
+        </Tabs>
+    4. Přeinstalujte jádro CachyOS:
+        ```bash
+        sudo pacman -Syu linux-cachyos linux-cachyos-headers
+        ```
+    5. Ukončete `cachy-chroot`:
+        ```bash
+        exit
+        ```
+    6. Restartujte systém.
+</Steps>
+
+## Správa balíčků a aktualizace
+
+### Řešení problémů s Pacmanem
+
+#### error: signature is invalid
+
+Tato chyba značí problém s kryptografickým podpisem balíčku. Obvykle je způsobena zastaralým zrcadlem nebo poškozeným klíčovým svazkem ve vašem systému.
+
+Ačkoli se zrcadla často po krátké době opraví sama, pokud problém přetrvává, měli byste vyzkoušet jedno z následujících řešení.
+
+<Tabs>
+
+<TabItem label='První řešení: Znovu synchronizujte zrcadla Pacmanu'>
+
+```sh
+sudo pacman -Syu
+```
+
+</TabItem>
+
+<TabItem label='Druhé řešení: Ohodnoťte svá zrcadla'>
+
+```sh title='Ohodnoťte svá zrcadla'
+sudo cachyos-rate-mirrors
+```
+
+</TabItem>
+
+<TabItem label='Třetí řešení: Obnovte klíčové svazky'>
+
+Pokud ohodnocení zrcadel nepomůže, jsou pravděpodobně poškozené klíčové svazky vašeho systému.
+
+- Otevřete CachyOS Hello a přejděte na záložku **Troubleshooting**.
+- Klikněte na tlačítko **Reset keyrings**.
+
+</TabItem>
+
+</Tabs>
+
+#### error: 404 Not Found
+
+Tato chyba znamená, že balíček, který se pokoušíte nainstalovat, není na vašem aktuálním zrcadle dostupný. K tomu obvykle dochází, když je vaše místní databáze balíčků neaktuální oproti vzdáleným repozitářům.
+
+**Řešení:**
+
+Spusťte následující příkaz pro obnovení databáze balíčků a provedení úplné aktualizace systému. Tím zajistíte, že váš systém bude znát nejnovější dostupné balíčky.
+
+```sh
+sudo pacman -Syu
+# Poté zkuste požadovaný balíček nainstalovat znovu.
+```
+
+#### error: could not remove
+
+K této chybě dochází, když mezipaměť (cache) pacmanu obsahuje soubory, které systém nemůže automaticky spravovat. Jedná se o běžný problém, který lze snadno opravit.
+
+- Řešení 1: Použijte CachyOS Hello.
+  - Nejjednodušší způsob, jak tento problém vyřešit, je pomocí CachyOS Hello. Otevřete jej, přejděte na **Troubleshooting** a klikněte na tlačítko **Clear package cache**.
+
+- Řešení 2: Ruční odstranění mezipaměti.
+  - Spusťte následující příkaz k odstranění všech osiřelých balíčků z mezipaměti.
+  ```sh
+  sudo rm -r /var/cache/pacman/pkg/*
+  ```
+
+#### error: File is corrupted (invalid or corrupted package (PGP signature))
+
+```sh
+# Příklad:
+:: File /var/cache/pacman/pkg/python-charset-normalizer-3.4.0-1-any.pkg.tar.zst
+is corrupted (invalid or corrupted package (PGP signature)).
+```
+
+Tato chyba obvykle značí problém s klíčovými svazky pacmanu ve vašem systému, které ověřují pravost balíčků. Následující příkazy klíčové svazky obnoví a znovu naplní, čímž problém vyřeší.
+
+```sh
+sudo rm -rf /etc/pacman.d/gnupg/
+sudo pacman-key --init
+sudo pacman-key --populate
+
+sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
+sudo pacman-key --lsign-key F3B607488DB35A47
+
+sudo rm -R /var/lib/pacman/sync
+```
+
+Pokud výše uvedený postup nepomůže, problém není v klíčovém svazku. Příčinou může být problém s vašimi zrcadly, takže můžete vybrat funkční zrcadla a poté vyčistit mezipaměť spuštěním následujících příkazů:
+
+```sh
+sudo cachyos-rate-mirrors
+sudo pacman -Scc
+```
+
+#### error: unable to lock database
+
+K této chybě dochází, když již běží jiný proces pacmanu, který uzamkne databázi, aby zabránil jejímu poškození. Pokud předchozí proces havaroval nebo byl přerušen, zamykací soubor `db.lck` nemusel být odstraněn.
+
+- Řešení 1: Použijte CachyOS Hello
+  - Nejjednodušší způsob, jak to opravit, je funkce **Remove db lock** na záložce **Troubleshooting** v CachyOS Hello.
+
+- Řešení 2: Ruční odstranění zamykacího souboru
+  - Pokud nechcete používat CachyOS Hello, můžete zamykací soubor odstranit ručně:
+
+```sh
+sudo rm /var/lib/pacman/db.lck
+```
+
+#### error: failed retrieving file ... Connection timed out
+
+Můžete narazit na podobné chyby:
+
+```text
+# Příklady chyb:
+error: failed retrieving file '...' from ... : Connection timed out
+error: failed retrieving file '...' from ... : Couldn't resolve host name
+error: failed retrieving file '...' from ... : The requested URL returned error: 526
+```
+
+Tyto chyby téměř vždy značí problém s vašimi aktuálními zrcadly. Mohou být pomalá, dočasně nedostupná nebo z vaší polohy nedosažitelná.
+
+- Řešení: Nejlepší způsob, jak tento problém vyřešit, je aktualizovat seznam zrcadel pomocí rychlejších a spolehlivějších zrcadel.
+
+```sh
+sudo cachyos-rate-mirrors
+# Poté můžete systém aktualizovat příkazem:
+sudo pacman -Syu
+```
+
+:::tip
+Příkaz `cachyos-rate-mirrors` otestuje dostupná zrcadla CachyOS podle rychlosti a stavu synchronizace a poté aktualizuje soubor se seznamem zrcadel (`/etc/pacman.d/cachyos-mirrorlist`) těmi nejvýkonnějšími.
+
+Zvažte jeho pravidelné spouštění, zejména pokud si při aktualizacích systému všimnete zpomalení.
+:::
+
+#### warning: local is newer than...
+
+Toto varování se zobrazí, když je verze balíčku ve vašem systému novější než verze dostupná v oficiálních repozitářích. To se může stát, pokud je zrcadlo zastaralé, pokud byl balíček v repozitářích ponížen (downgradován) nebo pokud byl nainstalován z jiného zdroje.
+
+- Řešení: příkaz `pacman -Syuu` provede úplnou aktualizaci systému a povolí downgrade, čímž toto varování odstraní synchronizací místních balíčků s verzemi v repozitářích.
+
+```sh title='Pro odstranění těchto varování spusťte následující příkaz:'
+sudo pacman -Syuu
+```
+
+#### error: failed to commit transaction (conflicting files)
+
+Tato chyba znamená, že pacman se pokouší nainstalovat nebo aktualizovat balíček, který obsahuje soubory, jež již ve vašem systému existují z jiného zdroje. Jedná se o vestavěnou bezpečnostní funkci, která má zabránit poškození systému.
+
+- Řešení: Tento problém můžete vyřešit ručním odstraněním kolidujících souborů. Více informací a řešení naleznete na [Arch Wiki](https://wiki.archlinux.org/title/Pacman#%22Failed_to_commit_transaction_(conflicting_files)%22_error).
+
+```sh title='Příklad'
+error: failed to commit transaction (conflicting files)
+nvidia-utils: /usr/lib/environment.d/10-gsk.conf exists in filesystem
+Errors occurred, no packages were upgraded.
+ -> error installing repo packages
+```
+
+Chcete-li vyřešit tento konkrétní příklad, odstraňte kolidující soubor a poté znovu spusťte příkaz pro aktualizaci.
+
+```sh
+sudo rm /usr/lib/environment.d/10-gsk.conf
+```
+
+#### ERROR: module not found: 'nvidia', 'nvidia_modeset', ...
+
+```sh title='Příklad'
+==> ERROR: module not found: 'nvidia'
+==> ERROR: module not found: 'nvidia_modeset'
+==> ERROR: module not found: 'nvidia_uvm'
+==> ERROR: module not found: 'nvidia_drm'
+```
+
+**Dva důvody této chyby:**
+
+1) Protože je v `chwd` vždy povoleno časné načítání modulů (Early Module Loading), `mkinitcpio` trvale očekává přítomnost modulů NVIDIA; tato chyba nastane, pokud tyto moduly chybí.
+
+2) Mohou vám chybět moduly NVIDIA pro jiná jádra nainstalovaná ve vašem systému.
+
+```sh title='Pro opravu této chyby nainstalujte následující balíček'
+sudo pacman -S nvidia
+```
+
+### Specifické problémy se softwarem
+
+#### Discord požaduje aktualizaci, která není dostupná v repozitářích
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/discord-update.png')} />
+
+K tomu dochází, protože Discord používá vlastní aktualizační systém, který předbíhá oficiální repozitáře. Byla vydána nová verze aplikace, ale zatím nebyla zabalena pro naše zrcadla.
+
+Chcete-li tento problém obejít, postupujte podle [návodu na opravu na Arch Wiki](<https://wiki.archlinux.org/title/Discord#Discord_asks_for_an_update_not_yet_available_in_the_repository>).
+
+### Obecné otázky
+
+#### V poslední době se můj systém spouští velmi dlouho
+
+Protože tento problém může být způsoben mnoha různými věcmi, začněme od základů a zkontrolujme `systemd-analyze`, abychom viděli, kde má systém potíže:
+
+Otevřete terminál a spusťte jeden z následujících dvou příkazů:
+
+```sh
+systemd-analyze blame
+```
+
+nebo:
+
+```sh
+systemd-analyze critical-chain
+```
+
+Pokud výstup ukazuje, že služba `cachyos-rate-mirrors.service` trvá dlouho, měli byste spustit následující příkaz pro její maskování, čímž zabráníte jejímu spouštění při startu systému:
+
+```sh
+systemctl mask cachyos-rate-mirrors
+systemctl mask cachyos-rate-mirrors.timer
+```
+
+#### Jaký je původ CachyOS a proč se jmenuje „CachyOS“?
+
+CachyOS je pojmenován po plánovači „Cachy“, což byl původní název [plánovače cacULE](https://github.com/hamadmarri/cacule-cpu-scheduler), plánovače CPU pro linuxové jádro.
+
+Projekt vznikl v letech 2020–2021, když ptr1337 (jeden ze zakladatelů CachyOS) testoval a spolupracoval s vývojářem jménem Hamad na plánovači cacULE. Když se rozhodli vytvořit optimalizovanou linuxovou distribuci založenou na Arch Linuxu s balíčky optimalizovanými pro x86-64-v3, pojmenovali ji „CachyOS“ podle plánovače, který je svedl dohromady.
+
+#### Jaký je interval aktualizací balíčků -git?
+
+Obvykle jednou týdně v pondělí, i když mohou existovat výjimky.
+
+#### Mají balíčky -bin v repozitářích CachyOS stejné optimalizace výkonu?
+
+Ne. Balíčky `-bin` jsou předkompilované binární soubory a neobsahují stejné optimalizace výkonu jako balíčky kompilované ze zdrojových kódů v repozitářích CachyOS.
+
+#### Jak zakázat animaci spouštění systému (Plymouth)
+
+:::note[Toto může vyřešit problém s černou obrazovkou na některých systémech, zejména se staršími grafickými kartami NVIDIA.]
+:::
+
+Chcete-li zakázat animaci spouštění systému, musíte upravit [konfiguraci zavaděče](/cs/configuration/boot_manager_configuration) a přidat následující parametry jádra:
+
+```sh
+plymouth.enable=0 disablehooks=plymouth
+```
+
+:::note[systemd-boot, GRUB a Limine vyžadují přegenerování obrazů initramfs]
+systemd-boot: `sudo sdboot-manage gen`
+
+GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+
+Limine: `sudo limine-mkinitcpio`
+:::
+
+#### Odesílání požadavků na balíčky do CachyOS
+
+CachyOS nabízí rozsáhlý seznam předkompilovaných balíčků z AUR, které se běžně používají.
+Uživatelé mohou vytvářet požadavky na balíčky z AUR následujícími způsoby:
+
+Pokud chcete, abychom přidali nějaký balíček, můžete odeslat požadavek na GitHubu nebo na fóru.
+
+- [GitHub](https://github.com/CachyOS/distribution/issues)
+- [Fórum](https://discuss.cachyos.org/c/feedback/repository/11)
+- [Kanál zpětné vazby na Discordu](https://discord.com/channels/862292009423470592/1150723027986813018)
+
+## Zabezpečení a osvědčené postupy
+
+### Bezpečné postupy pro AUR
+
+AUR nabízí obrovský výběr, ale bezpečnost je prvořadá. Zde je stručný průvodce bezpečným používáním AUR ve vašem systému CachyOS.
+
+* **Porozumějte souboru PKGBUILD:** Jedná se o sestavovací skript. Poznejte jeho strukturu, proměnné (`source`, `pkgname`) a funkce (`build()`, `package()`).
+* **Ověřte zdrojové odkazy:** Vždy zkontrolujte, zda adresy URL v `source` odkazují na oficiální stránky projektu nebo důvěryhodné repozitáře. Vyhněte se podezřelým nebo osobním odkazům.
+* **Zkontrolujte kroky instalace:** Prověřte, kam jsou soubory instalovány (funkce `package()`) a zda nejsou některé příkazy neobvyklé nebo nezasahují do citlivých oblastí systému. Zkontrolujte také skripty `.install`.
+* **Prověřte správce balíčku:** Podívejte se na historii správce v AUR, zda se u něj v minulosti nevyskytly bezpečnostní problémy nebo podezřelá aktivita.
+* **Kontrolujte kontrolní součty a PGP:** Zcela zásadní! Potvrďte, že všechny kontrolní součty (SHA256, BLAKE2b atd.) odpovídají zdrojovému projektu (upstream). Pokud jsou k dispozici, použijte k ověření pravosti podpisy PGP (`validpgpkeys`).
+* **Buďte opatrní u balíčků `-bin`:** Tyto balíčky používají předkompilované binární soubory, což znamená, že nemůžete zkontrolovat zdrojový kód. Věnujte maximální pozornost jejich původu a integritě.
+* **Čtěte komentáře komunity:** Zkontrolujte komentáře na stránce AUR, zda neobsahují varování, hlášení problémů nebo postřehy od ostatních uživatelů.
+* **Nikdy nepřeskakujte kontrolu integrity:** Použití příznaku `--skipinteg` nebo podobných obchází všechny bezpečnostní kontroly. Nedělejte to.
+* **Mějte pod kontrolou svůj pomocník pro AUR:** Pochopte, jak váš pomocník (`yay`, `paru`) funguje. Ujistěte se, že vám zobrazuje `PKGBUILD` a jeho rozdíly (diff), nebo sestavujte balíčky ručně pomocí `makepkg`.
+* **Zvažte nezbytnost:** Před instalací se zeptejte, zda tento balíček z AUR opravdu potřebujete, nebo zda existuje alternativa v oficiálním repozitáři.
+* **Udržujte systém aktualizovaný:** Pravidelně spouštějte `sudo pacman -Syu`, aby všechny součásti vašeho systému, včetně `pacman` a `makepkg`, měly nejnovější bezpečnostní záplaty.
+
+Zůstaňte ostražití, aby váš systém založený na Archu zůstal v bezpečí!
+
+### Pravidelná údržba CachyOS
+
+Postupujte podle Arch Wiki: https://wiki.archlinux.org/title/System_maintenance
+
+### Výběr grafického správce balíčků
+
+Přestože grafičtí správci balíčků nabízejí pohodlí, u některých je známo, že na systémech typu rolling-release, jako je CachyOS, způsobují závažné problémy a pro správu systémových balíčků je třeba se jim vyhnout.
+
+- **Pamac:** je známý tím, že nesprávně zpracovává některé úlohy správy balíčků, například poškozuje systémové klíčové svazky. To může vést k chybám podpisů PGP, které vám zabrání aktualizovat systém.
+- **Discover (KDE) a Centrum aplikací GNOME:** Tyto obchody s aplikacemi používají backend PackageKit. Zatímco pro správu Flatpaků jsou obecně bezpečné, jejich používání k instalaci nebo aktualizaci **systémových balíčků** je rizikové. Správci založení na PackageKit mohou být také nestabilní nebo náchylní k pádům, což by po neúspěšné transakci mohlo zanechat váš systém v nefunkčním stavu.
+
+Pro maximální stabilitu a spolehlivost **důrazně doporučujeme** spravovat systémové balíčky prostřednictvím příkazového řádku pomocí `pacman`.
+
+Pokud dáváte přednost grafickému rozhraní, grafické nadstavby jako **[Shelly](</cs/configuration/post_install_setup/#aktualizace-systému>)** nebo **CachyOS Package Installer** jsou považovány za bezpečné alternativy, protože jsou přímějšími nadstavbami pro funkce pacmanu.

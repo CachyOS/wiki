@@ -1,0 +1,121 @@
+---
+title: Instalace dalšího DE/WM pomocí CachyOS Settings
+description: Návod, jak nainstalovat další desktopové prostředí nebo správce oken (DE/WM) do stávající instalace CachyOS s využitím poskytovaných nastavení
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+## Co zvážit před instalací dalšího desktopového prostředí
+
+- Instalace více desktopových prostředí nebo správců oken (DE/WM) může vést ke konfliktům, zejména u správců nastavení, výchozích aplikací a konfigurace vzhledu, jako jsou motivy a ikony v aplikacích GTK nebo Qt.
+- Dvě nejproblematičtější prostředí z hlediska konfliktů jsou GNOME a KDE Plasma, protože používají dvě zcela odlišné knihovny (GTK a Qt) a spouštějí na pozadí mnoho služeb, které mohou zasahovat do ostatních DE/WM.
+  - To neznamená, že je nemůžete mít nainstalované společně, jen počítejte s tím, že můžete narazit na určité problémy.
+- Přebytečné balíčky: Běžná desktopová prostředí jako GNOME a KDE Plasma s sebou mohou přinést stovky balíčků, které nemusíte potřebovat ani chtít.
+- Mnoho správců oken (WM) můžete kombinovat s různými desktopovými prostředími bez větších potíží. Můžete mít například nainstalované KDE Plasma a Hyprland společně a při přihlášení si vybrat, které chcete použít.
+- Prostředí DE/WM nabízená v CachyOS mají vlastní příslušný balíček `-settings`. Například: `cachyos-i3wm-settings`.
+  - Co to znamená? Pokud si chcete nainstalovat jiné DE/WM a mít stejný vzhled nebo sadu úprav, které poskytujeme, měli byste nainstalovat odpovídající balíček `-settings`.
+  - Tyto balíčky ukládají konfigurační soubory do adresáře `/etc/skel/`, který slouží jako šablona pro nové uživatelské účty.
+  - Důležité: Pro stávající uživatele **se tato nastavení NEPOUŽIJÍ automaticky**, aby nedošlo k přepsání vaší osobní konfigurace.
+
+## Jak nainstalovat další DE/WM s nastavením CachyOS
+
+:::note
+Při instalaci dalšího DE nebo WM máte dvě možnosti:
+1. **Ponechat si stávající konfigurační soubory** a ručně upravit nebo zkopírovat potřebné soubory z `/etc/skel`.
+  - Například: pokud chcete pouze konfigurační soubory pro i3wm, ale chcete si ponechat stávající motiv GTK, můžete ze složky `/etc/skel/.config/i3` zkopírovat do své domovské složky jen soubory související s i3wm.
+2. **Přepsat stávající konfigurační soubory** novými z `/etc/skel/`.
+  - Získáte tak kompletní prostředí CachyOS, ale nahradíte tím svá současná nastavení.
+:::
+
+:::tip
+Pro podrobnější informace o konkrétním DE nebo WM využijte Arch Wiki.
+:::
+
+<Steps>
+1. Vytvořte si zálohu svých stávajících konfiguračních souborů v domovském adresáři:
+    ```bash
+    mkdir -p ~/config-backup
+    cp -r ~/.config ~/config-backup/
+    cp -r ~/.local ~/config-backup/
+    ```
+2. Odinstalujte stávající balíček `-settings`, pokud jej máte nainstalovaný. Pokud například používáte KDE, spusťte:
+    ```bash
+    sudo pacman -R cachyos-kde-settings
+    ```
+    :::note
+    Odstraněním tohoto balíčku nedojde ke smazání žádné z vašich aktuálních konfigurací DE/WM. Odstraní se pouze soubory uložené v `/etc/skel`.
+    :::
+3. Nainstalujte nové DE/WM spolu s jeho odpovídajícím balíčkem `-settings`. Například pro instalaci i3wm:
+    ```bash
+    sudo pacman -Syu i3-wm cachyos-i3wm-settings
+    ```
+    :::tip
+    Seznam dostupných DE/WM a jim odpovídajících balíčků `-settings` si můžete prohlédnout v [GitHub repozitáři CachyOS PKGBUILDs](https://github.com/CachyOS/CachyOS-PKGBUILDS).
+    :::
+    Nebo pomocí vámi preferovaného správce souborů.
+4. Zkopírujte nové konfigurační soubory z `/etc/skel` do své domovské složky:
+    - Například: Balíček `cachyos-i3wm-settings` obsahuje konfiguraci pro Kvantum, dunst, GTK, i3, polybar, Qt5 a rofi.
+    - Zde je postup pomocí správce souborů:
+        <Steps>
+        1. Otevřete správce souborů (Dolphin, Nautilus, Thunar apod.).
+        2. Zapněte zobrazování skrytých souborů:
+            - **Většina správců souborů**: `Ctrl+H` nebo přes nabídku: `Zobrazit` → `Zobrazit skryté soubory`
+        3. Přejděte ve správci souborů do `/etc/skel`.
+        4. Vyberte všechny soubory a složky (`Ctrl+A`).
+        5. Zkopírujte je (`Ctrl+C`).
+        6. Přejděte do své domovské složky.
+        7. Vložte soubory (`Ctrl+V`).
+        8. Při dotazu na přepsání zvolte:
+            - **„Sloučit“** (Merge) nebo **„Použít na vše“** (Apply to All) u složek
+            - **„Nahradit“** (Replace) u jednotlivých souborů, které chcete aktualizovat
+            :::caution
+            Při nahrazování souborů buďte opatrní. Tímto krokem přepíšete svá stávající nastavení!
+            :::
+        </Steps>
+        - Nebo jednoduše použijte terminál, pokud s ním umíte pracovat.
+</Steps>
+
+Po instalaci nového DE/WM a zkopírování konfiguračních souborů se odhlaste z aktuální relace. Na přihlašovací obrazovce před opětovným přihlášením vyberte v možnostech relace nově nainstalované DE/WM.
+
+### FAQ
+
+#### Jak se vrátit zpět ke konfiguraci předchozího DE/WM?
+
+- Obnovte ji ze zálohy, kterou jste si vytvořili:
+  ```bash
+  cp -r ~/config-backup/.config/* ~/.config/
+  cp -r ~/config-backup/.local/* ~/.local/
+  ```
+  Nebo pomocí správce souborů.
+
+#### Co s novými aktualizacemi balíčku `-settings`?
+
+- Když se aktualizuje balíček `-settings`, nové soubory se uloží do `/etc/skel/`, ale vaše uživatelská konfigurace v `/home/` zůstane beze změny. Chcete-li aktualizace použít, budete muset aktualizované soubory z `/etc/skel/` zkopírovat znovu ručně.
+
+Pro sledování případných změn budete muset kontrolovat GitHub repozitář příslušného DE/WM.
+
+Zde je seznam všech repozitářů různých DE a WM spravovaných projektem CachyOS:
+- [KDE Plasma](https://github.com/CachyOS/cachyos-kde-settings)
+- [GNOME](https://github.com/CachyOS/cachyos-gnome-settings)
+- [Niri](https://github.com/cachyos/cachyos-niri-noctalia)
+- [Hyprland](https://github.com/CachyOS/cachyos-hypr-noctalia)
+- [MangoWM](https://github.com/CachyOS/cachyos-mangowc-dms)
+- [i3](https://github.com/CachyOS/cachyos-i3wm-settings)
+- [Qtile](https://github.com/CachyOS/cachyos-qtile-settings)
+- [Wayfire](https://github.com/CachyOS/cachyos-wayfire-settings)
+
+Všechna ostatní DE a WM, která nabízíme při instalaci CachyOS, v tuto chvíli nemají vlastní balíček `-settings`, což znamená, že jde pouze o čisté (vanilla) verze.
+
+#### Mohu mít nainstalováno více balíčků nastavení DE/WM najednou?
+
+- Ano i ne. Můžete mít nainstalováno více DE/WM, ale doporučuje se mít v jednu chvíli nainstalovaný pouze jeden balíček `-settings`, abyste předešli konfliktům v `/etc/skel/`. V opačném případě by si `pacman` mohl při pokusu o instalaci dalšího balíčku `-settings` stěžovat na konflikty souborů.
+
+#### Co jsou „CachyOS Settings“?
+
+„CachyOS Settings“ jsou praktické konfigurační balíčky pro různá desktopová prostředí a správce oken. Poskytují přednastavenou konfiguraci, motivy a úpravy v závislosti na zvoleném DE/WM.
+
+Když nainstalujete jeden z těchto balíčků, automaticky se s ním nainstalují i další závislosti, které nejsou součástí čistého (vanilla) DE/WM, například motivy, ikony, tapety a doplňkové aplikace. Například v balíčku `cachyos-i3wm-settings` instalujeme `rofi`, `dunst`, `picom`, `lxappearance` a další.
