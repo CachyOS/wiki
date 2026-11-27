@@ -1,10 +1,11 @@
 ---
 title: Donácie
 description: Možnosti, ako nás podporiť
+ai_translated: true
 ---
 
-Ak chcete podporiť našu prácu, môžete nám poslať donáciu a pomôcť nám zaplatiť naše buildservery.
-Každý donátor získa Donator Rank na našom Discorde.
+Ak chcete podporiť našu prácu, môžete nám prispieť a pomôcť nám zaplatiť naše buildservery.
+Každý donátor získa rolu Donator Rank na našom Discorde.
 
 Tu je zoznam aktuálnych mesačných nákladov:
 
@@ -12,15 +13,9 @@ Tu je zoznam aktuálnych mesačných nákladov:
 - Druhý Buildserver 70€ (Hetzner 7700X)
 - Webserver/mirror 17 €
 - Mailserver/mirror 17 €
-- Forum Server (Netcup VPS) 7 Euro
+- Forum Server (Netcup VPS) 7 €
 
-### Patreon
-
-https://www.patreon.com/CachyOS
-
-### PayPal
-
-https://paypal.me/pttrr
+### [Patreon](<https://www.patreon.com/CachyOS>)
 
 ### Ethereum
 

@@ -1,0 +1,375 @@
+---
+title: CachyOS Recovery
+description: Spustenie, obnova a oprava systému zo záchranného prostredia v ponuke zavádzača
+tableOfContents:
+  minHeadingLevel: 2
+  maxHeadingLevel: 3
+ai_translated: true
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+
+[CachyOS Recovery](https://github.com/CachyOS/cachyos-recovery) je malé záchranné prostredie, ktoré sa nainštaluje vedľa
+vašich jadier a spúšťa sa z ponuky zavádzača. Keď aktualizácia alebo zmena konfigurácie poškodí váš systém, môžete ho
+použiť aj bez live USB na:
+
+- **spustenie snímky Btrfs**, aby ste overili, či funguje, bez toho, aby ste menili svoj systém,
+- **trvalé vrátenie späť** na snímku vrátane zodpovedajúcich jadier a zavádzacích súborov,
+- **otvorenie nainštalovaného systému v kontajneri**, aby ste ho mohli opraviť ručne.
+
+Záchranné prostredie zaberá približne 70 MB. Nezávisí od stavu vášho nainštalovaného systému, takže funguje aj vtedy,
+keď sa samotný systém už nedá spustiť.
+
+:::caution
+Snímky nie sú zálohou. Nachádzajú sa na tom istom disku ako váš systém a nechránia vás pred zlyhaním disku ani pred
+náhodným vymazaním súborov v priečinku `/home`. Pravidelne si zálohujte svoje dôležité údaje.
+:::
+
+## Požiadavky
+
+Záchranné prostredie sa spustí na akejkoľvek inštalácii CachyOS s koreňovým súborovým systémom Btrfs, ext4, XFS alebo
+F2FS. Operácie so snímkami si navyše vyžadujú:
+
+- Koreňový súborový systém **Btrfs** s koreňom na podzväzku `@`, ako ho vytvára inštalátor CachyOS.
+- **Snímky len na čítanie** koreňového podzväzku. Snapper ich vytvára predvolene a s balíkom
+  `cachyos-snapper-support` ich CachyOS vytvára automaticky pred každou transakciou `pacman` a po nej.
+  Inštalácie so systemd-boot tento balík zatiaľ neobsahujú, pozrite si časť
+  [„No snapshots were found“](#no-snapshots-were-found). Pozrite si tiež [Snímky Btrfs](/sk/configuration/btrfs_snapshots).
+- **mkinitcpio** ako generátor initramfs, čo je v CachyOS predvolené nastavenie.
+
+Na systémoch UEFI musí byť systémová partícia EFI uvedená v súbore `/etc/fstab` s typom `vfat` a pripojená do
+`/boot`, `/efi` alebo `/boot/efi`.
+
+Ak je systémová partícia EFI pripojená do `/boot`, vrátenie na snímku znova vygeneruje aj jadrá, obrazy initramfs a
+konfiguráciu zavádzača pre **Limine**, **systemd-boot** (pomocou `sdboot-manage`) a **GRUB**. **rEFInd** aktualizáciu
+konfigurácie nepotrebuje. Ak je systémová partícia EFI pripojená do `/efi` alebo `/boot/efi`, ako aj na systémoch BIOS,
+kde je `/boot` súčasťou koreňového súborového systému, jadrá sú súčasťou samotnej snímky a obnovia sa spolu s ňou.
+
+### Šifrované disky a rozloženie klávesnice
+
+Disky šifrované pomocou **LUKS** sú podporované. Ak váš disk ešte nie je odomknutý, záchranné prostredie si pri spustení
+vyžiada vaše prístupové heslo LUKS. Majte ho poruke, aj keď disk zvyčajne odomykáte pomocou TPM2 alebo FIDO2.
+
+Záchranné prostredie vždy používa **anglické (US) rozloženie klávesnice**, a to aj pri zadávaní prístupového hesla a pri
+prihlasovaní do chrootu. Ak vaše heslo obsahuje znaky, ktoré sú na vašej klávesnici na inom mieste, zadajte ich tak,
+akoby ste písali na US klávesnici.
+
+## Inštalácia
+
+<Tabs syncKey="firmware">
+  <TabItem label="UEFI">
+    ```bash
+    sudo pacman -S cachyos-recovery
+    ```
+
+    Počas inštalácie pacman hook všetko nastaví automaticky:
+
+    - Skopíruje záchranný obraz do `EFI/Linux/cachyos-recovery.efi` na vašej systémovej partícii EFI.
+    - Zapíše umiestnenie vášho koreňového súborového systému (a prípadného zariadenia LUKS) do malého doplnku vedľa obrazu,
+      `EFI/Linux/cachyos-recovery.efi.extra.d/root.addon.efi`.
+    - Podpíše oba súbory nástrojom `sbctl`, ak je Secure Boot nastavený pomocou `sbctl` (pozrite si [Secure Boot](#secure-boot)).
+    - Pri **Limine** pridá položku **CachyOS Recovery** do ponuky zavádzača.
+    - Pri **GRUB** zapíše položku **CachyOS Recovery** do `/etc/grub.d/50-cachyos-recovery` a znova vygeneruje konfiguráciu
+      GRUB.
+    - Pridá položku **CachyOS Recovery** do ponuky zavádzania vášho firmvéru (vyžaduje `efibootmgr`). Položka sa pridá na
+      koniec poradia zavádzania, takže váš bežný zavádzač zostane predvolený.
+
+    **systemd-boot** zobrazuje obrazy v `EFI/Linux` automaticky a **rEFInd** obraz nájde pri prehľadávaní systémovej
+    partície EFI. Pri iných zavádzačoch spustite záchranné prostredie z ponuky zavádzania firmvéru.
+  </TabItem>
+  <TabItem label="BIOS">
+    ```bash
+    sudo pacman -S cachyos-recovery-legacy
+    ```
+
+    Počas inštalácie pacman hook pridá položku **CachyOS Recovery** do ponuky zavádzača **Limine** alebo **GRUB**.
+    V prípade GRUB skopíruje záchranné jadro a initramfs do `/boot/cachyos-recovery.vmlinuz` a
+    `/boot/cachyos-recovery.initrd`, zapíše položku do `/etc/grub.d/50-cachyos-recovery` a znova vygeneruje konfiguráciu
+    GRUB.
+
+    Balíky `cachyos-recovery` a `cachyos-recovery-legacy` nemôžu byť nainštalované súčasne. Neinštalujte
+    `cachyos-recovery` na systéme s BIOS-om, obsahuje totiž iba obraz pre UEFI.
+  </TabItem>
+</Tabs>
+
+Tento hook sa spustí znova pri každej aktualizácii balíka. Ak zmeníte umiestnenie nainštalovaného systému, napríklad po
+presune na nový disk alebo po nastavení šifrovania, preinštalujte balík, aby záchranné prostredie znova našlo váš
+koreňový súborový systém: `sudo pacman -S cachyos-recovery` na UEFI, `sudo pacman -S cachyos-recovery-legacy` na BIOS-e.
+
+Balík inštalujte a preinštalujte z bežne spusteného systému. Počas spustenia zo snímky nedokáže rozpoznať váš koreňový
+súborový systém.
+
+### Secure Boot
+
+Ak ste Secure Boot nastavili pomocou `sbctl` podľa návodu [Nastavenie Secure Boot](/sk/configuration/secure_boot_setup),
+záchranný obraz a jeho doplnok sa podpíšu automaticky. Stane sa tak vtedy, keď:
+
+- je nainštalovaný `sbctl` a má vytvorené vlastné kľúče,
+- Secure Boot je zapnutý a firmvér nie je v režime nastavenia (setup mode),
+- vaše kľúče sú zaregistrované (enrolled).
+
+Podpisy môžete overiť príkazom:
+
+```bash
+sudo sbctl verify | grep cachyos-recovery
+```
+
+Ak súbory nie sú podpísané, napríklad preto, že ste Secure Boot zapli až po nainštalovaní balíka, odstráňte záchranný
+obraz a balík preinštalujte. Samotná preinštalácia nestačí, pretože hook znova neskopíruje ani nepodpíše obraz, ak sa
+už na systémovej partícii EFI nachádza v nezmenenej podobe.
+
+```bash
+sudo rm /boot/EFI/Linux/cachyos-recovery.efi
+sudo pacman -S cachyos-recovery
+```
+
+Upravte cestu, ak je vaša systémová partícia EFI pripojená do `/efi` alebo `/boot/efi`. Hook následne podpíše oba súbory
+a pri zavádzači Limine aktualizuje aj položku v ponuke zavádzača.
+
+:::caution
+So zapnutým Secure Bootom firmvér odmietne spustiť nepodpísaný záchranný obraz a Limine namiesto ponuky záchranného
+prostredia zobrazí chybu. Ak má Limine nastavené zapamätanie poslednej položky, vyberte v ponuke zavádzača inú položku,
+aby sa systém znova spustil, a potom súbory podpíšte.
+:::
+
+## Spustenie záchranného prostredia
+
+<Steps>
+1. Reštartujte počítač.
+2. V ponuke zavádzača vyberte **CachyOS Recovery**. Ak váš zavádzač túto položku nemá, otvorte namiesto toho ponuku
+   zavádzania firmvéru (zvyčajne klávesom <kbd>F8</kbd>, <kbd>F11</kbd> alebo <kbd>F12</kbd> počas štartu) a vyberte
+   **CachyOS Recovery** tam.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-limine-entry.png')} />
+3. Ak je váš disk šifrovaný, zadajte prístupové heslo LUKS. Máte päť pokusov.
+4. Otvorí sa ponuka záchranného prostredia.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-main-menu.png')} />
+</Steps>
+
+Na výber položky použite šípky a kláves <kbd>Enter</kbd>, na návrat späť použite <kbd>Esc</kbd>. V zoznamoch môžete
+písaním filtrovať položky. Rámček v spodnej časti popisuje vybranú akciu.
+
+Záchranné prostredie pripojí váš systém len na čítanie. Na disku sa nič nezmení, kým nespustíte vrátenie na snímku
+alebo nevykonáte zmeny v chroote.
+
+| Akcia | Čo robí |
+| --- | --- |
+| **Boot Btrfs snapshot** | Spustí snímku s dočasným zapisovateľným koreňovým systémom. Odporúčaný prvý krok. |
+| **Rollback Btrfs snapshot** | Natrvalo obnoví systém zo snímky. |
+| **Chroot into target system** | Spustí váš nainštalovaný systém v kontajneri, určené pre pokročilých používateľov. |
+| **Reboot** | Reštartuje počítač. |
+
+Dve akcie pre snímky sa zobrazia iba vtedy, keď je vaším koreňovým súborovým systémom Btrfs.
+
+## Spustenie snímky
+
+Spustenie snímky je najbezpečnejší spôsob, ako nájsť funkčný stav systému. Snímku používate ako svoj bežný systém a
+nič sa natrvalo neobnoví, kým sa nerozhodnete ju ponechať.
+
+<Steps>
+1. Vyberte **Boot Btrfs snapshot**.
+2. Vyberte snímku. Zoznam zobrazuje ID podzväzku Btrfs a čas vytvorenia v UTC. Vpravo vidíte cestu k snímke a pri
+   snímkach Snapper aj jej popis a typ. Vyberte snímku vášho koreňového súborového systému. Jej cesta vyzerá ako
+   `.snapshots/<number>/snapshot`.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-snapshot-list.png')} />
+3. Vyberte jadro, ktoré sa má spustiť. Zobrazujú sa iba jadrá nainštalované v tejto snímke.
+
+   <ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-kernel-picker.png')} />
+4. Záchranné prostredie snímku pripraví a spustí. Váš systém nabehne ako zvyčajne. Pri šifrovanom disku môžete byť
+   znova vyzvaní na zadanie prístupového hesla.
+</Steps>
+
+Počas spustenia systému zo snímky:
+
+- Zmeny v systéme (všetko na koreňovom podzväzku) sa uchovávajú v pamäti a po reštarte sa stratia.
+- Ostatné podzväzky a partície, napríklad `/home`, sú pripojené ako zvyčajne. **Zmeny na nich sa zachovajú.**
+- Vaše vlastné parametre jadra sa nepoužijú. Snímka sa spustí s parametrami, ktoré potrebuje na nájdenie vášho systému.
+
+### Ponechanie snímky
+
+Po prihlásení do pracovného prostredia sa zobrazí upozornenie s otázkou, či si chcete snímku ponechať.
+
+<ImageComponent imgsrc={import('~/assets/images/cachyos-recovery-notifier.png')} />
+
+- **Rollback snapshot** otvorí terminál a vyžiada si vaše heslo. Po potvrdení klávesom `y` snímka nahradí váš
+  aktuálny systém (pozrite si [čo robí vrátenie na snímku](#čo-robí-vrátenie-na-snímku)). Potom počítač reštartujte.
+- **Stay in snapshot** zatvorí upozornenie. Nič sa neobnoví a váš nainštalovaný systém zostane nezmenený.
+
+Ak sa upozornenie nezobrazí, napríklad v správcovi okien bez notifikácií, alebo ak sa neotvorí terminál, spustite
+vrátenie na snímku z terminálu:
+
+```bash
+sudo cachyos-recovery rollback
+```
+
+Tento príkaz je dostupný iba vtedy, keď ste spustili systém zo snímky cez záchranné prostredie.
+
+:::tip
+Ak sa snímka nespustí, napríklad preto, že váš hardvér nezvládne opätovné spustenie jadra zo snímky, použite namiesto
+toho položku **Rollback Btrfs snapshot** priamo v ponuke záchranného prostredia.
+:::
+
+## Vrátenie na snímku
+
+Túto možnosť použite, keď viete, ktorá snímka funguje, alebo keď spustenie snímky zlyhá.
+
+<Steps>
+1. Vyberte **Rollback Btrfs snapshot**.
+2. Vyberte snímku, ktorú chcete obnoviť, podľa postupu v časti [Spustenie snímky](#spustenie-snímky).
+3. Potvrďte stlačením `y` a <kbd>Enter</kbd>.
+4. Počkajte na dokončenie procesu. Záchranné prostredie sa vás potom opýta, či chcete reštartovať.
+5. Vyberte **Yes, reboot** na spustenie obnoveného systému.
+</Steps>
+
+:::danger[Váš aktuálny stav systému bude vymazaný]
+Vrátenie na snímku nahradí váš aktuálny koreňový podzväzok a po úspešnom dokončení ho vymaže. Dá sa vrátiť späť iba
+pomocou snímky, ktorá bola vytvorená predtým. Váš domovský priečinok a ostatné podzväzky nie sú dotknuté a vaše
+existujúce snímky zostávajú zachované.
+:::
+
+### Čo robí vrátenie na snímku
+
+<Steps>
+1. Ak je vaša systémová partícia EFI pripojená do `/boot`, záchranné prostredie skopíruje jadrá zo snímky a vygeneruje
+   zodpovedajúce obrazy initramfs a konfiguráciu zavádzača pomocou nástrojov vnútri snímky. Tieto súbory sa najprv
+   pripravia v dočasnom umiestnení, takže systémová partícia EFI sa zatiaľ nemení. Jadrá, ktoré sa v snímke
+   nenachádzajú, sa odstránia z ponuky zavádzača, a ak je Secure Boot nastavený pomocou `sbctl`, súbory sa podpíšu.
+2. Vytvorí nový koreňový podzväzok zo snímky a vymení ho za váš aktuálny koreň.
+3. Presunie vnorené podzväzky, napríklad `/.snapshots`, zo starého koreňa do nového, aby vaše snímky zostali naďalej
+   dostupné.
+4. Skopíruje pripravené zavádzacie súbory na systémovú partíciu EFI.
+5. Vymaže starý koreňový podzväzok.
+</Steps>
+
+Ak niektorý krok zlyhá pred skopírovaním zavádzacích súborov, záchranné prostredie vráti váš starý koreň a systémovú
+partíciu EFI ponechá nezmenenú.
+
+Ak je systémová partícia EFI pripojená do `/efi` alebo `/boot/efi`, jadrá sú súčasťou samotnej snímky, takže krok 1 a
+krok 4 sa preskočia.
+
+:::caution[Secure Boot a staršie snímky]
+Nové zavádzacie súbory sa podpisujú pomocou inštalácie `sbctl` **vnútri snímky**. Ak sa vrátite k snímke, ktorá bola
+vytvorená predtým, než ste nastavili Secure Boot, nič sa nepodpíše a systém sa so zapnutým Secure Bootom nespustí.
+Záchranné prostredie vás na to neupozorní. Vaše kľúče `sbctl` v `/var/lib/sbctl` sa takisto odstránia spolu so starým
+koreňom.
+
+Samotný záchranný obraz zostáva podpísaný. Ak novšia snímka stále obsahuje `sbctl` a jeho kľúče, spustite
+**CachyOS Recovery** z ponuky zavádzania firmvéru a vráťte sa k tejto novšej snímke. Vrátenie na snímku zavádzacie
+súbory znova podpíše.
+
+V opačnom prípade vypnite Secure Boot vo firmvéri a spustite systém. Nainštalujte `sbctl` a skopírujte `/var/lib/sbctl`
+späť z novšej snímky v `/.snapshots`. Potom podpíšte svoje jadrá a zavádzač podľa návodu
+[Signing the Kernel Image and Boot Manager](/sk/configuration/secure_boot_setup#podpisovanie-obrazu-jadra-a-zavádzača)
+a znova zapnite Secure Boot. Ak žiadna novšia snímka neobsahuje `/var/lib/sbctl`, postupujte podľa návodu
+[Nastavenie Secure Boot](/sk/configuration/secure_boot_setup) od začiatku, aby ste vytvorili a zaregistrovali nové kľúče.
+:::
+
+:::note[Jadro Easy Anti-Cheat]
+Vrátenie na snímku nepodpíše jadro `linux-cachyos-eac` vaším vlastným kľúčom, takže si zachová podpis CachyOS, ktorý
+vyžaduje položka zavádzača pre [Easy Anti-Cheat](/sk/configuration/easy_anti_cheat). Ak sa položka Easy Anti-Cheat po
+vrátení na snímku nespustí, skopírujte jadro podpísané CachyOS späť do `/boot` preinštalovaním balíka `linux-cachyos-eac`,
+alebo pri zavádzači Limine spustením `sudo limine-mkinitcpio`.
+:::
+
+## Chroot do systému
+
+**Chroot into target system** spustí váš nainštalovaný systém v kontajneri pomocou `systemd-nspawn`. Zobrazí sa
+prihlasovacia výzva do vášho nainštalovaného systému, kde sa môžete prihlásiť svojím používateľským menom a heslom.
+Váš koreňový súborový systém je v tomto režime zapisovateľný, takže vykonané zmeny sa uložia.
+
+Tento režim použite na offline opravy koreňového súborového systému, napríklad na opravu poškodeného konfiguračného
+súboru v `/etc` alebo na zakázanie služby, ktorá bráni spusteniu systému. Kontajner nemá **žiadny prístup k sieti** a
+pripojený je iba váš koreňový súborový systém. Na Btrfs nemusia byť dostupné ostatné podzväzky, ako napríklad `/home`,
+`/var/cache` a `/var/log`, ani iné partície vrátane systémovej partície EFI. Na opravy, ktoré ich vyžadujú, napríklad
+na inštaláciu alebo preinštalovanie balíkov, použite nástroj [cachy-chroot](/sk/features/cachy_chroot) z live ISO.
+
+Ak chcete kontajner opustiť a vrátiť sa do ponuky záchranného prostredia, stlačte trikrát <kbd>Ctrl</kbd>+<kbd>]</kbd>
+počas jednej sekundy.
+
+## Odstránenie CachyOS Recovery
+
+<Tabs syncKey="firmware">
+  <TabItem label="UEFI">
+    ```bash
+    sudo pacman -Rns cachyos-recovery
+    ```
+
+    Pacman hook odstráni záchranný obraz a jeho doplnok zo systémovej partície EFI, položku v ponuke zavádzača Limine
+    alebo GRUB a položku **CachyOS Recovery** v ponuke zavádzania vášho firmvéru.
+  </TabItem>
+  <TabItem label="BIOS">
+    ```bash
+    sudo pacman -Rns cachyos-recovery-legacy
+    ```
+
+    Pacman hook odstráni položku v ponuke zavádzača Limine, alebo v prípade GRUB skopírované záchranné jadro, initramfs
+    a položku v `/etc/grub.d`, a znova vygeneruje konfiguráciu GRUB.
+  </TabItem>
+</Tabs>
+
+## Riešenie problémov
+
+### V ponuke zavádzača chýba položka CachyOS Recovery
+
+Preinštalujte balík (`cachyos-recovery` na UEFI, `cachyos-recovery-legacy` na BIOS-e) a prečítajte si výstup kroku
+**Installing system recovery image...**:
+
+```bash
+sudo pacman -S cachyos-recovery
+```
+
+Položka pre Limine vyžaduje `limine-entry-tool` a položka vo firmvéri vyžaduje `efibootmgr`. Pri systemd-boot sa obraz
+musí nachádzať na tej systémovej partícii EFI, na ktorej je nainštalovaný systemd-boot.
+
+### Záchranné prostredie sa nespustí so zapnutým Secure Bootom
+
+Záchranný obraz alebo jeho doplnok nie je podpísaný. Skontrolujte ich a podpíšte podľa postupu v časti
+[Secure Boot](#secure-boot).
+
+### „No snapshots were found“
+
+Záchranné prostredie zobrazuje iba snímky len na čítanie. Skontrolujte, či Snapper vytvára snímky vášho koreňového
+súborového systému:
+
+```bash
+sudo snapper list
+```
+
+Ak príkaz hlási, že konfigurácia `root` neexistuje, Snapper nie je nastavený. Toto je prípad inštalácií so
+**systemd-boot**, kde inštalátor zatiaľ Snapper nenastavuje. Nainštalujte `cachyos-snapper-support`, ktorý vytvorí
+konfiguráciu Snappera pre váš koreňový súborový systém a nainštaluje aj `snap-pac` na vytváranie snímok pred každou
+transakciou `pacman` a po nej:
+
+```bash
+sudo pacman -S cachyos-snapper-support
+```
+
+Záchranné prostredie potom dokáže používať snímky vytvorené od tohto momentu.
+
+### Spustenie snímky zlyhá alebo obrazovka zostane čierna
+
+Priame spustenie jadra zo snímky zo záchranného prostredia nefunguje na každom zariadení. Namiesto toho použite na
+obnovu snímky možnosť **Rollback Btrfs snapshot**.
+
+### „No ESP partition was found“
+
+Inštalácia balíka aj vrátenie na snímku čítajú umiestnenie systémovej partície EFI zo súboru `/etc/fstab` (počas
+vrátenia na snímku zo súboru `/etc/fstab` vnútri snímky). Partícia tam musí byť uvedená s typom `vfat` a pripojená do
+`/boot`, `/efi` alebo `/boot/efi`.
+
+### Vrátenie na snímku sa zastaví s chybou
+
+Prečítajte si chybu nad touto správou. Ak záchranné prostredie nedokázalo pripraviť zavádzacie súbory, nič sa nezmenilo
+a váš starý systém je stále na svojom mieste.
+
+Ak správa hovorí, že snímka bola obnovená, ale `/boot` je nekonzistentný, snímka sa obnovila, no kopírovanie
+zavádzacích súborov zlyhalo. Spustite live ISO, vstúpte do svojho systému pomocou [cachy-chroot](/sk/features/cachy_chroot)
+a znova vygenerujte zavádzacie súbory:
+
+- Pri **Limine** spustite `limine-mkinitcpio`.
+- Pri ostatných zavádzačoch preinštalujte balíky jadra, napríklad `pacman -S linux-cachyos`. Funguje to vtedy, keď je
+  nainštalovaná verzia jadra stále vo vyrovnávacej pamäti balíkov. Ak ju pacman nedokáže stiahnuť, aktualizujte namiesto
+  toho celý systém príkazom `pacman -Syu`.

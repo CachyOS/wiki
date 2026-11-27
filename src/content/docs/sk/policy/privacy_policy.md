@@ -1,10 +1,11 @@
 ---
 title: Zásady ochrany osobných údajov
+ai_translated: true
 ---
 
 ## 1. Úvod
 
-CachyOS ("my," "nás," alebo "naše") sa zaväzuje chrániť vaše súkromie. Tieto Zásady ochrany osobných údajov stanovujú, ako zhromažďujeme, používame, sprístupňujeme a chránime vaše informácie, keď navštívite našu webovú stránku a používate naše služby, vrátane fóra založeného na softvéri Discourse. Používaním našich služieb súhlasíte so zhromažďovaním a používaním informácií v súlade s týmito zásadami.
+CachyOS („my“, „nás“ alebo „naše“) sa zaväzuje chrániť vaše súkromie. Tieto Zásady ochrany osobných údajov stanovujú, ako zhromažďujeme, používame, sprístupňujeme a chránime vaše informácie, keď navštívite našu webovú stránku a používate naše služby, vrátane fóra založeného na softvéri Discourse. Používaním našich služieb súhlasíte so zhromažďovaním a používaním informácií v súlade s týmito zásadami.
 
 ## 2. Prevádzkovateľ
 
@@ -17,8 +18,9 @@ E-mail: admin na cachyos bodka org
 ### 3.1. Všeobecné používanie platformy
 
 Keď navštívite našu webovú stránku, náš poskytovateľ hostingu automaticky zhromažďuje určité technické údaje:
+
 - IP adresa
-- Prístupný obsah
+- Pristupovaný obsah
 - Dátum a čas prístupu
 - Typ a verzia prehliadača
 - Referrer URL
@@ -28,6 +30,7 @@ Tieto údaje sú potrebné na prevádzku webovej stránky a na zabezpečenie jej
 ### 3.2. Registrácia používateľského účtu
 
 Keď si vytvoríte používateľský účet, zhromažďujeme:
+
 - Používateľské meno
 - E-mailovú adresu
 - Heslo
@@ -54,11 +57,12 @@ Vaše osobné údaje uchovávame len tak dlho, ako je to potrebné na splnenie �
 
 ## 7. Príjemcovia údajov
 
-Vaše údaje môžeme zdieľať s externými poskytovateľmi služieb, ako je náš poskytovateľ hostingu, na uľahčenie našich služieb. Títo poskytovatelia sú zmluvne zaviazaní chrániť vaše údaje a používať ich len na stanovené účely.
+Vaše údaje môžeme zdieľať s externými poskytovateľmi služieb, ako je náš poskytovateľ hostingu, na uľahčenie našich služieb. Títo poskytovateľia sú zmluvne zaviazaní chrániť vaše údaje a používať ich len na stanovené účely.
 
 ## 8. Vaše práva
 
 Podľa GDPR máte v súvislosti s vašimi osobnými údajmi nasledujúce práva:
+
 - Právo na prístup (článok 15 GDPR)
 - Právo na opravu (článok 16 GDPR)
 - Právo na vymazanie (článok 17 GDPR)
@@ -68,7 +72,7 @@ Podľa GDPR máte v súvislosti s vašimi osobnými údajmi nasledujúce práva:
 - Právo odvolať súhlas (článok 7 ods. 3 GDPR)
 - Právo podať sťažnosť dozornému orgánu (článok 77 GDPR)
 
-Ak chcete uplatniť tieto práva, kontaktujte nás na admin@cachyos.org.
+Ak chcete uplatniť tieto práva, kontaktujte nás na <admin@cachyos.org>.
 
 ## 9. Bezpečnosť údajov
 

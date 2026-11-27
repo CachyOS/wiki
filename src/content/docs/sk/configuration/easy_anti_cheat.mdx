@@ -1,0 +1,934 @@
+---
+title: Easy Anti-Cheat (Linux v2)
+description: Spustite jadro CachyOS EAC so Secure Boot, aby fungovali hry používajúce Easy Anti-Cheat Linux v2
+ai_translated: true
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+[Easy Anti-Cheat Linux v2](https://onlineservices.epicgames.com/news/introducing-easy-anti-cheat-linux-v2)
+povolí spustenie hier iba vtedy, keď dokáže overiť, akým spôsobom bol systém spustený. Kontroluje, či:
+
+- je povolený Secure Boot a jadro je podpísané kľúčom, ktorému Epic dôveruje
+- systém disponuje čipom TPM 2.0, ktorý zaznamenáva každý krok spustenia systému (measured boot)
+- jadro beží v režime `lockdown=integrity` a načítava iba podpísané moduly
+- je povolené IOMMU, je zakázaný `kexec` a je aktívny modul BPF LSM
+
+CachyOS poskytuje vyhradené jadro `linux-cachyos-eac`, ktoré tieto požiadavky spĺňa, ako aj `systemd-boot`
+podpísaný rovnakým kľúčom. Svoje vlastné kľúče pre Secure Boot si ponecháte. Jediným prídavkom je certifikát
+**CachyOS EAC CA** v databáze Secure Boot, aby váš firmvér akceptoval súbory podpísané projektom CachyOS.
+
+Jadro EAC získa vlastnú položku spustenia. Vaše bežné položky spustenia zostanú nezmenené, takže položku
+EAC vyberiete iba vtedy, keď si chcete zahrať hru využívajúcu EAC.
+
+EAC vyžaduje boot manažér, ktorý overuje všetko, čo načítava, voči databáze Secure Boot a zaznamenáva to
+do čipu TPM. `systemd-boot` to robí, Limine nie. rEFInd to robí, no je podpísaný vaším vlastným kľúčom,
+ktorý EAC neakceptuje, a to isté platí aj pre GRUB. Používatelia boot manažérov Limine, rEFInd a GRUB si
+preto ponechajú svoj boot manažér ako predvolený a jadro EAC spúšťajú prostredníctvom `systemd-boot` podpísaného
+CachyOS, ktorý dostane vlastnú položku spustenia vo firmvéri a používa sa výhradne na spustenie EAC.
+
+[Skript `eac-setup`](#nastavenie-pomocou-eac-setup) vykoná nastavenie za vás. [Manuálne nastavenie](#manuálne-nastavenie)
+opisuje tie isté kroky vykonané ručne.
+
+## Požiadavky
+
+- CachyOS nainštalovaný v režime UEFI s boot manažérom **systemd-boot**, **Limine** alebo **rEFInd**. Pri rEFInd
+  musí byť systémová partícia EFI pripojená v `/boot`, tak ako ju nastavuje inštalátor CachyOS. **GRUB** je
+  podporovaný experimentálne, pozrite si sekciu [GRUB (experimentálne)](#grub-experimentálne).
+- Aktualizovaný systém (`sudo pacman -Syu`). `eac-setup` vyžaduje balík `cachyos-settings` vo verzii 1.4.4 alebo novšej,
+  `eac-status` a podpora EAC v `sbctl-batch-sign` vyžadujú verziu 1.4.2 alebo novšiu.
+- Povolený **TPM 2.0** v nastaveniach firmvéru. Firmvérový TPM (AMD fTPM, Intel PTT) je v poriadku.
+- Povolené **IOMMU** v nastaveniach firmvéru (AMD-Vi / „IOMMU“ na platforme AMD, VT-d na platforme Intel).
+- Grafické karty NVIDIA: architektúra Maxwell alebo novšia (GTX 750, séria GTX 900 a novšie). Jadro EAC dodáva
+  moduly NVIDIA vo forme balíkov: `linux-cachyos-eac-nvidia-open` pre Turing a novšie (séria GTX 16 / RTX 20 a novšie),
+  `linux-cachyos-eac-nvidia-580xx` pre Maxwell, Pascal a Volta.
+
+:::caution[Žiadne DKMS moduly]
+Jadro EAC načítava iba moduly, ktoré boli podpísané pri zostavovaní jadra. Moduly NVIDIA, ZFS a Realtek r8125
+sú dodávané ako balíky `linux-cachyos-eac-*`, ostatné moduly zostavené cez DKMS (napríklad
+`virtualbox-host-dkms`) sa v položke spustenia EAC nenačítajú. Neinštalujte balík `linux-cachyos-eac-headers`.
+:::
+
+:::danger[BitLocker a odomykanie disku cez TPM]
+Toto nastavenie mení kľúče pre Secure Boot, čo mení aj hodnoty, ktoré TPM meria. BitLocker pri dual-boote
+s Windows si potom môže vyžiadať kľúč na obnovenie a disk LUKS, ktorý ste sami naviazali na TPM, si vyžiada
+prístupovú frázu. Pred začatím sa uistite, že ich máte k dispozícii, inak môžete stratiť prístup k svojim údajom.
+:::
+
+:::danger[Steam Deck]
+Steam Deck nemá v nastaveniach firmvéru štandardný prepínač pre Secure Boot a momentálne nie je podporovaný.
+Zaregistrovanie kľúčov môže spôsobiť, že zariadenie prestane štartovať bez jednoduchého spôsobu, ako Secure Boot zakázať.
+Na zariadení Steam Deck podľa tejto príručky nepostupujte.
+:::
+
+## Nastavenie pomocou eac-setup
+
+Nástroj `eac-setup` z balíka `cachyos-settings` vykoná nastavenie pre systemd-boot, Limine, rEFInd aj GRUB.
+Skontroluje, čo je už hotové, takže ho môžete kedykoľvek spustiť znova, napríklad na opravu nastavenia.
+Na vás zostávajú iba zmeny v nastaveniach firmvéru.
+
+<Steps>
+
+1. **Prepnite firmvér do režimu Setup Mode**
+
+    Tento krok preskočte, ak už používate Secure Boot s kľúčmi vytvorenými pomocou `sbctl`, napríklad podľa
+    [príručky pre Secure Boot](/sk/configuration/secure_boot_setup). `eac-setup` v takom prípade pridá certifikát
+    CachyOS EAC CA do databázy Secure Boot, zatiaľ čo Secure Boot zostane povolený.
+
+    V opačnom prípade postupujte podľa sekcie [Vstup do režimu nastavenia v UEFI](/sk/configuration/secure_boot_setup#povolenie-režimu-setup-mode-v-uefi)
+    a Secure Boot zatiaľ ponechajte **zakázaný**.
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+2. **Spustite eac-setup**
+
+    ```bash
+    sudo eac-setup
+    ```
+
+    Skript si pred registráciou kľúčov Secure Boot vyžiada potvrdenie a `pacman` si vyžiada potvrdenie pred
+    inštaláciou balíkov. Vykoná tieto kroky:
+
+    - Skontroluje TPM, IOMMU a to, aký boot manažér používate.
+    - Zaregistruje certifikát CachyOS EAC CA. V režime Setup Mode najprv vytvorí vaše vlastné kľúče a zaregistruje
+      ich spolu s kľúčmi spoločnosti Microsoft.
+    - Nainštaluje `linux-cachyos-eac`, `systemd-boot-cachyos-signed` a balíky modulov `linux-cachyos-eac-*`, ktoré
+      zodpovedajú vášmu systému (NVIDIA, ZFS, r8125).
+    - Podpíše vaše bežné jadrá vaším vlastným kľúčom, ako aj Limine, rEFInd alebo GRUB, aby vaše bežné spúšťanie
+      fungovalo aj so zapnutým Secure Boot.
+    - Zabráni nástroju `sbctl` prepisovať súbory podpísané projektom CachyOS a obnoví ich podpisy, ak ich `sbctl`
+      znova podpísal.
+    - Vytvorí položku spustenia EAC z parametrov jadra vášho bežiaceho systému a pridá parametre pre EAC.
+      Pri boot manažéroch Limine, rEFInd a GRUB taktiež nainštaluje `systemd-boot` podpísaný CachyOS s vlastnou
+      položkou spustenia „CachyOS EAC“ vo firmvéri.
+
+    Ak firmvér nie je v režime Setup Mode a vaše kľúče neboli vytvorené cez `sbctl`, skript sa zastaví a požiada
+    vás o prepnutie firmvéru do režimu Setup Mode. Urobte tak a spustite skript znova.
+
+    Položka EAC používa parametre jadra, s ktorými bol váš systém spustený. Ak neskôr zmeníte parametre jadra
+    vo svojej bežnej položke spustenia, reštartujte systém a spustite `sudo eac-setup` znova.
+
+3. **Povoľte Secure Boot**
+
+    Skript `eac-setup` vám na konci oznámi, ak je Secure Boot stále zakázaný. Ak je už povolený, tento krok
+    preskočte.
+
+    Reštartujte počítač do nastavení firmvéru a povoľte Secure Boot. Ak vaša základná doska nemá prepínač
+    Secure Boot, pozrite si poznámky pre dosky ASUS v [príručke pre Secure Boot](/sk/configuration/secure_boot_setup#podpisovanie-obrazu-jadra-a-zavádzača).
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+4. **Spustite systém v režime EAC**
+
+    ```bash
+    sudo eac-setup boot
+    ```
+
+    Týmto sa systém jednorazovo reštartuje do položky EAC. Ďalší reštart po skončení hrania znova spustí váš bežný
+    systém. Pri `systemd-boot` môžete v ponuke spustenia vybrať aj **CachyOS (EAC)**.
+
+    :::caution
+    Ponuky Limine a GRUB zobrazujú aj položku pre `linux-cachyos-eac`. Jej spustenie cez Limine alebo GRUB
+    **neprejde** kontrolami EAC. Vždy použite `sudo eac-setup boot`.
+    :::
+
+    Potom skontrolujte výsledok podľa sekcie [Overenie nastavenia](#overenie-nastavenia).
+
+</Steps>
+
+### GRUB (experimentálne)
+
+Podpora pre GRUB je nová a zatiaľ bola málo testovaná. Vyžaduje balík `cachyos-settings` vo verzii 1.4.5 alebo novšej.
+Problémy nahláste v [sledovači problémov CachyOS-Settings](https://github.com/CachyOS/CachyOS-Settings/issues).
+
+GRUB sa nastavuje výhradne pomocou `eac-setup`, neexistuje preň manuálny návod. Postup je rovnaký ako vyššie.
+Okrem toho skript vykoná tieto zmeny:
+
+- Preinštaluje GRUB s modulom `tpm` a bez `shim lock`, a podpíše ho vaším vlastným kľúčom. Bez toho by GRUB
+  nespustil vaše bežné jadrá so zapnutým Secure Boot.
+- Skopíruje jadro EAC a jeho `initramfs` na systémovú partíciu EFI, pretože `systemd-boot` ich nedokáže čítať
+  z `/boot` na koreňovom súborovom systéme. Vyžadujú tam približne 40 MiB miesta. Skript nainštaluje balík
+  `cachyos-eac-grub-hook`, ktorého hook pre `mkinitcpio` aktualizuje kópiu vždy, keď sa jadro EAC alebo jeho
+  `initramfs` zmenia.
+- Znova vygeneruje ponuku GRUB. Ponuka potom obsahuje položku **CachyOS EAC (EFI BootNext)** pod položkami
+  firmvéru UEFI, ktorá robí to isté ako `sudo eac-setup boot`.
+- Ak by GRUB predvolene spúšťal `linux-cachyos-eac`, nastaví parameter `GRUB_TOP_LEVEL` v `/etc/default/grub` na
+  vaše bežné jadro. To sa stáva, keď táto možnosť ešte nie je nastavená, pretože GRUB vtedy zoraďuje jadrá podľa názvu.
+
+:::caution
+Ak máte v `/etc/default/grub` nastavené `GRUB_SAVEDEFAULT=true`, nevyberajte položku **CachyOS EAC (EFI BootNext)**.
+GRUB by si ju zapamätal a spúšťal EAC pri každom štarte. Namiesto toho použite `sudo eac-setup boot`. Ak sa to už
+stalo, spustite `sudo eac-setup` znova, čím uloženú položku odstráni.
+:::
+
+Šifrovanie disku zatiaľ nie je s GRUB podporované. Inštalátor CachyOS uchováva `/boot` vnútri šifrovanej koreňovej
+partície a vkladá kľúč disku do `initramfs`. Kópia `initramfs` na nešifrovanej systémovej partícii EFI by tento kľúč
+odhalila, preto sa `eac-setup` zastaví, ak je `/boot` šifrovaný.
+
+## Manuálne nastavenie
+
+Toto sú kroky, ktoré spúšťa `eac-setup`, pre prípad, že ich chcete vykonať ručne alebo si pozrieť, čo skript mení.
+Kedykoľvek môžete prejsť na skript, ktorý bude pokračovať od toho, čo je už hotové.
+
+:::note[Spúšťajte príkazy v bashi]
+Príkazy na tejto stránke sú napísané pre `bash`. Predvoleným shellom v CachyOS je `fish`, ktorý niektoré z nich
+odmietne, napríklad s chybou `Unsupported use of '='`. Najprv v termináli spustite `bash` a potom zadávajte príkazy.
+:::
+
+### Ak už používate Secure Boot
+
+Ak ste už nastavili Secure Boot pomocou `sbctl`, napríklad podľa [príručky pre Secure Boot](/sk/configuration/secure_boot_setup),
+režim Setup Mode nepotrebujete. `sbctl` dokáže pridať certifikát CachyOS EAC CA do databázy Secure Boot aj vtedy,
+keď Secure Boot zostáva povolený. Zmenu podpíše vaším vlastným kľúčom Key Exchange Key (KEK), ktorý firmvér akceptuje.
+
+{/* TODO: only tested in OVMF so far, test on real hardware */}
+
+<Steps>
+
+1. **Skontrolujte svoje nastavenie Secure Boot**
+
+    ```bash
+    sudo sbctl status
+    ```
+
+    Výstup musí zobrazovať `sbctl is installed`, `Setup Mode: Disabled` a `Secure Boot: Enabled`. Ak vaše kľúče
+    neboli vytvorené pomocou `sbctl`, postupujte namiesto toho podľa návodu pre váš boot manažér od 1. kroku.
+
+2. **Zaregistrujte certifikát CachyOS EAC CA**
+
+    ```bash
+    sudo pacman -S cachyos-eac-signing-key
+    sudo sbctl enroll-keys --append --partial db --custom --ignore-immutable
+    ```
+
+    `--append` zachová všetky už zaregistrované certifikáty, `--partial db` upraví iba databázu Secure Boot (`db`)
+    a `--ignore-immutable` umožní nástroju `sbctl` do nej zapisovať, keďže Linux ju predvolene označuje ako
+    len na čítanie.
+
+    :::caution[Spustite tento príkaz iba raz]
+    `sbctl` nekontroluje, ktoré certifikáty sú už zaregistrované. Každé spustenie pridá CachyOS EAC CA znova
+    spolu s vaším vlastným kľúčom Database Key a firmvér má pre ne iba obmedzený priestor.
+    :::
+
+    Skontrolujte, či bol certifikát zaregistrovaný:
+
+    ```bash
+    sudo sbctl list-enrolled-keys
+    ```
+
+    Sekcia `db` musí vedľa vašich predchádzajúcich položiek obsahovať `CachyOS EAC CA`. Váš vlastný `Database Key`
+    je teraz uvedený dvakrát, čo je neškodné.
+
+    Ak `sbctl` nahlási chybu, firmvér zmenu neakceptoval, zvyčajne preto, že zaregistrovaný KEK nie je ten, ktorý
+    sa nachádza v adresári kľúčov `sbctl`. V takom prípade postupujte podľa návodu pre váš boot manažér od 1. kroku.
+
+3. **Pokračujte nastavením pre váš boot manažér**
+
+    Postupujte podľa sekcie [nastavenie pre váš boot manažér](#nastavenie-pre-váš-boot-manažér) od 2. kroku.
+    Preskočte 3. krok, pretože CA je zaregistrovaný a váš boot manažér je už podpísaný. V 6. kroku je Secure Boot
+    už povolený, takže stačí spustiť položku EAC.
+
+</Steps>
+
+### Nastavenie pre váš boot manažér
+
+<Tabs syncKey="boot-manager">
+<TabItem label='Limine'>
+
+Limine zostáva vaším predvoleným boot manažérom. Vedľa neho sa nainštaluje `systemd-boot` podpísaný CachyOS,
+do vlastného adresára na systémovej partícii EFI a s vlastnou položkou spustenia vo firmvéri. Keď sa chcete hrať,
+prikážete firmvéru, aby pri nasledujúcom štarte jednorazovo spustil `systemd-boot` (`BootNext`). `systemd-boot`
+potom priamo spustí jadro EAC. Po ďalšom reštarte sa váš systém opäť spustí cez Limine ako zvyčajne.
+
+<Steps>
+
+1. **Prepnite firmvér do režimu Setup Mode**
+
+    Ak už používate Secure Boot s `sbctl`, postupujte namiesto toho podľa sekcie
+    [Ak už používate Secure Boot](#ak-už-používate-secure-boot) a pokračujte 2. krokom.
+
+    Postupujte podľa sekcie [Vstup do režimu nastavenia v UEFI](/sk/configuration/secure_boot_setup#povolenie-režimu-setup-mode-v-uefi)
+    a Secure Boot zatiaľ ponechajte **zakázaný**.
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+2. **Nainštalujte balíky**
+
+    Ak ste pred prechodom na Limine používali `systemd-boot` s [príručkou pre Secure Boot](/sk/configuration/secure_boot_setup),
+    najprv odstráňte vlastnoručne podpísaný `systemd-boot`, ktorý príručka vytvorila. V opačnom prípade `pacman`
+    odmietne nainštalovať `systemd-boot-cachyos-signed` a `sbctl` prepíše `systemd-boot` podpísaný CachyOS:
+
+    ```bash
+    sudo sbctl remove-file /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+    sudo rm -f /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed
+    ```
+
+    Potom nainštalujte balíky:
+
+    ```bash
+    sudo pacman -S sbctl sbsigntools tpm2-tools efibootmgr cachyos-eac-signing-key linux-cachyos-eac systemd-boot-cachyos-signed
+    ```
+
+    V systémoch s grafickou kartou NVIDIA nainštalujte aj `linux-cachyos-eac-nvidia-open` (Turing a novšie) alebo
+    `linux-cachyos-eac-nvidia-580xx` (Maxwell, Pascal a Volta). Ak používate ZFS, nainštalujte aj `linux-cachyos-eac-zfs`.
+    Ak pre sieťovú kartu Realtek 2.5 GbE používate `r8125-dkms`, nainštalujte aj `linux-cachyos-eac-r8125`.
+
+    :::danger
+    **Nespúšťajte** príkaz `bootctl install`. Nastavil by `systemd-boot` ako váš predvolený boot manažér a nahradil
+    by záložný zavádzač na systémovej partícii EFI.
+    :::
+
+    :::caution
+    V súbore `/etc/default/limine` ponechajte `ENABLE_UKI=no` (predvolené). S povolenými UKI sa jadro EAC zabalí
+    do nového obrazu, ktorý `sbctl` podpíše vaším vlastným kľúčom, čo EAC neakceptuje.
+    :::
+
+3. **Zaregistrujte kľúče Secure Boot a podpíšte Limine**
+
+    Tento krok preskočte, ak ste CA zaregistrovali podľa sekcie [Ak už používate Secure Boot](#ak-už-používate-secure-boot).
+
+    Balík `cachyos-eac-signing-key` vloží certifikát CachyOS EAC CA do adresára `sbctl` pre vlastné certifikáty.
+    Zaregistrujte svoje vlastné kľúče spolu s kľúčmi Microsoftu, vstavanými kľúčmi firmvéru a certifikátom
+    CachyOS EAC CA.
+
+    :::caution[Základné dosky ASUS a Gigabyte]
+    Na týchto doskách spustite ako posledný príkaz nižšie `sudo sbctl enroll-keys --microsoft --custom` bez prepínača
+    `--firmware-builtin`. Na niektorých z nich tento prepínač vytvára duplicitné záznamy kľúčov a doska sa po
+    zapnutí Secure Boot zastaví s chybou **Secure Boot Violation**. Ak sa to už stalo, vymažte v nastaveniach
+    firmvéru všetky kľúče Secure Boot, aby ste sa vrátili do režimu Setup Mode (pozrite si
+    [Vstup do režimu nastavenia v UEFI](/sk/configuration/secure_boot_setup#povolenie-režimu-setup-mode-v-uefi)),
+    spustite CachyOS a vykonajte `sudo sbctl enroll-keys --microsoft --custom`. Nepoužívajte na to príkaz z príručky
+    pre Secure Boot, pretože vynecháva certifikát CachyOS EAC CA.
+    :::
+
+    ```bash
+    sudo sbctl create-keys
+    sudo sbctl enroll-keys --microsoft --firmware-builtin --custom
+    ```
+
+    Ak sa `sbctl` zastaví s chybou `could not enroll built-in firmware keys`, firmvér nemá vstavané kľúče a zatiaľ
+    nebolo nič zaregistrované. Spustite posledný príkaz znova bez `--firmware-builtin`.
+
+    Skontrolujte, či bol certifikát zaregistrovaný:
+
+    ```bash
+    sudo sbctl list-enrolled-keys
+    ```
+
+    Sekcia `db` musí obsahovať `CachyOS EAC CA`.
+
+    Samotný Limine musí byť stále podpísaný vaším vlastným kľúčom, aby vaše bežné spúšťanie fungovalo aj so
+    zapnutým Secure Boot. Postupujte podľa karty Limine v sekcii
+    [Podpisovanie obrazu jadra a Boot Managera](/sk/configuration/secure_boot_setup#podpisovanie-obrazu-jadra-a-zavádzača).
+
+    :::caution
+    Nikdy nepodpisujte jadro EAC ani `systemd-boot` podpísaný CachyOS pomocou `sbctl`. Nepoužívajte na ne
+    `sbctl-batch-sign` ani `sbctl sign`, a to ani vtedy, keď ich `sbctl verify` uvádza ako nepodpísané. Sú podpísané
+    projektom CachyOS.
+    :::
+
+4. **Pridajte systemd-boot ako samostatnú položku spustenia vo firmvéri**
+
+    `sbctl` znova podpíše každý súbor vo svojej databáze vždy, keď sa aktualizuje jadro alebo binárny súbor EFI.
+    Skontrolujte, či v nej nie je žiadny zo súborov podpísaných CachyOS, napríklad zo skoršieho `sbctl sign -s`:
+
+    ```bash
+    sudo sbctl list-files
+    ```
+
+    Ak niektorá z uvedených ciest obsahuje `cachyos-eac` alebo ide o `/usr/lib/systemd/boot/efi/systemd-bootx64.efi`,
+    odstráňte ju príkazom `sudo sbctl remove-file <path>`. Potom preinštalujte balíky, aby sa obnovili podpisy CachyOS:
+
+    ```bash
+    sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
+    ```
+
+    Skopírujte podpísaný `systemd-boot` do jeho vlastného adresára na systémovej partícii EFI:
+
+    ```bash
+    ESP="$(bootctl --print-esp-path)"
+    sudo install -Dm644 /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed "$ESP/EFI/cachyos-eac/systemd-bootx64.efi"
+    ```
+
+    Pokiaľ existuje adresár `EFI/cachyos-eac`, balík `systemd-boot-cachyos-signed` bude túto kópiu aktualizovať
+    automaticky.
+
+    Potom vytvorte položku spustenia vo firmvéri. Prepínač `--create-only` pridá položku bez zmeny poradia spúšťania,
+    takže Limine zostane predvolený:
+
+    ```bash
+    ESP_DEV="$(findmnt -no SOURCE "$ESP")"
+    ESP_DISK="/dev/$(lsblk -no PKNAME "$ESP_DEV")"
+    ESP_PART="$(cat "/sys/class/block/$(basename "$ESP_DEV")/partition")"
+    sudo efibootmgr --create-only --disk "$ESP_DISK" --part "$ESP_PART" \
+      --label "CachyOS EAC" --loader '\EFI\cachyos-eac\systemd-bootx64.efi'
+    ```
+
+    Skontrolujte, či je nová položka v zozname a či `BootOrder` stále začína boot manažérom Limine:
+
+    ```bash
+    efibootmgr
+    ```
+
+5. **Vytvorte položku spustenia EAC**
+
+    `systemd-boot` číta svoju konfiguráciu zo systémovej partície EFI. Hook pre Limine udržiava jadro EAC a jeho
+    `initramfs` aktuálne v adresári pomenovanom podľa vášho identifikátora zariadenia (`machine-id`). Skontrolujte,
+    či oba súbory existujú:
+
+    ```bash
+    ESP="$(bootctl --print-esp-path)"
+    KERNEL="/$(cat /etc/machine-id)/linux-cachyos-eac/vmlinuz"
+    INITRD="/$(cat /etc/machine-id)/linux-cachyos-eac/initramfs"
+    sudo ls -l "$ESP$KERNEL" "$ESP$INITRD"
+    ```
+
+    Potom zostavte príkazový riadok jadra z vášho bežiaceho systému a parametrov EAC:
+
+    ```bash
+    EAC_REQ="lockdown=integrity lsm=landlock,lockdown,yama,integrity,bpf iommu.passthrough=0 intel_iommu=on module.sig_enforce=1 sysctl.kernel.kexec_load_disabled=1"
+    EAC_OPTS="$(sed -E 's/(^| )(BOOT_IMAGE|initrd)=[^ ]*//g' /proc/cmdline) $EAC_REQ"
+    echo "$EAC_OPTS"
+    ```
+
+    Výstup musí obsahovať váš parameter `root=` a končiť parametrami EAC. Zapíšte položku a nastavte ju ako
+    predvolenú, aby ju `systemd-boot` spustil bez zobrazenia ponuky. Tým sa nahradí existujúci súbor `loader/loader.conf`,
+    čo je v tomto prípade v poriadku, pretože `systemd-boot` spúšťa iba položku EAC:
+
+    ```bash
+    printf 'title   CachyOS (EAC)\nlinux   %s\ninitrd  %s\noptions %s\n' "$KERNEL" "$INITRD" "$EAC_OPTS" \
+      | sudo install -Dm644 /dev/stdin "$ESP/loader/entries/cachyos-eac.conf"
+    printf 'default cachyos-eac.conf\ntimeout 0\n' | sudo install -Dm644 /dev/stdin "$ESP/loader/loader.conf"
+    ```
+
+    Ak napriek tomu chcete zobraziť ponuku `systemd-boot`, počas jej spúšťania podržte kláves <kbd>Space</kbd>.
+
+    :::caution
+    Ponuka Limine zobrazuje aj položku pre `linux-cachyos-eac`. Jej spustenie cez Limine **neprejde** kontrolami
+    EAC. Vždy použite položku firmvéru „CachyOS EAC“.
+    :::
+
+    {/* TODO: hide the linux-cachyos-eac entry in Limine (limine-entry-tool has no per-kernel exclude yet) */}
+
+6. **Povoľte Secure Boot a spustite systém v režime EAC**
+
+    Ak je Secure Boot už povolený, preskočte rovno na spustenie systému v režime EAC.
+
+    Reštartujte počítač do nastavení firmvéru a povoľte Secure Boot. Ak vaša základná doska nemá prepínač
+    Secure Boot, pozrite si poznámky pre dosky ASUS v [príručke pre Secure Boot](/sk/configuration/secure_boot_setup#podpisovanie-obrazu-jadra-a-zavádzača).
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+    Na spustenie v režime EAC nastavte položku „CachyOS EAC“ ako `BootNext` a reštartujte počítač. Príkaz
+    `sudo eac-setup boot` robí to isté:
+
+    ```bash
+    EAC_BOOTNUM="$(efibootmgr | sed -n 's/^Boot\([0-9A-F]\{4\}\)\* CachyOS EAC.*/\1/p')"
+    sudo efibootmgr --bootnext "$EAC_BOOTNUM" && systemctl reboot
+    ```
+
+    `BootNext` platí iba pre nasledujúci štart. Reštart po skončení vašej hernej relácie znova spustí Limine.
+
+</Steps>
+
+</TabItem>
+<TabItem label='systemd-boot'>
+
+<Steps>
+
+1. **Prepnite firmvér do režimu Setup Mode**
+
+    Ak už používate Secure Boot s `sbctl`, postupujte namiesto toho podľa sekcie
+    [Ak už používate Secure Boot](#ak-už-používate-secure-boot) a pokračujte 2. krokom.
+
+    Postupujte podľa sekcie [Vstup do režimu nastavenia v UEFI](/sk/configuration/secure_boot_setup#povolenie-režimu-setup-mode-v-uefi)
+    a Secure Boot zatiaľ ponechajte **zakázaný**.
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+2. **Nainštalujte balíky**
+
+    Ak ste predtým postupovali podľa [príručky pre Secure Boot](/sk/configuration/secure_boot_setup), najprv
+    odstráňte vlastnoručne podpísaný `systemd-boot`, ktorý vytvorila. Balík `systemd-boot-cachyos-signed` ho
+    nahrádza a `pacman` odmietne balík nainštalovať, kým súbor existuje. `sbctl` ho vedie pod cestou nepodpísaného
+    súboru a pokiaľ tam je uvedený, `sbctl` prepíše `systemd-boot` podpísaný CachyOS súborom podpísaným vaším kľúčom:
+
+    ```bash
+    sudo sbctl remove-file /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+    sudo rm -f /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed
+    ```
+
+    Potom nainštalujte balíky:
+
+    ```bash
+    sudo pacman -S sbctl sbsigntools tpm2-tools cachyos-eac-signing-key linux-cachyos-eac systemd-boot-cachyos-signed
+    sudo bootctl install
+    ```
+
+    V systémoch s grafickou kartou NVIDIA nainštalujte aj `linux-cachyos-eac-nvidia-open` (Turing a novšie) alebo
+    `linux-cachyos-eac-nvidia-580xx` (Maxwell, Pascal a Volta). Ak používate ZFS, nainštalujte aj `linux-cachyos-eac-zfs`.
+    Ak pre sieťovú kartu Realtek 2.5 GbE používate `r8125-dkms`, nainštalujte aj `linux-cachyos-eac-r8125`.
+
+    `bootctl install` nainštaluje `systemd-boot` podpísaný CachyOS na systémovú partíciu EFI. Budúce aktualizácie
+    `systemd-boot` sú taktiež podpísané projektom CachyOS, takže ich nemusíte podpisovať sami.
+
+3. **Zaregistrujte kľúče Secure Boot**
+
+    Tento krok preskočte, ak ste CA zaregistrovali podľa sekcie [Ak už používate Secure Boot](#ak-už-používate-secure-boot).
+
+    Balík `cachyos-eac-signing-key` vloží certifikát CachyOS EAC CA do adresára `sbctl` pre vlastné certifikáty.
+    `sbctl` vytvorí vaše vlastné kľúče (ak ešte žiadne nemáte) a zaregistruje ich spolu s kľúčmi Microsoftu,
+    vstavanými kľúčmi firmvéru a certifikátom CachyOS EAC CA.
+
+    :::caution[Základné dosky ASUS a Gigabyte]
+    Na týchto doskách spustite ako posledný príkaz nižšie `sudo sbctl enroll-keys --microsoft --custom` bez prepínača
+    `--firmware-builtin`. Na niektorých z nich tento prepínač vytvára duplicitné záznamy kľúčov a doska sa po
+    zapnutí Secure Boot zastaví s chybou **Secure Boot Violation**. Ak sa to už stalo, vymažte v nastaveniach
+    firmvéru všetky kľúče Secure Boot, aby ste sa vrátili do režimu Setup Mode (pozrite si
+    [Vstup do režimu nastavenia v UEFI](/sk/configuration/secure_boot_setup#povolenie-režimu-setup-mode-v-uefi)),
+    spustite CachyOS a vykonajte `sudo sbctl enroll-keys --microsoft --custom`. Nepoužívajte na to príkaz z príručky
+    pre Secure Boot, pretože vynecháva certifikát CachyOS EAC CA.
+    :::
+
+    ```bash
+    sudo sbctl create-keys
+    sudo sbctl enroll-keys --microsoft --firmware-builtin --custom
+    ```
+
+    Ak sa `sbctl` zastaví s chybou `could not enroll built-in firmware keys`, firmvér nemá vstavané kľúče a zatiaľ
+    nebolo nič zaregistrované. Spustite posledný príkaz znova bez `--firmware-builtin`.
+
+    Skontrolujte, či bol certifikát zaregistrovaný:
+
+    ```bash
+    sudo sbctl list-enrolled-keys
+    ```
+
+    Sekcia `db` musí obsahovať `CachyOS EAC CA`.
+
+    Potom podpíšte svoje bežné jadrá, inak sa po zapnutí Secure Boot nespustia. Príkaz preskočí jadro EAC, ktoré
+    je už podpísané projektom CachyOS:
+
+    ```bash
+    sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+    sudo sbctl list-files
+    ```
+
+    Výstup musí zobrazovať každé z vašich bežných jadier ako podpísané.
+
+4. **Zabráňte nástroju sbctl upravovať súbory podpísané CachyOS**
+
+    Jadro EAC a `systemd-boot` sú už podpísané projektom CachyOS. Ak ich `sbctl` podpíše znova vaším vlastným
+    kľúčom, EAC ich už nerozpozná. Balík `cachyos-eac-signing-key` zabraňuje hooku `sbctl` pre `initramfs`
+    podpisovať jadro EAC, no `sbctl` stále podpisuje každý súbor vo svojej databáze, napríklad po spustení
+    `sbctl-batch-sign` alebo `sbctl sign -s`.
+
+    ```bash
+    sudo sbctl list-files
+    ```
+
+    Ak sú v zozname súbory `vmlinuz-linux-cachyos-eac`, `systemd-bootx64.efi` alebo `BOOTX64.EFI`, odstráňte ich
+    a preinštalujte balíky, aby sa obnovili podpisy CachyOS:
+
+    ```bash
+    sudo sbctl remove-file /boot/vmlinuz-linux-cachyos-eac
+    sudo sbctl remove-file /boot/EFI/systemd/systemd-bootx64.efi
+    sudo sbctl remove-file /boot/EFI/BOOT/BOOTX64.EFI
+    sudo sbctl remove-file /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+    sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
+    sudo bootctl install
+    ```
+
+    Pri súboroch, ktoré v zozname nie sú, `sbctl` nahlási `doesn't exist in database`, čo je v poriadku.
+
+    Skontrolujte podpisy. Každý súbor musí zobrazovať presne **jeden** podpis vydaný certifikátom `CachyOS EAC CA`,
+    po ktorom nasleduje `Signature verification OK`:
+
+    ```bash
+    for f in /boot/vmlinuz-linux-cachyos-eac /boot/EFI/systemd/systemd-bootx64.efi; do
+      sudo sbverify --list "$f"
+      sudo sbverify --cert /usr/share/cachyos-eac/cachyos-eac-ca.crt "$f"
+    done
+    ```
+
+    `sbctl verify` bude tieto súbory naďalej uvádzať ako nepodpísané, pretože započítava iba podpisy vytvorené vaším
+    vlastným kľúčom. Nepodpisujte ich. `sbctl-batch-sign` ich preskočí.
+
+5. **Vytvorte položku spustenia EAC**
+
+    EAC kontroluje príkazový riadok jadra kvôli požadovaným parametrom, takže jadro EAC potrebuje vlastnú položku
+    spustenia. Položka, ktorú automaticky vytvára `sdboot-manage` („Linux CachyOS Eac“), tieto parametre neobsahuje
+    a pri aktualizáciách sa prepisuje, preto vytvorte samostatnú položku na základe príkazového riadku vášho
+    bežiaceho systému:
+
+    {/* TODO: replace with automatic entry generation (sdboot-manage or package hook) */}
+
+    ```bash
+    EAC_REQ="lockdown=integrity lsm=landlock,lockdown,yama,integrity,bpf iommu.passthrough=0 intel_iommu=on module.sig_enforce=1 sysctl.kernel.kexec_load_disabled=1"
+    EAC_OPTS="$(sed -E 's/(^| )(BOOT_IMAGE|initrd)=[^ ]*//g' /proc/cmdline) $EAC_REQ"
+    echo "$EAC_OPTS"
+    ```
+
+    Výstup musí obsahovať váš parameter `root=` a končiť parametrami EAC. Potom zapíšte položku:
+
+    ```bash
+    printf 'title   CachyOS (EAC)\nlinux   /vmlinuz-linux-cachyos-eac\ninitrd  /initramfs-linux-cachyos-eac.img\noptions %s\n' "$EAC_OPTS" \
+      | sudo install -Dm644 /dev/stdin /boot/loader/entries/cachyos-eac.conf
+    ```
+
+    :::caution
+    Neodstraňujte žiadny z parametrov EAC z tejto položky. Bez nich EAC odmietne hru spustiť.
+    :::
+
+6. **Povoľte Secure Boot a spustite položku EAC**
+
+    Ak je Secure Boot už povolený, preskočte rovno na spustenie položky EAC.
+
+    Reštartujte počítač do nastavení firmvéru a povoľte Secure Boot. Ak vaša základná doska nemá prepínač
+    Secure Boot, pozrite si poznámky pre dosky ASUS v [príručke pre Secure Boot](/sk/configuration/secure_boot_setup#podpisovanie-obrazu-jadra-a-zavádzača).
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+    Na spustenie položky EAC vyberte **CachyOS (EAC)** v ponuke `systemd-boot` alebo spustite:
+
+    ```bash
+    systemctl reboot --boot-loader-entry=cachyos-eac.conf
+    ```
+
+</Steps>
+
+</TabItem>
+<TabItem label='rEFInd'>
+
+rEFInd zostáva vaším predvoleným boot manažérom. Rovnako ako pri Limine sa `systemd-boot` podpísaný CachyOS
+nainštaluje do vlastného adresára na systémovej partícii EFI a dostane vlastnú položku spustenia vo firmvéri.
+Keď sa chcete hrať, prikážete firmvéru, aby pri nasledujúcom štarte jednorazovo spustil `systemd-boot` (`BootNext`).
+`systemd-boot` potom priamo spustí jadro EAC. Po ďalšom reštarte sa váš systém opäť spustí cez rEFInd ako zvyčajne.
+
+Tieto kroky vyžadujú systémovú partíciu EFI pripojenú v `/boot`, čo je spôsob, akým inštalátor CachyOS nastavuje
+rEFInd. Skontrolujte to:
+
+```bash
+bootctl --print-esp-path
+```
+
+Výstup musí byť `/boot`. Iné rozloženia, napríklad systémová partícia EFI v `/boot/efi` zo starších inštalácií,
+nie sú podporované.
+
+<Steps>
+
+1. **Prepnite firmvér do režimu Setup Mode**
+
+    Ak už používate Secure Boot s `sbctl`, postupujte namiesto toho podľa sekcie
+    [Ak už používate Secure Boot](#ak-už-používate-secure-boot) a pokračujte 2. krokom.
+
+    Postupujte podľa sekcie [Vstup do režimu nastavenia v UEFI](/sk/configuration/secure_boot_setup#povolenie-režimu-setup-mode-v-uefi)
+    a Secure Boot zatiaľ ponechajte **zakázaný**.
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+2. **Nainštalujte balíky**
+
+    Ak ste pred prechodom na rEFInd používali `systemd-boot` s [príručkou pre Secure Boot](/sk/configuration/secure_boot_setup),
+    najprv odstráňte vlastnoručne podpísaný `systemd-boot`, ktorý príručka vytvorila. V opačnom prípade `pacman`
+    odmietne nainštalovať `systemd-boot-cachyos-signed` a `sbctl` prepíše `systemd-boot` podpísaný CachyOS:
+
+    ```bash
+    sudo sbctl remove-file /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+    sudo rm -f /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed
+    ```
+
+    Potom nainštalujte balíky:
+
+    ```bash
+    sudo pacman -S sbctl sbsigntools tpm2-tools efibootmgr cachyos-eac-signing-key linux-cachyos-eac systemd-boot-cachyos-signed
+    ```
+
+    V systémoch s grafickou kartou NVIDIA nainštalujte aj `linux-cachyos-eac-nvidia-open` (Turing a novšie) alebo
+    `linux-cachyos-eac-nvidia-580xx` (Maxwell, Pascal a Volta). Ak používate ZFS, nainštalujte aj `linux-cachyos-eac-zfs`.
+    Ak pre sieťovú kartu Realtek 2.5 GbE používate `r8125-dkms`, nainštalujte aj `linux-cachyos-eac-r8125`.
+
+    :::danger
+    **Nespúšťajte** príkaz `bootctl install`. Nastavil by `systemd-boot` ako váš predvolený boot manažér a nahradil
+    by záložný zavádzač na systémovej partícii EFI.
+    :::
+
+3. **Zaregistrujte kľúče Secure Boot a podpíšte rEFInd**
+
+    Tento krok preskočte, ak ste CA zaregistrovali podľa sekcie [Ak už používate Secure Boot](#ak-už-používate-secure-boot).
+
+    Balík `cachyos-eac-signing-key` vloží certifikát CachyOS EAC CA do adresára `sbctl` pre vlastné certifikáty.
+    Zaregistrujte svoje vlastné kľúče spolu s kľúčmi Microsoftu, vstavanými kľúčmi firmvéru a certifikátom
+    CachyOS EAC CA.
+
+    :::caution[Základné dosky ASUS a Gigabyte]
+    Na týchto doskách spustite ako posledný príkaz nižšie `sudo sbctl enroll-keys --microsoft --custom` bez prepínača
+    `--firmware-builtin`. Na niektorých z nich tento prepínač vytvára duplicitné záznamy kľúčov a doska sa po
+    zapnutí Secure Boot zastaví s chybou **Secure Boot Violation**. Ak sa to už stalo, vymažte v nastaveniach
+    firmvéru všetky kľúče Secure Boot, aby ste sa vrátili do režimu Setup Mode (pozrite si
+    [Vstup do režimu nastavenia v UEFI](/sk/configuration/secure_boot_setup#povolenie-režimu-setup-mode-v-uefi)),
+    spustite CachyOS a vykonajte `sudo sbctl enroll-keys --microsoft --custom`. Nepoužívajte na to príkaz z príručky
+    pre Secure Boot, pretože vynecháva certifikát CachyOS EAC CA.
+    :::
+
+    ```bash
+    sudo sbctl create-keys
+    sudo sbctl enroll-keys --microsoft --firmware-builtin --custom
+    ```
+
+    Ak sa `sbctl` zastaví s chybou `could not enroll built-in firmware keys`, firmvér nemá vstavané kľúče a zatiaľ
+    nebolo nič zaregistrované. Spustite posledný príkaz znova bez `--firmware-builtin`.
+
+    Skontrolujte, či bol certifikát zaregistrovaný:
+
+    ```bash
+    sudo sbctl list-enrolled-keys
+    ```
+
+    Sekcia `db` musí obsahovať `CachyOS EAC CA`.
+
+    rEFInd a vaše bežné jadrá musia byť stále podpísané vaším vlastným kľúčom, aby vaše bežné spúšťanie fungovalo aj so
+    zapnutým Secure Boot. Príkaz `find` preskočí jadro EAC, ktoré je už podpísané projektom CachyOS:
+
+    ```bash
+    sudo sbctl sign -s /boot/EFI/refind/refind_x64.efi
+    sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+    sudo sbctl list-files
+    ```
+
+    Výstup musí zobrazovať rEFInd a každé z vašich bežných jadier ako podpísané. `sbctl` ich znova podpíše po
+    aktualizáciách jadra. `pacman` neaktualizuje rEFInd na systémovej partícii EFI. Ak sami spustíte
+    `refind-install`, následne vykonajte `sudo sbctl sign-all`.
+
+    :::caution
+    Nikdy nepodpisujte jadro EAC ani `systemd-boot` podpísaný CachyOS pomocou `sbctl`. Nepoužívajte na ne
+    `sbctl-batch-sign` ani `sbctl sign`, a to ani vtedy, keď ich `sbctl verify` uvádza ako nepodpísané. Sú podpísané
+    projektom CachyOS.
+    :::
+
+4. **Pridajte systemd-boot ako samostatnú položku spustenia vo firmvéri**
+
+    `sbctl` znova podpíše každý súbor vo svojej databáze vždy, keď sa aktualizuje jadro alebo binárny súbor EFI.
+    Skontrolujte, či v nej nie je žiadny zo súborov podpísaných CachyOS, napríklad zo skoršieho `sbctl sign -s`:
+
+    ```bash
+    sudo sbctl list-files
+    ```
+
+    Ak niektorá z uvedených ciest obsahuje `cachyos-eac` alebo ide o `/usr/lib/systemd/boot/efi/systemd-bootx64.efi`,
+    odstráňte ju príkazom `sudo sbctl remove-file <path>`. Potom preinštalujte balíky, aby sa obnovili podpisy CachyOS:
+
+    ```bash
+    sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
+    ```
+
+    Skopírujte podpísaný `systemd-boot` do jeho vlastného adresára na systémovej partícii EFI:
+
+    ```bash
+    ESP="$(bootctl --print-esp-path)"
+    sudo install -Dm644 /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed "$ESP/EFI/cachyos-eac/systemd-bootx64.efi"
+    ```
+
+    Pokiaľ existuje adresár `EFI/cachyos-eac`, balík `systemd-boot-cachyos-signed` bude túto kópiu aktualizovať
+    automaticky.
+
+    Potom vytvorte položku spustenia vo firmvéri. Prepínač `--create-only` pridá položku bez zmeny poradia spúšťania,
+    takže rEFInd zostane predvolený:
+
+    ```bash
+    ESP_DEV="$(findmnt -no SOURCE "$ESP")"
+    ESP_DISK="/dev/$(lsblk -no PKNAME "$ESP_DEV")"
+    ESP_PART="$(cat "/sys/class/block/$(basename "$ESP_DEV")/partition")"
+    sudo efibootmgr --create-only --disk "$ESP_DISK" --part "$ESP_PART" \
+      --label "CachyOS EAC" --loader '\EFI\cachyos-eac\systemd-bootx64.efi'
+    ```
+
+    Skontrolujte, či je nová položka v zozname a či `BootOrder` stále začína boot manažérom rEFInd:
+
+    ```bash
+    efibootmgr
+    ```
+
+5. **Vytvorte položku spustenia EAC**
+
+    `systemd-boot` číta svoju konfiguráciu zo systémovej partície EFI, kde sa jadro EAC a jeho `initramfs` už
+    nachádzajú. Zostavte príkazový riadok jadra z vášho bežiaceho systému a parametrov EAC:
+
+    ```bash
+    EAC_REQ="lockdown=integrity lsm=landlock,lockdown,yama,integrity,bpf iommu.passthrough=0 intel_iommu=on module.sig_enforce=1 sysctl.kernel.kexec_load_disabled=1"
+    EAC_OPTS="$(sed -E 's/(^| )(BOOT_IMAGE|initrd)=[^ ]*//g' /proc/cmdline) $EAC_REQ"
+    echo "$EAC_OPTS"
+    ```
+
+    Výstup musí obsahovať váš parameter `root=` a končiť parametrami EAC. Zapíšte položku a nastavte ju ako
+    predvolenú, aby ju `systemd-boot` spustil bez zobrazenia ponuky:
+
+    ```bash
+    ESP="$(bootctl --print-esp-path)"
+    printf 'title   CachyOS (EAC)\nlinux   /vmlinuz-linux-cachyos-eac\ninitrd  /initramfs-linux-cachyos-eac.img\noptions %s\n' "$EAC_OPTS" \
+      | sudo install -Dm644 /dev/stdin "$ESP/loader/entries/cachyos-eac.conf"
+    printf 'default cachyos-eac.conf\ntimeout 0\n' | sudo install -Dm644 /dev/stdin "$ESP/loader/loader.conf"
+    ```
+
+    Ak napriek tomu chcete zobraziť ponuku `systemd-boot`, počas jej spúšťania podržte kláves <kbd>Space</kbd>.
+
+    rEFInd si jadro EAC a `systemd-boot` nájde sám a pridá ich do svojej ponuky. Čokoľvek spustené z ponuky rEFInd
+    **neprejde** kontrolami EAC, pretože rEFInd je podpísaný vaším vlastným kľúčom. Obe položky skryte:
+
+    ```bash
+    printf '\n# Easy Anti-Cheat: boot these only through the "CachyOS EAC" firmware entry\ndont_scan_files +,vmlinuz-linux-cachyos-eac\ndont_scan_dirs +,EFI/cachyos-eac\n' \
+      | sudo tee -a "$ESP/EFI/refind/refind.conf" >/dev/null
+    ```
+
+    Znak `+` zachová súbory a adresáre, ktoré rEFInd už preskakuje. Od nasledujúceho spustenia bude ponuka rEFInd
+    zobrazovať iba vaše bežné jadrá.
+
+6. **Povoľte Secure Boot a spustite systém v režime EAC**
+
+    Ak je Secure Boot už povolený, preskočte rovno na spustenie systému v režime EAC.
+
+    Reštartujte počítač do nastavení firmvéru a povoľte Secure Boot. Ak vaša základná doska nemá prepínač
+    Secure Boot, pozrite si poznámky pre dosky ASUS v [príručke pre Secure Boot](/sk/configuration/secure_boot_setup#podpisovanie-obrazu-jadra-a-zavádzača).
+
+    ```bash
+    systemctl reboot --firmware-setup
+    ```
+
+    Na spustenie v režime EAC nastavte položku „CachyOS EAC“ ako `BootNext` a reštartujte počítač. Príkaz
+    `sudo eac-setup boot` robí to isté:
+
+    ```bash
+    EAC_BOOTNUM="$(efibootmgr | sed -n 's/^Boot\([0-9A-F]\{4\}\)\* CachyOS EAC.*/\1/p')"
+    sudo efibootmgr --bootnext "$EAC_BOOTNUM" && systemctl reboot
+    ```
+
+    `BootNext` platí iba pre nasledujúci štart. Reštart po skončení vašej hernej relácie znova spustí rEFInd.
+
+</Steps>
+
+</TabItem>
+</Tabs>
+
+## Overenie nastavenia
+
+Po spustení položky EAC spustite `eac-status` z balíka `cachyos-settings`:
+
+```bash
+sudo eac-status
+```
+
+Skontroluje Secure Boot a Setup Mode, TPM, zaregistrovaný certifikát CachyOS EAC CA, podpisy jadra EAC a
+`systemd-boot`, príkazový riadok jadra, lockdown, podpisy modulov, `kexec`, IOMMU a to, ktorými certifikátmi
+firmvér overil spustenie (z protokolu udalostí TPM). Každá kontrola musí zobraziť `[ OK ]` a posledný riadok
+musí znieť `All checks passed`. Vo vašej bežnej položke spustenia kontroluje iba firmvér a súbory zavádzania
+a ak sú v poriadku, skončí správou `The boot files are ready`.
+
+Tieto kontroly pokrývajú iba váš systém. To, či sa hra spustí, závisí stále od Easy Anti-Cheat a samotnej hry.
+
+Certifikát spoločnosti Microsoft v protokole udalostí TPM je v poriadku (používa sa pre firmvér GPU) a nie je
+hlásený. Akýkoľvek iný certifikát, napríklad váš vlastný „Database Key“, je hlásený s `[WARN] Boot was also verified by`.
+
+## Riešenie problémov
+
+### `eac-status` hlási dva podpisy alebo váš vlastný kľúč
+
+Správa `has 2 signatures` alebo `Boot was also verified by Database Key` znamená, že `sbctl` znova podpísal
+jadro EAC alebo `systemd-boot` vaším vlastným kľúčom. Verzie balíka `cachyos-eac-signing-key` staršie ako 1-2
+umožňovali hooku `sbctl` pre `initramfs` robiť to pri každom opätovnom zostavení `initramfs`, preto najprv
+aktualizujte systém:
+
+```bash
+sudo pacman -Syu
+```
+
+Potom znova spustite `sudo eac-setup`. Odstráni súbory z databázy `sbctl` a obnoví podpisy CachyOS. Ak to chcete
+urobiť ručne, postupujte podľa krokov nižšie.
+
+Pri `systemd-boot` zopakujte 4. krok na karte `systemd-boot` v sekcii
+[Nastavenie pre váš boot manažér](#nastavenie-pre-váš-boot-manažér), aby ste odstránili súbory z databázy `sbctl`
+a preinštalovali balíky.
+
+Pri Limine alebo rEFInd tento krok **nevykonávajte**. Príkaz `bootctl install` v ňom by nastavil `systemd-boot`
+ako váš predvolený boot manažér a nahradil by záložný zavádzač na systémovej partícii EFI. Namiesto toho
+skontrolujte databázu `sbctl`:
+
+```bash
+sudo sbctl list-files
+```
+
+Ak niektorá z uvedených ciest obsahuje `cachyos-eac` alebo ide o `/usr/lib/systemd/boot/efi/systemd-bootx64.efi`
+(pozostatok z krokov pre `systemd-boot` v príručke pre Secure Boot), odstráňte ju príkazom
+`sudo sbctl remove-file <path>`. Potom preinštalujte balíky a znova skopírujte podpísaný `systemd-boot`:
+
+```bash
+sudo pacman -S linux-cachyos-eac systemd-boot-cachyos-signed
+ESP="$(bootctl --print-esp-path)"
+sudo install -Dm644 /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed "$ESP/EFI/cachyos-eac/systemd-bootx64.efi"
+```
+
+### `eac-status` hlási, že spustenie nebolo overené certifikátom CachyOS EAC CA
+
+Ak sa správa `Boot was not verified by CachyOS EAC CA` objaví spolu so zlyhanými kontrolami príkazového riadku
+jadra, bola spustená nesprávna položka. Pozrite si sekciu [Hra hlási, že systém nie je podporovaný](#hra-hlási-že-systém-nie-je-podporovaný).
+
+Ak ide o jedinú neúspešnú kontrolu, firmvér nezaznamenal, ktorým certifikátom overil súbory zavádzania. Na doskách
+MSI je najpravdepodobnejšou príčinou predvolená politika Secure Boot: firmvér spúšťa každý zavádzací súbor bez
+overenia, a to aj pri zapnutom Secure Boot.
+
+Otvorte stránku Secure Boot v nastaveniach firmvéru. V závislosti od dosky sa nachádza pod
+**Settings > Advanced > Windows OS Configuration > Secure Boot** alebo **Settings > Security > Secure Boot**.
+Názov možnosti závisí od verzie firmvéru:
+
+| Možnosť                | Hodnota                                                      |
+| ---------------------- | ------------------------------------------------------------ |
+| Image Execution Policy | **Deny Execute** pre **Fixed Media** a **Removable Media**   |
+| Secure Boot Preset     | **Maximum Security**                                         |
+| Target OS              | **Windows UEFI OS**                                          |
+
+:::caution
+Neprepínajte **Secure Boot Mode** na **Standard** a neobnovujte továrenské kľúče. Oboje odstráni certifikát
+CachyOS EAC CA aj vaše vlastné kľúče.
+:::
+
+Uložte zmenu, spustite položku EAC a znova vykonajte `sudo eac-status`. Ak teraz hlási, že certifikát CachyOS EAC CA
+nie je zaregistrovaný, firmvér obnovil svoje kľúče. Spustite `sudo eac-setup` znova.
+
+### Hra hlási, že systém nie je podporovaný
+
+V položke EAC spustite `sudo eac-status` a opravte každú kontrolu označenú ako `[FAIL]`. Najčastejšie bola spustená
+nesprávna položka a `eac-status` hlási, že parametre EAC v príkazovom riadku jadra chýbajú. Reštartujte systém
+pomocou `sudo eac-setup boot`. V `systemd-boot` môžete vybrať aj **CachyOS (EAC)**, nie automaticky vytvorenú
+položku „Linux CachyOS Eac“. Pri Limine, rEFInd alebo GRUB nespúšťajte jadro EAC z ponuky vášho boot manažéra.
+
+### Namiesto položky EAC sa spustí Limine alebo rEFInd
+
+Skontrolujte, či bolo pred reštartom nastavené `BootNext`:
+
+```bash
+efibootmgr | grep -E 'BootNext|CachyOS EAC'
+```
+
+Ak položka „CachyOS EAC“ chýba, firmvér ju odstránil, čo niektoré dosky robia po aktualizácii alebo resete
+firmvéru. Znova spustite `sudo eac-setup`, aby ju vytvoril, alebo zopakujte 4. krok na karte Limine alebo rEFInd
+v sekcii [Nastavenie pre váš boot manažér](#nastavenie-pre-váš-boot-manažér). Položku „CachyOS EAC“ môžete vybrať
+aj v jednorazovej ponuke spustenia firmvéru.
+
+### Modul sa v položke EAC nenačíta
+
+Moduly zostavené cez DKMS nie sú podpísané kľúčom jadra a nie je možné ich načítať. Použite moduly dodávané pre
+jadro EAC (`linux-cachyos-eac-nvidia-open`, `linux-cachyos-eac-nvidia-580xx`, `linux-cachyos-eac-zfs` alebo
+`linux-cachyos-eac-r8125`), alebo spustite svoje bežné jadro pre čokoľvek, čo vyžaduje DKMS moduly.

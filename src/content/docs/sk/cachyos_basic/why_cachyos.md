@@ -1,58 +1,69 @@
 ---
 title: Prečo CachyOS?
 description: Prečo môže byť CachyOS pre vás lepší
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
 ---
 
-CachyOS ponúka vyladený zážitok s Archom, doplnený o používateľsky prívetivý inštalátor, predkonfigurované desktopové prostredia a optimalizácie výkonu bez kompromisov v používateľskom zážitku a bezpečnosti systému. Nižšie sú uvedené niektoré z hlavných funkcií, ktoré CachyOS poskytuje na zabezpečenie úžasného zážitku s desktopom.
+CachyOS je distribúcia založená na Arch Linuxe zameraná na výkon, navrhnutá tak, aby poskytovala stabilné, efektívne a používateľsky prívetivé výpočtové prostredie. Ponúka plnú silu a flexibilitu priebežne aktualizovaného (rolling-release) systému obohateného o pokročilé optimalizácie a vlastný súbor nástrojov (toolchain), ktorý zjednodušuje prácu so systémom novým aj skúseným používateľom.
 
-## Optimalizované balíčky a repozitáre
+## Výkon a optimalizácia
 
-CachyOS ponúka optimalizované balíčky pre rôzne konfigurácie hardvéru, vrátane systémov x86-64-v3, x86-64-v4 a Zen4+, s cieľom zlepšiť celkový výkon systému. Okrem toho CachyOS obsahuje vysoko žiadané balíčky z [AUR](https://aur.archlinux.org/) od používateľov pre zlepšenie QoL (kvality života).
+### Optimalizované balíky a repozitáre
 
-Pre lepšiu predstavu o rôznych balíčkoch, ktoré CachyOS optimalizoval, pozrite si [Optimalizované repozitáre](/features/optimized_repos).
+CachyOS poskytuje široký výber **[optimalizovaných balíkov](https://packages.cachyos.org/)**, ktoré sú špeciálne skompilované pre rôzne moderné architektúry CPU. To zahŕňa podporu pre systémy `x86-64-v3`, `x86-64-v4` a `Zen4+`, čím sa zabezpečí, že váš softvér je zostavený tak, aby naplno využil možnosti vášho hardvéru a priniesol výrazné zvýšenie výkonu.
 
-## Vlastné jadro vyladené pre výkon a stabilitu
+Podrobnejší pohľad na naše optimalizované repozitáre nájdete v našom detailnom sprievodcovi **[Optimalizované repozitáre](/sk/features/optimized_repos)**.
 
-Okrem sady základných záplat jadra CachyOS, ktoré ladia rôzne parametre jadra na zlepšenie odozvy desktopu, CachyOS tiež vyberá sľubné sady záplat, ktoré nie sú zahrnuté v hlavnej vetve alebo v stabilnej revízii jadra. Tieto záplaty prechádzajú interným testovaním pred odoslaním používateľom, aby sa zabezpečilo, že stabilita nebude ovplyvnená. Úplný zoznam záplat, ktoré CachyOS poskytuje, nájdete v časti [Jadro](/features/kernel).
+### Vlastné jadro vyladené pre výkon a stabilitu
 
-## Podpora vlastného plánovača CPU
+Okrem základnej sady záplat jadra CachyOS, ktorá ladí rôzne parametre jadra na zlepšenie odozvy pracovnej plochy, CachyOS cielene vyberá sady záplat, ktoré zatiaľ neboli začlenené do hlavnej vetvy alebo nie sú súčasťou stabilnej revízie jadra.
 
-Plánovanie CPU je dôležitou súčasťou jadra na zabezpečenie spravodlivého prideľovania času CPU všetkým úlohám. Jadro Linuxu implementuje rôzne triedy plánovania, aby sa zabezpečilo, že každá úloha bude naplánovaná primerane. Spravodlivá trieda plánovania, známejšia ako „predvolený plánovač“, je založená na algoritme [EEVDF (Earliest Eligible Virtual Deadline First)](https://lwn.net/Articles/925371/).
+Preto tieto záplaty pred vydaním používateľom prechádzajú interným testovaním, aby sa zabezpečilo, že stabilita systému nebude ovplyvnená. Úplný zoznam záplat, ktoré CachyOS poskytuje, nájdete v časti [Jadro](/sk/features/kernel).
 
-Predvolene je EEVDF naladený tak, aby spravodlivo rozdeľoval dostupný čas CPU medzi všetky úlohy a je zameraný najmä na pracovné zaťaženia orientované na priepustnosť. Jadro CachyOS [konfiguruje niektoré nastaviteľné parametre EEVDF](https://github.com/CachyOS/linux/blob/6.12/cachy/kernel/sched/fair.c#L76-L79) tak, aby uprednostňovali odozvu desktopu pred samotnou priepustnosťou.
+### Pokročilá podpora plánovačov CPU
 
-Avšak EEVDF nebol od začiatku určený na použitie pre interaktivitu desktopu. S týmto na pamäti CachyOS dodáva jadrá so záplatami [BORE (Burst-Oriented Response Enhancer)](https://github.com/firelzrd/bore-scheduler) plánovača, ktorý zavádza ďalšiu vlastnosť na priradenie úlohám vyžadujúcim vysokú odozvu viac času CPU v porovnaní s úlohami, ktoré to nevyžadujú, na základe ich „výbušnosti“.
+CachyOS dodáva jadrá s najnovšími optimalizáciami plánovača CPU na zabezpečenie plynulého a interaktívneho pracovného prostredia aj pri vysokom zaťažení.
 
-V 6.12 umožňuje jadro Linuxu hotplug BPF plánovačov a nahradenie spravodlivej triedy plánovania iným plánovačom. Na uľahčenie tohto CachyOS poskytuje prvotriednu podporu pre [plánovače sched-ext](https://github.com/sched-ext/scx).
+* **EEVDF (predvolený plánovač jadra Linux):** Hoci je vynikajúci pre všeobecnú priepustnosť, jadro CachyOS obsahuje vlastné **[nastaviteľné parametre EEVDF](https://github.com/CachyOS/linux/blob/6.15/cachy/kernel/sched/fair.c#L79-81)** na zlepšenie odozvy pracovnej plochy.
 
-Viac informácií o jadrách, ktoré CachyOS ponúka, a plánovačoch sched-ext nájdete v časti [Jadro](/features/kernel) a [sched-ext](/configuration/sched-ext/).
+* **[BORE](https://github.com/firelzrd/bore-scheduler) (Burst-Oriented Response Enhancer):** Pre používateľov, ktorí vyžadujú maximálnu interaktivitu, naše jadrá podporujú plánovač BORE – sadu záplat, ktorá rozširuje EEVDF s cieľom poskytnúť plynulejší chod počas náročného zaťaženia.
+  * Dostupné vo variante jadra `linux-cachyos-bore`.
 
-## Detekcia hardvéru
+Viac informácií o jadrách ponúkaných systémom CachyOS a o rámci sched-ext nájdete v dokumentácii **[Jadro](/sk/features/kernel)** a **[sched-ext](/sk/configuration/sched-ext)**.
 
-CachyOS obsahuje vlastný [nástroj na detekciu hardvéru](https://github.com/CachyOS/chwd), ktorý správne inštaluje potrebné balíčky a ovládače pre každý systém, aby odľahčil používateľov od záťaže poinštalačných nastavení.
+## Používateľsky prívetivé nástroje a prispôsobenie
 
-## Prispôsobiteľný proces inštalácie
+### [Automatická detekcia hardvéru](/sk/features/chwd/chwd/)
 
-Inštalátor CachyOS zaručuje, že používatelia si môžu vybrať, aký systém chcú. Táto prispôsobiteľnosť zahŕňa, ale nie je obmedzená na:
-- [Desktopové prostredia](/installation/desktop_environments/)
-- [Správcov bootovania](/installation/boot_managers/)
-- [Verzie jadra](/features/kernel#variants)
-- [Súborové systémy](/installation/filesystem)
-- Vlastné balíčky na inštaláciu počas procesu inštalácie
+CachyOS obsahuje vlastný nástroj na detekciu hardvéru, ktorý automaticky rozpozná a nainštaluje potrebné ovládače a balíky pre váš systém. Tým odpadá nutnosť manuálneho vyhľadávania ovládačov, čo vám po inštalácii šetrí čas a námahu.
 
-## Aplikácie CachyOS
+### Prispôsobiteľný proces inštalácie
 
-CachyOS predvolene poskytuje vlastné aplikácie, ako napríklad CachyOS Hello alebo CachyOS Package Installer
-Predvolene sú používateľom poskytované pomocné aplikácie, ako napríklad CachyOS Hello a CachyOS Package Installer, aby zjednodušili a vylepšili váš zážitok s Linuxom. Napríklad CachyOS Hello poskytuje možnosti aktualizovať váš systém, povoliť služby a zoradiť zrkadlá. Dodáva sa aj s vylepšeniami a opravami niektorých bežných problémov na jedno kliknutie. Package Installer vám pomôže s inštaláciou balíčkov.
+Inštalátor CachyOS umožňuje používateľom prispôsobiť si systém výberom desktopového prostredia, balíkov, súborového systému, správcu zavádzania, jadra a ďalších súčastí podľa svojich potrieb:
 
-Zoznam aplikácií, ktoré CachyOS vyvíja a udržiava:
+- [Desktopové prostredia](/sk/installation/desktop_environments/)
+- [Správcovia zavádzania](/sk/installation/boot_managers/)
+- [Varianty jadra](/sk/features/kernel#varianty)
+- [Súborové systémy](/sk/installation/filesystem)
+- [Vlastné balíky na zahrnutie počas inštalácie](https://github.com/CachyOS/cachyos-calamares/blob/cachyos-limine-qt6/src/modules/netinstall/netinstall.yaml)
 
-- **CachyOS Kernel Manager**: Jednoducho inštalujte jadrá z repozitára alebo konfigurujte vlastné jadro a zahrňte vlastné záplaty a dokonca spravujte rámec sched-ext prostredníctvom [scx_loader](<https://github.com/sched-ext/scx/tree/main/rust/scx_loader>).
-- **CachyOS Hello**: Aplikácia na ovládanie vylepšení, aplikovanie opráv, inštaláciu balíčkov a ďalšie informácie o CachyOS.
-- **CachyOS Package Installer**: GUI pre jednoduchú inštaláciu bežne používaných aplikácií.
-- **cachyos-rate-mirrors**: Automaticky zaraďuje zrkadlá Archu a CachyOS pre optimálne rýchlosti sťahovania.
-- **systemd-boot-manager**: Automaticky generuje nové záznamy pre systemd-boot-manager a dá sa jednoducho konfigurovať v `/etc/sdboot-manage.conf`.
+### Vlastné aplikácie CachyOS
+
+CachyOS vyvíja a udržiava vlastnú sadu aplikácií na zjednodušenie správy systému a zlepšenie vášho používateľského zážitku.
+
+Zoznam aplikácií, ktoré CachyOS v súčasnosti vyvíja a udržiava:
+
+-   **[CachyOS Hello](https://github.com/CachyOS/CachyOS-Welcome):** Uvítacia aplikácia na správu vylepšení, aplikovanie opráv a inštaláciu balíkov.
+-   **[CachyOS Package Installer](https://github.com/CachyOS/packageinstaller):** Grafické používateľské rozhranie (GUI) na jednoduchú inštaláciu aplikácií.
+-   **[CachyOS Kernel Manager](https://github.com/CachyOS/kernel-manager):** Jednoducho inštalujte jadrá z repozitára, konfigurujte si vlastné a spravujte rámec `sched-ext`.
+-   **[cachyos-rate-mirrors](https://github.com/CachyOS/rate-mirrors):** Automaticky zoraďuje zrkadlá Arch Linuxu a CachyOS pre optimálne rýchlosti sťahovania pomocou `pacman`.
+-   **[systemd-boot-manager](https://github.com/CachyOS/systemd-boot-manager):** Automaticky generuje nové záznamy zavádzania pre `systemd-boot`, ktoré možno jednoducho konfigurovať prostredníctvom `/etc/sdboot-manage.conf`.
 
 ## Priateľská a aktívna komunita
 
-Najdôležitejším bodom je neustále rastúca komunita CachyOS. Bez komunity by CachyOS nikdy nedosiahol to, kde je teraz. Komunita si navzájom pomáha a zdieľa tipy a triky pre lepší zážitok s Linuxom. Pridajte sa k nám na [CachyOS Discord](https://discord.gg/cachyos-862292009423470592) alebo na [CachyOS Forum](https://discuss.cachyos.org/).
+Najväčšou silou CachyOS je jeho rastúca komunita. Členovia komunity si navzájom pomáhajú zdieľaním tipov, poskytovaním podpory a prispievaním k úspechu projektu. Vaša spätná väzba nám pomáha neustále zlepšovať zážitok z používania CachyOS.
+
+Pridajte sa k nám a staňte sa súčasťou komunity na **[CachyOS Discord](https://discord.gg/cachyos-862292009423470592)** a na **[CachyOS Fóre](https://discuss.cachyos.org/)**.

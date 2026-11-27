@@ -1,0 +1,408 @@
+---
+title: Hardvérová akcelerácia v prehliadačoch na báze Chromium
+description: Nastavenie hardvérovej akcelerácie pre dekódovanie a enkódovanie videa v prehliadačoch na báze Chromium v systéme CachyOS. Zahŕňa nastavenie pre GPU AMD a šablónu pre ostatné GPU a prehliadače.
+ai_translated: true
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+Táto príručka opisuje zapnutie hardvérovej akcelerácie v prehliadačoch na báze Chromium v systéme CachyOS. Týmto sa úlohy spojené s videom a grafikou presunú na vaše GPU, čo zlepší výkon.
+
+## Predpoklady
+
+**Vyžadované:**
+* **Prehliadač na báze Chromium:** (napr. Chrome, Brave, Ungoogled Chromium, Edge)
+* **Ovládače GPU a API:** Aktuálne ovládače Mesa (AMD/Intel) alebo NVIDIA s nakonfigurovaným rozhraním Vulkan/VA-API/VDPAU.
+
+**Voliteľné:**
+
+* **amdgpu_top:** Nainštalujte `amdgpu_top` z repozitára prostredníctvom správcu balíkov, ak chcete monitorovať aktivitu GPU AMD z terminálu.
+* **nvtop:** (len pre GPU Intel) Nainštalujte `nvtop` (Lunar Lake) a `intel-gpu-tools` (staršie ako Lunar Lake) prostredníctvom správcu balíkov Shelly, ak chcete monitorovať aktivitu GPU Intel z terminálu.
+
+## Príspevky
+
+Túto príručku je možné rozširovať. Ak máte funkčné nastavenie hardvérovej akcelerácie pre konkrétne GPU a prehliadač na báze Chromium, môžete prispieť pridaním novej sekcie do časti „Konfigurácie GPU a prehliadačov“. Uveďte:
+
+* **Názov prehliadača**
+* **Model GPU**
+* **Príznaky (Flags):** Obsah súboru `~/.config/[browser]-flags.conf`.
+* **Cesta k súboru:** Úplná cesta k súboru s príznakmi.
+* **Poznámky (voliteľné):** Kľúčové ovládače, balíky alebo špecifiká nastavenia.
+
+### Šablóna na prispievanie
+
+#### [Váš prehliadač] - [Model vášho GPU] (Prispel [Vaše meno/prezývka])
+
+* **Prehliadač:** [napr. Brave, Ungoogled Chromium, Microsoft Edge, Vivaldi, Opera, Chromium]
+
+* **GPU:** [napr. NVIDIA GeForce RTX 3080, Intel Iris Xe]
+
+* **Cesta k súboru s príznakmi:** (Kľúčové, líši sa podľa prehliadača!)
+
+  * Bežné cesty k súborom `.conf`:
+
+    * Chromium: `~/.config/chromium-flags.conf`
+
+    * Brave Browser: `~/.config/brave-flags.conf`
+
+    * Ungoogled Chromium: `~/.config/ungoogled-chromium-flags.conf`
+
+* Úprava súboru `.desktop`:
+    * Niektoré prehliadače (Brave, Edge, Vivaldi, Opera) môžu vyžadovať úpravu riadka `Exec=` v ich súbore `.desktop` (najprv ho skopírujte z `/usr/share/applications/` do `~/.local/share/applications/`).
+
+Obsah príznakov (pre súbor `.conf` alebo riadok `Exec=`):
+
+```bash
+# Sem vložte svoje príznaky.
+# Pri súboroch .desktop sú príznaky oddelené medzerou za spustiteľným súborom.
+```
+
+**Poznámky (voliteľné):**
+
+* Požadované ovládače (napr. `nvidia-dkms`, `intel-media-driver`).
+
+* Špecifické okolnosti nastavenia alebo pokyny na úpravu súboru `.desktop`.
+
+
+### Kroky nastavenia
+
+<Steps>
+
+1. Nájdite súbor s príznakmi: Vyhľadajte cestu k súboru s príznakmi pre váš prehliadač v sekcii „Konfigurácie GPU a prehliadačov“.
+2. Upravte súbor s príznakmi: Otvorte alebo vytvorte súbor pomocou editora `nano` (alebo vášho preferovaného textového editora, napr. `micro`, `vim`).
+
+    ```bash
+    nano [PATH_TO_YOUR_BROWSER_FLAGS_FILE]
+    # Príklad: nano ~/.config/chrome-flags.conf
+    ```
+
+3. Pridajte príznaky: Vložte príslušné príznaky pre vaše GPU a prehliadač do súboru.
+4. Uložte a zatvorte súbor.
+5. Reštartujte prehliadač: Zatvorte všetky inštancie prehliadača a znova ho spustite.
+6. Overte stav: Prejdite na adresu `chrome://gpu` (alebo `brave://gpu`, `edge://gpu` atď.). Potvrďte stav „Hardware accelerated“ v častiach „Video Acceleration Information“ a „Graphics Feature Status“.
+
+</Steps>
+
+## Ako overiť hardvérovú akceleráciu videa
+
+<Tabs>
+
+<TabItem label='GPU AMD (amdgpu_top)'>
+
+<Steps>
+
+1. Otvorte terminál a spustite príkaz:
+    ```bash
+    amdgpu_top
+    ```
+2. Spustite prehrávanie videa v prehliadači (napr. na YouTube).
+3. Sledujte sekciu `media` v nástroji `amdgpu_top`. Mali by ste tu vidieť určité využitie, čo znamená, že mediálny engine vášho GPU je aktívny. Ak počas prehrávania videa zostane na 0 %, hardvérová akcelerácia dekódovania nemusí byť plne aktívna.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='GPU Intel (nvtop)'>
+
+<Steps>
+
+1. Otvorte terminál a spustite príkaz:
+    ```bash
+    sudo nvtop
+    ```
+2. Spustite prehrávanie videa v prehliadači (napr. na YouTube).
+3. Sledujte percentuálne využitie `ENC/DEC` v nástroji `nvtop`; ak dekódovanie videa prebieha hardvérovo, hodnota by sa mala zvýšiť.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='GPU Intel (intel_gpu_tools)'>
+
+<Steps>
+
+1. Otvorte terminál a spustite príkaz:
+
+    ```bash
+    sudo intel_gpu_top
+    ```
+
+    Poznámka: Niektoré novšie GPU Intel, ako napríklad Lunar Lake, už nezobrazujú počítadlá výkonu GPU v `intel_gpu_top`; pre tieto systémy použite `nvtop`.
+
+2. Spustite prehrávanie videa v prehliadači (napr. na YouTube).
+3. Sledujte percentuálne využitie `Video` a `VideoEnhance` v `intel_gpu_top`; ak dekódovanie videa prebieha hardvérovo, hodnota by sa mala zvýšiť.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label='Vývojárske nástroje prehliadača'>
+
+<Steps>
+
+1. Otvorte váš prehliadač na báze Chromium.
+
+2. Spustite prehrávanie videa (napr. na YouTube alebo lokálneho súboru).
+
+3. Otvorte Vývojárske nástroje: Stlačte `F12` alebo `Ctrl+Shift+I`.
+
+4. Prejdite na kartu **Media**. Ak ju nevidíte, kliknite na tri bodky (`...`) alebo `>>` (More tabs) na paneli Vývojárskych nástrojov a vyberte `Media`.
+
+5. V sekcii „Players“ naľavo kliknite na položku zodpovedajúcu vášmu videu.
+
+6. V hlavnom paneli prejdite nižšie do sekcie **Video Decoder**.
+
+7. Vyhľadajte štítok `Hardware decoder`. Mal by mať hodnotu `true`. Ak je tam `false` alebo názov softvérového dekodéra (napr. `FFmpegVideoDecoder`, `VpxVideoDecoder`, `Dav1dVideoDecoder`), hardvérová akcelerácia nie je pre dané video aktívna.
+
+</Steps>
+
+</TabItem>
+
+</Tabs>
+
+## Konfigurácie GPU a prehliadačov
+
+### AMD Radeon RX 6900 XT (Google Chrome)
+
+* **Prehliadač:** Google Chrome
+
+* **GPU:** AMD Radeon RX 6900 XT
+
+* **Súbor s príznakmi:** `~/.config/chrome-flags.conf`
+
+```bash
+--use-gl=angle
+--use-angle=vulkan
+--enable-features=Vulkan,VulkanFromANGLE,DefaultANGLEVulkan,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
+```
+
+**Poznámky:** Využíva Vulkan (cez ANGLE) a VA-API. Na Waylande môže byť pre niektoré cesty akcelerácie užitočný príznak `--ozone-platform=x11`.
+
+
+### Nvidia RTX 4090 (Vivaldi)
+
+* **Prehliadač:** Vivaldi
+
+* **GPU:** Nvidia RTX 4090
+
+* **Súbor s príznakmi:** `~/.config/vivaldi-stable.conf`
+
+```bash
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL
+```
+
+* **Súbor s príznakmi:** `/usr/share/applications/vivaldi-stable.desktop`
+
+```bash
+# Všetky ostatné riadky nechajte nezmenené
+# V sekcii '[Desktop Entry]' by ste mali zmeniť iba tento riadok Exec=
+Exec=/usr/bin/vivaldi-stable --enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL %U
+```
+
+**Poznámky:**
+
+Úpravu stačí použiť iba v jednom z týchto konfiguračných súborov, ale jej vykonanie v oboch by nemalo spôsobiť žiadne problémy.
+
+Prípadne môžete v prostredí KDE postupovať takto:
+1. Odstráňte všetky skratky prehliadača Vivaldi zo Správcu úloh / panela úloh
+2. Vyhľadajte `Vivaldi` v zozname spúšťača aplikácií (Application Launcher)
+3. Kliknite pravým tlačidlom myši na položku v spúšťači aplikácií a vyberte `Upraviť aplikáciu...` (`Edit Application...`)
+4. V sekcii `Argumenty príkazového riadka` (`Command-line arguments`) pridajte pred posledný argument `%U` nasledujúce argumenty:
+```
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL
+```
+5. Spustite Vivaldi a pripnite proces do Správcu úloh / panela úloh
+
+
+### AMD Radeon RX 550 (UnGoogled Chromium)
+
+* **Prehliadač:** UnGoogled Chromium
+
+* **GPU:** AMD Radeon RX 550
+
+* **Súbor s príznakmi:** `~/.config/chromium-flags.conf`
+
+```bash
+--enable-wayland-ime
+--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,WaylandSessionManagement,WaylandTextInputV3,WaylandUiScale,WaylandWindowDecorations
+```
+
+
+### Nvidia RTX 5070 TI (Brave)
+
+* **Prehliadač:** Brave
+
+* **GPU:** Nvidia RTX 5070 TI
+
+* **Súbor s príznakmi:** `~/.config/brave-flags.conf`
+
+```bash
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks
+```
+
+**Poznámky:**
+- Dekódovanie **aj** enkódovanie videa sa na stránke `brave://gpu` zobrazuje ako `Hardware accelerated`.
+- Kontrola karty `media` pri videu na YouTube niekedy zobrazí hardvérovú akceleráciu a niekedy nie.
+
+
+### Brave - 7700xt (Prispel DaJRJesus)
+
+* **Prehliadač:** Brave
+
+* **GPU:** AMD Radeon RX 7700 XT
+
+* **Cesta k súboru s príznakmi:** `~/.config/brave-flags.conf`
+
+```bash
+--ignore-gpu-blocklist
+--enable-gpu-rasterization
+--enable-zero-copy
+--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,CanvasOopRasterization,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
+```
+
+**Poznámky:**
+Na zabránenie trhaniu používateľského rozhrania je potrebné vypnúť funkciu „Ambient Mode“ (Režim okolia) v nastaveniach YouTube.
+
+
+### Vivaldi - AMD Radeon RX 9070 XT (Prispel tTrmc)
+
+* **Prehliadač:** Vivaldi
+
+* **GPU:** AMD Radeon RX 9070 XT (RDNA 4 / gfx1201)
+
+* **Cesta k súboru s príznakmi:** `~/.config/vivaldi-stable.conf`
+
+```bash
+--ignore-gpu-blocklist
+--enable-gpu-rasterization
+--enable-zero-copy
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
+```
+
+**Poznámky:**
+- Testované na systéme CachyOS s jadrom 6.19.11-1-cachyos, Mesa 26.0.3, GNOME (Wayland), rozlíšenie displeja 2560x1440.
+- Potvrdená funkčnosť: `vivaldi://gpu` zobrazuje Video Decode a Video Encode ako „Hardware accelerated“. Plná podpora kodekov na dekódovanie H264, VP9, HEVC, AV1 a enkódovanie H264, AV1. Karta Media v nástrojoch DevTools zobrazuje ako aktívny dekodér `VaapiVideoDecoder`.
+- Karta RX 9070 XT (RDNA 4) sa môže nachádzať na zozname blokovaných GPU v prehliadači Chromium, preto je potrebný príznak `--ignore-gpu-blocklist`.
+- V protokole sa môže zobraziť upozornenie: `'--ozone-platform=wayland' is not compatible with Vulkan` — toto nebráni fungovaniu hardvérovej akcelerácie.
+
+
+### Google Chrome - AMD Radeon RX 9070 XT (Prispel naknak)
+
+* **Prehliadač:** Google Chrome
+
+* **GPU:** AMD Radeon RX 9070 XT (RDNA 4 / gfx1201)
+
+* **Cesta k súboru s príznakmi:** `~/.config/chrome-flags.conf`
+
+```bash
+--ignore-gpu-blocklist
+--enable-gpu-rasterization
+--enable-zero-copy
+--use-gl=angle
+--use-angle=vulkan
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo,Vulkan,VulkanFromANGLE,DefaultANGLEVulkan
+```
+
+**Poznámky:**
+- Dekódovanie **aj** enkódovanie videa sa na stránke `chrome://gpu` zobrazuje ako `Hardware accelerated`.
+- Kontrola karty `media` pri videu na YouTube niekedy zobrazí hardvérovú akceleráciu a niekedy nie.
+
+### Vivaldi - AMD Ryzen AI Max+ 395 (Prispel woutervanelten)
+
+* **Prehliadač:** Vivaldi (8.0.4033.35)
+
+* **APU:** AMD Radeon 8060S (GFX1151/Strix Halo)
+
+* **Cesta k súboru s príznakmi:** `~/.config/vivaldi-stable.conf`
+
+```bash
+--ignore-gpu-blocklist
+--enable-gpu-rasterization
+--enable-zero-copy
+--ozone-platform=wayland
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
+```
+
+**Poznámky:**
+- Testované na systéme CachyOS s jadrom 7.0.10-2-cachyos, Mesa 26.1.1, GNOME (Wayland), rozlíšenie displeja 5120x1440.
+- Potvrdená funkčnosť: `vivaldi://gpu` zobrazuje Canvas, Compositing, Rasterization, Video Decode, Video Encode, WebGL, WebGPU a WebGPU interop ako „Hardware accelerated“. Plná podpora kodekov na dekódovanie H264, H265, VP9, AV1 a enkódovanie H264, H265 a AV1.
+
+### Vivaldi - NVIDIA RTX 5090 (Prispel icetea)
+
+* **Prehliadač:** Vivaldi (8.1)
+
+* **GPU:** NVIDIA GeForce RTX 5090 (Blackwell)
+
+* **Cesta k súboru s príznakmi:** `~/.config/vivaldi-stable.conf`
+
+```bash
+--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,VaapiOnNvidiaGPUs,VaapiIgnoreDriverChecks
+--use-gl=angle
+--use-angle=gl
+--disable-features=Vulkan
+--ignore-gpu-blocklist
+--ozone-platform=wayland
+```
+
+**Poznámky:**
+- Vyžaduje balík `libva-nvidia-driver`. Testované v júli 2026: ovládač 610.43.03, KDE Plasma (Wayland), Vivaldi 8.1.
+- `VaapiIgnoreDriverChecks` je kľúčový príznak na kartách NVIDIA — bez neho sa dekódovanie inicializuje a `vivaldi://gpu` uvádza „Hardware accelerated“, ale dekódovanie počas behu zlyhá (`vaEndPicture failed, VA error: internal decoding error`) a potichu prepne na softvérové dekódovanie.
+- Overte to na karte DevTools → Media (`VaapiVideoDecoder` ako názov dekodéra) a príkazom `nvidia-smi dmon -s u` (stĺpec DEC > 0 počas prehrávania). Nespoliehajte sa len na `vivaldi://gpu`.
+- Dekódovanie AV1 je v `libva-nvidia-driver` 0.0.17 nefunkčné (oprava je vo vetve master u vývojárov, zatiaľ nevydaná — pozri [elFarto/nvidia-vaapi-driver#419](https://github.com/elFarto/nvidia-vaapi-driver/issues/419)). Zablokujte AV1 (napr. pomocou rozšírenia enhanced-h264ify), aby YouTube poskytoval VP9.
+
+### Google Chrome - NVIDIA RTX 5070 (Prispel pisyukaev)
+
+* **Prehliadač:** Google Chrome
+
+* **GPU:** NVIDIA GeForce RTX 5070 (Blackwell / GB205)
+
+* **Cesta k súboru s príznakmi:** `~/.config/chrome-flags.conf`
+
+```bash
+--enable-features=AcceleratedVideoDecodeLinuxGL,VaapiVideoDecoder,VaapiIgnoreDriverChecks,VaapiOnNvidiaGPUs
+--ignore-gpu-blocklist
+```
+
+**Poznámky:**
+- Vyžaduje balíky `libva-nvidia-driver` a `nvidia-utils` (testované s ovládačom 610.43.03).
+- **Kritický príznak:** `VaapiOnNvidiaGPUs` — toto je kľúčový príznak, ktorý v prehliadačoch Chrome/Chromium zapína VA-API na GPU NVIDIA. Bez neho má Chrome v súbore `vaapi_wrapper.cc` napevno zakódované blokovanie zariadení NVIDIA a potichu prepne na softvérové dekódovanie.
+- Odporúča sa aj príznak `VaapiIgnoreDriverChecks`, aby sa predišlo zlyhaniam dekódovania počas behu.
+- `AcceleratedVideoDecodeLinuxGL` zapína hardvérovo akcelerované dekódovanie videa prostredníctvom OpenGL backendu ANGLE.
+- Overená funkčnosť: `chrome://gpu` → Video Acceleration Information zobrazuje podporu dekódovania pre H264 (baseline, main, high), VP8, VP9 (profile0, profile2), HEVC (main, main 10, main still-picture) a AV1.
+- Overenie: Otvorte `chrome://gpu` a potvrďte, že v časti „Video Acceleration Information“ sú uvedené dekódovacie kodeky. Prehrajte HEVC video a na karte DevTools → Media skontrolujte, či je ako aktívny dekodér uvedený `VaapiVideoDecoder`.
+- Príznak `--ozone-platform=wayland` nie je potrebný — Chrome v systéme CachyOS automaticky rozpozná Wayland. Ak narazíte na problémy, môžete príznak `--ozone-platform=wayland` pridať explicitne.
+
+### Brave Origin - AMD Radeon RX 7600 (Prispel RyuuPendragon)
+
+* **Prehliadač:** Brave Origin
+
+* **GPU:** AMD Radeon RX 7600
+
+* **Cesta k súboru s príznakmi:** `~/.config/brave-origin-flags.conf`
+
+```bash
+--ignore-gpu-blocklist
+--enable-gpu-rasterization
+--enable-zero-copy
+--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,CanvasOopRasterization,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo
+```
+
+### Vivaldi - NVIDIA RTX 5070Ti (Prispel Peek4Boo7)
+
+* **Prehliadač:** Vivaldi
+
+* **GPU:** NVIDIA GeForce RTX 5070Ti
+
+* **Cesta k súboru s príznakmi:** `~/.config/vivaldi-stable.conf`
+
+```bash
+--enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,VaapiOnNvidiaGPUs
+```
+
+**Poznámky:**
+- Ovládač: NVIDIA 615.71.09, libva-nvidia-driver 0.0.18-1.1
+- Verzia Vivaldi: 8.2.4133.52 (Official Build) (x86_64)
+- Potvrdené cez vainfo (ovládač: VA-API NVDEC driver [direct backend]) a nvidia-smi dmon
+- Pri tejto verzii ovládača nie sú potrebné príznaky VaapiVideoDecoder a VaapiIgnoreDriverChecks
+- AV1 potvrdené ako funkčné: panel DevTools Media zobrazuje Decoder name: VaapiVideoDecoder počas prehrávania AV1 (kodek av01)
+- Profil AV1 je uvedený ako podporovaný vo výstupe vainfo (VAProfileAV1Profile0)
