@@ -1,71 +1,139 @@
 ---
-title: Inštalácia na T2 MacBook
+title: T2 MacBook
 description: Ako nainštalovať CachyOS na T2 MacBook
+ai_translated: true
 ---
 
-import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
-## Inštalácia
+CachyOS poskytuje priamu podporu pre T2 MacBooky vrátane potrebných záplat jadra vo všetkých poskytovaných jadrách. Na zabezpečenie úspešného nastavenia je však potrebné vykonať niekoľko kľúčových krokov.
 
-### Všeobecné informácie
+:::caution[Možné riziká]
+Úplné odstránenie systému macOS so sebou prináša riziká, ako je strata údajov alebo znefunkčnenie zariadenia. **Dôrazne odporúčame** ponechať si oddiel so systémom macOS na aktualizácie firmvéru a obnovu. Podrobnosti nájdete v [pláne projektu T2 Linux](https://wiki.t2linux.org/roadmap/#can-i-completely-remove-macos).
 
-CachyOS poskytuje priamu podporu pre T2 MacBook. Potrebné kernel patche sú obsiahnuté vo všetkých jadrách poskytovaných CachyOS.
+Ak sa predsa len rozhodnete macOS odstrániť, vopred si vytvorte úplnú zálohu a [bootovací inštalátor macOS](https://support.apple.com/en-us/101578).
+:::
 
-**WiFi pripojenie** **nie je dostupné** hneď po inštalácii, pretože ide o firmware so zatvoreným zdrojovým kódom, ktorý CachyOS nemá povolenie redistribuovať.
-Inštalácia bude fungovať iba s LAN pripojením. Podpora WiFi sa dá nastaviť po inštalácii.
-Pozrite si [inštaláciu firmvéru](#inštalácia-firmvéru).
+## Pred inštaláciou
 
-### Pokračovanie v inštalácii
+Vytvorenie bootovacieho inštalátora macOS je voliteľné, ale odporúča sa, ak plánujete upravovať oddiely alebo odstrániť macOS. Môže byť užitočné pri aktualizáciách firmvéru, riešení problémov alebo obnove systému. Podrobné pokyny nájdete v [príručke spoločnosti Apple](https://support.apple.com/en-us/101578).
 
-Postupujte podľa pokynov v časti [Príprava na inštaláciu](/installation/installation_prepare#vytvorenie-bootovacieho-usb-disku-cachyos) o tom, ako stiahnuť
-ISO a vytvoriť bootovateľný USB disk.
+Vykonajte nasledujúce kroky v systéme macOS **pred** spustením inštalátora CachyOS.
 
-Musíte vykonať ďalšie kroky na prípravu T2 MacBooku na inštaláciu Linuxu, ako je napríklad rozdelenie disku pomocou macOS a deaktivácia bezpečného spustenia (secure boot). Môžete sa riadiť [príručkou predinštalácie t2linux](https://wiki.t2linux.org/guides/preinstall/) pre pokyny.
+### Príprava bootovacieho USB disku CachyOS
 
-Po vytvorení bootovateľného USB disku prejdite na [Inštaláciu na Root](/installation/installation_on_root).
-CachyOS aplikuje potrebné bootovacie parametre a konfigurácie na T2 MacBook používateľa pomocou [CachyOS Hardware Detection](/features/chwd).
+Stiahnite si [CachyOS ISO](/sk/cachyos_basic/download) a postupujte podľa pokynov v časti [Vytvorenie bootovacieho USB disku CachyOS](/sk/installation/installation_prepare#vytvorenie-bootovacieho-usb-disku-cachyos) na vytvorenie inštalačného média.
 
-### Inštalácia firmvéru
+### (Voliteľné) Extrahovanie firmvéru Wi-Fi
 
-Firmvér je možné stiahnuť a získať z iného zrkadla, ktoré nie je hostované spoločnosťou CachyOS.
+:::note
+Wi-Fi **nebude fungovať** hneď po spustení počas inštalácie ani po nej, pretože potrebný firmvér je proprietárny a CachyOS ho nemôže ďalej šíriť. Na proces inštalácie budete potrebovať internetové pripojenie (napr. Ethernet, USB tethering), pokiaľ vopred nevykonáte nižšie uvedené kroky na prípravu firmvéru Wi-Fi a nepovolíte ho počas inštalácie.
+:::
 
-Po zavedení do nainštalovaného systému spustite nasledujúce príkazy:
+Ešte v systéme macOS otvorte Terminál a spustite nasledujúci príkaz. Tým sa skopírujú potrebné súbory firmvéru Wi-Fi na váš oddiel EFI, vďaka čomu budú dostupné neskôr počas inštalácie CachyOS.
+```sh
+curl -sL https://wiki.t2linux.org/tools/firmware.sh | bash -s copy_to_efi
+```
+
+### Príprava disku
+
+Ak plánujete dual-boot so systémom macOS (odporúčané), musíte pre CachyOS vytvoriť voľné miesto. Použite aplikáciu Disková utilita (Disk Utility) v systéme macOS na zmenu veľkosti existujúceho oddielu macOS:
 
 <Steps>
 
-1. Získajte balík firmvéru pomocou jedného z nasledujúcich nástrojov:
-
-    <Tabs>
-
-    <TabItem label="použitím curl">
-
-    ```sh
-    curl https://mirror.funami.tech/arch-mact2/os/x86_64/apple-bcm-firmware-14.0-1-any.pkg.tar.zst -o apple-bcm-firmware-14.0-1-any.pkg.tar.zst
-    ```
-
-    </TabItem>
-    <TabItem label="použitím wget">
-
-    ```sh
-    wget https://mirror.funami.tech/arch-mact2/os/x86_64/apple-bcm-firmware-14.0-1-any.pkg.tar.zst
-    ```
-    > Ak `wget` nie je dostupný, nainštalujte ho pomocou `sudo pacman -S wget`
-
-    </TabItem>
-    </Tabs>
-
-2. Nainštalujte balík firmvéru
-    ```sh
-    sudo pacman -U apple-bcm-firmware-14.0-1-any.pkg.tar.zst
-    ```
+1.  Otvorte **Diskovú utilitu (Disk Utility)**.
+2.  Na bočnom paneli Diskovej utility vyberte **zväzok (volume)**, ktorého veľkosť chcete zmeniť (zvyčajne s názvom „Macintosh HD“ alebo podobným).
+3.  Kliknite na tlačidlo **„Partition“ (Rozdeliť)** na paneli nástrojov.
+4.  Kliknite na tlačidlo **„+“ (plus)** pod koláčovým grafom znázorňujúcim využitie disku.
+5.  **Dôležité:** Po zobrazení výzvy vyberte **„Add Partition“ (Pridať oddiel)**, *nie* „Add Volume“ (Pridať zväzok). Pre Linux musíte vytvoriť samostatný oddiel.
+6.  **Názov (Name):** Zadajte popisný názov pre nový oddiel (napr. „CachyOS“ alebo „Linux“).
+7.  **Formát (Format):** Vyberte ľubovoľný dostupný formát (napríklad APFS alebo Mac OS Extended). Inštalátor CachyOS tento oddiel neskôr preformátuje, takže na počiatočnom výbere nezáleží.
+8.  **Veľkosť (Size):** Priraďte požadované množstvo úložného priestoru pre CachyOS. **Uvedomte si, že neskoršia zmena veľkosti oddielov môže byť náročná alebo nemožná**, preto zvoľte veľkosť, ktorá vyhovuje vašim potrebám.
+9.  Kliknutím na **„Apply“ (Použiť)** vytvoríte nový oddiel. Disková utilita zmení veľkosť oddielu macOS a vytvorí nový prázdny priestor.
 
 </Steps>
 
-Potom načítajte firmvér a reštartujte ovládač WiFi:
-```bash
-sudo modprobe -r brcmfmac_wcc
-sudo modprobe -r brcmfmac
-sudo modprobe brcmfmac
-```
 
-Firmvér je tiež možné extrahovať zo súboru ISPW, pozrite si [stránku t2linux wiki](https://wiki.t2linux.org/guides/wifi-bluetooth/).
+### Vypnutie Secure Boot
+
+<Steps>
+
+1. Reštartujte Mac a ihneď po zapnutí podržte `Command (⌘) + R`, čím prejdete do režimu obnovy (Recovery Mode).
+2. Prejdite do ponuky Utilities > Startup Security Utility.
+3. V časti **Secure Boot** vyberte možnosť „No Security“ a v časti **Allowed Boot Media** vyberte „Allow booting from external or removable media“.
+
+</Steps>
+
+Podrobnosti nájdete v [príručke spoločnosti Apple o Startup Security Utility](https://support.apple.com/en-in/102522).
+
+---
+
+Ďalší prehľad o príprave T2 Macu pre Linux nájdete v [predinštalačnej príručke t2linux](https://wiki.t2linux.org/guides/preinstall/).
+
+## Postup inštalácie
+
+<Steps>
+
+1.  **Spustenie z USB disku CachyOS:**
+    *   Reštartujte Mac a ihneď po zapnutí podržte kláves `Option (⌥)`.
+    *   Vyberte USB disk CachyOS (zvyčajne označený ako „EFI Boot“).
+2.  **(Voliteľné) Povolenie Wi-Fi v live prostredí:**
+    *   Ak potrebujete Wi-Fi počas inštalácie a nemáte Ethernet ani USB tethering, po načítaní live prostredia CachyOS otvorte terminál.
+    *   Spustite nasledujúce príkazy na skopírovanie firmvéru z oddielu EFI (vytvoreného v kroku [(Voliteľné) Extrahovanie firmvéru Wi-Fi](#voliteľné-extrahovanie-firmvéru-wi-fi)) a na konfiguráciu NetworkManagera:
+        ```sh
+        # Mount the EFI partition (usually nvme0n1p1 on T2 Macs)
+        sudo mkdir -p /tmp/apple-wifi-efi
+        sudo mount /dev/nvme0n1p1 /tmp/apple-wifi-efi
+
+        # Copy firmware from EFI to the live environment
+        bash /tmp/apple-wifi-efi/firmware.sh get_from_efi
+        sudo umount /tmp/apple-wifi-efi
+
+        # Configure NetworkManager to use iwd backend
+        cat <<EOF | sudo tee /etc/NetworkManager/conf.d/wifi_backend.conf
+        [device]
+        wifi.backend=iwd
+        EOF
+        sudo systemctl restart NetworkManager
+        ```
+    *   Teraz by ste sa mali vedieť pripojiť k sieťam Wi-Fi pomocou sieťového appletu na systémovej lište.
+3.  **Spustenie inštalátora CachyOS:**
+    *   Spustite inštalátor CachyOS z pracovnej plochy alebo z ponuky aplikácií.
+    *   Postupujte podľa štandardného postupu inštalácie, pozrite si [Sprievodcu inštaláciou pre Desktop Edition](/sk/installation/installation_on_root).
+    *   Pri rozdeľovaní disku vyberte voľné miesto vytvorené predtým. Formátovanie nechajte na inštalátor.
+        :::caution[Upozornenie pri rozdeľovaní disku]
+        Počas kroku rozdeľovania disku v inštalátore buďte **veľmi opatrní**. Uistite sa, že vyberáte správne voľné miesto, ktoré ste si pripravili, a **nevymažte ani nenaformátujte** omylom váš existujúci oddiel macOS, najmä ak plánujete dual-boot. Pred pokračovaním si svoje výbery dvakrát skontrolujte.
+        :::
+    *   Nástroj CachyOS Hardware Detection ([chwd](/sk/features/chwd/chwd)) by mal počas inštalácie automaticky použiť potrebné parametre zavádzania a konfigurácie špecifické pre T2.
+
+</Steps>
+
+## Poinštalačné kroky
+
+Po dokončení inštalácie a reštartovaní do nového systému CachyOS bude možno potrebné vykonať niekoľko ďalších krokov, aby všetko fungovalo hladko.
+
+### Trvalá inštalácia firmvéru Wi-Fi
+
+Ak ste vykonali voliteľný krok [Povolenie Wi-Fi v live prostredí](#postup-inštalácie) na získanie firmvéru v live ISO, môžete ho jednoducho zopakovať na opätovné povolenie Wi-Fi. V opačnom prípade sa pripojte na internet (napr. cez Ethernet alebo USB tethering) a postupujte podľa krokov nižšie:
+
+<Steps>
+1. Otvorte terminál a stiahnite balík firmvéru zo zrkadla Arch Linux T2:
+   ```sh
+   curl https://mirror.funami.tech/arch-mact2/os/x86_64/apple-bcm-firmware-14.0-1-any.pkg.tar.zst -o apple-bcm-firmware-14.0-1-any.pkg.tar.zst
+   ```
+2. Nainštalujte stiahnutý balík:
+   ```sh
+   sudo pacman -U apple-bcm-firmware-14.0-1-any.pkg.tar.zst
+   ```
+3. Znova načítajte moduly jadra pre Wi-Fi:
+   ```bash
+   sudo modprobe -r brcmfmac_wcc
+   sudo modprobe -r brcmfmac
+   sudo modprobe brcmfmac
+   ```
+</Steps>
+
+Wi-Fi by teraz malo spoľahlivo fungovať aj po reštartoch. Stiahnutý súbor `.pkg.tar.zst` môžete odstrániť.
+
+### Ďalšia konfigurácia
+Pre konfiguráciu ďalších hardvérových komponentov, ako sú zvuk, webkamera, Touch Bar atď., si pozrite jednotlivé návody na [t2linux Wiki](https://wiki.t2linux.org/roadmap/#configuring-the-installation).

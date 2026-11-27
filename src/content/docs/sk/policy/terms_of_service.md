@@ -6,8 +6,8 @@ title: Podmienky poskytovania služieb
 
 ### 1.1. Definície
 
-Tieto Podmienky poskytovania služieb upravujú používanie platformy CachyOS a súvisiacich služieb, vrátane fór, wiki, nástroja na hlásenie chýb a ďalších nástrojov na spoluprácu ("Služby").
-CachyOS ("my," "nás," "naše") prevádzkuje platformu dostupnú na cachyos.org a súvisiacich subdoménach. Používatelia ("vy," "váš") musia prijať tieto podmienky, aby mohli používať Služby.
+Tieto Podmienky poskytovania služieb upravujú používanie platformy CachyOS a súvisiacich služieb, vrátane fór, wiki, nástroja na hlásenie chýb a ďalších nástrojov na spoluprácu („Služby“).
+CachyOS („my“, „nás“, „naše“) prevádzkuje platformu dostupnú na cachyos.org a súvisiacich subdoménach. Používatelia („vy“, „váš“) musia prijať tieto podmienky, aby mohli používať Služby.
 
 ### 1.2. Používanie Služieb
 
@@ -15,14 +15,14 @@ Používať Služby môžu iba fyzické osoby, ktoré dosiahli vek plnoletosti a
 
 ### 1.3. Prístup k Podmienkam poskytovania služieb
 
-Najnovšia verzia Podmienok poskytovania služieb je kedykoľvek dostupná na našej webovej stránke: https://cachyos.org/terms.
+Najnovšia verzia Podmienok poskytovania služieb je kedykoľvek dostupná na našej webovej stránke: <https://wiki.cachyos.org/policy/terms_of_service>.
 
 ## 2. Registrácia, uzavretie zmluvy a predmet zmluvy
 
 ### 2.1. Požiadavky
 
 Na používanie našich Interaktívnych služieb (napr. fóra, príspevky balíkov) sa musíte zaregistrovať prostredníctvom nášho online formulára, poskytnúť presné kontaktné informácie a súhlasiť s týmito Podmienkami poskytovania služieb.
-Aktivácia vášho účtu znamená uzavretie zmluvy. Nie je nárok na aktiváciu alebo účasť.
+Aktivácia vášho účtu znamená uzavretie zmluvy. Na aktiváciu ani účasť nevzniká nárok.
 
 ### 2.2. Zmena platformy
 
@@ -134,4 +134,4 @@ Ak sa akékoľvek ustanovenie týchto Podmienok poskytovania služieb ukáže ak
 
 ### 10.3. Spory
 
-Platforma Európskej komisie na riešenie sporov online je dostupná na https://ec.europa.eu/consumers/odr. Nie sme povinní zúčastňovať sa na postupoch riešenia sporov pred spotrebiteľským arbitrážnym orgánom.
+Platforma Európskej komisie na riešenie sporov online je dostupná na <https://ec.europa.eu/consumers/odr>. Nie sme povinní zúčastňovať sa na postupoch riešenia sporov pred spotrebiteľským arbitrážnym orgánom.

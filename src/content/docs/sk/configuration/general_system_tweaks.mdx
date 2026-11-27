@@ -1,35 +1,42 @@
 ---
 title: Všeobecné vyladenia systému
 description: Veci, ktoré môžete urobiť na vyladenie po inštalácii
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
 ---
 
-import { Steps } from '@astrojs/starlight/components';
+import { Tabs, TabItem, Steps, LinkButton, Icon } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
 
-## AMD Ryzen
+## Vyladenia výkonu pre AMD
 
-### Ovladač AMD P-State
+### Ovládač AMD P-State
 ---------------------------
 
-`amd-pstate` je ovládač na škálovanie výkonu CPU od AMD, ktorý zavádza nový mechanizmus riadenia frekvencie CPU na moderných sériách APU a CPU od AMD v jadre Linuxu. Nový mechanizmus je založený na Collaborative Processor Performance Control (CPPC), ktorý poskytuje jemnejšiu správu frekvencie ako staršie hardvérové P-Stavy ACPI. Súčasné platformy CPU/APU od AMD používajú ovládač ACPI P-states na správu frekvencie a taktov CPU s prepínaním iba v 3 P-stavoch. CPPC nahrádza ovládacie prvky ACPI P-states a umožňuje flexibilné rozhranie s nízkou latenciou, aby jadro Linuxu mohlo priamo komunikovať s hardvérom o výkonových náznakoch.
+`amd-pstate` je ovládač na škálovanie výkonu CPU od AMD, ktorý zavádza nový mechanizmus riadenia frekvencie CPU v linuxovom jadre na moderných sériách APU a CPU od AMD. Nový mechanizmus je založený na Collaborative Processor Performance Control (CPPC), ktorý poskytuje jemnejšiu správu frekvencie než staršie hardvérové P-stavy ACPI.
 
-Nižšie sú uvedené 3 režimy prevádzky ovládača `amd_pstate` a položky príkazového riadku jadra, ktoré sa majú použiť pri spúšťaní:
+Súčasné platformy CPU/APU od AMD používajú ovládač ACPI P-states na správu frekvencie a taktov CPU s prepínaním iba medzi 3 P-stavmi. CPPC nahrádza ovládacie prvky ACPI P-states a poskytuje flexibilné rozhranie s nízkou latenciou, aby linuxové jadro mohlo priamo komunikovať výkonové pokyny hardvéru.
 
-- **AMD P-State (Non-Autonomous Mode)**: `amd_pstate=passive`
-- **AMD P-State Guided (Guided Autonomous Mode)**: `amd_pstate=guided`
-- **AMD P-State EPP (Autonomous Mode)**: `amd_pstate=active`
+Nižšie sú uvedené 3 prevádzkové režimy ovládača `amd_pstate` a položky príkazového riadka jadra na ich použitie pri štarte:
+
+- AMD P-State (neautonómny režim): `amd_pstate=passive`
+- AMD P-State Guided (riadený autonómny režim): `amd_pstate=guided`
+- AMD P-State EPP (autonómny režim): `amd_pstate=active`
 
 :::note
-Ovladač AMD P-State EPP sa používa predvolene, ak sa nevykoná žiadna explicitná konfigurácia.
+Ovládač AMD P-State EPP sa používa predvolene, ak nie je vykonaná žiadna explicitná konfigurácia.
 :::
 
-Medzi prevádzkovými režimami môžete prepínať aj za behu, aby ste otestovali možnosti:
+Medzi prevádzkovými režimami môžete prepínať aj za chodu, aby ste si možnosti otestovali:
 
 - **Autonómny režim**: platforma zohľadňuje iba hodnoty nastavené pre minimálny výkon, maximálny výkon a Energy Performance Preference.
    ```sh
    echo active | sudo tee /sys/devices/system/cpu/amd_pstate/status
    ```
 
-- **Riadený-autonómny režim**: platforma nastavuje úroveň prevádzkového výkonu podľa aktuálneho zaťaženia a v rámci limitov stanovených OS prostredníctvom registrov minimálneho a maximálneho výkonu.
+- **Riadený autonómny režim**: platforma nastavuje úroveň prevádzkového výkonu podľa aktuálneho zaťaženia a v rámci limitov stanovených OS prostredníctvom registrov minimálneho a maximálneho výkonu.
    ```sh
    echo guided | sudo tee /sys/devices/system/cpu/amd_pstate/status
    ```
@@ -39,15 +46,15 @@ Medzi prevádzkovými režimami môžete prepínať aj za behu, aby ste otestova
    echo passive | sudo tee /sys/devices/system/cpu/amd_pstate/status
    ```
 
-Pre viac informácií:
+Podrobnejšie informácie:
 
-*   [https://www.kernel.org/doc/html/v6.9/admin-guide/pm/amd-pstate.html](https://www.kernel.org/doc/html/v6.9/admin-guide/pm/amd-pstate.html)
-*   [https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/](https://lore.kernel.org/lkml/20221110175847.3098728-1-Perry.Yuan@amd.com/)
-*   [https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/](https://lore.kernel.org/lkml/20230119115017.10188-1-wyes.karny@amd.com/)
+<LinkButton icon="external" href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html">Dokumentácia AMD P-State</LinkButton>
+<LinkButton icon="external" href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html#amd-pstate-driver-operation-modes">Prevádzkové režimy ovládača AMD P-State</LinkButton>
+<LinkButton icon="external" href="https://www.kernel.org/doc/html/latest/admin-guide/pm/amd-pstate.html#user-space-interface-in-sysfs-per-policy-control">Používateľské rozhranie AMD P-State</LinkButton>
 
 ### Konfigurácia AMD P-State EPP
 
-Na používanie P-State EPP sú k dispozícii dva regulátory škálovania frekvencie CPU: **powersave** a **performance**. Odporúča sa používať regulátor powersave a nastaviť preferenciu.
+Na používanie P-State EPP sú k dispozícii dva regulátory škálovania frekvencie CPU: `powersave` a `performance`. Odporúča sa používať regulátor powersave a nastaviť preferenciu.
 
 *   Nastavenie regulátora powersave: `sudo cpupower frequency-set -g powersave`
 *   Nastavenie regulátora performance: `sudo cpupower frequency-set -g performance`
@@ -60,22 +67,22 @@ echo power | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_pr
 
 Dostupné preferencie: `performance`, `power`, `balance_power`, `balance_performance`
 
-Benchmarky pre každú preferenciu nájdete tu:
-[https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/](https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/)
+<LinkButton icon="external" href="https://lore.kernel.org/lkml/20221219064042.661122-1-perry.yuan@amd.com/">Oficiálne benchmarky pre jednotlivé preferencie</LinkButton>
 
 ### Optimalizátor AMD 3D V-Cache
 
-Spoločnosť AMD zverejnila opravu na optimalizáciu plánovania vyrovnávacej pamäte na Dual CCD 3D CPU, ako sú 7950X3D a 7900X3D.
-V systéme BIOS musíte v časti CPPC Option nastaviť možnosť "Driver". To umožní prepísať použitý režim pomocou sysfs.
+Spoločnosť AMD zverejnila opravu na optimalizáciu plánovania vyrovnávacej pamäte na procesoroch Dual CCD 3D CPU, ako sú 7950X3D a 7900X3D.
+V systéme BIOS musíte v časti CPPC Option nastaviť možnosť „Driver“. To umožní prepísať použitý režim prostredníctvom sysfs.
 
 Existujú dva režimy:
+
 1. Frequency (Frekvencia)
 2. Cache (Vyrovnávacia pamäť)
 
-Ak je nastavená možnosť `cache`, ovládač sa pokúsi umiestniť úlohy najskôr na CCD s vyššou vyrovnávacou pamäťou, čo je prospešné najmä pri hrách.
-Možnosť `frequency` sa pokúsi umiestniť úlohy na druhý CCD, ktorý má vyššiu frekvenciu ako 3D Cache CCD.
+Ak je nastavená možnosť `cache`, ovládač sa pokúsi umiestniť úlohy najskôr na CCD s vyššou vyrovnávacou pamäťou, čo je prínosné najmä v hrách.
+Možnosť `frequency` sa pokúsi umiestniť úlohy na druhý CCD, ktorý má vyššiu frekvenciu než CCD s 3D Cache.
 
-Frequency (Predvolené):
+Frequency (predvolené):
 ```sh
 echo frequency | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
 ```
@@ -85,20 +92,18 @@ Cache:
 echo cache | sudo tee /sys/bus/platform/drivers/amd_x3d_vcache/AMDI0101:00/amd_x3d_mode
 ```
 
-Po zmene režimov by štatistiky preferovaných jadier amd mali poskytovať iné poradie. Môžete si ich prečítať pomocou:
+Po zmene režimu by štatistiky preferovaných jadier AMD mali vykazovať odlišné poradie. Môžete si ich prečítať pomocou:
 ```sh
 grep -v /sys/devices/system/cpu/cpu*/cpufreq/amd_pstate_prefcore_ranking
 ```
 
 ### AMD P-State Core Performance Boost
 
-AMD Core Performance Boost známy aj ako AMD Turbo Core je technológia dynamického škálovania frekvencie od spoločnosti AMD, ktorá umožňuje
-procesoru dynamicky nastavovať a riadiť prevádzkovú frekvenciu procesora v určitých verziách svojich procesorov,
+AMD Core Performance Boost, známy aj ako AMD Turbo Core, je technológia dynamického škálovania frekvencie od spoločnosti AMD, ktorá umožňuje
+procesoru dynamicky upravovať a riadiť prevádzkovú frekvenciu v určitých verziách svojich procesorov,
 čo umožňuje zvýšený výkon v prípade potreby pri zachovaní nižších energetických a tepelných parametrov počas bežnej prevádzky.
 
-Od verzie `linux-cachyos` 6.9.6 je jadro opravené s podporou CPB pre ovládače p-state od AMD (zahŕňa `passive`, `active` a `guided`).
-Používatelia môžu zmeniť stav zvýšenia výkonu každého CPU prostredníctvom súboru boost sysfs `/sys/devices/system/cpu/cpuX/cpufreq/boost`
-(X označuje číslo jadra, napr. cpu0 je prvé jadro, cpu1 druhé atď.).
+Na správu AMD CPB v systéme CachyOS môžete použiť nasledujúce príkazy:
 
 ```sh
 ❯ echo 0 | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/boost # Zakáže zvýšenie výkonu pre všetky jadrá
@@ -116,57 +121,376 @@ CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ       MHZ
   2    0      0    1 1:1:1:0          yes 3301.0000 400.0000 2157.8469
 ```
 
-CachyOS tiež poskytuje verziu `power-profiles-daemon`, ktorá prenáša commit, ktorý umožňuje
-podporu pre AMD CPB. AMD CPB bude zakázané, ak sa používa profil `powersave`, a bude povolené pre `balanced` alebo `performance`.
+CachyOS tiež poskytuje verziu `power-profiles-daemon`, ktorá obsahuje spätne prenesený commit povoľujúci
+podporu pre AMD CPB. AMD CPB bude zakázané, ak sa používa profil `powersave`, a povolené pri profiloch `balanced` alebo `performance`.
 
-Pre viac informácií pozri:
+Ďalšie informácie nájdete tu:
 - https://lore.kernel.org/linux-pm/1a78eeaa-fadd-4734-aaeb-2fe11e96e198@amd.com/T/#m4a0c8917ea8fb033504055bd61512c80c85410c8
 - https://lore.kernel.org/linux-pm/20240624213400.67773-1-mario.limonciello@amd.com/
 
-## Možné zlepšenia výkonu
+## Zlepšenia výkonu
 
-### Zakázanie Split Lock Mitigate
+### [Plánovač I/O ADIOS](https://github.com/firelzrd/adios)
 
-V niektorých prípadoch môže split lock mitigate spomaliť výkon v niektorých aplikáciách a hrách. K dispozícii je oprava na jeho zakázanie prostredníctvom sysctl.
+Vytvoril [firelzrd](https://github.com/firelzrd)
 
-*   Zakázanie split lock mitigate: `sudo sysctl kernel.split_lock_mitigate=0`
-*   Povolenie split lock mitigate: `sudo sysctl kernel.split_lock_mitigate=1`
+:::note
+CachyOS obsahuje stabilnú vetvu ADIOS priamo v jadre.
 
-Ak chcete, aby bola zmena trvalá, pridajte nasledujúci riadok do `/etc/sysctl.d/99-splitlock.conf`:
+Aktuálna verzia v **linux-cachyos**: `3.2.0`
 
-```text
-kernel.split_lock_mitigate=0
-```
+Aktuálna verzia v **linux-cachyos-rc**: `3.2.0`
+:::
 
-Pre viac informácií o split lock pozri:
+Stručný úvod zo súboru README:
 
-- https://www.phoronix.com/news/Linux-Splitlock-Hurts-Gaming
-- https://github.com/doitsujin/dxvk/issues/2938
+- *ADIOS (Adaptive Deadline I/O Scheduler) je plánovač I/O blokovej vrstvy pre linuxové jadro navrhnutý pre moderné blokové zariadenia s viacerými frontmi (blk-mq). Jeho cieľom je poskytovať nízku latenciu pre I/O operácie kombináciou princípov plánovania s uzávierkami (deadline scheduling) a mechanizmu adaptívneho riadenia latencie založeného na učení.*
+  - *Inšpiroval sa konceptmi z plánovačov I/O mq-deadline a Kyber a ďalej na nich stavia. Jeho kľúčovou funkciou je schopnosť predvídať latenciu dokončenia I/O na základe predchádzajúceho výkonu a charakteristík požiadavky (typ operácie, veľkosť) a využiť túto predpoveď na dynamickú úpravu uzávierok požiadaviek a správania dávkovania.*
+
+TLDR: ADIOS funguje tak, že sa učí profil latencie vášho úložného zariadenia a tieto poznatky využíva na dynamické nastavovanie uzávierok pre I/O požiadavky. Požiadavky prioritizuje do štyroch úrovní, od kritických systémových operácií (úroveň 0) až po úlohy na pozadí (úroveň 3), aby zabezpečil plynulý používateľský zážitok. Hoci sa zameriava na odozvu, jeho správanie je možné jemne doladiť cez nastavenia v sysfs na vyváženie latencie a priepustnosti.
+
+Živú ukážku si môžete pozrieť na tomto [videu](https://www.youtube.com/watch?v=L9WDcEeHgy4)
+
+#### Ako povoliť ADIOS
+
+<Tabs>
+    <TabItem label='Dočasne (prejaví sa za chodu)'>
+        Táto metóda nastaví plánovač pre aktuálnu reláciu. Zmena sa po reštarte stratí.
+        ```sh
+        sync && echo adios | sudo tee /sys/block/<yourdrive>/queue/scheduler
+            # Nahraďte <yourdrive> skutočným identifikátorom disku (napr. sda, sdb, nvme0n1)
+        ```
+    </TabItem>
+    <TabItem label='Trvalo po reštarte'>
+        <Steps>
+            1. Otvorte alebo vytvorte nový súbor pravidiel udev vo vašom obľúbenom textovom editore (napr. nano, micro, vim)
+                ```sh title='Príklad'
+                sudo nano /etc/udev/rules.d/60-ioschedulers.rules
+                ```
+            2. Pridajte do súboru nasledujúce pravidlá. Tieto pravidlá automaticky použijú konkrétny plánovač I/O podľa typu disku (HDD, SSD alebo NVMe).
+                ```text
+                # HDD
+                ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", \
+                    ATTR{queue/scheduler}="bfq"
+
+                # SSD
+                ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="adios"
+
+                # NVMe SSD
+                ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="adios"
+                ```
+              3.  Uložte súbor a zatvorte editor.
+              4.  Znova načítajte pravidlá `udev`, aby sa zmeny prejavili okamžite bez reštartu.
+                  ```sh
+                  sudo udevadm control --reload-rules
+                  sudo udevadm trigger
+                  ```
+        </Steps>
+    </TabItem>
+</Tabs>
+
+Často kladené otázky (FAQ):
+
+- Ak zlepšuje odozvu, prečo nie je povolený predvolene?
+  - ADIOS je stále v aktívnom vývoji a priebežne sa testuje. Hoci prináša výrazné výhody pre odozvu pracovnej plochy, zatiaľ sa nepovažuje za dostatočne stabilný na to, aby bol predvoleným pre všetky typy záťaže a hardvéru. V niektorých okrajových prípadoch by chyby mohli viesť k problémom, ako je zamrznutie systému. Z tohto dôvodu ide o voliteľnú funkciu pre používateľov, ktorí ju chcú testovať a využívať jej najnovšie vylepšenia.
+
+### NVIDIA Smooth Motion (séria RTX 40xx a 50xx)
+
+:::note[Kompatibilita hier.]
+Hry bežiace na DX11, DX12 a Vulkan. Riešenie pre OpenGL nájdete v sekcii FAQ.
+
+DXVK aj VKD3D fungujú bez problémov.
+
+**Podporované sú iba 64-bitové aplikácie. Smooth Motion nebude fungovať s 32-bitovými aplikáciami (napr. staré hry DX11).**
+
+:::
+
+Priamy citát z dokumentácie spoločnosti NVIDIA:
+
+*NVIDIA Smooth Motion je nový model umelej inteligencie na úrovni ovládača, ktorý prináša plynulejšie hranie tým, že odvodzuje dodatočnú snímku medzi dvoma vykreslenými snímkami. Pre hry bez technológie DLSS Frame Generation predstavuje NVIDIA Smooth Motion novú možnosť na vylepšenie zážitku na grafických kartách GeForce RTX série 40 a novších.*
+
+- Ako povoliť NVIDIA Smooth Motion pre hru:
+  - Pridajte nasledujúcu premennú prostredia:
+    ```text
+    NVPRESENT_ENABLE_SMOOTH_MOTION=1
+    ```
+
+Často kladené otázky (FAQ):
+
+- Prečo použiť Smooth Motion namiesto DLSS Frame Generation?
+  - Keď hra nepodporuje DLSS Frame Generation, Smooth Motion slúži ako alternatíva vďaka svojmu AI modelu na úrovni ovládača.
+- Existuje nejaká nevýhoda používania Smooth Motion?
+  - Áno, povolenie Smooth Motion môže spôsobiť mierne vstupné oneskorenie (input lag) v dôsledku dodatočného odvodzovania snímok.
+  - Môže spôsobovať problémy s prekrytiami tretích strán. Aby ste sa tomu vyhli, pridajte nasledujúcu premennú prostredia:
+    ```text
+    NVPRESENT_QUEUE_FAMILY=1
+    ```
+    :::note[Pri použití tejto premennej sa môže prejaviť vplyv na výkon.]
+    :::
+- Prečo MangoHud nezobrazuje zvýšenú snímkovú frekvenciu?
+  - MangoHud v súčasnosti nezohľadňuje dodatočné snímky generované funkciou Smooth Motion, čo vedie k zavádzajúcemu údaju o snímkovej frekvencii.
+    - Správnu snímkovú frekvenciu zobrazí vstavané počítadlo FPS priamo v monitore.
+- Aká je kvalita obrazu v porovnaní s DLSS Frame Generation?
+  - Kvalita obrazu nie je taká dobrá a môže vnášať artefakty, najmä počas rýchlych akčných scén.
+- Je funkcia kompatibilná s externými nástrojmi na obmedzenie FPS? Napríklad MangoHud.
+  - Nie. Obmedzovač FPS priamo v hre by mal fungovať bez problémov.
+- Možno Smooth Motion kombinovať s DLSS Frame Generation?
+  - Nie. Naraz môže byť aktívna iba jedna metóda generovania snímok.
+- Možno Smooth Motion použiť s aplikáciami OpenGL?
+  - Nie priamo, keďže je implementovaný ako vrstva pre Vulkan, ale je to možné s využitím projektu [Zink](https://docs.mesa3d.org/drivers/zink.html) na preklad volaní OpenGL do rozhrania Vulkan:
+    ```text
+    NVPRESENT_ENABLE_SMOOTH_MOTION=1 zink-run <command>
+    ```
+    :::note
+    Použitie projektu Zink pravdepodobne ovplyvní výkon a v niektorých hrách môže spôsobiť grafické chyby.
+
+    Používatelia s dvoma GPU musia nastaviť `DRI_PRIME=1`, aby namiesto bežnejších metód výberu GPU využili dedikovanú grafickú kartu NVIDIA.
+    :::
 
 ## Vyladenia pre úsporu energie
+
+### thermald
+
+`thermald` je démon na správu teploty pre systémy Intel. Monitoruje teplotné senzory a uplatňuje chladiace opatrenia, ako sú limity výkonu CPU alebo zmeny výkonových stavov, ešte predtým, než firmvér bude musieť použiť agresívnejšie obmedzovanie výkonu (throttling).
+
+Je užitočný najmä na notebookoch, konvertibilných zariadeniach, tabletoch, vreckových herných konzolách a kompaktných PC s procesormi Intel, ktoré sprístupňujú tepelné ovládanie Intel prostredníctvom `/sys/class/thermal`. Podporované systémy bežne využívajú teplotné senzory CPU Intel, Intel P-state, Intel power clamp, RAPL, `INT340X` alebo adaptívne tepelné tabuľky ACPI DPTF. Procesory AMD nie sú démonom `thermald` podporované.
+
+Nainštalujte a povoľte ho príkazmi:
+
+```sh
+sudo pacman -S thermald
+sudo systemctl enable --now thermald.service
+```
+
+Skontrolujte, či sa spustil správne:
+
+```sh
+systemctl status thermald.service
+journalctl -u thermald.service -b
+```
+
+Ďalšie informácie:
+
+<LinkButton icon="external" href="https://github.com/intel/thermal_daemon">Oficiálny repozitár thermald</LinkButton>
+<LinkButton icon="external" href="https://man.archlinux.org/man/thermald.8">Manuálová stránka thermald</LinkButton>
 
 ### Povolenie RCU Lazy
 
 RCU Lazy pomáha znižovať spotrebu energie v systémoch v nečinnosti alebo s nízkym zaťažením. To môže byť užitočné pre notebooky a prenosné zariadenia.
-Zlepšenie je medzi 5-10% z hľadiska úspory energie. Je však dôležité poznamenať, že táto funkcia úspory energie môže prísť za cenu mierne zníženého výkonu v závislosti od scenára.
-Jadro linux-cachyos-deckify bude mať túto možnosť predvolene povolenú, pretože úspora energie je kľúčová a nevyhnutná pre tieto zariadenia.
+Zlepšenie predstavuje 5–10 % z hľadiska úspory energie. Je však dôležité poznamenať, že táto funkcia úspory energie môže prísť za cenu mierne zníženého výkonu v závislosti od scenára.
+Jadro linux-cachyos-deckify má túto možnosť predvolene povolenú, pretože úspora energie je pre tieto zariadenia kľúčová a nevyhnutná.
 
-Ak chcete povoliť RCU Lazy, pridajte nasledujúci parameter do zoznamu parametrov [príkazového riadka](/configuration/boot_manager_configuration/) jadra:
+Ak chcete povoliť RCU Lazy, pridajte nasledujúci parameter do zoznamu parametrov [príkazového riadka](/sk/configuration/boot_manager_configuration/) jadra:
 ```text
 rcutree.enable_rcu_lazy=1
 ```
 
-## Riešenia pre NVIDIA
+## Riešenie problémov s NVIDIA
 
-### Zakázanie SDDM Wayland Backend
+### Firmvér NVIDIA GSP
+
+Firmvér NVIDIA GSP môže **„v niektorých prípadoch“** viesť k zníženému výkonu. Hoci ovládač NVIDIA 555.58.02 tento problém vo veľkej miere vyriešil, na niektorých systémoch môže pretrvávať.
+Ak sa v KDE stretávate so zásekmi alebo v niektorých prípadoch so slabým výkonom, môžete firmvér GSP zakázať nasledujúcim konfiguračným súborom:
+`/etc/modprobe.d/nvidia-gsp.conf`
+
+```text
+options nvidia NVreg_EnableGpuFirmware=0
+```
+
+Po vytvorení súboru vykonajte nasledujúci príkaz:
+```sh
+sudo mkinitcpio -P
+```
 
 :::note
-Počnúc cachyos-kde-settings 4.3 používa SDDM predvolene KWin ako svoj Wayland kompozitor.
+Otvorené [moduly jadra](https://github.com/NVIDIA/open-gpu-kernel-modules) spoločnosti NVIDIA sú založené na firmvéri GSP. Z tohto dôvodu nie je možné GSP zakázať a táto možnosť modprobe bude pri ich používaní ignorovaná. Použite `linux-cachyos-nvidia` alebo `nvidia-dkms`.
 :::
 
-Hoci je to pekný krok vpred, môže to priniesť niektoré nepríjemnosti, ako napríklad zrušenie podpory pretaktovania pomocou nvidia-settings alebo spôsobiť nekompatibilitu so staršími GPU, ktoré majú problémy s Waylandom.
+Všeobecne sa odporúča otestovať firmvér GSP po každej novej inštalácii ovládača NVIDIA, keďže často prináša užitočné funkcie. Spoločnosť NVIDIA navyše začala vykonávať QA testovanie primárne s použitím firmvéru GSP.
 
-Ak chcete vrátiť túto zmenu. **Odstráňte** cachyos-kde-settings:
-```sh
-sudo pacman -R cachyos-kde-settings
+## Vylepšenia zvuku a softvéru
+
+### Vylepšenie zvuku reproduktorov notebooku
+
+Reproduktory notebookov často produkujú tenký a nevýrazný zvuk v dôsledku svojich kompaktných rozmerov a obmedzených hardvérových možností. [EasyEffects](https://wiki.archlinux.org/title/PipeWire#EasyEffects) dokáže výrazne zlepšiť kvalitu zvuku vstavaných reproduktorov vášho notebooku pomocou rôznych zvukových efektov a vlastných konfigurácií.
+
+Ak chcete začať, musíte nainštalovať EasyEffects a potrebné závislosti:
+
+```bash
+# Inštalácia EasyEffects
+sudo pacman -S easyeffects
+# Inštalácia ďalších zásuvných modulov pre viac efektov
+sudo pacman -S lsp-plugins-lv2
+sudo pacman -S zam-plugins
+sudo pacman -S calf
+sudo pacman -S mda.lv2
 ```
+
+#### Konfigurácia
+
+Postupujte podľa týchto krokov na konfiguráciu EasyEffects:
+
+1. Spustite EasyEffects z ponuky aplikácií alebo zadaním `easyeffects` v termináli.
+2. Prejdite na kartu **Output** (Výstup), kde môžete spravovať efekty aplikované na zvuk reproduktorov.
+3. Prepnite na kartu **Effects** (Efekty), kde môžete pridávať, upravovať alebo nastavovať zvukové efekty.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects.png')} />
+
+##### Používanie komunitných predvolieb
+
+Pre rýchle a efektívne nastavenie začnite s **komunitnými predvoľbami** prispôsobenými pre rôzne zvukové scenáre:
+
+1. Stiahnite si predvoľby z repozitára [EasyEffects Community Presets](https://github.com/wwmm/easyeffects/wiki/Community-presets).
+2. V aplikácii EasyEffects kliknite na tlačidlo **Presets** (Predvoľby) a vyberte **„Import preset from local storage“** (Importovať predvoľbu z lokálneho úložiska).
+3. Nájdite a vyberte stiahnutý súbor predvoľby.
+4. Po importovaní sa predvoľba zobrazí vo vašom zozname — kliknutím na **„Load“** (Načítať) ju použijete na váš zvukový výstup.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects-presets.png')} />
+
+##### Vytvorenie vlastného profilu
+
+Pre osobnejší zvukový zážitok si vytvorte vlastný profil prispôsobený reproduktorom vášho notebooku:
+
+1. Kliknite na tlačidlo **„+“** v ponuke Predvoľby a vytvorte novú predvoľbu (napr. pomenujte ju **„Laptop Speakers“**).
+2. Vyberte **„Load“** (Načítať) na aktivovanie novej predvoľby.
+3. Pridajte a nakonfigurujte efekty na karte **Output** > **Effects** a experimentujte s možnosťami, ako sú ekvalizéry, zvýraznenie basov alebo rozšírenie sterea.
+
+##### Použitie efektu Convolver (notebooky s Dolby Atmos)
+
+**Efekt Convolver** dokáže dramaticky zlepšiť zvuk aplikovaním impulzných oziev, ktoré simulujú vysokokvalitné zvukové prostredia. Vyžaduje si však presné nastavenie:
+
+1. Pridajte efekt **Convolver** do svojho reťazca efektov na karte **Effects**.
+2. Načítajte súbor impulznej odozvy (vo formáte `.wav`) špecifický pre váš model notebooku, ak je k dispozícii. Tieto súbory môžete vyhľadať online na zdrojoch ako:
+   - https://wiki.archlinux.org/title/Lenovo_ThinkPad_T14_(AMD)_Gen_4#Speakers
+   - https://github.com/m4tx/thinkpad-p14s-g4-linux/#sound
+   - https://github.com/shuhaowu/linux-thinkpad-speaker-improvements/
+3. **Predchádzanie orezávaniu (clipping)**: Efekt Convolver môže výrazne zvýšiť hlasitosť. Pridajte efekt **Limiter** za Convolver vo vašom reťazci efektov, aby ste udržali špičky pod kontrolou a predišli skresleniu.
+
+<ImageComponent imgsrc={import('~/assets/images/easyeffects-convolver.png')} />
+
+#### Tipy na optimálne výsledky
+
+- **Experimentujte** s rôznymi predvoľbami, aby ste našli najlepšiu kombináciu pre váš konkrétny model notebooku a osobné zvukové preferencie.
+- **Robte postupné úpravy** jednotlivých efektov, aby ste predišli skresleniu alebo neprirodzenému zvukovému výstupu.
+- **Porovnávajte prepínaním**: Často prepínajte EasyEffects **zapnuté/vypnuté**, aby ste zhodnotili vylepšenia oproti predvolenému zvuku.
+- Vyhľadajte **predvoľby špecifické pre zariadenie alebo impulzné odozvy pre Convolver** pre populárne modely notebookov ako **Framework Laptop 13** alebo **ThinkPad T14**, aby ste dosiahli výsledky šité na mieru.
+- **Automatizujte spustenie**: Nakonfigurujte EasyEffects v predvoľbách aplikácie tak, aby sa spúšťal automaticky pri štarte systému, čím zabezpečíte, že váš vlastný profil bude vždy aktívny.
+- **Automatické načítanie predvolieb pre viacero zariadení**: Použite kartu **PipeWire** > **Presets Autoloading** na priradenie konkrétnych predvolieb k rôznym výstupným zariadeniam (napr. Reproduktory vs. Slúchadlá) pre plynulé prepínanie. <ImageComponent imgsrc={import('~/assets/images/easyeffects-autoloading.png')} />
+
+#### Alternatíva k EasyEffects
+
+Ako alternatívu môžete vyskúšať [JDSP4Linux](https://github.com/Audio4Linux/JDSP4Linux), čo je procesor zvukových efektov pre klientov PipeWire a PulseAudio.
+
+### OBS Studio
+
+V našom repozitári poskytujeme upravený balík obs-studio-browser, ktorý odporúčame namiesto štandardného balíka `obs-studio`. Obsahuje opravy bežných problémov, ako sú chyby CUDA a problémy s virtuálnou kamerou.
+
+```sh title='Otvorte terminál a spustite nasledujúci príkaz'
+sudo pacman -S obs-studio-browser
+# Ak ste mali predtým nainštalovaný obs-studio, pacman sa vás opýta, či ho
+# chcete nahradiť, v takom prípade zadajte „Y“.
+```
+
+## Konfigurácia odkladacieho priestoru (Swap)
+
+### Prepnutie zo ZRam na Zswap
+
+CachyOS predvolene používa na správu odkladacieho priestoru ZRam. Ak však uprednostňujete Zswap, môžete naň jednoducho prejsť podľa nasledujúcich krokov:
+
+:::note
+Tento návod predpokladá, že máte predvolené nastavenie CachyOS so zapnutým ZRam a počas inštalácie nebola vytvorená žiadna odkladacia partícia ani odkladací súbor.
+:::
+
+<Steps>
+    1. Zakážte ZRam pridaním parametra jadra. [Upravte konfiguráciu zavádzača](/sk/configuration/boot_manager_configuration) a pridajte nasledujúci riadok:
+        ```text
+        systemd.zram=0
+        ```
+    2. Povoľte Zswap pridaním nasledujúceho parametra jadra:
+        ```text
+        zswap.enabled=1 zswap.shrinker_enabled=1 zswap.compressor=lz4 zswap.max_pool_percent=30
+        ```
+    3. Vytvorte prázdny prepisovací súbor na zakázanie [pravidla udev systému CachyOS](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/30-zram.rules), ktoré vypína Zswap:
+        ```bash
+        sudo touch /etc/udev/rules.d/30-zram.rules
+        ```
+    4. Vytvorte odkladací súbor pre Zswap.
+        <details>
+            <summary>Ak používate Btrfs:</summary>
+                <Steps>
+                    1. Vytvorte podzväzok (subvolume) Btrfs pre odkladací súbor:
+                        ```bash
+                        sudo btrfs subvolume create /swap
+                        ```
+                    2. Vytvorte odkladací súbor s požadovanou veľkosťou (napr. 8 GB) zmenou parametra `--size`:
+                        ```bash "--size"
+                        sudo btrfs filesystem mkswapfile --size 4g --uuid clear /swap/swapfile
+                        ```
+                    3. Aktivujte odkladací súbor:
+                        ```bash
+                        sudo swapon /swap/swapfile
+                        ```
+                    4. Pridajte odkladací súbor do `/etc/fstab`, aby zostal pripojený aj po reštarte:
+                        ```bash
+                        echo "/swap/swapfile none swap defaults 0 0" | sudo tee -a /etc/fstab
+                        ```
+                </Steps>
+        </details>
+        <details>
+            <summary>Ak nepoužívate Btrfs:</summary>
+            <Steps>
+                1. Vytvorte odkladací súbor s požadovanou veľkosťou (napr. 8 GB) zmenou parametra `count=`:
+                    ```bash "count=8"
+                    sudo dd if=/dev/zero of=/swapfile bs=1G count=8
+                    ```
+                2. Nastavte správne oprávnenia pre odkladací súbor:
+                    ```bash
+                    sudo chmod 0600 /swapfile
+                    ```
+                3. Naformátujte odkladací súbor:
+                    ```bash
+                    sudo mkswap /swapfile
+                    ```
+                4. Pridajte odkladací súbor do `/etc/fstab`, aby zostal pripojený aj po reštarte:
+                    ```bash
+                    echo "/swapfile none swap defaults 0 0" | sudo tee -a /etc/fstab
+                    ```
+                5. Aktivujte odkladací súbor:
+                    ```bash
+                    sudo swapon /swapfile
+                    ```
+            </Steps>
+        </details>
+    5. Pridajte kompresný modul lz4 do konfiguračného súboru `mkinitcpio.conf`:
+        1. Otvorte súbor v textovom editore:
+            ```bash
+            sudo nano /etc/mkinitcpio.conf
+            ```
+        2. Nájdite pole `MODULES` a pridajte doň `lz4`. Malo by vyzerať približne takto:
+            ```text
+            MODULES=(... lz4)
+            ```
+        3. Uložte súbor stlačením `Ctrl + O` a potvrdením klávesom `Enter`, potom editor ukončite stlačením `Ctrl + X`.
+    6. Znova vytvorte initramfs, aby sa zmeny prejavili. Príkaz sa líši v závislosti od vášho správcu zavádzania:
+        <details>
+            <summary>systemd-boot</summary>
+            ```bash
+            sudo sdboot-manage gen
+            ```
+        </details>
+        <details>
+            <summary>GRUB</summary>
+            ```bash
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+        </details>
+        <details>
+            <summary>Limine</summary>
+            ```bash
+            sudo limine-mkinitcpio
+            ```
+        </details>
+    7. Reštartujte systém, aby sa prejavili všetky zmeny.
+</Steps>

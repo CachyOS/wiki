@@ -1,81 +1,252 @@
 ---
 title: Nastavenie Secure Boot
-description: Nastavte secure boot pomocou sbctl po inštalácii CachyOS
+description: Nastavte si Secure Boot pomocou sbctl po inštalácii CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
 ---
 
 import ImageComponent from '~/components/image-component.astro';
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
-# sbctl
+:::tip[Easy Anti-Cheat]
+Ak chcete hrať hry, ktoré používajú Easy Anti-Cheat Linux v2, postupujte radšej podľa [sprievodcu pre Easy Anti-Cheat](/sk/configuration/easy_anti_cheat).
+Ten nastavuje Secure Boot od začiatku, takže túto príručku najprv nepotrebujete. Zaregistruje vaše vlastné kľúče spolu
+s kľúčmi Microsoftu, aby duálne spúšťanie (dual boot) so systémom Windows naďalej fungovalo. Taktiež používa jadro a systemd-boot podpísané tímom CachyOS, ktoré
+sa nesmú znova podpisovať vašimi vlastnými kľúčmi.
+:::
 
-[`sbctl`](https://github.com/Foxboron/sbctl) je užívateľsky prívetivý správca kľúčov pre secure boot, ktorý umožňuje nastaviť secure boot,
-ponúka možnosti správy kľúčov a sleduje súbory, ktoré je potrebné podpísať v reťazci spúšťania.
+## Príprava pred nastavením
 
-## Inštalácia sbctl
+### Zavádzač GRUB
 
-```bash
-❯ sudo pacman -S sbctl
-```
-
-## Prednastavenie
-
-### Boot Manager GRUB
-
-Ak používate GRUB, spustením nasledujúceho príkazu povolíte podporu secure boot v GRUB pomocou CA kľúčov.
+Ak používate GRUB, spustením nasledujúceho príkazu povolíte podporu Secure Boot v GRUB pomocou CA kľúčov.
 
 ```bash
-❯ sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
+sudo grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=cachyos --modules="tpm" --disable-shim-lock
 ```
 
 :::note
-Načítanie nepotrebných modulov do vášho boot managera môže predstavovať bezpečnostné riziko.
-Tento príkaz spúšťajte len v prípade, že skutočne potrebujete secure boot.
+Načítanie nepotrebných modulov do vášho zavádzača môže predstavovať bezpečnostné riziko.
+Tento príkaz spustite len v prípade, že skutočne potrebujete Secure Boot.
 :::
 
-### Vstup do režimu nastavenia v UEFI
-Najprv musíme prejsť do nastavení firmvéru a nastaviť režim secure boot na "Setup Mode". Môžete reštartovať z už spusteného systému do nastavení firmvéru pomocou nasledujúceho príkazu.
+### Povolenie režimu Setup Mode v UEFI
+
+Najprv musíme prejsť do nastavení firmvéru a nastaviť režim Secure Boot na „Setup Mode“. Z už spusteného systému môžete reštartovať do nastavení firmvéru pomocou nasledujúceho príkazu.
 
 ```bash
-❯ systemctl reboot --firmware-setup
+systemctl reboot --firmware-setup
 ```
 
 <br />
 <ImageComponent imgsrc={import('~/assets/images/ideapad-bios-secure-boot.jpg')} />
 
-Takto vyzerá BIOS na Lenovo Ideapad 5 Pro. Resetujte do režimu nastavenia alebo obnovte továrenské kľúče a reštartujte späť do systému.
+Takto vyzerá BIOS na Lenovo Ideapad 5 Pro. Obnovte ho do režimu nastavenia (Setup Mode) alebo obnovte továrenské kľúče a reštartujte späť
+do systému.
 
-## Nastavenie sbctl
+#### Automatický reštart
 
-```bash
-❯ sudo sbctl status # Ak je povolený režim nastavenia, môžeme pokračovať ďalším krokom
-Installed:      ✘ sbctl nie je nainštalovaný
-Setup Mode:     ✘ Povolený
-Secure Boot     ✘ Zakázaný
+Na niektorých základných doskách Gigabyte nasleduje hneď po voľbe „reset to setup mode“ dialógové okno „reset without saving“
+<ImageComponent imgsrc={import('~/assets/images/gigabyte-reset-without-saving.jpg')} />
+toto je potrebné zamietnuť, pretože to spôsobí reštart systému a následné vypnutie režimu Setup Mode.
 
-❯ sudo sbctl create-keys # Vytvorte si vlastné kľúče pre secure boot
-Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-Creating secure boot keys...✔
-Secure boot kľúče vytvorené!
+Namiesto toho spustite priamo operačný systém (Save & Exit a v ponuke Boot Override vyberte svoj zavádzač).
 
-❯ sudo sbctl enroll-keys -m # Zaregistrujte svoje kľúče pomocou kľúčov od Microsoftu
-Enrolling keys to EFI variables...✔
-Kľúče zaregistrované do EFI premenných!
+#### Chýbajúci režim Setup Mode
 
-❯ sudo sbctl status
-# sbctl by mal byť teraz nainštalovaný a môžeme pokračovať v podpisovaní obrazov jadra a boot managera
-Installed:      ✔ sbctl je nainštalovaný
-Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-Setup Mode:     ✔ Zakázaný
-Secure Boot     ✘ Zakázaný
-Vendor Keys:    microsoft
+Niektoré základné dosky MSI a ASUS nemajú režim Setup Mode.
+
+##### MSI
+
+Nastavte Secure Boot Mode na „custom“ a vyberte možnosť kompatibility „maximum security“ (toto je dôležité: pri predvolenom režime sa vám nemusí podariť spustiť CachyOS zo zavádzača!). Potom prejdite do časti „key management“ a postupujte podľa dvoch krokov znázornených na obrázku nižšie:
+<br />
+<ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
+
+##### ASUS
+
+Prejdite do ponuky Boot → Secure Boot, nastavte Secure Boot Mode na Custom, potom otvorte Key Management a vyberte „Delete all Secure Boot Variables“.
+
+#### Inštalácia sbctl a registrácia kľúčov
+
+Pred pokračovaním sa uistite, či je nástroj `sbctl` nainštalovaný.
+
+[sbctl](https://github.com/Foxboron/sbctl) je používateľsky prívetivý správca kľúčov pre Secure Boot, ktorý umožňuje nastaviť Secure Boot,
+ponúka možnosti správy kľúčov a sleduje súbory, ktoré je potrebné podpísať v reťazci spúšťania.
+
+<details>
+    <summary>Ako nainštalovať sbctl</summary>
+    ```bash title='Otvorte terminál a spustite nasledujúci príkaz'
+    sudo pacman -S sbctl
+    ```
+</details>
+
+Teraz, keď je `sbctl` nainštalovaný, musíte ho nastaviť a zaregistrovať svoje kľúče do firmvéru. Tento proces je pomerne jednoduchý, stačí postupovať podľa krokov nižšie.
+
+<Steps>
+1. Skontrolujte, či je povolený režim Setup Mode:
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>Očakávaný výstup</summary>
+        ```bash
+        Installed:      ✘ sbctl is not installed
+        Setup Mode:     ✘ Enabled
+        Secure Boot     ✘ Disabled
+        ```
+    </details>
+2. Vytvorte si vlastné kľúče pre Secure Boot:
+    ```bash
+    sudo sbctl create-keys
+    ```
+    <details>
+        <summary>Príklad úspešného vytvorenia kľúčov</summary>
+        ```bash
+        Created Owner UUID a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Creating secure boot keys...✔
+        Secure boot keys created!
+        ```
+    </details>
+3. Zaregistrujte svoje kľúče spolu s kľúčmi Microsoftu a vstavanými kľúčmi OEM firmvéru:
+    ```bash
+    sudo sbctl enroll-keys --microsoft --firmware-builtin
+    ```
+    <details>
+        <summary>Očakávaný výstup</summary>
+        ```bash
+        Enrolling keys to EFI variables...✔
+        Enrolled keys to the EFI variables!
+        ```
+    </details>
+
+    :::caution[Základné dosky ASUS / Gigabyte — nepoužívajte `--firmware-builtin`]
+    Na niektorých základných doskách ASUS a Gigabyte spôsobuje použitie príznaku `--firmware-builtin` duplicitné záznamy
+    v premenných kľúčov EFI (napr. `builtin-db` sa v `Vendor Keys` zobrazuje viackrát).
+    Pri následnej aktivácii Secure Boot v nastaveniach UEFI doska rozpozná túto
+    nekonzistentnú štruktúru kľúčov a vyhodí chybu **Secure Boot Violation** ešte pred načítaním
+    zavádzača.
+
+    Na doskách ASUS / Gigabyte použite iba `--microsoft`:
+
+    ```bash
+    sudo sbctl enroll-keys --microsoft
+    ```
+
+    Ak `Vendor Keys` zobrazuje `microsoft builtin-db builtin-db ...`, kľúče je potrebné
+    znova zaregistrovať. Vstúpte opäť do režimu Setup Mode v UEFI (pomocou vymazania všetkých kľúčov) a potom spustite
+    `sbctl enroll-keys --microsoft` znova bez `--firmware-builtin`.
+    :::
+
+
+4. Znova skontrolujte stav nástroja sbctl, aby ste sa uistili, že kľúče sú zaregistrované a režim Setup Mode je zakázaný:
+    ```bash
+    sudo sbctl status
+    ```
+    <details>
+        <summary>Očakávaný výstup</summary>
+        ```bash
+        Installed:      ✔ sbctl is installed
+        Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
+        Setup Mode:     ✔ Disabled
+        Secure Boot     ✘ Disabled
+        Vendor Keys:    microsoft
+        ```
+    </details>
+
+    :::note[Setup Mode zobrazuje Enabled?]
+    Ak `Setup Mode` zobrazuje **Enabled**, prejdite do nastavení firmvéru a **dočasne zakážte Secure Boot**.
+    Spustite systém späť, znova skontrolujte stav `sbctl`, pokračujte časťou [Podpisovanie obrazu jadra a zavádzača](#podpisovanie-obrazu-jadra-a-zavádzača)
+    nižšie, potom reštartujte počítač a v nastaveniach firmvéru znova povoľte Secure Boot.
+    :::
+
+</Steps>
+
+## Podpisovanie obrazu jadra a zavádzača
+
+<Tabs syncKey="boot-manager">
+<TabItem label='Limine'>
+Limine je špeciálny zavádzač, ktorý umožňuje kontrolovať hash obrazov jadra
+a ďalších súborov, ktoré Limine používa počas spúšťania. Ak je táto funkcia povolená, akákoľvek
+manuálna úprava vykonaná používateľom, napr. podpisovanie obrazu pomocou
+`sbctl-batch-sign`, zmení hash príslušných súborov a
+overenie kontrolného súčtu v Limine zlyhá.
+
+Podpisovanie týchto súborov však v Limine nie je potrebné, pretože používa špeciálny
+proces spúšťania, ktorý obchádza reťazové načítanie EFI (chainloading) a kontroly podpisov. Jediným EFI
+binárnym súborom, ktorý je potrebné podpísať, je samotný Limine.
+
+:::caution[Limine >= 11.2.0]
+Od verzie Limine 11.2.0 sa politiky Secure Boot **prísne vynucujú**, keď je aktívny UEFI Secure Boot:
+
+- Kontrolný súčet konfigurácie BLAKE2B **musí** byť zaregistrovaný v EFI binárnom súbore Limine, inak Limine skončí chybou (panic): `SECURE BOOT IS ACTIVE BUT NO CONFIG CHECKSUM IS ENROLLED`
+- Všetky cesty k súborom v `limine.conf` (jadro, initramfs atď.) **musia** mať pripojené hashe BLAKE2B (napr. `boot():/vmlinuz-linux#<hash>`)
+- Editor konfigurácie je bezpodmienečne zakázaný
+- Nezhoda hashu vždy spôsobí chybu (panic)
+:::
+
+Ak chcete povoliť automatickú registráciu kontrolného súčtu konfigurácie, nastavte nasledujúce v `/etc/default/limine`:
+
+```sh
+ENABLE_ENROLL_LIMINE_CONFIG=yes
 ```
 
-## Podpisovanie obrazu jadra a Boot Managera
+Pokračujte vygenerovaním hashu pre úvodný obrázok (splash image) Limine:
 
-CachyOS poskytuje skript [`sbctl-batch-sign`](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign),
-ktorý preberá zoznam súborov, ktoré je potrebné podpísať, z `sudo sbctl verify` a podpíše ich všetky.
+:::note[Na vykonanie nasledujúcich krokov sú potrebné oprávnenia root, pred pokračovaním sa uistite, že používate sudo alebo ste sa prepli na používateľa root.]
+:::
+
+<Steps>
+
+1. Skontrolujte aktuálny názov a cestu k úvodnému obrázku v konfiguračnom súbore:
+    ```sh title="Otvorte terminál a spustite nasledujúci príkaz:"
+    sudo cat /boot/limine.conf
+    ```
+    Mali by ste vidieť takýto riadok:
+    ```sh
+    wallpaper: boot():/limine-splash.png
+    ```
+2. Vygenerujte hash BLAKE2B pre úvodný obrázok a pripojte ho k ceste v konfiguračnom súbore:
+    ```sh title="Spustite nasledujúci príkaz a nahraďte cestu tou, ktorú ste našli v predchádzajúcom kroku:"
+    sudo b2sum /boot/limine-splash.png
+    ```
+    Vypíše sa hash podobný tomuto príkladu:
+    ```sh
+    75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+3. Po skopírovaní novo vygenerovaného hashu z predchádzajúceho kroku otvorte konfiguračný súbor v textovom editore a pripojte hash k ceste k úvodnému obrázku takto:
+    :::note[Nepoužívajte ukážkový hash zhora, uistite sa, že používate ten, ktorý ste vygenerovali v predchádzajúcom kroku.]
+    :::
+    ```sh
+    wallpaper: boot():/limine-splash.png#75205d08fa9c61599897857e861d6b2f6da25465183fc4cc9efecffb22ee630efb510f2ef1b17677db94c28d5c69ad2ceb4d3892f5bec9cfa65c97b5ba16f52f
+    ```
+    Ako vidíte, hash sa pripája k ceste pomocou znaku `#`. Po úprave súbor uložte.
+
+</Steps>
+
+Po povolení registrácie kontrolného súčtu konfigurácie a vygenerovaní hashu pre úvodný obrázok spustite nasledujúce príkazy na registráciu kontrolného súčtu konfigurácie a podpísanie EFI binárneho súboru Limine:
+
+```sh
+# Použite limine-enroll-config na registráciu kontrolného súčtu konfigurácie a podpísanie EFI binárneho súboru Limine
+# Na pozadí používa sbctl
+sudo limine-enroll-config
+sudo limine-update
+```
+</TabItem>
+<TabItem label='systemd-boot'>
+
+CachyOS poskytuje [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign),
+skript, ktorý preberá zoznam súborov potrebných na podpísanie z príkazu `sudo sbctl verify` a podpíše ich všetky.
+
+:::caution
+Na systémoch so samostatným rozložením partícií `/boot` a `/boot/efi` môže `sbctl` skenovať EFI binárne súbory len v `/boot/efi`.
+To spôsobí, že obrazy jadra v `/boot` nebudú rozpoznané. `sbctl-batch-sign` to obchádza tak, že **vždy** skenuje
+`/boot` pre súbory `vmlinuz-*`.
+:::
 
 ```bash
-❯ sudo sbctl verify
+sudo sbctl verify
 Verifying file database and EFI images in /boot...
 ✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is not signed
 ✘ /boot/EFI/BOOT/BOOTX64.EFI is not signed
@@ -83,9 +254,9 @@ Verifying file database and EFI images in /boot...
 ✘ /boot/1c4b5246eef05ac3bc87339323cd5101/0-rescue/linux is not signed
 ✘ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is not signed
 
-❯ sudo sbctl-batch-sign
+sudo sbctl-batch-sign
 
-❯ sudo sbctl verify
+sudo sbctl verify
 Verifying file database and EFI images in /boot...
 ✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn4.0.fc40.x86_64/linux is signed
 ✔ /boot/EFI/BOOT/BOOTX64.EFI is signed
@@ -94,39 +265,92 @@ Verifying file database and EFI images in /boot...
 ✔ /boot/1c4b5246eef05ac3bc87339323cd5101/6.10.0-cn3.0.fc40.x86_64/linux is signed
 ```
 
-:::caution
-Na systémoch so samostatným rozložením partícií `/boot` a `/boot/efi` môže `sbctl` skenovať EFI binárne súbory len v `/boot/efi`.
-To spôsobí, že obrazy jadra, ktoré sú v `/boot`, nebudú detekované. `sbctl-batch-sign` to obchádza tak, že **vždy** skenuje
-`/boot` pre súbory `vmlinuz-*`.
+Teraz, keď sú všetky súbory podpísané, **reštartujte systém a prejdite do nastavení UEFI, aby ste povolili Secure Boot.**
+
+:::caution[Základné dosky ASUS — povolenie Secure Boot]
+Niektoré základné dosky ASUS sa pri povoľovaní Secure Boot správajú odlišne od iných výrobcov:
+
+- **Použite `Windows UEFI Mode`, nie `Other OS`:**
+  Názov je zavádzajúci – toto nastavenie jednoducho riadi, či sa Secure Boot vynucuje.
+  Nastavenie `OS Type` na `Other OS` na doskách ASUS **aktívne zakáže** Secure Boot
+  bez ohľadu na akékoľvek iné nastavenia. Príkaz `sbctl status` bude naďalej zobrazovať
+  `Secure Boot: Disabled` aj po reštarte.
+
+- **Na niektorých doskách ASUS neexistuje samostatný prepínač zapnutia/vypnutia Secure Boot.**
+  Secure Boot sa aktivuje automaticky výberom možnosti `Windows UEFI Mode`.
+
+Správna konfigurácia BIOSu ASUS na aktiváciu Secure Boot v tomto prípade je:
+```
+Boot → Secure Boot
+  OS Type          → Windows UEFI Mode
+  Secure Boot Mode → Custom
+```
 :::
 
-Teraz, keď sú všetky súbory podpísané, môžeme reštartovať späť do nastavení UEFI a povoliť secure boot.
+Pozrite si [túto časť ako referenciu](/sk/configuration/secure_boot_setup#povolenie-režimu-setup-mode-v-uefi)
+
 Upozorňujeme, že ide o jednorazový proces, pretože podpisovanie súborov s príznakom `-s` uloží tieto súbory do databázy `sbctl`.
+
+:::tip[Pripomienka]
 `sbctl` sa dodáva s [pacman hookom](https://wiki.archlinux.org/title/Pacman_hook), čo znamená, že automaticky
-podpíše všetky nové súbory pri aktualizácii jadra alebo boot managera.
+podpíše všetky nové súbory pri aktualizácii jadra alebo zavádzača.
+:::
 
-### systemd-boot
-
-CachyOS používa `systemd-boot-update.service` poskytovaný systémom systemd na aktualizáciu boot managera pri reštarte. To znamená, že
-pacman hook `sbctl` **nepodpíše** aktualizované EFI binárne súbory. Ako riešenie môžeme podpísať boot manager priamo.
+CachyOS používa `systemd-boot-update.service` poskytovaný systémom systemd na aktualizáciu zavádzača pri reštarte. To znamená, že
+pacman hook nástroja `sbctl` **nepodpíše** aktualizované EFI binárne súbory. Ako riešenie môžeme zavádzač podpísať priamo
 
 ```sh
-❯ sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
 ```
 
-## Overenie, že je Secure Boot povolený
+:::note
+Tento krok preskočte, ak používate [nastavenie pre Easy Anti-Cheat](/sk/configuration/easy_anti_cheat). Tam balík `systemd-boot-cachyos-signed`
+poskytuje systemd-boot podpísaný tímom CachyOS.
+:::
+</TabItem>
+<TabItem label='rEFInd'>
 
-Ak chcete overiť, či je secure boot skutočne povolený, môžete spustiť jeden z nasledujúcich príkazov.
+rEFInd spúšťa jadrá prostredníctvom firmvéru, takže firmvér kontroluje podpisy rEFIndu aj každého
+jadra. Tieto kroky sú určené pre inštalácie, kde je systémová partícia EFI pripojená v `/boot`, čo je spôsob, akým
+inštalátor CachyOS nastavuje rEFInd. Príkaz `bootctl --print-esp-path` musí vypísať `/boot`.
+
+Podpíšte rEFInd a svoje jadrá. Príkaz `find` preskočí jadro pre
+[Easy Anti-Cheat](/sk/configuration/easy_anti_cheat), ktoré je už podpísané tímom CachyOS:
 
 ```bash
-❯ sudo sbctl status
-Installed:      ✓ sbctl je nainštalovaný
+sudo sbctl sign -s /boot/EFI/refind/refind_x64.efi
+sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+sudo sbctl verify
+```
+
+`sbctl verify` musí uvádzať rEFInd aj každé z vašich jadier ako podpísané. Ak používate Easy Anti-Cheat, uvedie aj
+`vmlinuz-linux-cachyos-eac` a `EFI/cachyos-eac/systemd-bootx64.efi` ako nepodpísané. To je očakávané, sú
+podpísané tímom CachyOS. **Nepodpisujte ich**, inak ich EAC prestane akceptovať. Potom **reštartujte do nastavení UEFI
+a povoľte Secure Boot.** Pri základných doskách ASUS si pozrite poznámky na karte systemd-boot.
+
+Príznak `-s` uloží súbory do databázy `sbctl` a jeho pacman hook po aktualizáciách jadrá znova podpíše.
+pacman neaktualizuje rEFInd na systémovej partícii EFI. Ak sami spustíte `refind-install`, potom ho znova
+podpíšte:
+
+```bash
+sudo sbctl sign-all
+```
+</TabItem>
+</Tabs>
+
+## Kontrola stavu Secure Boot
+
+Ak chcete overiť, či je Secure Boot skutočne povolený, môžete spustiť jeden z nasledujúcich príkazov
+
+```bash
+sudo sbctl status
+Installed:      ✓ sbctl is installed
 Owner GUID:     a9fbbdb7-a05f-48d5-b63a-08c5df45ee70
-Setup Mode:     ✓ Zakázaný
-Secure Boot:    ✓ Povolený
+Setup Mode:     ✓ Disabled
+Secure Boot:    ✓ Enabled
 Vendor Keys:    microsoft
 
-❯ bootctl
+bootctl
 System:
       Firmware: UEFI 2.80 (INSYDE Corp. 28724.16435)
  Firmware Arch: x64
@@ -136,11 +360,26 @@ System:
   Boot into FW: supported
 ```
 
-## Odkazy a Poďakovania
+## Fwupd
+
+Ak chcete používať `fwupd` so zapnutým Secure Boot, podpíšte spustiteľný súbor UEFI:
+
+```sh
+sudo sbctl sign -s -o /usr/lib/fwupd/efi/fwupdx64.efi.signed /usr/lib/fwupd/efi/fwupdx64.efi
+```
+
+A pridajte do súboru `/etc/fwupd/fwupd.conf` nasledujúce riadky:
+
+```sh
+[uefi_capsule]
+DisableShimForSecureBoot=true
+```
+
+## Odkazy a poďakovania
 
 - [Arch Wiki](https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot#Assisted_process_with_sbctl)
-položila základy pre túto príručku. Väčšina vecí tu bola prevzatá odtiaľ.
-- [sbctl](https://github.com/Foxboron/sbctl) - Táto jednoduchá príručka na povolenie podpory secure boot by nebola možná, keby nebolo
+položila základy pre túto príručku. Väčšina informácií tu bola prevzatá odtiaľ.
+- [sbctl](https://github.com/Foxboron/sbctl) – Táto jednoduchá príručka na povolenie podpory Secure Boot by nebola možná bez
 skvelej práce vykonanej pri vytváraní tohto softvéru.
-- [Improving the Secure Boot Experience od Mortena linderuda](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) - Blogový príspevok od Mortena
-"Foxboron" Linderuda o tom, aké komplikované bolo používanie secure boot pred `sbctl`.
+- [Improving the Secure Boot Experience od Mortena Linderuda](https://linderud.dev/blog/improving-the-secure-boot-user-experience/) – Blogový príspevok od Mortena
+„Foxboron“ Linderuda o tom, aké komplikované bolo používanie Secure Boot pred `sbctl`.

@@ -1,0 +1,97 @@
+---
+title: Prechod medzi grafickými kartami NVIDIA a AMD
+description: Pokyny na migráciu z NVIDIA na AMD (a naopak) v systéme CachyOS.
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+ai_translated: true
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::note[Tento návod platí, ak vymieňate svoju grafickú kartu (NVIDIA ↔ AMD) na existujúcej inštalácii CachyOS.]
+:::
+
+## Požiadavky
+  - Vaša náhradná grafická karta je správne nainštalovaná a pripojená.
+  - Uistite sa, že je váš systém úplne aktualizovaný
+    ```bash
+    sudo pacman -Syu
+    ```
+
+### Kroky migrácie
+
+<Tabs>
+    <TabItem label='Z NVIDIA na AMD'>
+        Hoci sú ovládače AMD súčasťou jadra Linuxu, možno budete musieť vyčistiť starú konfiguráciu NVIDIA a uistiť sa, že sú nainštalované potrebné balíky pre AMD.
+        <Steps>
+            0. Poznačte si používateľské meno a heslo svojho účtu. Možno ich budete potrebovať na prihlásenie cez TTY.
+            1. Skontrolujte, ktorý profil ovládačov NVIDIA je momentálne nainštalovaný:
+                ```bash
+                sudo chwd --list-installed
+                ```
+            2. Odstráňte konkrétny profil pomocou prepínača `-r`:
+                ```bash
+                sudo chwd -r <profile-name>
+                ```
+            3. Vypnite systém a nainštalujte grafickú kartu AMD.
+                > Ak sa systém po nainštalovaní grafickej karty spustí do čiernej obrazovky, stlačte CTRL+ALT+F3 na vstup do TTY.
+                > Zadajte svoje používateľské meno a heslo (dajte pozor na zapnutý NUMLOCK).
+            4. Po spustení systému použite nástroj chwd na automatickú detekciu grafickej karty a inštaláciu správnych balíkov AMD.
+                ```bash
+                sudo chwd -a
+                ```
+            5. Po nainštalovaní nových ovládačov aktualizujte initramfs a konfiguráciu zavádzača
+                > CachyOS obsahuje pacman hook, ktorý automaticky znova zostaví initramfs pri pridaní alebo odstránení ovládačov.
+                > Tým sa zabezpečí, že sa pri štarte načítajú správne ovládače.
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            6. Reštartujte systém, aby sa zmeny prejavili.
+                ```bash
+                sudo reboot
+                ```
+            7. Po reštarte overte, či sú ovládače AMD aktívne.
+                ```bash
+                vulkaninfo | grep "deviceName"
+                ```
+                alebo
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                Ak sa v zozname zobrazí vaša grafická karta AMD, ovládače fungujú správne.
+        </Steps>
+    </TabItem>
+    <TabItem label='Z AMD na NVIDIA'>
+        <Steps>
+            1. Vyčistite zostávajúce balíky AMD.
+                ```bash
+                sudo chwd -r amd
+                ```
+            2. Vypnite systém a nainštalujte grafickú kartu NVIDIA.
+            3. Po spustení systému použite nástroj chwd na automatickú detekciu grafickej karty a inštaláciu správnych balíkov NVIDIA.
+                ```bash
+                sudo chwd -a
+                ```
+            4. Po nainštalovaní nových ovládačov aktualizujte initramfs a konfiguráciu zavádzača
+                > CachyOS obsahuje pacman hook, ktorý automaticky znova zostaví initramfs pri pridaní alebo odstránení ovládačov.
+                > Tým sa zabezpečí, že sa pri štarte načítajú správne ovládače.
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            5. Reštartujte systém, aby sa zmeny prejavili.
+                ```bash
+                sudo reboot
+                ```
+            6. Po reštarte overte, či sú ovládače NVIDIA aktívne.
+                ```bash
+                nvidia-smi
+                ```
+                alebo
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                Ak sa v zozname zobrazí vaša grafická karta NVIDIA, ovládače fungujú správne.
+        </Steps>
+    </TabItem>
+</Tabs>

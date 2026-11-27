@@ -1,0 +1,222 @@
+---
+title: Ponúkaní správcovia zavádzania
+description: Popis a odporúčania pre aktuálne ponúkaných správcov zavádzania
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+ai_translated: true
+---
+
+Aby CachyOS ponúkal najlepší zážitok na rôznych zariadeniach, aktuálne ponúka nasledujúcich správcov zavádzania: **systemd-boot, rEFInd, GRUB a Limine**.
+
+Tento článok na wiki popisuje sadu funkcií každého správcu zavádzania a obsahuje naše odporúčania, kedy si ich vybrať.
+Informácie o konfigurácii nájdete v článku [Konfigurácia správcu zavádzania](/sk/configuration/boot_manager_configuration).
+
+:::caution
+**Dôležitá poznámka:** Niektoré základné dosky MSI majú firmvér UEFI, ktorý nie je úplne v súlade so špecifikáciou UEFI. To môže viesť k problémom s kompatibilitou pri niektorých správcoch zavádzania vrátane GRUB a rEFInd.
+
+Ak narazíte na takéto problémy, zvážte použitie `systemd-boot` alebo `Limine`.
+:::
+
+---
+
+## Rýchle porovnanie funkcií
+
+<style>{`
+  .bm-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .bm-table th, .bm-table td {
+    padding: 8px 10px;
+    vertical-align: top;
+    word-break: break-word;
+  }
+  /* vertical separators between boot-manager columns */
+  .bm-table th:not(:first-child),
+  .bm-table td:not(:first-child) {
+    border-left: 2px solid var(--ifm-table-border-color, #e5e7eb);
+  }
+  /* bottom rule under header */
+  .bm-table thead th {
+    border-bottom: 2px solid var(--ifm-table-border-color, #e5e7eb);
+  }
+`}</style>
+
+<table className="bm-table">
+  <thead>
+    <tr>
+      <th>Funkcia</th>
+      <th><strong>systemd-boot</strong></th>
+      <th><strong>rEFInd</strong></th>
+      <th><strong>GRUB</strong></th>
+      <th><strong>Limine</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Podpora firmvéru</strong></td>
+      <td>Iba UEFI (bez BIOS/MBR)</td>
+      <td>Iba UEFI</td>
+      <td>UEFI &amp; BIOS</td>
+      <td>UEFI &amp; BIOS</td>
+    </tr>
+    <tr>
+      <td><strong>Podpora súborových systémov pre <code>/boot</code></strong></td>
+      <td>Podľa podpory firmvéru (zvyčajne FAT12/16/32); viac s ovládačmi EFI</td>
+      <td>Firmvérové, ext2, ext3, ext4, btrfs, ISO-9660, HFS+ a NTFS; viac s ovládačmi EFI</td>
+      <td>Široká podpora súborových systémov (ext*, Btrfs, XFS atď.)</td>
+      <td>FAT12/16/32, ISO9660 pre <code>/boot</code></td>
+    </tr>
+    <tr>
+      <td><strong>Dual-boot s Windows</strong></td>
+      <td>Automaticky deteguje Windows Boot Manager na rovnakom ESP</td>
+      <td>Automaticky deteguje EFI zavádzače a jadrá</td>
+      <td>Podporovaný cez <code>os-prober</code> alebo manuálnu konfiguráciu</td>
+      <td>Podporovaný; záznamy Windows Boot Manager je možné pridať pomocou <code>limine-scan</code></td>
+    </tr>
+    <tr>
+      <td><strong>Integrácia snímok Btrfs</strong></td>
+      <td>Možná s vlastným nastavením (nie je poskytovaná v CachyOS)</td>
+      <td>Možná s vlastným nastavením (nie je poskytovaná v CachyOS)</td>
+      <td><strong>Podporovaná v CachyOS cez</strong> <code>grub-btrfs-support</code></td>
+      <td><strong>Podporovaná v CachyOS cez</strong> <code>limine-snapper-sync</code></td>
+    </tr>
+    <tr>
+      <td><strong>Plné šifrovanie disku (FDE)</strong></td>
+      <td>Možné (root šifrovaný; <code>/boot</code> musí zostať nešifrovaný)</td>
+      <td>Možné (root šifrovaný; <code>/boot</code> musí zostať nešifrovaný)</td>
+      <td>Plne podporované, vrátane šifrovaného <code>/boot</code> cez <code>cryptodisk</code> (iba LUKS1/PBKDF2; podpora LUKS2 je obmedzená/vyžaduje náhradné riešenia)</td>
+      <td>Možné (root šifrovaný; <code>/boot</code> musí zostať nešifrovaný)</td>
+    </tr>
+    <tr>
+      <td><strong>Témy / Používateľské rozhranie</strong></td>
+      <td>Minimálne, bez tém</td>
+      <td>Grafické rozhranie s podporou tém</td>
+      <td>Klasické rozhranie s podporou tém</td>
+      <td>Ponuka s podporou tém (skiny)</td>
+    </tr>
+    <tr>
+      <td><strong>Jednoduchosť nastavenia v CachyOS</strong></td>
+      <td>Veľmi jednoduché (CachyOS ho predvolene automaticky konfiguruje)</td>
+      <td>Jednoduché nastavenie s automatickou detekciou OS a jadier</td>
+      <td>Zjednodušené pomocou hookov/skriptov CachyOS (zahŕňa snímky Btrfs v ponuke)</td>
+      <td>Zjednodušené pomocou nástrojov CachyOS (pomocné nástroje pre záznamy + integrácia snímok v ponuke)</td>
+    </tr>
+    <tr>
+      <td><strong>Špecifiká UEFI na doskách MSI</strong></td>
+      <td>Funguje spoľahlivo</td>
+      <td>Môže mať problémy (vyžaduje náhradné riešenia)</td>
+      <td>Môže mať problémy</td>
+      <td>Funguje spoľahlivo</td>
+    </tr>
+    <tr>
+      <td><strong>TPM PCR Measured Boot</strong></td>
+      <td>Áno, <a href="https://systemd.io/TPM2_PCR_MEASUREMENTS/" target="_blank">vstavané</a></td>
+      <td>Možné pomocou systemd-ukify</td>
+      <td>Áno, <a href="https://www.gnu.org/software/grub/manual/grub/html_node/Measured-Boot.html" target="_blank">vstavané</a></td>
+      <td><a href="https://github.com/fwupd/fwupd/discussions/9568" target="_blank">Možné pomocou systemd-ukify</a></td>
+    </tr>
+    <tr>
+      <td><strong>Najlepší prípad použitia</strong></td>
+      <td>Rýchle/jednoduché nastavenia UEFI; záložné riešenie pri problémoch s MSI</td>
+      <td>Viacnásobné zavádzanie s prepracovaným používateľským rozhraním</td>
+      <td>Potrebný pre šifrovaný <strong>/boot</strong>, BIOS alebo najširšiu podporu súborových systémov</td>
+      <td>Moderné nastavenia vyžadujúce zavádzanie zo snímok + BIOS &amp; UEFI + chainloading</td>
+    </tr>
+  </tbody>
+</table>
+
+## Podrobnosti o správcoch zavádzania
+
+### systemd-boot
+
+Ako súčasť rodiny systemd bol systemd-boot vytvorený tak, aby bol čo najjednoduchší. Preto podporuje iba systémy založené na UEFI. Tento jednoduchý, ale efektívny dizajn zaisťuje spoľahlivosť a rýchlosť, avšak na úkor pokročilých funkcií podporovaných inými správcami zavádzania.
+
+#### Výhody
+- Veľmi jednoduchá konfigurácia.
+- Záznamy o zavádzaní sú oddelené do viacerých súborov, čo uľahčuje ich správu.
+- Zaisťuje kompatibilitu s niektorými základnými doskami MSI, ktoré majú problémy s UEFI pri použití iných správcov zavádzania.
+- V CachyOS je konfigurácia automaticky generovaná hneď po inštalácii.
+- Počas zavádzania sa merajú registre TPM PCR.
+
+#### Nevýhody
+- Bez podpory pre BIOS/MBR.
+- Veľmi základné vyhotovenie: bez tém alebo možnosti prispôsobenia.
+- Ak používate súborový systém pre zavádzanie nad rámec predvolených súborových systémov firmvéru (FAT12/16/32), je potrebné manuálne vytvoriť samostatnú partíciu ESP a [XBOOTLDR](https://wiki.archlinux.org/title/Systemd-boot#Installation_using_XBOOTLDR) a pridať ovládače EFI.
+- Nedokáže nájsť zavádzacie obrazy na iných partíciách ako na vlastnej ESP alebo na partícii XBOOTLDR.
+- Konfigurácia sa negeneruje automaticky, pokiaľ to nie je výslovne nakonfigurované.
+- Bez natívnej podpory návratu k snímkam Btrfs (rollback) z dôvodu požiadavky ukladať obrazy jadra na zavádzaciu partíciu namiesto koreňovej (root).
+  - Zavádzanie zo snímok je možné iba s vlastným nastavením (nie je poskytované v CachyOS).
+
+---
+
+### rEFInd
+
+Ako fork rEFIt bol rEFInd primárne vytvorený s cieľom uľahčiť používateľom MacOS viacnásobné zavádzanie. rEFInd sa však vyvinul tak, že je nezávislý od hardvéru, vďaka čomu je skvelou voľbou pre viacnásobné zavádzanie na akomkoľvek systéme. Hlavným lákadlom rEFInd je jeho schopnosť skenovať všetky úložné zariadenia pri zavádzaní a zodpovedajúcim spôsobom zobrazovať záznamy pre každý nájdený OS/jadro.
+
+#### Výhody
+- Automaticky deteguje všetky operačné systémy a jadrá na úložných zariadeniach.
+- Vyžaduje sa minimálna alebo žiadna manuálna konfigurácia.
+- Grafické používateľské rozhranie pripomínajúce výber zavádzania v MacOS.
+- Skvelá podpora tém s voliteľnou podporou dotykovej obrazovky.
+- Dokáže čítať zavádzacie obrazy zo súborových systémov EFI (FAT12/16/32), ako aj EXT4 a BTRFS. Podporu ďalších súborových systémov je možné povoliť inštaláciou ovládačov EFI z balíka `efifs`.
+
+#### Nevýhody
+- Bez podpory pre systémy BIOS.
+- Nekompatibilný s niektorými základnými doskami MSI (kvôli porušeniu špecifikácie UEFI).
+  - Možno opraviť náhradným riešením, vyžaduje si to však kroky navyše.
+- Registre TPM PCR sa nemerajú. <a href="https://github.com/fwupd/fwupd/wiki/TPM-PCR0-differs-from-reconstruction">Zlyhá v teste TPM PCR0 Reconstruction</a>.
+  - Možno opraviť zavedením UKI, ktoré používa systemd-stub ako UEFI stub. Vytvoriť ho dokáže systemd-ukify.
+  - Ďalším náhradným riešením je zreťaziť (chainload) iný zavádzač, ktorý meria TPM PCR (napr. systemd-boot, GRUB).
+---
+
+### GRUB
+
+GRUB je najstarší z dostupných správcov zavádzania. Má veľmi rozsiahlu sadu funkcií, funguje takmer na každom počítači a zostáva najčastejšie používaným správcom zavádzania pre Linux.
+
+#### Výhody
+- Podporuje takmer všetky linuxové súborové systémy.
+- Široko používaný — dokumentácia a komunitná pomoc sú bohaté.
+- Podporuje šifrované partície `/boot`.
+- Podporuje zavádzanie zo snímok Btrfs (v CachyOS cez `grub-btrfs-support`).
+- Podporuje systémy BIOS aj UEFI.
+- Dostupná podpora tém, napriek trochu zastaranému používateľskému rozhraniu.
+- Počas zavádzania sa merajú registre TPM PCR.
+
+#### Nevýhody
+- Veľký a komplexný, s množstvom ovládačov súborových systémov.
+- Pozorovateľne pomalší ako systemd-boot, rEFInd a Limine.
+- Nekompatibilný s niektorými základnými doskami MSI (porušenia špecifikácie UEFI).
+
+---
+
+### Limine
+
+Limine je moderný, pokročilý a prenosný multiprotokolový zavádzač. Slúži ako referenčná implementácia pre zavádzací protokol Limine a podporuje Linux, ako aj reťazenie (chainloading) iných zavádzačov.
+
+#### Výhody
+- Podporuje viacero zavádzacích protokolov vrátane Multiboot2 a linuxového zavádzacieho protokolu.
+- Dokáže zavádzať systém na systémoch UEFI aj BIOS.
+- Má možnosti prispôsobenia tém podobné ako GRUB.
+- Podporuje snímky Btrfs cez `limine-snapper-sync`, čo je v CachyOS s Btrfs predvolene povolené.
+
+#### Nevýhody
+- `/boot` musí používať FAT12/16/32 alebo ISO9660. Iné súborové systémy vyžadujú dodatočné nastavenie.
+- Automaticky nepridáva záznam do UEFI NVRAM. To je potrebné urobiť manuálne pomocou `efibootmgr` alebo to automaticky zabezpečí `limine-entry-tool` (predinštalovaný v CachyOS).
+- Nefunguje s úložiskom UFS (Universal Flash Storage), ktoré sa používa napr. v niektorých Chromebookoch.
+- Registre TPM PCR sa nemerajú. <a href="https://github.com/fwupd/fwupd/wiki/TPM-PCR0-differs-from-reconstruction">Zlyhá v teste TPM PCR0 Reconstruction</a>.
+  - Možno opraviť zavedením UKI, ktoré používa systemd-stub ako UEFI stub. Vytvoriť ho dokáže systemd-ukify (<a href="https://github.com/fwupd/fwupd/discussions/9568" target="_blank">pozri tu</a>).
+  - Ďalším náhradným riešením je zreťaziť (chainload) iný zavádzač, ktorý meria TPM PCR (napr. systemd-boot, GRUB).
+
+---
+
+## TL;DR
+
+- Vyberte **GRUB**, ak potrebujete šifrovaný `/boot`, kompatibilitu s BIOSom alebo chcete snímky Btrfs so stabilným a osvedčeným správcom zavádzania.
+
+- Vyberte **Limine**, ak chcete moderný zavádzač s integráciou snímok Btrfs hneď po inštalácii, podporou pre BIOS aj UEFI a dual-bootom s Windows (cez **limine-scan**).
+
+- Vyberte **rEFInd**, ak chcete prepracované grafické rozhranie a automatickú detekciu viacerých operačných systémov na systémoch UEFI.
+
+- Vyberte **systemd-boot**, ak uprednostňujete najjednoduchšie nastavenie a nevyžadujete snímky ani pokročilé funkcie. Je to tiež najspoľahlivejšie záložné riešenie pre základné dosky MSI s problémami UEFI.
