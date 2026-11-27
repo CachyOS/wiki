@@ -6,8 +6,8 @@ title: Podmínky služby
 
 ### 1.1. Definice
 
-Tyto Podmínky služby upravují používání platformy CachyOS a souvisejících služeb, včetně fór, wiki, nástroje pro hlášení chyb a dalších nástrojů pro spolupráci ("Služby").
-CachyOS ("my", "nás", "naše") provozuje platformu přístupnou na cachyos.org a souvisejících subdoménách. Uživatelé ("vy", "váš") musí tyto podmínky přijmout, aby mohli Služby používat.
+Tyto Podmínky služby upravují používání platformy CachyOS a souvisejících služeb, včetně fór, wiki, nástroje pro hlášení chyb a dalších nástrojů pro spolupráci („Služby“).
+CachyOS („my“, „nás“, „naše“) provozuje platformu přístupnou na cachyos.org a souvisejících subdoménách. Uživatelé („vy“, „váš“) musí tyto podmínky přijmout, aby mohli Služby používat.
 
 ### 1.2. Používání Služeb
 
@@ -15,13 +15,13 @@ Používání Služeb je povoleno pouze zletilým fyzickým osobám s plnou prá
 
 ### 1.3. Přístup k Podmínkám služby
 
-Nejnovější verzi Podmínek služby lze kdykoli zobrazit na našich webových stránkách: https://wiki.cachyos.org/policy/terms_of_service.
+Nejnovější verzi Podmínek služby lze kdykoli zobrazit na našich webových stránkách: <https://wiki.cachyos.org/policy/terms_of_service>.
 
 ## 2. Registrace, uzavření smlouvy a předmět smlouvy
 
 ### 2.1. Požadavky
 
-Pro používání našich Interaktivních služeb (např. fóra, přispívání balíčků) se musíte zaregistrovat prostřednictvím našeho online formuláře, poskytnout přesné kontaktní údaje a souhlasit s těmito Podmínkami služby.
+Pro používání našich Interaktivních služeb (např. fóra, přispívání balíčky) se musíte zaregistrovat prostřednictvím našeho online formuláře, poskytnout přesné kontaktní údaje a souhlasit s těmito Podmínkami služby.
 Aktivací vašeho účtu dochází k uzavření smlouvy. Neexistuje žádný nárok na aktivaci nebo účast.
 
 ### 2.2. Změna platformy
@@ -134,4 +134,4 @@ Pokud bude jakékoli ustanovení těchto Podmínek služby shledáno neplatným,
 
 ### 10.3. Řešení sporů
 
-Platforma Evropské komise pro online řešení sporů je dostupná na https://ec.europa.eu/consumers/odr. Nejsme povinni účastnit se řízení o řešení sporů před spotřebitelskou rozhodčí komisí.
+Platforma Evropské komise pro online řešení sporů je dostupná na <https://ec.europa.eu/consumers/odr>. Nejsme povinni účastnit se řízení o řešení sporů před spotřebitelskou rozhodčí komisí.

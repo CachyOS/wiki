@@ -192,6 +192,7 @@ export default defineConfig({
               label: 'ISO Changelogs',
               items: [{ autogenerate: { directory: 'cachyos_basic/changelogs' } }],
               translations: {
+                cs: 'Seznamy změn ISO',
                 de: 'ISO-Änderungsprotokolle',
                 el: 'Αρχεία αλλαγών ISO',
                 es: 'Registros de cambios de ISO',
@@ -738,6 +739,7 @@ export default defineConfig({
               label: 'Desktop Environments',
               items: [{ autogenerate: { directory: 'configuration/desktop_environments' } }],
               translations: {
+                cs: 'Desktopová prostředí',
                 de: 'Desktopumgebungen',
                 el: 'Επιφάνειες εργασίας',
                 es: 'Entornos de escritorio',
@@ -757,6 +759,7 @@ export default defineConfig({
         {
           label: 'Virtualization',
           translations: {
+            cs: 'Virtualizace',
             de: 'Virtualisierung',
             el: 'Εικονικοποίηση',
             es: 'Virtualización',
@@ -774,6 +777,7 @@ export default defineConfig({
             {
               label: 'QEMU and VMM Setup',
               translations: {
+                cs: 'Nastavení QEMU a VMM',
                 de: 'QEMU- und VMM-Einrichtung',
                 el: 'Ρύθμιση των QEMU και VMM',
                 es: 'Configuración de QEMU y VMM',
@@ -792,6 +796,7 @@ export default defineConfig({
             {
               label: 'QEMU User Session',
               translations: {
+                cs: 'Uživatelská relace QEMU',
                 de: 'QEMU-User-Session',
                 el: 'Συνεδρία χρήστη QEMU',
                 es: 'Sesión de usuario de QEMU',
@@ -810,6 +815,7 @@ export default defineConfig({
             {
               label: 'EGL Headless',
               translations: {
+                cs: 'EGL Headless',
                 de: 'EGL-Headless',
                 el: 'EGL Headless',
                 es: 'EGL Headless',
@@ -828,6 +834,7 @@ export default defineConfig({
             {
               label: 'Virtio-Venus',
               translations: {
+                cs: 'Virtio-Venus',
                 de: 'Virtio-Venus',
                 el: 'Virtio-Venus',
                 es: 'Virtio-Venus',
@@ -846,6 +853,7 @@ export default defineConfig({
             {
               label: 'CachyOS on WSL',
               translations: {
+                cs: 'CachyOS ve WSL',
                 de: 'CachyOS unter WSL',
                 es: 'CachyOS en WSL',
                 fr: 'CachyOS sur WSL',

@@ -1,0 +1,179 @@
+---
+title: Jádro CachyOS
+description: Vlastnosti a změny v jádru CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
+---
+
+Jádro CachyOS je upravené jádro, které využívá vylepšení, konfigurace a patche z upstreamu.
+
+## Vlastnosti
+
+
+### Optimalizace výkonu
+
+- **Pokročilá kompilace**: Vysoce přizpůsobitelný PKGBUILD s podporou překladačů GCC i Clang
+- **Optimalizace v době linkování (LTO)**: Clang Thin LTO povoleno ve výchozím nastavení u hlavního balíčku `linux-cachyos`
+- **Distribuované ThinLTO**: Podpora distribuovaných sestavení Clang ThinLTO pro zrychlení kompilace jádra
+- **Optimalizace řízená profilem (PGO)**: Profilování AutoFDO u výchozího jádra pro optimální generování kódu ([Další informace](https://cachyos.org/blog/2411-kernel-autofdo/))
+- **Kernel Control Flow Integrity (kCFI)**: Dostupné při použití LLVM pro vyšší zabezpečení
+- **Možnosti frekvence časovače**: Konfigurovatelné mezi 100Hz, 250Hz, 300Hz, 500Hz, 600Hz, 750Hz a 1000Hz (výchozí: 1000Hz)
+- **Optimalizace pro architektury**: Podpora sestavení specifických pro x86-64-v3, x86-64-v4 a AMD Zen4
+- **Optimalizace překladače**: Pokročilé příznaky GCC včetně `-fivopts` a `-fmodulo-sched`
+- **PREEMPT_DYNAMIC**: Režimy preempce volitelné za běhu (full, lazy, voluntary, none)
+
+### Vylepšení CPU
+
+- **Více plánovačů**: Plánovače BORE, EEVDF a BMQ pro optimalizaci různých typů zátěže
+- **[POC Selector](https://github.com/masahitoS/scx_cake)**: Rychlý výběr nečinného CPU (Piece-Of-Cake) inspirovaný scx_cake, který snižuje latenci probuzení
+- **CachyOS Sauce**: Vlastní konfigurace `CONFIG_CACHY` s úpravami plánovače a systému
+- **Vylepšení AMD P-State**: Podpora Preferred Core a nejnovější vylepšení amd-pstate z linux-next
+- **Podpora Real-Time**: Dostupná sestavení RT jádra s integrací plánovače BORE
+- **Optimalizace pro nízkou latenci**: Patche pro lepší odezvu a snížení kolísání latence (jitteru)
+- **sched/wait LIFO accept()**: Zpracování `accept()` u socketů v pořadí LIFO pro lepší efektivitu mezipaměti (cache)
+
+### Sítě
+
+- **[BBR3 TCP](https://github.com/google/bbr)**: Řízení zahlcení BBRv3 dostupné jako samostatný modul vedle BBRv1
+
+### Souborové systémy a paměť
+
+- **Podpora ZFS**: Vestavěná podpora souborového systému ZFS s předkompilovanými moduly
+- **Vylepšení NTFS**: Upstreamové opravy ovladače NTFS pro ověřování MFT mirroru, kontrolu mezí atributů a zpracování souboru protokolu (logfile)
+- **Vylepšení MGLRU**: Vylepšená správa zápisu dirty stránek (writeback), zjednodušené statistiky uvolňování paměti vmscan a ladění správy paměti Cachy Sauce (ochrana working setu LRU-gen, úpravy kompakce/watermarků, uvolňování hugepage)
+- **Integrace NVIDIA**:
+  - Proprietární moduly ovladače NVIDIA s patchy
+  - Podpora open-source ovladače NVIDIA
+  - Moduly připravené k okamžitému použití v repozitáři
+- **Vylepšení I/O plánovačů**:
+  - Vyšší výkon BFQ a mq-deadline
+  - Podpora vícejádrového (multi-queue) I/O plánovače [ADIOS](https://github.com/firelzrd/adios) v3.2.0
+- **VRAM Cgroup (DMEM)**: Řadič paměti zařízení pro omezení využití VRAM GPU na jednotlivé cgroup v subsystému DRM
+
+### Další funkce
+
+#### Podpora hardwaru
+- **AMD ISP4**: Nový ovladač kamery AMD ISP 4 pro podporované platformy
+- **Herní hardware**: Patche pro Steam Deck (zvuk, HW quirks, HID), podpora ROG Ally a HID ovladač pro MSI Claw (deckify)
+- **Hardware Apple**: Podpora T2 MacBooků s ovladačem apple-bce ve větvi staging
+- **Hardware ASUS**: Rozšířené patche pro kompatibilitu s hardwarem ASUS
+- **Hardware Lenovo**: Omezení nabíjení baterie přes WMI, laditelné atributy GPU/CPU a capdata debugfs
+- **Hardware HP**: Podpora notebooků OMEN Slim a OMEN MAX prostřednictvím hp-wmi
+- **Grafika**: Povolená podpora HDR, přepsání min_powercap pro AMDGPU (`amdgpu_ignore_min_pcap`)
+- **Displej**: HDMI VRR na AMD, vlastnosti konektorů ALLM a pasivního VRR, čtení VESA DSC bitů na pixel z EDID
+- **Zvukové kodeky**: Podpora kodeků HDA side AW88399 a MAX98390
+
+#### Vylepšení systému
+- **Multimédia**: Moduly v4l2loopback zahrnuté ve výchozím nastavení
+- **Virtualizace**: Podpora ACS Override pro VFIO / GPU passthrough
+- **Integrace z upstreamu**: Vybrané patche z Clear Linux a linux-next
+
+#### Různé
+
+Jádro CachyOS má také několik dalších pozoruhodných vlastností, které jsou nenápadné, ale zlepšují uživatelský zážitek:
+
+- Zahrnuje ladicí (debug) variantu jádra, která poskytuje neořezaný (unstripped) binární soubor jádra pro účely ladění. Tento balíček je potřebný pro profilování jádra pomocí AutoFDO.
+- [Binder](https://developer.android.com/reference/android/os/Binder), modul potřebný pro [Waydroid](https://waydro.id/), je ve výchozím nastavení povolen v konfiguraci jádra
+a již [nastaven](https://github.com/CachyOS/linux-cachyos/blob/2f380e2b35c4ad9acda98296f638f93af3742533/linux-cachyos/config#L11037).
+
+## Varianty
+
+CachyOS nabízí širokou škálu možností jádra. Všechna jádra, která poskytujeme, jsou dodávána se [základní sadou patchů CachyOS](https://github.com/CachyOS/kernel-patches).
+Pro každé z jader existuje [odpovídající varianta -lto](#konvence-pojmenování-balíčků), která
+je sestavena s [clang](https://clang.llvm.org/) namísto [GCC](https://gcc.gnu.org/).
+
+- **linux-cachyos**
+  - Výchozí jádro. Toto je doporučené jádro, pokud si nejste jisti, které použít.
+  - Tickrate 1000Hz pro lepší odezvu.
+  - Sestaveno pomocí Clang a ThinLTO.
+  - Profilováno naším vlastním profilem [AutoFDO](https://cachyos.org/blog/2411-kernel-autofdo/) pro vyšší výkon. [Skript](https://github.com/CachyOS/cachyos-benchmarker/blob/master/kernel-autofdo.sh) použitý k profilování jádra.
+- **linux-cachyos-bore**
+  - Používá plánovač [BORE](https://github.com/firelzrd/bore-scheduler).
+- **linux-cachyos-bmq**
+  - Používá plánovač BMQ z [Project C](https://gitlab.com/alfredchen/projectc/) od Alfreda Chena.
+    - `Nepodporuje sched-ext.`
+- **linux-cachyos-deckify**
+  - Výchozí jádro pro handheldy. Používat jakékoli jiné jádro na handheldech **není doporučeno** a **není podporováno**.
+  - Používá plánovač [BORE](https://github.com/firelzrd/bore-scheduler).
+  - Specifické patche pro handheldy nad rámec základní sady patchů pro lepší kompatibilitu a celkový zážitek na handheldových zařízeních.
+- **linux-cachyos-eevdf**
+  - Upravuje výchozí plánovač jádra pro lepší odezvu.
+- **linux-cachyos-lts**
+  - Založeno na nejnovějším jádru s dlouhodobou podporou (Long Term Support).
+  - Používá plánovač [BORE](https://github.com/firelzrd/bore-scheduler).
+  - Minimálně opatchováno ve srovnání s ostatními jádry pro zajištění maximální stability.
+- **linux-cachyos-hardened**
+  - Používá plánovač [BORE](https://github.com/firelzrd/bore-scheduler).
+  - Zahrnuje sadu patchů [linux-hardened](https://github.com/anthraxx/linux-hardened).
+  - Konfigurace jádra založená na [konfiguraci linux-hardened](https://gitlab.archlinux.org/archlinux/packaging/packages/linux-hardened/-/blob/main/config).
+    - Obsahuje velmi agresivní zabezpečení, které výrazně omezuje výkon a uživatelský zážitek.
+    - `Nepodporuje sched-ext.`
+- **linux-cachyos-rc**
+  - Založeno na nejnovějším mainline jádru ze [stromu Linuse](https://github.com/torvalds/linux/).
+  - Hlavní jádro pro zavádění nových funkcí do naší sady patchů.
+- **linux-cachyos-server**
+  - Vyladěno pro serverové zátěže oproti desktopovému použití.
+    - Tickrate 300Hz.
+    - Žádná preempce.
+    - Standardní EEVDF.
+- **linux-cachyos-rt-bore**
+  - Preempce v reálném čase.
+  - Používá plánovač [BORE](https://github.com/firelzrd/bore-scheduler).
+
+:::note
+Pokud není uvedeno jinak, lze bezpečně předpokládat, že všechny ostatní varianty jádra
+mají stejnou konfiguraci jako výchozí jádro.
+:::
+
+Prosím, otevřete issue na [linux-cachyos GitHubu](https://github.com/CachyOS/linux-cachyos) pro návrhy a vylepšení, která mohou být přidána do výchozího jádra.
+
+### Konvence pojmenování balíčků
+
+```sh
+linux-cachyos # Základní balíček jádra pro výchozí jádro. Kompilováno pomocí Clang a ThinLTO
+linux-cachyos-hardened # Základní balíček jádra pro hardened jádro. Kompilováno pomocí GCC
+linux-cachyos-hardened-lto # Protějšek balíčku linux-cachyos-hardened kompilovaný pomocí clang
+linux-cachyos-hardened-{,lto-}headers
+linux-cachyos-hardened-{,lto-}nvidia
+linux-cachyos-hardened-{,lto-}nvidia-open
+linux-cachyos-hardened-{,lto-}zfs
+linux-cachyos-hardened-{,lto-}dbg
+```
+
+## Předkompilované moduly jádra
+
+Aby CachyOS vyhověl širší uživatelské základně, dodává spolu s jádrem některé známé a hojně používané moduly jádra. To znamená, že uživatelé již nebudou
+muset tyto moduly po každé aktualizaci jádra nebo při každé nové instalaci jádra znovu kompilovat, ale pouze je nainstalují z repozitáře, protože jsou
+již předkompilované. Tím se efektivně stávají zastaralými všechny balíčky `-dkms`, které by uživatel mohl mít a které poskytují stejný modul jako předkompilovaná verze.
+
+### ZFS
+
+[ZFS](https://openzfs.org/wiki/Main_Page) je jedním z mnoha souborových systémů, které jsou v CachyOS podporovány. Vzhledem k tomu, že je licencován pod
+[CDDL](https://opensource.org/license/cddl-1-0), je nekompatibilní s licencí linuxového jádra, a proto nemůže být začleněn do hlavního stromu. Dodávaný modul zahrnuje
+nejnovější upstreamové funkce a opravy pro zajištění kompatibility s nejnovějším jádrem.
+
+### NVIDIA
+
+CachyOS dodává předkompilované verze jak uzavřených, tak [otevřených](https://github.com/NVIDIA/open-gpu-kernel-modules/) modulů jádra. Protože vývoj
+modulu jádra NVIDIA probíhá mimo hlavní strom, a tudíž nesleduje vydávací cyklus jádra, může být standardní konfigurace někdy nekompatibilní s nejnovějším
+jádrem. Jako řešení CachyOS patchuje moduly komunitou vytvořenými patchy nebo patchy sdílenými přímo společností NVIDIA.
+
+## FAQ
+
+### Proč se AutoFDO nepoužívá pro všechny ostatní varianty jádra?
+
+Protože jeho sestavení je nákladné – v podstatě vyžaduje sestavení jádra dvakrát, což znamená více času a prostředků věnovaných kompilaci. Proces sestavení jádra s AutoFDO zahrnuje následující kroky:
+
+1) Sestavení jádra s povoleným AutoFDO a ladicími funkcemi.
+2) Vytvoření profilu, tedy spouštění zátěží za účelem shromáždění profilovacích dat pro možné optimalizace.
+3) Opětovné sestavení jádra s profilem AutoFDO.
+
+Proto je zatím přítomno pouze ve variantě [linux-cachyos](/cs/features/kernel#varianty).
+
+Více informací o AutoFDO naleznete [zde.](https://cachyos.org/blog/2411-kernel-autofdo/)
+
+### Zlepšuje real-time jádro výkon při hraní her?
+
+Ne, nezlepšuje. Real-time jádro činí mnohem více kódu preemptibilním ve srovnání s běžným preemptibilním (PREEMPT) jádrem. To znamená, že mnohem více úloh (včetně herních procesů) je často přerušováno a nuceně uvolňuje systémové prostředky, což vede k horšímu výkonu.

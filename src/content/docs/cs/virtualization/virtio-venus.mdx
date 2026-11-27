@@ -1,0 +1,62 @@
+---
+title: Virtio-Venus
+description: 3D akcelerace prostřednictvím Vulkanu
+ai_translated: true
+---
+
+## Případy použití:
+- **3D akcelerace blížící se nativnímu výkonu**
+
+V operačních systémech, které využívají `libvulkan`, jako jsou **Linux**, **BSD** a **Android**, můžete 
+dosáhnout výkonu blízkého nativnímu překladem volání z virtuálního stroje do Vulkanu a následně přímo na 
+vaše GPU a zpět, aniž byste jej museli virtuálnímu stroji předávat.
+
+Bohužel **Virtio-Venus** není ve **VMM** k dispozici, a proto bude vyžadovat použití **qemu-cli**.
+Budete si muset poznamenat název, který jste dali svému virtuálnímu stroji, a kde se nachází.
+
+## Použití Virtio-Venus v qemu-cli:
+Jakmile nainstalujete libovolný vhodný virtuální stroj, můžete otevřít terminál a vytvořit příkaz `qemu-cli` 
+pro váš virtuální stroj; zde je příklad mého virtuálního stroje s CachyOS:
+
+```sh
+qemu-system-x86_64                                                                             \
+    -enable-kvm                                                                                \
+    -M q35                                                                                     \
+    -smp 6                                                                                     \
+    -m 12G                                                                                     \
+    -cpu host                                                                                  \
+    -net nic,model=virtio                                                                      \
+    -net user,hostfwd=tcp::2222-:22                                                            \
+    -device virtio-sound-pci,audiodev=my_audiodev -audiodev pipewire,id=my_audiodev            \
+    -device virtio-vga-gl,hostmem=4G,blob=true,venus=true                                      \
+    -vga none                                                                                  \
+    -display gtk,gl=on,show-cursor=on                                                          \
+    -usb -device usb-tablet                                                                    \
+    -object memory-backend-memfd,id=mem1,size=12G                                              \
+    -machine memory-backend=mem1                                                               \
+    -drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd   \
+    -drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd              \
+    -drive file=.local/share/libvirt/images/archlinux.qcow2
+```
+
+## Vysvětlení:
+
+- `-smp 6` znamená 6 jader CPU
+- `-m 12G` znamená 12 GB paměti RAM
+- `-net user,hostfwd=tcp::2222-:22` znamená, že port 22 je přesměrován z hostitele do virtuálního stroje jako port 2222; 
+pokud byste se tedy chtěli připojit k virtuálnímu stroji přes SSH z nějakého zařízení, použili byste:
+
+```sh
+ssh -p 2222 vmusername@vmipaddress
+```
+
+- `-device virtio-vga-gl,hostmem=4G,blob=true,venus=true` toto je ovladač venus, který bohužel zatím není ve 
+virt-manageru; jakmile tam bude, celá tato sekce kromě uživatelského režimu bude nahrazena.
+- `-hostmem=4G` znamená, že virtuálnímu stroji povoluji využívat až 4 GB VRAM z mého GPU.
+- `-object memory-backend-memfd,id=mem1,size=12G` v této části je velikost paměti RAM, kterou jste mu přidělili, v mém případě tedy 12 GB.
+- `-drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd` toto je soubor firmwaru 
+pro virtuální stroj, jde pouze o cestu k němu.
+- `-drive if=pflash,format=raw,file=.config/libvirt/qemu/nvram/archlinux_VARS.fd` toto je NVRAM virtuálního stroje; bez 
+něj nebo při nastavení pouze pro čtení se virtuální stroj nespustí.
+- `-drive file=.local/share/libvirt/images/archlinux.qcow2` toto je cesta k souboru `.qcow2` (úložišti virtuálního stroje).\
+(Vidíte, že moje zvukové zařízení v tomto případě není `ich9`, ale `pipewire`, což je zde nepodstatné.)

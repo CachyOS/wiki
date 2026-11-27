@@ -1,0 +1,500 @@
+---
+title: Snímky Btrfs
+description: Správa snímků Btrfs v CachyOS
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 5
+ai_translated: true
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import ImageComponent from '~/components/image-component.astro';
+import MultipleImageComponent from '~/components/multiple-images-component.astro';
+
+## Úvod
+
+:::caution
+Nepovažujte snímky Btrfs za náhradu pravidelných záloh. Vždy se ujistěte, že máte řádné zálohy svých důležitých dat.
+:::
+
+### Co je to snímek Btrfs?
+
+Začněme od základů:
+
+Snímky Btrfs vycházejí z funkce subvolumů (podsvazků). Možná se ptáte, co je to subvolum? Představte si subvolum jako samostatný souborový systém uvnitř souborového systému Btrfs, který vám umožňuje rozdělit data na různé části. Proto máme například v CachyOS různé subvolumy pro:
+
+- Kořenový souborový systém: (`/`)
+- Adresář root: (`/root`)
+- Domovský adresář: (`/home`)
+- Adresáře var: (`/var/cache`, `/var/tmp`, `/var/log`)
+- Adresář srv: (`/srv`)
+
+Tím, že máme pro tyto adresáře samostatné subvolumy, je můžeme spravovat nezávisle na sobě, aplikovat na ně různá nastavení a především pro ně vytvářet snímky.
+
+Zde přichází na řadu snímek. Snímek je v podstatě kopie subvolumu určená pouze ke čtení nebo ke čtení i zápisu (**výchozí**) v určitém časovém okamžiku. To znamená, že můžete zachytit stav svého souborového systému, včetně všech souborů a adresářů, přesně v danou chvíli.
+
+Snímky se tak stávají referenčním bodem v čase – když se cílový soubor od dat ve snímku odchýlí, snímek si zachová původní soubor a v cíli se vytvoří nový soubor se změnami, zatímco snímek zůstane navždy stejný. Proto někteří uživatelé označují snímek jako „data zmrazená v čase“.
+
+Představte si to jako vyfocení vašeho souborového systému v konkrétním okamžiku – k této fotografii se pak můžete kdykoli vrátit, kdykoli to budete potřebovat.
+
+Jednou z hlavních výhod snímků je jejich vysoká úspornost místa, protože jde pouze o odkaz na původní data, dokud nedojde ke změnám.
+
+Právě v tom se však snímek liší od tradiční zálohy. Řekněme, že vám selže disk – pokud byste měli tradiční zálohu, mohli byste z ní svá data obnovit. Pokud byste ale měli pouze snímky na poškozeném disku, ztratili byste k nim přístup, protože jsou uloženy na stejném disku.
+
+### Případy obnovy, kdy jsou snímky užitečné a kdy nikoli
+
+Jsou užitečné pro obnovu po:
+
+- Rozbití nebo poškození systému po aktualizacích.
+- Chybných konfiguracích, které brání spuštění systému.
+- Náhodném smazání nebo úpravě souborů.
+
+Nejsou užitečné pro obnovu při:
+
+- Problémech se zavaděčem (bootloaderem).
+- Hardwarových selháních (např. porucha pevného disku).
+
+## Správa snímků (GUI a CLI)
+
+:::tip
+Protože CachyOS ve výchozím nastavení obsahuje `snap-pac`, Snapper automaticky vytváří snímky před a po každé instalaci, aktualizaci nebo odebrání balíčku pomocí `pacman`. To znamená, že pro tyto operace nemusíte snímky vytvářet ručně, protože se o to Snapper postará za vás.
+:::
+
+:::note
+Pokud používáte zavaděč GRUB, ujistěte se, že máte nainstalovaný balíček `grub-btrfs-support`, abyste měli k dispozici všechny potřebné skripty a hooky pro automatickou detekci snímků BTRFS a jejich přidání do nabídky GRUB.
+```bash
+sudo pacman -Syu grub-btrfs-support
+```
+:::
+
+Několik věcí, které je dobré zvážit před správou snímků. **Platí pro metody v CLI i GUI.**
+
+- Doporučuje se uchovávat maximálně 10 snímků. Nad tento počet bývají snímky příliš staré a méně užitečné. V nejhorším případě může návrat ke starému snímku způsobit problémy s kompatibilitou s novějšími verzemi softwaru.
+- Snímky jsou primárně určeny pro účely obnovy. Můžete je však také použít k vrácení změn v jednotlivých souborech bez nutnosti obnovovat celý snímek.
+- Při vytváření snímků přidávejte smysluplný popis. Pomůže vám to později snáze určit účel každého snímku.
+
+### Btrfs Assistant (GUI)
+
+Než budete pokračovat, ujistěte se, že máte nainstalovaný balíček `btrfsmaintenance`, abyste mohli využívat funkce automatické správy snímků.
+
+Pro ty, kteří dávají přednost správě Btrfs, snímků a dalších funkcí přes grafické rozhraní (GUI), je [Btrfs Assistant](https://gitlab.com/btrfs-assistant/btrfs-assistant) skvělým projektem pro začátečníky.
+
+#### Nastavení automatického čištění snímků
+
+Nastavíme automatické čištění snímků pomocí programu Btrfs Assistant. To vám pomůže efektivně spravovat snímky bez ručního zásahu.
+
+Postupujte podle následujících kroků:
+
+<Steps>
+
+    1. Spusťte Btrfs Assistant otevřením terminálu a zadáním příkazu:
+        ```bash
+        btrfs-assistant-launcher
+        ```
+
+        Případně:
+
+        ```bash
+        sudo -E btrfs-assistant
+        ```
+
+  2. Přejděte na kartu Snapper Settings:
+
+      <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperSettingsTab.png')} />
+      Upravte nastavení **Snapshot Retention** následujícím způsobem:
+      - Ujistěte se, že je vybrána konfigurace `root`
+      - Zadejte hodnotu `0` pro Hourly, Daily, Weekly, Monthly a Yearly.
+      - Odškrtněte `Enable timeline snapshots`.
+      - Zadejte hodnotu `10` do pole `Number`.
+      - Zaškrtněte ✅ `Snapper cleanup enabled`.
+      - Klikněte na tlačítko `Save` vpravo nahoře a `Apply systemd changes` vpravo dole.
+      **snapper-cleanup.timer bude nyní povolen, aby automaticky čistil staré snímky podle vaší konfigurace.**
+      :::caution
+      Ověřte, zda byly provedené úpravy správně použity, kontrolou konfigurace Snapperu:
+      ```bash
+      sudo nano /etc/snapper/configs/root
+      ```
+      Očekávaná ukázka výstupu:
+      ```text
+      # limit for number cleanup
+      NUMBER_MIN_AGE="3600"
+      NUMBER_LIMIT="10"
+      NUMBER_LIMIT_IMPORTANT="10"
+      ```
+      Pokud `NUMBER_LIMIT` a `NUMBER_LIMIT_IMPORTANT` neobsahují hodnotu `10`, odpovídajícím způsobem je upravte.
+      Uložte soubor a ukončete editor stisknutím `CTRL + O`, `Enter` a `CTRL + X`.
+      :::
+</Steps>
+
+#### Odstranění snímků pomocí Btrfs Assistant
+
+<Steps>
+    1. Otevřete Btrfs Assistant:
+        ```bash
+        btrfs-assistant-launcher
+        ```
+
+        Případně:
+
+        ```bash
+        sudo -E btrfs-assistant
+        ```
+    2. Přejděte na kartu Snapper Settings:
+        <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperTab.png')} />
+    3. Vyberte ze seznamu snímek nebo snímky, které chcete odstranit.
+        :::tip
+        - Podržením klávesy `CTRL` můžete vybrat více snímků.
+        - Podržením klávesy `SHIFT` můžete vybrat celý rozsah snímků.
+        :::
+    4. Klikněte na tlačítko `Delete` v horní části okna.
+    5. Znovu vygenerujte položky zavaděče, aby se změny projevily:
+        <details>
+            <summary>systemd-boot</summary>
+            ```bash
+            sudo sdboot-manage gen
+            ```
+        </details>
+        <details>
+            <summary>GRUB</summary>
+            ```bash
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            ```
+        </details>
+        <details>
+            <summary>Limine</summary>
+            ```bash
+            sudo limine-mkinitcpio
+            ```
+        </details>
+</Steps>
+
+Podrobnější přehled všech možností najdete na jejich [oficiální wiki](https://gitlab.com/btrfs-assistant/wiki).
+
+### Snapper (CLI)
+
+Nyní, když jsme si probrali, co je snímek Btrfs a jaké jsou jeho případy použití, pojďme se podívat, jak je spravovat pomocí nástroje [Snapper](http://snapper.io/), který vytvořil [Arvin Schnell](https://github.com/aschnell) z projektu [openSUSE](https://www.opensuse.org/).
+
+<details>
+<summary>CachyOS ve výchozím nastavení používá následující konfiguraci Snapperu:</summary>
+
+```text
+# subvolume to snapshot
+SUBVOLUME="/"
+
+# filesystem type
+FSTYPE="btrfs"
+
+# btrfs qgroup for space aware cleanup algorithms
+QGROUP=""
+
+# fraction or absolute size of the filesystems space the snapshots may use
+SPACE_LIMIT="0.5"
+
+# fraction or absolute size of the filesystems space that should be free
+FREE_LIMIT="0.2"
+
+# users and groups allowed to work with config
+ALLOW_USERS=""
+ALLOW_GROUPS=""
+
+# sync users and groups from ALLOW_USERS and ALLOW_GROUPS to .snapshots
+# directory
+SYNC_ACL="no"
+
+# start comparing pre- and post-snapshot in background after creating
+# post-snapshot
+BACKGROUND_COMPARISON="yes"
+
+# run daily number cleanup
+NUMBER_CLEANUP="yes"
+
+# limit for number cleanup
+NUMBER_MIN_AGE="1800"
+NUMBER_LIMIT="50"
+NUMBER_LIMIT_IMPORTANT="15"
+
+# create hourly snapshots
+TIMELINE_CREATE="no"
+
+# cleanup hourly snapshots after some time
+TIMELINE_CLEANUP="yes"
+
+# limits for timeline cleanup
+TIMELINE_MIN_AGE="1800"
+TIMELINE_LIMIT_HOURLY="5"
+TIMELINE_LIMIT_DAILY="7"
+TIMELINE_LIMIT_WEEKLY="0"
+TIMELINE_LIMIT_MONTHLY="0"
+TIMELINE_LIMIT_YEARLY="0"
+
+# cleanup empty pre-post-pairs
+EMPTY_PRE_POST_CLEANUP="yes"
+
+# limits for empty pre-post-pair cleanup
+EMPTY_PRE_POST_MIN_AGE="1800"
+```
+
+</details>
+
+:::caution
+Výchozí konfigurace Snapperu v CachyOS pokrývá pouze kořenový subvolum (`/`). Pokud máte další subvolumy, které chcete pomocí Snapperu spravovat, budete muset pro každý z nich vytvořit samostatnou konfiguraci.
+
+Tato konfigurace vyžaduje úpravu, aby se zvýšila její efektivita.
+:::
+
+Zde je seznam nejběžnějších příkazů nástroje Snapper.
+
+:::note
+`< >` označuje zástupný symbol, který byste měli nahradit příslušnou hodnotou.
+:::
+
+<details>
+    <summary>Získání aktuální konfigurace:</summary>
+    ```bash
+    sudo snapper get-config
+    ```
+    <details>
+        <summary>Ukázka výstupu:</summary>
+        ```bash
+        Key                    │ Value
+        ───────────────────────┼──────
+        ALLOW_GROUPS           │
+        ALLOW_USERS            │
+        BACKGROUND_COMPARISON  │ yes
+        EMPTY_PRE_POST_CLEANUP │ yes
+        EMPTY_PRE_POST_MIN_AGE │ 1800
+        FREE_LIMIT             │ 0.2
+        FSTYPE                 │ btrfs
+        NUMBER_CLEANUP         │ yes
+        NUMBER_LIMIT           │ 10
+        NUMBER_LIMIT_IMPORTANT │ 10
+        NUMBER_MIN_AGE         │ 3600
+        QGROUP                 │
+        SPACE_LIMIT            │ 0.5
+        SUBVOLUME              │ /
+        SYNC_ACL               │ no
+        TIMELINE_CLEANUP       │ yes
+        TIMELINE_CREATE        │ no
+        TIMELINE_LIMIT_DAILY   │ 0
+        TIMELINE_LIMIT_HOURLY  │ 0
+        TIMELINE_LIMIT_MONTHLY │ 0
+        TIMELINE_LIMIT_WEEKLY  │ 0
+        TIMELINE_LIMIT_YEARLY  │ 0
+        TIMELINE_MIN_AGE       │ 1800
+        ```
+    </details>
+</details>
+
+<details>
+    <summary>Výpis dostupných snímků + podrobností:</summary>
+    ```bash
+    sudo snapper list
+    ```
+    <details>
+        <summary>Ukázka výstupu:</summary>
+        ```bash
+          # │ Type   │ Pre # │ Date                     │ User │ Cleanup │ Description                                                              │ Userdata
+        ────┼────────┼───────┼──────────────────────────┼──────┼─────────┼──────────────────────────────────────────────────────────────────────────┼─────────
+        0   │ single │       │                          │ root │         │ current                                                                  │
+        715 │ pre    │       │ Thu 22 Jan 2026 16:14:07 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        716 │ post   │   715 │ Thu 22 Jan 2026 16:14:25 │ root │ number  │ docker-buildx lilv sof-firmware zed                                      │
+        717 │ pre    │       │ Sat 24 Jan 2026 11:19:48 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        718 │ post   │   717 │ Sat 24 Jan 2026 11:20:19 │ root │ number  │ bpf cachyos-hello cachyos-wallpapers cpupower jdk-openjdk ldb less libev │
+        719 │ pre    │       │ Sat 24 Jan 2026 11:20:31 │ root │ number  │ pacman -U --config /etc/pacman.conf -- /home/mario/.cache/yay/visual-s   │
+        720 │ post   │   719 │ Sat 24 Jan 2026 11:20:36 │ root │ number  │ visual-studio-code-bin                                                   │
+        721 │ pre    │       │ Sat 24 Jan 2026 20:46:40 │ root │ number  │ pacman -Syu plasma-login-manager                                         │
+        722 │ post   │   721 │ Sat 24 Jan 2026 20:46:48 │ root │ number  │ cmake fastfetch harfbuzz harfbuzz-icu jdk21-openjdk lib32-harfbuzz lib32 │
+        723 │ pre    │       │ Sat 24 Jan 2026 20:46:53 │ root │ number  │ pacman -R sddm-kcm cachyos-themes-sddm sddm                              │
+        724 │ post   │   723 │ Sat 24 Jan 2026 20:46:56 │ root │ number  │ cachyos-themes-sddm sddm sddm-kcm                                        │
+        725 │ pre    │       │ Sun 25 Jan 2026 08:05:05 │ root │ number  │ pacman -S -y -u --config /etc/pacman.conf --                             │
+        726 │ post   │   725 │ Sun 25 Jan 2026 08:05:11 │ root │ number  │ plasma-login-manager                                                     │
+        727 │ pre    │       │ Sun 25 Jan 2026 15:55:28 │ root │ number  │ pacman -S --config /etc/pacman.conf -- cachyos-extra-znver4/caligula     │
+        728 │ post   │   727 │ Sun 25 Jan 2026 15:55:30 │ root │ number  │ caligula                                                                 │
+      ```
+      - Zde je přehled sloupců:
+        - `#`: Označuje číslo snímku, které se používá v dalších příkazech.
+        - `Type`: Udává, zda se jedná o samostatný snímek nebo součást páru před/po (pre/post).
+            - `single`: Tyto snímky nemají žádnou zvláštní vazbu k ostatním snímkům.
+            - `pre`: Tyto snímky jsou určeny k vytvoření před jakoukoli systémovou změnou (např. úpravou souboru nebo instalací balíčku).
+            - `post`: Jak název napovídá, jedná se o snímky pořízené po provedení systémové změny. Jsou propojeny se svým odpovídajícím snímkem `pre`.
+        - `Pre #`: U snímků typu `post` tento sloupec uvádí číslo příslušného snímku `pre`.
+        - `Date`: Datum a čas vytvoření snímku.
+        - `User`: Uživatel, který snímek vytvořil.
+        - `Cleanup`: Označuje algoritmus čištění aplikovaný na snímek.
+            - V nástroji Snapper je k dispozici několik algoritmů čištění, například `number`, `timeline` a empty-pre-post. V tomto příkladu je použit algoritmus `number`, což znamená, že starší snímky budou mazány na základě předem stanoveného limitu.
+            - timeline: Snímky jsou čištěny na základě jejich stáří a četnosti.
+            - empty-pre-post: Odstraňuje páry snímků pre/post s prázdnými rozdíly (diffy).
+        - `Description`: Stručný popis snímku, který často udává důvod jeho vytvoření.
+        - `Userdata`: Další uživatelsky definovaná data spojená se snímkem.
+        Další podrobnosti o výstupních sloupcích
+    </details>
+</details>
+
+<details>
+    <summary>Vytvoření nového snímku:</summary>
+    ```bash
+    sudo snapper create --type single --description "My Snapshot Description"
+    ```
+</details>
+
+<details>
+    <summary>Úprava snímku:</summary>
+    ```bash
+    sudo snapper modify <option> <snapshot_number>
+    ```
+    <details>
+        <summary>Dostupné volby:</summary>
+        ```bash
+        Options for 'modify' command:
+            --description, -d <description>  Description for snapshot.
+            --cleanup-algorithm, -c <algo>   Cleanup algorithm for snapshot.
+            --userdata, -u <userdata>        Userdata for snapshot.
+            --read-only                      Set snapshot read-only.
+            --read-write                     Set snapshot read-write.
+            --default                        Set snapshot as default snapshot.
+        ```
+        <details>
+            <summary>Příklad: Úprava popisu snímku 729:</summary>
+            ```bash
+            sudo snapper modify 729 --description 'My New Snapshot Description'
+            ```
+        </details>
+    </details>
+</details>
+
+<details>
+<summary>Odstranění snímků:</summary>
+:::note
+Snímek 0 nelze odstranit, protože představuje aktuální stav souborového systému.
+:::
+    <details>
+    <summary>Odstranění jednoho snímku:</summary>
+    ```bash
+    sudo snapper delete <snapshot_number>
+    ```
+    </details>
+    <details>
+    <summary>Odstranění rozsahu snímků:</summary>
+    ```bash
+    sudo snapper delete 718-721
+    ```
+    Snímky 718, 719, 720 a 721 budou odstraněny.
+    </details>
+</details>
+
+#### Dokumentace Snapperu
+
+[Oficiální manuálová stránka příkazu Snapper:](http://snapper.io/manpages/snapper.html#global_options)
+
+[Průvodce konfiguračním souborem Snapperu:](http://snapper.io/manpages/snapper-configs.html)
+
+[Průvodce na Arch Wiki:](https://wiki.archlinux.org/title/Snapper)
+
+### Doporučení a tipy pro Limine
+
+#### Úprava nastavení zobrazení snímků v zavaděči Limine
+
+- Omezte počet snímků zobrazovaných v nabídce zavaděče Limine, aby nedocházelo k nepřehlednosti:
+
+<Steps>
+    1. Vytvořte zálohu konfiguračního souboru limine-snapper-sync:
+        ```bash
+        sudo cp /etc/limine-snapper-sync.conf /etc/limine-snapper-sync.conf.orig
+        ```
+    2. Upravte konfigurační soubor limine-snapper-sync:
+        ```bash
+        sudo nano /etc/limine-snapper-sync.conf
+        ```
+        Očekávaná ukázka výstupu:
+        ```bash
+        ### Max Snapshot Entries
+        ### Sets the limit for how many snapshot entries show up in the boot menu.
+        ### This depends on the size of your FAT32 boot partition and how many different kernel and module versions you want to keep.
+        ### A larger FAT32 boot partition allows more snapshot entries.
+        MAX_SNAPSHOT_ENTRIES=10
+        ```
+        Volitelně upravte formát názvu snímku (Snapshot Name Format):
+        ```bash
+        ### Snapshot Name Format
+        ### Choose a format for how snapshot entries look in the Limine bootloader:
+        ### 0. ID=111 2023-12-20 10:59:59 (default)
+        ### 1. 111│2023-12-20 10:59:59
+        ### 2. 111 │ 2023-12-20 10:59:59
+        ### 3. 2023-12-20 10:59:59│111
+        ### 4. 2023-12-20 10:59:59 │ 111
+        ### 5. 2023-12-20 10:59:59
+        ### 6. 111
+        ### 7. 111│snapshot description
+        ### 8. 2023-12-20 10:59:59│snapshot description
+        ### 9. │snapshot description
+        SNAPSHOT_FORMAT_CHOICE=8
+        ```
+        `8` je dobrá volba, protože zobrazuje datum a čas spolu s popisem snímku.
+    3. Uložte soubor a ukončete editor stisknutím `CTRL+O` `Enter` `CTRL+X`
+</Steps>
+
+### Obnovení ze snímku
+
+:::caution
+Pokud snímek, ze kterého chcete provést obnovení, zahrnoval aktualizaci jádra, nebudete moci provést návrat zpět (rollback).
+:::
+
+<details>
+    <summary>Limine</summary>
+    <Steps>
+        1. V nabídce zavaděče Limine přejděte do nabídky Snapshots:
+            <ImageComponent imgsrc={import('~/assets/images/limine-snapshotMenu-1.jpg')} />
+        2. Vyberte snímek a jádro, ze kterého chcete provést obnovení:
+            <MultipleImageComponent
+                images={[
+                import('~/assets/images/limine-snapshotMenu-2.jpg'),
+                import('~/assets/images/limine-snapshotMenu-3.jpg')]}
+            />
+        3. Váš systém je nyní v režimu pouze pro čtení (`read-only mode`). Mělo by se zobrazit vyskakovací oznámení informující o detekci snímku s dotazem, zda z něj chcete provést obnovení:
+            <ImageComponent imgsrc={import('~/assets/images/kde-snapshot-popup.png')} />
+        4. Klikněte na `Restore now`. Otevře se okno terminálu s výzvou a požádá vás o několik potvrzení:
+            ```bash title="Ukázka výzvy k obnovení"
+            Snapshot ID    : 2
+            Date           : 2026-01-26 11:19:14
+            Description    : nc-git
+            Restore method : replace
+
+            Confirm restore of snapshot 2 using the "replace" method?
+            Type [y]es to restore, [l]ist to display all snapshots, or [c]ancel to abort.
+
+            Your input: yes
+
+            Enter a description for the "backup" of the subvolume: @
+
+            Your input: @
+            ```
+          5. Napište `yes` a volitelně přidejte popis pro záložní snímek.
+          6. Zahájí se proces obnovení. Po dokončení napište v nové výzvě znovu `yes` pro restartování systému:
+              ```bash
+              The restore is complete. Please reboot now:
+              Type [y]es to reboot, [n]o or [c]ancel to abort rebooting.
+
+              Your input: yes
+              ```
+    </Steps>
+</details>
+
+<details>
+    <summary>GRUB</summary>
+    <Steps>
+        1. V nabídce zavaděče GRUB spusťte požadovaný snímek a jádro, ze kterého chcete provést obnovení.
+        2. Po spuštění otevřete Btrfs Assistant:
+            ```bash
+            btrfs-assistant-launcher
+            ```
+
+            Případně:
+
+            ```bash
+            sudo -E btrfs-assistant
+            ```
+        3. Přejděte na kartu Snapper → „Browse/Restore“ a vyberte snímek, ze kterého jste systém spustili:
+            <ImageComponent imgsrc={import('~/assets/images/btrfs-assistant-example.png')} />
+        4. Klikněte na tlačítko `Restore` a restartujte systém, aby se změny projevily.
+    </Steps>
+</details>

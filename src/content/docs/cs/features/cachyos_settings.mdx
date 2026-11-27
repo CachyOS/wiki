@@ -1,125 +1,412 @@
 ---
 title: Nastavení CachyOS
+ai_translated: true
 ---
 import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
 
-Společně s našimi optimalizovanými kernely a repozitáři poskytujeme také nastavení, která dále vylepšují zážitek z používání desktopu.
-Zahrnujeme také některé pomocné skripty pro zlepšení kvality života (QoL). Všechny tyto konfigurace a skripty jsou součástí balíčku `cachyos-settings`.
+Společně s našimi optimalizovanými jádry a repozitáři poskytujeme také nastavení, která dále vylepšují zážitek z používání desktopu, a několik pomocných skriptů pro zvýšení uživatelského komfortu (QoL). Všechny tyto konfigurace a skripty jsou součástí balíčku `cachyos-settings`.
 
-## Vylepšení sysctl
+Podívejte se do [repozitáře CachyOS Settings](https://github.com/CachyOS/CachyOS-Settings?tab=readme-ov-file#cachyos-settings), kde se dozvíte více o všech poskytovaných konfiguracích a skriptech.
 
-Poskytujeme mnoho vylepšení sysctl, jejichž cílem je zlepšit celkový výkon desktopu. Každý záznam sysctl je dobře zdokumentován
-v souboru [`99-cachyos-settings.conf`](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/sysctl.d/99-cachyos-settings.conf).
+## Skripty a nástroje
 
-Chcete-li změnit kteroukoli z těchto hodnot, zkopírujte původní záznam a vytvořte nový soubor pod `/etc/sysctl.d/` pro upravenou hodnotu.
+### [cachyos-bugreport.sh](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/cachyos-bugreport.sh)
 
-### Úprava hodnot sysctl
-
+Zde je návod, jak můžete vygenerovat hlášení o chybě pomocí skriptu `cachyos-bugreport.sh`:
 <Steps>
-
-1. Podívejte se na původní hodnotu z `cachyos-settings`
-
+1. Otevřete terminál a spusťte následující příkaz:
     ```sh
-    ❯ cat /usr/lib/sysctl.d/99-cachyos-settings.conf
-    # Pouze experimentální!
-    # Nechat Realtime úlohy běžet tak dlouho, jak potřebují
-    # sched: RT throttling aktivován
-    kernel.sched_rt_runtime_us=-1
+    sudo cachyos-bugreport.sh
     ```
-
-2. Vytvořte nový soubor v `/etc/sysctl.d` pro provedení změn v nastavení sysctl
-
-    ```sh title="Navrácení kernel.sched_rt_runtime_us= na výchozí hodnotu"
-    ❯ sudo micro /etc/sysctl.d/99-kernel-sched-rt.conf # Pokud soubor neexistuje, tento příkaz ho vytvoří a umožní vám ho upravit
-    kernel.sched_rt_runtime_us=950000
-    ```
-
+    <details>
+        <summary>Příklad výstupu</summary>
+        ```sh
+        sudo cachyos-bugreport.sh
+        [sudo] password for array:
+        Starting with bugreport
+        Redacting personal information...
+        Do you want to upload this log to https://paste.cachyos.org? [Y]es/[N]o: Y
+        Uploading Log
+          % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                         Dload  Upload  Total   Spent   Left   Speed
+        100 130.3k 100     10 100 130.3k      7  96934   0:01   0:01         117.7k
+        # Po dokončení nahrávání se zde zobrazí adresa URL.
+        ```
+    </details>
+2. Skript vygeneruje ve vašem domovském adresáři soubor s protokolem obsahující systémové informace a záznamy, které mohou být užitečné pro ladění. Také se vás zeptá, zda chcete protokol nahrát do naší služby pastebin, což může být užitečné při hlášení chyb.
 </Steps>
 
-## Pravidla udev
+### DLSS Swapper
 
-- [Pravidla ZRAM](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/30-zram.rules) - Nastavuje swappiness ZRAM na agresivnější
-hodnotu, takže je pravděpodobnější, že se mezipaměť odloží do ZRAM
-- [Oprávnění HPET](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/40-hpet-permissions.rules) - Povoluje přístup k uzlům zařízení `rtc0`
-a `hpet` skupině audio.
-- [Správa napájení SATA](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/50-sata.rules) - Nastavuje politiku správy napájení SATA zařízení na `max_performance`
-- [Pravidla I/O plánovače](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/60-ioschedulers.rules) - Vybírá optimální plánovač pro každý typ disku (HDD, SSD, NVMe)
-- [Pravidla hdparm](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/69-hdparm.rules) - Nastavuje SATA a IDE HDD na maximální výkon
-- [NVIDIA RTD3](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/71-nvidia.rules) - Konfiguruje funkci dynamické správy napájení pro generaci GPU Turing. **RTD3 nefunguje správně na GPU Turing s otevřenými moduly**
-- [Latence CPU DMA](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/99-cpu-dma-latency.rules) -
-Povoluje přístup k uzlu zařízení `cpu_dma_latency` skupině audio.
-- [snd_hda_intel PM](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/udev/rules.d/20-audio-pm.rules) - Nastavuje úsporu energie na **`0`** při napájení ze sítě a obnovuje předchozí hodnotu při přechodu na baterii
+V některých případech se může hodit. Zejména pro verzi Protonu poskytovanou společností Valve.
 
-## Možnosti modprobe
+:::note
+Proton-CachyOS již obsahuje vestavěnou funkci aktualizace.
+:::
 
-- Vynutí ovladač AMDGPU na Southern Islands (GCN 1.0) a Sea Islands (GCN 2.0)
-- Povolí [různá vylepšení](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/modprobe.d/nvidia.conf) pro NVIDIA
-- Zařadí moduly watchdog na černou listinu
-- Zakázána úspora energie pro audio ovladač **sna_hda_intel**
+:::caution
+Nekombinujte současně `PROTON_DLSS_UPGRADE=1` a `dlss-swapper`, protože oba dělají totéž a mohou způsobit konflikty.
+:::
 
-## Pomocné skripty
+Skript se pokouší aktualizovat knihovny DLSS DLL a předvolby (presets) na nejnovější dostupnou verzi, což může být užitečné u některých her, které ke správnému fungování vyžadují konkrétní verzi DLSS.
 
-- **`cachyos-bugreport.sh`** - Sbírá různé logy z **`inxi`**, **`dmesg`** a **`journalctl`** pro pomoc při řešení problémů
-- **`game-performance`** - Wrapper skript pro **`powerprofilesctl`** pro přepnutí na výkonnostní profil na vyžádání.
-Viz [Přepínání napájecího profilu na vyžádání](/configuration/gaming#power-profile-switching-on-demand)
-- **`dlss-swapper`** - Wrapper skript pro vynucení nejnovějšího přednastavení DLSS ve hrách, které tuto technologii podporují
-- - **`dlss-swapper-dll`** - Podobně jako **`dlss-swapper`**, ale vyžaduje ruční aktualizaci knihovny **`nvngx_dlss.dll`** dodávané s hrou; může fungovat u her, které mají problémy s běžnou verzí skriptu
-- **`kerver`** - QoL skript pro zobrazení informací o aktuálním kernelu
-- **`paste-cachyos`** - Skript pro vložení výstupu z terminálu pro textové soubory ze systému
+Jak? Pomocí vložení proměnných prostředí do procesu hry:
 
-    <Tabs>
-        <TabItem label="Nahrávání textových souborů">
-            ```sh
-            ❯ paste-cachyos /cesta/k/souboru
-            ```
-        </TabItem>
-        <TabItem label="Nahrávání výstupu z terminálu">
-            ```sh
-            ❯ <příkaz> | paste-cachyos
-            ```
-        </TabItem>
-    </Tabs>
-- [`pci-latency`](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/pci-latency) - Snižuje hodnotu latency_timer na **`80`** pro PCI zvukové karty a resetuje všechna ostatní PCI zařízení na **`20`** a **`0`**
-    ```sh title="Povolení pci-latency pro celý systém"
-    ❯ sudo systemctl enable --now pci-latency.service
+<details>
+    <summary>Proměnné prostředí dlss-swapper</summary>
+    ```sh
+    export PROTON_ENABLE_NGX_UPDATER=1
+    export DXVK_NVAPI_DRS_NGX_DLSS_RR_OVERRIDE=on
+    export DXVK_NVAPI_DRS_NGX_DLSS_SR_OVERRIDE=on
+    export DXVK_NVAPI_DRS_NGX_DLSS_FG_OVERRIDE=on
+    export DXVK_NVAPI_DRS_NGX_DLSS_RR_OVERRIDE_RENDER_PRESET_SELECTION=render_preset_latest
+    export DXVK_NVAPI_DRS_NGX_DLSS_SR_OVERRIDE_RENDER_PRESET_SELECTION=render_preset_latest
     ```
-- **`sbctl-batch-sign`** - Pomocný skript pro snadné podepisování obrazů kernelu a EFI binárních souborů pro Secure Boot a jejich uložení do databáze sbctl
-- **`topmem`** - Zobrazuje statistiky RAM, swapu a ksm pro 10 procesů v sestupném pořadí
-- **`zink-run`** - Usnadňuje spuštění programu OpenGL prostřednictvím ovladače Zink Gallium
+</details>
+<details>
+    <summary>Proměnné prostředí dlss-swapper-dll</summary>
+    ```sh
+    export DXVK_NVAPI_DRS_NGX_DLSS_RR_OVERRIDE=on
+    export DXVK_NVAPI_DRS_NGX_DLSS_SR_OVERRIDE=on
+    export DXVK_NVAPI_DRS_NGX_DLSS_FG_OVERRIDE=on
+    export DXVK_NVAPI_DRS_NGX_DLSS_RR_OVERRIDE_RENDER_PRESET_SELECTION=render_preset_latest
+    export DXVK_NVAPI_DRS_NGX_DLSS_SR_OVERRIDE_RENDER_PRESET_SELECTION=render_preset_latest
+    ```
+</details>
 
-## Ostatní konfigurace
+- Jaký je rozdíl mezi `dlss-swapper` a `dlss-swapper-dll`?
+    - `dlss-swapper` aktualizuje knihovny DLSS DLL a předvolby na nejnovější dostupné verze poskytované službou NGX Updater, zatímco `dlss-swapper-dll` spoléhá na knihovny DLL již přítomné v adresáři hry.
 
-### Vylepšení využití paměti
 
-- Konfigurace THP Shrinker **`max_ptes_none = 409`**
-- Nastavení maximální velikosti **`50MB`** pro žurnál systemd
-- [Generátor ZRAM](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/systemd/zram-generator.conf) - Nastaví ZRAM na stejnou velikost jako RAM a použije ZSTD pro kompresi
+### [game-performance](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/game-performance)
 
-### Pravidla Ananicy-cpp
+Malý skript, který pro cílový proces aktivuje výkonnostní profil z `powerprofilesctl` (lze jej použít pro hry nebo jakýkoli jiný proces) a během běhu procesu vypne spořič obrazovky.
 
-- [ananicy-cpp](https://gitlab.com/ananicy-cpp/ananicy-cpp) s [komunitou udržovanými sadami pravidel](https://github.com/CachyOS/ananicy-rules)
+Otázky a odpovědi:
 
-### Síťové úpravy
+<details>
+    <summary>Jak používat</summary>
+    Řekněme, že chcete použít `game-performance` pro hru na Steamu. Můžete to udělat přidáním příkazu `game-performance` jako možnosti spuštění hry ve Steamu:
+        <Steps>
+            1. Otevřete Steam a přejděte do své Knihovny.
+            2. Klikněte pravým tlačítkem myši na hru, u které chcete `game-performance` použít, a vyberte „Vlastnosti“ (Properties).
+            3. Na kartě „Obecné“ (General) najděte sekci „Možnosti spuštění“ (Launch Options) a přidejte následující příkaz:
+                ```sh
+                game-performance %command%
+                ```
+                :::tip[Průvodce správou možností spuštění ve Steamu]
+                CachyOS Wiki - [Jak správně nastavit více možností spuštění](/cs/configuration/gaming#jak-správně-nastavit-více-možností-spuštění)
+                :::
+            4. Zavřete kartu vlastností a spusťte hru.
+        </Steps>
+        <details>
+            <summary>Použití mimo Steam</summary>
+            Protože je `game-performance` pouhý wrapper skript, můžete jej použít ke spuštění libovolného procesu se zapnutým výkonnostním profilem. Stačí v terminálu spustit následující příkaz:
+            ```sh
+            game-performance <command>
+            ```
+        </details>
+</details>
 
-- [systemd-resolved jako výchozí DNS resolver](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/NetworkManager/conf.d/dns.conf) pro NetworkManager
+<details>
+    <summary>Přináší game-performance nějaký užitek na starším CPU?</summary>
+    Obecně ne. Na starých procesorech byste se mu měli vyhnout, protože může způsobit více škody než užitku.
 
-### RTC
+    Orientačně platí, že použití `game-performance` na čemkoli slabším než 6jádrový/12vláknový CPU pravděpodobně výkon nezvýší, nebo jej dokonce sníží. Jako u většiny možností byste si měli sami vyzkoušet, zda na vašem konkrétním systému výkon zlepší, nebo ne.
+      - U stolních CPU Intel je přibližnou hranicí 8. generace (Coffee Lake) pro i7 a i9 a 10. generace (Comet Lake) pro i5. Všechny procesory Intel Ultra by měly fungovat dobře.
+      - U stolních CPU AMD je to řada 1000 (Zen) pro Ryzen 7 a Ryzen 9. Pro Ryzen 5 je to také řada 1000, ale pouze od modelu Ryzen 5 1600 výše. To platí až do řady 5000 (Zen 3), kde již všechny procesory Ryzen 5 mají 6 jader a 12 vláken.
+      - Stolní procesory Intel i3 a Ryzen 3 nikdy nemají více než čtyři jádra.
+      - Počty jader u mobilních, pracovních a serverových CPU se značně liší, proto si zjistěte parametry svého hardwaru a vyzkoušejte různá nastavení – právě v tom je polovina zábavy z vlastnictví PC hardwaru!
+</details>
 
-- Zvýší nejvyšší požadovanou frekvenci přerušení RTC na **`3072`**
+<details>
+    <summary>Proč není povolen ve výchozím nastavení?</summary>
+    Povolení výkonnostního profilu nemusí být ideální pro všechny uživatele a může způsobit vyšší spotřebu energie a zahřívání. Tím, že jej ve výchozím nastavení nepovolujeme, dáváme uživatelům možnost zapnout si jej, kdykoli ho potřebují, aniž bychom ho vnucovali všem.
+</details>
 
-### NTP vylepšení
+### [kerver](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/kerver)
 
-- Preferovaný server nastaven na **Cloudflare**
-- Záložní servery > **Google a Arch Linux**
+kerver je skript, který zobrazí stručný souhrn:
 
-### Vylepšení služeb systemd
+- Vaší aktuální verze jádra
+    - Zkontroluje podporu x86_64 a optimalizace kompilátoru CPU
+- Aktuálního plánovače I/O
+- Souhrnu CPU, I/O a plánovače sched-ext (pokud je aktivní).
 
-- Časový limit pro spuštění služby/jednotky nastaven na **`15s`**
-- Časový limit pro zastavení služby/jednotky nastaven na **`10s`**
-- Měkký limit pro otevřené popisovače souborů nastaven na **`2048`**
-- Tvrdý limit pro otevřené popisovače souborů nastaven na **`2097152`**
+<details>
+    <summary>Použití</summary>
+    ```sh title='Otevřete terminál a spusťte následující příkaz:'
+    kerver
+    ```
+    <details>
+        <summary>Příklad výstupu</summary>
+        ```sh
+        kerver
 
-### X.Org
+        Check kernel version:
 
-- Povolit [Tap to Click](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/share/X11/xorg.conf.d/20-touchpad.conf) ve výchozím nastavení pro všechny X11 sezení
+        Linux version 6.19.8-1-hC (linux-hC@hC) (clang version 22.1.1, LLD 22.1.1) #1 SMP PREEMPT_DYNAMIC Sun, 15 Mar 2026 16:27:53 +0000
+        Linux CatchyOS 6.19.8-1-hC #1 SMP PREEMPT_DYNAMIC Sun, 15 Mar 2026 16:27:53 +0000 x86_64 GNU/Linux
+
+
+        Check x86_64 support:
+
+          x86-64-v3 (supported, searched)
+          x86-64-v2 (supported, searched)
+
+
+        Check CPU config:
+
+        CONFIG_X86_NATIVE_CPU=y
+        # CONFIG_GENERIC_CPU is not set
+        # CONFIG_MZEN4 is not set
+
+
+        Current disk schedulers:
+
+        sda: none mq-deadline kyber [adios] bfq
+        sdb: none mq-deadline kyber [adios] bfq
+
+        Check available schedulers:
+
+        BORE CPU Scheduler modification 6.6.2 by Masahito Suzuki
+        rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.
+        io scheduler mq-deadline registered
+        io scheduler kyber registered
+        Adaptive Deadline I/O Scheduler 3.2.0 by Masahito Suzuki
+        io scheduler adios registered
+        io scheduler bfq registered
+        sched_ext: BPF scheduler "bpfland_1.1.0_gc505008f_x86_64_unknown_linux_gnu" enabled with options scx_bpfland
+        ```
+    </details>
+</details>
+
+### [paste-cachyos](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/paste-cachyos)
+
+Jednoduchý nástroj příkazového řádku, který umožňuje nahrát text do naší [služby pastebin](https://paste.cachyos.org). Může být užitečný pro sdílení protokolů a dalšího textového obsahu při hlášení chyb nebo žádosti o pomoc.
+
+:::note
+Abyste mohli `paste-cachyos` použít, musíte do příkazu přesměrovat obsah, který chcete nahrát, pomocí roury `|`.
+
+Příklad:
+```sh
+<command> | paste-cachyos
+```
+:::
+
+Zde je několik příkladů, jak `paste-cachyos` použít:
+
+<details>
+    <summary>Sdílení výstupu aktualizace pacman</summary>
+    ```sh
+    sudo pacman -Syu | paste-cachyos
+    ```
+    [Příklad](https://paste.cachyos.org/p/079e1cc)
+</details>
+
+<details>
+    <summary>Záznam journalctl služby systemd-resolved</summary>
+    ```sh
+    journalctl -u systemd-resolved.service | paste-cachyos
+    ```
+</details>
+
+### [pci-latency](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/pci-latency)
+
+Jednoduchý skript určený ke snížení latence a zlepšení výkonu PCI zvukových karet úpravou časovače latence PCI.
+
+Je k dispozici jak jako spustitelný soubor, tak jako služba systemd. Služba systemd aplikuje změny automaticky při spuštění systému, zatímco binární soubor lze použít k aplikaci změn na vyžádání.
+
+<details>
+    <summary>Jednorázové použití pro aktuální relaci</summary>
+    ```sh
+    sudo pci-latency
+    ```
+</details>
+<details>
+    <summary>Povolení služby systemd</summary>
+    ```sh
+    systemctl enable pci-latency.service
+    ```
+</details>
+<details>
+    <summary>Zakázání služby systemd</summary>
+    ```sh
+    systemctl disable pci-latency.service
+    ```
+</details>
+
+### [sbctl-batch-sign](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/sbctl-batch-sign)
+
+:::note
+Není kompatibilní se zavaděčem Limine.
+:::
+
+`sbctl-batch-sign` je pomocný skript navržený tak, aby uživatelům usnadnil podepisování souborů potřebných pro podporu Secure Boot.
+
+Typickým případem, kdy tento skript výrazně pomáhá, je dual boot se systémem Windows, protože v oddílu EFI se nachází mnoho souborů Windows, které je potřeba podepsat.
+
+Stručný přehled činnosti skriptu při spuštění:
+
+- Vyhledá nepodepsané soubory pomocí `sbctl verify`
+    - V případě potřeby podepíše nalezené soubory pomocí `sbctl sign`
+- Vynechá soubory patřící Windows, GRUBu nebo soubory s příponou `.mui` a `.dll`
+
+Další informace naleznete v naší sekci [Nastavení Secure Boot](/cs/configuration/secure_boot_setup#podepisování-obrazu-jádra-a-správce-spouštění).
+
+### [topmem](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/topmem)
+
+Skript v jazyce Lua, který zobrazuje procesy s nejvyšší spotřebou paměti podle využití RAM, SWAPu a sdílení KSM (Kernel Same-page Merging).
+
+<details>
+    <summary>Před použitím</summary>
+    ```sh
+    # Pro spuštění skriptu nainstalujte lua-luv:
+    sudo pacman -S lua-luv
+    ```
+</details>
+<details>
+    <summary>Použití</summary>
+    ```sh
+    topmem
+    ```
+    <details>
+        <summary>Příklad výstupu</summary>
+        ```sh
+        topmem
+
+        MEMORY                Top 10 processes        SWAP      KSM
+        1333M     node                                0M        0M
+        811M      exe                                 0M        0M
+        759M      VQ6B1EUZqoCU04zoRU= --cha...        0M        0M
+        681M      node                                0M        0M
+        531M      zed-editor                          0M        0M
+        484M      brave                               0M        0M
+        424M      qs                                  0M        0M
+        408M      mdx-language-server                 0M        0M
+        395M      Telegram                            0M        0M
+        365M      VQ6B1EUZqoCU04zoRU= --cha...        0M        0M
+        ```
+    </details>
+</details>
+
+### [zink-run](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/bin/zink-run)
+
+Vynutí použití vrstvy Zink (OpenGL přes Vulkan) pro cílový proces nastavením příslušných proměnných prostředí.
+
+<details>
+    <summary>Použité proměnné prostředí</summary>
+    ```sh
+    MESA_LOADER_DRIVER_OVERRIDE=zink
+    GALLIUM_DRIVER=zink
+    __GLX_VENDOR_LIBRARY_NAME=mesa
+    __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
+    ```
+</details>
+
+Může být užitečné ve Steamu u některých her, které mají se Zinkem lepší výkon nebo kompatibilitu.
+
+<details>
+    <summary>Použití</summary>
+    ```sh
+    zink-run <command>
+    ```
+</details>
+
+## Vytváření přepsání
+
+Co je to přepsání (override)?
+
+Přepsání je konfigurační soubor, který vytvoříte za účelem změny výchozích nastavení poskytovaných balíčkem `cachyos-settings`. To vám umožní přizpůsobit si systém bez úprav původních souborů, což je užitečné pro zachování kompatibility s budoucími aktualizacemi balíčku `cachyos-settings`.
+
+### sysctl
+
+Poskytujeme řadu úprav sysctl, jejichž cílem je zlepšit celkový výkon desktopu. Každý záznam sysctl je dobře zdokumentován
+v souboru [70-cachyos-settings.conf](https://github.com/CachyOS/CachyOS-Settings/blob/master/usr/lib/sysctl.d/70-cachyos-settings.conf).
+
+Chcete-li kteroukoli z těchto hodnot změnit, zkopírujte původní záznam a vytvořte v adresáři `/etc/sysctl.d/` nový soubor s upravenou hodnotou.
+
+<details>
+    <summary>Příklad přepsání sysctl</summary>
+    <Steps>
+
+    1. Podívejte se na původní hodnotu z `cachyos-settings`
+
+        ```sh
+        cat /usr/lib/sysctl.d/70-cachyos-settings.conf
+        # Pouze experimentální!
+        # Nechat Realtime úlohy běžet tak dlouho, jak potřebují
+        # sched: RT throttling aktivován
+        kernel.sched_rt_runtime_us=-1
+        ```
+    2. Vytvořte nový soubor v `/etc/sysctl.d` pro provedení změn v nastavení sysctl
+
+        ```sh title="Navrácení kernel.sched_rt_runtime_us= na výchozí hodnotu"
+        sudo micro /etc/sysctl.d/99-kernel-sched-rt.conf # Pokud soubor neexistuje, tento příkaz ho vytvoří a umožní vám ho upravit
+        kernel.sched_rt_runtime_us=950000
+        ```
+    3. Soubor uložte stisknutím `CTRL + S` a editor ukončete stisknutím `CTRL + Q`.
+    4. Po provedení změn v nastavení sysctl nezapomeňte změny použít:
+        ```sh
+        sudo sysctl --system
+        ```
+    </Steps>
+</details>
+
+### Pravidla udev
+
+Totéž platí pro pravidla udev. Vlastní přepsání můžete vytvořit tak, že v adresáři `/etc/udev/rules.d/` založíte nový soubor se stejným názvem, jaký má původní soubor.
+
+:::tip[Pro nalezení původních souborů použijte následující příkaz]
+```sh
+pacman -Ql cachyos-settings | grep udev
+```
+:::
+
+<details>
+    <summary>Příklad přepsání pravidla udev</summary>
+    1. Zkontrolujte původní pravidlo udev v CachyOS:
+        ```sh
+        cat /usr/lib/udev/rules.d/60-ioschedulers.rules
+        ```
+        <details>
+            <summary>Výstup:</summary>
+                ```sh
+                # HDD
+                ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", \
+                    ATTR{queue/scheduler}="bfq"
+
+                # SSD
+                ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="mq-deadline"
+
+                # NVMe SSD
+                ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", \
+                    ATTR{queue/scheduler}="none"
+                ```
+        </details>
+        Představte si nyní, že chcete změnit I/O plánovač pro SSD a NVMe na `kyber` místo `mq-deadline`, respektive `none`. Můžete to udělat vytvořením souboru přepsání.
+    2. Vytvořte nový soubor v `/etc/udev/rules.d` pro přepsání původního pravidla:
+        ```sh
+        sudo micro /etc/udev/rules.d/60-ioschedulers.rules # Pokud soubor neexistuje, tento příkaz ho vytvoří a umožní vám ho upravit
+        # HDD
+        ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", \
+            ATTR{queue/scheduler}="bfq"
+
+        # SSD
+        ACTION=="add|change", KERNEL=="sd[a-z]*|mmcblk[0-9]*", ATTR{queue/rotational}=="0", \
+            ATTR{queue/scheduler}="kyber"
+
+        # NVMe SSD
+        ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/rotational}=="0", \
+            ATTR{queue/scheduler}="kyber"
+        ```
+    3. Soubor uložte stisknutím `CTRL + S` a editor ukončete stisknutím `CTRL + Q`.
+    4. Po provedení změn v pravidlech udev nezapomeňte pravidla znovu načíst a spustit:
+
+        ```sh
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger
+        ```
+</details>

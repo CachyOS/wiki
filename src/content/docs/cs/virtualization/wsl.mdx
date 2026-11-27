@@ -1,0 +1,62 @@
+---
+title: CachyOS ve WSL
+description: Instalace a používání CachyOS ve Windows Subsystem for Linux
+ai_translated: true
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+CachyOS poskytuje obraz pro [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/about) (WSL). Je spravován v repozitáři [cachyos-wsl](https://github.com/CachyOS/cachyos-wsl), kde můžete také nahlásit chyby specifické pro tento obraz.
+
+## Instalace
+
+Potřebujete WSL 2 verze `2.4.4` nebo novější, kterou můžete aktualizovat příkazem `wsl --update`. Pro starší verze se podívejte do souboru [cachyos-wsl README](https://github.com/CachyOS/cachyos-wsl#wsl-prior-to-244).
+
+<Steps>
+
+1. Stáhněte si obraz `.wsl` z [nejnovějšího vydání](https://github.com/CachyOS/cachyos-wsl/releases/latest), nebo v PowerShellu:
+
+   ```powershell
+   $v = (Invoke-RestMethod https://api.github.com/repos/CachyOS/cachyos-wsl/releases/latest).tag_name
+   Invoke-WebRequest "https://github.com/CachyOS/cachyos-wsl/releases/download/$v/cachyos-$v.wsl" -OutFile "$env:TEMP\cachyos.wsl"
+   ```
+
+2. Nainstalujte jej dvojklikem na soubor, nebo v PowerShellu:
+
+   ```powershell
+   wsl --install --from-file "$env:TEMP\cachyos.wsl"
+   ```
+
+3. Spusťte CachyOS z nabídky Start, nebo pomocí `wsl -d cachyos`.
+
+</Steps>
+
+## První nastavení
+
+První spuštění může trvat několik minut. Nastaví klíčenku pacmanu, seřadí zrcadla, přepne na optimalizované balíčky a požádá vás o vytvoření uživatele, který má přístup k `sudo` a jako shell používá `fish`.
+
+Obrazy jsou sestavovány pouze periodicky, takže po dokončení spusťte `sudo pacman -Syu`.
+
+## Optimalizované balíčky
+
+Obraz je obecný a běží na jakémkoli procesoru x86-64. Stejně jako instalátor CachyOS se při prvním nastavení přepne na nejvhodnější [optimalizované repozitáře](/cs/features/optimized_repos) pro váš procesor: `znver4`, `v4` nebo `v3`. Starší procesory zůstanou na obecných balíčcích.
+
+Pokud přepnutí selže, například proto, že jste offline, nastavení pokračuje s obecnými balíčky. Pro opětovný pokus spusťte:
+
+```sh
+sudo /usr/lib/wsl/optimize-repos
+```
+
+## Rozdíly oproti běžné instalaci
+
+WSL vždy používá jádro od Microsoftu, takže `linux-cachyos`, jeho plánovače a `sched-ext` se nepoužívají. Obraz také neobsahuje žádný zavaděč, `chwd` ani zram.
+
+## Řešení problémů
+
+Pokud pacman oznámí, že se doporučuje restart, restartujte distribuci z PowerShellu příkazem `wsl --terminate cachyos`.
+
+Chcete-li začít znovu, odeberte distribuci příkazem `wsl --unregister cachyos` a nainstalujte ji znovu.
+
+:::caution
+`wsl --unregister` trvale odstraní vše uvnitř distribuce, včetně vašeho domovského adresáře v Linuxu.
+:::

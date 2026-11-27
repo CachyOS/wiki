@@ -22,7 +22,7 @@ Příklady chování, které přispívá k pozitivnímu prostředí pro naši ko
 
 Příklady nepřijatelného chování zahrnují:
 
-- Používání sexualizovaného jazyka nebo obrazového materiálu a jakékoliv sexuální pozornosti nebo návrhy
+- Používání sexualizovaného jazyka nebo obrazového materiálu a jakákoli sexuální pozornost nebo návrhy
 - Trolling, urážlivé nebo hanlivé komentáře a osobní či politické útoky
 - Veřejné nebo soukromé obtěžování
 - Zveřejňování soukromých informací jiných osob, jako je fyzická adresa nebo e-mail, bez jejich výslovného souhlasu
@@ -40,7 +40,7 @@ Tento Kodex chování platí ve všech komunitních prostorech a rovněž při o
 
 ## Vymáhání
 
-Případy urážlivého, obtěžujícího nebo jinak nepřijatelného chování mohou být hlášeny vedoucím komunity odpovědným za vymáhání na adrese admin@cachyos.org.  
+Případy urážlivého, obtěžujícího nebo jinak nepřijatelného chování mohou být hlášeny vedoucím komunity odpovědným za vymáhání na adrese <admin@cachyos.org>.  
 Všechny stížnosti budou přezkoumány a vyšetřeny rychle a spravedlivě.
 
 Všichni vedoucí komunity jsou povinni respektovat soukromí a bezpečnost osoby, která incident nahlásí.
@@ -69,19 +69,19 @@ Vedoucí komunity se budou řídit těmito Pravidly pro dopad na komunitu při u
 
 ### 4. Trvalý zákaz
 
-**Dopad na komunitu**: Opakované porušování komunitních standardů, včetně přetrvávajícího nevhodného chování, obtěžování jednotlivce nebo agrese vůči skupinám osob.
+**Dopad na komunitu**: Opakované porušování komunitních standardů, včetně přetrvávajícího nevhodného chování, obtěžování jednotlivce nebo agrese vůči skupinám osob či jejich znevažování.
 
 **Důsledek**: Trvalý zákaz jakékoli veřejné interakce v rámci komunity.
 
 ## Přisuzování
 
 Tento Kodex chování je převzat z [Contributor Covenant][homepage], verze 2.0, dostupného na  
-https://www.contributor-covenant.org/version/2/0/code_of_conduct.html.
+[https://www.contributor-covenant.org/version/2/0/code_of_conduct.html](<https://www.contributor-covenant.org/version/2/0/code_of_conduct.html>).
 
 Pravidla pro dopad na komunitu byla inspirována [Kodexem chování Mozilly](https://github.com/mozilla/diversity).
 
 [homepage]: https://www.contributor-covenant.org
 
 Pro odpovědi na časté dotazy ohledně tohoto Kodexu chování navštivte FAQ na  
-https://www.contributor-covenant.org/faq. Překlady jsou dostupné na  
-https://www.contributor-covenant.org/translations.
+[FAQ](<https://www.contributor-covenant.org/faq>). Překlady jsou dostupné na  
+[https://www.contributor-covenant.org/translations](<https://www.contributor-covenant.org/translations>).

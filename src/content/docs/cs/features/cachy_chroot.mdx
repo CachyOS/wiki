@@ -1,0 +1,144 @@
+---
+title: Pomocník CachyOS chroot
+description: Pomocný nástroj pro snazší chrootování do systémů
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
+---
+
+import {Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+[cachy-chroot](https://github.com/CachyOS/cachy-chroot) je jednoduchý pomocný program, který usnadňuje proces chrootování do existujících
+instalací CachyOS nebo systémů založených na Archu. Vypíše všechny oddíly nalezené na počítači a také podporuje výpis subvolumů BTRFS.
+V neposlední řadě `cachy-chroot` podporuje také šifrované systémy pomocí LUKS. Namapuje každý záznam `fstab` na příslušné záznamy `crypttab`
+a při ukončení chrootu korektně uzavře všechny svazky LUKS.
+
+:::caution[cachy-chroot je určen ke spuštění z živého (live) prostředí CachyOS.]
+:::
+
+:::note
+cachy-chroot podporuje připojení prakticky jakéhokoli souborového systému podporovaného linuxovým jádrem s výjimkou ZFS.
+:::
+
+## Použití
+
+:::tip
+Pro pohyb mezi možnostmi použijte klávesy se šipkami a pro výběr stiskněte `ENTER`.
+
+Symbol **❯** označuje aktuálně vybranou možnost.
+
+**?** označuje výzvu k zadání vstupu od uživatele.
+:::
+
+<Steps>
+1. Nabootujte do živého ISO obrazu CachyOS
+2. Otevřete terminál a přepněte se na uživatele root pomocí `sudo su`
+3. Ujistěte se, že máte nainstalovanou nejnovější verzi `cachy-chroot`, spuštěním:
+    ```bash
+    pacman -Sy cachy-chroot
+    ```
+4. Spusťte `cachy-chroot` zadáním:
+    ```bash
+    cachy-chroot
+    ```
+    `cachy-chroot` prohledá a vypíše všechny dostupné oddíly.
+    <details>
+    <summary>Příklad výstupu při instalaci CachyOS s BTRFS</summary>
+        ```bash
+        Info: Found 3 block devices
+        Info: Found partition: Partition: /dev/nvme0n1p1: FS: vfat UUID: EDA6-ED98
+        Info: Found partition: Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+        Info: Found partition: Partition: /dev/nvme0n1p4: FS: btrfs UUID: 66e84339-8c77-4131-afce-50ec2cf67a80
+        ? Select the block device for the root partition (use arrow keys):  ›
+        Partition: /dev/nvme0n1p1: FS: vfat UUID: EDA6-ED98
+        ❯ Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+        ```
+    </details>
+    <details>
+    <summary>Příklad výstupu s EXT4</summary>
+        ```bash
+        Info: Found 8 block devices
+        Info: Found partition: Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+        Info: Found partition: Partition: /dev/sda2: FS: vfat UUID: CA0D-2D5A
+        Info: Found partition: Partition: /dev/sdb1: FS: ntfs UUID: A4763F77763F48F6
+        Info: Found partition: Partition: /dev/sdc1: FS: ntfs UUID: C4CA216BCA215B46
+        Info: Found partition: Partition: /dev/sdc2: FS: ntfs UUID: 060C28590C284651
+        Info: Found partition: Partition: /dev/sdc3: FS: ntfs UUID: 3A3CF8B13CF86971
+        Info: Found partition: Partition: /dev/sdd1: FS: exfat UUID: 4FDC-0AAB
+        Info: Found partition: Partition: /dev/sdd2: FS: vfat UUID: 3105-B091
+        ? Select the block device for the root partition (use arrow keys):  ›
+        ❯ Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+        Partition: /dev/sda2: FS: vfat UUID: CA0D-2D5A
+        Partition: /dev/sdb1: FS: ntfs UUID: A4763F77763F48F6
+        Partition: /dev/sdc1: FS: ntfs UUID: C4CA216BCA215B46
+        Partition: /dev/sdc2: FS: ntfs UUID: 060C28590C284651
+        Partition: /dev/sdc3: FS: ntfs UUID: 3A3CF8B13CF86971
+        Partition: /dev/sdd1: FS: exfat UUID: 4FDC-0AAB
+        Partition: /dev/sdd2: FS: vfat UUID: 3105-B091
+        ```
+        V tomto příkladu je kořenovým oddílem `/dev/sda1` se souborovým systémem `ext4`. Ostatní oddíly nejsou pro chroot relevantní.
+    </details>
+5. Vyberte oddíl, který obsahuje kořenový souborový systém:
+    <details>
+    <summary>Příklad s CachyOS BTRFS</summary>
+        ```bash title="Výběr kořenového oddílu"
+        ✔ Select the block device for the root partition (use arrow keys):  · Partition: /dev/nvme0n1p2: FS: btrfs UUID: b09a027e-a61d-424f-858f-2e02be61b342
+        Info: Selected BTRFS partition, mounting and listing subvolumes...
+        Info: Mounting partition /dev/nvme0n1p2 at /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-858f-2e02be61b342-hwAeIm with options: []
+        Info: Unmounting partition at /tmp/cachyos-chroot-temp-mount-b09a027e-a61d-424f-858f-2e02be61b342-hwAeIm
+        ? Do you want to use CachyOS BTRFS preset to auto mount root subvolume? (y/n) › # Zadejte y, pokud jste na CachyOS
+        ```
+        **Pokud používáte CachyOS s BTRFS**, zadejte `y` pro použití předvolby CachyOS BTRFS. Tím se automaticky připojí kořenový subvolum a další důležité subvolumy, jako jsou `/home`, `/var`, `/tmp` a `/srv`. Pokud používáte vlastní rozložení BTRFS nebo jiný systém než CachyOS, zadejte `n` a vyberte subvolumy ručně.
+    </details>
+    <details>
+    <summary>Příklad s EXT4</summary>
+            ```bash title="Výběr kořenového oddílu"
+            ✔ Select the block device for the root partition (use arrow keys):  · Partition: /dev/sda1: FS: ext4 UUID: b7fef200-fbb8-4783-9fad-46c5e8b7ca0e
+            Info: Mounting partition /dev/sda1 at /tmp/cachyos-chroot-root-mount-b7fef200-fbb8-4783-9fad-46c5e8b7ca0e-LtsXXC with options: []
+            Info: Mounting additional partitions based on /etc/fstab...
+            Info: Found 3 entries in /etc/fstab
+            Warning: Partition UUID=b7fef200-fbb8-4783-9fad-46c5e8b7ca0e already mounted, skipping...
+            Info: Mounting partition /dev/sda2 at /tmp/cachyos-chroot-root-mount-b7fef200-fbb8-4783-9fad-46c5e8b7ca0e-LtsXXC/boot with options: []
+            Info: Finished mounting additional partitions
+            ✔ Do you want to mount additional partitions? · no
+            Info: Chrooting into the configured root partition...
+            Info: To exit the chroot, type 'exit' or press Ctrl+D
+            ```
+    </details>
+6. `cachy-chroot` se pokusí automaticky připojit všechny oddíly a subvolumy uvedené v `/etc/fstab` kořenového zařízení. Pokud se některé oddíly nepodaří připojit, budete na to upozorněni a dostanete možnost připojit je v případě potřeby ručně. Můžete zvolit `no`, pokud chcete připojování dalších oddílů přeskočit.
+7. **Nyní se nacházíte v prostředí chroot**.
+    ```bash
+    [root@CachyOS /]#
+    ```
+    Nyní můžete spouštět příkazy stejně, jako byste byli nabootováni v nainstalovaném systému. Můžete například aktualizovat systém pomocí:
+    ```bash title="Aktualizace systému v chrootu"
+    pacman -Syu
+    ```
+    ```bash title="Pro jistotu znovu vygenerujte initramfs"
+    mkinitcpio -P
+    ```
+    nebo podle potřeby provádět další úkony údržby.
+8. Po dokončení ukončete prostředí chroot zadáním `exit` do příkazového řádku nebo stisknutím `CTRL+D` na klávesnici.
+    ```bash title="Ukončení chrootu"
+    exit
+    ```
+9. Po ukončení `cachy-chroot` automaticky odpojí připojené oddíly a uzavře všechny kontejnery LUKS. Vrátíte se zpět do shellu živého prostředí.
+</Steps>
+
+### Řešení problémů
+
+- **Nebyly nalezeny žádné oddíly:** Ujistěte se, že disk obsahující vaši instalaci je připojen a rozpoznán živým systémem. Můžete to zkontrolovat pomocí `lsblk` nebo `fdisk -l`.
+- **Automatické připojení u některých oddílů selže:** Můžete je zkusit připojit ručně z prostředí chroot. `cachy-chroot` chyby ignoruje a pokračuje.
+
+### FAQ
+
+- **Otázka: K čemu slouží připojení dalších oddílů?**
+  - Odpověď: Existuje několik případů použití pro ruční připojení dalších oddílů, například:
+    - **Poškozený nebo chybějící soubor fstab:** Můžete ručně připojit potřebné oddíly (například `/boot` nebo `/home`), abyste mohli provést opravy nebo obnovu dat.
+    - **Aktualizovaná UUID oddílů:** Pokud se váš systém nespustí, protože jste změnili UUID oddílu, můžete použít `cachy-chroot` k připojení oddílů a následné aktualizaci souboru fstab.
+
+### Další informace
+
+- [Arch Wiki - chroot](https://wiki.archlinux.org/title/Chroot)
+- [Video ukázka cachy-chroot](https://github.com/user-attachments/assets/29360aaf-b775-4cfa-9051-465ad5360ae8)

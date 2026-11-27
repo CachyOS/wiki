@@ -1,0 +1,97 @@
+---
+title: Přechod mezi GPU NVIDIA a AMD
+description: Pokyny pro přechod z NVIDIA na AMD (a naopak) v CachyOS.
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 3
+ai_translated: true
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::note[Tento průvodce platí, pokud vyměňujete grafickou kartu (NVIDIA ↔ AMD) na stávající instalaci CachyOS.]
+:::
+
+## Požadavky
+  - Vaše náhradní GPU je správně nainstalované a připojené.
+  - Ujistěte se, že je váš systém plně aktualizovaný
+    ```bash
+    sudo pacman -Syu
+    ```
+
+### Postup přechodu
+
+<Tabs>
+    <TabItem label='Z NVIDIA na AMD'>
+        I když jsou ovladače AMD součástí linuxového jádra, může být nutné vyčistit starou konfiguraci NVIDIA a zajistit instalaci potřebných balíčků pro AMD.
+        <Steps>
+            0. Poznamenejte si uživatelské jméno a heslo svého účtu. Můžete je potřebovat pro přihlášení přes TTY.
+            1. Zkontrolujte, který profil ovladačů NVIDIA je aktuálně nainstalován:
+                ```bash
+                sudo chwd --list-installed
+                ```
+            2. Odstraňte konkrétní profil pomocí přepínače `-r`:
+                ```bash
+                sudo chwd -r <profile-name>
+                ```
+            3. Vypněte systém a nainstalujte své GPU AMD.
+                > Pokud se systém po instalaci GPU spustí do černé obrazovky, stiskněte CTRL+ALT+F3 pro přepnutí do TTY.
+                > Zadejte své uživatelské jméno a heslo (dejte pozor na NUMLOCK).
+            4. Po spuštění systému použijte `chwd` k automatické detekci GPU a instalaci správných balíčků pro AMD.
+                ```bash
+                sudo chwd -a
+                ```
+            5. Po instalaci nových ovladačů aktualizujte initramfs a konfiguraci zavaděče
+                > CachyOS obsahuje pacman hook, který při přidání nebo odebrání ovladačů automaticky znovu sestaví initramfs.
+                > Tím se zajistí, že se při spuštění systému načtou správné ovladače.
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            6. Restartujte systém, aby se změny projevily.
+                ```bash
+                sudo reboot
+                ```
+            7. Po restartu ověřte, že jsou ovladače AMD aktivní.
+                ```bash
+                vulkaninfo | grep "deviceName"
+                ```
+                nebo
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                Pokud vidíte v seznamu své GPU AMD, ovladače fungují správně.
+        </Steps>
+    </TabItem>
+    <TabItem label='Z AMD na NVIDIA'>
+        <Steps>
+            1. Odstraňte zbývající balíčky AMD.
+                ```bash
+                sudo chwd -r amd
+                ```
+            2. Vypněte systém a nainstalujte své GPU NVIDIA.
+            3. Po spuštění systému použijte `chwd` k automatické detekci GPU a instalaci správných balíčků pro NVIDIA.
+                ```bash
+                sudo chwd -a
+                ```
+            4. Po instalaci nových ovladačů aktualizujte initramfs a konfiguraci zavaděče
+                > CachyOS obsahuje pacman hook, který při přidání nebo odebrání ovladačů automaticky znovu sestaví initramfs.
+                > Tím se zajistí, že se při spuštění systému načtou správné ovladače.
+                - GRUB: `sudo grub-mkconfig -o /boot/grub/grub.cfg`
+                - systemd-boot: `sudo sdboot-manage gen`
+                - Limine: `sudo limine-mkinitcpio`
+            5. Restartujte systém, aby se změny projevily.
+                ```bash
+                sudo reboot
+                ```
+            6. Po restartu ověřte, že jsou ovladače NVIDIA aktivní.
+                ```bash
+                nvidia-smi
+                ```
+                nebo
+                ```bash
+                glxinfo | grep "OpenGL renderer"
+                ```
+                Pokud vidíte v seznamu své GPU NVIDIA, ovladače fungují správně.
+        </Steps>
+    </TabItem>
+</Tabs>
