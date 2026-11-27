@@ -1,152 +1,153 @@
 ---
-title: Btrfs Snapshots
-description: Managing Btrfs snapshots in CachyOS
+title: Btrfs снимки
+description: Управление на Btrfs снимки в CachyOS
 tableOfContents:
   minHeadingLevel: 1
   maxHeadingLevel: 5
+ai_translated: true
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 import ImageComponent from '~/components/image-component.astro';
 import MultipleImageComponent from '~/components/multiple-images-component.astro';
 
-## Introduction
+## Въведение
 
 :::caution
-Don't consider Btrfs snapshots as a replacement for regular backups. Always ensure you have proper backups of your important data.
+Не разглеждайте Btrfs снимките като заместител на редовните резервни копия (backups). Винаги се уверявайте, че разполагате с надеждни резервни копия на важните си данни.
 :::
 
-### What is a Btrfs snapshot?
+### Какво представлява Btrfs снимката (snapshot)?
 
-Let's start with the basics:
+Нека започнем с основите:
 
-Btrfs snapshots come from the feature of subvolume. What is a subvolume you might ask?. Think of a subvolume as a separate filesystem within the Btrfs filesystem. Allowing you to segment your data in different parts. That's why for example in CachyOS we have different subvolumes for:
+Btrfs снимките се основават на функцията за подтомове (subvolumes). Може би се питате какво е подтом? Представете си подтома като отделна файлова система вътре във файловата система Btrfs. Това ви позволява да разделяте данните си на различни части. Именно затова например в CachyOS имаме отделни подтомове за:
 
-- Root filesystem: (`/`)
-- Root directory: (`/root`)
-- Home directory: (`/home`)
-- Var directories: (`/var/cache`, `/var/tmp`, `/var/log`)
-- Srv directory: (`/srv`)
+- Коренова файлова система: (`/`)
+- Директория root: (`/root`)
+- Домашна директория: (`/home`)
+- Var директории: (`/var/cache`, `/var/tmp`, `/var/log`)
+- Srv директория: (`/srv`)
 
-By having different subvolumes for these directories, we can manage them independently, apply different settings and most importantly create snapshots for them.
+Като имаме отделни подтомове за тези директории, можем да ги управляваме независимо, да прилагаме различни настройки и най-важното — да създаваме снимки за тях.
 
-This is where a snapshot is born. A snapshot is essentially a read-only or read-write (**default**) copy of a subvolume at a specific point in time. This means you can capture the state of your filesystem, including all files and directories, at that moment.
+Точно тук се появява снимката. Снимката на практика е копие само за четене или за четене и запис (**по подразбиране**) на даден подтом в конкретен момент от времето. Това означава, че можете да заснемете състоянието на файловата си система, включително всички файлове и директории, към този момент.
 
-Therefore snapshots become a point-in-time reference meaning when the target file diverges from the snapshot data, the snapshot will keep the original file and the target will create a new file with the changes and the snapshot remains the same forever, that's why some users refer to a snapshot as "data frozen in time".
+По този начин снимките се превръщат в отправна точка във времето: когато целевият файл се отклони от данните в снимката, снимката запазва оригиналния файл, а целта създава нов файл с промените, като самата снимка остава непроменена завинаги — ето защо някои потребители наричат снимката „данни, замразени във времето“.
 
-Imagine taking a photograph of your filesystem at a specific moment, and you can always go back to that photograph whenever you need to.
+Представете си, че правите фотография на файловата си система в определен момент и винаги можете да се върнете към тази фотография, когато ви потрябва.
 
-One of the key advantages of snapshots is that they are very space-efficient because it's just a reference to the original data until changes are made.
+Едно от ключовите предимства на снимките е, че са много икономични откъм дисково пространство, тъй като представляват само препратка към оригиналните данни, докато не бъдат направени промени.
 
-But this is where a snapshot diverges from a traditional backup. Let's say your disk crashes, if you had a traditional backup, you could restore your data from that backup. However, if you only had snapshots on the crashed disk, you would lose access to those snapshots since they are stored on the same disk.
+Но точно тук снимката се различава от традиционното резервно копие. Да предположим, че дискът ви се повреди — ако сте имали традиционно резервно копие, бихте могли да възстановите данните си от него. Ако обаче сте имали само снимки на повредения диск, ще загубите достъп до тях, тъй като те се съхраняват на същия диск.
 
-### Recovery Cases where snapshots are useful and not useful
+### Сценарии за възстановяване, при които снимките са полезни и при които не са
 
-They're useful recovering from:
+Те са полезни за възстановяване при:
 
-- Broken or corruption after system updates.
-- Misconfigurations that prevent the system from booting.
-- Accidental file deletions or modifications.
+- Повреда или срив след системни актуализации.
+- Грешни конфигурации, които пречат на системата да се стартира.
+- Случайно изтриване или промяна на файлове.
 
-They're not useful recovering from:
+Те не са полезни за възстановяване при:
 
-- Bootloader issues.
-- Hardware failures (e.g., failing hard drives).
+- Проблеми с мениджъра за зареждане (буутлоудъра).
+- Хардуерни повреди (напр. дефектиращ твърд диск или SSD).
 
-## Managing snapshots (GUI & CLI)
+## Управление на снимки (GUI и CLI)
 
 :::tip
-Because CachyOS includes `snap-pac` by default, Snapper will automatically create snapshots before and after any package installation, upgrade, or removal using `pacman`. This means you don't have to manually create snapshots for these operations, as Snapper handles it for you.
+Тъй като CachyOS включва `snap-pac` по подразбиране, Snapper автоматично ще създава снимки преди и след всяко инсталиране, актуализиране или премахване на пакети чрез `pacman`. Това означава, че не е нужно да създавате снимки ръчно за тези операции, тъй като Snapper се грижи за това вместо вас.
 :::
 
 :::note
-If you're using the GRUB bootloader, ensure you have `grub-btrfs-support` to have all the necessary scripts and hooks to automatically detect BTRFS snapshots and add them to the GRUB menu.
+Ако използвате мениджъра за зареждане GRUB, уверете се, че имате инсталиран `grub-btrfs-support`, за да разполагате с всички необходими скриптове и куки (hooks) за автоматично откриване на Btrfs снимки и добавянето им към менюто на GRUB.
 ```bash
 sudo pacman -Syu grub-btrfs-support
 ```
 :::
 
-A few things to consider before managing snapshots. **Applies to both CLI and GUI methods.**
+Няколко неща, които да имате предвид при управлението на снимки. **Важи както за CLI, така и за GUI методите.**
 
-- A maximum of 10 snapshots are recommended to be kept. Beyond that, snapshots become too old and less useful. In a worst case scenario, reverting to an old snapshot may introduce compatibility issues with newer software versions.
-- Snapshots ideally are meant to be used to recover purposes. Although you can use them to undo changes to files without restoring the entire snapshot.
-- Add a meaningful description when creating snapshots. This will help you identify the purpose of each snapshot later on.
+- Препоръчително е да съхранявате максимум 10 снимки. Отвъд това снимките стават твърде стари и по-малко полезни. В най-лошия случай връщането към стара снимка може да доведе до проблеми със съвместимостта с по-нови версии на софтуера.
+- В идеалния случай снимките са предназначени за възстановяване. Въпреки това можете да ги използвате и за отмяна на промени по отделни файлове, без да възстановявате цялата снимка.
+- Добавяйте смислено описание при създаването на снимки. Това ще ви помогне по-късно да разпознаете предназначението на всяка снимка.
 
 ### Btrfs Assistant (GUI)
 
-Before proceeding, ensure you have `btrfsmaintenance` installed to take advantage of automatic snapshot management features.
+Преди да продължите, уверете се, че имате инсталиран `btrfsmaintenance`, за да се възползвате от функциите за автоматично управление на снимките.
 
-For those who prefer managing Btrfs, snapshots, and more through a GUI. [Btrfs Assistant](https://gitlab.com/btrfs-assistant/btrfs-assistant) is  an awesome project for beginners.
+За тези, които предпочитат да управляват Btrfs, снимки и др. чрез графичен интерфейс, [Btrfs Assistant](https://gitlab.com/btrfs-assistant/btrfs-assistant) е чудесен проект за начинаещи.
 
-#### Automatic Snapshots Cleanup Setup
+#### Настройка на автоматичното изчистване на снимки
 
-We're going to set up automatic snapshot cleanup using Btrfs Assistant. This will help manage your snapshots effectively without manual intervention.
+Ще настроим автоматично изчистване на снимки с помощта на Btrfs Assistant. Това ще ви помогне да управлявате снимките си ефективно без ръчна намеса.
 
-Follow these steps:
+Следвайте тези стъпки:
 
 <Steps>
 
-    1. Launch Btrfs Assistant by opening a terminal and running:
+    1. Стартирайте Btrfs Assistant, като отворите терминал и изпълните:
         ```bash
         btrfs-assistant-launcher
         ```
 
-        Alternatively:
+        Като алтернатива:
 
         ```bash
         sudo -E btrfs-assistant
         ```
 
-  2. Navigate to the Snapper Settings tab:
+  2. Отидете в раздела **Snapper Settings**:
 
       <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperSettingsTab.png')} />
-      Modify the **Snapshot Retention** settings as follows:
-      - Ensure the `root` config is selected
-      - Enter a value of `0` for Hourly, Daily, Weekly, Monthly and Yearly.
-      - Untick `Enable timeline snapshots`.
-      - Enter a value of `10` to `Number`.
-      - Add a ✅ to `Snapper cleanup enabled`.
-      - Click on the `Save` button on the top right and `Apply systemd changes` on the bottom right.
-      **snapper-cleanup.timer will now be enabled to automatically clean up old snapshots based on your configuration.**
+      Променете настройките за **Snapshot Retention** (Запазване на снимки), както следва:
+      - Уверете се, че е избрана конфигурацията `root`.
+      - Въведете стойност `0` за Hourly, Daily, Weekly, Monthly и Yearly.
+      - Премахнете отметката от `Enable timeline snapshots`.
+      - Въведете стойност `10` за `Number`.
+      - Поставете отметка ✅ на `Snapper cleanup enabled`.
+      - Щракнете върху бутона `Save` горе вдясно и върху `Apply systemd changes` долу вдясно.
+      **`snapper-cleanup.timer` вече ще бъде активиран, за да изчиства автоматично старите снимки според вашата конфигурация.**
       :::caution
-      Verify the adjustments you just made have been applied correctly by checking the Snapper configuration:
+      Проверете дали направените промени са приложени правилно, като прегледате конфигурацията на Snapper:
       ```bash
       sudo nano /etc/snapper/configs/root
       ```
-      Expected output snippet:
+      Очакван фрагмент от съдържанието:
       ```text
       # limit for number cleanup
       NUMBER_MIN_AGE="3600"
       NUMBER_LIMIT="10"
       NUMBER_LIMIT_IMPORTANT="10"
       ```
-      If `NUMBER_LIMIT` and `NUMBER_LIMIT_IMPORTANT` don't contain the value of `10`. Update them accordingly.
-      Save the file and exit by pressing `CTRL + O`, `Enter` and `CTRL + X`.
+      Ако `NUMBER_LIMIT` и `NUMBER_LIMIT_IMPORTANT` не съдържат стойност `10`, актуализирайте ги съответно.
+      Запазете файла и излезте, като натиснете `CTRL + O`, `Enter` и `CTRL + X`.
       :::
 </Steps>
 
-#### Removing Snapshots using Btrfs Assistant
+#### Премахване на снимки с помощта на Btrfs Assistant
 
 <Steps>
-    1. Open Btrfs Assistant:
+    1. Отворете Btrfs Assistant:
         ```bash
         btrfs-assistant-launcher
         ```
 
-        Alternatively:
+        Като алтернатива:
 
         ```bash
         sudo -E btrfs-assistant
         ```
-    2. Go to the Snapper Settings tab:
+    2. Отидете в раздела **Snapper**:
         <ImageComponent imgsrc={import('~/assets/images/btrfs-maintenance-snapperTab.png')} />
-    3. Select the snapshot(s) you want to delete from the list.
+    3. Изберете снимката или снимките, които искате да изтриете, от списъка.
         :::tip
-        - Hold `CTRL` to select multiple snapshots.
-        - Hold `SHIFT` to select a range of snapshots.
+        - Задръжте `CTRL`, за да изберете няколко снимки.
+        - Задръжте `SHIFT`, за да изберете диапазон от снимки.
         :::
-    4. Click on the `Delete` button located at the top of the window.
-    5. Regenerate your bootloader entires to reflect the changes:
+    4. Щракнете върху бутона `Delete`, намиращ се в горната част на прозореца.
+    5. Генерирайте отново записите в мениджъра за зареждане, за да се отразят промените:
         <details>
             <summary>systemd-boot</summary>
             ```bash
@@ -167,14 +168,14 @@ Follow these steps:
         </details>
 </Steps>
 
-Check out their [Official Wiki](https://gitlab.com/btrfs-assistant/wiki) for a more in depth look about what can be done.
+Разгледайте тяхното [Официално уики](https://gitlab.com/btrfs-assistant/wiki) за по-подробен поглед върху това какво може да се направи.
 
 ### Snapper (CLI)
 
-Now that we covered what a Btrfs snapshot is and its use cases, let's talk about how to manage them using a tool called [Snapper](http://snapper.io/) created by [Arvin Schnell](https://github.com/aschnell) from [openSUSE](https://www.opensuse.org/).
+След като разгледахме какво представлява Btrfs снимката и нейните приложения, нека поговорим за това как да ги управляваме чрез инструмента [Snapper](http://snapper.io/), създаден от [Arvin Schnell](https://github.com/aschnell) от [openSUSE](https://www.opensuse.org/).
 
 <details>
-<summary>CachyOS uses the following Snapper configuration by default:</summary>
+<summary>По подразбиране CachyOS използва следната конфигурация на Snapper:</summary>
 
 ```text
 # subvolume to snapshot
@@ -236,40 +237,61 @@ EMPTY_PRE_POST_MIN_AGE="1800"
 </details>
 
 :::caution
-CachyOS's default Snapper configuration only covers the root subvolume (`/`). If you have other subvolumes that you want to manage with Snapper, you'll need to create separate configurations for each of them.
+Конфигурацията на Snapper по подразбиране в CachyOS обхваща само кореновия подтом (`/`). Ако имате други подтомове, които искате да управлявате със Snapper, ще трябва да създадете отделни конфигурации за всеки от тях.
 
-This configuration requires a revision to increase it's effectiveness.
+Тази конфигурация изисква преглед и настройка, за да се повиши ефективността ѝ.
 :::
 
-Here is a list of the most common Snapper commands.
+Ето списък с най-често използваните команди на Snapper.
 
 :::note
-`< >` indicates a placeholder that you should replace with the appropriate value.
+`< >` обозначава параметър, който трябва да замените със съответната стойност.
 :::
 
 <details>
-    <summary>Get current configuration:</summary>
+    <summary>Преглед на текущата конфигурация:</summary>
     ```bash
     sudo snapper get-config
     ```
     <details>
-        <summary>Output Example:</summary>
+        <summary>Примерен изход:</summary>
         ```bash
-        ❯ snapper list-configs
-        Config │ Subvolume
-        ───────┼──────────
-        root   │ /
+        Key                    │ Value
+        ───────────────────────┼──────
+        ALLOW_GROUPS           │
+        ALLOW_USERS            │
+        BACKGROUND_COMPARISON  │ yes
+        EMPTY_PRE_POST_CLEANUP │ yes
+        EMPTY_PRE_POST_MIN_AGE │ 1800
+        FREE_LIMIT             │ 0.2
+        FSTYPE                 │ btrfs
+        NUMBER_CLEANUP         │ yes
+        NUMBER_LIMIT           │ 10
+        NUMBER_LIMIT_IMPORTANT │ 10
+        NUMBER_MIN_AGE         │ 3600
+        QGROUP                 │
+        SPACE_LIMIT            │ 0.5
+        SUBVOLUME              │ /
+        SYNC_ACL               │ no
+        TIMELINE_CLEANUP       │ yes
+        TIMELINE_CREATE        │ no
+        TIMELINE_LIMIT_DAILY   │ 0
+        TIMELINE_LIMIT_HOURLY  │ 0
+        TIMELINE_LIMIT_MONTHLY │ 0
+        TIMELINE_LIMIT_WEEKLY  │ 0
+        TIMELINE_LIMIT_YEARLY  │ 0
+        TIMELINE_MIN_AGE       │ 1800
         ```
     </details>
 </details>
 
 <details>
-    <summary>List available snapshots + details:</summary>
+    <summary>Списък с наличните снимки + подробности:</summary>
     ```bash
     sudo snapper list
     ```
     <details>
-        <summary>Output Example:</summary>
+        <summary>Примерен изход:</summary>
         ```bash
           # │ Type   │ Pre # │ Date                     │ User │ Cleanup │ Description                                                              │ Userdata
         ────┼────────┼───────┼──────────────────────────┼──────┼─────────┼──────────────────────────────────────────────────────────────────────────┼─────────
@@ -289,39 +311,38 @@ Here is a list of the most common Snapper commands.
         727 │ pre    │       │ Sun 25 Jan 2026 15:55:28 │ root │ number  │ pacman -S --config /etc/pacman.conf -- cachyos-extra-znver4/caligula     │
         728 │ post   │   727 │ Sun 25 Jan 2026 15:55:30 │ root │ number  │ caligula                                                                 │
       ```
-      - Here is a summary of the columns:
-        - `#`: Indicates the snapshot number which is used in other commands.
-        - `Type`: Indicates whether the snapshot is a single snapshot or part of a pre/post pair.
-            - `single`: These snapshots have no special relationship to other snapshots.
-            - `pre`: These snapshots are meant to be taken before any kind of system change (like editing a file or installing a package).
-            - `post`: As the name implies, these snapshots refer to snapshots taken after a system change has occurred. They are linked to their corresponding `pre` snapshot.
-        - `Pre #`: For `post` snapshots, this column indicates the snapshot number of the corresponding `pre` snapshot.
-        - `Date`: The date and time when the snapshot was created.
-        - `User`: The user who created the snapshot.
-        - `Cleanup`: Indicates the cleanup algorithm applied to the snapshot.
-            - There are several cleanup algorithms available in Snapper, such as `number`, `timeline`, and empty-pre-post. In this example, the `number` algorithm is used, which means that older snapshots will be deleted based on a predefined limit.
-            - timeline: Snapshots are cleaned up based on their age and frequency.
-            - empty-pre-post: Deletes pre/post snapshot pairs with empty diffs.
-        - `Description`: A brief description of the snapshot, often indicating the reason for its creation.
-        - `Userdata`: Additional user-defined data associated with the snapshot.
-        For more details about the output columns
+      - Ето обобщение на колоните:
+        - `#`: Указва номера на снимката, който се използва в други команди.
+        - `Type`: Показва дали снимката е единична или част от двойка pre/post.
+            - `single`: Тези снимки нямат специална връзка с други снимки.
+            - `pre`: Тези снимки са предназначени да се правят преди някаква промяна в системата (например редактиране на файл или инсталиране на пакет).
+            - `post`: Както подсказва името, тези снимки са направени след извършена промяна в системата. Те са свързани със съответната си `pre` снимка.
+        - `Pre #`: За `post` снимките тази колона показва номера на съответната `pre` снимка.
+        - `Date`: Датата и часът на създаване на снимката.
+        - `User`: Потребителят, създал снимката.
+        - `Cleanup`: Показва алгоритъма за изчистване, приложен към снимката.
+            - В Snapper са налични няколко алгоритъма за изчистване, като `number`, `timeline` и `empty-pre-post`. В този пример се използва алгоритъмът `number`, което означава, че по-старите снимки ще бъдат изтривани въз основа на предварително зададен лимит.
+            - `timeline`: Снимките се изчистват въз основа на тяхната възраст и честота.
+            - `empty-pre-post`: Изтрива двойки pre/post снимки, между които няма разлики.
+        - `Description`: Кратко описание на снимката, което често указва причината за нейното създаване.
+        - `Userdata`: Допълнителни потребителски данни, свързани със снимката.
     </details>
 </details>
 
 <details>
-    <summary>Create a new snapshot:</summary>
+    <summary>Създаване на нова снимка:</summary>
     ```bash
     sudo snapper create --type single --description "My Snapshot Description"
     ```
 </details>
 
 <details>
-    <summary>Modify a snapshot:</summary>
+    <summary>Редактиране на снимка:</summary>
     ```bash
     sudo snapper modify <option> <snapshot_number>
     ```
     <details>
-        <summary>Available options:</summary>
+        <summary>Налични опции:</summary>
         ```bash
         Options for 'modify' command:
             --description, -d <description>  Description for snapshot.
@@ -332,7 +353,7 @@ Here is a list of the most common Snapper commands.
             --default                        Set snapshot as default snapshot.
         ```
         <details>
-            <summary>Example: Modifying snapshot 729 description:</summary>
+            <summary>Пример: Промяна на описанието на снимка 729:</summary>
             ```bash
             sudo snapper modify 729 --description 'My New Snapshot Description'
             ```
@@ -341,49 +362,49 @@ Here is a list of the most common Snapper commands.
 </details>
 
 <details>
-<summary>Deletion of snapshots:</summary>
+<summary>Изтриване на снимки:</summary>
 :::note
-Snapshot 0 cannot be deleted as it represents the current state of the filesystem.
+Снимка 0 не може да бъде изтрита, тъй като представлява текущото състояние на файловата система.
 :::
     <details>
-    <summary>Delete a single snapshot:</summary>
+    <summary>Изтриване на единична снимка:</summary>
     ```bash
     sudo snapper delete <snapshot_number>
     ```
     </details>
     <details>
-    <summary>Delete a range of snapshots:</summary>
+    <summary>Изтриване на диапазон от снимки:</summary>
     ```bash
     sudo snapper delete 718-721
     ```
-    Snapshot 718, 719, 720, and 721 will be deleted.
+    Снимки 718, 719, 720 и 721 ще бъдат изтрити.
     </details>
 </details>
 
-#### Snapper Documentation
+#### Документация на Snapper
 
-[Official Snapper's command man page:](http://snapper.io/manpages/snapper.html#global_options)
+[Официална man страница на командата Snapper](http://snapper.io/manpages/snapper.html#global_options)
 
-[Snapper Configuration File guide:](http://snapper.io/manpages/snapper-configs.html)
+[Ръководство за конфигурационния файл на Snapper](http://snapper.io/manpages/snapper-configs.html)
 
-[Arch Wiki guide:](https://wiki.archlinux.org/title/Snapper)
+[Ръководство в Arch Wiki](https://wiki.archlinux.org/title/Snapper)
 
-### Limine  Recommendations & Tips
+### Препоръки и съвети за Limine
 
-#### Tweak Limine bootloader Snapshots Display Settings
+#### Настройка на показването на снимки в буутлоудъра Limine
 
-- Limit the number of snapshots shown in the Limine bootloader menu to avoid clutter:
+- Ограничете броя на снимките, показвани в менюто на мениджъра за зареждане Limine, за да избегнете претрупване:
 
 <Steps>
-    1. Create a backup of the limine-snapper-sync configuration file:
+    1. Направете резервно копие на конфигурационния файл на `limine-snapper-sync`:
         ```bash
         sudo cp /etc/limine-snapper-sync.conf /etc/limine-snapper-sync.conf.orig
         ```
-    2. Edit the limine-snapper-sync configuration file:
+    2. Редактирайте конфигурационния файл на `limine-snapper-sync`:
         ```bash
         sudo nano /etc/limine-snapper-sync.conf
         ```
-        Expected output snippet:
+        Очакван фрагмент от съдържанието:
         ```bash
         ### Max Snapshot Entries
         ### Sets the limit for how many snapshot entries show up in the boot menu.
@@ -391,7 +412,7 @@ Snapshot 0 cannot be deleted as it represents the current state of the filesyste
         ### A larger FAT32 boot partition allows more snapshot entries.
         MAX_SNAPSHOT_ENTRIES=10
         ```
-        Optionally, adjust the Snapshot Name Format:
+        По желание коригирайте формата на имената на снимките:
         ```bash
         ### Snapshot Name Format
         ### Choose a format for how snapshot entries look in the Limine bootloader:
@@ -407,31 +428,31 @@ Snapshot 0 cannot be deleted as it represents the current state of the filesyste
         ### 9. │snapshot description
         SNAPSHOT_FORMAT_CHOICE=8
         ```
-        `8` is a good choice as it shows the date and time along with the snapshot description.
-    3. Save the file and exit by pressing `CTRL+O` `Enter` `CTRL+X`
+        `8` е добър избор, тъй като показва датата и часа заедно с описанието на снимката.
+    3. Запазете файла и излезте, като натиснете `CTRL+O`, `Enter`, `CTRL+X`.
 </Steps>
 
-### Restoring from a Snapshot
+### Възстановяване от снимка
 
 :::caution
-If the snapshot you want to restore from involved a kernel update, you won't be able to rollback.
+Ако снимката, от която искате да възстановите системата, включва актуализация на ядрото, няма да можете да извършите връщане (rollback).
 :::
 
 <details>
     <summary>Limine</summary>
     <Steps>
-        1. From the Limine bootloader menu, navigate to the Snapshots menu:
+        1. От менюто на мениджъра за зареждане Limine отидете в менюто Snapshots:
             <ImageComponent imgsrc={import('~/assets/images/limine-snapshotMenu-1.jpg')} />
-        2. Select the snapshot & kernel you want to restore from:
+        2. Изберете снимката и ядрото, от които искате да възстановите системата:
             <MultipleImageComponent
                 images={[
                 import('~/assets/images/limine-snapshotMenu-2.jpg'),
-                import('~/assets/images/limine-snapshotMenu-1.jpg')]}
+                import('~/assets/images/limine-snapshotMenu-3.jpg')]}
             />
-        3. Your system is now in `read-only mode`. A pop up notification should appear indicating that a snapshot was detected asking to restore from it:
+        3. Системата ви вече е в режим само за четене (`read-only mode`). Би трябвало да се появи изскачащо известие, че е открита снимка, с въпрос дали искате да възстановите от нея:
             <ImageComponent imgsrc={import('~/assets/images/kde-snapshot-popup.png')} />
-        4. Click on `Restore now`. A terminal window will open with a prompt and ask for some confirmations:
-            ```bash title="Example Restore Prompt"
+        4. Щракнете върху `Restore now`. Ще се отвори терминален прозорец с подкана за потвърждение:
+            ```bash title="Примерен диалог за възстановяване"
             Snapshot ID    : 2
             Date           : 2026-01-26 11:19:14
             Description    : nc-git
@@ -446,8 +467,8 @@ If the snapshot you want to restore from involved a kernel update, you won't be 
 
             Your input: @
             ```
-          5. Type `yes` and optionally add a description for the backup snapshot.
-          6. The restoration process will begin. Once completed, Type yes once again in the new prompt to reboot your system:
+          5. Въведете `yes` и по желание добавете описание за резервната снимка.
+          6. Процесът по възстановяване ще започне. След като приключи, въведете `yes` отново в новата подкана, за да рестартирате системата си:
               ```bash
               The restore is complete. Please reboot now:
               Type [y]es to reboot, [n]o or [c]ancel to abort rebooting.
@@ -460,19 +481,19 @@ If the snapshot you want to restore from involved a kernel update, you won't be 
 <details>
     <summary>GRUB</summary>
     <Steps>
-        1. From the GRUB bootloader menu. Boot into the desired snapshot & kernel you want to restore from.
-        2. Once booted. Open Btrfs Assistant:
+        1. От менюто на мениджъра за зареждане GRUB стартирайте желаната снимка и ядро, от които искате да възстановите.
+        2. След като системата зареди, отворете Btrfs Assistant:
             ```bash
             btrfs-assistant-launcher
             ```
 
-            Alternatively:
+            Като алтернатива:
 
             ```bash
             sudo -E btrfs-assistant
             ```
-        3. Go to the Snapper tab → “Browse/Restore” tab and select the snapshot you booted from:
+        3. Отидете в раздела **Snapper** → **Browse/Restore** и изберете снимката, от която сте заредили:
             <ImageComponent imgsrc={import('~/assets/images/btrfs-assistant-example.png')} />
-        4. Click on `Restore` button and reboot your system to apply the changes.
+        4. Щракнете върху бутона `Restore` и рестартирайте системата си, за да приложите промените.
     </Steps>
 </details>

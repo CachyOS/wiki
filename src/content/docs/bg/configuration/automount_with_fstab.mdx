@@ -1,143 +1,355 @@
 ---
-title: Automount Additional Drives Through fstab at Boot
-description: Mount additional static drives at boot by utilizing the file found at /etc/fstab
+title: Автоматично монтиране на допълнителни дискове при зареждане
+description: Монтирайте допълнителни статични дискове при зареждане на системата чрез systemd mount файлове или файла /etc/fstab
+ai_translated: true
 ---
 
-This tutorial describes the basics of utilizing the fstab file located in /etc/ in order to mount static drives during boot. It briefly explains how to find a partition or drive's UUID, what some options do, and further reading should the information provided be insufficient.
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
-## Prerequisites
+Това ръководство описва основите за използване както на systemd mount файлове, така и на файла fstab, намиращ се в /etc/, за монтиране на статични дискове по време на зареждане. В него накратко се обяснява как да намерите UUID на дял или диск, какво правят някои от опциите, както и се предоставят допълнителни източници за четене, в случай че дадената информация не ви е достатъчна.
 
-- Root or sudo access
+## Предварителни изисквания
 
-## Adding Entries to /etc/fstab
+- Root или sudo достъп
 
-:::note[NTFS on Linux]
-The NTFS filesystem can be unstable under Linux, whether using the ntfs3 or ntfs-3g driver. Use it at your own risk. For better stability and performance, consider Linux native filesystems like ext4, xfs, or btrfs.
+:::note[NTFS под Linux]
+Файловата система NTFS може да бъде нестабилна под Linux, независимо дали се използва драйверът ntfs, ntfs3 или ntfs-3g. Използвайте я на свой собствен риск. За по-добра стабилност и производителност обмислете използването на нативни за Linux файлови системи като ext4, xfs или btrfs.
 :::
 
-### 1. List the UUIDs of your partitions
+## По-безопасен и лесен за начинаещи метод: Монтиране на дискове чрез systemd mount файлове
 
-```sh title="Open a terminal and run the following command"
+Предимството на монтирането чрез systemd е, че дори да сгрешите нещо във вашия mount файл, системата ви все пак ще се зареди. За разлика от това, грешка във fstab може да направи системата ви неспособна да стартира.
+
+### 1. Извеждане на UUID на вашите дялове
+
+```sh title="Отворете терминал и изпълнете следната команда"
 lsblk -f
 ```
 
-```text title="Example output"
-# NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
-# zram0                                                                              [SWAP]
-# nvme0n1
-# ├─nvme0n1p1 vfat   FAT32       E04D-9F05
-# ├─nvme0n1p2
-# ├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
-# ├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
-# ├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
-# └─nvme0n1p6 ntfs
+```sh title="Примерен изход"
+NAME          FSTYPE FSVER LABEL UUID                                 FSAVAIL   FSUSE% MOUNTPOINTS
+zram0                                                                              [SWAP]
+nvme0n1
+├─nvme0n1p1   vfat   FAT32       E04D-9F05
+├─nvme0n1p2
+├─nvme0n1p3   ntfs               08A24E90A24E81E4                      715.4G   50%
+├─nvme0n1p4   vfat   FAT32       E09C-D4DA                             628.1M   39% /boot
+├─nvme0n1p5   ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G   47% /
+└─nvme0n1p6   ntfs
+nvme1n1
+└─nvme1n1p1   ext4               4e55896f-3f1f-4bc5-aa8a-fec099689cd9  931.5G   0%
+
 ```
 
-In our example, we know that we want to mount a Windows partition, which is ntfs. We also know that roughly half its space is available. Therefore, we can determine that the partition we want to mount is `nvme0n1p3` and its UUID to be `08A24E90A24E81E4`, with a file system of `ntfs` in this example.
+В този пример искаме да монтираме допълнителен диск, току-що форматиран като ext4. Знаем, че е 1TB диск и че на него все още няма записано нищо. Следователно можем да определим, че дялът за монтиране е `nvme1n1p1`, който има UUID `4e55896f-3f1f-4bc5-aa8a-fec099689cd9`.
 
-### 2. Identifying your partition
+### 2. Идентифициране на вашия дял
 
-Often `lsblk -f` will provide all the information you need to mount your disk through /etc/fstab at this point. If you're still unsure which is the correct partition, you can run the following command:
+Често на този етап `lsblk -f` ще ви даде цялата информация, от която се нуждаете, за да монтирате диска си чрез systemd. Ако все още не сте сигурни кой е правилният дял, можете да изпълните следната команда:
 
 ```sh
 sudo fdisk -l
 ```
 
-```text title="Example output"
-# Device              Start        End    Sectors  Size Type
-# /dev/nvme0n1p1       2048     206847     204800  100M EFI System
-# /dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
-# /dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
-# /dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
-# /dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
-# /dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
+```sh title="Примерен изход"
+Device          Start       End         Sectors     Size    Type
+/dev/nvme0n1p1  2048        206847      204800      100M    EFI System
+/dev/nvme0n1p2  206848      239615      32768       16M     Microsoft reserved
+/dev/nvme0n1p3  239616      2997384182  2997144567  1.4T    Microsoft basic data
+/dev/nvme0n1p4  2997385216  2999482367  2097152     1G      EFI System
+/dev/nvme0n1p5  2999482368  3905454079  905971712   432G    Linux root (x86-64)
+/dev/nvme0n1p6  3905454080  3907026943  1572864     768M    Windows recovery environment
+/dev/nvme1n1p1  2048        1953523711  1953521664  931.5G  Linux filesystem
+
 ```
 
-We already know our UUID in this example. However, `fdisk -l` can make it a bit more clear to us by showing the exact size of the partition (1.4T) as well as its type (Microsoft basic data).
+В този пример вече знаем нашия UUID. Въпреки това `fdisk -l` може да внесе повече яснота, като покаже точния размер на дяла (931.5G), както и неговия тип (Linux filesystem).
 
-That should make it abundantly clear to us that the partition we want is `nvme0n1p3` with a UUID of `08A24E90A24E81E4` as described earlier. We knew earlier, but now we just know it for sure.
+Това прави съвсем сигурно, че дялът, който търсим, е `nvme1n1p1` с UUID `4e55896f-3f1f-4bc5-aa8a-fec099689cd9`, както беше описано по-рано. Знаехме го и преди, но сега сме напълно сигурни.
 
-Once you are confident you've found the correct partition, copy the UUID. Copying from the terminal emulator is typically done with `ctrl+shift+C`.
+След като сте сигурни, че сте намерили правилния дял, копирайте неговия UUID. Копирането от терминалния емулатор обикновено се прави с `ctrl+shift+C`.
 
-### 3. Adding an Entry to /etc/fstab
+### 3. Създаване на systemd mount файла
+Да кажем, че искаме да използваме този диск предимно за игри — добро място за монтирането му е във вашата потребителска домашна директория. Може да е навсякъде, но за простота ще използваме `/home/user` (заменете `user` с вашето Linux потребителско име). Това има значение, тъй като пътят на монтиране определя името на systemd mount файла. Понеже този диск е предназначен за игри, ще го монтираме в папката `games` в домашната директория на потребителя: `/home/user/games`.
 
-Now that we've obtained the UUID of our partition, it's time to open up the fstab file.
+За systemd mount файл това се превежда като `home-$USER-games.mount` (наклонените черти `/` се заменят с тирета `-`), като systemd mount файловете се поставят в `/etc/systemd/system`.
 
-Feel free to use your text editor of choice. In this example, we will use nano. In order to edit the fstab file, it must be opened as root:
+:::tip
+Ако искате да използвате интервал, тире, CJK символ или символ с ударение/диакритика в името на папката за монтиране, името на файла трябва да бъде форматирано по различен начин. Да кажем, че искате да използвате пътя `/home/grzegorz/brzęczyszczykiewicz` — изпълнете следната команда, за да получите името, което трябва да използвате за вашия файл:
+```bash
+systemd-escape -p --suffix=mount "/home/grzegorz/brzęczyszczykiewicz"
+```
+Тъй като трябва да екранирате всяка обратна наклонена черта `\`, ще създадете mount файла като `/etc/systemd/system/home-grzegorz-brz\\xc4\\x99czyszczykiewicz.mount`
+:::
+
+Използвайте текстов редактор по ваш избор; в този пример ще използваме `micro`.
+
+```sh
+micro /etc/systemd/system/home-$USER-games.mount
+```
+:::note
+Ако монтирате в потребителската си домашна директория, можете да оставите `$USER` в горното име на файла — вашето потребителско име ще заеме мястото му автоматично.
+:::
+
+Поставете този шаблон в празния файл:
+```ini
+[Unit]
+Description=
+
+[Mount]
+What=
+Where=
+Type=
+Options=
+
+[Install]
+WantedBy=multi-user.target
+```
+По-долу са описани всяко от полетата във файла:
+
+<Tabs>
+  <TabItem label='Description'>
+  Description може да бъде каквото пожелаете — служи за ваше собствено разпознаване.
+  </TabItem>
+  <TabItem label= 'What'>
+  Въведете UUID, който копирахте по-рано. Тук това ще бъде `UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9`
+  </TabItem>
+  <TabItem label= 'Where'>
+  Това е точката на монтиране. Папката ще бъде създадена автоматично, ако не съществува. Тук тя ще бъде `/home/user/games`. Заменете "user" с вашето потребителско име, ако монтирате в домашната си папка.
+  </TabItem>
+  <TabItem label= 'Type'>
+  Тип на файловата система — тук ще бъде `ext4`
+  </TabItem>
+  <TabItem label= 'Options'>
+  Всички опции за монтиране, които желаете. Тук ще използваме `defaults,exec,rw,noatime`. Важно е да няма интервали.
+  </TabItem>
+</Tabs>
+---
+
+Следвайки примера, попълненият mount файл трябва да изглежда така:
+```ini
+[Unit]
+Description=Mount games drive (/home/user/games)
+
+[Mount]
+What=UUID=4e55896f-3f1f-4bc5-aa8a-fec099689cd9
+Where=/home/user/games
+Type=ext4
+Options=defaults,exec,rw,noatime
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 4. Завършване
+За да монтирате диска, за който току-що създадохте запис, изпълнете следното:
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now home-$USER-games.mount
+```
+
+Трябва да видите избраната от вас папка за точка на монтиране и можете да проверите състоянието на монтирането с `systemctl status home-$USER-games.mount`:
+
+```sh
+● home-user-games.mount - Mount games drive (/home/user/games)
+     Loaded: loaded (/proc/self/mountinfo; enabled; preset: disabled)
+     Active: active (mounted) since Sat 2026-05-02 13:02:31 CDT; 23h ago
+ Invocation: e52ef8fe3d754c64a3825bc1ee89e7da
+      Where: /home/user/games
+       What: /dev/nvme1n1p1
+      Tasks: 0 (limit: 74118)
+     Memory: 316K (peak: 3.9M)
+        CPU: 5ms
+     CGroup: /system.slice/home-user-games.mount
+
+May 02 13:02:31 cachyos systemd[1]: Mounting Mount games drive (/home/user/games)...
+May 02 13:02:31 cachyos systemd[1]: Mounted Mount games drive (/home/user/games).
+```
+
+### Накратко (tl;dr)
+
+- Намерете **UUID** на вашия дял
+
+```sh
+lsblk -f
+```
+
+- Създайте mount файла
+
+```sh
+micro /etc/systemd/system/mnt-foo.mount
+```
+
+Като замените `mnt-foo` с пълния път, където искате да монтирате, заменяйки `/` с `-`.
+
+- Попълнете mount файла
+
+```sh
+[Unit]
+Description=Mount drive
+
+[Mount]
+What=UUID=<partition UUID>
+Where=/mnt/foo
+Type=somefs
+Options=defaults
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Като замените `<partition UUID>`, `/mnt/foo` и `somefs` с вашия UUID, директория и файлова система (напр. ext4), както и зададете други опции след `defaults`, които може да са ви нужни, например `_netdev` за NAS или `nofail` за диск, който не е критичен за системата.
+
+- Презаредете демона
+
+```sh
+sudo systemctl daemon-reload
+```
+
+- Монтирайте диска и го настройте да се монтира при зареждане
+
+```sh
+sudo systemctl enable --now mnt-foo.mount
+```
+
+### Допълнително четиво
+
+- [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
+- [FHS относно /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Ръководство за dump](<https://linux.die.net/man/8/dump>)
+- [Ръководство за fsck](https://man.archlinux.org/man/fsck.8)
+- [systemd-mount](https://manual.siduction.org/systemd-mount_en.html)
+
+## Метод за напреднали: Добавяне на записи в /etc/fstab
+
+:::danger
+Файлът fstab се чете по време на зареждане и ако в него има грешка, това може да попречи на системата ви да стартира. Задължително проверете внимателно записа си за печатни грешки, преди да рестартирате. Ако все пак допуснете грешка, обикновено можете да я поправите, като заредите в live среда и направите [chroot във вашата инсталация](/bg/features/cachy_chroot), за да редактирате файла.
+:::
+
+### 1. Извеждане на UUID на вашите дялове
+
+```sh title="Отворете терминал и изпълнете следната команда"
+lsblk -f
+```
+
+```sh title="Примерен изход"
+NAME        FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+zram0                                                                              [SWAP]
+nvme0n1
+├─nvme0n1p1 vfat   FAT32       E04D-9F05
+├─nvme0n1p2
+├─nvme0n1p3 ntfs               08A24E90A24E81E4                      715.4G    50%
+├─nvme0n1p4 vfat   FAT32       E09C-D4DA                             628.1M    39% /boot
+├─nvme0n1p5 ext4   1.0         187a9f06-9411-48d9-b941-f03c2e605812  203.6G    47% /
+└─nvme0n1p6 ntfs
+```
+
+В нашия пример знаем, че искаме да монтираме дял на Windows, който е ntfs. Също така знаем, че приблизително половината от пространството му е свободно. Следователно можем да определим, че дялът, който искаме да монтираме, е `nvme0n1p3`, а неговият UUID е `08A24E90A24E81E4` с файлова система `ntfs` в този пример.
+
+### 2. Идентифициране на вашия дял
+
+Често на този етап `lsblk -f` ще ви даде цялата информация, от която се нуждаете, за да монтирате диска си чрез `/etc/fstab`. Ако все още не сте сигурни кой е правилният дял, можете да изпълните следната команда:
+
+```sh
+sudo fdisk -l
+```
+
+```sh title="Примерен изход"
+Device              Start        End    Sectors  Size Type
+/dev/nvme0n1p1       2048     206847     204800  100M EFI System
+/dev/nvme0n1p2     206848     239615      32768   16M Microsoft reserved
+/dev/nvme0n1p3     239616 2997384182 2997144567  1.4T Microsoft basic data
+/dev/nvme0n1p4 2997385216 2999482367    2097152    1G EFI System
+/dev/nvme0n1p5 2999482368 3905454079  905971712  432G Linux root (x86-64)
+/dev/nvme0n1p6 3905454080 3907026943    1572864  768M Windows recovery environment
+```
+
+В този пример вече знаем нашия UUID. Въпреки това `fdisk -l` може да внесе повече яснота, като покаже точния размер на дяла (1.4T), както и неговия тип (Microsoft basic data).
+
+Това прави съвсем сигурно, че дялът, който търсим, е `nvme0n1p3` с UUID `08A24E90A24E81E4`, както беше описано по-рано. Знаехме го и преди, но сега сме напълно сигурни.
+
+След като сте сигурни, че сте намерили правилния дял, копирайте неговия UUID. Копирането от терминалния емулатор обикновено се прави с `ctrl+shift+C`.
+
+### 3. Добавяне на запис в /etc/fstab
+
+Сега, след като разполагаме с UUID на нашия дял, е време да отворим файла fstab.
+
+Използвайте текстов редактор по ваш избор. В този пример ще използваме `nano`. За да редактирате файла fstab, той трябва да бъде отворен като root:
 
 ```sh
 sudo nano /etc/fstab
 ```
 
-Using the arrow keys, navigate to the bottom of the fstab file, then create our new entry on an empty new line:
+Използвайки клавишите със стрелки, отидете до края на файла fstab, след което създайте новия ни запис на празен нов ред:
 
 ```sh
 UUID=08A24E90A24E81E4 /media/windows ntfs3 defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000 0 0
 ```
 
 :::note
-`/media/windows` needs to exist on your filesystem. Use `mkdir` to create the directory if it doesn't.
+`/media/windows` трябва да съществува във вашата файлова система. Използвайте `mkdir`, за да създадете директорията, ако не съществува.
 :::
 
-The break down of this entry is as follows:
+Разбивката на този запис е следната:
 
-- `UUID=08A24E90A24E81E4` is the file system we want to mount, identified by its UUID. There are other methods to identify your filesystem, though UUID tends to be safest. Additional methods listed [here](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems).
+- `UUID=08A24E90A24E81E4` е файловата система, която искаме да монтираме, идентифицирана чрез своя UUID. Има и други методи за идентифициране на файлова система, въпреки че UUID обикновено е най-безопасният. Допълнителни методи са изброени [тук](https://wiki.archlinux.org/title/Fstab#Identifying_file_systems).
 
-- `/media/windows` is the mount point of our drive. The [Linux Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html) says that `/media/` is the proper location for removable drives to be mounted. `windows` indicates the directory we wish to mount our drive to. Each drive we want to mount will need its own directory.
+- `/media/windows` е точката на монтиране на нашия диск. [Стандартът за йерархия на файловата система в Linux (FHS)](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html) посочва, че `/media/` е правилното място за монтиране на сменяеми носители. `windows` указва директорията, в която искаме да монтираме нашия диск. Всеки диск, който искаме да монтираме, ще се нуждае от собствена директория.
 
-- `ntfs3` is the filesystem type to be used. We are explicitly using the ntfs3 kernel driver in our example. Other examples would be `ext4`, `xfs` or similar. This explicit filesystem type declaration can be replaced with `auto` to allow the mount command to make its best guess.
+- `ntfs3` е типът файлова система, която ще се използва. В нашия пример изрично използваме драйвера на ядрото ntfs3. Други примери биха били `ext4`, `xfs` или подобни. Това изрично указване на типа файлова система може да бъде заменено с `auto`, за да позволи на командата `mount` да направи най-доброто предположение.
 
-- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000`: These are mount options:
+- `defaults,nofail,uid=1000,gid=1000,rw,user,exec,umask=000`: Това са опциите за монтиране:
 
-  - `defaults`: a standard set of options including `rw, suid, dev, exec, auto, nouser, and async.`
+  - `defaults`: стандартен набор от опции, включващ `rw, suid, dev, exec, auto, nouser и async.`
 
-  - `nofail`: allows the boot process to continue even if this mount fails.
+  - `nofail`: позволява процесът на зареждане да продължи, дори ако това монтиране се провали.
 
-  - `uid=1000` and `gid=1000`: sets the user and group ownership of the mounted files to the user and group with ID 1000.
+  - `uid=1000` и `gid=1000`: задава собствеността на потребителя и групата на монтираните файлове на потребителя и групата с ID 1000.
 
-  - `rw`: mounts the filesystem as read-write.
+  - `rw`: монтира файловата система в режим за четене и запис (read-write).
 
-  - `user`: allows a non-root user to mount the filesystem.
+  - `user`: позволява на потребител без root права да монтира файловата система.
 
-  - `exec`: allows execution of binaries on the mounted filesystem.
+  - `exec`: позволява изпълнението на двоични файлове на монтираната файлова система.
 
-  - `umask=000`: sets the file permission mask to allow read, write, and execute permissions for everyone.
+  - `umask=000`: задава маската за права на файловете, така че да позволява права за четене, запис и изпълнение за всички.
 
-  - `the first 0` dump is typically deprecated in modern systems. Leaving this at 0 won't hurt anything. Feel free to read more about it [here](https://linux.die.net/man/8/dump).
+  - `първата 0`: `dump` обикновено е остаряла опция при съвременните системи. Оставянето ѝ на 0 няма да навреди с нищо. Можете да прочетете повече за нея [тук](https://linux.die.net/man/8/dump).
 
-  - `the second 0` sets the order for file system checks at boot time. For a root partition, this should be 1 unless your root file system is btrfs, which should otherwise be set to 0. All other file systems in your fstab should be either 0 (disabled) or 2. More information [here](https://man.archlinux.org/man/fsck.8).
+  - `втората 0`: задава реда за проверка на файловата система при зареждане. За root дял това трябва да бъде 1, освен ако вашата root файлова система не е btrfs — в такъв случай трябва да бъде настроена на 0. Всички останали файлови системи във вашия fstab трябва да бъдат или 0 (деактивирано), или 2. Повече информация ще намерите [тук](https://man.archlinux.org/man/fsck.8).
 
-For a more in depth look of each option, visit these two [fstab man page](https://man7.org/linux/man-pages/man5/fstab.5.html) and [mount man page](https://man7.org/linux/man-pages/man8/mount.8.html)
+За по-подробно разглеждане на всяка опция посетете страниците на ръководството за [fstab](https://man7.org/linux/man-pages/man5/fstab.5.html) и [mount](https://man7.org/linux/man-pages/man8/mount.8.html)
 
-#### More info
+#### Допълнителна информация
 
-As an aside, all options after the filesystem type declaration are optional if you do not change them from the default.
+Между другото, всички опции след указването на типа файлова система са незадължителни, ако не ги променяте от стойностите по подразбиране.
 
-Thus
+Така
 
 `UUID=<partition UUID> /media/foo somefs`
 
-and
+и
 
 `UUID=<partition UUID> /media/foo somefs defaults 0 0`
 
-are equivalent.  `somefs` followed by nothing is implicitly `somefs defaults 0 0`
+са еквивалентни. `somefs`, следвано от нищо, по подразбиране означава `somefs defaults 0 0`
 
-### 4. Finishing Up
+### 4. Завършване
 
-If you wish to mount the drive you created an entry for now, you need to run the following:
+Ако искате да монтирате диска, за който току-що създадохте запис, сега, трябва да изпълните следното:
 
 ```sh
 sudo systemctl daemon-reload
 ```
 
-and then:
+и след това:
 
 ```sh
 sudo mount -a
 ```
 
-Your drive should now appear under `/media/windows` and will appear there each time you reboot.
+Вашият диск вече трябва да се показва в `/media/windows` и ще се появява там при всяко рестартиране.
 
 ```sh
 ls /media/windows
@@ -153,13 +365,13 @@ ls /media/windows
 # Intel                    'Ship of Harkinian'
  ```
 
- If you wish to create a link to your newly mounted drive in your home directory, you can run the following:
+ Ако желаете да създадете връзка (symlink) към новомонтирания си диск в домашната си директория, можете да изпълните следното:
 
  ```sh
  ln -s /media/windows ~/Windows
  ```
 
- To show it worked:
+ За да проверите дали е проработило:
 
  ```sh
  ls ~/Windows
@@ -175,47 +387,47 @@ ls /media/windows
 # Intel                    'Ship of Harkinian'
  ```
 
-## tl;dr
+### Накратко (tl;dr)
 
-- Find the **UUID** of your partition
+- Намерете **UUID** на вашия дял
 
 ```sh
 lsblk -f
 ```
 
-- Open `/etc/fstab`
+- Отворете `/etc/fstab`
 
 ```sh
 sudo nano /etc/fstab
 ```
 
-- Create an entry in the bottom of the file
+- Създайте запис в края на файла
 
 ```sh
 UUID=<partition UUID> /media/foo somefs defaults 0 0
 ```
 
-Replacing `<partition UUID>`, `foo`, and `somefs` with your UUID, directory, and filesystem. eg., ext4, as well as setting any other options you may want after defaults, such as `_netdev` for a NAS, or `nofail` for any non-critical drive.
+Като замените `<partition UUID>`, `foo` и `somefs` с вашия UUID, директория и файлова система (напр. ext4), както и зададете други опции след `defaults`, които може да са ви нужни, например `_netdev` за NAS или `nofail` за диск, който не е критичен за системата.
 
-- Reload your daemon
+- Презаредете демона
 
 ```sh
 sudo systemctl daemon-reload
 ```
 
-- Mount your drive
+- Монтирайте вашия диск
 
 ```sh
 sudo mount -a
 ```
 
-This drive is now mounted, and will now be mounted on boot moving forward as well.
+Дискът вече е монтиран и занапред ще се монтира автоматично при всяко зареждане на системата.
 
-## Additional reading
+### Допълнително четиво
 
 - [Filesystem Hierarchy Standard](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html)
-- [FHS on /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
-- [Manual for dump](<https://linux.die.net/man/8/dump>)
-- [Manual for fsck](https://man.archlinux.org/man/fsck.8)
-- [Man page for fstab](https://man.archlinux.org/man/fstab.5.en)
-- [Arch Linux Wiki entry for fstab](https://wiki.archlinux.org/title/Fstab)
+- [FHS относно /media/](https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch03s11.html)
+- [Ръководство за dump](<https://linux.die.net/man/8/dump>)
+- [Ръководство за fsck](https://man.archlinux.org/man/fsck.8)
+- [Справочна страница (man) за fstab](https://man.archlinux.org/man/fstab.5.en)
+- [Статия в Arch Linux Wiki за fstab](https://wiki.archlinux.org/title/Fstab)

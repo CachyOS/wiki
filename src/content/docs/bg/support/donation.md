@@ -1,22 +1,21 @@
 ---
 title: Дарения
 description: Начини да ни подкрепите
+ai_translated: true
 ---
 
-Ако искате да подкрепите работата ни, можете да дарите средства, които да помогнат за заплащането на нашите сървъри за компилация (buildservers).
-Всеки дарител получава ранг **Donator** в нашия Discord.
+Ако искате да подкрепите работата ни, можете да ни направите дарение и да помогнете за заплащането на нашите сървъри за компилация (buildservers).
+Всеки дарител получава ранг Donator в нашия Discord.
 
 Ето списък с текущите разходи на месец:
 
-- Buildserver 127 € (Hetzner 7950X3D)
-- Second Buildserver 70€ (Hetzner 7700X)
-- Webserver/mirror 17 €
-- Mailserver/mirror 17 €
-- Forum Server (Netcup VPS) 7 €
+- Сървър за компилация 127 € (Hetzner 7950X3D)
+- Втори сървър за компилация 70 € (Hetzner 7700X)
+- Уеб сървър/огледало 17 €
+- Пощенски сървър/огледало 17 €
+- Сървър за форума (Netcup VPS) 7 €
 
-### Patreon
-
-<https://www.patreon.com/CachyOS>
+### [Patreon](<https://www.patreon.com/CachyOS>)
 
 ### Ethereum
 
