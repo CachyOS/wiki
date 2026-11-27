@@ -4,6 +4,107 @@ description: Changelogs do Calamares e da ISO Live GUI
 sidebar:
   order: 1
 ---
+26.06
+----
+
+**Funcionalidades:**
+
+* **Pacotes:**
+  * O Python utiliza agora PGO alargado para melhorar o desempenho
+  * Adicionado um [patch ao GCC](https://www.phoronix.com/news/GCC-x86-Generic-Mispredict) para ajuste genérico de falhas de previsão de ramificações x86, melhorando a forma como o GCC contabiliza os custos de previsão incorreta em CPUs Intel e AMD modernos
+  * Corrigida uma regressão encontrada nos Phoronix Benchmarks quando o OpenBLAS era utilizado em CPUs com elevada contagem de núcleos
+  * Renomeado `proton-cachyos` para `proton-cachyos-native`
+* **pacman:** Adicionado [isolamento de rede para scriptlets e hooks](https://github.com/CachyOS/pacman/commit/4056cd687f6379e61e7decb9b66e9b57cb3949a9)
+* **Instalador:**
+  * Adicionada a opção de ambiente de trabalho CachyOS Hyprland Noctalia e vídeo de pré-visualização
+  * Removido o `paru` da instalação; recomenda-se aos utilizadores a utilização do [Shelly](https://wiki.cachyos.org/configuration/post_install_setup/#updating-the-system), através da respetiva GUI ou CLI, como alternativa
+  * Adicionado o SDDM como gestor de sessão para o MangoWM
+  * Substituído o Monitor de Sistema do GNOME pelo Resources
+  * Adicionado `realtime-privileges` ao grupo de pacotes de áudio
+  * Melhorada a deteção de esquema e variante de teclado na sessão live
+* **CachyOS-Welcome:**
+  * Adicionado suporte para DNS over QUIC (DoQ) através do `blocky`
+  * Adicionada uma página dedicada à Resolução de Problemas
+  * Adicionado suporte para o terminal Ptyxis
+  * Adicionadas traduções para azerbaijano e grego
+  * Adicionadas páginas de leitura (readme) e participação em francês
+  * Atualizadas as traduções para italiano, alemão, francês, japonês e búlgaro
+* **chwd:**
+  * Adicionada tradução para turco
+  * Removido `cachyos-handheld` das listas de pacotes para consolas portáteis
+  * Resolve conflitos de controladores em sistemas com múltiplas GPUs que exijam ramos de controladores incompatíveis (ex.: gerações mistas da NVIDIA), instalando o melhor controlador comum ou recorrendo à GPU principal
+  * Adicionado o controlador Vulkan de 32 bits para máquinas virtuais
+* **cachyos-settings:** Aplicados limites de tempo de 15 segundos no arranque e 10 segundos no encerramento aos serviços de utilizador, evitando atrasos de 90 segundos ao encerrar
+
+**Correções:**
+
+* **Instalador:**
+  * Corrigida a ordenação do esquema de teclado e o tratamento da configuração de `locale1`
+  * Corrigida a cópia da configuração correta do pacman para o sistema instalado
+  * Removidas diretorias `/etc/calamares` residuais após a instalação
+  * Movida a limpeza do Calamares para depois de todos os scripts de instalação
+  * Removido o passo redundante de pós-instalação do Limine
+* **CachyOS-Welcome:**
+  * Evitada uma falha ao selecionar "Install Apps" sem o `cachyos-pi` instalado; o botão fica agora oculto quando indisponível
+  * Corrigida uma falha quando o ficheiro de definições guardado não podia ser lido ou analisado; as definições são agora repostas para as predefinições em caso de erro
+  * Corrigida a deteção de ajustes (incluindo `graphical-session.target.wants`) e a desativação global de ajustes de serviços de utilizador via polkit
+* **chwd:**
+  * Corrigidos os IDs de fabricante de máquinas virtuais
+  * Removida a ativação desnecessária do serviço `fprintd`
+  * Corrigida a proteção de remoção do Mesa
+
+26.04
+----
+
+**Funcionalidades:**
+
+* **Instalador:**
+  * O Shelly substituiu o Octopi como gestor de pacotes gráfico (GUI)
+  * É agora criado um snapshot limpo imediatamente após a instalação e mantido de forma permanente, fornecendo um ponto de restauro inicial
+  * O `os-prober` do GRUB está agora ativado por predefinição
+  * Adicionado o MangoWM como opção de ambiente de trabalho com dotfiles
+  * Removido o ambiente de trabalho UKUI
+  * As GPUs AMD utilizam agora um tema Plymouth diferente, uma vez que o controlador amdgpu não consegue renderizar o tema anterior de forma fiável em portáteis com um monitor secundário ligado
+  * Limpeza e modernização da seleção de pacotes do GNOME
+  * Adicionada opção para instalar o `MangoWM` com a shell `DMS`
+* **CachyOS-Welcome:**
+  * Adicionado suporte para DNS-over-HTTPS (DoH) através do `blocky`
+  * Adicionado suporte para servidores DNS personalizados e indicador/reposição automática de DHCP
+  * Os servidores DNS apresentam agora metadados (região, página inicial, filtragem) e suportam testes individuais de latência
+  * Adicionada a opção de gestão de VRAM `dmemcg-booster` (instala adicionalmente `plasma-foreground-booster` no KDE)
+  * Adicionado suporte completo de navegação por teclado para acessibilidade
+  * Substituídos os ícones sociais em PNG por SVGs nítidos compatíveis com HiDPI
+  * Adicionado `wezterm` ao auxiliar de terminal
+* **chwd:**
+  * Adicionada deteção nativa de dispositivos USB (via libusb/sysfs) e deteção do tipo de chassis
+  * Adicionado suporte para integração de impressão digital (`fprint`) no sudo
+  * Adicionada deteção de família/modelo de CPU para suportar `intel-lpmd`
+  * **Consolas portáteis:** Adicionados padrões exatos para a Xbox ROG Ally
+  * **Rede:** Adicionado perfil Wi-Fi Marvell AVASTAR 88W8897 (Surface Pro 4)
+  * Separados os perfis NVIDIA para portáteis e computadores de secretária
+  * Separados e atualizados os perfis para Máquinas Virtuais
+* **cachyos-settings:** Alterado o agendador de E/S predefinido para NVMe de `none` para `kyber`
+
+**Correções:**
+
+* **Instalador:**
+  * O método de particionamento é agora registado no log de depuração
+  * Os pacotes de microcódigo antigos são agora removidos ao reutilizar uma partição de arranque existente
+* **CachyOS-Welcome:**
+  * Corrigidas as verificações de conectividade que devolviam incorretamente verdadeiro quando o ping falhava
+  * Garantido que os ícones de ligações externas são visíveis em temas escuros
+  * Impedida a execução simultânea de múltiplas instâncias da aplicação de boas-vindas
+  * Adicionado `StartupWMClass` para melhor correspondência de janelas `.desktop`
+* **chwd:**
+  * Removido o hook `kms` de `mkinitcpio.conf` em computadores de secretária não portáteis para corrigir conflitos com o controlador NVIDIA
+  * Tornada mais precisa a pesquisa de kernels instalados nos perfis NVIDIA
+  * Removida a sessão Xorg forçada dos perfis NVIDIA 470xx (corrige a compatibilidade com `plasma-login-manager`)
+  * Removido o obsoleto `WaylandEnable=false` para o GDM nos perfis de Máquinas Virtuais
+  * Corrigidos falsos positivos na deteção de consolas portáteis (ex.: determinados portáteis MSI confundidos com a MSI Claw)
+* **cachyos-settings:**
+  * Removida a gestão de energia `S01x` devido a problemas com o controlador NVIDIA 595
+  * Desativado `AggressiveVblank` devido a problemas relacionados com RV (VR) com o controlador NVIDIA
+
 26.03
 ----
 
@@ -100,7 +201,8 @@ sidebar:
 **Correções:**
 
 * **Limine:** Aumentado o tamanho da partição de boot para 4192MB para acomodar os requisitos elevados do `limine-snapper-sync`.
-* **Instalador:** * O instalador agora bloqueia/impede o avanço se a partição EFI for demasiado pequena ao usar as opções "ao lado de" ou "substituir partição".
+* **Instalador:**
+  * O instalador agora bloqueia/impede o avanço se a partição EFI for demasiado pequena ao usar as opções "ao lado de" ou "substituir partição".
   * Corrigido um problema em que, ao selecionar um desktop e avançar um passo, se voltasse atrás e selecionasse um desktop diferente, resultava na seleção de ambos.
 * **chwd:** Removida a variável de ambiente que forçava o `libva-nvidia-driver`, pois causava problemas em sistemas com duas GPUs.
 * **cachyos-hello**: Corrigido um problema em que o cachy-update aparecia como desativado quando estava ativo.
