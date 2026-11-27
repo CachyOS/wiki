@@ -1,0 +1,110 @@
+---
+title: Linux-kernels & het sched-ext-framework beheren met de CachyOS Kernel Manager
+description: De CachyOS Kernel Manager is een krachtig hulpmiddel voor het beheren van kernels, waarmee gebruikers eenvoudig kernels kunnen installeren of eigen kernels kunnen bouwen.
+tableOfContents:
+  minHeadingLevel: 1
+  maxHeadingLevel: 4
+ai_translated: true
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+Een kernel installeren vanuit een repository
+---------------------------------------
+
+Met de CachyOS Kernel Manager kun je eenvoudig kernels uit elke Arch Linux-repository installeren en beheren.
+
+Om een kernel te installeren: start de applicatie `CachyOS Kernel Manager`, kies de gewenste kernel door het vakje `[]` aan te vinken in de lijst met alle beschikbare opties, en druk vervolgens op `Execute` om de installatie van de kernel te starten.
+
+Om een kernel te verwijderen, vink je het vakje `[]` naast de geïnstalleerde kernel die je wilt verwijderen uit en druk je opnieuw op `Execute`.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km1.png')} />
+
+:::note
+De knop `Execute` is niet beschikbaar wanneer je een kernel kiest die al geïnstalleerd is.
+:::
+
+Een eigen CachyOS-kernel configureren en bouwen
+---------------------------------
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km2.png')} />
+
+:::note
+De CachyOS Kernel Manager is specifiek ontworpen om eigen kernels te bouwen voor **CachyOS-varianten** en ondersteunt het bouwen of configureren van een standaard Arch Linux-kernel of een andere variant niet.
+:::
+
+*Om te beginnen: open de Kernel Manager en klik op de knop `Configure` om diverse instellingen aan te passen, zoals de gewenste scheduler, tick rate en meer. Zodra je de gewenste wijzigingen hebt gemaakt, klik je op `Build kernel` om te beginnen met het bouwen van je eigen CachyOS-kernel.*
+
+**Gebouwde kernelpakketten en cache worden opgeslagen in** `~/.cache/cachyos-km/`
+
+**Beschikbare configuratieopties:**
+
+* `Custom package name`: Met deze optie kun je je kernel elke gewenste naam geven. Bijvoorbeeld: `linux-custom-cachy`
+* Scheduler (BORE, RC, RT, RT+BORE, EEVDF en BMQ)
+* CachyOS-configuratie inschakelen
+* Configuratie aanpassen via nconfig, menuconfig, xconfig of gconfig
+* NUMA in-/uitschakelen
+* Modprobed-db in-/uitschakelen
+* KBUILD CFLAGS (-O3 of -O2)
+* Performance governor als standaard
+* BBR3 inschakelen
+* Keuze van tick rate (100Hz, 250Hz, 300Hz, 500Hz, 600Hz, 750Hz, 1000Hz)
+* Tickless-modus (idle, periodic, full)
+* Preemption (Full, Voluntary of Server)
+* Transparent Hugepages (Always of Madvise)
+* DAMON in-/uitschakelen
+* Automatische detectie van CPU-architectuur in-/uitschakelen
+* Kerneloptimalisatie toepassen voor specifieke CPU-architecturen
+* LTO inschakelen (Full, Thin, No)
+* ZFS-module bouwen
+* NVIDIA Closed-module bouwen
+* NVIDIA Open-module bouwen
+* vmlinux meeleveren met debuginformatie/symbolen
+* Kernel Manager-configuratiepreset laden/opslaan: `(Alleen presets van de manager zelf)`
+* Beheer van kernelpatches (ondersteuning voor remote en lokaal)
+
+*Zodra de kernel succesvol is gebouwd, wordt je om je sudo-wachtwoord gevraagd om de kernel te installeren.*
+
+## Beheer van het sched-ext-framework
+
+:::caution[Vereist een werkende polkit-agent om goed te functioneren.]
+Bekijk de volgende **[Arch Wiki-pagina ter referentie.](https://wiki.archlinux.org/title/Polkit#Authentication_agents)**
+:::
+
+De Kernel Manager biedt een grafische gebruikersinterface (GUI) voor het beheren en aansturen van sched-ext-schedulers. Open de GUI door in het hoofdvenster op de knop `sched-ext scheduler config` te klikken.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cachyos-km3.png')} />
+
+Met deze GUI kun je:
+
+- Wisselen tussen verschillende sched-ext (scx)-schedulers.
+- De scheduler-service in- of uitschakelen.
+- Controleren welke scheduler momenteel draait.
+- Scheduler-flags en -profielen instellen.
+
+Om dit te bereiken, gebruikt de Kernel Manager de `scx_loader` met een configuratie die is opgeslagen in `/etc/scx_loader.toml`.
+
+Voor meer informatie over het configuratiebestand van `scx_loader`, zie [deze documentatie](https://github.com/sched-ext/scx-loader/blob/main/crates/scx_loader/configuration.md).
+
+- Hoe werkt de `scx_loader`?
+    - Zodra je de scheduler en het profiel hebt geselecteerd, start de scx_loader de scheduler met het gekozen profiel en slaat deze configuratie op in het bestand `/etc/scx_loader.toml`, zodat deze behouden blijft na een herstart. Een voorbeeld van hoe het bestand eruitziet wanneer je `scx_bpfland` kiest met het profiel `Gaming`:
+        ```toml
+        default_sched = "scx_bpfland"
+        default_mode = "Gaming"
+
+        [scheds.scx_bpfland]
+        auto_mode = []
+        gaming_mode = ["-m", "performance"]
+        lowlatency_mode = ["-k", "-s", "5000", "-l", "5000"]
+        powersave_mode = ["-m", "powersave"]
+        ```
+
+### Scheduler-profielen
+
+- Waar zijn de "profielen" voor?
+  - Het zijn presets voor de scheduler die flags aanpassen op basis van beproefde combinaties, om de effectiviteit voor specifieke toepassingen, zoals "Gaming", te verbeteren.
+
+Bekijk alle details over de profielen in de [scheduler-handleiding.](/nl/configuration/sched-ext#scheduler-handleiding-profielen-en-toepassingen)

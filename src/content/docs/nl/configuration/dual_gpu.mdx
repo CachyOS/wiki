@@ -1,0 +1,162 @@
+---
+title: Handleiding voor een dual-GPU-opstelling
+ai_translated: true
+---
+
+import ImageComponent from '~/components/image-component.astro';
+
+## Wat is hybride graphics?
+
+Hybride graphics is een hardwareconfiguratie waarbij je twee grafische
+kaarten hebt die met elkaar kunnen samenwerken. Deze aanpak vind je vooral in
+laptops, waar je de geïntegreerde graphics (iGPU) van je CPU hebt en een aparte
+grafische kaart (dGPU).
+
+Het belangrijkste voordeel is dat de geïntegreerde graphics (in principe, maar niet per se) alleen
+worden gebruikt voor lichte taken, zoals op internet surfen, video's kijken, enz.
+De aparte grafische kaart wordt daarentegen gebruikt voor zware
+taken zoals gamen, videobewerking, 3D-modellering, enzovoort.
+
+Als twee GPU's de "grote" en "kleine" taken verdelen en er op dat moment alleen
+"kleine" taken draaien, hoeven we onze dGPU dus niet te gebruiken. Deze kan dan
+eenvoudig worden uitgeschakeld (alsof hij slaapt), waardoor het stroomverbruik aanzienlijk daalt.
+Wanneer onze dGPU weer nodig is (we starten een applicatie die hem gebruikt),
+wordt hij wakker en gaat hij aan het werk.
+
+## Wat is PRIME Offload?
+
+PRIME is een overkoepelende technologie voor het werken met verschillende soorten hybride
+graphics in Linux, zoals NVIDIA Optimus/AMD Dynamic Switchable Graphics. PRIME
+Offload is een implementatie van het idee om het renderen van
+de ene GPU naar de andere te verplaatsen in Linux.
+
+PRIME-ondersteuning in het gesloten NVIDIA-stuurprogramma begon eigenlijk pas bij stuurprogramma 435.17.
+Als je dus een verouderde 390xx- of zelfs 340xx-stuurprogrammatak gebruikt,
+werkt PRIME Offload niet voor jou. Merk op dat we je ook
+sterk afraden om verouderde methoden te gebruiken om hybride graphics af te handelen,
+zoals nvidia-xrun of Bumblebee. Die zijn verouderd en worden niet ondersteund (Bumblebee
+is al meer dan 8 jaar niet bijgewerkt), draaien volledig op hacks en presteren
+slecht. Tegelijkertijd ondersteunt het Nouveau-stuurprogramma PRIME Offload, wat
+een alternatief kan zijn voor oudere dGPU's.
+
+In CachyOS **hoef je niets te configureren om PRIME Offload te laten werken**.
+Met het pakket nvidia-utils en cachyos-settings heb je al alles
+wat je nodig hebt om PRIME Offload te gebruiken.
+
+Vermijd ook hulpmiddelen zoals optimus-manager. Ze lijken misschien
+heel handig, maar geloof ons, ze kunnen veel problemen veroorzaken en je hebt ze echt
+niet nodig als je dGPU PRIME Offload en dynamisch energiebeheer ondersteunt.
+
+### Hoe gebruik je PRIME Offload
+
+Om PRIME aan te geven dat je de aparte grafische kaart wilt gebruiken in plaats van de geïntegreerde
+graphics, moet je een aantal omgevingsvariabelen opgeven voordat je het
+programma start:
+
+```bash
+__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only __GLX_VENDOR_LIBRARY_NAME=nvidia <program>
+```
+
+Deze set variabelen ziet er erg omslachtig uit en is makkelijk te vergeten, dus je kunt
+het pakket `nvidia-prime` installeren (`sudo pacman -S nvidia-prime`), dat
+een script-alias voor al deze variabelen bevat. Een applicatie starten
+ziet er dan zo uit:
+
+```bash
+prime-run <program>
+```
+
+Waarbij `<program>` de naam is van het commando dat je applicatie start.
+
+:::note
+Sommige DX12-games hebben moeite om de dGPU te kiezen, zelfs met `prime-run`.
+Om dit te omzeilen, voeg je de omgevingsvariabele `VK_DRIVER_FILES=/usr/share/vulkan/icd.d/nvidia_icd.json`
+toe vóór het wrapperscript `prime-run`.
+:::
+
+Voor configuraties waarbij beide grafische kaarten worden aangestuurd door open Mesa-stuurprogramma's
+(bijv. AMD+AMD, AMD+Intel of zelfs Intel+NVIDIA waarbij de aparte NVIDIA-kaart
+wordt aangestuurd door het opensource Nouveau-stuurprogramma), hoeft niets te worden geconfigureerd.
+Om de aparte grafische kaart te gebruiken, hoef je alleen de omgevingsvariabele `DRI_PRIME=1`
+op te geven voordat je applicaties of games start, vergelijkbaar met de
+variabelen die eerder voor NVIDIA zijn beschreven, of je gebruikt de kant-en-klare grafische methoden
+die hieronder worden besproken.
+
+## Grafische methode
+
+Misschien vind je het onhandig om alle benodigde applicaties via de terminal met `prime-run` te starten.
+Gelukkig bieden sommige applicaties en bureaubladomgevingen hulpmiddelen om te bepalen welke GPU voor specifieke applicaties wordt gebruikt.
+
+### Lutris
+
+Om games in Lutris met de aparte grafische kaart te laten draaien, ga je naar
+de instellingen (drie streepjes in de rechterbenedenhoek van het venster en
+de knop "Preferences"). Ga vervolgens naar *"Global Options"* -> *"Display"*. Hier kun je de GPU kiezen waarop de game draait.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/lutris-prime.png')} />
+
+### Steam
+
+Steam heeft geen specifieke instelling om een game te dwingen de aparte grafische kaart te gebruiken. Je kunt echter de eigenschappen van de game openen door op het tandwielicoon te klikken voordat je de game start. In het veld "Launch options" kun je het commando prime-run of omgevingsvariabelen toevoegen.
+Voorbeeld:
+
+```bash
+prime-run %command%
+```
+
+Zorg ervoor dat je `%command%` na `prime-run` toevoegt. Onthoud dat game-opties na de placeholder komen,
+terwijl systeemomgevingsvariabelen of commando's ervoor moeten staan.
+
+Om een game in plaats daarvan op de geïntegreerde graphics te draaien, gebruik je de volgende startoptie als voorbeeld voor geïntegreerde Radeon-graphics. Dit kan wenselijk zijn voor een langere batterijduur en minder ventilatorgeluid bij lichtere games.
+
+```bash
+VK_DRIVER_FILES=/usr/share/vulkan/icd.d/radeon_icd.x86_64.json:/usr/share/vulkan/icd.d/radeon_icd.i686.json %command%
+```
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/steam-prime.png')} />
+
+### KDE Plasma
+
+Plasma heeft een erg handige manier om in te stellen dat applicaties met de aparte
+grafische kaart starten. Deze methode werkt echter alleen als het pakket switcheroo-control en de bijbehorende service op je systeem zijn geïnstalleerd.
+
+Bij een verse installatie van CachyOS zouden dit pakket en deze service al
+standaard via chwd moeten zijn ingeschakeld.
+
+```bash
+sudo pacman -S switcheroo-control
+sudo systemctl enable --now switcheroo-control
+```
+
+Klik na het uitvoeren van beide commando's met de rechtermuisknop op het gewenste programma op je bureaublad of in het
+applicatiemenu en ga naar *"Properties"* -> *"Application"* -> *"Advanced Options"*.
+
+Het selectievakje *"Run using dedicated graphics card"* moet aangevinkt zijn.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/plasma-prime.jpg')} />
+
+:::note
+Met switcheroo-control werken deze selectievakjes op alle PRIME-configuraties,
+zelfs die zonder NVIDIA-dGPU, zoals AMD-APU+AMD-Dedicated.
+:::
+
+### GNOME
+
+Op GNOME moet je ook switcheroo-control installeren zoals hierboven getoond,
+met de rechtermuisknop op het applicatie-icoon klikken en *"Run using discrete graphics"* selecteren.
+Houd er wel rekening mee dat GNOME deze keuze niet onthoudt: de volgende keer dat je
+de applicatie via het icoon start, draait deze op de geïntegreerde graphics in plaats van op de aparte kaart.
+
+### Cinnamon
+
+Net als Plasma kun je in Cinnamon ook de GPU kiezen voor specifieke applicaties. Klik met de rechtermuisknop op het programma, ga naar Properties en schakel de betreffende optie in.
+
+<br />
+<ImageComponent imgsrc={import('~/assets/images/cinnamon-prime.png')} />
+
+Als deze optie niet beschikbaar is, controleer dan of `switcheroo-control` is geïnstalleerd en
+de service is ingeschakeld, omdat alle bureaubladomgevingen hiervan afhankelijk zijn voor deze
+functionaliteit.
