@@ -1,0 +1,103 @@
+---
+title: Updating your desktop configuration
+---
+
+CachyOS desktop settings packages provide defaults in `/etc/skel`. These files are copied to a
+new user's home directory when the account is created. Updating a settings package can change
+`/etc/skel` without changing the configuration you already use in your home directory.
+
+Compare the updated defaults with your own files and merge the changes you need. This applies
+to desktop/window-manager settings and shared tools such as terminals, launchers, and shells.
+Check the relevant desktop's release notes for version-specific migration steps too.
+
+## Find the relevant defaults
+
+List the installed settings packages:
+
+```sh
+pacman -Qq | grep -E '^cachyos-.*-settings$'
+```
+
+Inspect a package's file list to find its defaults. For example, on a KDE installation:
+
+```sh
+pacman -Ql cachyos-kde-settings
+```
+
+Look for the files under `/etc/skel/.config/` that correspond to the settings you want to
+update. Not every settings package installs the same paths. A missing directory is not a
+reason to copy the rest of `/etc/skel` over your home directory.
+
+## Back up the configuration you will edit
+
+Create a separate copy of the selected file or directory before opening a comparison. For
+example, if both `/etc/skel/.config/rofi` and `~/.config/rofi` exist:
+
+```sh
+mkdir -p "$HOME/.local/state/cachyos-config-backups"
+backup_dir=$(mktemp -d "$HOME/.local/state/cachyos-config-backups/rofi.XXXXXXXX")
+cp -a -- "$HOME/.config/rofi" "$backup_dir/"
+printf 'Backup: %s\n' "$backup_dir/rofi"
+```
+
+Replace `rofi` with the configuration you are actually comparing. Keep the printed backup
+path until you have tested the merged settings. Do not assume a root filesystem snapshot
+includes your separate home subvolume; see [Btrfs Snapshots](/configuration/btrfs_snapshots/).
+
+## Compare and merge with Meld
+
+Check whether Meld is installed:
+
+```sh
+pacman -Q meld
+```
+
+If it is missing, install it during a full system update:
+
+```sh
+sudo pacman -Syu meld
+```
+
+Run Meld as your normal user. Put the new defaults on the left and your current settings on
+the right:
+
+```sh
+meld /etc/skel/.config/rofi "$HOME/.config/rofi"
+```
+
+1. Open a changed file in the directory comparison. Review the actual differences before
+   copying anything.
+2. Copy only the changes you want from the default file into your user configuration. Preserve
+   personal keybindings, monitor/output names, application commands, and other local values.
+3. Review added files individually. Check deleted or renamed files against the desktop's
+   migration notes before removing your existing copies.
+4. Save the right-hand user configuration. Do not modify the package defaults in `/etc/skel`.
+5. Reload or restart the affected application as its documentation recommends, then test the
+   changes before merging more files.
+
+For a single settings file, pass the two file paths instead of directories. Choose small,
+corresponding paths rather than comparing `/etc/skel` against the whole home directory. If a
+larger comparison is necessary, Meld's file filters can hide files that exist on only one side
+so unrelated personal files do not overwhelm the comparison.
+
+:::caution
+Do not run Meld as root or copy all of `/etc/skel/.` into an existing home directory to perform
+an update. That can overwrite unrelated customizations. Changes to packaged Plasma shell QML
+or other application internals also need a version-compatible upstream base; merging desktop
+settings alone does not update those overrides.
+:::
+
+## Recover from an unwanted merge
+
+Close the affected application. Move the merged configuration aside, then restore your saved
+copy. For the Rofi example above, while the same `backup_dir` variable is still set:
+
+```sh
+mv -- "$HOME/.config/rofi" "$backup_dir/rofi-merged"
+cp -a -- "$backup_dir/rofi" "$HOME/.config/rofi"
+```
+
+If you opened a new terminal, first set `backup_dir` to the backup directory you recorded.
+Keep the merged copy for comparison. Restart the application and verify that the restored
+configuration works. This restores that selected configuration only; it does not roll back
+installed packages.
