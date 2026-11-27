@@ -7,7 +7,7 @@ title: Termos de Serviço
 ### 1.1. Definições
 
 Estes Termos de Serviço regem a utilização da plataforma CachyOS e dos serviços associados, incluindo os fóruns, wiki, ferramenta de reporte de erros (bug reporting) e outras ferramentas colaborativas ("Serviços").
-O CachyOS ("nós", "nos", "nosso") opera a plataforma acessível em cachyos.org e subdomínios relacionados. Os utilizadores ("você", "seu") devem aceitar estes termos para utilizar os Serviços.
+O CachyOS ("nós", "nos", "nosso") opera a plataforma acessível em cachyos.org e subdomínios relacionados. Os utilizadores ("o utilizador", "o seu") devem aceitar estes termos para utilizar os Serviços.
 
 ### 1.2. Utilização dos Serviços
 
@@ -36,7 +36,7 @@ Deve fornecer informações de contacto completas e precisas e atualizá-las con
 
 ### 3.2. Utilização da Conta
 
-A sua conta é pessoal e deve ser protegida contra utilização não autorizada. Você é responsável por qualquer utilização indevida da sua conta.
+A sua conta é pessoal e deve ser protegida contra utilização não autorizada. É responsável por qualquer utilização indevida da sua conta.
 
 ### 3.3. Conduta
 
@@ -44,7 +44,7 @@ Os utilizadores devem interagir de forma respeitosa e lícita, aderindo às noss
 
 ### 3.4. Conteúdo e Conduta
 
-Você é responsável por qualquer conteúdo que contribua, garantindo que este não viola estes termos ou as leis aplicáveis.
+É responsável por qualquer conteúdo com que contribua, garantindo que este não viola estes termos ou as leis aplicáveis.
 
 ### 3.5. Violações
 
@@ -54,7 +54,7 @@ Não deve publicar conteúdo que seja insultuoso, falso, malicioso ou que viole 
 
 As contribuições podem ser indexadas por motores de busca e permanecer acessíveis em todo o mundo. Não pode reivindicar o apagamento ou a correção de tais entradas.
 
-### 3.7. Discrição do Conteúdo
+### 3.7. Critério sobre o Conteúdo
 
 Reservamo-nos o direito de recusar, apagar, modificar ou remover qualquer conteúdo de acordo com o nosso critério e de aplicar sanções por violações destes termos.
 

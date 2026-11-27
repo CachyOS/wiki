@@ -15,8 +15,8 @@ description: Changelogs do Instalador CLI
 - **Clang-Format e Clang-Tidy:** A consistência e qualidade da base de código foram melhoradas através da aplicação do clang-format e clang-tidy.
 - **Refatorização com String Views:** Diversas áreas da base de código utilizam agora literais `string_view` para melhor desempenho e legibilidade.
 - **Implementação do Doctest:** Os `asserts` de C foram substituídos pelo doctest para testes mais robustos e informativos.
-- **Testes Refatorizados:** As suítes de testes foram refatorizadas para maior clareza e manutenibilidade.
-- **Gestão do rEFInd na `gucc`:** O código relacionado com o rEFInd foi refatorizado e movido para a biblioteca `gucc` para uma melhor organização.
+- **Testes Refatorizados:** As suites de testes foram refatorizadas para maior clareza e facilidade de manutenção.
+- **Gestão do rEFInd na `gucc`:** O código relacionado com o rEFInd foi refatorizado e movido para a biblioteca `gucc` para uma melhor organização e facilidade de manutenção.
 
 ## Correções de Erros 🐛
 
@@ -35,7 +35,7 @@ description: Changelogs do Instalador CLI
 
 - Atualização da dependência CPR para uma versão mais recente para melhor funcionalidade.
 - Instrução explícita ao CTRE (biblioteca Compile Time Regular Expressions) para utilizar o padrão C++23 para consistência e melhorias de desempenho.
-- Aumento do timeout de verificação de ligação na secção de utilitários para acomodar potenciais atrasos de rede.
+- Aumento do timeout de verificação de ligação na secção de utilitários para acomodar potenciais atrasos de rede ou respostas lentas.
 
 # 0.8.2
 

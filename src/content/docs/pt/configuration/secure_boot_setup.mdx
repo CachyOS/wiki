@@ -10,6 +10,13 @@ ai_translated: true
 import ImageComponent from '~/components/image-component.astro';
 import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
+:::tip[Easy Anti-Cheat]
+Para jogar jogos que utilizam o Easy Anti-Cheat Linux v2, siga antes o [guia do Easy Anti-Cheat](/pt/configuration/easy_anti_cheat).
+Este configura o Secure Boot desde o início, pelo que não precisa deste guia primeiro. Regista as suas próprias chaves em conjunto
+com as da Microsoft, para que um arranque duplo (dual boot) com o Windows continue a funcionar. Também utiliza o kernel assinado pelo CachyOS e o systemd-boot, que
+não devem ser assinados novamente com as suas próprias chaves.
+:::
+
 ## Pré-configuração
 
 ### Gestor de Arranque GRUB
@@ -65,7 +72,7 @@ Navegue até Boot → Secure Boot, defina o Secure Boot Mode para Custom, depois
 Antes de prosseguir, certifique-se de verificar se o `sbctl` está instalado.
 
 O [sbctl](https://github.com/Foxboron/sbctl) é um gestor de chaves de Secure Boot intuitivo, capaz de configurar o Secure Boot,
-oferecendo funcionalidades de gestão de chaves e mantendo o rastro dos ficheiros que precisam de ser assinados na cadeia de arranque (boot chain).
+oferecendo funcionalidades de gestão de chaves e mantendo o registo dos ficheiros que precisam de ser assinados na cadeia de arranque (boot chain).
 
 <details>
     <summary>Como instalar o sbctl</summary>
@@ -113,21 +120,21 @@ Agora que o `sbctl` está instalado, tem de configurar o sbctl e registar as sua
         ```
     </details>
 
-    :::caution[Placas-mãe ASUS / Gigabyte — Não utilize `--firmware-builtin`]
-    Em algumas placas-mãe ASUS e Gigabyte, o uso da flag `--firmware-builtin` causa entradas duplicadas
-    nas variáveis de chave EFI (por exemplo, `builtin-db` aparecendo várias vezes em `Vendor Keys`).
-    Ao ativar o Secure Boot nas definições UEFI posteriormente, a placa deteta esta
-    estrutura de chaves inconsistente e lança uma **Secure Boot Violation** antes que o gestor
+    :::caution[Motherboards ASUS / Gigabyte — Não utilize `--firmware-builtin`]
+    Em algumas motherboards ASUS e Gigabyte, a utilização da opção `--firmware-builtin` causa entradas duplicadas
+    nas variáveis de chave EFI (por exemplo, `builtin-db` a aparecer várias vezes em `Vendor Keys`).
+    Ao ativar o Secure Boot nas definições UEFI posteriormente, a motherboard deteta esta
+    estrutura de chaves inconsistente e apresenta um erro de **Secure Boot Violation** antes que o gestor
     de arranque possa carregar.
 
-    Utilize apenas `--microsoft` em placas ASUS / Gigabyte:
+    Utilize apenas `--microsoft` em motherboards ASUS / Gigabyte:
 
     ```bash
     sudo sbctl enroll-keys --microsoft
     ```
 
     Se `Vendor Keys` mostrar `microsoft builtin-db builtin-db ...`, as chaves precisam de ser
-    re-registadas. Reentre no Setup Mode no UEFI (usando delete all keys), depois execute
+    novamente registadas. Volte a entrar no Setup Mode no UEFI (utilizando a opção para eliminar todas as chaves), e depois execute
     `sbctl enroll-keys --microsoft` novamente sem `--firmware-builtin`.
     :::
 
@@ -157,7 +164,7 @@ Agora que o `sbctl` está instalado, tem de configurar o sbctl e registar as sua
 
 ## Assinar a Imagem do Kernel e o Gestor de Arranque
 
-<Tabs>
+<Tabs syncKey="boot-manager">
 <TabItem label='Limine'>
 O Limine é um gestor de arranque especial que permite verificar o hash das imagens do kernel
 e de outros ficheiros que o Limine utiliza durante o arranque. Se isto estiver ativado, qualquer
@@ -259,17 +266,17 @@ Verifying file database and EFI images in /boot...
 
 Agora que todos os ficheiros estão assinados. **Reinicie o seu sistema e vá às suas Definições UEFI para ativar o Secure Boot.**
 
-:::caution[Placas-mãe ASUS — ativando o Secure Boot]
-Algumas placas-mãe ASUS comportam-se diferentemente de outros fabricantes ao ativar o Secure Boot:
+:::caution[Motherboards ASUS — ativar o Secure Boot]
+Algumas motherboards ASUS comportam-se de forma diferente de outros fabricantes ao ativar o Secure Boot:
 
 - **Utilize `Windows UEFI Mode`, não `Other OS`:**
-  O nome é enganador, esta definição simplesmente controla se o Secure Boot é aplicado.
-  Definir `OS Type` para `Other OS` **desativa ativamente** o Secure Boot em placas ASUS,
+  O nome é enganador; esta definição simplesmente controla se o Secure Boot é aplicado.
+  Definir `OS Type` para `Other OS` **desativa ativamente** o Secure Boot em motherboards ASUS,
   independentemente de qualquer outra definição. O `sbctl status` continuará a mostrar
   `Secure Boot: Disabled` mesmo após reiniciar.
 
-- **Não existe um toggle separado de Secure Boot on/off** em algumas placas ASUS.
-  O Secure Boot é ativado implicitamente selecionando `Windows UEFI Mode`.
+- **Não existe uma opção separada para ativar/desativar o Secure Boot** em algumas motherboards ASUS.
+  O Secure Boot é ativado implicitamente ao selecionar `Windows UEFI Mode`.
 
 A configuração correta da BIOS ASUS para ativar o Secure Boot neste caso é:
 ```
@@ -279,7 +286,7 @@ Boot → Secure Boot
 ```
 :::
 
-Consulte [esta parte para referência](/pt/configuration/secure_boot_setup#enabling-setup-mode-in-uefi)
+Consulte [esta parte para referência](/pt/configuration/secure_boot_setup#ativar-o-setup-mode-no-uefi)
 
 Note que este é um processo de uma vez só, pois assinar ficheiros com a flag `-s` irá guardar esses ficheiros na base de dados do `sbctl`.
 
@@ -293,6 +300,39 @@ O CachyOS usa o `systemd-boot-update.service` fornecido pelo systemd para atuali
 
 ```sh
 sudo sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+```
+
+:::note
+Ignore este passo se utilizar a [configuração do Easy Anti-Cheat](/pt/configuration/easy_anti_cheat). Nesse caso, o `systemd-boot-cachyos-signed`
+fornece um systemd-boot assinado pelo CachyOS.
+:::
+</TabItem>
+<TabItem label='rEFInd'>
+
+O rEFInd inicia os kernels através do firmware, pelo que o firmware verifica as assinaturas do rEFInd e de cada
+kernel. Estes passos destinam-se a instalações em que a partição do sistema EFI está montada em `/boot`, que é como
+o instalador do CachyOS configura o rEFInd. O comando `bootctl --print-esp-path` tem de apresentar `/boot`.
+
+Assine o rEFInd e os seus kernels. O comando `find` ignora o kernel para o
+[Easy Anti-Cheat](/pt/configuration/easy_anti_cheat), que já se encontra assinado pelo CachyOS:
+
+```bash
+sudo sbctl sign -s /boot/EFI/refind/refind_x64.efi
+sudo find /boot -maxdepth 1 -name 'vmlinuz-*' ! -name vmlinuz-linux-cachyos-eac -exec sbctl sign -s {} \;
+sudo sbctl verify
+```
+
+O `sbctl verify` tem de listar o rEFInd e cada um dos seus kernels como assinados. Se utilizar o Easy Anti-Cheat, também listará
+`vmlinuz-linux-cachyos-eac` e `EFI/cachyos-eac/systemd-bootx64.efi` como não assinados. Isto é esperado, pois estão
+assinados pelo CachyOS. **Não os assine**, caso contrário o EAC deixará de os aceitar. Em seguida, **reinicie para as Definições UEFI
+e ative o Secure Boot.** Em motherboards ASUS, consulte as notas no separador systemd-boot.
+
+A opção `-s` guarda os ficheiros na base de dados do `sbctl`, e o respetivo pacman hook assina novamente os kernels após as atualizações.
+O pacman não atualiza o rEFInd na partição do sistema EFI. Se executar `refind-install` manualmente, volte a assiná-lo
+depois:
+
+```bash
+sudo sbctl sign-all
 ```
 </TabItem>
 </Tabs>
@@ -317,6 +357,21 @@ System:
   TPM2 Support: yes
   Measured UKI: no
   Boot into FW: supported
+```
+
+## Fwupd
+
+Para utilizar o `fwupd` com o Secure Boot ativado, assine o executável UEFI:
+
+```sh
+sudo sbctl sign -s -o /usr/lib/fwupd/efi/fwupdx64.efi.signed /usr/lib/fwupd/efi/fwupdx64.efi
+```
+
+E adicione o seguinte a `/etc/fwupd/fwupd.conf`:
+
+```sh
+[uefi_capsule]
+DisableShimForSecureBoot=true
 ```
 
 ## Ligações e Créditos

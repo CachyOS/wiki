@@ -11,7 +11,7 @@ O repositório CachyOS foi concebido para fornecer pacotes de alta qualidade e o
 
 ## 2. Exclusão de Garantia
 
-Salvo quando exigido pela lei aplicável ou acordado por escrito, a equipa do CachyOS fornece o repositório **"TAL COMO ESTÁ" (AS IS), SEM GARANTIAS OU CONDIÇÕES DE QUALQUER TIPO**, expressas ou implícitas, incluindo, sem limitação, quaisquer garantias ou condições de **TÍTULO, NÃO INFRAÇÃO, COMERCIALIZAÇÃO ou ADEQUAÇÃO A UM FIM ESPECÍFICO**. Você, como utilizador do repositório, é o único responsável por determinar a adequação da utilização do mesmo e assume quaisquer riscos associados ao exercício das permissões concedidas.
+Salvo quando exigido pela lei aplicável ou acordado por escrito, a equipa do CachyOS fornece o repositório **"TAL COMO ESTÁ" (AS IS), SEM GARANTIAS OU CONDIÇÕES DE QUALQUER TIPO**, expressas ou implícitas, incluindo, sem limitação, quaisquer garantias ou condições de **TÍTULO, NÃO INFRAÇÃO, COMERCIALIZAÇÃO ou ADEQUAÇÃO A UM FIM ESPECÍFICO**. Enquanto utilizador do repositório, é o único responsável por determinar a adequação da utilização do mesmo e assume quaisquer riscos associados ao exercício das permissões concedidas.
 
 ## 3. Limitação de Responsabilidade
 
