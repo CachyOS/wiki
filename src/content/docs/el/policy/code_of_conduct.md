@@ -125,5 +125,5 @@ title: Κώδικας δεοντολογίας
 [homepage]: https://www.contributor-covenant.org
 
 Για απαντήσεις σε συχνές ερωτήσεις σχετικά με τον παρόντα Κώδικα δεοντολογίας, ανατρέξτε στις
-συχνές ερωτήσεις στο <https://www.contributor-covenant.org/faq>. Μεταφράσεις είναι διαθέσιμες στο
-<https://www.contributor-covenant.org/translations>.
+[Συχνές ερωτήσεις](<https://www.contributor-covenant.org/faq>). Μεταφράσεις είναι διαθέσιμες στο
+[https://www.contributor-covenant.org/translations](<https://www.contributor-covenant.org/translations>).
