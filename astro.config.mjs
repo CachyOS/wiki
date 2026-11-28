@@ -855,6 +855,7 @@ export default defineConfig({
               translations: {
                 cs: 'CachyOS ve WSL',
                 de: 'CachyOS unter WSL',
+                el: 'CachyOS στο WSL',
                 es: 'CachyOS en WSL',
                 fr: 'CachyOS sur WSL',
                 ja: 'WSL 上の CachyOS',

@@ -1,0 +1,62 @@
+---
+title: CachyOS στο WSL
+description: Εγκατάσταση και χρήση του CachyOS στο Windows Subsystem for Linux
+ai_translated: true
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Το CachyOS παρέχει ένα είδωλο για το [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/about) (WSL). Συντηρείται στο αποθετήριο [cachyos-wsl](https://github.com/CachyOS/cachyos-wsl), όπου μπορείτε επίσης να αναφέρετε σφάλματα που αφορούν ειδικά το είδωλο.
+
+## Εγκατάσταση
+
+Χρειάζεστε την έκδοση `2.4.4` ή νεότερη του WSL 2, την οποία μπορείτε να ενημερώσετε με την εντολή `wsl --update`. Για παλαιότερες εκδόσεις, δείτε το [cachyos-wsl README](https://github.com/CachyOS/cachyos-wsl#wsl-prior-to-244).
+
+<Steps>
+
+1. Κατεβάστε το αρχείο `.wsl` από την [τελευταία έκδοση (latest release)](https://github.com/CachyOS/cachyos-wsl/releases/latest) ή μέσω PowerShell:
+
+   ```powershell
+   $v = (Invoke-RestMethod https://api.github.com/repos/CachyOS/cachyos-wsl/releases/latest).tag_name
+   Invoke-WebRequest "https://github.com/CachyOS/cachyos-wsl/releases/download/$v/cachyos-$v.wsl" -OutFile "$env:TEMP\cachyos.wsl"
+   ```
+
+2. Εγκαταστήστε το κάνοντας διπλό κλικ στο αρχείο ή μέσω PowerShell:
+
+   ```powershell
+   wsl --install --from-file "$env:TEMP\cachyos.wsl"
+   ```
+
+3. Εκκινήστε το CachyOS από το μενού Έναρξη (Start) ή με την εντολή `wsl -d cachyos`.
+
+</Steps>
+
+## Πρώτη ρύθμιση
+
+Η πρώτη εκκίνηση ενδέχεται να διαρκέσει λίγα λεπτά. Ρυθμίζει το keyring του pacman, κατατάσσει τους καθρέφτες (mirrors), μεταβαίνει στα βελτιστοποιημένα πακέτα και σας ζητά να δημιουργήσετε τον χρήστη σας, ο οποίος διαθέτει πρόσβαση `sudo` και χρησιμοποιεί το `fish` ως κέλυφος (shell).
+
+Τα είδωλα δημιουργούνται μόνο περιοδικά, οπότε εκτελέστε `sudo pacman -Syu` μόλις ολοκληρωθεί η διαδικασία.
+
+## Βελτιστοποιημένα πακέτα
+
+Το είδωλο είναι γενικό (generic) και εκτελείται σε οποιονδήποτε επεξεργαστή x86-64. Όπως το πρόγραμμα εγκατάστασης του CachyOS, η πρώτη ρύθμιση μεταβαίνει έπειτα στα καλύτερα [βελτιστοποιημένα αποθετήρια](/el/features/optimized_repos) για τον επεξεργαστή σας: `znver4`, `v4` ή `v3`. Οι παλαιότεροι επεξεργαστές παραμένουν στα γενικά πακέτα.
+
+Εάν η μετάβαση αποτύχει, για παράδειγμα επειδή δεν είστε συνδεδεμένοι στο διαδίκτυο, η ρύθμιση συνεχίζει με τα γενικά πακέτα. Για να προσπαθήσετε ξανά:
+
+```sh
+sudo /usr/lib/wsl/optimize-repos
+```
+
+## Διαφορές από μια κανονική εγκατάσταση
+
+Το WSL εκτελεί πάντα τον πυρήνα της Microsoft, οπότε ο `linux-cachyos`, οι χρονοπρογραμματιστές (schedulers) του και το `sched-ext` δεν χρησιμοποιούνται. Επίσης, το είδωλο δεν διαθέτει διαχειριστή εκκίνησης, `chwd` ή zram.
+
+## Αντιμετώπιση προβλημάτων
+
+Εάν το pacman αναφέρει ότι συνιστάται επανεκκίνηση, επανεκκινήστε τη διανομή από το PowerShell με την εντολή `wsl --terminate cachyos`.
+
+Για να ξεκινήσετε από την αρχή, αφαιρέστε τη διανομή με `wsl --unregister cachyos` και εγκαταστήστε την ξανά.
+
+:::caution
+Η εντολή `wsl --unregister` διαγράφει μόνιμα τα πάντα μέσα στη διανομή, συμπεριλαμβανομένου του προσωπικού σας καταλόγου στο Linux.
+:::

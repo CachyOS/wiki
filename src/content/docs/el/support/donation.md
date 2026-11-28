@@ -14,9 +14,7 @@ description: Τρόποι για να μας υποστηρίξετε
 - Διακομιστής αλληλογραφίας/είδωλο: 17€
 - Διακομιστής φόρουμ (Netcup VPS): 7€
 
-### Patreon
-
-<https://www.patreon.com/CachyOS>
+### [Patreon](<https://www.patreon.com/CachyOS>)
 
 ### Ethereum
 
